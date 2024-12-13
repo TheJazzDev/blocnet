@@ -17,13 +17,13 @@ class Post {
     required this.id,
     required this.projectTitle,
     required this.primaryTag,
-    required this.secondaryTags,
+    required List<SecondaryTag> secondaryTags,
     required this.logoUrl,
     required this.title,
     required this.description,
     required this.createdAt,
     required this.priority,
-  });
+  }) : secondaryTags = secondaryTags.toSet().toList();
 
   // Factory method to create a Post from JSON data
   factory Post.fromJson(Map<String, dynamic> json) {
@@ -64,7 +64,8 @@ class Post {
       secondaryTags: [
         SecondaryTag.airdrops,
         SecondaryTag.mining,
-        SecondaryTag.nft
+        SecondaryTag.nft,
+        SecondaryTag.launching
       ],
       logoUrl:
           'https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg',
@@ -79,7 +80,13 @@ class Post {
       id: '2',
       projectTitle: 'Alpha blockchain',
       primaryTag: PrimaryTag.ethereum,
-      secondaryTags: [SecondaryTag.icoIdo, SecondaryTag.staking],
+      secondaryTags: [
+        SecondaryTag.partnership,
+        SecondaryTag.staking,
+        SecondaryTag.mining,
+        SecondaryTag.airdrops,
+        SecondaryTag.governance,
+      ],
       logoUrl:
           'https://pbs.twimg.com/profile_images/1866175744402948096/KtXzmRGA_400x400.jpg',
       title: 'New Ethereum update rolling out next week!',
@@ -92,7 +99,14 @@ class Post {
       id: '3',
       projectTitle: 'SpaceX Ventures',
       primaryTag: PrimaryTag.solana,
-      secondaryTags: [SecondaryTag.governance, SecondaryTag.nft],
+      secondaryTags: [
+        SecondaryTag.governance,
+        SecondaryTag.nft,
+        SecondaryTag.partnership,
+        SecondaryTag.security,
+        SecondaryTag.icoIdo,
+        SecondaryTag.governance
+      ],
       logoUrl:
           'https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg',
       title: 'SpaceX mission to Mars launches next year!',
@@ -105,7 +119,11 @@ class Post {
       id: '4',
       projectTitle: 'MetaVision',
       primaryTag: PrimaryTag.ethereum,
-      secondaryTags: [SecondaryTag.nft, SecondaryTag.metaverse],
+      secondaryTags: [
+        SecondaryTag.nft,
+        SecondaryTag.metaverse,
+        SecondaryTag.gaming,
+      ],
       logoUrl:
           'https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg',
       title: 'Meta introduces new AR glasses!',
@@ -142,8 +160,8 @@ class Post {
     ),
     Post(
       id: '7',
-      projectTitle: 'Ethereum Breakthrough',
-      primaryTag: PrimaryTag.ethereum,
+      projectTitle: 'Breakthrough',
+      primaryTag: PrimaryTag.iceOpenNetwork,
       secondaryTags: [SecondaryTag.governance, SecondaryTag.nft],
       logoUrl:
           'https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg',

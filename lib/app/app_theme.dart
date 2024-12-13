@@ -64,6 +64,11 @@ ThemeData primaryTheme = ThemeData(
         fontSize: 12,
         fontWeight: FontWeight.w400,
         fontFamily: 'Geist'),
+    titleLarge: TextStyle(
+        color: AppColors.darkGrey700,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        fontFamily: 'Britti'),      
 
     // Unused
     displayLarge: TextStyle(
@@ -96,11 +101,7 @@ ThemeData primaryTheme = ThemeData(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         fontFamily: 'Geist'),
-    titleLarge: TextStyle(
-        color: AppColors.darkGrey700,
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-        fontFamily: 'Geist'),
+
     titleMedium: TextStyle(
         color: AppColors.titleColor,
         fontSize: 14,

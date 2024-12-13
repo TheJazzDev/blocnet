@@ -88,6 +88,9 @@ flutter:
         - asset: assets/fonts/Geist-Semibold.ttf
         - asset: assets/fonts/Geist-Thin.ttf
           # style: italic
+    - family:  
+      fonts:
+      - asset: assets/fonts/Britti_Sans_Medium_Normal_500_100.ttf
 
   #
   # For details regarding fonts from package dependencies,

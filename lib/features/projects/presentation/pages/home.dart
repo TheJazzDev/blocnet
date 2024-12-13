@@ -24,14 +24,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'jazzdev'),
+      appBar: const CustomAppBar(title: 'Jazzdev'),
       body: Container(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             StyledToggleButton(
-              text1: 'For you',
+              text1: 'For You',
               text2: 'Explore',
               activeSection: activeSection,
               onToggle: _handleToggle,
@@ -46,16 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemCount: Post.dummyPosts.length,
                         itemBuilder: (context, index) {
                           final post = Post.dummyPosts[index];
-                          return PostCard(
-                            projectTitle: post.projectTitle,
-                            primaryTag: post.primaryTag,
-                            secondaryTags: post.secondaryTags,
-                            logoUrl: post.logoUrl,
-                            title: post.title,
-                            description: post.description,
-                            createdAt: post.createdAt,
-                            priority: post.priority,
-                          );
+                          return PostCard(post);
                         },
                       ),
                     ),
