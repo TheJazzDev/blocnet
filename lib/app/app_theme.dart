@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // static Color primaryColor = const Color(0xFF0078E8);
-  // static Color primaryAccent = const Color.fromRGBO(120, 14, 14, 1);
-  // static Color secondaryColor = const Color(0xFF0078E8);
-  // static Color secondaryAccent = const Color(0xFF0078E8);
-
   static Color primary50 = const Color(0xFFE6F3FF);
   static Color primary75 = const Color(0xFFC9E5FF);
   static Color primary100 = const Color(0xFFB0D9FF);
@@ -52,34 +47,97 @@ ThemeData primaryTheme = ThemeData(
   appBarTheme: AppBarTheme(
     backgroundColor: AppColors.darkGrey50,
     foregroundColor: AppColors.textColor,
-    surfaceTintColor: Colors.transparent, 
+    surfaceTintColor: Colors.transparent,
     centerTitle: true,
   ),
 
   // text theme
-  textTheme: const TextTheme().copyWith(
-    bodyMedium: TextStyle(
-      color: AppColors.textColor,
-      fontSize: 12,
-      letterSpacing: 1,
-      // fontWeight: FontWeight(),
-    ),
+  textTheme: TextTheme(
+    // Used
+    titleSmall: TextStyle(
+        color: AppColors.darkGrey700,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        fontFamily: 'Geist'),
     bodySmall: TextStyle(
-      color: AppColors.darkGrey600,
-      fontSize: 12,
-      letterSpacing: 1,
-    ),
+        color: AppColors.darkGrey600,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        fontFamily: 'Geist'),
+
+    // Unused
+    displayLarge: TextStyle(
+        color: AppColors.primary500,
+        fontSize: 64,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Geist'),
+    displayMedium: TextStyle(
+        color: AppColors.primary400,
+        fontSize: 48,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Geist'),
+    displaySmall: TextStyle(
+        color: AppColors.primary300,
+        fontSize: 36,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Geist'),
+    headlineLarge: TextStyle(
+        color: AppColors.titleColor,
+        fontSize: 32,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Geist'),
     headlineMedium: TextStyle(
-      color: AppColors.titleColor,
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-      letterSpacing: 1,
-    ),
+        color: AppColors.darkGrey600,
+        fontSize: 28,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'Geist'),
+    headlineSmall: TextStyle(
+        color: AppColors.darkGrey500,
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'Geist'),
+    titleLarge: TextStyle(
+        color: AppColors.darkGrey700,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        fontFamily: 'Geist'),
     titleMedium: TextStyle(
-      color: AppColors.titleColor,
-      fontSize: 18,
-      fontWeight: FontWeight.bold,
-      letterSpacing: 2,
-    ),
+        color: AppColors.titleColor,
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        fontFamily: 'Geist'),
+
+    bodyLarge: TextStyle(
+        color: AppColors.textColor,
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        fontFamily: 'Geist'),
+    bodyMedium: TextStyle(
+        color: AppColors.darkGrey500,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        fontFamily: 'Geist'),
+
+    labelLarge: TextStyle(
+        color: AppColors.primary600,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'Geist'),
+    labelMedium: TextStyle(
+        color: AppColors.primary500,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        fontFamily: 'Geist'),
+    labelSmall: TextStyle(
+        color: AppColors.primary400,
+        fontSize: 10,
+        fontWeight: FontWeight.w400,
+        fontFamily: 'Geist'),
   ),
 );
+
+
+  // static Color primaryColor = const Color(0xFF0078E8);
+  // static Color primaryAccent = const Color.fromRGBO(120, 14, 14, 1);
+  // static Color secondaryColor = const Color(0xFF0078E8);
+  // static Color secondaryAccent = const Color(0xFF0078E8);

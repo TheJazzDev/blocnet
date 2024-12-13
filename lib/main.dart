@@ -1,12 +1,12 @@
 import 'package:blocknet/app/app_theme.dart';
-import 'package:blocknet/features/projects/home.dart';
+import 'package:blocknet/features/projects/presentation/pages/home.dart';
 import 'package:flutter/material.dart';
 
 void main() {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const Sandbox(),
+      home: const HomeScreen(),
       theme: primaryTheme,
       routes: {
         '/homepage': (context) => const HomeScreen(),
