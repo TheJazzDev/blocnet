@@ -25,37 +25,36 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: 'Jazzdev'),
-      body: Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            StyledToggleButton(
-              text1: 'For You',
-              text2: 'Explore',
-              activeSection: activeSection,
-              onToggle: _handleToggle,
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (activeSection == 'first-section')
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: Post.dummyPosts.length,
-                        itemBuilder: (context, index) {
-                          final post = Post.dummyPosts[index];
-                          return PostCard(post);
-                        },
-                      ),
-                    ),
-                  if (activeSection == 'second-section')
-                    const StyledHeading('Explore page'),
-                ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StyledToggleButton(
+                text1: 'For You',
+                text2: 'Explore',
+                activeSection: activeSection,
+                onToggle: _handleToggle,
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              if (activeSection == 'first-section')
+                Column(
+                  children: List.generate(
+                    Post.dummyPosts.length,
+                    (index) => PostCard(Post.dummyPosts[index]),
+                  ),
+                )
+              else if (activeSection == 'second-section')
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    StyledHeading('Explore page'),
+                    // Add more widgets if necessary
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );

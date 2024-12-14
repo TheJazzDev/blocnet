@@ -32,8 +32,7 @@ class _StyledToggleButtonState extends State<StyledToggleButton> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(8),
-      margin: const EdgeInsets.symmetric(vertical: 16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.darkGrey100,
         borderRadius: const BorderRadius.all(Radius.circular(40)),
@@ -74,6 +73,8 @@ class _StyledToggleButtonState extends State<StyledToggleButton> {
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
         backgroundColor: isActive ? AppColors.darkGrey800 : Colors.transparent,
         shape: const RoundedRectangleBorder(

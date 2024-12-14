@@ -24,12 +24,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           _buildDivider(),
           _buildIconButton(
-            icon: Icons.search_outlined,
+            icon: Icons.search,
             onPressed: () {},
           ),
           _buildDivider(),
           _buildIconButton(
-            icon: Icons.info_outlined,
+            icon: Icons.tune,
             onPressed: () {},
           ),
         ],
@@ -40,12 +40,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget _buildIconButton(
       {required IconData icon, required VoidCallback onPressed}) {
     return Container(
-      padding: const EdgeInsets.all(5),
+      // padding: EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.darkGrey100,
         borderRadius: BorderRadius.circular(100),
       ),
       child: IconButton(
+        style: IconButton.styleFrom(
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
         icon: Icon(icon, color: AppColors.darkGrey500),
         onPressed: onPressed,
       ),

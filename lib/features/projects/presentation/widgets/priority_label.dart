@@ -11,7 +11,7 @@ class PriorityLabel extends StatelessWidget {
     Color urgencyColor = urgency.color;
 
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 14),
+      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 14),
       decoration: BoxDecoration(
           border: Border.all(
             color: urgencyColor,
@@ -34,7 +34,7 @@ class PriorityLabel extends StatelessWidget {
   Widget _buildDivider(Color color) {
     return Center(
       child: Container(
-        margin: const EdgeInsets.all(8),
+        margin: const EdgeInsets.only(right: 2),
         width: 8,
         height: 8,
         decoration: BoxDecoration(
