@@ -19,6 +19,11 @@ enum SecondaryTag {
   final String name;
   const SecondaryTag(this.name);
 
+  // Method to get all tag names
+  static List<String> getAll() {
+    return SecondaryTag.values.map((e) => e.name).toList();
+  }
+
   @override
   String toString() {
     return name;

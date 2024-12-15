@@ -43,6 +43,10 @@ ThemeData primaryTheme = ThemeData(
   // scaffold color
   scaffoldBackgroundColor: AppColors.darkGrey50,
 
+// bottom sheet color
+  bottomSheetTheme:
+      BottomSheetThemeData(backgroundColor: AppColors.darkGrey100),
+
   // app bar theme colors
   appBarTheme: AppBarTheme(
     backgroundColor: AppColors.darkGrey50,
@@ -54,21 +58,31 @@ ThemeData primaryTheme = ThemeData(
   // text theme
   textTheme: TextTheme(
     // Used
-    titleSmall: TextStyle(
-        color: AppColors.darkGrey700,
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        fontFamily: 'Geist'),
     bodySmall: TextStyle(
         color: AppColors.darkGrey600,
         fontSize: 12,
         fontWeight: FontWeight.w400,
         fontFamily: 'Geist'),
+    titleSmall: TextStyle(
+        color: AppColors.darkGrey700,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        fontFamily: 'Geist'),
+    titleMedium: TextStyle(
+        color: AppColors.darkGrey700,
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        fontFamily: 'Geist'),
     titleLarge: TextStyle(
         color: AppColors.darkGrey700,
         fontSize: 16,
         fontWeight: FontWeight.w500,
-        fontFamily: 'Britti'),      
+        fontFamily: 'Britti'),
+    labelLarge: TextStyle(
+        color: AppColors.darkGrey700,
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'Britti'),
 
     // Unused
     displayLarge: TextStyle(
@@ -102,12 +116,6 @@ ThemeData primaryTheme = ThemeData(
         fontWeight: FontWeight.w600,
         fontFamily: 'Geist'),
 
-    titleMedium: TextStyle(
-        color: AppColors.titleColor,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        fontFamily: 'Geist'),
-
     bodyLarge: TextStyle(
         color: AppColors.textColor,
         fontSize: 16,
@@ -117,12 +125,6 @@ ThemeData primaryTheme = ThemeData(
         color: AppColors.darkGrey500,
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        fontFamily: 'Geist'),
-
-    labelLarge: TextStyle(
-        color: AppColors.primary600,
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
         fontFamily: 'Geist'),
     labelMedium: TextStyle(
         color: AppColors.primary500,

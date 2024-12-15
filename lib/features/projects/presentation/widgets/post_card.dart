@@ -4,7 +4,7 @@ import 'package:blocknet/features/projects/data/models/post.dart';
 import 'package:blocknet/features/projects/presentation/widgets/primary_label.dart';
 import 'package:blocknet/features/projects/presentation/widgets/secondary_label.dart';
 import 'package:blocknet/features/projects/presentation/widgets/priority_label.dart';
-import 'package:blocknet/shared/styles/text.dart';
+import 'package:blocknet/shared/styled/text.dart';
 import 'package:blocknet/shared/utils/format_date.dart';
 import 'package:flutter/material.dart';
 
@@ -192,7 +192,7 @@ class _PostCardState extends State<PostCard> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  StyledBodyTextFade(
+                  StyledBodyText500(
                       formatDateWithSuffix(widget.post.createdAt)),
                   const SizedBox(width: 12),
                   _buildDivider(22),

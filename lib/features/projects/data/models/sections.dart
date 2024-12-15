@@ -1,0 +1,1 @@
+enum Sections { forYou, explore, yourProjects, discoverProjects }

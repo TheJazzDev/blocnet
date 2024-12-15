@@ -1,6 +1,8 @@
 import 'package:blocknet/features/projects/data/models/post.dart';
+import 'package:blocknet/features/projects/data/models/sections.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post_card.dart';
-import 'package:blocknet/shared/styles/text.dart';
+import 'package:blocknet/features/projects/presentation/widgets/tag_card.dart';
+import 'package:blocknet/shared/styled/text.dart';
 import 'package:blocknet/shared/widgets/toggle_button.dart';
 import 'package:blocknet/shared/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
@@ -13,9 +15,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String activeSection = 'first-section';
+  Sections activeSection = Sections.forYou;
 
-  void _handleToggle(String activeButton) {
+  void _handleToggle(Sections activeButton) {
     setState(() {
       activeSection = activeButton;
     });
@@ -38,24 +40,55 @@ class _HomeScreenState extends State<HomeScreen> {
                 onToggle: _handleToggle,
               ),
               const SizedBox(height: 16),
-              if (activeSection == 'first-section')
-                Column(
-                  children: List.generate(
-                    Post.dummyPosts.length,
-                    (index) => PostCard(Post.dummyPosts[index]),
-                  ),
-                )
-              else if (activeSection == 'second-section')
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    StyledHeading('Explore page'),
-                    // Add more widgets if necessary
-                  ],
-                ),
+              activeSection == Sections.forYou
+                  ? _buildForYouSection()
+                  : _buildExploreSection()
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildForYouSection() {
+    return Column(
+      children: List.generate(
+        Post.dummyPosts.length,
+        (index) => PostCard(Post.dummyPosts[index]),
+      ),
+    );
+  }
+
+  Widget _buildExploreSection() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                TagCard(label: 'Trending', iconName: 'timeline', onTap: () {}),
+                TagCard(
+                    label: 'High Urgency', iconName: 'emergency', onTap: () {}),
+                TagCard(
+                    label: 'Mid Urgency', iconName: 'brightness', onTap: () {}),
+                TagCard(label: 'Low Urgency', iconName: 'calm', onTap: () {}),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          StyledBodyText400('Latest News'),
+          const SizedBox(height: 8),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: Post.dummyPosts.length,
+            itemBuilder: (context, index) {
+              return PostCard(Post.dummyPosts[index]);
+            },
+          ),
+        ],
       ),
     );
   }

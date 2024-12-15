@@ -1,10 +1,10 @@
 enum PrimaryTag {
-  ethereum('Ethereum (ETH)'),
-  binanceSmartChain('Binance Smart Chain (BSC)'),
-  core('Core (CORE)'),
-  solana('Solana (SOL)'),
-  iceOpenNetwork('Ice Open Network (ION)'),
-  telegramNetwork('Telegram Network (TON)');
+  ethereum('Ethereum'),
+  binanceSmartChain('Binance Smart Chain'),
+  core('Core'),
+  solana('Solana'),
+  iceOpenNetwork('Ice Open Network'),
+  telegramNetwork('Telegram Network');
 
   // The display name for each tag
   final String displayName;
@@ -13,7 +13,7 @@ enum PrimaryTag {
   const PrimaryTag(this.displayName);
 
   // Method to get all tag display names
-  static List<String> getTags() {
+  static List<String> getAll() {
     return PrimaryTag.values.map((e) => e.displayName).toList();
   }
 

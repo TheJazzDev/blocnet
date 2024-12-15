@@ -1,5 +1,6 @@
 import 'package:blocknet/app/app_theme.dart';
-import 'package:blocknet/shared/styles/text.dart';
+import 'package:blocknet/features/projects/data/models/sections.dart';
+import 'package:blocknet/shared/styled/text.dart';
 import 'package:flutter/material.dart';
 
 class StyledToggleButton extends StatefulWidget {
@@ -13,15 +14,15 @@ class StyledToggleButton extends StatefulWidget {
 
   final String text1;
   final String text2;
-  final String activeSection;
-  final Function(String) onToggle;
+  final Sections activeSection;
+  final Function(Sections) onToggle;
 
   @override
   State<StyledToggleButton> createState() => _StyledToggleButtonState();
 }
 
 class _StyledToggleButtonState extends State<StyledToggleButton> {
-  late String _activeSection;
+  late Sections _activeSection;
 
   @override
   void initState() {
@@ -42,22 +43,22 @@ class _StyledToggleButtonState extends State<StyledToggleButton> {
         children: [
           _buildButton(
             text: widget.text1,
-            isActive: _activeSection == 'first-section',
+            isActive: _activeSection == Sections.forYou,
             onPressed: () {
               setState(() {
-                _activeSection = 'first-section';
+                _activeSection = Sections.forYou;
               });
-              widget.onToggle('first-section');
+              widget.onToggle(Sections.forYou);
             },
           ),
           _buildButton(
             text: widget.text2,
-            isActive: _activeSection == 'second-section',
+            isActive: _activeSection == Sections.explore,
             onPressed: () {
               setState(() {
-                _activeSection = 'second-section';
+                _activeSection = Sections.explore;
               });
-              widget.onToggle('second-section');
+              widget.onToggle(Sections.explore);
             },
           ),
         ],
