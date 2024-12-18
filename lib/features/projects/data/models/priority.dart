@@ -1,4 +1,4 @@
-import 'package:blocknet/app/app_theme.dart';
+import 'package:blocknet/app/theme.dart';
 import 'package:flutter/material.dart';
 
 class Priority {

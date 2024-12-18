@@ -1,4 +1,4 @@
-import 'package:blocknet/app/app_theme.dart';
+import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/data/models/primary_tag.dart';
 import 'package:blocknet/shared/styled/text.dart';
 import 'package:flutter/material.dart';

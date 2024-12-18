@@ -1,4 +1,5 @@
-import 'package:blocknet/app/app_theme.dart';
+import 'package:blocknet/app/theme.dart';
+import 'package:blocknet/features/projects/presentation/widgets/vertical_divider.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/shared/styled/text.dart';
 
@@ -48,6 +49,7 @@ class DropdownSection extends StatelessWidget {
               runSpacing: 8,
               children: [
                 ..._buildTagList(selectedTags, true),
+                if (selectedTags.isNotEmpty) CustomVerticalDivider(height: 25),
                 ..._buildTagList(unselectedTags, false),
               ],
             ),

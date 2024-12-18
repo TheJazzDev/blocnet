@@ -1,3 +1,5 @@
+import 'package:blocknet/app/theme.dart';
+import 'package:blocknet/shared/styled/text.dart';
 import 'package:flutter/material.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -10,6 +12,17 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Signup'),
+        centerTitle: true,
+        backgroundColor: AppColors.darkGrey50,
+      ),
+      body: Center(
+        child: Container(
+            padding: const EdgeInsets.all(16),
+            child: StyledTitleLarge('Welcome to Sign up screen')),
+      ),
+    );
   }
 }

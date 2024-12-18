@@ -2,6 +2,22 @@ import 'package:blocknet/features/projects/data/models/primary_tag.dart';
 import 'package:blocknet/features/projects/data/models/priority.dart';
 import 'package:blocknet/features/projects/data/models/secondary_tag.dart';
 
+class Admin {
+  final String id;
+  final String name;
+  final String username;
+  final String imageUrl;
+  final int followers;
+
+  Admin({
+    required this.id,
+    required this.name,
+    required this.username,
+    required this.imageUrl,
+    required this.followers,
+  });
+}
+
 class Post {
   final String id;
   final String projectTitle;
@@ -12,6 +28,7 @@ class Post {
   final String description;
   final DateTime createdAt;
   final Priority priority;
+  final Admin admin;
 
   Post({
     required this.id,
@@ -23,6 +40,7 @@ class Post {
     required this.description,
     required this.createdAt,
     required this.priority,
+    required this.admin,
   }) : secondaryTags = secondaryTags.toSet().toList();
 
   // Factory method to create a Post from JSON data
@@ -37,6 +55,7 @@ class Post {
       description: json['description'],
       createdAt: DateTime.parse(json['createdAt']),
       priority: json['priority'],
+      admin: json['admin'],
     );
   }
 
@@ -52,6 +71,7 @@ class Post {
       'description': description,
       'createdAt': createdAt.toIso8601String(),
       'priority': priority,
+      'admin': admin,
     };
   }
 
@@ -59,13 +79,15 @@ class Post {
   static List<Post> dummyPosts = [
     Post(
       id: '1',
-      projectTitle: 'Over protocol',
+      projectTitle: 'Over Protocol',
       primaryTag: PrimaryTag.solana,
       secondaryTags: [
         SecondaryTag.airdrops,
         SecondaryTag.mining,
         SecondaryTag.nft,
-        SecondaryTag.launching
+        SecondaryTag.launching,
+        SecondaryTag.partnership,
+        SecondaryTag.metaverse
       ],
       logoUrl:
           'https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg',
@@ -75,6 +97,13 @@ class Post {
           'Due to unforeseen technical issues, Bitcoin has extended the vesting period for its tokens. The unlock date is now scheduled for December 15. Be sure to adjust your trading strategies in light of this delay.',
       createdAt: DateTime.now(),
       priority: Priority.medium,
+      admin: Admin(
+        id: 'admin1',
+        name: 'Indomie Ola',
+        username: 'jazz_dev',
+        imageUrl: 'https://example.com/profile.jpg',
+        followers: 3567,
+      ),
     ),
     Post(
       id: '2',
@@ -94,6 +123,13 @@ class Post {
           'Ethereum developers will be launching a new update next week to enhance scalability.',
       createdAt: DateTime.now(),
       priority: Priority.high,
+      admin: Admin(
+        id: 'admin2',
+        name: 'Omobola Ijagba',
+        username: 'omo_agba',
+        imageUrl: 'https://example.com/profile.jpg',
+        followers: 898,
+      ),
     ),
     Post(
       id: '3',
@@ -114,6 +150,13 @@ class Post {
           'SpaceX announces plans for the first manned mission to Mars. Exciting times ahead!',
       createdAt: DateTime.now(),
       priority: Priority.high,
+      admin: Admin(
+        id: 'admin3',
+        name: 'Monday Instance',
+        username: 'instance_here',
+        imageUrl: 'https://example.com/profile.jpg',
+        followers: 234,
+      ),
     ),
     Post(
       id: '4',
@@ -131,6 +174,13 @@ class Post {
           'Meta’s new AR glasses revolutionize user interaction with the digital world.',
       createdAt: DateTime.now(),
       priority: Priority.medium,
+      admin: Admin(
+        id: 'admin4',
+        name: 'Juwon Kenneth',
+        username: 'kenneth',
+        imageUrl: 'https://example.com/profile.jpg',
+        followers: 345,
+      ),
     ),
     Post(
       id: '5',
@@ -144,6 +194,13 @@ class Post {
           'A critical security flaw in Bitcoin wallets has been discovered. Immediate update required.',
       createdAt: DateTime.now(),
       priority: Priority.medium,
+      admin: Admin(
+        id: 'admin5',
+        name: 'Patience Adi',
+        username: 'patience_adi',
+        imageUrl: 'https://example.com/profile.jpg',
+        followers: 567,
+      ),
     ),
     Post(
       id: '6',
@@ -157,6 +214,13 @@ class Post {
           'AI is rapidly being integrated into blockchain for better scalability and automation.',
       createdAt: DateTime.now(),
       priority: Priority.low,
+      admin: Admin(
+        id: 'admin6',
+        name: 'Eunice Baby',
+        username: 'euniceBaby',
+        imageUrl: 'https://example.com/profile.jpg',
+        followers: 34,
+      ),
     ),
     Post(
       id: '7',
@@ -170,6 +234,13 @@ class Post {
           'Ethereum 2.0 upgrades are live, focusing on faster transactions and reduced gas fees.',
       createdAt: DateTime.now(),
       priority: Priority.high,
+      admin: Admin(
+        id: 'admin1',
+        name: 'Major Design',
+        username: 'design',
+        imageUrl: 'https://example.com/profile.jpg',
+        followers: 67,
+      ),
     ),
     Post(
       id: '8',
@@ -183,6 +254,13 @@ class Post {
           'Solana is now processing over 65,000 transactions per second, making it a leader in blockchain scalability.',
       createdAt: DateTime.now(),
       priority: Priority.low,
+      admin: Admin(
+        id: 'admin7',
+        name: 'Bernice Sarah',
+        username: 'bernice',
+        imageUrl: 'https://example.com/profile.jpg',
+        followers: 105,
+      ),
     ),
   ];
 }

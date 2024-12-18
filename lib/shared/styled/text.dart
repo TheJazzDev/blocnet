@@ -1,4 +1,4 @@
-import 'package:blocknet/app/app_theme.dart';
+import 'package:blocknet/app/theme.dart';
 import 'package:flutter/material.dart';
 
 class StyledBodyText extends StatelessWidget {
@@ -16,9 +16,10 @@ class StyledBodyText extends StatelessWidget {
 }
 
 class StyledBodyText400 extends StatelessWidget {
-  const StyledBodyText400(this.text, {super.key});
+  const StyledBodyText400(this.text, {this.size = 14.0, super.key});
 
   final String text;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class StyledBodyText400 extends StatelessWidget {
       text,
       style: TextStyle(
         color: AppColors.darkGrey400,
-        fontSize: 14,
+        fontSize: size,
         fontWeight: FontWeight.w400,
         fontFamily: 'Geist',
       ),
@@ -58,6 +59,26 @@ class StyledBodyText500 extends StatelessWidget {
   }
 }
 
+class StyledBodyText600 extends StatelessWidget {
+  const StyledBodyText600(this.text, { this.size = 14.0, super.key});
+
+  final String text;
+   final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: AppColors.darkGrey600,
+        fontSize: size,
+        fontWeight: FontWeight.w500,
+        fontFamily: 'Geist',
+      ),
+    );
+  }
+}
+
 class StyledHeading extends StatelessWidget {
   const StyledHeading(this.text, {super.key});
 
@@ -72,17 +93,25 @@ class StyledHeading extends StatelessWidget {
   }
 }
 
-class StyledHeading2 extends StatelessWidget {
-  const StyledHeading2(this.text, {super.key, this.style});
+class StyledPostProjectTitle extends StatelessWidget {
+  const StyledPostProjectTitle(
+    this.text, {
+    super.key,
+    this.style,
+    this.applyOverflow = false,
+  });
 
   final String text;
   final TextStyle? style;
+  final bool applyOverflow;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
       style: style ?? Theme.of(context).textTheme.titleLarge,
+      maxLines: applyOverflow ? 1 : null,
+      overflow: applyOverflow ? TextOverflow.ellipsis : null,
     );
   }
 }

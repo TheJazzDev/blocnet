@@ -1,10 +1,10 @@
 import 'package:blocknet/features/projects/data/models/post.dart';
 import 'package:blocknet/features/projects/data/models/sections.dart';
-import 'package:blocknet/features/projects/presentation/widgets/post_card.dart';
+import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
 import 'package:blocknet/features/projects/presentation/widgets/tag_card.dart';
 import 'package:blocknet/shared/styled/text.dart';
-import 'package:blocknet/shared/widgets/toggle_button.dart';
-import 'package:blocknet/shared/widgets/app_bar.dart';
+import 'package:blocknet/features/projects/presentation/widgets/toggle_button.dart';
+import 'package:blocknet/features/projects/presentation/widgets/app_bar.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {

@@ -1,5 +1,5 @@
-import 'dart:ui';
-import 'package:blocknet/app/app_theme.dart';
+import 'package:blocknet/app/theme.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dot_divider.dart';
 import 'package:blocknet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
 import 'package:blocknet/shared/styled/text.dart';
 import 'package:flutter/material.dart';
@@ -23,34 +23,26 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         actions: [
           _buildIconButton(
             icon: Icons.notifications_outlined,
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/notifications');
+            },
           ),
-          _buildDivider(),
+          DotDivider(8),
           _buildIconButton(
             icon: Icons.search,
             onPressed: () {},
           ),
-          _buildDivider(),
+          DotDivider(8),
           _buildIconButton(
             icon: Symbols.page_info,
             onPressed: () {
               showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  barrierColor: Colors.transparent,
-                  builder: (context) {
-                    return Stack(children: [
-                      Positioned.fill(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                          child: Container(
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      FilterBottomSheet()
-                    ]);
-                  });
+                context: context,
+                isScrollControlled: true,
+                builder: (context) {
+                  return FilterBottomSheet();
+                },
+              );
             },
           ),
         ],
@@ -71,20 +63,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         icon: Icon(icon, color: AppColors.darkGrey500),
         onPressed: onPressed,
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.all(8),
-        width: 4,
-        height: 4,
-        decoration: BoxDecoration(
-          color: AppColors.darkGrey200,
-          shape: BoxShape.circle,
-        ),
       ),
     );
   }

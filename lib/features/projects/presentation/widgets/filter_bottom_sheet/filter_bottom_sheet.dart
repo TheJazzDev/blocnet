@@ -1,14 +1,15 @@
-import 'package:blocknet/app/app_theme.dart';
+import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/data/models/primary_tag.dart';
 import 'package:blocknet/features/projects/data/models/priority.dart';
 import 'package:blocknet/features/projects/data/models/secondary_tag.dart';
-import 'package:blocknet/features/projects/presentation/widgets/filter_bottom_sheet/priority_dropdown.dart';
+import 'package:blocknet/features/projects/presentation/widgets/horizontal_divider.dart';
 import 'package:blocknet/shared/styled/primary_button.dart';
 import 'package:blocknet/shared/styled/secondary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/shared/styled/text.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'dropdown_section.dart';
+import 'priority_dropdown.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   const FilterBottomSheet({super.key});
@@ -76,7 +77,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 unselectedTags: _primaryTags,
                 onTagToggle: _togglePrimaryTag,
               ),
-              _buildDivider(),
+              CustomHorizontalDivider(margin: 16),
               DropdownSection(
                 title: 'Secondary Tag',
                 icon: Symbols.bookmark,
@@ -84,7 +85,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 unselectedTags: _secondaryTags,
                 onTagToggle: _toggleSecondaryTag,
               ),
-              _buildDivider(),
+              CustomHorizontalDivider(margin: 16),
               PriorityDropdown(
                 selectedPriorities: _selectedPriorities,
                 unselectedPriorities: _priorities,
@@ -163,17 +164,5 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _priorities.addAll(_selectedPriorities);
       _selectedPriorities.clear();
     });
-  }
-
-  Widget _buildDivider() {
-    return Container(
-      height: 2,
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.darkGrey200,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-    );
   }
 }

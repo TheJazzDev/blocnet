@@ -1,4 +1,4 @@
-import 'package:blocknet/app/app_theme.dart';
+import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/data/models/sections.dart';
 import 'package:blocknet/shared/styled/text.dart';
 import 'package:flutter/material.dart';
@@ -82,7 +82,7 @@ class _StyledToggleButtonState extends State<StyledToggleButton> {
           borderRadius: BorderRadius.all(Radius.circular(40)),
         ),
       ),
-      child: StyledHeading2(
+      child: StyledPostProjectTitle(
         text,
         style: TextStyle(
           color: isActive ? AppColors.darkGrey100 : AppColors.darkGrey400,

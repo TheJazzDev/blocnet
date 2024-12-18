@@ -38,6 +38,7 @@ dependencies:
   google_fonts: ^6.2.1
   intl: ^0.18.0
   material_symbols_icons: ^4.2801.0
+  flutter_native_splash: ^2.4.3
 
 dev_dependencies:
   flutter_test:
@@ -62,7 +63,8 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/logo/
+    - assets/img/logo.png
+    - assets/img/
     - assets/fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see
