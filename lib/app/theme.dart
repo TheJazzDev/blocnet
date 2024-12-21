@@ -87,32 +87,32 @@ ThemeData primaryTheme = ThemeData(
     // Unused
     displayLarge: TextStyle(
         color: AppColors.primary500,
-        fontSize: 64,
+        fontSize: 56,
         fontWeight: FontWeight.bold,
         fontFamily: 'Geist'),
     displayMedium: TextStyle(
         color: AppColors.primary400,
-        fontSize: 48,
+        fontSize: 40,
         fontWeight: FontWeight.bold,
         fontFamily: 'Geist'),
     displaySmall: TextStyle(
         color: AppColors.primary300,
-        fontSize: 36,
+        fontSize: 32,
         fontWeight: FontWeight.bold,
         fontFamily: 'Geist'),
     headlineLarge: TextStyle(
         color: AppColors.titleColor,
-        fontSize: 32,
+        fontSize: 20,
         fontWeight: FontWeight.bold,
         fontFamily: 'Geist'),
     headlineMedium: TextStyle(
         color: AppColors.darkGrey600,
-        fontSize: 28,
+        fontSize: 18,
         fontWeight: FontWeight.w600,
         fontFamily: 'Geist'),
     headlineSmall: TextStyle(
         color: AppColors.darkGrey500,
-        fontSize: 24,
+        fontSize: 16,
         fontWeight: FontWeight.w600,
         fontFamily: 'Geist'),
 
@@ -138,9 +138,3 @@ ThemeData primaryTheme = ThemeData(
         fontFamily: 'Geist'),
   ),
 );
-
-
-  // static Color primaryColor = const Color(0xFF0078E8);
-  // static Color primaryAccent = const Color.fromRGBO(120, 14, 14, 1);
-  // static Color secondaryColor = const Color(0xFF0078E8);
-  // static Color secondaryAccent = const Color(0xFF0078E8);

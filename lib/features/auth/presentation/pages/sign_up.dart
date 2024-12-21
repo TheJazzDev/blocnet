@@ -1,5 +1,5 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class SignUpScreen extends StatefulWidget {

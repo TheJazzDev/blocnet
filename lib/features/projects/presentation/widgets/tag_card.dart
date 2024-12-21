@@ -1,5 +1,5 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -30,7 +30,7 @@ class TagCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 112,
-        height: 121,
+        height: 131,
         margin: EdgeInsets.only(right: 8),
         padding: EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 40),
         decoration: BoxDecoration(
@@ -38,6 +38,7 @@ class TagCard extends StatelessWidget {
           borderRadius: const BorderRadius.all(Radius.circular(20)),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: EdgeInsets.all(10),
@@ -51,9 +52,7 @@ class TagCard extends StatelessWidget {
                 color: AppColors.darkGrey600,
               ),
             ),
-            Expanded(
-              child: SizedBox(),
-            ),
+            Expanded(child: SizedBox()),
             StyledTitleMedium(label),
           ],
         ),

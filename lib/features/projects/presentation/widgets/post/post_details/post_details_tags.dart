@@ -1,4 +1,5 @@
-import 'package:blocknet/features/projects/data/models/post.dart';
+import 'package:blocknet/features/projects/data/models/post_model.dart';
+import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocknet/features/projects/presentation/widgets/primary_label.dart';
 import 'package:blocknet/features/projects/presentation/widgets/secondary_label.dart';
 import 'package:blocknet/features/projects/presentation/widgets/vertical_divider.dart';
@@ -18,7 +19,7 @@ class PostDetailsTags extends StatelessWidget {
           spacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            PrimaryLabel(post.primaryTag),
+            PrimaryLabel(primaryTag: post.project?.primaryTag ?? PrimaryTag.none),
             CustomVerticalDivider(
               height: 25,
               single: true,

@@ -1,7 +1,5 @@
 import 'package:blocknet/app/router.dart';
 import 'package:blocknet/app/theme.dart';
-// import 'package:blocknet/features/projects/presentation/pages/home.dart';
-// import 'package:blocknet/screens/notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
@@ -40,3 +38,4 @@ class Sandbox extends StatelessWidget {
     );
   }
 }
+ 

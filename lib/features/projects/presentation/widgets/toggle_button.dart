@@ -1,6 +1,6 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/sections.dart';
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/features/projects/data/models/sections_model.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class StyledToggleButton extends StatefulWidget {
@@ -76,7 +76,7 @@ class _StyledToggleButtonState extends State<StyledToggleButton> {
       style: TextButton.styleFrom(
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
         backgroundColor: isActive ? AppColors.darkGrey800 : Colors.transparent,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(40)),

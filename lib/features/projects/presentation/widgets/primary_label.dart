@@ -1,12 +1,12 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/primary_tag.dart';
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class PrimaryLabel extends StatelessWidget {
-  const PrimaryLabel(this.title, {super.key});
+  const PrimaryLabel({required this.primaryTag, super.key});
 
-  final PrimaryTag title;
+  final PrimaryTag primaryTag;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class PrimaryLabel extends StatelessWidget {
       decoration: BoxDecoration(
           color: AppColors.darkGrey50,
           borderRadius: BorderRadius.all(Radius.circular(20))),
-      child: StyledBodyText(title.toString()),
+      child: StyledBodyText(primaryTag.toString()),
     );
   }
 }

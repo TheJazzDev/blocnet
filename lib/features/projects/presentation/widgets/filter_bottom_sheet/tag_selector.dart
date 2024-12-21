@@ -1,16 +1,16 @@
 import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/presentation/widgets/vertical_divider.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 
-class DropdownSection extends StatelessWidget {
+class TagSelector extends StatelessWidget {
   final String title;
   final IconData icon;
   final Set<String> selectedTags;
   final Set<String> unselectedTags;
   final Function(String) onTagToggle;
 
-  const DropdownSection({
+  const TagSelector({
     super.key,
     required this.title,
     required this.icon,

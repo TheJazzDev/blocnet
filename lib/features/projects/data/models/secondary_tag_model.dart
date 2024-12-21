@@ -19,9 +19,22 @@ enum SecondaryTag {
   final String name;
   const SecondaryTag(this.name);
 
-  // Method to get all tag names
+  /// Method to get all tag names
   static List<String> getAll() {
     return SecondaryTag.values.map((e) => e.name).toList();
+  }
+
+  /// Convert enum value to a JSON string
+  String toJson() {
+    return name;
+  }
+
+  /// Create an enum value from a JSON string
+  static SecondaryTag fromJson(String json) {
+    return SecondaryTag.values.firstWhere(
+      (e) => e.name == json,
+      orElse: () => throw ArgumentError('Invalid SecondaryTag: $json'),
+    );
   }
 
   @override

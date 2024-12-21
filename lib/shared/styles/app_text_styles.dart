@@ -2,15 +2,18 @@ import 'package:blocknet/app/theme.dart';
 import 'package:flutter/material.dart';
 
 class StyledBodyText extends StatelessWidget {
-  const StyledBodyText(this.text, {super.key});
+  const StyledBodyText(this.text, {this.applyOverflow = false, super.key});
 
   final String text;
+  final bool applyOverflow;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
       style: Theme.of(context).textTheme.bodySmall,
+      maxLines: applyOverflow ? 3 : null,
+      overflow: applyOverflow ? TextOverflow.ellipsis : null,
     );
   }
 }
@@ -60,10 +63,10 @@ class StyledBodyText500 extends StatelessWidget {
 }
 
 class StyledBodyText600 extends StatelessWidget {
-  const StyledBodyText600(this.text, { this.size = 14.0, super.key});
+  const StyledBodyText600(this.text, {this.size = 14.0, super.key});
 
   final String text;
-   final double size;
+  final double size;
 
   @override
   Widget build(BuildContext context) {

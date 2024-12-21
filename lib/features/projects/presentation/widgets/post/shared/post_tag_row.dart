@@ -1,16 +1,18 @@
-import 'package:blocknet/features/projects/data/models/post.dart';
+import 'package:blocknet/features/projects/data/models/post_model.dart';
+import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocknet/features/projects/presentation/widgets/primary_label.dart';
 import 'package:blocknet/features/projects/presentation/widgets/secondary_label.dart';
 import 'package:blocknet/features/projects/presentation/widgets/vertical_divider.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/app/theme.dart';
 
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 
-class PostCardTagRow extends StatelessWidget {
-  const PostCardTagRow({required this.post, super.key});
+class PostTagRow extends StatelessWidget {
+  const PostTagRow({required this.post, this.moreFrom = false, super.key});
 
   final Post post;
+  final bool moreFrom;
 
   @override
   Widget build(BuildContext context) {
@@ -27,18 +29,20 @@ class PostCardTagRow extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Wrap(
-              spacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                PrimaryLabel(post.primaryTag),
-                CustomVerticalDivider(
-                  height: 25,
-                  single: true,
-                ),
-                const SizedBox(width: 2)
-              ],
-            ),
+            if (!moreFrom)
+              Wrap(
+                spacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  PrimaryLabel(
+                      primaryTag: post.project?.primaryTag ?? PrimaryTag.none),
+                  CustomVerticalDivider(
+                    height: 25,
+                    single: true,
+                  ),
+                  const SizedBox(width: 2)
+                ],
+              ),
 
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,

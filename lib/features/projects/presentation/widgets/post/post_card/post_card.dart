@@ -1,26 +1,22 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/post.dart';
+import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:flutter/material.dart';
 import 'post_card_details.dart';
-import 'post_card_tag_row.dart';
+import '../shared/post_tag_row.dart';
 import '../shared/post_project_title.dart';
 import '../post_details/post_details_dialog.dart';
 
 class PostCard extends StatefulWidget {
-  const PostCard(
-    this.post, {
-    super.key,
-  });
+  const PostCard({required this.post, this.moreFrom = false, super.key});
 
   final Post post;
+  final bool moreFrom;
 
   @override
   State<PostCard> createState() => _PostCardState();
 }
 
 class _PostCardState extends State<PostCard> {
-  int hiddenCount = 0;
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -29,7 +25,7 @@ class _PostCardState extends State<PostCard> {
         barrierDismissible: true,
         barrierLabel: 'Dismiss',
         pageBuilder: (context, animation, secondaryAnimation) {
-          return PostDetailsDialog(widget.post);
+          return PostDetailsDialog(post: widget.post);
         },
         transitionDuration: const Duration(milliseconds: 300),
         transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -51,7 +47,9 @@ class _PostCardState extends State<PostCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            PostProjectTitle(widget.post.projectTitle, applyOverflow: true),
+            PostProjectTitle(
+                projectTitle: widget.post.project?.name ?? 'No project name',
+                applyOverflow: true),
             _buildContent(),
           ],
         ),
@@ -69,11 +67,11 @@ class _PostCardState extends State<PostCard> {
       ),
       child: Column(
         children: [
-          PostCardTagRow(
+          PostTagRow(
             post: widget.post,
           ),
           const SizedBox(height: 16),
-          PostCardDetails(post: widget.post),
+          PostCardDetails(post: widget.post, moreFrom: widget.moreFrom),
         ],
       ),
     );

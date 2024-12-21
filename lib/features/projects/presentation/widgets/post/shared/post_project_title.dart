@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 
 class PostProjectTitle extends StatelessWidget {
-  const PostProjectTitle(this.projectTitle,
-      {this.margin = true, this.applyOverflow = false, super.key});
+  const PostProjectTitle(
+      {required this.projectTitle, this.margin = true, this.applyOverflow = false, super.key});
 
   final String projectTitle;
   final bool margin;

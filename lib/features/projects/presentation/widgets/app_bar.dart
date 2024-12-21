@@ -1,7 +1,7 @@
 import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/presentation/widgets/dot_divider.dart';
 import 'package:blocknet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -16,7 +16,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: AppBar(
         title: StyledTitleLarge(title),
         centerTitle: false,
@@ -39,6 +39,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                isDismissible: true,
+                backgroundColor: Colors.transparent,
                 builder: (context) {
                   return FilterBottomSheet();
                 },
@@ -52,21 +54,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _buildIconButton(
       {required IconData icon, required VoidCallback onPressed}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.darkGrey100,
-        borderRadius: BorderRadius.circular(100),
+    return IconButton(
+      style: IconButton.styleFrom(
+        backgroundColor: AppColors.darkGrey100,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
-      child: IconButton(
-        style: IconButton.styleFrom(
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        icon: Icon(icon, color: AppColors.darkGrey500),
-        onPressed: onPressed,
-      ),
+      icon: Icon(icon, size: 26, color: AppColors.darkGrey500),
+      onPressed: onPressed,
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 24);
 }

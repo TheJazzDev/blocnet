@@ -1,16 +1,16 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/priority.dart';
+import 'package:blocknet/features/projects/data/models/priority_model.dart';
 import 'package:blocknet/features/projects/presentation/widgets/priority_label.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
-class PriorityDropdown extends StatefulWidget {
+class PrioritySelector extends StatefulWidget {
   final Set<Priority> selectedPriorities;
   final Set<Priority> unselectedPriorities;
   final Function(Priority) onPriorityToggle;
 
-  const PriorityDropdown({
+  const PrioritySelector({
     super.key,
     required this.selectedPriorities,
     required this.unselectedPriorities,
@@ -18,10 +18,10 @@ class PriorityDropdown extends StatefulWidget {
   });
 
   @override
-  State<PriorityDropdown> createState() => _PriorityDropdownState();
+  State<PrioritySelector> createState() => _PrioritySelectorState();
 }
 
-class _PriorityDropdownState extends State<PriorityDropdown> {
+class _PrioritySelectorState extends State<PrioritySelector> {
   bool _isExpanded = false;
 
   @override
@@ -79,7 +79,7 @@ class _PriorityDropdownState extends State<PriorityDropdown> {
         child: Wrap(
           children: [
             PriorityLabel(
-              priority,
+              priority: priority,
               isButton: isSelected,
             )
           ],

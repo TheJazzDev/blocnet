@@ -1,7 +1,7 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/shared/styled/primary_button.dart';
-import 'package:blocknet/shared/styled/secondary_button.dart';
-import 'package:blocknet/shared/styled/text.dart';
+import 'package:blocknet/shared/styles/app_primary_button.dart';
+import 'package:blocknet/shared/styles/app_secondary_button.dart';
+import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class SignInScreen extends StatefulWidget {

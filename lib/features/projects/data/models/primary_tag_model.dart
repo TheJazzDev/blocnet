@@ -1,39 +1,47 @@
 enum PrimaryTag {
-  ethereum('Ethereum'),
-  binanceSmartChain('Binance Smart Chain'),
+  none('None'),
   core('Core'),
   solana('Solana'),
+  ethereum('Ethereum'),
   iceOpenNetwork('Ice Open Network'),
-  telegramNetwork('Telegram Network');
+  telegramNetwork('Telegram Network'),
+  binanceSmartChain('Binance Smart Chain');
 
-  // The display name for each tag
+  /// Display name for each tag
   final String displayName;
 
-  // Constructor to assign the display name
+  /// Constructor to assign the display name
   const PrimaryTag(this.displayName);
 
-  // Method to get all tag display names
+  /// Get all tag display names
   static List<String> getAll() {
     return PrimaryTag.values.map((e) => e.displayName).toList();
   }
 
-  // Method to find a tag by its display name
-  static PrimaryTag fromString(String displayName) {
+  /// Find a tag by its display name
+  static PrimaryTag fromJson(String json) {
     return PrimaryTag.values.firstWhere(
-      (tag) => tag.displayName == displayName,
-      orElse: () => throw ArgumentError('Invalid tag: $displayName'),
+      (tag) => tag.displayName == json,
+      orElse: () => throw ArgumentError('Invalid tag: $json'),
     );
   }
 
-  // Override toString to return the display name
+  /// Serialize the tag to JSON
+  String toJson() {
+    return displayName;
+  }
+
+  /// Override toString to return the display name
   @override
   String toString() {
     return displayName;
   }
 
-  // Optional: Get the identifier (abbreviation) for each tag
+  /// Get the identifier (abbreviation) for each tag
   String get identifier {
     switch (this) {
+      case PrimaryTag.none:
+        return 'none';
       case PrimaryTag.ethereum:
         return 'eth';
       case PrimaryTag.binanceSmartChain:
@@ -46,8 +54,6 @@ enum PrimaryTag {
         return 'ion';
       case PrimaryTag.telegramNetwork:
         return 'ton';
-      default:
-        return '';
     }
   }
 }
