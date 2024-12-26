@@ -28,7 +28,7 @@ class MoreFromProjectNameCard extends StatelessWidget {
         children: [
           PostTagRow(post: post, moreFrom: true),
           const SizedBox(height: 12),
-          StyledTitleSmall(post.title),
+          StyledTitleMedium(post.title),
           const SizedBox(height: 8),
           Expanded(
             child: StyledBodyText(

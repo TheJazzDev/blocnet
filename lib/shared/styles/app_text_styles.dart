@@ -82,6 +82,24 @@ class StyledBodyText600 extends StatelessWidget {
   }
 }
 
+class StyledBodyText700 extends StatelessWidget {
+  const StyledBodyText700(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: AppColors.darkGrey700,
+        fontWeight: FontWeight.w500,
+        fontFamily: 'Geist',
+      ),
+    );
+  }
+}
+
 class StyledHeading extends StatelessWidget {
   const StyledHeading(this.text, {super.key});
 
@@ -112,7 +130,7 @@ class StyledPostProjectTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: style ?? Theme.of(context).textTheme.titleLarge,
+      style: style ?? Theme.of(context).textTheme.titleSmall,
       maxLines: applyOverflow ? 1 : null,
       overflow: applyOverflow ? TextOverflow.ellipsis : null,
     );
@@ -128,7 +146,7 @@ class StyledTitleSmall extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: Theme.of(context).textTheme.titleSmall,
+      style: Theme.of(context).textTheme.titleMedium,
     );
   }
 }

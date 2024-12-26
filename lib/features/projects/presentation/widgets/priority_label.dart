@@ -30,7 +30,7 @@ class PriorityLabel extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               '${priority.label[0].toUpperCase()}${priority.label.substring(1).toLowerCase()} Urgency',
-              style: TextStyle(color: Colors.black, fontSize: 12),
+              style: TextStyle(color: Colors.black, fontSize: 10),
             ),
           ],
         ),
@@ -51,7 +51,7 @@ class PriorityLabel extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '${priority.label[0].toUpperCase()}${priority.label.substring(1).toLowerCase()} Urgency',
-            style: TextStyle(color: priorityColor, fontSize: 12),
+            style: TextStyle(color: priorityColor, fontSize: 10),
           ),
         ],
       ),

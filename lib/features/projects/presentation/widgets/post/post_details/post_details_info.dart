@@ -3,6 +3,7 @@ import 'package:blocknet/features/projects/presentation/widgets/dot_divider.dart
 import 'package:blocknet/features/projects/presentation/widgets/horizontal_divider.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:blocknet/shared/utils/format_date_utils.dart';
+import 'package:blocknet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/features/projects/data/models/post_model.dart';
 import '../shared/post_project_logo.dart';
@@ -59,23 +60,25 @@ class PostDetailsInfo extends StatelessWidget {
             StyledBodyText500('12 mins read'),
             SizedBox(width: 12),
             // DotDivider(12),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              decoration: BoxDecoration(
-                color: AppColors.darkGrey75,
-                borderRadius: const BorderRadius.all(Radius.circular(20)),
-                border: Border.all(color: AppColors.darkGrey300),
+            if (post.lastEditedAt != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.darkGrey75,
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
+                  border: Border.all(color: AppColors.darkGrey300),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    StyledBodyText400('last edited', size: 12),
+                    const SizedBox(width: 8),
+                    StyledBodyText600(getTimeStamp(post.lastEditedAt!),
+                        size: 12),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  StyledBodyText400('last edited', size: 12),
-                  const SizedBox(width: 8),
-                  StyledBodyText600(formatDateWithSuffix(post.createdAt),
-                      size: 12),
-                ],
-              ),
-            ),
           ],
         ),
       ],

@@ -53,7 +53,8 @@ class _MoreFromProjectNameState extends State<MoreFromProjectName> {
           ],
         ),
         morePosts.isEmpty
-            ? const StyledBodyText500("No posts available for this project!")
+            ? StyledBodyText500(
+                "No posts available for this ${widget.projectTitle}!")
             : Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Row(

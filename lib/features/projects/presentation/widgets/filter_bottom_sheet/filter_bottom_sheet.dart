@@ -55,8 +55,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     setState(() {
       if (_selectedPrimaryTags.contains(tag)) {
         _selectedPrimaryTags.remove(tag);
+        _primaryTags.add(tag);
       } else {
         _selectedPrimaryTags.add(tag);
+        _primaryTags.remove(tag);
       }
     });
   }
@@ -65,8 +67,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     setState(() {
       if (_selectedSecondaryTags.contains(tag)) {
         _selectedSecondaryTags.remove(tag);
+        _secondaryTags.add(tag);
       } else {
         _selectedSecondaryTags.add(tag);
+        _secondaryTags.remove(tag);
       }
     });
   }
@@ -75,8 +79,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     setState(() {
       if (_selectedPriorities.contains(priority)) {
         _selectedPriorities.remove(priority);
+        _priorities.add(priority);
       } else {
         _selectedPriorities.add(priority);
+        _priorities.remove(priority);
       }
     });
   }

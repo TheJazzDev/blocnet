@@ -19,6 +19,9 @@ List<Post> dummyPosts = [
         'Critical exploit found in Bitcoin wallet. Move your funds immediately!',
     description:
         'Due to unforeseen technical issues, Bitcoin has extended the vesting period for its tokens. The unlock date is now scheduled for December 15. Be sure to adjust your trading strategies in light of this delay.',
+    priority: Priority.mid,
+    createdAt: DateTime.parse('2022-01-23'),
+    lastEditedAt: DateTime.parse('2024-05-20'),
     content: """
 ## Overview
 
@@ -51,8 +54,6 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 - [Top 10 Secure Wallets for 2024](#)
 - [How to Protect Your Bitcoin From Hacks](#)
 """,
-    createdAt: DateTime.now(),
-    priority: Priority.mid,
   ),
   Post(
     postId: 'post2',
@@ -68,6 +69,9 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
     title: 'New Ethereum update rolling out next week!',
     description:
         'Ethereum developers will be launching a new update next week to enhance scalability.',
+    priority: Priority.high,
+    createdAt: DateTime.parse('2024-18-20'),
+    lastEditedAt: DateTime.now(),
     content: """
 ## Overview
 
@@ -100,8 +104,6 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 - [Top 10 Secure Wallets for 2024](#)
 - [How to Protect Your Bitcoin From Hacks](#)
 """,
-    createdAt: DateTime.now(),
-    priority: Priority.high,
   ),
   Post(
     postId: 'post3',
@@ -118,6 +120,9 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
     title: 'SpaceX mission to Mars launches next year!',
     description:
         'SpaceX announces plans for the first manned mission to Mars. Exciting times ahead!',
+    priority: Priority.high,
+    createdAt: DateTime.parse('2015-06-22'),
+    lastEditedAt: DateTime.parse('2021-12-03'),
     content: """
 ## Overview
 
@@ -150,8 +155,6 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 - [Top 10 Secure Wallets for 2024](#)
 - [How to Protect Your Bitcoin From Hacks](#)
 """,
-    createdAt: DateTime.now(),
-    priority: Priority.high,
   ),
   Post(
     postId: 'post4',
@@ -165,6 +168,9 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
     title: 'Meta introduces new AR glasses!',
     description:
         'Meta’s new AR glasses revolutionize user interaction with the digital world.',
+    priority: Priority.mid,
+    createdAt: DateTime.parse('2022-01-23'),
+    lastEditedAt: null,
     content: """
 ## Overview
 
@@ -197,8 +203,6 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 - [Top 10 Secure Wallets for 2024](#)
 - [How to Protect Your Bitcoin From Hacks](#)
 """,
-    createdAt: DateTime.now(),
-    priority: Priority.mid,
   ),
   Post(
     postId: 'post5',
@@ -208,6 +212,9 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
     title: 'Bitcoin wallet breach alert!',
     description:
         'A critical security flaw in Bitcoin wallets has been discovered. Immediate update required.',
+    priority: Priority.mid,
+    createdAt: DateTime.parse('2019-14-06'),
+    lastEditedAt: DateTime.parse('2021-10-09'),
     content: """
 ## Overview
 
@@ -240,8 +247,6 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 - [Top 10 Secure Wallets for 2024](#)
 - [How to Protect Your Bitcoin From Hacks](#)
 """,
-    createdAt: DateTime.now(),
-    priority: Priority.mid,
   ),
   Post(
     postId: 'post6',
@@ -251,6 +256,9 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
     title: 'AI revolution in blockchain technology.',
     description:
         'AI is rapidly being integrated into blockchain for better scalability and automation.',
+    priority: Priority.low,
+    createdAt: DateTime.parse('2022-01-23'),
+    lastEditedAt: null,
     content: """
 ## Overview
 
@@ -283,8 +291,6 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 - [Top 10 Secure Wallets for 2024](#)
 - [How to Protect Your Bitcoin From Hacks](#)
 """,
-    createdAt: DateTime.now(),
-    priority: Priority.low,
   ),
   Post(
     postId: 'post7',
@@ -294,6 +300,9 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
     title: 'Ethereum 2.0 updates rolling out!',
     description:
         'Ethereum 2.0 upgrades are live, focusing on faster transactions and reduced gas fees.',
+    priority: Priority.high,
+    createdAt: DateTime.parse('2022-01-23'),
+    lastEditedAt: null,
     content: """
 ## Overview
 
@@ -326,8 +335,6 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 - [Top 10 Secure Wallets for 2024](#)
 - [How to Protect Your Bitcoin From Hacks](#)
 """,
-    createdAt: DateTime.now(),
-    priority: Priority.high,
   ),
   Post(
     postId: 'post8',
@@ -337,6 +344,9 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
     title: 'Solana hits new milestone in transaction speeds.',
     description:
         'Solana is now processing over 65,000 transactions per second, making it a leader in blockchain scalability.',
+    priority: Priority.low,
+    createdAt: DateTime.parse('2022-01-23'),
+    lastEditedAt: DateTime.parse('4018-08-29'),
     content: """
 ## Overview
 
@@ -369,7 +379,5 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 - [Top 10 Secure Wallets for 2024](#)
 - [How to Protect Your Bitcoin From Hacks](#)
 """,
-    createdAt: DateTime.now(),
-    priority: Priority.low,
   ),
 ];

@@ -65,12 +65,12 @@ ThemeData primaryTheme = ThemeData(
         fontFamily: 'Geist'),
     titleSmall: TextStyle(
         color: AppColors.darkGrey700,
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: FontWeight.w400,
         fontFamily: 'Geist'),
     titleMedium: TextStyle(
         color: AppColors.darkGrey700,
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: FontWeight.w500,
         fontFamily: 'Geist'),
     titleLarge: TextStyle(

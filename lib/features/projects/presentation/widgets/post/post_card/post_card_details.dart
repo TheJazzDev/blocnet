@@ -26,15 +26,16 @@ class PostCardDetails extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              StyledTitleSmall(post.title),
+              StyledTitleMedium(post.title),
               const SizedBox(height: 8),
               StyledBodyText(post.description),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  StyledBodyText500(formatDateWithSuffix(post.createdAt)),
+                  StyledBodyText500(formatDateWithSuffix(post.createdAt),
+                      size: 12),
                   const SizedBox(width: 12),
-                  CustomVerticalDivider(height: moreFrom ? 18 : 25),
+                  CustomVerticalDivider(height: 12.9),
                   const SizedBox(width: 12),
                   PriorityLabel(priority: post.priority, moreFrom: moreFrom),
                 ],

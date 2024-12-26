@@ -3,13 +3,7 @@ import 'package:blocknet/features/projects/presentation/widgets/vertical_divider
 import 'package:flutter/material.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 
-class TagSelector extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Set<String> selectedTags;
-  final Set<String> unselectedTags;
-  final Function(String) onTagToggle;
-
+class TagSelector extends StatefulWidget {
   const TagSelector({
     super.key,
     required this.title,
@@ -19,6 +13,17 @@ class TagSelector extends StatelessWidget {
     required this.onTagToggle,
   });
 
+  final String title;
+  final IconData icon;
+  final Set<String> selectedTags;
+  final Set<String> unselectedTags;
+  final Function(String) onTagToggle;
+
+  @override
+  State<TagSelector> createState() => _TagSelectorState();
+}
+
+class _TagSelectorState extends State<TagSelector> {
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -28,12 +33,12 @@ class TagSelector extends StatelessWidget {
         title: Row(
           children: [
             Icon(
-              icon,
+              widget.icon,
               color: AppColors.darkGrey500,
               size: 16,
             ),
             const SizedBox(width: 8),
-            StyledBodyText500(title),
+            StyledBodyText500(widget.title),
           ],
         ),
         trailing: Icon(
@@ -48,9 +53,10 @@ class TagSelector extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                ..._buildTagList(selectedTags, true),
-                if (selectedTags.isNotEmpty) CustomVerticalDivider(height: 25),
-                ..._buildTagList(unselectedTags, false),
+                ..._buildTagList(widget.selectedTags, true),
+                if (widget.selectedTags.isNotEmpty)
+                  CustomVerticalDivider(height: 25),
+                ..._buildTagList(widget.unselectedTags, false),
               ],
             ),
           ),
@@ -62,7 +68,7 @@ class TagSelector extends StatelessWidget {
   List<Widget> _buildTagList(Set<String> tags, bool isSelected) {
     return tags.map((tag) {
       return GestureDetector(
-        onTap: () => onTagToggle(tag),
+        onTap: () => widget.onTagToggle(tag),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(

@@ -2,6 +2,8 @@ import 'package:blocknet/app/router.dart';
 import 'package:blocknet/app/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'constants/app_routes.dart';
+import 'screen/page_not_found.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -13,16 +15,20 @@ void main() async {
 
   runApp(
     MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: primaryTheme,
-        onGenerateRoute: CustomAppRouter.generateRoute,
-        initialRoute: '/signin'),
+      debugShowCheckedModeBanner: false,
+      theme: primaryTheme,
+      onGenerateRoute: CustomAppRouter.generateRoute,
+      initialRoute: AppRoutes.signIn,
+      onUnknownRoute: (settings) => MaterialPageRoute(
+        builder: (context) => const PageNotFoundScreen(),
+      ),
+    ),
   );
 }
 
 class Sandbox extends StatelessWidget {
   const Sandbox({super.key});
- 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

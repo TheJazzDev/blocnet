@@ -14,11 +14,13 @@ class Post {
   final Priority priority;
   final String description;
   final DateTime createdAt;
+  final DateTime? lastEditedAt;
   final List<SecondaryTag> secondaryTags;
 
   Post({
     this.admin,
     this.project,
+    this.lastEditedAt,
     required this.title,
     required this.postId,
     required this.content,
@@ -41,6 +43,7 @@ class Post {
       projectId: projectId,
       createdAt: createdAt,
       description: description,
+      lastEditedAt: lastEditedAt,
       admin: admin ?? this.admin,
       secondaryTags: secondaryTags,
       project: project ?? this.project,
@@ -58,6 +61,9 @@ class Post {
       description: json['description'],
       createdAt: DateTime.parse(json['createdAt']),
       priority: Priority.fromJson(json['priority']),
+      lastEditedAt: json['lastEditedAt'] != null
+          ? DateTime.parse(json['lastEditedAt'])
+          : null,
       secondaryTags: (json['secondaryTags'] as List<dynamic>?)
               ?.map((tag) => SecondaryTag.fromJson(tag))
               .toList() ??
@@ -73,14 +79,15 @@ class Post {
       'adminId': adminId,
       'description': description,
       'priority': priority.toJson(),
-      'secondaryTags': secondaryTags.map((tag) => tag.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
+      'lastEditedAt': lastEditedAt?.toIso8601String(),
+      'secondaryTags': secondaryTags.map((tag) => tag.toJson()).toList(),
     };
   }
 
   // Override toString method to provide a custom string representation
   @override
   String toString() {
-    return 'Post(title: $title, postId: $postId, adminId: $adminId, content: $content, projectId: $projectId, description: $description, createdAt: $createdAt, priority: $priority, secondaryTags: $secondaryTags)';
+    return 'Post(title: $title, postId: $postId, adminId: $adminId, content: $content, projectId: $projectId, description: $description, createdAt: $createdAt, lastEditAt: $lastEditedAt, priority: $priority, secondaryTags: $secondaryTags)';
   }
 }
