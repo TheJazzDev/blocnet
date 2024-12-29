@@ -1,6 +1,6 @@
 import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/data/models/priority_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/priority_label.dart';
+import 'package:blocknet/features/projects/presentation/widgets/labels/priority_label.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';

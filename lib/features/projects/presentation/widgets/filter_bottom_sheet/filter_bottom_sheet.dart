@@ -4,7 +4,7 @@ import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocknet/features/projects/data/models/priority_model.dart';
 import 'package:blocknet/features/projects/data/models/secondary_tag_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/horizontal_divider.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
 import 'package:blocknet/shared/styles/app_primary_button.dart';
 import 'package:blocknet/shared/styles/app_secondary_button.dart';
 import 'package:flutter/material.dart';

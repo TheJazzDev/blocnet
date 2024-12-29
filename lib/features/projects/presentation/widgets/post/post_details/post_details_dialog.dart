@@ -1,20 +1,34 @@
 import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/horizontal_divider.dart';
+import 'package:blocknet/features/projects/data/services/post_by_id.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
 import 'package:flutter/material.dart';
-import 'more_from/more_from_primary_tag.dart';
-import 'more_from/more_from_project_name.dart';
-import 'more_from/more_from_secondary_tags.dart';
+import '../more_from/more_from_primary_tag.dart';
+import '../more_from/more_from_project_name.dart';
+import '../more_from/more_from_secondary_tags.dart';
 import 'post_details_header.dart';
 import 'post_details_info.dart';
 import 'post_details_overview.dart';
 import 'post_details_tags.dart';
 
-class PostDetailsDialog extends StatelessWidget {
-  const PostDetailsDialog({required this.post, super.key});
+class PostDetailsDialog extends StatefulWidget {
+  const PostDetailsDialog({required this.postId, super.key});
 
-  final Post post;
+  final String postId;
+
+  @override
+  State<PostDetailsDialog> createState() => _PostDetailsDialogState();
+}
+
+class _PostDetailsDialogState extends State<PostDetailsDialog> {
+  late Post post;
+
+  @override
+  void initState() {
+    super.initState();
+    post = PostById.fetchPostById(widget.postId);
+  }
 
   @override
   Widget build(BuildContext context) {

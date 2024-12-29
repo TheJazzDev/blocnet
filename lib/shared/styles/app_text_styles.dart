@@ -63,10 +63,16 @@ class StyledBodyText500 extends StatelessWidget {
 }
 
 class StyledBodyText600 extends StatelessWidget {
-  const StyledBodyText600(this.text, {this.size = 14.0, super.key});
+  const StyledBodyText600(
+    this.text, {
+    this.size = 14.0,
+    this.fontWeight = FontWeight.w500,
+    super.key,
+  });
 
   final String text;
   final double size;
+  final FontWeight fontWeight;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +81,7 @@ class StyledBodyText600 extends StatelessWidget {
       style: TextStyle(
         color: AppColors.darkGrey600,
         fontSize: size,
-        fontWeight: FontWeight.w500,
+        fontWeight: fontWeight,
         fontFamily: 'Geist',
       ),
     );
@@ -83,15 +89,17 @@ class StyledBodyText600 extends StatelessWidget {
 }
 
 class StyledBodyText700 extends StatelessWidget {
-  const StyledBodyText700(this.text, {super.key});
+  const StyledBodyText700(this.text, {this.size, super.key});
 
   final String text;
+  final double? size;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
       style: TextStyle(
+        fontSize: size,
         color: AppColors.darkGrey700,
         fontWeight: FontWeight.w500,
         fontFamily: 'Geist',

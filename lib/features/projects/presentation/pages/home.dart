@@ -15,9 +15,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Sections activeSection = Sections.forYou;
+ Section activeSection = Sections.forYou;
 
-  void _handleToggle(Sections activeButton) {
+  void _handleToggle(Section activeButton) {
     setState(() {
       activeSection = activeButton;
     });
@@ -42,13 +42,13 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 StyledToggleButton(
-                  text1: 'For You',
-                  text2: 'Explore',
+                   section1: Sections.forYou,
+                  section2: Sections.explore,
                   activeSection: activeSection,
                   onToggle: _handleToggle,
                 ),
                 const SizedBox(height: 16),
-                activeSection == Sections.forYou
+                activeSection == Sections.forYou      
                     ? _buildForYouSection()
                     : ExploreSection(allPosts: allPosts)
               ],

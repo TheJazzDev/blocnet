@@ -4,7 +4,7 @@ import 'package:blocknet/features/projects/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/features/projects/data/dummy/dummy_posts.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
-import 'package:blocknet/features/projects/presentation/widgets/tag_card.dart';
+import 'package:blocknet/features/projects/presentation/widgets/cards/tag_card.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 
 class ExploreSection extends StatelessWidget {

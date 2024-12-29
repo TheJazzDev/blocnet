@@ -1,6 +1,6 @@
 import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/priority_label.dart';
-import 'package:blocknet/features/projects/presentation/widgets/vertical_divider.dart';
+import 'package:blocknet/features/projects/presentation/widgets/labels/priority_label.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:blocknet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ class PostCardDetails extends StatelessWidget {
         PostProjectLogo(
           logoUrl: post.project?.logo ?? '',
           size: 40,
-        ),
+        ), 
         const SizedBox(width: 16),
         Expanded(
           child: Column(

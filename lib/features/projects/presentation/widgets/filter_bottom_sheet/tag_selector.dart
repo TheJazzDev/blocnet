@@ -1,5 +1,5 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/presentation/widgets/vertical_divider.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 

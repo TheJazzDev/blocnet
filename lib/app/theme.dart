@@ -28,9 +28,11 @@ class AppColors {
   static Color darkGrey950 = const Color(0xFFFAFAFA);
 
   static Color error500 = const Color(0xFFCB1A14);
+  static Color error900 = const Color(0xFF591000);
   static Color textColor = const Color(0xFFA3A3A3);
   static Color titleColor = const Color(0xFFD4D4D4);
   static Color warning500 = const Color(0xFFDD900D);
+  static Color warning900 = const Color(0xFF523300);
   static Color successColor = const Color(0xFF0FA968);
 }
 

@@ -10,7 +10,7 @@ List<Project> dummyProjects = [
     description:
         'Alpha Blockchain is a leading platform in decentralized finance and NFTs.',
     primaryTag: PrimaryTag.solana,
-    followerCount: 12000,
+    followersCount: 12000,
     adminId: 'admin1',
     website: 'https://alphablockchain.com',
     socials: {
@@ -24,6 +24,7 @@ List<Project> dummyProjects = [
           'https://play.google.com/store/apps/details?id=alphablockchain',
       'ios': 'https://apps.apple.com/app/alphablockchain',
     },
+    createdAt: DateTime.parse('2021-01-03'),
     postIds: {'post1', 'post2', 'post3'},
   ),
   Project(
@@ -34,7 +35,7 @@ List<Project> dummyProjects = [
     description:
         'Beta Network powers decentralized applications for the metaverse.',
     primaryTag: PrimaryTag.ethereum,
-    followerCount: 8000,
+    followersCount: 8000,
     adminId: 'admin2',
     website: 'https://betanetwork.com',
     socials: {
@@ -47,6 +48,7 @@ List<Project> dummyProjects = [
       'android': null,
       'ios': 'https://apps.apple.com/app/betanetwork',
     },
+    createdAt: DateTime.parse('2024-11-09'),
     postIds: {'post4', 'post5', 'post6'},
   ),
   Project(
@@ -56,7 +58,7 @@ List<Project> dummyProjects = [
         'https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg',
     description: 'Top community update/networking mobile application.',
     primaryTag: PrimaryTag.ethereum,
-    followerCount: 8000,
+    followersCount: 8000,
     adminId: 'admin3',
     website: 'https://blocnet.com',
     socials: {
@@ -69,6 +71,7 @@ List<Project> dummyProjects = [
       'android': null,
       'ios': 'https://apps.apple.com/app/blocnet',
     },
+    createdAt: DateTime.parse('2020-05-20'),
     postIds: {'post7', 'post8'},
   ),
 ];

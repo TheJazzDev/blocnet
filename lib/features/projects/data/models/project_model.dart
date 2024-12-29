@@ -1,4 +1,6 @@
 // import 'dart:convert';
+import 'admin_model.dart';
+import 'post_model.dart';
 import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
 // import 'package:crypto/crypto.dart';
 
@@ -6,28 +8,54 @@ class Project {
   final String id;
   final String name;
   final String logo;
+  final Admin? admin;
   final String adminId;
   final String? website;
-  final int followerCount;
+  final List<Post>? posts;
+  final int followersCount;
   final String description;
   final Set<String> postIds;
+  final DateTime createdAt;
   final PrimaryTag primaryTag;
+  // final DateTime? lastEditedAt;
   final Map<String, String?> apps;
   final Map<String, String?> socials;
 
   Project({
+    this.posts,
+    this.admin,
     this.website,
     required this.id,
     required this.logo,
     required this.name,
     required this.adminId,
+    required this.createdAt,
     required this.primaryTag,
     required this.description,
-    required this.followerCount,
+    required this.followersCount,
     this.apps = const {},
     this.socials = const {},
     this.postIds = const {},
   });
+
+  Project copyWith({List<Post>? posts, Admin? admin}) {
+    return Project(
+      id: id,
+      logo: logo,
+      name: name,
+      apps: apps,
+      socials: socials,
+      adminId: adminId,
+      postIds: postIds,
+      createdAt: createdAt,
+      primaryTag: primaryTag,
+      description: description,
+      posts: posts ?? this.posts,
+      admin: admin ?? this.admin,
+      website: website ?? website,
+      followersCount: followersCount,
+    );
+  }
 
   // Generate a unique hash for the project
   // String get uniqueHash {
@@ -44,7 +72,8 @@ class Project {
       adminId: json["adminId"],
       primaryTag: json['primaryTag'],
       description: json['description'],
-      followerCount: json['followerCount'] ?? 0,
+      createdAt: DateTime.parse(json['createdAt']),
+      followersCount: json['followersCount'] ?? 0,
       website: json['website'],
       apps: {
         'ios': json['iosApp'],
@@ -76,7 +105,8 @@ class Project {
       'primaryTag': primaryTag,
       'description': description,
       'postIds': postIds.toList(),
-      'followerCount': followerCount,
+      'followersCount': followersCount,
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 }

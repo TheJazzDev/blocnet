@@ -1,28 +1,27 @@
 import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/data/models/sections_model.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class StyledToggleButton extends StatefulWidget {
   const StyledToggleButton({
     super.key,
-    required this.text1,
-    required this.text2,
+    required this.section1,
+    required this.section2,
     required this.activeSection,
     required this.onToggle,
   });
 
-  final String text1;
-  final String text2;
-  final Sections activeSection;
-  final Function(Sections) onToggle;
+  final Section section1;
+  final Section section2;
+  final Section activeSection;
+  final Function(Section) onToggle;
 
   @override
   State<StyledToggleButton> createState() => _StyledToggleButtonState();
 }
 
 class _StyledToggleButtonState extends State<StyledToggleButton> {
-  late Sections _activeSection;
+  late Section _activeSection;
 
   @override
   void initState() {
@@ -42,23 +41,23 @@ class _StyledToggleButtonState extends State<StyledToggleButton> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildButton(
-            text: widget.text1,
-            isActive: _activeSection == Sections.forYou,
+            text: widget.section1.label,
+            isActive: _activeSection == widget.section1,
             onPressed: () {
               setState(() {
-                _activeSection = Sections.forYou;
+                _activeSection = widget.section1;
               });
-              widget.onToggle(Sections.forYou);
+              widget.onToggle(widget.section1);
             },
           ),
           _buildButton(
-            text: widget.text2,
-            isActive: _activeSection == Sections.explore,
+            text: widget.section2.label,
+            isActive: _activeSection == widget.section2,
             onPressed: () {
               setState(() {
-                _activeSection = Sections.explore;
+                _activeSection = widget.section2;
               });
-              widget.onToggle(Sections.explore);
+              widget.onToggle(widget.section2);
             },
           ),
         ],
@@ -82,11 +81,13 @@ class _StyledToggleButtonState extends State<StyledToggleButton> {
           borderRadius: BorderRadius.all(Radius.circular(40)),
         ),
       ),
-      child: StyledPostProjectTitle(
+      child: Text(
         text,
         style: TextStyle(
-          color: isActive ? AppColors.darkGrey100 : AppColors.darkGrey400,
-        ),
+            color: isActive ? AppColors.darkGrey100 : AppColors.darkGrey400,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Britti'),
       ),
     );
   }

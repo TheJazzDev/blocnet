@@ -2,8 +2,8 @@ import 'package:blocknet/app/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class FilterPriority extends StatefulWidget {
-  const FilterPriority({
+class FilterLabel extends StatefulWidget {
+  const FilterLabel({
     super.key,
     required this.selectedTags,
     required this.unselectedTags,
@@ -15,10 +15,10 @@ class FilterPriority extends StatefulWidget {
   final Function(String) onTagToggle;
 
   @override
-  State<FilterPriority> createState() => _FilterPriorityState();
+  State<FilterLabel> createState() => _FilterLabelState();
 }
 
-class _FilterPriorityState extends State<FilterPriority> {
+class _FilterLabelState extends State<FilterLabel> {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -35,9 +35,7 @@ class _FilterPriorityState extends State<FilterPriority> {
                   isSelected: widget.selectedTags.isEmpty,
                   onTap: () => widget.onTagToggle('All'),
                 ),
-                // Build buttons for selected tags
                 ..._buildTagList(widget.selectedTags, true),
-                // Build buttons for unselected tags
                 ..._buildTagList(widget.unselectedTags, false),
               ],
             ),
@@ -81,7 +79,7 @@ class TagButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.darkGrey200),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           color: isSelected ? AppColors.primary600 : Colors.transparent,
         ),
         child: Wrap(

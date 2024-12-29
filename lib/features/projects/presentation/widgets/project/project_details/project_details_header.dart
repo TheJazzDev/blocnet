@@ -1,11 +1,9 @@
-import 'package:blocknet/features/projects/data/models/priority_model.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/features/projects/presentation/widgets/labels/priority_label.dart';
 
-class PostDetailsHeader extends StatelessWidget {
-  const PostDetailsHeader({required this.priority, super.key});
+class ProjectDetailsHeader extends StatelessWidget {
+  const ProjectDetailsHeader({required this.projectId, super.key});
 
-  final Priority priority;
+  final String projectId;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +16,6 @@ class PostDetailsHeader extends StatelessWidget {
             icon: const Icon(Icons.close),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          PriorityLabel(priority: priority),
           IconButton(
             icon: const Icon(Icons.bookmark_outline),
             onPressed: () => {},

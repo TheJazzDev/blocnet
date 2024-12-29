@@ -1,9 +1,8 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dot_divider.dart';
-import 'package:blocknet/features/projects/presentation/widgets/horizontal_divider.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dividers/dot_divider.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:blocknet/shared/utils/format_date_utils.dart';
-import 'package:blocknet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/features/projects/data/models/post_model.dart';
 import '../shared/post_project_logo.dart';
@@ -20,6 +19,7 @@ class PostDetailsInfo extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             PostProjectLogo(logoUrl: post.project?.logo ?? '', size: 60),
             const SizedBox(width: 24),
@@ -55,9 +55,11 @@ class PostDetailsInfo extends StatelessWidget {
               ],
             ),
             DotDivider(12),
-            StyledBodyText500(formatDateWithSuffix(post.createdAt)),
+            StyledBodyText600(formatDateWithSuffix(post.createdAt),
+                size: 12, fontWeight: FontWeight.w400),
             DotDivider(12),
-            StyledBodyText500('12 mins read'),
+            StyledBodyText600('12 mins read',
+                size: 12, fontWeight: FontWeight.w400),
             SizedBox(width: 12),
             // DotDivider(12),
             if (post.lastEditedAt != null)
@@ -74,7 +76,7 @@ class PostDetailsInfo extends StatelessWidget {
                   children: [
                     StyledBodyText400('last edited', size: 12),
                     const SizedBox(width: 8),
-                    StyledBodyText600(getTimeStamp(post.lastEditedAt!),
+                    StyledBodyText600(formatDateWithSuffix(post.lastEditedAt!),
                         size: 12),
                   ],
                 ),

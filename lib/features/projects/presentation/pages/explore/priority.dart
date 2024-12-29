@@ -2,7 +2,7 @@ import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:blocknet/features/projects/data/models/priority_model.dart';
 import 'package:blocknet/features/projects/data/services/post_by_priority.dart';
 import 'package:blocknet/features/projects/presentation/widgets/app_bar.dart';
-import 'package:blocknet/features/projects/presentation/widgets/filter_priority/filter_priority.dart';
+import 'package:blocknet/features/projects/presentation/widgets/filter_label/filter_label.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
@@ -99,8 +99,6 @@ class _PriorityScreensState extends State<PriorityScreens> {
 
   @override
   Widget build(BuildContext context) {
-    // print(_allSecondaryTags);
-    print(_selectedFilters);
     return Scaffold(
       appBar: const CustomAppBar(title: ''),
       body: Container(
@@ -111,7 +109,7 @@ class _PriorityScreensState extends State<PriorityScreens> {
             Wrap(
               children: [
                 StyledBodyText700('$priority Urgency'),
-                FilterPriority(
+                FilterLabel(
                   selectedTags: _selectedFilters,
                   unselectedTags: _allSecondaryTags,
                   onTagToggle: _toggleTag,

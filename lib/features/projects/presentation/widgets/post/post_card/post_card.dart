@@ -25,7 +25,7 @@ class _PostCardState extends State<PostCard> {
         barrierDismissible: true,
         barrierLabel: 'Dismiss',
         pageBuilder: (context, animation, secondaryAnimation) {
-          return PostDetailsDialog(post: widget.post);
+          return PostDetailsDialog(postId: widget.post.postId);
         },
         transitionDuration: const Duration(milliseconds: 300),
         transitionBuilder: (context, animation, secondaryAnimation, child) {

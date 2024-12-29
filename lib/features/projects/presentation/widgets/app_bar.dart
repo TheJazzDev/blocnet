@@ -1,6 +1,6 @@
 import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/constants/app_routes.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dot_divider.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dividers/dot_divider.dart';
 import 'package:blocknet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
@@ -10,9 +10,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({
     super.key,
     required this.title,
+    this.backButton = true,
   });
 
   final String title;
+  final bool backButton;
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +23,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: AppBar(
         title: StyledTitleLarge(title),
         centerTitle: false,
+        automaticallyImplyLeading: backButton,
         actions: [
           _buildIconButton(
             svgAsset: "assets/icons/notification.svg",
@@ -31,7 +34,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           DotDivider(8),
           _buildIconButton(
             svgAsset: "assets/icons/search.svg",
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.discover);
+            },
           ),
           DotDivider(8),
           _buildIconButton(

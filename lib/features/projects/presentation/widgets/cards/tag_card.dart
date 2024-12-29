@@ -20,6 +20,8 @@ class TagCard extends StatelessWidget {
     'emergency': Symbols.e911_emergency,
     'brightness': Symbols.brightness_alert,
     'calm': Symbols.sentiment_calm,
+    'post': Symbols.post,
+    'style': Symbols.style,
   };
 
   @override
@@ -39,6 +41,7 @@ class TagCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               padding: EdgeInsets.all(10),
@@ -52,7 +55,6 @@ class TagCard extends StatelessWidget {
                 color: AppColors.darkGrey600,
               ),
             ),
-            Expanded(child: SizedBox()),
             StyledTitleMedium(label),
           ],
         ),

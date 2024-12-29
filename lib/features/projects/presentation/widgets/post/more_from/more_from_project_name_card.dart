@@ -2,8 +2,8 @@ import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post/shared/post_tag_row.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/features/projects/presentation/widgets/priority_label.dart';
-import 'package:blocknet/features/projects/presentation/widgets/vertical_divider.dart';
+import 'package:blocknet/features/projects/presentation/widgets/labels/priority_label.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:blocknet/shared/utils/format_date_utils.dart';
 

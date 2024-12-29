@@ -1,7 +1,7 @@
 import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:blocknet/features/projects/data/services/post_by_secondary_tag_service.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
-import 'package:blocknet/features/projects/presentation/widgets/secondary_label.dart';
+import 'package:blocknet/features/projects/presentation/widgets/labels/secondary_label.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
