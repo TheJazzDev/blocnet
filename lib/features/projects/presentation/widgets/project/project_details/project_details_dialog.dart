@@ -1,7 +1,5 @@
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:blocknet/features/projects/data/models/project_model.dart';
-import 'package:blocknet/features/projects/data/services/post_by_id.dart';
 import 'package:blocknet/features/projects/data/services/project_by_id.dart';
 import 'package:flutter/material.dart';
 
