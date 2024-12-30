@@ -94,7 +94,7 @@ class TagButton extends StatelessWidget {
                 fontFamily: 'Geist',
               ),
             ),
-            if (isSelected)
+            if (isSelected && tag != 'All')
               SvgPicture.asset(
                 "assets/icons/mutiply_circle.svg",
                 width: 12,

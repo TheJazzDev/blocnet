@@ -1,16 +1,13 @@
-import 'dart:ui';
-
 import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocknet/features/projects/data/models/priority_model.dart';
-import 'package:blocknet/features/projects/data/models/secondary_tag_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
-import 'package:blocknet/shared/styles/app_primary_button.dart';
-import 'package:blocknet/shared/styles/app_secondary_button.dart';
+import 'package:blocknet/features/projects/presentation/controllers/bottom_sheet_filter_controller.dart';
+import 'package:blocknet/shared/widgets/app_primary_button.dart';
+import 'package:blocknet/shared/widgets/app_secondary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
-import 'tag_selector.dart';
+import '../custom_backdrop_filter.dart';
+import '../dividers/horizontal_divider.dart';
+import 'filter_dropdown_section.dart';
 import 'priority_selector.dart';
 
 class FilterBottomSheet extends StatefulWidget {
@@ -21,112 +18,26 @@ class FilterBottomSheet extends StatefulWidget {
 }
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
-  Set<String> _primaryTags = {};
-  Set<String> _secondaryTags = {};
-  Set<Priority> _priorities = {};
-
-  final Set<String> _selectedPrimaryTags = {};
-  final Set<String> _selectedSecondaryTags = {};
-  final Set<Priority> _selectedPriorities = {};
-
-  bool get isEnabled =>
-      _selectedPrimaryTags.isNotEmpty ||
-      _selectedSecondaryTags.isNotEmpty ||
-      _selectedPriorities.isNotEmpty;
+  late BottomSheetFilterController _controller;
 
   @override
   void initState() {
     super.initState();
-    _primaryTags = Set.from(PrimaryTag.getAll());
-    _secondaryTags = Set.from(SecondaryTag.getAll());
-    _priorities = Set.from(Priority.getAll());
+    _controller = BottomSheetFilterController();
   }
 
   void _getAllFilters() {
-    final allFilters = {
-      'primaryTags': _selectedPrimaryTags.toList(),
-      'secondaryTags': _selectedSecondaryTags.toList(),
-      'priorities': _selectedPriorities.toList(),
-    };
+    final allFilters = _controller.getFilters();
     debugPrint(allFilters.toString());
-  }
-
-  void _togglePrimaryTag(String tag) {
-    setState(() {
-      if (_selectedPrimaryTags.contains(tag)) {
-        _selectedPrimaryTags.remove(tag);
-        _primaryTags.add(tag);
-      } else {
-        _selectedPrimaryTags.add(tag);
-        _primaryTags.remove(tag);
-      }
-    });
-  }
-
-  void _toggleSecondaryTag(String tag) {
-    setState(() {
-      if (_selectedSecondaryTags.contains(tag)) {
-        _selectedSecondaryTags.remove(tag);
-        _secondaryTags.add(tag);
-      } else {
-        _selectedSecondaryTags.add(tag);
-        _secondaryTags.remove(tag);
-      }
-    });
-  }
-
-  void _togglePriority(Priority priority) {
-    setState(() {
-      if (_selectedPriorities.contains(priority)) {
-        _selectedPriorities.remove(priority);
-        _priorities.add(priority);
-      } else {
-        _selectedPriorities.add(priority);
-        _priorities.remove(priority);
-      }
-    });
-  }
-
-  // Clears all selected filters
-  void _clearAllFilters() {
-    setState(() {
-      // Move all selected primary tags back to unselected
-      _primaryTags.addAll(_selectedPrimaryTags);
-      _selectedPrimaryTags.clear();
-
-      // Move all selected secondary tags back to unselected
-      _secondaryTags.addAll(_selectedSecondaryTags);
-      _selectedSecondaryTags.clear();
-
-      // Move all selected priorities back to unselected
-      _priorities.addAll(_selectedPriorities);
-      _selectedPriorities.clear();
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        _buildBackdropFilter(),
+        CustomBackdropFilter(),
         _buildBottomSheetContent(),
       ],
-    );
-  }
-
-  Widget _buildBackdropFilter() {
-    return Positioned.fill(
-      child: GestureDetector(
-        onTap: () {
-          Navigator.of(context).pop();
-        },
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Container(
-            color: Colors.black.withOpacity(0.5),
-          ),
-        ),
-      ),
     );
   }
 
@@ -150,39 +61,55 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     children: [
                       StyledLabelLarge('Filters'),
                       const SizedBox(height: 16),
-                      _buildDropdownSection(
+                      FilterDropdownSection(
                         title: 'Primary Tag',
                         icon: Symbols.bookmark_star,
-                        selectedTags: _selectedPrimaryTags,
-                        unselectedTags: _primaryTags,
-                        onTagToggle: _togglePrimaryTag,
+                        selectedTags: _controller.selectedPrimaryTags,
+                        unselectedTags: _controller.primaryTags,
+                        onTagToggle: (tag) {
+                          setState(() {
+                            _controller.togglePrimaryTag(tag);
+                          });
+                        },
                       ),
                       CustomHorizontalDivider(margin: 16),
-                      _buildDropdownSection(
+                      FilterDropdownSection(
                         title: 'Secondary Tag',
                         icon: Symbols.bookmark,
-                        selectedTags: _selectedSecondaryTags,
-                        unselectedTags: _secondaryTags,
-                        onTagToggle: _toggleSecondaryTag,
+                        selectedTags: _controller.selectedSecondaryTags,
+                        unselectedTags: _controller.secondaryTags,
+                        onTagToggle: (tag) {
+                          setState(() {
+                            _controller.toggleSecondaryTag(tag);
+                          });
+                        },
                       ),
                       CustomHorizontalDivider(margin: 16),
                       PrioritySelector(
-                        selectedPriorities: _selectedPriorities,
-                        unselectedPriorities: _priorities,
-                        onPriorityToggle: _togglePriority,
+                        selectedPriorities: _controller.selectedPriorities,
+                        unselectedPriorities: _controller.priorities,
+                        onPriorityToggle: (priority) {
+                          setState(() {
+                            _controller.togglePriority(priority);
+                          });
+                        },
                       ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
                           SecondaryButton(
-                              onPressed: _clearAllFilters,
+                              onPressed: () {
+                                setState(() {
+                                  _controller.clearAllFilters();
+                                });
+                              },
                               title: 'Clear All Filters',
-                              isEnabled: isEnabled),
+                              isEnabled: _controller.isEnabled),
                           SizedBox(width: 12),
                           PrimaryButton(
                             onPressed: _getAllFilters,
                             title: 'Apply Filters',
-                            isEnabled: isEnabled,
+                            isEnabled: _controller.isEnabled,
                           )
                         ],
                       ),
@@ -194,22 +121,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDropdownSection({
-    required String title,
-    required IconData icon,
-    required Set<String> selectedTags,
-    required Set<String> unselectedTags,
-    required Function(String) onTagToggle,
-  }) {
-    return TagSelector(
-      title: title,
-      icon: icon,
-      selectedTags: selectedTags,
-      unselectedTags: unselectedTags,
-      onTagToggle: onTagToggle,
     );
   }
 }

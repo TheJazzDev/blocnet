@@ -15,9 +15,9 @@ class _TrendingScreenState extends State<TrendingScreen> {
     return Scaffold(
       appBar: const CustomAppBar(title: ''),
       body: Container(
-        padding: const EdgeInsets.all(16),
-        child: const Column(
-            children: [StyledBodyText700('Trending')],
+          padding: const EdgeInsets.all(16),
+          child: const Column(
+            children: [StyledBodyText700('Trending posts will appear here...')],
           )),
     );
   }

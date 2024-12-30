@@ -15,7 +15,10 @@ enum PrimaryTag {
 
   /// Get all tag display names
   static List<String> getAll() {
-    return PrimaryTag.values.map((e) => e.displayName).toList();
+    return PrimaryTag.values
+        .where((e) => e != PrimaryTag.none)
+        .map((e) => e.displayName)
+        .toList();
   }
 
   /// Find a tag by its display name
