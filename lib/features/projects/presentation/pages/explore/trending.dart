@@ -1,4 +1,4 @@
-import 'package:blocknet/features/projects/presentation/widgets/app_bar.dart';
+import 'package:blocknet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 

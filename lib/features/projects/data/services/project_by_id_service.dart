@@ -5,7 +5,7 @@ import '../models/admin_model.dart';
 import '../models/post_model.dart';
 import '../models/project_model.dart';
 
-class ProjectById {
+class ProjectByIdService {
   static Project fetchProjectById(String projectId) {
     // Search through all dummyProjects and check their id
     final fetchedProject =

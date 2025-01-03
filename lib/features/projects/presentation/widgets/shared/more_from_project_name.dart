@@ -1,38 +1,17 @@
 import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/data/dummy/dummy_posts.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post/shared/post_project_title.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'more_from_project_name_card.dart';
+import '../post/more_from/more_from_project_name_card.dart';
 
-class MoreFromProjectName extends StatefulWidget {
+class MoreFromProjectName extends StatelessWidget {
   const MoreFromProjectName(
-      {required this.projectId, required this.projectTitle, super.key});
+      {required this.label, required this.projectTitle, required this.posts, super.key});
 
-  final String projectId;
+  final String label;
   final String projectTitle;
-
-  @override
-  State<MoreFromProjectName> createState() => _MoreFromProjectNameState();
-}
-
-class _MoreFromProjectNameState extends State<MoreFromProjectName> {
-  late List<Post> morePosts;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPosts();
-  }
-
-  void _loadPosts() {
-    setState(() {
-      morePosts = dummyPosts
-          .where((post) => post.projectId == widget.projectId)
-          .toList();
-    });
-  }
+  final List<Post> posts;
 
   @override
   Widget build(BuildContext context) {
@@ -45,16 +24,16 @@ class _MoreFromProjectNameState extends State<MoreFromProjectName> {
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                StyledBodyText600("More From"),
+                StyledBodyText600(label),
                 PostProjectTitle(
-                    projectTitle: widget.projectTitle, margin: false)
+                    projectTitle: projectTitle, margin: false)
               ],
             ),
           ],
         ),
-        morePosts.isEmpty
+        posts.isEmpty
             ? StyledBodyText500(
-                "No posts available for this ${widget.projectTitle}!")
+                "No posts available for this $projectTitle!")
             : Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Row(
@@ -73,9 +52,9 @@ class _MoreFromProjectNameState extends State<MoreFromProjectName> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: List.generate(
-                            morePosts.length,
+                            posts.length,
                             (index) {
-                              final post = morePosts[index];
+                              final post = posts[index];
                               return Padding(
                                 padding: const EdgeInsets.only(right: 20),
                                 child: MoreFromProjectNameCard(post: post),

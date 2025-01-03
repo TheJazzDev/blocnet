@@ -7,10 +7,10 @@ import '../shared/post_project_title.dart';
 import '../post_details/post_details_dialog.dart';
 
 class PostCard extends StatefulWidget {
-  const PostCard({required this.post, this.moreFrom = false, super.key});
+  const PostCard({required this.post, this.miniCard = false, super.key});
 
   final Post post;
-  final bool moreFrom;
+  final bool miniCard;
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -71,7 +71,7 @@ class _PostCardState extends State<PostCard> {
             post: widget.post,
           ),
           const SizedBox(height: 16),
-          PostCardDetails(post: widget.post, moreFrom: widget.moreFrom),
+          PostCardDetails(post: widget.post, miniCard: widget.miniCard),
         ],
       ),
     );

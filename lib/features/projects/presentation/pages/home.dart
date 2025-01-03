@@ -1,10 +1,10 @@
 import 'explore/explore.dart';
 import 'package:blocknet/app/theme.dart';
 import 'package:blocknet/features/projects/data/models/sections_model.dart';
-import 'package:blocknet/features/projects/data/services/all_posts.dart';
-import 'package:blocknet/features/projects/presentation/widgets/app_bar.dart';
+import 'package:blocknet/features/projects/data/services/all_posts_service.dart';
+import 'package:blocknet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
-import 'package:blocknet/features/projects/presentation/widgets/toggle_button.dart';
+import 'package:blocknet/features/projects/presentation/widgets/shared/toggle_button.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  final allPosts = AllPosts.getAllPosts();
+  final allPosts = AllPostsService.getAllPosts();
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onToggle: _handleToggle,
                 ),
                 const SizedBox(height: 16),
-                activeSection == Sections.forYou      
+                activeSection == Sections.forYou
                     ? _buildForYouSection()
                     : ExploreSection(allPosts: allPosts)
               ],

@@ -3,24 +3,16 @@ import '../dummy/dummy_posts.dart';
 import '../dummy/dummy_projects.dart';
 import '../models/admin_model.dart';
 import '../models/post_model.dart';
-import '../models/primary_tag_model.dart';
 import '../models/project_model.dart';
+import '../models/secondary_tag_model.dart';
 
-class PostByPrimaryTagService {
-  static List<Post> fetchPostsByPrimaryTag(PrimaryTag primaryTag) {
-    // Step 1: Search through all dummyProjects and check their primaryTag
-    final matchingProjectPostIds = dummyProjects
-        .where((project) => project.primaryTag == primaryTag)
-        .map((project) => project.postIds)
-        .toList();
-
-    // Step 2: Merge all the lists into one list
-    final mergedPostIds = matchingProjectPostIds.expand((ids) => ids).toList();
-
-    // Step 3: Using the postIds in the list, fetch all related dummyPosts
-    final fetchedPosts = dummyPosts
-        .where((post) => mergedPostIds.contains(post.postId))
-        .map((post) {
+class PostsBySecondaryTagService {
+  static List<Post> fetchPostsBySecondaryTags(
+      List<SecondaryTag> secondaryTags) {
+    // Search through all dummyPosts and check their secondaryTags
+    final fetchedPosts = dummyPosts.where((post) {
+      return post.secondaryTags.any((tag) => secondaryTags.contains(tag));
+    }).map((post) {
       Project? project;
       Admin? admin;
 

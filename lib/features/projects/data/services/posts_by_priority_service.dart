@@ -6,7 +6,7 @@ import '../models/post_model.dart';
 import '../models/priority_model.dart';
 import '../models/project_model.dart';
 
-class PostByPriority {
+class PostsByPriorityService {
   static List<Post> fetchPostsByPriority(Priority priority) {
     // Search through all dummyPosts and check their primaryTag
     final fetchedPosts =

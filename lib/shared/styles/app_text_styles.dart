@@ -67,17 +67,20 @@ class StyledBodyText600 extends StatelessWidget {
     this.text, {
     this.size = 14.0,
     this.fontWeight = FontWeight.w500,
+    this.textAlign = TextAlign.left,
     super.key,
   });
 
   final String text;
   final double size;
   final FontWeight fontWeight;
+  final TextAlign textAlign;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
+      textAlign: textAlign,
       style: TextStyle(
         color: AppColors.darkGrey600,
         fontSize: size,

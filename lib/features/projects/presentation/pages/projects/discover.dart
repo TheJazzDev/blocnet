@@ -1,6 +1,6 @@
 import 'package:blocknet/features/projects/data/models/sections_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/app_bar.dart';
-import 'package:blocknet/features/projects/presentation/widgets/toggle_button.dart';
+import 'package:blocknet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocknet/features/projects/presentation/widgets/shared/toggle_button.dart';
 import 'package:flutter/material.dart';
 import 'discover_projects.dart';
 import 'your_projects.dart';

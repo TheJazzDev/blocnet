@@ -1,6 +1,6 @@
 import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocknet/features/projects/data/services/post_by_primary_tag_service.dart';
+import 'package:blocknet/features/projects/data/services/posts_by_primary_tag_service.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
 import 'package:blocknet/features/projects/presentation/widgets/labels/primary_label.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
@@ -27,7 +27,7 @@ class _MoreFromPrimaryTagState extends State<MoreFromPrimaryTag> {
   void _loadPosts() {
     setState(() {
       morePosts =
-          PostByPrimaryTagService.fetchPostsByPrimaryTag(widget.primaryTag);
+          PostsByPrimaryTagService.fetchPostsByPrimaryTag(widget.primaryTag);
     });
   }
 
@@ -54,7 +54,7 @@ class _MoreFromPrimaryTagState extends State<MoreFromPrimaryTag> {
             : Column(
                 children: List.generate(
                   morePosts.length,
-                  (index) => PostCard(post: morePosts[index], moreFrom: true),
+                  (index) => PostCard(post: morePosts[index], miniCard: true),
                 ),
               ),
       ],

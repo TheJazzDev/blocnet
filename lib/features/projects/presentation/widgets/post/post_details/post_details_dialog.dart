@@ -1,15 +1,16 @@
 import 'package:blocknet/app/theme.dart';
+import 'package:blocknet/features/projects/data/dummy/dummy_posts.dart';
 import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocknet/features/projects/data/services/post_by_id.dart';
+import 'package:blocknet/features/projects/data/services/post_by_id_service.dart';
 import 'package:blocknet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
+import 'package:blocknet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
 import 'package:flutter/material.dart';
 import '../more_from/more_from_primary_tag.dart';
-import '../more_from/more_from_project_name.dart';
+import '../../shared/more_from_project_name.dart';
 import '../more_from/more_from_secondary_tags.dart';
 import 'post_details_header.dart';
 import 'post_details_info.dart';
-import 'post_details_overview.dart';
 import 'post_details_tags.dart';
 
 class PostDetailsDialog extends StatefulWidget {
@@ -23,11 +24,18 @@ class PostDetailsDialog extends StatefulWidget {
 
 class _PostDetailsDialogState extends State<PostDetailsDialog> {
   late Post post;
+  late List<Post> moreFromProjectName;
 
   @override
   void initState() {
     super.initState();
-    post = PostById.fetchPostById(widget.postId);
+    post = PostByIdService.fetchPostById(widget.postId);
+
+    setState(() {
+      moreFromProjectName = dummyPosts
+          .where((post) => post.projectId == post.project?.id)
+          .toList();
+    });
   }
 
   @override
@@ -57,11 +65,13 @@ class _PostDetailsDialogState extends State<PostDetailsDialog> {
                         const CustomHorizontalDivider(margin: 12),
                         PostDetailsTags(post),
                         const CustomHorizontalDivider(margin: 12),
-                        PostDetailsOverview(content: post.content),
+                        RenderMarkdownContent(content: post.content),
                         SizedBox(height: 40),
                         MoreFromProjectName(
-                            projectId: post.project?.id ?? '',
-                            projectTitle: post.project?.name ?? ''),
+                          label: 'More from',
+                          projectTitle: post.project?.name ?? '',
+                          posts: moreFromProjectName,
+                        ),
                         const CustomHorizontalDivider(margin: 16),
                         const SizedBox(height: 16),
                         MoreFromPrimaryTag(

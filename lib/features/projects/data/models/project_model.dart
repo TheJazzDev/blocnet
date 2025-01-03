@@ -10,6 +10,7 @@ class Project {
   final String logo;
   final Admin? admin;
   final String adminId;
+  final String details;
   final String? website;
   final List<Post>? posts;
   final int followersCount;
@@ -28,6 +29,7 @@ class Project {
     required this.id,
     required this.logo,
     required this.name,
+    required this.details,
     required this.adminId,
     required this.createdAt,
     required this.primaryTag,
@@ -47,6 +49,7 @@ class Project {
       socials: socials,
       adminId: adminId,
       postIds: postIds,
+      details: details,
       createdAt: createdAt,
       primaryTag: primaryTag,
       description: description,
@@ -69,6 +72,7 @@ class Project {
       id: json['id'],
       logo: json['logo'],
       name: json['name'],
+      details: json['details'],
       adminId: json["adminId"],
       primaryTag: json['primaryTag'],
       description: json['description'],
@@ -99,6 +103,7 @@ class Project {
       'logo': logo,
       'apps': apps,
       'name': name,
+      'details': details,
       'website': website,
       'socials': socials,
       'adminId': adminId,

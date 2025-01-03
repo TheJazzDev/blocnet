@@ -5,7 +5,7 @@ import 'package:blocknet/shared/widgets/app_secondary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
-import '../custom_backdrop_filter.dart';
+import '../shared/custom_backdrop_filter.dart';
 import '../dividers/horizontal_divider.dart';
 import 'filter_dropdown_section.dart';
 import 'priority_selector.dart';

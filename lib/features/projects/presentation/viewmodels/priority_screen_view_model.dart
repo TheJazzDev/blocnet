@@ -1,6 +1,6 @@
 import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:blocknet/features/projects/data/models/priority_model.dart';
-import 'package:blocknet/features/projects/data/services/post_by_priority.dart';
+import 'package:blocknet/features/projects/data/services/posts_by_priority_service.dart';
 
 class PriorityScreenViewModel {
   final Priority priority;
@@ -14,7 +14,7 @@ class PriorityScreenViewModel {
   }
 
   void _loadPosts() {
-    final posts = PostByPriority.fetchPostsByPriority(priority);
+    final posts = PostsByPriorityService.fetchPostsByPriority(priority);
     priorityPosts = posts;
     _extractSecondaryTags();
     _applyFilters();

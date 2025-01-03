@@ -3,15 +3,21 @@ import '../dummy/dummy_posts.dart';
 import '../dummy/dummy_projects.dart';
 import '../models/admin_model.dart';
 import '../models/post_model.dart';
+import '../models/priority_model.dart';
 import '../models/project_model.dart';
-import '../models/secondary_tag_model.dart';
 
-class PostBySecondaryTagService {
-  static List<Post> fetchPostsBySecondaryTags(
-      List<SecondaryTag> secondaryTags) {
-    // Search through all dummyPosts and check their secondaryTags
+class PostsByProjectIdAndPriorityService {
+  static List<Post> fetchPostsByIdAndPriority(
+      String projectId, Priority priority) {
+    // Fetch the project by projectId
+    final project = dummyProjects.firstWhere((proj) => proj.id == projectId);
+
+    // Get the list of postIds from the project
+    final postIds = project.postIds;
+
+    // Filter posts by the fetched postIds and the given priority
     final fetchedPosts = dummyPosts.where((post) {
-      return post.secondaryTags.any((tag) => secondaryTags.contains(tag));
+      return postIds.contains(post.postId) && post.priority == priority;
     }).map((post) {
       Project? project;
       Admin? admin;
@@ -23,15 +29,15 @@ class PostBySecondaryTagService {
         project = null;
       }
 
-      // Fetch the associated admin
+      // Fetch the associated admin for each post
       try {
         admin = dummyAdmins.firstWhere((adm) => adm.id == post.adminId);
       } catch (e) {
         admin = null;
       }
 
-      // Return a new Post object with the project and admin populated
-      return post.copyWith(project: project, admin: admin);
+      // Return a new Post object with the admin populated
+      return post.copyWith(admin: admin, project: project);
     }).toList();
 
     return fetchedPosts;

@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class PostDetailsOverview extends StatelessWidget {
-  const PostDetailsOverview({required this.content, super.key});
+class RenderMarkdownContent extends StatelessWidget {
+  const RenderMarkdownContent({required this.content, super.key});
 
   final String content;
 

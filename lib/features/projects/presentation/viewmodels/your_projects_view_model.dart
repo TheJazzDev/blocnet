@@ -1,5 +1,5 @@
 import 'package:blocknet/features/projects/data/models/project_model.dart';
-import 'package:blocknet/features/projects/data/services/all_projects.dart';
+import 'package:blocknet/features/projects/data/services/all_projects_service.dart';
 
 class YourProjectsViewModel {
   final List<Project> allProjects = [];
@@ -12,7 +12,7 @@ class YourProjectsViewModel {
   }
 
   void _loadProjects() {
-    final projects = AllProjects.getAllProjects();
+    final projects = AllProjectsService.getAllProjects();
     allProjects.addAll(projects);
     _extractPrimaryTags();
     _applyFilters();

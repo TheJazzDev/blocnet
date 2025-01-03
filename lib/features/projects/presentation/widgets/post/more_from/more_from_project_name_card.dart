@@ -46,7 +46,7 @@ class MoreFromProjectNameCard extends StatelessWidget {
               const SizedBox(width: 12),
               CustomVerticalDivider(height: 20),
               const SizedBox(width: 12),
-              PriorityLabel(priority: post.priority, moreFrom: true),
+              PriorityLabel(priority: post.priority, miniCard: true),
             ],
           ),
         ],

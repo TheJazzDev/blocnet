@@ -57,7 +57,7 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
   ),
   Post(
     postId: 'post2',
-    projectId: 'project2',
+    projectId: 'project1',
     adminId: 'admin2',
     secondaryTags: [
       SecondaryTag.partnership,

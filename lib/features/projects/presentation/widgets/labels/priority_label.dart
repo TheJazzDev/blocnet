@@ -5,12 +5,12 @@ class PriorityLabel extends StatelessWidget {
   const PriorityLabel(
       {required this.priority,
       this.isButton = false,
-      this.moreFrom = false,
+      this.miniCard = false,
       super.key});
 
   final Priority priority;
   final bool isButton;
-  final bool moreFrom;
+  final bool miniCard;
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +39,9 @@ class PriorityLabel extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-          vertical: moreFrom ? 7 : 8, horizontal: moreFrom ? 12 : 14),
+          vertical: miniCard ? 7 : 8, horizontal: miniCard ? 12 : 14),
       decoration: BoxDecoration(
-        border: Border.all(color: priorityColor, width: moreFrom ? 0.7 : 1),
+        border: Border.all(color: priorityColor, width: miniCard ? 0.7 : 1),
         borderRadius: const BorderRadius.all(Radius.circular(30)),
       ),
       child: Row(

@@ -5,7 +5,7 @@ import '../models/admin_model.dart';
 import '../models/post_model.dart';
 import '../models/project_model.dart';
 
-class PostById {
+class PostByIdService {
   static Post fetchPostById(String postId) {
     // Search through all dummyPosts and check their primaryTag
     final fetchedPost = dummyPosts.firstWhere((post) => post.postId == postId);

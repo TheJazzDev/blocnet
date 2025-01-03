@@ -7,10 +7,10 @@ import 'package:flutter/material.dart';
 import '../shared/post_project_logo.dart';
 
 class PostCardDetails extends StatelessWidget {
-  const PostCardDetails({required this.post, this.moreFrom = false, super.key});
+  const PostCardDetails({required this.post, this.miniCard = false, super.key});
 
   final Post post;
-  final bool moreFrom;
+  final bool miniCard;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class PostCardDetails extends StatelessWidget {
         PostProjectLogo(
           logoUrl: post.project?.logo ?? '',
           size: 40,
-        ), 
+        ),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -28,7 +28,7 @@ class PostCardDetails extends StatelessWidget {
             children: [
               StyledTitleMedium(post.title),
               const SizedBox(height: 8),
-              StyledBodyText(post.description),
+              StyledBodyText(post.description, applyOverflow: true),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -37,7 +37,7 @@ class PostCardDetails extends StatelessWidget {
                   const SizedBox(width: 12),
                   CustomVerticalDivider(height: 12.9),
                   const SizedBox(width: 12),
-                  PriorityLabel(priority: post.priority, moreFrom: moreFrom),
+                  PriorityLabel(priority: post.priority, miniCard: miniCard),
                 ],
               ),
             ],

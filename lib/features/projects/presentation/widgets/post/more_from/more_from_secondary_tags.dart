@@ -1,5 +1,5 @@
 import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/data/services/post_by_secondary_tag_service.dart';
+import 'package:blocknet/features/projects/data/services/posts_by_secondary_tag_service.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
 import 'package:blocknet/features/projects/presentation/widgets/labels/secondary_label.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';
@@ -29,7 +29,7 @@ class _MoreFromSecondaryTagsState extends State<MoreFromSecondaryTags> {
     // Fetch posts by secondary tags using the PostService
     setState(() {
       morePosts =
-          PostBySecondaryTagService.fetchPostsBySecondaryTags(secondaryTags);
+          PostsBySecondaryTagService.fetchPostsBySecondaryTags(secondaryTags);
     });
   }
 
@@ -69,7 +69,7 @@ class _MoreFromSecondaryTagsState extends State<MoreFromSecondaryTags> {
             : Column(
                 children: List.generate(
                   morePosts.length,
-                  (index) => PostCard(post: morePosts[index], moreFrom: true),
+                  (index) => PostCard(post: morePosts[index], miniCard: true),
                 ),
               ),
       ],

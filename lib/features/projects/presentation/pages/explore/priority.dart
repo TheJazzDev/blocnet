@@ -1,6 +1,6 @@
 import 'package:blocknet/features/projects/data/models/priority_model.dart';
 import 'package:blocknet/features/projects/presentation/viewmodels/priority_screen_view_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/app_bar.dart';
+import 'package:blocknet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocknet/features/projects/presentation/widgets/filter_label/filter_label.dart';
 import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
 import 'package:blocknet/shared/styles/app_text_styles.dart';

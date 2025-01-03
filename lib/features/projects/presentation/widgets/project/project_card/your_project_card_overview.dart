@@ -47,11 +47,17 @@ class _YourProjectCardOverviewState extends State<YourProjectCardOverview> {
             showModalBottomSheet(
               context: context,
               isScrollControlled: true,
-              isDismissible: true,
+              isDismissible: false,
               barrierColor: Colors.transparent,
               backgroundColor: Colors.transparent,
               builder: (context) {
-                return FollowBottomSheet();
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: FollowBottomSheet(),
+                );
               },
             );
           },

@@ -5,7 +5,7 @@ import '../models/admin_model.dart';
 import '../models/post_model.dart';
 import '../models/project_model.dart';
 
-class AllPosts {
+class AllPostsService {
   // Enrich posts with project and admin details
   static List<Post> getAllPosts() {
     return dummyPosts.map((post) {

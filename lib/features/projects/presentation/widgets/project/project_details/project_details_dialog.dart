@@ -1,8 +1,12 @@
 import 'package:blocknet/app/theme.dart';
+import 'package:blocknet/features/projects/data/models/post_model.dart';
 import 'package:blocknet/features/projects/data/models/project_model.dart';
-import 'package:blocknet/features/projects/data/services/project_by_id.dart';
+import 'package:blocknet/features/projects/data/services/project_by_id_service.dart';
+import 'package:blocknet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
+import 'package:blocknet/features/projects/presentation/widgets/shared/more_from_project_name.dart';
+import 'package:blocknet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
 import 'package:flutter/material.dart';
-
+import '../more_from/urgent_post_in_project_name.dart';
 import 'project_details_header.dart';
 import 'project_details_info.dart';
 
@@ -17,11 +21,19 @@ class ProjectDetailsDialog extends StatefulWidget {
 
 class _ProjectDetailsDialogState extends State<ProjectDetailsDialog> {
   late Project project;
+  late List<Post> recentPostInProjectName;
 
   @override
   void initState() {
     super.initState();
-    project = ProjectById.fetchProjectById(widget.projectId);
+
+    // Fetch the project
+    project = ProjectByIdService.fetchProjectById(widget.projectId);
+
+    // Filter posts related to this project and also fetch urgent posts
+    setState(() {
+      recentPostInProjectName = project.posts?.take(5).toList() ?? [];
+    });
   }
 
   @override
@@ -48,23 +60,18 @@ class _ProjectDetailsDialogState extends State<ProjectDetailsDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ProjectDetailsInfo(project: project),
-                        // const CustomHorizontalDivider(margin: 12),
-                        // PostDetailsTags(post),
-                        // const CustomHorizontalDivider(margin: 12),
-                        // PostDetailsOverview(content: post.content),
-                        // SizedBox(height: 40),
-                        // MoreFromProjectName(
-                        //     projectId: post.project?.id ?? '',
-                        //     projectTitle: post.project?.name ?? ''),
-                        // const CustomHorizontalDivider(margin: 16),
-                        // const SizedBox(height: 16),
-                        // MoreFromPrimaryTag(
-                        //     primaryTag:
-                        //         post.project?.primaryTag ?? PrimaryTag.none),
-                        // SizedBox(height: 8),
-                        // const CustomHorizontalDivider(margin: 16),
-                        // SizedBox(height: 8),
-                        // MoreFromSecondaryTags(post: post),
+                        SizedBox(height: 32),
+                        RenderMarkdownContent(content: project.details),
+                        SizedBox(height: 40),
+                        MoreFromProjectName(
+                          label: 'Recent Posts in',
+                          projectTitle: project.name,
+                          posts: recentPostInProjectName,
+                        ),
+                        const CustomHorizontalDivider(margin: 16),
+                        UrgentPostInProjectName(
+                            projectName: project.name, projectId: project.id),
+                        const CustomHorizontalDivider(margin: 16),
                       ],
                     ),
                   ),
