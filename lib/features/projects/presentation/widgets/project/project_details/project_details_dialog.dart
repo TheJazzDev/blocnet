@@ -1,10 +1,10 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/data/models/project_model.dart';
-import 'package:blocknet/features/projects/data/services/project_by_id_service.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
-import 'package:blocknet/features/projects/presentation/widgets/shared/more_from_project_name.dart';
-import 'package:blocknet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/data/services/project_by_id_service.dart';
+import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/more_from_project_name.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
 import 'package:flutter/material.dart';
 import '../more_from/urgent_post_in_project_name.dart';
 import 'project_details_header.dart';
@@ -43,11 +43,12 @@ class _ProjectDetailsDialogState extends State<ProjectDetailsDialog> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-              color: AppColors.darkGrey100,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(32),
-                topRight: Radius.circular(32),
-              )),
+            color: AppColors.darkGrey100,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(32),
+              topRight: Radius.circular(32),
+            ),
+          ),
           child: Scaffold(
             backgroundColor: Colors.transparent,
             body: Column(
@@ -70,7 +71,9 @@ class _ProjectDetailsDialogState extends State<ProjectDetailsDialog> {
                         ),
                         const CustomHorizontalDivider(margin: 16),
                         UrgentPostInProjectName(
-                            projectName: project.name, projectId: project.id),
+                          projectName: project.name,
+                          projectId: project.id,
+                        ),
                         const CustomHorizontalDivider(margin: 16),
                       ],
                     ),

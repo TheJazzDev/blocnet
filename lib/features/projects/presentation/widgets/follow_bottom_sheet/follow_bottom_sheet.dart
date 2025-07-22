@@ -1,6 +1,6 @@
-import 'package:blocknet/app/theme.dart';
+import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 class FollowBottomSheet extends StatefulWidget {
@@ -18,11 +18,7 @@ class _FollowBottomSheetState extends State<FollowBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        _buildBottomSheetContent(),
-      ],
-    );
+    return Stack(children: [_buildBottomSheetContent()]);
   }
 
   Widget _buildBottomSheetContent() {
@@ -48,14 +44,16 @@ class _FollowBottomSheetState extends State<FollowBottomSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Row(
                       children: [
-                        Icon(Symbols.adaptive_audio_mic_off,
-                            color: AppColors.darkGrey400),
+                        Icon(
+                          Symbols.adaptive_audio_mic_off,
+                          color: AppColors.darkGrey400,
+                        ),
                         SizedBox(width: 8),
                         StyledBodyText500('Unfollow'),
                       ],
                     ),
                   ),
-                )
+                ),
               ],
             ),
           ),

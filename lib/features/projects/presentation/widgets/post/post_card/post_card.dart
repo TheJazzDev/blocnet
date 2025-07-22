@@ -1,5 +1,5 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/post_model.dart';
 import 'package:flutter/material.dart';
 import 'post_card_details.dart';
 import '../shared/post_tag_row.dart';
@@ -48,8 +48,9 @@ class _PostCardState extends State<PostCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             PostProjectTitle(
-                projectTitle: widget.post.project?.name ?? 'No project name',
-                applyOverflow: true),
+              projectTitle: widget.post.project?.name ?? 'No project name',
+              applyOverflow: true,
+            ),
             _buildContent(),
           ],
         ),
@@ -67,9 +68,7 @@ class _PostCardState extends State<PostCard> {
       ),
       child: Column(
         children: [
-          PostTagRow(
-            post: widget.post,
-          ),
+          PostTagRow(post: widget.post),
           const SizedBox(height: 16),
           PostCardDetails(post: widget.post, miniCard: widget.miniCard),
         ],

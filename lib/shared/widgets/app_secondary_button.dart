@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:blocknet/app/theme.dart';
+import 'package:blocnet/app/theme.dart';
 
 // Define variants
 enum ButtonVariant { small, large }
@@ -35,7 +35,9 @@ class SecondaryButton extends StatelessWidget {
         child: Container(
           width: variant != ButtonVariant.small ? double.infinity : null,
           padding: EdgeInsets.symmetric(
-              vertical: varticalPadding, horizontal: horizontalPadding),
+            vertical: varticalPadding,
+            horizontal: horizontalPadding,
+          ),
           decoration: BoxDecoration(
             color: AppColors.darkGrey100,
             borderRadius: const BorderRadius.all(Radius.circular(25)),
@@ -45,11 +47,11 @@ class SecondaryButton extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
-                color:
-                    isEnabled ? AppColors.darkGrey700 : AppColors.darkGrey500,
-                fontSize: fontSize,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Geist'),
+              color: isEnabled ? AppColors.darkGrey700 : AppColors.darkGrey500,
+              fontSize: fontSize,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Geist',
+            ),
           ),
         ),
       ),

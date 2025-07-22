@@ -1,4 +1,4 @@
-package com.example.blocknet
+package com.example.blocnet
 
 import io.flutter.embedding.android.FlutterActivity
 

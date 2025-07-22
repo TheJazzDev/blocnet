@@ -1,8 +1,8 @@
-import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/labels/priority_label.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
-import 'package:blocknet/shared/utils/format_date_utils.dart';
+import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';
+import 'package:blocnet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
 import '../shared/post_project_logo.dart';
 
@@ -17,10 +17,7 @@ class PostCardDetails extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PostProjectLogo(
-          logoUrl: post.project?.logo ?? '',
-          size: 40,
-        ),
+        PostProjectLogo(logoUrl: post.project?.logo ?? '', size: 40),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -32,8 +29,10 @@ class PostCardDetails extends StatelessWidget {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  StyledBodyText500(formatDateWithSuffix(post.createdAt),
-                      size: 12),
+                  StyledBodyText500(
+                    formatDateWithSuffix(post.createdAt),
+                    size: 12,
+                  ),
                   const SizedBox(width: 12),
                   CustomVerticalDivider(height: 12.9),
                   const SizedBox(width: 12),

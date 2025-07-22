@@ -1,5 +1,5 @@
-import 'package:blocknet/features/projects/data/models/project_model.dart';
-import 'package:blocknet/features/projects/data/services/all_projects_service.dart';
+import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/data/services/all_projects_service.dart';
 
 class YourProjectsViewModel {
   final List<Project> allProjects = [];
@@ -30,7 +30,9 @@ class YourProjectsViewModel {
       filteredProjects.addAll(allProjects);
     } else {
       filteredProjects.addAll(
-        allProjects.where((project) => selectedFilters.contains(project.primaryTag.toString())),
+        allProjects.where(
+          (project) => selectedFilters.contains(project.primaryTag.toString()),
+        ),
       );
     }
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 
 class PostProjectTitle extends StatelessWidget {
   const PostProjectTitle({
@@ -47,20 +47,14 @@ class _TitleContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
-        border: Border.all(
-          color: AppColors.darkGrey400,
-        ),
+        border: Border.all(color: AppColors.darkGrey400),
         borderRadius: const BorderRadius.all(Radius.circular(40)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(
-            Icons.style,
-            size: 24,
-            color: AppColors.darkGrey400,
-          ),
+          Icon(Icons.style, size: 24, color: AppColors.darkGrey400),
           const SizedBox(width: 8),
           Flexible(
             child: StyledPostProjectTitle(

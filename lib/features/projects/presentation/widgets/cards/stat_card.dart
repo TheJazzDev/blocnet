@@ -1,5 +1,5 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -44,11 +44,7 @@ class StatCard extends StatelessWidget {
               color: AppColors.darkGrey300,
               borderRadius: const BorderRadius.all(Radius.circular(100)),
             ),
-            child: Icon(
-              iconData,
-              size: 20,
-              color: AppColors.darkGrey600,
-            ),
+            child: Icon(iconData, size: 20, color: AppColors.darkGrey600),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +53,7 @@ class StatCard extends StatelessWidget {
               SizedBox(height: 4),
               StyledBodyText700('$value', size: 14),
             ],
-          )
+          ),
         ],
       ),
     );

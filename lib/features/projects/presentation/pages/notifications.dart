@@ -1,5 +1,5 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
@@ -17,13 +17,14 @@ class NotificationsScreen extends StatelessWidget {
           IconButton(
             onPressed: () {},
             icon: Icon(Symbols.mop, color: AppColors.darkGrey500),
-          )
+          ),
         ],
       ),
       body: Container(
         padding: const EdgeInsets.all(16),
         child: const StyledBodyText(
-            'All your notifications will be display here!!!'),
+          'All your notifications will be display here!!!',
+        ),
       ),
     );
   }

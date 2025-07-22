@@ -1,11 +1,8 @@
-import 'package:blocknet/app/theme.dart';
+import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 
 class CustomHorizontalDivider extends StatelessWidget {
-  const CustomHorizontalDivider({
-    required this.margin,
-    super.key,
-  });
+  const CustomHorizontalDivider({required this.margin, super.key});
 
   final double margin;
 

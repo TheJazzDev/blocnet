@@ -1,11 +1,11 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/post/shared/post_tag_row.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/post/shared/post_tag_row.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/features/projects/presentation/widgets/labels/priority_label.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
-import 'package:blocknet/shared/utils/format_date_utils.dart';
+import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';
+import 'package:blocnet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/utils/format_date_utils.dart';
 
 class MoreFromProjectNameCard extends StatelessWidget {
   const MoreFromProjectNameCard({required this.post, super.key});
@@ -31,18 +31,12 @@ class MoreFromProjectNameCard extends StatelessWidget {
           StyledTitleMedium(post.title),
           const SizedBox(height: 8),
           Expanded(
-            child: StyledBodyText(
-              post.description,
-              applyOverflow: true,
-            ),
+            child: StyledBodyText(post.description, applyOverflow: true),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              StyledBodyText500(
-                formatDateWithSuffix(post.createdAt),
-                size: 12,
-              ),
+              StyledBodyText500(formatDateWithSuffix(post.createdAt), size: 12),
               const SizedBox(width: 12),
               CustomVerticalDivider(height: 20),
               const SizedBox(width: 12),

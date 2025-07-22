@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "blocknet" "\0"
+            VALUE "FileDescription", "blocnet" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "blocknet" "\0"
+            VALUE "InternalName", "blocnet" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "blocknet.exe" "\0"
-            VALUE "ProductName", "blocknet" "\0"
+            VALUE "OriginalFilename", "blocnet.exe" "\0"
+            VALUE "ProductName", "blocnet" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

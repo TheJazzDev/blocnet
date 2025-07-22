@@ -1,9 +1,9 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/presentation/controllers/bottom_sheet_filter_controller.dart';
-import 'package:blocknet/shared/widgets/app_primary_button.dart';
-import 'package:blocknet/shared/widgets/app_secondary_button.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/presentation/controllers/bottom_sheet_filter_controller.dart';
+import 'package:blocnet/shared/widgets/app_primary_button.dart';
+import 'package:blocnet/shared/widgets/app_secondary_button.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../shared/custom_backdrop_filter.dart';
 import '../dividers/horizontal_divider.dart';
@@ -34,10 +34,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Stack(
-      children: [
-        CustomBackdropFilter(),
-        _buildBottomSheetContent(),
-      ],
+      children: [CustomBackdropFilter(), _buildBottomSheetContent()],
     );
   }
 
@@ -98,19 +95,20 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       Row(
                         children: [
                           SecondaryButton(
-                              onPressed: () {
-                                setState(() {
-                                  _controller.clearAllFilters();
-                                });
-                              },
-                              title: 'Clear All Filters',
-                              isEnabled: _controller.isEnabled),
+                            onPressed: () {
+                              setState(() {
+                                _controller.clearAllFilters();
+                              });
+                            },
+                            title: 'Clear All Filters',
+                            isEnabled: _controller.isEnabled,
+                          ),
                           SizedBox(width: 12),
                           PrimaryButton(
                             onPressed: _getAllFilters,
                             title: 'Apply Filters',
                             isEnabled: _controller.isEnabled,
-                          )
+                          ),
                         ],
                       ),
                     ],

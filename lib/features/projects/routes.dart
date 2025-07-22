@@ -1,4 +1,4 @@
-import 'package:blocknet/constants/app_routes.dart';
+import 'package:blocnet/constants/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'presentation/pages/home.dart';
 import 'presentation/pages/notifications.dart';

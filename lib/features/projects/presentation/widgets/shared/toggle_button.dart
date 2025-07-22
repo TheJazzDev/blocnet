@@ -1,5 +1,5 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/sections_model.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:flutter/material.dart';
 
 class StyledToggleButton extends StatefulWidget {
@@ -84,10 +84,11 @@ class _StyledToggleButtonState extends State<StyledToggleButton> {
       child: Text(
         text,
         style: TextStyle(
-            color: isActive ? AppColors.darkGrey100 : AppColors.darkGrey400,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Britti'),
+          color: isActive ? AppColors.darkGrey100 : AppColors.darkGrey400,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          fontFamily: 'Britti',
+        ),
       ),
     );
   }

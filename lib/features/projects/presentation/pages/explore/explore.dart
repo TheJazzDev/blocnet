@@ -1,11 +1,11 @@
-import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/data/models/priority_model.dart';
-import 'package:blocknet/features/projects/routes.dart';
+import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/features/projects/routes.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/features/projects/data/dummy/dummy_posts.dart';
-import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
-import 'package:blocknet/features/projects/presentation/widgets/cards/tag_card.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/features/projects/data/dummy/dummy_posts.dart';
+import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/cards/tag_card.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 
 class ExploreSection extends StatelessWidget {
   const ExploreSection({required this.allPosts, super.key});
@@ -23,34 +23,38 @@ class ExploreSection extends StatelessWidget {
             child: Row(
               children: [
                 TagCard(
-                    label: 'Trending',
-                    iconName: 'timeline',
-                    onTap: () =>
-                        Navigator.pushNamed(context, ProjectRoutes.trending)),
+                  label: 'Trending',
+                  iconName: 'timeline',
+                  onTap: () =>
+                      Navigator.pushNamed(context, ProjectRoutes.trending),
+                ),
                 TagCard(
-                    label: 'High Urgency',
-                    iconName: 'emergency',
-                    onTap: () => Navigator.pushNamed(
-                          context,
-                          ProjectRoutes.highPriority,
-                          arguments: {'priority': Priority.high},
-                        )),
+                  label: 'High Urgency',
+                  iconName: 'emergency',
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    ProjectRoutes.highPriority,
+                    arguments: {'priority': Priority.high},
+                  ),
+                ),
                 TagCard(
-                    label: 'Mid Urgency',
-                    iconName: 'brightness',
-                    onTap: () => Navigator.pushNamed(
-                          context,
-                          ProjectRoutes.midPriority,
-                          arguments: {'priority': Priority.mid},
-                        )),
+                  label: 'Mid Urgency',
+                  iconName: 'brightness',
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    ProjectRoutes.midPriority,
+                    arguments: {'priority': Priority.mid},
+                  ),
+                ),
                 TagCard(
-                    label: 'Low Urgency',
-                    iconName: 'calm',
-                    onTap: () => Navigator.pushNamed(
-                          context,
-                          ProjectRoutes.lowPriority,
-                          arguments: {'priority': Priority.low},
-                        )),
+                  label: 'Low Urgency',
+                  iconName: 'calm',
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    ProjectRoutes.lowPriority,
+                    arguments: {'priority': Priority.low},
+                  ),
+                ),
               ],
             ),
           ),

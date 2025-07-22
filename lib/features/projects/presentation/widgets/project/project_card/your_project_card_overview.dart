@@ -1,7 +1,7 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/project_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/follow_bottom_sheet/follow_bottom_sheet.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/follow_bottom_sheet/follow_bottom_sheet.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 import '../../post/shared/post_project_logo.dart';
@@ -21,10 +21,7 @@ class _YourProjectCardOverviewState extends State<YourProjectCardOverview> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        PostProjectLogo(
-          logoUrl: widget.project.logo,
-          size: 52,
-        ),
+        PostProjectLogo(logoUrl: widget.project.logo, size: 52),
         SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -32,7 +29,7 @@ class _YourProjectCardOverviewState extends State<YourProjectCardOverview> {
             children: [
               StyledBodyText500(widget.project.primaryTag.toString()),
               SizedBox(width: 4),
-              StyledBodyText700(widget.project.name)
+              StyledBodyText700(widget.project.name),
             ],
           ),
         ),
@@ -61,7 +58,7 @@ class _YourProjectCardOverviewState extends State<YourProjectCardOverview> {
               },
             );
           },
-        )
+        ),
       ],
     );
   }

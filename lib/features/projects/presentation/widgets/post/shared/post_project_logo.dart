@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:blocknet/app/theme.dart';
+import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 
 class PostProjectLogo extends StatelessWidget {
@@ -30,11 +30,7 @@ class PostProjectLogo extends StatelessWidget {
         ),
         ClipRRect(
           borderRadius: BorderRadius.circular(size == 40 ? 10 : 15),
-          child: Image.network(
-            logoUrl,
-            width: size,
-            height: size,
-          ),
+          child: Image.network(logoUrl, width: size, height: size),
         ),
       ],
     );

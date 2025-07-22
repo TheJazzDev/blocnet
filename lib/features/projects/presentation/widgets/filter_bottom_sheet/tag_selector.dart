@@ -1,7 +1,7 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 
 class TagSelector extends StatefulWidget {
   const TagSelector({
@@ -32,11 +32,7 @@ class _TagSelectorState extends State<TagSelector> {
         tilePadding: EdgeInsets.all(0),
         title: Row(
           children: [
-            Icon(
-              widget.icon,
-              color: AppColors.darkGrey500,
-              size: 16,
-            ),
+            Icon(widget.icon, color: AppColors.darkGrey500, size: 16),
             const SizedBox(width: 8),
             StyledBodyText500(widget.title),
           ],

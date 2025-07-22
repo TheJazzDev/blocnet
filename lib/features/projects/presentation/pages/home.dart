@@ -1,10 +1,13 @@
+import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/services/posts_store.dart';
+import 'package:provider/provider.dart';
+
 import 'explore/explore.dart';
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/sections_model.dart';
-import 'package:blocknet/features/projects/data/services/all_posts_service.dart';
-import 'package:blocknet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
-import 'package:blocknet/features/projects/presentation/widgets/shared/toggle_button.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/sections_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/toggle_button.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,15 +18,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
- Section activeSection = Sections.forYou;
+  Section activeSection = Sections.forYou;
 
   void _handleToggle(Section activeButton) {
     setState(() {
       activeSection = activeButton;
     });
   }
-
-  final allPosts = AllPostsService.getAllPosts();
 
   @override
   Widget build(BuildContext context) {
@@ -42,15 +43,17 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 StyledToggleButton(
-                   section1: Sections.forYou,
+                  section1: Sections.forYou,
                   section2: Sections.explore,
                   activeSection: activeSection,
                   onToggle: _handleToggle,
                 ),
                 const SizedBox(height: 16),
-                activeSection == Sections.forYou
-                    ? _buildForYouSection()
-                    : ExploreSection(allPosts: allPosts)
+                Consumer<PostsStore>(builder: (context, store, _) {
+                  return activeSection == Sections.forYou
+                      ? _buildForYouSection(store.posts)
+                      : ExploreSection(allPosts: store.posts);
+                })
               ],
             ),
           ),
@@ -59,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildForYouSection() {
+  Widget _buildForYouSection(List<Post> allPosts) {
     final enrichedPosts = allPosts
         .where((post) => post.project != null && post.admin != null)
         .toList();

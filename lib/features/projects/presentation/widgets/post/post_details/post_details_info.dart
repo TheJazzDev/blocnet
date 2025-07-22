@@ -1,10 +1,10 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dividers/dot_divider.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
-import 'package:blocknet/shared/utils/format_date_utils.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/presentation/widgets/dividers/dot_divider.dart';
+import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/post_model.dart';
 import '../shared/post_project_logo.dart';
 import '../shared/post_project_title.dart';
 
@@ -25,7 +25,9 @@ class PostDetailsInfo extends StatelessWidget {
             const SizedBox(width: 24),
             Flexible(
               child: PostProjectTitle(
-                  projectTitle: post.project?.name ?? '', margin: false),
+                projectTitle: post.project?.name ?? '',
+                margin: false,
+              ),
             ),
           ],
         ),
@@ -55,17 +57,25 @@ class PostDetailsInfo extends StatelessWidget {
               ],
             ),
             DotDivider(12),
-            StyledBodyText600(formatDateWithSuffix(post.createdAt),
-                size: 12, fontWeight: FontWeight.w400),
+            StyledBodyText600(
+              formatDateWithSuffix(post.createdAt),
+              size: 12,
+              fontWeight: FontWeight.w400,
+            ),
             DotDivider(12),
-            StyledBodyText600('12 mins read',
-                size: 12, fontWeight: FontWeight.w400),
+            StyledBodyText600(
+              '12 mins read',
+              size: 12,
+              fontWeight: FontWeight.w400,
+            ),
             SizedBox(width: 12),
             // DotDivider(12),
             if (post.lastEditedAt != null)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.darkGrey75,
                   borderRadius: const BorderRadius.all(Radius.circular(20)),
@@ -76,8 +86,10 @@ class PostDetailsInfo extends StatelessWidget {
                   children: [
                     StyledBodyText400('last edited', size: 12),
                     const SizedBox(width: 8),
-                    StyledBodyText600(formatDateWithSuffix(post.lastEditedAt!),
-                        size: 12),
+                    StyledBodyText600(
+                      formatDateWithSuffix(post.lastEditedAt!),
+                      size: 12,
+                    ),
                   ],
                 ),
               ),

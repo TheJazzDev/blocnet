@@ -1,9 +1,9 @@
-import 'package:blocknet/features/projects/data/models/priority_model.dart';
-import 'package:blocknet/features/projects/presentation/viewmodels/priority_screen_view_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocknet/features/projects/presentation/widgets/filter_label/filter_label.dart';
-import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/features/projects/presentation/viewmodels/priority_screen_view_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/features/projects/presentation/widgets/filter_label/filter_label.dart';
+import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class PriorityScreens extends StatefulWidget {
@@ -49,7 +49,7 @@ class _PriorityScreensState extends State<PriorityScreens> {
                       viewModel.toggleTag(tag);
                     });
                   },
-                )
+                ),
               ],
             ),
             SizedBox(height: 16),

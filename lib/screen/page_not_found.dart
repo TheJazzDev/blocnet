@@ -1,4 +1,4 @@
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class PageNotFoundScreen extends StatelessWidget {

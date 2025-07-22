@@ -1,5 +1,5 @@
-import 'package:blocknet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class TrendingScreen extends StatefulWidget {
@@ -15,10 +15,11 @@ class _TrendingScreenState extends State<TrendingScreen> {
     return Scaffold(
       appBar: const CustomAppBar(title: ''),
       body: Container(
-          padding: const EdgeInsets.all(16),
-          child: const Column(
-            children: [StyledBodyText700('Trending posts will appear here...')],
-          )),
+        padding: const EdgeInsets.all(16),
+        child: const Column(
+          children: [StyledBodyText700('Trending posts will appear here...')],
+        ),
+      ),
     );
   }
 }

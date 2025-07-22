@@ -1,7 +1,7 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/project_model.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
-import 'package:blocknet/shared/utils/format_date_utils.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
 
 class YourProjectCardInfo extends StatelessWidget {
@@ -20,8 +20,10 @@ class YourProjectCardInfo extends StatelessWidget {
             borderRadius: const BorderRadius.all(Radius.circular(20)),
             border: Border.all(color: AppColors.darkGrey200),
           ),
-          child: StyledBodyText600('${project.followersCount} followers',
-              size: 10),
+          child: StyledBodyText600(
+            '${project.followersCount} followers',
+            size: 10,
+          ),
         ),
         SizedBox(width: 8),
         if (project.posts != null && project.posts!.isNotEmpty)
@@ -39,8 +41,9 @@ class YourProjectCardInfo extends StatelessWidget {
                   StyledBodyText400('Last updated', size: 12),
                   const SizedBox(width: 8),
                   StyledBodyText600(
-                      formatDateWithSuffix(project.posts![0].lastEditedAt!),
-                      size: 12),
+                    formatDateWithSuffix(project.posts![0].lastEditedAt!),
+                    size: 12,
+                  ),
                 ],
               ),
             ),

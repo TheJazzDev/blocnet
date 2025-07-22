@@ -1,7 +1,7 @@
 // import 'dart:convert';
 import 'admin_model.dart';
 import 'post_model.dart';
-import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
+import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 // import 'package:crypto/crypto.dart';
 
 class Project {
@@ -79,17 +79,15 @@ class Project {
       createdAt: DateTime.parse(json['createdAt']),
       followersCount: json['followersCount'] ?? 0,
       website: json['website'],
-      apps: {
-        'ios': json['iosApp'],
-        'android': json['androidApp'],
-      },
+      apps: {'ios': json['iosApp'], 'android': json['androidApp']},
       socials: {
         'github': json['github'],
         'twitter': json['twitter'],
         'discord': json['discord'],
         'telegram': json['telegram'],
       },
-      postIds: (json['postIds'] as List<dynamic>?)
+      postIds:
+          (json['postIds'] as List<dynamic>?)
               ?.map((postId) => postId.toString())
               .toSet() ??
           {},

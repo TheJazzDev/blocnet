@@ -1,4 +1,4 @@
-import 'package:blocknet/app/theme.dart';
+import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 
 class StyledBodyText extends StatelessWidget {
@@ -39,11 +39,7 @@ class StyledBodyText400 extends StatelessWidget {
 }
 
 class StyledBodyText500 extends StatelessWidget {
-  const StyledBodyText500(
-    this.text, {
-    this.size = 14.0,
-    super.key,
-  });
+  const StyledBodyText500(this.text, {this.size = 14.0, super.key});
 
   final String text;
   final double size;
@@ -118,10 +114,7 @@ class StyledHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.headlineMedium,
-    );
+    return Text(text, style: Theme.of(context).textTheme.headlineMedium);
   }
 }
 
@@ -155,10 +148,7 @@ class StyledTitleSmall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.titleMedium,
-    );
+    return Text(text, style: Theme.of(context).textTheme.titleMedium);
   }
 }
 
@@ -169,10 +159,7 @@ class StyledTitleMedium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.titleMedium,
-    );
+    return Text(text, style: Theme.of(context).textTheme.titleMedium);
   }
 }
 
@@ -183,10 +170,7 @@ class StyledTitleLarge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.titleLarge,
-    );
+    return Text(text, style: Theme.of(context).textTheme.titleLarge);
   }
 }
 
@@ -197,9 +181,6 @@ class StyledLabelLarge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.labelLarge,
-    );
+    return Text(text, style: Theme.of(context).textTheme.labelLarge);
   }
 }

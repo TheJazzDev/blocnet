@@ -1,5 +1,5 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -20,8 +20,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
       body: Center(
         child: Container(
-            padding: const EdgeInsets.all(16),
-            child: StyledTitleLarge('Welcome to Sign up screen')),
+          padding: const EdgeInsets.all(16),
+          child: StyledTitleLarge('Welcome to Sign up screen'),
+        ),
       ),
     );
   }

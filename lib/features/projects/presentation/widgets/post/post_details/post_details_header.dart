@@ -1,6 +1,6 @@
-import 'package:blocknet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/features/projects/presentation/widgets/labels/priority_label.dart';
+import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';
 
 class PostDetailsHeader extends StatelessWidget {
   const PostDetailsHeader({required this.priority, super.key});

@@ -1,12 +1,12 @@
-import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/labels/primary_label.dart';
-import 'package:blocknet/features/projects/presentation/widgets/labels/secondary_label.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
+import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
+import 'package:blocnet/features/projects/presentation/widgets/labels/secondary_label.dart';
+import 'package:blocnet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
 import 'package:flutter/material.dart';
-import 'package:blocknet/app/theme.dart';
+import 'package:blocnet/app/theme.dart';
 
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 
 class PostTagRow extends StatelessWidget {
   const PostTagRow({required this.post, this.moreFrom = false, super.key});
@@ -35,12 +35,10 @@ class PostTagRow extends StatelessWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   PrimaryLabel(
-                      primaryTag: post.project?.primaryTag ?? PrimaryTag.none),
-                  CustomVerticalDivider(
-                    height: 25,
-                    single: true,
+                    primaryTag: post.project?.primaryTag ?? PrimaryTag.none,
                   ),
-                  const SizedBox(width: 2)
+                  CustomVerticalDivider(height: 25, single: true),
+                  const SizedBox(width: 2),
                 ],
               ),
 
@@ -66,8 +64,10 @@ class PostTagRow extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.darkGrey200,
                     borderRadius: const BorderRadius.all(Radius.circular(20)),

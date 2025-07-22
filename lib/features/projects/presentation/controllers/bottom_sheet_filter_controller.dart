@@ -1,6 +1,6 @@
-import 'package:blocknet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocknet/features/projects/data/models/priority_model.dart';
-import 'package:blocknet/features/projects/data/models/secondary_tag_model.dart';
+import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/features/projects/data/models/secondary_tag_model.dart';
 
 class BottomSheetFilterController {
   // State for selected/unselected tags and priorities

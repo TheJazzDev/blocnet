@@ -1,4 +1,4 @@
-import 'package:blocknet/features/projects/data/models/admin_model.dart';
+import 'package:blocnet/features/projects/data/models/admin_model.dart';
 
 List<Admin> dummyAdmins = [
   Admin(

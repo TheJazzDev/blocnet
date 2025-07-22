@@ -1,4 +1,4 @@
-import 'package:blocknet/app/theme.dart';
+import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -9,8 +9,10 @@ class CustomIconButton extends StatelessWidget {
     this.iconData,
     this.svgDimentions,
     super.key,
-  }) : assert(svgAsset != null || iconData != null,
-            'Either svgAsset or iconData must be provided');
+  }) : assert(
+         svgAsset != null || iconData != null,
+         'Either svgAsset or iconData must be provided',
+       );
 
   final VoidCallback? onPressed;
   final String? svgAsset;

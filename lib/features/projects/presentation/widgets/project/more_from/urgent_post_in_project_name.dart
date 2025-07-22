@@ -1,14 +1,17 @@
-import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/data/models/priority_model.dart';
-import 'package:blocknet/features/projects/data/services/posts_by_project_id_and_priority_service.dart';
-import 'package:blocknet/features/projects/presentation/widgets/post/post_card/post_card.dart';
-import 'package:blocknet/features/projects/presentation/widgets/post/shared/post_project_title.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/features/projects/data/services/posts_by_project_id_and_priority_service.dart';
+import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/post/shared/post_project_title.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class UrgentPostInProjectName extends StatefulWidget {
-  const UrgentPostInProjectName(
-      {required this.projectName, required this.projectId, super.key});
+  const UrgentPostInProjectName({
+    required this.projectName,
+    required this.projectId,
+    super.key,
+  });
 
   final String projectName;
   final String projectId;
@@ -31,7 +34,9 @@ class _UrgentPostInProjectNameState extends State<UrgentPostInProjectName> {
     setState(() {
       urgentPosts =
           PostsByProjectIdAndPriorityService.fetchPostsByIdAndPriority(
-              widget.projectId, Priority.high);
+            widget.projectId,
+            Priority.high,
+          );
 
       print(urgentPosts);
       print(widget.projectId);
@@ -51,7 +56,9 @@ class _UrgentPostInProjectNameState extends State<UrgentPostInProjectName> {
               children: [
                 StyledBodyText600("Urgent Post In"),
                 PostProjectTitle(
-                    projectTitle: widget.projectName, margin: false)
+                  projectTitle: widget.projectName,
+                  margin: false,
+                ),
               ],
             ),
           ],

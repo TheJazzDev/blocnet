@@ -1,7 +1,7 @@
-import 'package:blocknet/features/projects/presentation/viewmodels/your_projects_view_model.dart';
-import 'package:blocknet/features/projects/presentation/widgets/cards/stat_card.dart';
-import 'package:blocknet/features/projects/presentation/widgets/filter_label/filter_label.dart';
-import 'package:blocknet/features/projects/presentation/widgets/project/project_card/your_project_card.dart';
+import 'package:blocnet/features/projects/presentation/viewmodels/your_projects_view_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/cards/stat_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/filter_label/filter_label.dart';
+import 'package:blocnet/features/projects/presentation/widgets/project/project_card/your_project_card.dart';
 import 'package:flutter/material.dart';
 
 class YourProjectsSection extends StatefulWidget {
@@ -65,7 +65,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
           },
         ),
         const SizedBox(height: 16),
-        _buildYourProjectsSection()
+        _buildYourProjectsSection(),
       ],
     );
   }

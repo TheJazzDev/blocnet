@@ -1,8 +1,8 @@
-import 'package:blocknet/app/theme.dart';
-import 'package:blocknet/features/projects/data/models/post_model.dart';
-import 'package:blocknet/features/projects/data/models/priority_model.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
-import 'package:blocknet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 
 import '../../post/post_details/post_details_dialog.dart';
@@ -41,8 +41,8 @@ class YourProjectCardPost extends StatelessWidget {
           color: post.priority == Priority.high
               ? AppColors.error900
               : post.priority == Priority.mid
-                  ? AppColors.warning900
-                  : AppColors.darkGrey200,
+              ? AppColors.warning900
+              : AppColors.darkGrey200,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -53,23 +53,20 @@ class YourProjectCardPost extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    StyledBodyText500(
-                      getTimeStamp(post.createdAt),
-                      size: 10,
-                    ),
+                    StyledBodyText500(getTimeStamp(post.createdAt), size: 10),
                     const SizedBox(height: 4),
-                    StyledBodyText600(
-                      post.title,
-                      size: 12,
-                    ),
+                    StyledBodyText600(post.title, size: 12),
                   ],
                 ),
               ),
             ),
             Container(
-                margin: EdgeInsets.only(left: 24),
-                child: Icon(Icons.keyboard_arrow_right,
-                    color: AppColors.darkGrey600)),
+              margin: EdgeInsets.only(left: 24),
+              child: Icon(
+                Icons.keyboard_arrow_right,
+                color: AppColors.darkGrey600,
+              ),
+            ),
           ],
         ),
       ),

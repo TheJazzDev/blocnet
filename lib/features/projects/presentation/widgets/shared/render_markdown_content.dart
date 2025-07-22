@@ -1,4 +1,4 @@
-import 'package:blocknet/app/theme.dart';
+import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -18,33 +18,33 @@ class RenderMarkdownContent extends StatelessWidget {
       data: cleanContent(),
       styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
         p: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.darkGrey500,
-              height: 1.8,
-            ),
+          color: AppColors.darkGrey500,
+          height: 1.8,
+        ),
         h1: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              color: AppColors.darkGrey600,
-              height: 2.0,
-            ),
+          color: AppColors.darkGrey600,
+          height: 2.0,
+        ),
         h2: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.darkGrey600,
-              height: 2.2,
-            ),
+          color: AppColors.darkGrey600,
+          height: 2.2,
+        ),
         h3: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: AppColors.darkGrey500,
-              height: 1.6,
-            ),
+          color: AppColors.darkGrey500,
+          height: 1.6,
+        ),
         h4: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColors.darkGrey500,
-              height: 1.5,
-            ),
+          color: AppColors.darkGrey500,
+          height: 1.5,
+        ),
         h5: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.darkGrey500,
-              height: 1.4,
-            ),
+          color: AppColors.darkGrey500,
+          height: 1.4,
+        ),
         h6: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: AppColors.darkGrey500,
-              height: 1.3,
-            ),
+          color: AppColors.darkGrey500,
+          height: 1.3,
+        ),
       ),
       onTapLink: (text, href, title) async {
         if (href != null) {

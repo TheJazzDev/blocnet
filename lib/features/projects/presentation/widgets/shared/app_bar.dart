@@ -1,16 +1,12 @@
-import 'package:blocknet/constants/app_routes.dart';
-import 'package:blocknet/features/projects/presentation/widgets/dividers/dot_divider.dart';
-import 'package:blocknet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
-import 'package:blocknet/shared/styles/app_text_styles.dart';
-import 'package:blocknet/shared/widgets/custom_icon_button.dart';
+import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/projects/presentation/widgets/dividers/dot_divider.dart';
+import 'package:blocnet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
+import 'package:blocnet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/widgets/custom_icon_button.dart';
 import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CustomAppBar({
-    super.key,
-    required this.title,
-    this.backButton = true,
-  });
+  const CustomAppBar({super.key, required this.title, this.backButton = true});
 
   final String title;
   final bool backButton;

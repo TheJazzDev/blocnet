@@ -1,12 +1,13 @@
-import 'package:blocknet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:flutter/material.dart';
 
 class PriorityLabel extends StatelessWidget {
-  const PriorityLabel(
-      {required this.priority,
-      this.isButton = false,
-      this.miniCard = false,
-      super.key});
+  const PriorityLabel({
+    required this.priority,
+    this.isButton = false,
+    this.miniCard = false,
+    super.key,
+  });
 
   final Priority priority;
   final bool isButton;
@@ -39,7 +40,9 @@ class PriorityLabel extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-          vertical: miniCard ? 7 : 8, horizontal: miniCard ? 12 : 14),
+        vertical: miniCard ? 7 : 8,
+        horizontal: miniCard ? 12 : 14,
+      ),
       decoration: BoxDecoration(
         border: Border.all(color: priorityColor, width: miniCard ? 0.7 : 1),
         borderRadius: const BorderRadius.all(Radius.circular(30)),
@@ -65,10 +68,7 @@ class PriorityLabel extends StatelessWidget {
         margin: const EdgeInsets.only(right: 2),
         width: 8,
         height: 8,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }

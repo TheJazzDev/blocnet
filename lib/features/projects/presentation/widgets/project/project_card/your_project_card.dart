@@ -1,5 +1,5 @@
-import 'package:blocknet/features/projects/data/models/project_model.dart';
-import 'package:blocknet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 import '../project_details/project_details_dialog.dart';
 import 'your_project_card_info.dart';

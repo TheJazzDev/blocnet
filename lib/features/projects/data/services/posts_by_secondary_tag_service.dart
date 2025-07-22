@@ -24,7 +24,7 @@ class PostsBySecondaryTagService {
       }
 
       // Fetch the associated admin
-      try {
+      try { 
         admin = dummyAdmins.firstWhere((adm) => adm.id == post.adminId);
       } catch (e) {
         admin = null;
