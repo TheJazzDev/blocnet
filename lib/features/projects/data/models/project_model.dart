@@ -1,8 +1,8 @@
-// import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'admin_model.dart';
 import 'post_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
-// import 'package:crypto/crypto.dart';
 
 class Project {
   final String id;
@@ -15,8 +15,8 @@ class Project {
   final List<Post>? posts;
   final int followersCount;
   final String description;
-  final Set<String> postIds;
   final DateTime createdAt;
+  final Set<String> postIds;
   final PrimaryTag primaryTag;
   // final DateTime? lastEditedAt;
   final Map<String, String?> apps;
@@ -40,7 +40,11 @@ class Project {
     this.postIds = const {},
   });
 
-  Project copyWith({List<Post>? posts, Admin? admin}) {
+  Project copyWith({
+    List<Post>? posts,
+    Admin? admin,
+    String? website,
+  }) {
     return Project(
       id: id,
       logo: logo,
@@ -55,42 +59,37 @@ class Project {
       description: description,
       posts: posts ?? this.posts,
       admin: admin ?? this.admin,
-      website: website ?? website,
+      website: website ?? this.website,
       followersCount: followersCount,
     );
   }
 
-  // Generate a unique hash for the project
-  // String get uniqueHash {
-  //   final content = '$name|$website|${socials.values.join("|")}';
-  //   return sha256.convert(utf8.encode(content)).toString();
-  // }
-
   // Factory method to create a Project from JSON
-  factory Project.fromJson(Map<String, dynamic> json) {
+  factory Project.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    final data = snapshot.data()!;
+
     return Project(
-      id: json['id'],
-      logo: json['logo'],
-      name: json['name'],
-      details: json['details'],
-      adminId: json["adminId"],
-      primaryTag: json['primaryTag'],
-      description: json['description'],
-      createdAt: DateTime.parse(json['createdAt']),
-      followersCount: json['followersCount'] ?? 0,
-      website: json['website'],
-      apps: {'ios': json['iosApp'], 'android': json['androidApp']},
+      id: data['id'],
+      logo: data['logo'],
+      name: data['name'],
+      details: data['details'],
+      adminId: data["adminId"],
+      website: data['website'],
+      description: data['description'],
+      followersCount: data['followersCount'] ?? 0,
+      createdAt: DateTime.parse(data['createdAt']),
+      primaryTag:  PrimaryTag.fromJson(data['primaryTag']),
+      apps: {'ios': data['iosApp'], 'android': data['androidApp']},
       socials: {
-        'github': json['github'],
-        'twitter': json['twitter'],
-        'discord': json['discord'],
-        'telegram': json['telegram'],
+        'github': data['github'],
+        'twitter': data['twitter'],
+        'discord': data['discord'],
+        'telegram': data['telegram'],
       },
-      postIds:
-          (json['postIds'] as List<dynamic>?)
-              ?.map((postId) => postId.toString())
-              .toSet() ??
-          {},
+      postIds: (data['postIds'] as List?)?.whereType<String>().toSet() ?? {},
     );
   }
 
@@ -105,10 +104,10 @@ class Project {
       'website': website,
       'socials': socials,
       'adminId': adminId,
-      'primaryTag': primaryTag,
       'description': description,
       'postIds': postIds.toList(),
       'followersCount': followersCount,
+      'primaryTag': primaryTag.toJson(),
       'createdAt': createdAt.toIso8601String(),
     };
   }

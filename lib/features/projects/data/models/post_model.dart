@@ -1,12 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_model.dart';
 import 'priority_model.dart';
 import 'project_model.dart';
 import 'secondary_tag_model.dart';
 
 class Post {
+  final String id;
   final String title;
   final Admin? admin;
-  final String postId;
   final String adminId;
   final String content;
   final Project? project;
@@ -21,8 +22,8 @@ class Post {
     this.admin,
     this.project,
     this.lastEditedAt,
+    required this.id,
     required this.title,
-    required this.postId,
     required this.content,
     required this.adminId,
     required this.priority,
@@ -32,11 +33,10 @@ class Post {
     required List<SecondaryTag> secondaryTags,
   }) : secondaryTags = secondaryTags.toSet().toList();
 
-  // Copy with to support updates
   Post copyWith({Project? project, Admin? admin}) {
     return Post(
+      id: id,
       title: title,
-      postId: postId,
       content: content,
       adminId: adminId,
       priority: priority,
@@ -50,33 +50,40 @@ class Post {
     );
   }
 
-  // Factory method to create a Post from JSON data
-  factory Post.fromJson(Map<String, dynamic> json) {
+  /// Factory method to create a Post from Firestore DocumentSnapshot
+  factory Post.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
+    final data = snapshot.data()!;
+
     return Post(
-      title: json['title'],
-      postId: json['postId'],
-      adminId: json['adminId'],
-      content: json['content'],
-      projectId: json['projectId'],
-      description: json['description'],
-      createdAt: DateTime.parse(json['createdAt']),
-      priority: Priority.fromJson(json['priority']),
-      lastEditedAt: json['lastEditedAt'] != null
-          ? DateTime.parse(json['lastEditedAt'])
+      id: snapshot.id,
+      title: data['title'],
+      adminId: data['adminId'],
+      content: data['content'],
+      projectId: data['projectId'],
+      description: data['description'],
+      createdAt: DateTime.parse(data['createdAt']),
+      priority: Priority.fromJson(data['priority']),
+      lastEditedAt: data['lastEditedAt'] != null
+          ? DateTime.parse(data['lastEditedAt'])
           : null,
-      secondaryTags: (json['secondaryTags'] as List<dynamic>?)
+      secondaryTags: (data['secondaryTags'] as List<dynamic>?)
               ?.map((tag) => SecondaryTag.fromJson(tag))
               .toList() ??
           [],
     );
   }
 
-  // Method to convert a Post to JSON
+  /// Convert a Post to a JSON Map (for Firestore)
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'title': title,
-      'postId': postId,
       'adminId': adminId,
+      'content': content,
+      'projectId': projectId,
       'description': description,
       'priority': priority.toJson(),
       'createdAt': createdAt.toIso8601String(),
@@ -85,9 +92,8 @@ class Post {
     };
   }
 
-  // Override toString method to provide a custom string representation
   @override
   String toString() {
-    return 'Post(title: $title, postId: $postId, adminId: $adminId, content: $content, projectId: $projectId, description: $description, createdAt: $createdAt, lastEditAt: $lastEditedAt, priority: $priority, secondaryTags: $secondaryTags)';
+    return 'Post(id: $id, title: $title, adminId: $adminId, content: $content, projectId: $projectId, description: $description, createdAt: $createdAt, lastEditedAt: $lastEditedAt, priority: $priority, secondaryTags: $secondaryTags)';
   }
 }

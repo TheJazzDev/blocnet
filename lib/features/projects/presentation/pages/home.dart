@@ -1,5 +1,7 @@
 import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/services/admins_store.dart';
 import 'package:blocnet/services/posts_store.dart';
+import 'package:blocnet/services/projects_store.dart';
 import 'package:provider/provider.dart';
 
 import 'explore/explore.dart';
@@ -24,6 +26,14 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       activeSection = activeButton;
     });
+  }
+
+  @override
+  void initState() {
+    Provider.of<PostsStore>(context, listen: false).fetchPostsOnce();
+    Provider.of<AdminsStore>(context, listen: false).fetchAdminsOnce();
+    Provider.of<ProjectsStore>(context, listen: false).fetchProjectsOnce();
+    super.initState();
   }
 
   @override

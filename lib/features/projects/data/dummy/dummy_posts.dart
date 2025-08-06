@@ -4,7 +4,7 @@ import '../models/priority_model.dart';
 
 List<Post> dummyPosts = [
   Post(
-    postId: 'post1',
+    id: 'post1',
     projectId: 'project1',
     adminId: 'admin1',
     secondaryTags: [
@@ -56,7 +56,7 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 """,
   ),
   Post(
-    postId: 'post2',
+    id: 'post2',
     projectId: 'project1',
     adminId: 'admin2',
     secondaryTags: [
@@ -106,7 +106,7 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 """,
   ),
   Post(
-    postId: 'post3',
+    id: 'post3',
     projectId: 'project3',
     adminId: 'admin3',
     secondaryTags: [
@@ -157,7 +157,7 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 """,
   ),
   Post(
-    postId: 'post4',
+    id: 'post4',
     projectId: 'project3',
     adminId: 'admin3',
     secondaryTags: [
@@ -205,7 +205,7 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 """,
   ),
   Post(
-    postId: 'post5',
+    id: 'post5',
     projectId: 'project1',
     adminId: 'admin3',
     secondaryTags: [SecondaryTag.wallet, SecondaryTag.security],
@@ -249,7 +249,7 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 """,
   ),
   Post(
-    postId: 'post6',
+    id: 'post6',
     projectId: 'project1',
     adminId: 'admin1',
     secondaryTags: [SecondaryTag.staking, SecondaryTag.mining],
@@ -293,7 +293,7 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 """,
   ),
   Post(
-    postId: 'post7',
+    id: 'post7',
     projectId: 'project2',
     adminId: 'admin2',
     secondaryTags: [SecondaryTag.governance, SecondaryTag.nft],
@@ -337,7 +337,7 @@ A major vulnerability has been discovered in the **BitcoinSecure** wallet, poten
 """,
   ),
   Post(
-    postId: 'post8',
+    id: 'post8',
     projectId: 'project1',
     adminId: 'admin1',
     secondaryTags: [SecondaryTag.tokenBurn, SecondaryTag.ido],

@@ -1,136 +1,55 @@
+import 'package:blocnet/services/firestore_service.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 
 class ProjectsStore extends ChangeNotifier {
-  final List<Project> _projects = [
-    Project(
-      id: 'project1',
-      name: 'Alpha Blockchain',
-      logo:
-          'https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg',
-      description:
-          'Alpha Blockchain is a leading platform in decentralized finance and NFTs.',
-      primaryTag: PrimaryTag.solana,
-      followersCount: 12000,
-      adminId: 'admin1',
-      website: 'https://alphablockchain.com',
-      socials: {
-        'twitter': 'https://twitter.com/alphablockchain',
-        'discord': 'https://discord.gg/alphablockchain',
-        'telegram': null,
-        'github': 'https://github.com/alphablockchain',
-      },
-      apps: {
-        'android':
-            'https://play.google.com/store/apps/details?id=alphablockchain',
-        'ios': 'https://apps.apple.com/app/alphablockchain',
-      },
-      createdAt: DateTime.parse('2021-01-03'),
-      postIds: {'post1', 'post2', 'post3'},
-      details: '''
-# Alpha Blockchain
+  final List<Project> _projects = [];
 
-- **Description**: Alpha Blockchain is a leading platform in decentralized finance and NFTs.
-- **Primary Tag**: Solana
-- **Followers**: 12,000
-- **Website**: [alphablockchain.com](https://alphablockchain.com)
-- **Socials**:
-  - [Twitter](https://twitter.com/alphablockchain)
-  - [Discord](https://discord.gg/alphablockchain)
-  - GitHub: [alphablockchain](https://github.com/alphablockchain)
-- **Apps**:
-  - [Android](https://play.google.com/store/apps/details?id=alphablockchain)
-  - [iOS](https://apps.apple.com/app/alphablockchain)
-- **Created At**: January 3, 2021
-- **Posts**: Post1, Post2, Post3
+  List<Project> get projects => _projects;
 
-![Alpha Blockchain Logo](https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg)
-    ''',
-    ),
-    Project(
-      id: 'project2',
-      name: 'Beta Network',
-      logo:
-          'https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg',
-      description:
-          'Beta Network powers decentralized applications for the metaverse.',
-      primaryTag: PrimaryTag.ethereum,
-      followersCount: 8000,
-      adminId: 'admin2',
-      website: 'https://betanetwork.com',
-      socials: {
-        'twitter': 'https://twitter.com/betanetwork',
-        'discord': 'https://discord.gg/betanetwork',
-        'telegram': 'https://t.me/betanetwork',
-        'github': null,
-      },
-      apps: {'android': null, 'ios': 'https://apps.apple.com/app/betanetwork'},
-      createdAt: DateTime.parse('2024-11-09'),
-      postIds: {'post4', 'post5', 'post6'},
-      details: '''
-# Beta Network
+  // Fetch initial posts from Firestore
+  void fetchProjectsOnce() async {
+    if (_projects.isNotEmpty) return;
 
-- **Description**: Beta Network powers decentralized applications for the metaverse.
-- **Primary Tag**: Ethereum
-- **Followers**: 8,000
-- **Website**: [betanetwork.com](https://betanetwork.com)
-- **Socials**:
-  - [Twitter](https://twitter.com/betanetwork)
-  - [Discord](https://discord.gg/betanetwork)
-  - [Telegram](https://t.me/betanetwork)
-- **Apps**:
-  - iOS: [Beta Network](https://apps.apple.com/app/betanetwork)
-- **Created At**: November 9, 2024
-- **Posts**: Post4, Post5, Post6
+    final snapshot = await FirestoreService.getProjectsOnce();
+    final postSnapshot = await FirestoreService.getPostsOnce();
+    final adminSnapshot = await FirestoreService.getAdminsOnce();
 
-![Beta Network Logo](https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg)
-    ''',
-    ),
-    Project(
-      id: 'project3',
-      name: 'BlocNet',
-      logo:
-          'https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg',
-      description: 'Top community update/networking mobile application.',
-      primaryTag: PrimaryTag.ethereum,
-      followersCount: 8000,
-      adminId: 'admin3',
-      website: 'https://blocnet.com',
-      socials: {
-        'twitter': 'https://twitter.com/blocnet',
-        'discord': 'https://discord.gg/blocnet',
-        'telegram': 'https://t.me/blocnet',
-        'github': null,
-      },
-      apps: {'android': null, 'ios': 'https://apps.apple.com/app/blocnet'},
-      createdAt: DateTime.parse('2020-05-20'),
-      postIds: {'post7', 'post8'},
-      details: '''
-# BlocNet
+    for (var doc in snapshot.docs) {
+      final project = doc.data();
 
-- **Description**: Top community update/networking mobile application.
-- **Primary Tag**: Ethereum
-- **Followers**: 8,000
-- **Website**: [blocnet.com](https://blocnet.com)
-- **Socials**:
-  - [Twitter](https://twitter.com/blocnet)
-  - [Discord](https://discord.gg/blocnet)
-  - [Telegram](https://t.me/blocnet)
-- **Apps**:
-  - iOS: [BlocNet](https://apps.apple.com/app/blocnet)
-- **Created At**: May 20, 2020
-- **Posts**: Post7, Post8
+      final posts = postSnapshot.docs
+          .where((p) => p.data().projectId == project.id)
+          .map((p) => p.data())
+          .toList();
 
-![BlocNet Logo](https://pbs.twimg.com/profile_images/1642449081371959297/YlF36jXl_400x400.jpg)
-    ''',
-    ),
-  ];
+      final admin = adminSnapshot.docs
+          .firstWhere(
+            (a) => a.data().id == project.adminId,
+          )
+          .data();
 
-  get projects => _projects;
+      _projects.add(project.copyWith(posts: posts, admin: admin));
+    }
+    notifyListeners();
+  }
 
   void addProject(Project project) {
     _projects.add(project);
     notifyListeners();
+  }
+
+  void removeProject(String projectId) {
+    _projects.removeWhere((project) => project.id == projectId);
+    notifyListeners();
+  }
+
+  void updateProject(Project updatedProject) {
+    final index =
+        _projects.indexWhere((project) => project.id == updatedProject.id);
+    if (index != -1) {
+      _projects[index] = updatedProject;
+      notifyListeners();
+    }
   }
 }

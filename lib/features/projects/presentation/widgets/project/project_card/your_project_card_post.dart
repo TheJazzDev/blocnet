@@ -20,7 +20,7 @@ class YourProjectCardPost extends StatelessWidget {
         barrierDismissible: true,
         barrierLabel: 'Dismiss',
         pageBuilder: (context, animation, secondaryAnimation) {
-          return PostDetailsDialog(postId: post.postId);
+          return PostDetailsDialog(id: post.id);
         },
         transitionDuration: const Duration(milliseconds: 300),
         transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -41,8 +41,8 @@ class YourProjectCardPost extends StatelessWidget {
           color: post.priority == Priority.high
               ? AppColors.error900
               : post.priority == Priority.mid
-              ? AppColors.warning900
-              : AppColors.darkGrey200,
+                  ? AppColors.warning900
+                  : AppColors.darkGrey200,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,

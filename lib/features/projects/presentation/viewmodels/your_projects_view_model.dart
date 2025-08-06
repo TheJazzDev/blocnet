@@ -1,5 +1,5 @@
 import 'package:blocnet/features/projects/data/models/project_model.dart';
-import 'package:blocnet/features/projects/data/services/all_projects_service.dart';
+import 'package:blocnet/services/projects_store.dart';
 
 class YourProjectsViewModel {
   final List<Project> allProjects = [];
@@ -7,13 +7,8 @@ class YourProjectsViewModel {
   final Set<String> allPrimaryTags = {};
   final Set<String> selectedFilters = {};
 
-  YourProjectsViewModel() {
-    _loadProjects();
-  }
-
-  void _loadProjects() {
-    final projects = AllProjectsService.getAllProjects();
-    allProjects.addAll(projects);
+  YourProjectsViewModel(ProjectsStore store) {
+    allProjects.addAll(store.projects);
     _extractPrimaryTags();
     _applyFilters();
   }

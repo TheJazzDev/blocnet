@@ -15,7 +15,7 @@ class ProjectByIdService {
     List<Post>? posts;
     try {
       posts = dummyPosts
-          .where((post) => fetchedProject.postIds.contains(post.postId))
+          .where((post) => fetchedProject.postIds.contains(post.id))
           .toList();
     } catch (e) {
       posts = null;

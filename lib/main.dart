@@ -1,6 +1,7 @@
 import 'package:blocnet/app/router.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/services/admins_store.dart';
+import 'package:blocnet/services/app_store.dart';
 import 'package:blocnet/services/posts_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
@@ -27,8 +28,10 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AppStore()),
         ChangeNotifierProvider(create: (_) => PostsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),
+        // ChangeNotifierProvider(create: (_) => PriorityStore()),
         ChangeNotifierProvider(create: (_) => ProjectsStore()),
       ],
       child: MaterialApp(

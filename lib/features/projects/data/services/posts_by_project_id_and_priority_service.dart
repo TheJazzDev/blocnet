@@ -17,7 +17,7 @@ class PostsByProjectIdAndPriorityService {
 
     // Filter posts by the fetched postIds and the given priority
     final fetchedPosts = dummyPosts.where((post) {
-      return postIds.contains(post.postId) && post.priority == priority;
+      return postIds.contains(post.id) && post.priority == priority;
     }).map((post) {
       Project? project;
       Admin? admin;

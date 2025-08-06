@@ -1,39 +1,21 @@
-import 'package:blocnet/features/projects/data/models/post_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocnet/features/projects/data/services/posts_by_primary_tag_service.dart';
 import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
+import 'package:blocnet/services/posts_store.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class MoreFromPrimaryTag extends StatefulWidget {
+class MoreFromPrimaryTag extends StatelessWidget {
   const MoreFromPrimaryTag({required this.primaryTag, super.key});
 
   final PrimaryTag primaryTag;
 
   @override
-  State<MoreFromPrimaryTag> createState() => _MoreFromPrimaryTagState();
-}
-
-class _MoreFromPrimaryTagState extends State<MoreFromPrimaryTag> {
-  late List<Post> morePosts = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPosts();
-  }
-
-  void _loadPosts() {
-    setState(() {
-      morePosts = PostsByPrimaryTagService.fetchPostsByPrimaryTag(
-        widget.primaryTag,
-      );
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final postStore = Provider.of<PostsStore>(context);
+    final morePosts = postStore.getPostsByPrimaryTag(primaryTag, context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -44,7 +26,7 @@ class _MoreFromPrimaryTagState extends State<MoreFromPrimaryTag> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 StyledBodyText600("More From"),
-                PrimaryLabel(primaryTag: widget.primaryTag),
+                PrimaryLabel(primaryTag: primaryTag),
               ],
             ),
           ],
