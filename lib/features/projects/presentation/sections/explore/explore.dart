@@ -1,6 +1,6 @@
 import 'package:blocnet/features/projects/data/models/post_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
-import 'package:blocnet/features/projects/routes.dart';
+import 'package:blocnet/routes/protected_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/data/dummy/dummy_posts.dart';
 import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
@@ -26,14 +26,14 @@ class ExploreSection extends StatelessWidget {
                   label: 'Trending',
                   iconName: 'timeline',
                   onTap: () =>
-                      Navigator.pushNamed(context, ProjectRoutes.trending),
+                      Navigator.pushNamed(context, ProtectedRoutes.trending),
                 ),
                 TagCard(
                   label: 'High Urgency',
                   iconName: 'emergency',
                   onTap: () => Navigator.pushNamed(
                     context,
-                    ProjectRoutes.highPriority,
+                    ProtectedRoutes.highPriority,
                     arguments: {'priority': Priority.high},
                   ),
                 ),
@@ -42,7 +42,7 @@ class ExploreSection extends StatelessWidget {
                   iconName: 'brightness',
                   onTap: () => Navigator.pushNamed(
                     context,
-                    ProjectRoutes.midPriority,
+                    ProtectedRoutes.midPriority,
                     arguments: {'priority': Priority.mid},
                   ),
                 ),
@@ -51,7 +51,7 @@ class ExploreSection extends StatelessWidget {
                   iconName: 'calm',
                   onTap: () => Navigator.pushNamed(
                     context,
-                    ProjectRoutes.lowPriority,
+                    ProtectedRoutes.lowPriority,
                     arguments: {'priority': Priority.low},
                   ),
                 ),

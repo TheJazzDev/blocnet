@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/auth/routes.dart';
-import 'package:blocnet/features/projects/routes.dart';
+import 'package:blocnet/routes/protected_routes.dart';
 
 class CustomAppRouter {
   static Map<String, WidgetBuilder> getRoutes() {
-    return {...AuthRoutes.getAll(), ...ProjectRoutes.getAll()};
+    return {...AuthRoutes.getAll(), ...ProtectedRoutes.getAll()};
   }
 
   static Route<dynamic> generateRoute(RouteSettings settings) {

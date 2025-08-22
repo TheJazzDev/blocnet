@@ -43,7 +43,6 @@ class FirestoreService {
     }
   }
 
-  // delete a post by ID
   static Future<void> deletePost(String id) async {
     try {
       await postCollections.doc(id).delete();

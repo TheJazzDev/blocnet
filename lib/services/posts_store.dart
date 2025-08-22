@@ -3,7 +3,6 @@ import 'package:blocnet/services/firestore_service.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/data/models/post_model.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 
 class PostsStore extends ChangeNotifier {

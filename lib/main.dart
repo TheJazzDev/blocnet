@@ -38,7 +38,7 @@ void main() async {
         debugShowCheckedModeBanner: false,
         theme: primaryTheme,
         onGenerateRoute: CustomAppRouter.generateRoute,
-        initialRoute: AppRoutes.signIn,
+        initialRoute: AppRoutes.main,
         onUnknownRoute: (settings) =>
             MaterialPageRoute(builder: (context) => const PageNotFoundScreen()),
       ),

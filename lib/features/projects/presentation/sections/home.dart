@@ -1,11 +1,7 @@
 import 'package:blocnet/features/projects/data/models/post_model.dart';
-import 'package:blocnet/services/admins_store.dart';
 import 'package:blocnet/services/posts_store.dart';
-import 'package:blocnet/services/projects_store.dart';
 import 'package:provider/provider.dart';
-
 import 'explore/explore.dart';
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
@@ -31,8 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     Provider.of<PostsStore>(context, listen: false).fetchPostsOnce();
-    Provider.of<AdminsStore>(context, listen: false).fetchAdminsOnce();
-    Provider.of<ProjectsStore>(context, listen: false).fetchProjectsOnce();
+    // Provider.of<AdminsStore>(context, listen: false).fetchAdminsOnce();
+    // Provider.of<ProjectsStore>(context, listen: false).fetchProjectsOnce();
     super.initState();
   }
 
@@ -40,32 +36,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: 'Blocnet'),
-      body: RefreshIndicator(
-        color: AppColors.primary400,
-        backgroundColor: AppColors.darkGrey300,
-        onRefresh: () async {
-          await Future.delayed(const Duration(seconds: 2));
-        },
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                StyledToggleButton(
-                  section1: Sections.forYou,
-                  section2: Sections.explore,
-                  activeSection: activeSection,
-                  onToggle: _handleToggle,
-                ),
-                const SizedBox(height: 16),
-                Consumer<PostsStore>(builder: (context, store, _) {
-                  return activeSection == Sections.forYou
-                      ? _buildForYouSection(store.posts)
-                      : ExploreSection(allPosts: store.posts);
-                })
-              ],
-            ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StyledToggleButton(
+                section1: Sections.forYou,
+                section2: Sections.explore,
+                activeSection: activeSection,
+                onToggle: _handleToggle,
+              ),
+              const SizedBox(height: 16),
+              Consumer<PostsStore>(builder: (context, store, _) {
+                return activeSection == Sections.forYou
+                    ? _buildForYouSection(store.posts)
+                    : ExploreSection(allPosts: store.posts);
+              })
+            ],
           ),
         ),
       ),

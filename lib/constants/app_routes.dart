@@ -1,5 +1,8 @@
 class AppRoutes {
   // Global route
+  static const String main = '/main';
+  static const String profile = '/profile';
+  static const String settings = '/settings';
   static const String notifications = '/notifications';
 
   // Auth routes

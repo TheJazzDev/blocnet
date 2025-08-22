@@ -57,6 +57,12 @@ ThemeData primaryTheme = ThemeData(
     centerTitle: true,
   ),
 
+  bottomNavigationBarTheme: BottomNavigationBarThemeData(
+    backgroundColor: AppColors.darkGrey50,
+    selectedItemColor: AppColors.primary500,
+    unselectedItemColor: AppColors.textColor,
+  ),
+
   // text theme
   textTheme: TextTheme(
     // Used
