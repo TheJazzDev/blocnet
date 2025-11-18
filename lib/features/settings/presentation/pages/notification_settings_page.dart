@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
-import '../../data/models/settings_model.dart';
 import '../../../../core/utils/helpers.dart';
 
 class NotificationSettingsPage extends StatelessWidget {

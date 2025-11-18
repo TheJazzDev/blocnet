@@ -130,7 +130,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            timeago.format(_post!.createdAt.toDate()),
+                            timeago.format(_post!.createdAt),
                             style: TextStyle(color: Colors.grey.shade600),
                           ),
                         ],
@@ -307,7 +307,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        timeago.format(comment.createdAt.toDate()),
+                        timeago.format(comment.createdAt),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,

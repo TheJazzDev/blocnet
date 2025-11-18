@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../providers/admin_provider.dart';
 import '../../../projects/data/models/post_model.dart';
+import '../../../projects/data/models/post_type_model.dart';
 import '../../../../core/utils/helpers.dart';
 
 class CreatePostPage extends StatefulWidget {
@@ -145,10 +146,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                       ),
                     ),
                     child: quill.QuillToolbar.simple(
-                      configurations: quill.QuillSimpleToolbarConfigurations(
-                        controller: _quillController,
-                        sharedConfigurations: const quill.QuillSharedConfigurations(),
-                      ),
+                      controller: _quillController,
                     ),
                   ),
                   const Divider(height: 1),
@@ -157,12 +155,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     height: 300,
                     padding: const EdgeInsets.all(12),
                     child: quill.QuillEditor.basic(
-                      configurations: quill.QuillEditorConfigurations(
-                        controller: _quillController,
-                        sharedConfigurations: const quill.QuillSharedConfigurations(
-                          locale: Locale('en'),
-                        ),
-                      ),
+                      controller: _quillController,
                     ),
                   ),
                 ],

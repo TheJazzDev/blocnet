@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_model.dart';
+import 'post_type_model.dart';
 import 'priority_model.dart';
 import 'project_model.dart';
 import 'secondary_tag_model.dart';
@@ -13,6 +14,8 @@ class Post {
   final Project? project;
   final String projectId;
   final Priority priority;
+  final PostType type;
+  final String? image;
   final String description;
   final DateTime createdAt;
   final DateTime? lastEditedAt;
@@ -26,8 +29,10 @@ class Post {
     this.admin,
     this.project,
     this.lastEditedAt,
+    this.image,
     required this.id,
     required this.title,
+    required this.type,
     required this.content,
     required this.adminId,
     required this.priority,
@@ -56,6 +61,8 @@ class Post {
     return Post(
       id: id,
       title: title,
+      type: type,
+      image: image,
       content: content,
       adminId: adminId,
       priority: priority,
@@ -87,6 +94,8 @@ class Post {
       content: data['content'],
       projectId: data['projectId'],
       description: data['description'],
+      type: PostType.fromJson(data['type']),
+      image: data['image'] as String?,
       createdAt: DateTime.parse(data['createdAt']),
       priority: Priority.fromJson(data['priority']),
       lastEditedAt: data['lastEditedAt'] != null
@@ -109,6 +118,8 @@ class Post {
     return {
       'id': id,
       'title': title,
+      'type': type.toJson(),
+      'image': image,
       'adminId': adminId,
       'content': content,
       'projectId': projectId,
@@ -122,6 +133,11 @@ class Post {
       'commentsCount': commentsCount,
       'viewsCount': viewsCount,
     };
+  }
+
+  /// Convert a Post to Firestore format
+  Map<String, dynamic> toFirestore() {
+    return toJson();
   }
 
   bool isLikedByUser(String userId) {

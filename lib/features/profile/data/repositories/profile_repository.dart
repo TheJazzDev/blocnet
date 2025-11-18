@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../auth/data/models/app_user_model.dart';
-import '../../projects/data/models/project_model.dart';
-import '../../projects/data/models/post_model.dart';
-import '../data/models/activity_model.dart';
+import '../../../auth/data/models/app_user_model.dart';
+import '../../../projects/data/models/project_model.dart';
+import '../../../projects/data/models/post_model.dart';
+import '../models/activity_model.dart';
 
 class ProfileRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

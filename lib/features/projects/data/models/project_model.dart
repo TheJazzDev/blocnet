@@ -11,6 +11,7 @@ class Project {
   final Admin? admin;
   final String adminId;
   final String details;
+  final String category;
   final String? website;
   final List<Post>? posts;
   final int followersCount;
@@ -33,6 +34,7 @@ class Project {
     required this.logo,
     required this.name,
     required this.details,
+    required this.category,
     required this.adminId,
     required this.createdAt,
     this.lastEditedAt,
@@ -68,6 +70,7 @@ class Project {
       adminId: adminId,
       postIds: postIds,
       details: details,
+      category: category,
       createdAt: createdAt,
       lastEditedAt: lastEditedAt ?? this.lastEditedAt,
       primaryTag: primaryTag,
@@ -94,6 +97,7 @@ class Project {
       logo: data['logo'],
       name: data['name'],
       details: data['details'],
+      category: data['category'] ?? '',
       adminId: data["adminId"],
       website: data['website'],
       description: data['description'],
@@ -125,6 +129,7 @@ class Project {
       'apps': apps,
       'name': name,
       'details': details,
+      'category': category,
       'website': website,
       'socials': socials,
       'adminId': adminId,
@@ -138,6 +143,11 @@ class Project {
       'createdAt': createdAt.toIso8601String(),
       'lastEditedAt': lastEditedAt?.toIso8601String(),
     };
+  }
+
+  /// Convert a Project to Firestore format
+  Map<String, dynamic> toFirestore() {
+    return toJson();
   }
 
   bool isFollowedByUser(String userId) {

@@ -20,7 +20,7 @@ class AdminPostRepository {
 
     // Create post document
     final postRef = _firestore.collection('posts').doc();
-    final now = Timestamp.now();
+    final now = Timestamp.now().toDate();
 
     String? imageUrl;
     if (imagePath != null) {
@@ -77,7 +77,7 @@ class AdminPostRepository {
     await _firestore.collection('posts').doc(postId).update({
       'title': title,
       'content': content,
-      'type': type.toString().split('.').last,
+      'type': type.toJson(),
       if (imageUrl != null) 'image': imageUrl,
       'lastEditedAt': FieldValue.serverTimestamp(),
     });

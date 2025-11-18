@@ -102,7 +102,7 @@ class AuthService {
       });
 
       return AppUser.fromFirestore(
-        docSnapshot as DocumentSnapshot<Map<String, dynamic>>,
+        docSnapshot,
         null,
       );
     } else {
@@ -130,7 +130,7 @@ class AuthService {
       if (!doc.exists) return null;
 
       return AppUser.fromFirestore(
-        doc as DocumentSnapshot<Map<String, dynamic>>,
+        doc,
         null,
       );
     } catch (e) {

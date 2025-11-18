@@ -21,7 +21,7 @@ class AdminProjectRepository {
 
     // Create project document
     final projectRef = _firestore.collection('projects').doc();
-    final now = Timestamp.now();
+    final now = Timestamp.now().toDate();
 
     String? logoUrl;
     if (imagePath != null) {

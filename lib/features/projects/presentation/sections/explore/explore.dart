@@ -2,7 +2,6 @@ import 'package:blocnet/features/projects/data/models/post_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/features/projects/data/dummy/dummy_posts.dart';
 import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/cards/tag_card.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
@@ -64,7 +63,7 @@ class ExploreSection extends StatelessWidget {
           ListView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
-            itemCount: dummyPosts.length,
+            itemCount: allPosts.length,
             itemBuilder: (context, index) {
               return PostCard(post: allPosts[index]);
             },

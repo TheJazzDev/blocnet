@@ -117,7 +117,7 @@ class ManageProjectPostsPage extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
-              timeago.format(post.createdAt.toDate()),
+              timeago.format(post.createdAt),
             ),
             trailing: PopupMenuButton(
               itemBuilder: (context) => [

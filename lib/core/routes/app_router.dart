@@ -28,7 +28,6 @@ import '../../features/projects/presentation/sections/explore/explore.dart';
 import '../../features/projects/presentation/sections/explore/trending.dart';
 import '../../features/projects/presentation/sections/explore/priority.dart';
 import '../../features/projects/presentation/sections/projects/discover.dart';
-import '../../screen/notifications.dart';
 import 'route_names.dart';
 
 class AppRouter {

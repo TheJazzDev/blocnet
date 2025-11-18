@@ -334,7 +334,7 @@ class _SearchPageState extends State<SearchPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${post.likesCount} likes • ${timeago.format(post.createdAt.toDate())}',
+              '${post.likesCount} likes • ${timeago.format(post.createdAt)}',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
           ],
