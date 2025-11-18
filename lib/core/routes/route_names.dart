@@ -41,4 +41,5 @@ class RouteNames {
   static const String createPost = '/create-post';
   static const String editPost = '/edit-post';
   static const String manageProjects = '/manage-projects';
+  static const String manageProjectPosts = '/manage-project-posts';
 }

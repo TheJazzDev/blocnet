@@ -11,6 +11,17 @@ import '../../features/settings/presentation/pages/account_settings_page.dart';
 import '../../features/settings/presentation/pages/about_page.dart';
 import '../../features/settings/presentation/pages/help_page.dart';
 import '../../features/settings/presentation/pages/privacy_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../../features/admin/presentation/pages/create_project_page.dart';
+import '../../features/admin/presentation/pages/edit_project_page.dart';
+import '../../features/admin/presentation/pages/create_post_page.dart';
+import '../../features/admin/presentation/pages/edit_post_page.dart';
+import '../../features/admin/presentation/pages/manage_projects_page.dart';
+import '../../features/admin/presentation/pages/manage_project_posts_page.dart';
+import '../../features/search/presentation/pages/search_page.dart';
+import '../../features/projects/presentation/pages/post_detail_page.dart';
+import '../../features/projects/presentation/pages/project_detail_page.dart';
 import '../../screen/main_screen.dart';
 import '../../features/projects/presentation/sections/home.dart';
 import '../../features/projects/presentation/sections/explore/explore.dart';
@@ -43,6 +54,18 @@ class AppRouter {
       case RouteNames.home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
 
+      case RouteNames.projectDetail:
+        final projectId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => ProjectDetailPage(projectId: projectId),
+        );
+
+      case RouteNames.postDetail:
+        final postId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => PostDetailPage(postId: postId),
+        );
+
       case RouteNames.explore:
         return MaterialPageRoute(
           builder: (_) => ExploreSection(allPosts: const []),
@@ -56,6 +79,9 @@ class AppRouter {
 
       case RouteNames.priority:
         return MaterialPageRoute(builder: (_) => const PriorityScreens());
+
+      case RouteNames.search:
+        return MaterialPageRoute(builder: (_) => const SearchPage());
 
       // Profile & Settings
       case RouteNames.profile:
@@ -87,7 +113,41 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const PrivacyPage());
 
       case RouteNames.notifications:
-        return MaterialPageRoute(builder: (_) => const NotificationsScreen());
+        return MaterialPageRoute(builder: (_) => const NotificationsPage());
+
+      // Admin routes
+      case RouteNames.adminDashboard:
+        return MaterialPageRoute(builder: (_) => const AdminDashboardPage());
+
+      case RouteNames.createProject:
+        return MaterialPageRoute(builder: (_) => const CreateProjectPage());
+
+      case RouteNames.editProject:
+        final project = settings.arguments;
+        return MaterialPageRoute(
+          builder: (_) => EditProjectPage(project: project as dynamic),
+        );
+
+      case RouteNames.createPost:
+        final projectId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => CreatePostPage(projectId: projectId),
+        );
+
+      case RouteNames.editPost:
+        final post = settings.arguments;
+        return MaterialPageRoute(
+          builder: (_) => EditPostPage(post: post as dynamic),
+        );
+
+      case RouteNames.manageProjects:
+        return MaterialPageRoute(builder: (_) => const ManageProjectsPage());
+
+      case RouteNames.manageProjectPosts:
+        final projectId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => ManageProjectPostsPage(projectId: projectId),
+        );
 
       // Default - 404
       default:
