@@ -1,0 +1,21 @@
+{
+  "name": "blocnet",
+  "description": "Community driven blockchain networking app built with Flutter",
+  "version": "1.0.0",
+  "hooks": {
+    "sessionStart": ".claude/hooks/SessionStart.sh"
+  },
+  "ignore": [
+    "build/",
+    ".dart_tool/",
+    "**/*.g.dart",
+    "**/*.freezed.dart",
+    "**/*.mocks.dart",
+    ".flutter-plugins",
+    ".flutter-plugins-dependencies",
+    "ios/Pods/",
+    "android/.gradle/",
+    "android/build/",
+    "*.log"
+  ]
+}
