@@ -49,6 +49,7 @@ dependencies:
   url_launcher: ^6.3.1
   timeago: ^3.7.0
   share_plus: ^10.0.2
+  shared_preferences: ^2.3.3
 
   # Markdown & Rich Text
   flutter_markdown: ^0.7.4+3
