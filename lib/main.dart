@@ -2,6 +2,9 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/core/routes/app_router.dart';
 import 'package:blocnet/core/routes/route_names.dart';
 import 'package:blocnet/features/auth/presentation/providers/auth_provider.dart';
+import 'package:blocnet/features/profile/presentation/providers/profile_provider.dart';
+import 'package:blocnet/features/settings/presentation/providers/theme_provider.dart';
+import 'package:blocnet/features/settings/presentation/providers/settings_provider.dart';
 import 'package:blocnet/features/projects/presentation/providers/interactions_provider.dart';
 import 'package:blocnet/services/admins_store.dart';
 import 'package:blocnet/services/app_store.dart';
@@ -38,6 +41,13 @@ class BlocNetApp extends StatelessWidget {
       providers: [
         // Auth
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+
+        // Profile
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+
+        // Settings
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
 
         // Interactions
         ChangeNotifierProvider(create: (_) => InteractionsProvider()),
