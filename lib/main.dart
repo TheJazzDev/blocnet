@@ -1,16 +1,17 @@
-import 'package:blocnet/app/router.dart';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/core/routes/app_router.dart';
+import 'package:blocnet/core/routes/route_names.dart';
+import 'package:blocnet/features/auth/presentation/providers/auth_provider.dart';
+import 'package:blocnet/features/projects/presentation/providers/interactions_provider.dart';
 import 'package:blocnet/services/admins_store.dart';
 import 'package:blocnet/services/app_store.dart';
 import 'package:blocnet/services/posts_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'constants/app_routes.dart';
-import 'screen/page_not_found.dart';
 import 'package:provider/provider.dart';
 
-// firebase
+// Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -22,26 +23,38 @@ void main() async {
   );
 
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  await Future.delayed(Duration(seconds: 3));
+  await Future.delayed(const Duration(seconds: 2));
   FlutterNativeSplash.remove();
 
-  runApp(
-    MultiProvider(
+  runApp(const BlocNetApp());
+}
+
+class BlocNetApp extends StatelessWidget {
+  const BlocNetApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
       providers: [
+        // Auth
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+
+        // Interactions
+        ChangeNotifierProvider(create: (_) => InteractionsProvider()),
+
+        // App State
         ChangeNotifierProvider(create: (_) => AppStore()),
         ChangeNotifierProvider(create: (_) => PostsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),
-        // ChangeNotifierProvider(create: (_) => PriorityStore()),
         ChangeNotifierProvider(create: (_) => ProjectsStore()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        title: 'BlocNet',
         theme: primaryTheme,
-        onGenerateRoute: CustomAppRouter.generateRoute,
-        initialRoute: AppRoutes.main,
-        onUnknownRoute: (settings) =>
-            MaterialPageRoute(builder: (context) => const PageNotFoundScreen()),
+        onGenerateRoute: AppRouter.generateRoute,
+        initialRoute: RouteNames.splash,
       ),
-    ),
-  );
+    );
+  }
 }
