@@ -14,11 +14,14 @@ class Project {
   final String? website;
   final List<Post>? posts;
   final int followersCount;
+  final List<String> followerIds;
+  final int postsCount;
+  final int totalLikes;
   final String description;
   final DateTime createdAt;
+  final DateTime? lastEditedAt;
   final Set<String> postIds;
   final PrimaryTag primaryTag;
-  // final DateTime? lastEditedAt;
   final Map<String, String?> apps;
   final Map<String, String?> socials;
 
@@ -32,18 +35,29 @@ class Project {
     required this.details,
     required this.adminId,
     required this.createdAt,
+    this.lastEditedAt,
     required this.primaryTag,
     required this.description,
     required this.followersCount,
+    List<String>? followerIds,
+    int? postsCount,
+    int? totalLikes,
     this.apps = const {},
     this.socials = const {},
     this.postIds = const {},
-  });
+  })  : followerIds = followerIds ?? [],
+        postsCount = postsCount ?? 0,
+        totalLikes = totalLikes ?? 0;
 
   Project copyWith({
     List<Post>? posts,
     Admin? admin,
     String? website,
+    List<String>? followerIds,
+    int? followersCount,
+    int? postsCount,
+    int? totalLikes,
+    DateTime? lastEditedAt,
   }) {
     return Project(
       id: id,
@@ -55,12 +69,16 @@ class Project {
       postIds: postIds,
       details: details,
       createdAt: createdAt,
+      lastEditedAt: lastEditedAt ?? this.lastEditedAt,
       primaryTag: primaryTag,
       description: description,
       posts: posts ?? this.posts,
       admin: admin ?? this.admin,
       website: website ?? this.website,
-      followersCount: followersCount,
+      followersCount: followersCount ?? this.followersCount,
+      followerIds: followerIds ?? this.followerIds,
+      postsCount: postsCount ?? this.postsCount,
+      totalLikes: totalLikes ?? this.totalLikes,
     );
   }
 
@@ -80,8 +98,14 @@ class Project {
       website: data['website'],
       description: data['description'],
       followersCount: data['followersCount'] ?? 0,
+      followerIds: (data['followerIds'] as List?)?.cast<String>() ?? [],
+      postsCount: data['postsCount'] ?? 0,
+      totalLikes: data['totalLikes'] ?? 0,
       createdAt: DateTime.parse(data['createdAt']),
-      primaryTag:  PrimaryTag.fromJson(data['primaryTag']),
+      lastEditedAt: data['lastEditedAt'] != null
+          ? DateTime.parse(data['lastEditedAt'])
+          : null,
+      primaryTag: PrimaryTag.fromJson(data['primaryTag']),
       apps: {'ios': data['iosApp'], 'android': data['androidApp']},
       socials: {
         'github': data['github'],
@@ -107,8 +131,17 @@ class Project {
       'description': description,
       'postIds': postIds.toList(),
       'followersCount': followersCount,
+      'followerIds': followerIds,
+      'postsCount': postsCount,
+      'totalLikes': totalLikes,
       'primaryTag': primaryTag.toJson(),
       'createdAt': createdAt.toIso8601String(),
+      'lastEditedAt': lastEditedAt?.toIso8601String(),
     };
   }
+
+  bool isFollowedByUser(String userId) {
+    return followerIds.contains(userId);
+  }
 }
+

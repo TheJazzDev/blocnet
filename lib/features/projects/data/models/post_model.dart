@@ -17,6 +17,10 @@ class Post {
   final DateTime createdAt;
   final DateTime? lastEditedAt;
   final List<SecondaryTag> secondaryTags;
+  final List<String> likedByUserIds;
+  final int likesCount;
+  final int commentsCount;
+  final int viewsCount;
 
   Post({
     this.admin,
@@ -31,9 +35,24 @@ class Post {
     required this.projectId,
     required this.description,
     required List<SecondaryTag> secondaryTags,
-  }) : secondaryTags = secondaryTags.toSet().toList();
+    List<String>? likedByUserIds,
+    int? likesCount,
+    int? commentsCount,
+    int? viewsCount,
+  })  : secondaryTags = secondaryTags.toSet().toList(),
+        likedByUserIds = likedByUserIds ?? [],
+        likesCount = likesCount ?? 0,
+        commentsCount = commentsCount ?? 0,
+        viewsCount = viewsCount ?? 0;
 
-  Post copyWith({Project? project, Admin? admin}) {
+  Post copyWith({
+    Project? project,
+    Admin? admin,
+    List<String>? likedByUserIds,
+    int? likesCount,
+    int? commentsCount,
+    int? viewsCount,
+  }) {
     return Post(
       id: id,
       title: title,
@@ -47,6 +66,10 @@ class Post {
       admin: admin ?? this.admin,
       secondaryTags: secondaryTags,
       project: project ?? this.project,
+      likedByUserIds: likedByUserIds ?? this.likedByUserIds,
+      likesCount: likesCount ?? this.likesCount,
+      commentsCount: commentsCount ?? this.commentsCount,
+      viewsCount: viewsCount ?? this.viewsCount,
     );
   }
 
@@ -73,6 +96,11 @@ class Post {
               ?.map((tag) => SecondaryTag.fromJson(tag))
               .toList() ??
           [],
+      likedByUserIds:
+          (data['likedByUserIds'] as List?)?.cast<String>() ?? [],
+      likesCount: data['likesCount'] as int? ?? 0,
+      commentsCount: data['commentsCount'] as int? ?? 0,
+      viewsCount: data['viewsCount'] as int? ?? 0,
     );
   }
 
@@ -89,11 +117,19 @@ class Post {
       'createdAt': createdAt.toIso8601String(),
       'lastEditedAt': lastEditedAt?.toIso8601String(),
       'secondaryTags': secondaryTags.map((tag) => tag.toJson()).toList(),
+      'likedByUserIds': likedByUserIds,
+      'likesCount': likesCount,
+      'commentsCount': commentsCount,
+      'viewsCount': viewsCount,
     };
+  }
+
+  bool isLikedByUser(String userId) {
+    return likedByUserIds.contains(userId);
   }
 
   @override
   String toString() {
-    return 'Post(id: $id, title: $title, adminId: $adminId, content: $content, projectId: $projectId, description: $description, createdAt: $createdAt, lastEditedAt: $lastEditedAt, priority: $priority, secondaryTags: $secondaryTags)';
+    return 'Post(id: $id, title: $title, adminId: $adminId, content: $content, projectId: $projectId, description: $description, createdAt: $createdAt, lastEditedAt: $lastEditedAt, priority: $priority, secondaryTags: $secondaryTags, likesCount: $likesCount, commentsCount: $commentsCount)';
   }
 }
