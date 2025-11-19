@@ -91,21 +91,21 @@ class _EditPostPageState extends State<EditPostPage> {
             ),
             const SizedBox(height: 8),
             SegmentedButton<PostType>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: PostType.update,
-                  label: Text('Update'),
-                  icon: Icon(Icons.update),
+                  label: const Text('Update'),
+                  icon: const Icon(Icons.update),
                 ),
                 ButtonSegment(
                   value: PostType.announcement,
-                  label: Text('Announcement'),
-                  icon: Icon(Icons.campaign),
+                  label: const Text('Announcement'),
+                  icon: const Icon(Icons.campaign),
                 ),
                 ButtonSegment(
                   value: PostType.urgent,
-                  label: Text('Urgent'),
-                  icon: Icon(Icons.priority_high),
+                  label: const Text('Urgent'),
+                  icon: const Icon(Icons.priority_high),
                 ),
               ],
               selected: {_selectedType},
@@ -175,7 +175,7 @@ class _EditPostPageState extends State<EditPostPage> {
                         topRight: Radius.circular(8),
                       ),
                     ),
-                    child: quill.QuillToolbar.simple(
+                    child: quill.QuillSimpleToolbar(
                       controller: _quillController,
                     ),
                   ),
@@ -283,6 +283,9 @@ class _EditPostPageState extends State<EditPostPage> {
       image: _imageUrlController.text.trim().isNotEmpty
           ? _imageUrlController.text.trim()
           : null,
+      description: widget.post.description,
+      priority: widget.post.priority,
+      secondaryTags: widget.post.secondaryTags,
     );
 
     setState(() => _isLoading = false);

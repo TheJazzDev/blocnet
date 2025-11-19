@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../auth/data/models/app_user_model.dart';
 import '../../../projects/data/models/project_model.dart';
 import '../../../projects/data/models/post_model.dart';
-import '../models/activity_model.dart';
 
 class ProfileRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -14,7 +13,7 @@ class ProfileRepository {
       if (!doc.exists) return null;
 
       return AppUser.fromFirestore(
-        doc as DocumentSnapshot<Map<String, dynamic>>,
+        doc,
         null,
       );
     } catch (e) {
@@ -25,10 +24,7 @@ class ProfileRepository {
   // Stream user profile
   Stream<DocumentSnapshot<Map<String, dynamic>>> streamUserProfile(
       String userId) {
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .snapshots() as Stream<DocumentSnapshot<Map<String, dynamic>>>;
+    return _firestore.collection('users').doc(userId).snapshots();
   }
 
   // Get followed projects
@@ -74,7 +70,7 @@ class ProfileRepository {
   }
 
   // Get user activities
-  Stream<QuerySnapshot> getUserActivities(String userId) {
+  Stream<QuerySnapshot<Map<String, dynamic>>> getUserActivities(String userId) {
     return _firestore
         .collection('activities')
         .where('userId', isEqualTo: userId)

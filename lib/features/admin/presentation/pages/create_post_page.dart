@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../providers/admin_provider.dart';
-import '../../../projects/data/models/post_model.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../projects/data/models/post_type_model.dart';
+import '../../../projects/data/models/priority_model.dart';
+import '../../../projects/data/models/secondary_tag_model.dart';
 import '../../../../core/utils/helpers.dart';
 
 class CreatePostPage extends StatefulWidget {
@@ -18,15 +20,19 @@ class CreatePostPage extends StatefulWidget {
 class _CreatePostPageState extends State<CreatePostPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final _imageUrlController = TextEditingController();
   final quill.QuillController _quillController = quill.QuillController.basic();
 
   PostType _selectedType = PostType.update;
+  final Priority _selectedPriority = Priority.mid;
+  final List<SecondaryTag> _selectedSecondaryTags = [];
   bool _isLoading = false;
 
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.dispose();
     _imageUrlController.dispose();
     _quillController.dispose();
     super.dispose();
@@ -35,6 +41,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   @override
   Widget build(BuildContext context) {
     final adminProvider = context.read<AdminProvider>();
+    final authProvider = context.read<AuthProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -42,7 +49,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
-            onPressed: _isLoading ? null : () => _createPost(adminProvider),
+            onPressed: _isLoading ? null : () => _createPost(adminProvider, authProvider),
             tooltip: 'Publish',
           ),
         ],
@@ -59,21 +66,21 @@ class _CreatePostPageState extends State<CreatePostPage> {
             ),
             const SizedBox(height: 8),
             SegmentedButton<PostType>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: PostType.update,
-                  label: Text('Update'),
-                  icon: Icon(Icons.update),
+                  label: const Text('Update'),
+                  icon: const Icon(Icons.update),
                 ),
                 ButtonSegment(
                   value: PostType.announcement,
-                  label: Text('Announcement'),
-                  icon: Icon(Icons.campaign),
+                  label: const Text('Announcement'),
+                  icon: const Icon(Icons.campaign),
                 ),
                 ButtonSegment(
                   value: PostType.urgent,
-                  label: Text('Urgent'),
-                  icon: Icon(Icons.priority_high),
+                  label: const Text('Urgent'),
+                  icon: const Icon(Icons.priority_high),
                 ),
               ],
               selected: {_selectedType},
@@ -145,7 +152,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                         topRight: Radius.circular(8),
                       ),
                     ),
-                    child: quill.QuillToolbar.simple(
+                    child: quill.QuillSimpleToolbar(
                       controller: _quillController,
                     ),
                   ),
@@ -191,7 +198,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
             SizedBox(
               height: 48,
               child: ElevatedButton.icon(
-                onPressed: _isLoading ? null : () => _createPost(adminProvider),
+                onPressed: _isLoading ? null : () => _createPost(adminProvider, authProvider),
                 icon: _isLoading
                     ? const SizedBox(
                         width: 20,
@@ -208,7 +215,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     );
   }
 
-  Future<void> _createPost(AdminProvider adminProvider) async {
+  Future<void> _createPost(AdminProvider adminProvider, AuthProvider authProvider) async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -228,9 +235,13 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
     final postId = await adminProvider.createPost(
       projectId: widget.projectId,
+      adminId: authProvider.currentUser?.id ?? '',
       title: _titleController.text.trim(),
       content: content,
+      description: _descriptionController.text.trim(),
       type: _selectedType,
+      priority: _selectedPriority,
+      secondaryTags: _selectedSecondaryTags,
       imagePath: _imageUrlController.text.trim().isNotEmpty
           ? _imageUrlController.text.trim()
           : null,

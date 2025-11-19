@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../data/models/post_model.dart';
+import '../../data/models/post_type_model.dart';
 import '../../data/models/comment_model.dart';
+import '../../../auth/data/models/app_user_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/interactions_provider.dart';
 import '../../../../shared/widgets/buttons/like_button.dart';
@@ -166,26 +168,17 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   Row(
                     children: [
                       LikeButton(
+                        postId: _post!.id,
+                        projectId: _post!.projectId,
+                        postTitle: _post!.title,
                         isLiked: _post!.isLikedByUser(currentUser.id),
                         likesCount: _post!.likesCount,
-                        onTap: () {
-                          interactionsProvider.toggleLikePost(
-                            currentUser.id,
-                            _post!.id,
-                            _post!.isLikedByUser(currentUser.id),
-                          );
-                        },
                       ),
                       const SizedBox(width: 16),
                       SaveButton(
+                        postId: _post!.id,
+                        postTitle: _post!.title,
                         isSaved: currentUser.hasPostSaved(_post!.id),
-                        onTap: () {
-                          interactionsProvider.toggleSavePost(
-                            currentUser.id,
-                            _post!.id,
-                            currentUser.hasPostSaved(_post!.id),
-                          );
-                        },
                       ),
                       const Spacer(),
                       Text(
@@ -220,7 +213,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     }
 
                     final comments = snapshot.data!.docs
-                        .map((doc) => Comment.fromFirestore(doc, null))
+                        .map((doc) => Comment.fromFirestore(
+                            doc as DocumentSnapshot<Map<String, dynamic>>, null))
                         .toList();
 
                     if (comments.isEmpty) {
@@ -273,7 +267,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(Icons.send),
-                    onPressed: () => _addComment(currentUser.id, interactionsProvider),
+                    onPressed: () => _addComment(currentUser, interactionsProvider),
                   ),
                 ],
               ),
@@ -326,22 +320,25 @@ class _PostDetailPageState extends State<PostDetailPage> {
     );
   }
 
-  Future<void> _addComment(String userId, InteractionsProvider provider) async {
+  Future<void> _addComment(AppUser user, InteractionsProvider provider) async {
     if (_commentController.text.trim().isEmpty) return;
 
-    final success = await provider.addComment(
-      userId: userId,
-      postId: widget.postId,
-      projectId: _post!.projectId,
-      content: _commentController.text.trim(),
-    );
+    try {
+      final commentId = await provider.addComment(
+        userId: user.id,
+        userDisplayName: user.displayName ?? user.email,
+        userPhotoURL: user.photoURL,
+        postId: widget.postId,
+        content: _commentController.text.trim(),
+      );
 
-    if (success) {
-      _commentController.clear();
-      if (mounted) {
-        Helpers.showSnackBar(context, 'Comment added');
+      if (commentId.isNotEmpty) {
+        _commentController.clear();
+        if (mounted) {
+          Helpers.showSnackBar(context, 'Comment added');
+        }
       }
-    } else {
+    } catch (e) {
       if (mounted) {
         Helpers.showSnackBar(
           context,
@@ -353,24 +350,24 @@ class _PostDetailPageState extends State<PostDetailPage> {
   }
 
   IconData _getPostTypeIcon(PostType type) {
-    switch (type) {
-      case PostType.update:
-        return Icons.update;
-      case PostType.announcement:
-        return Icons.campaign;
-      case PostType.urgent:
-        return Icons.priority_high;
+    if (type == PostType.update) {
+      return Icons.update;
+    } else if (type == PostType.announcement) {
+      return Icons.campaign;
+    } else if (type == PostType.urgent) {
+      return Icons.priority_high;
     }
+    return Icons.article; // default
   }
 
   Color _getPostTypeColor(PostType type) {
-    switch (type) {
-      case PostType.update:
-        return Colors.blue;
-      case PostType.announcement:
-        return Colors.orange;
-      case PostType.urgent:
-        return Colors.red;
+    if (type == PostType.update) {
+      return Colors.blue;
+    } else if (type == PostType.announcement) {
+      return Colors.orange;
+    } else if (type == PostType.urgent) {
+      return Colors.red;
     }
+    return Colors.grey; // default
   }
 }

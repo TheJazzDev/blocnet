@@ -22,8 +22,12 @@ class _SplashPageState extends State<SplashPage> {
 
     if (!mounted) return;
 
-    final authProvider = context.read<AuthProvider>();
+    // TEMPORARY: Bypass auth for development - REMOVE THIS LATER
+    // Navigator.of(context).pushReplacementNamed(RouteNames.main);
+    // return;
 
+    // Original auth check (commented out temporarily)
+    final authProvider = context.read<AuthProvider>();
     if (authProvider.isAuthenticated) {
       Navigator.of(context).pushReplacementNamed(RouteNames.main);
     } else {

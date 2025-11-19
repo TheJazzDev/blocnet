@@ -63,10 +63,7 @@ class ProfileProvider with ChangeNotifier {
   void listenToActivities(String userId) {
     _repository.getUserActivities(userId).listen((snapshot) {
       _activities = snapshot.docs
-          .map((doc) => UserActivity.fromFirestore(
-                doc as DocumentSnapshot<Map<String, dynamic>>,
-                null,
-              ))
+          .map((doc) => UserActivity.fromFirestore(doc, null))
           .toList();
       notifyListeners();
     });

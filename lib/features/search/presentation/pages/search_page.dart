@@ -1,3 +1,4 @@
+import 'package:blocnet/features/projects/data/models/post_type_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -352,24 +353,24 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   IconData _getPostTypeIcon(PostType type) {
-    switch (type) {
-      case PostType.update:
-        return Icons.update;
-      case PostType.announcement:
-        return Icons.campaign;
-      case PostType.urgent:
-        return Icons.priority_high;
+    if (type == PostType.update) {
+      return Icons.update;
+    } else if (type == PostType.announcement) {
+      return Icons.campaign;
+    } else if (type == PostType.urgent) {
+      return Icons.priority_high;
     }
+    return Icons.article; // default
   }
 
   Color _getPostTypeColor(PostType type) {
-    switch (type) {
-      case PostType.update:
-        return Colors.blue;
-      case PostType.announcement:
-        return Colors.orange;
-      case PostType.urgent:
-        return Colors.red;
+    if (type == PostType.update) {
+      return Colors.blue;
+    } else if (type == PostType.announcement) {
+      return Colors.orange;
+    } else if (type == PostType.urgent) {
+      return Colors.red;
     }
+    return Colors.grey; // default
   }
 }

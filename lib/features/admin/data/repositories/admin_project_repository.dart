@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import '../../../projects/data/models/project_model.dart';
+import '../../../projects/data/models/primary_tag_model.dart';
 
 class AdminProjectRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -12,10 +13,14 @@ class AdminProjectRepository {
     required String adminUserId,
     required String name,
     required String description,
+    required String details,
     required String category,
+    required PrimaryTag primaryTag,
     required String website,
     String? logo,
     String? imagePath,
+    Map<String, String?>? apps,
+    Map<String, String?>? socials,
   }) async {
     final batch = _firestore.batch();
 
@@ -32,9 +37,14 @@ class AdminProjectRepository {
       id: projectRef.id,
       name: name,
       description: description,
+      details: details,
       category: category,
+      adminId: adminUserId,
+      primaryTag: primaryTag,
       logo: logoUrl ?? logo ?? '',
       website: website,
+      apps: apps ?? {},
+      socials: socials ?? {},
       followerIds: [],
       followersCount: 0,
       postsCount: 0,

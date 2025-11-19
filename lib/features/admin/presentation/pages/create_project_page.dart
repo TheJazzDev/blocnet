@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/admin_provider.dart';
+import '../../../projects/data/models/primary_tag_model.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/helpers.dart';
 
@@ -16,16 +17,19 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _detailsController = TextEditingController();
   final _categoryController = TextEditingController();
   final _websiteController = TextEditingController();
   final _logoController = TextEditingController();
 
+  PrimaryTag _selectedPrimaryTag = PrimaryTag.none;
   bool _isLoading = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _detailsController.dispose();
     _categoryController.dispose();
     _websiteController.dispose();
     _logoController.dispose();
@@ -222,7 +226,9 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
       adminUserId: authProvider.currentUser!.id,
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
+      details: _detailsController.text.trim(),
       category: _categoryController.text.trim(),
+      primaryTag: _selectedPrimaryTag,
       website: _websiteController.text.trim(),
       logo: _logoController.text.trim().isNotEmpty
           ? _logoController.text.trim()

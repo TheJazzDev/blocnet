@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import '../../../projects/data/models/post_model.dart';
+import '../../../projects/data/models/post_type_model.dart';
+import '../../../projects/data/models/priority_model.dart';
+import '../../../projects/data/models/secondary_tag_model.dart';
 import '../../../../core/config/app_config.dart';
 
 class AdminPostRepository {
@@ -11,9 +14,13 @@ class AdminPostRepository {
   // Create new post
   Future<String> createPost({
     required String projectId,
+    required String adminId,
     required String title,
     required String content,
+    required String description,
     required PostType type,
+    required Priority priority,
+    required List<SecondaryTag> secondaryTags,
     String? imagePath,
   }) async {
     final batch = _firestore.batch();
@@ -30,9 +37,13 @@ class AdminPostRepository {
     final post = Post(
       id: postRef.id,
       projectId: projectId,
+      adminId: adminId,
       title: title,
       content: content,
+      description: description,
       type: type,
+      priority: priority,
+      secondaryTags: secondaryTags,
       image: imageUrl,
       likedByUserIds: [],
       likesCount: 0,
@@ -64,7 +75,10 @@ class AdminPostRepository {
     required String projectId,
     required String title,
     required String content,
+    required String description,
     required PostType type,
+    required Priority priority,
+    required List<SecondaryTag> secondaryTags,
     String? image,
     String? imagePath,
   }) async {
@@ -77,7 +91,10 @@ class AdminPostRepository {
     await _firestore.collection('posts').doc(postId).update({
       'title': title,
       'content': content,
+      'description': description,
       'type': type.toJson(),
+      'priority': priority.toJson(),
+      'secondaryTags': secondaryTags.map((tag) => tag.toJson()).toList(),
       if (imageUrl != null) 'image': imageUrl,
       'lastEditedAt': FieldValue.serverTimestamp(),
     });

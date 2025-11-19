@@ -1,6 +1,10 @@
+import 'package:blocnet/features/projects/data/models/post_type_model.dart';
 import 'package:flutter/foundation.dart';
 import '../../../projects/data/models/project_model.dart';
 import '../../../projects/data/models/post_model.dart';
+import '../../../projects/data/models/primary_tag_model.dart';
+import '../../../projects/data/models/priority_model.dart';
+import '../../../projects/data/models/secondary_tag_model.dart';
 import '../../data/services/admin_service.dart';
 import '../../data/repositories/admin_project_repository.dart';
 import '../../data/repositories/admin_post_repository.dart';
@@ -61,10 +65,14 @@ class AdminProvider with ChangeNotifier {
     required String adminUserId,
     required String name,
     required String description,
+    required String details,
     required String category,
+    required PrimaryTag primaryTag,
     required String website,
     String? logo,
     String? imagePath,
+    Map<String, String?>? apps,
+    Map<String, String?>? socials,
   }) async {
     try {
       _isLoading = true;
@@ -75,10 +83,14 @@ class AdminProvider with ChangeNotifier {
         adminUserId: adminUserId,
         name: name,
         description: description,
+        details: details,
         category: category,
+        primaryTag: primaryTag,
         website: website,
         logo: logo,
         imagePath: imagePath,
+        apps: apps,
+        socials: socials,
       );
 
       _adminProjectIds.add(projectId);
@@ -159,9 +171,13 @@ class AdminProvider with ChangeNotifier {
   // Create new post
   Future<String?> createPost({
     required String projectId,
+    required String adminId,
     required String title,
     required String content,
+    required String description,
     required PostType type,
+    required Priority priority,
+    required List<SecondaryTag> secondaryTags,
     String? imagePath,
   }) async {
     try {
@@ -171,9 +187,13 @@ class AdminProvider with ChangeNotifier {
 
       final postId = await _postRepository.createPost(
         projectId: projectId,
+        adminId: adminId,
         title: title,
         content: content,
+        description: description,
         type: type,
+        priority: priority,
+        secondaryTags: secondaryTags,
         imagePath: imagePath,
       );
 
@@ -195,7 +215,10 @@ class AdminProvider with ChangeNotifier {
     required String projectId,
     required String title,
     required String content,
+    required String description,
     required PostType type,
+    required Priority priority,
+    required List<SecondaryTag> secondaryTags,
     String? image,
     String? imagePath,
   }) async {
@@ -209,7 +232,10 @@ class AdminProvider with ChangeNotifier {
         projectId: projectId,
         title: title,
         content: content,
+        description: description,
         type: type,
+        priority: priority,
+        secondaryTags: secondaryTags,
         image: image,
         imagePath: imagePath,
       );

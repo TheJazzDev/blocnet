@@ -4,6 +4,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/admin_provider.dart';
 import '../../../projects/data/models/post_model.dart';
+import '../../../projects/data/models/post_type_model.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/utils/helpers.dart';
 
@@ -208,19 +209,18 @@ class ManageProjectPostsPage extends StatelessWidget {
     IconData icon;
     Color color;
 
-    switch (type) {
-      case PostType.update:
-        icon = Icons.update;
-        color = Colors.blue;
-        break;
-      case PostType.announcement:
-        icon = Icons.campaign;
-        color = Colors.orange;
-        break;
-      case PostType.urgent:
-        icon = Icons.priority_high;
-        color = Colors.red;
-        break;
+    if (type == PostType.update) {
+      icon = Icons.update;
+      color = Colors.blue;
+    } else if (type == PostType.announcement) {
+      icon = Icons.campaign;
+      color = Colors.orange;
+    } else if (type == PostType.urgent) {
+      icon = Icons.priority_high;
+      color = Colors.red;
+    } else {
+      icon = Icons.article;
+      color = Colors.grey;
     }
 
     return Container(

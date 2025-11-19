@@ -17,23 +17,39 @@ class AuthService {
   // Sign in with Google
   Future<AppUser?> signInWithGoogle() async {
     try {
+      print('🔵 [AUTH] Starting Google Sign In...');
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      print('🔵 [AUTH] Google user selected: ${googleUser?.email}');
 
-      if (googleUser == null) return null; // User canceled
+      if (googleUser == null) {
+        print('🟡 [AUTH] User canceled Google Sign In');
+        return null; // User canceled
+      }
 
+      print('🔵 [AUTH] Getting Google authentication...');
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+
+      print('🔵 [AUTH] AccessToken: ${googleAuth.accessToken != null ? "Present" : "Missing"}');
+      print('🔵 [AUTH] IdToken: ${googleAuth.idToken != null ? "Present" : "Missing"}');
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
+      print('🔵 [AUTH] Signing in with Firebase credential...');
       final UserCredential userCredential =
           await _auth.signInWithCredential(credential);
 
+      print('🟢 [AUTH] Firebase sign in successful: ${userCredential.user?.email}');
+
       return await _createOrUpdateUser(userCredential.user!);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('🔴 [AUTH ERROR] Google sign in failed:');
+      print('Error: $e');
+      print('Stack trace: $stackTrace');
       throw Exception('Google sign in failed: $e');
     }
   }
@@ -41,20 +57,32 @@ class AuthService {
   // Send sign in link to email
   Future<void> sendSignInLinkToEmail(String email) async {
     try {
+      print('🔵 [AUTH] Sending sign-in link to: $email');
+
       final actionCodeSettings = ActionCodeSettings(
-        url: 'https://blocnet.page.link/signin',
+        url: 'https://blocnet-f2c6e.firebaseapp.com/__/auth/action',
         handleCodeInApp: true,
-        androidPackageName: 'com.blocnet.app',
+        androidPackageName: 'com.example.blocnet',
         androidInstallApp: true,
         androidMinimumVersion: '21',
-        iOSBundleId: 'com.blocnet.app',
+        iOSBundleId: 'com.example.blocnet',
       );
+
+      print('🔵 [AUTH] Action code settings:');
+      print('  URL: https://blocnet-f2c6e.firebaseapp.com/__/auth/action');
+      print('  Android Package: com.example.blocnet');
+      print('  iOS Bundle: com.example.blocnet');
 
       await _auth.sendSignInLinkToEmail(
         email: email,
         actionCodeSettings: actionCodeSettings,
       );
-    } catch (e) {
+
+      print('🟢 [AUTH] Sign-in link sent successfully to: $email');
+    } catch (e, stackTrace) {
+      print('🔴 [AUTH ERROR] Failed to send sign-in link:');
+      print('Error: $e');
+      print('Stack trace: $stackTrace');
       throw Exception('Failed to send sign in link: $e');
     }
   }

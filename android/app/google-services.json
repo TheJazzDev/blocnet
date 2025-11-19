@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "962979513672",
+    "project_id": "blocnet-f2c6e",
+    "storage_bucket": "blocnet-f2c6e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:962979513672:android:f3b3ed5b2145d3c01b9f7d",
+        "android_client_info": {
+          "package_name": "com.example.blocnet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "962979513672-4ueg1o0sh0hvhn26ln2jo9egu0t25gd8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRRUDnpcr-QF3RAuYAYfLJYi5GDPuuwto"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "962979513672-4ueg1o0sh0hvhn26ln2jo9egu0t25gd8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "962979513672-upjfek49na1vurlru4gtuki98pmrt46g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.blocnet"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

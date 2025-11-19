@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../data/models/project_model.dart';
 import '../../data/models/post_model.dart';
+import '../../data/models/post_type_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../providers/interactions_provider.dart';
 import '../../../../shared/widgets/buttons/follow_button.dart';
 import '../../../../core/routes/route_names.dart';
 
@@ -81,7 +81,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     }
 
     final authProvider = context.watch<AuthProvider>();
-    final interactionsProvider = context.watch<InteractionsProvider>();
     final currentUser = authProvider.currentUser;
 
     return Scaffold(
@@ -142,14 +141,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 // Follow Button
                 if (currentUser != null)
                   FollowButton(
+                    projectId: _project!.id,
+                    projectName: _project!.name,
                     isFollowing: _project!.isFollowedByUser(currentUser.id),
-                    onTap: () {
-                      interactionsProvider.toggleFollowProject(
-                        currentUser.id,
-                        _project!.id,
-                        _project!.isFollowedByUser(currentUser.id),
-                      );
-                    },
                   ),
               ],
             ),
@@ -175,11 +169,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 const SizedBox(height: 16),
 
                 // Website
-                TextButton.icon(
-                  onPressed: () => _launchUrl(_project!.website),
-                  icon: const Icon(Icons.link),
-                  label: Text(_project!.website),
-                ),
+                if (_project!.website != null && _project!.website!.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () => _launchUrl(_project!.website!),
+                    icon: const Icon(Icons.link),
+                    label: Text(_project!.website!),
+                  ),
               ],
             ),
           ),
@@ -218,7 +213,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
               }
 
               final posts = snapshot.data!.docs
-                  .map((doc) => Post.fromFirestore(doc, null))
+                  .map((doc) => Post.fromFirestore(
+                      doc as DocumentSnapshot<Map<String, dynamic>>, null))
                   .toList();
 
               if (posts.isEmpty) {
@@ -304,24 +300,24 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
   }
 
   IconData _getPostTypeIcon(PostType type) {
-    switch (type) {
-      case PostType.update:
-        return Icons.update;
-      case PostType.announcement:
-        return Icons.campaign;
-      case PostType.urgent:
-        return Icons.priority_high;
+    if (type == PostType.update) {
+      return Icons.update;
+    } else if (type == PostType.announcement) {
+      return Icons.campaign;
+    } else if (type == PostType.urgent) {
+      return Icons.priority_high;
     }
+    return Icons.article; // default
   }
 
   Color _getPostTypeColor(PostType type) {
-    switch (type) {
-      case PostType.update:
-        return Colors.blue;
-      case PostType.announcement:
-        return Colors.orange;
-      case PostType.urgent:
-        return Colors.red;
+    if (type == PostType.update) {
+      return Colors.blue;
+    } else if (type == PostType.announcement) {
+      return Colors.orange;
+    } else if (type == PostType.urgent) {
+      return Colors.red;
     }
+    return Colors.grey; // default
   }
 }
