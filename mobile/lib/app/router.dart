@@ -22,11 +22,22 @@ class CustomAppRouter {
         settings: settings,
         builder: (context) {
           final isAuthenticated = context.watch<AuthStore>().isAuthenticated;
+          final roles = context.watch<AuthStore>().roles;
 
           if (ProtectedRoutes.isProtectedRoute(routeName)) {
+            if (!isAuthenticated) {
+              return RouteAccessGate(
+                allowAccess: false,
+                redirectTo: AppRoutes.signIn,
+                childBuilder: builder,
+              );
+            }
+
+            final hasRoleAccess =
+                ProtectedRoutes.hasRoleAccess(routeName, roles);
             return RouteAccessGate(
-              allowAccess: isAuthenticated,
-              redirectTo: AppRoutes.signIn,
+              allowAccess: hasRoleAccess,
+              redirectTo: AppRoutes.main,
               childBuilder: builder,
             );
           }

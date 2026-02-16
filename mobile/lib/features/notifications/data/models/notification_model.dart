@@ -7,7 +7,7 @@ class NotificationModel {
     required this.createdAt,
     this.type,
     this.projectId,
-    this.postId,
+    this.updateId,
     this.urgency,
     this.readAt,
   });
@@ -19,7 +19,7 @@ class NotificationModel {
   final DateTime createdAt;
   final String? type;
   final String? projectId;
-  final String? postId;
+  final String? updateId;
   final String? urgency;
   final DateTime? readAt;
 
@@ -33,7 +33,7 @@ class NotificationModel {
       body: body,
       type: type,
       projectId: projectId,
-      postId: postId,
+      updateId: updateId,
       urgency: urgency,
       createdAt: createdAt,
       isRead: isRead ?? this.isRead,
@@ -48,7 +48,7 @@ class NotificationModel {
       body: (json['body'] ?? '').toString(),
       type: json['type']?.toString(),
       projectId: json['projectId']?.toString(),
-      postId: json['postId']?.toString(),
+      updateId: json['updateId']?.toString(),
       urgency: json['urgency']?.toString(),
       isRead: json['isRead'] == true,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??

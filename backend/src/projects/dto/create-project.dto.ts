@@ -1,4 +1,12 @@
-import { IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateProjectDto {
   @IsString()
@@ -19,7 +27,12 @@ export class CreateProjectDto {
   @MaxLength(3000)
   description!: string;
 
-  @IsString()
-  @MaxLength(120)
-  primaryTag!: string;
+  @IsUUID()
+  primaryTagId!: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('4', { each: true })
+  secondaryTagIds?: string[];
 }

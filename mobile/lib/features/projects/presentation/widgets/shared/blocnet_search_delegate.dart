@@ -1,5 +1,5 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:flutter/material.dart';
 
@@ -10,10 +10,10 @@ class BlocnetSearchDelegate extends SearchDelegate<void> {
   });
 
   final List<Project> projects;
-  final List<Post> posts;
+  final List<Update> posts;
 
   @override
-  String get searchFieldLabel => 'Search projects or posts';
+  String get searchFieldLabel => 'Search projects or updates';
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -142,7 +142,7 @@ class BlocnetSearchDelegate extends SearchDelegate<void> {
         ],
         if (postMatches.isNotEmpty) ...[
           Text(
-            'Posts',
+            'Updates',
             style: TextStyle(
               color: AppColors.darkGrey600,
               fontFamily: 'Geist',

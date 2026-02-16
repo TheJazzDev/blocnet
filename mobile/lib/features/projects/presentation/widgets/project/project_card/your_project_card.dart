@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../project_details/project_details_dialog.dart';
 import 'your_project_card_info.dart';
 import 'your_project_card_overview.dart';
-import 'your_project_card_post.dart';
+import 'your_project_card_update.dart';
 
 class YourProjectCard extends StatefulWidget {
   const YourProjectCard({required this.project, super.key});
@@ -54,7 +54,7 @@ class _YourProjectCardState extends State<YourProjectCard> {
             SizedBox(height: 8),
             Wrap(
               children: firstThreePosts.map((post) {
-                return YourProjectCardPost(post: post);
+                return YourProjectCardUpdate(post: post);
               }).toList(),
             ),
           ],

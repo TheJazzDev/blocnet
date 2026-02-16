@@ -45,9 +45,10 @@ export class FcmService {
     }
   }
 
-  async sendProjectPostUpdate(input: {
+  async sendProjectUpdate(input: {
     projectId: string;
-    postId: string;
+    updateId: string;
+    actorName: string;
     title: string;
     body: string;
     urgency: string;
@@ -90,7 +91,8 @@ export class FcmService {
       },
       data: {
         projectId: input.projectId,
-        postId: input.postId,
+        updateId: input.updateId,
+        actorName: input.actorName,
         urgency: input.urgency,
         type: 'project_update',
       },

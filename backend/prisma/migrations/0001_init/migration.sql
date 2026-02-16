@@ -244,4 +244,3 @@ ALTER TABLE "AdminApplication" ADD CONSTRAINT "AdminApplication_userId_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "Profile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-

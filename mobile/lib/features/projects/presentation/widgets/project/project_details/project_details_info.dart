@@ -3,7 +3,7 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/dividers/dot_divider.dart';
 import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
-import 'package:blocnet/features/projects/presentation/widgets/post/shared/post_project_logo.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/shared/update_project_logo.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
@@ -41,7 +41,7 @@ class ProjectDetailsInfo extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        PostProjectLogo(logoUrl: project.logo, size: 60),
+        UpdateProjectLogo(logoUrl: project.logo, size: 60),
         const SizedBox(width: 24),
         Flexible(child: PrimaryLabel(primaryTag: project.primaryTag)),
       ],
@@ -93,7 +93,7 @@ class ProjectDetailsInfo extends StatelessWidget {
       children: [
         StyledBodyText600('${project.followersCount} Followers', size: 12),
         DotDivider(12),
-        StyledBodyText600('$postsCount Total Posts', size: 12),
+        StyledBodyText600('$postsCount Total Updates', size: 12),
       ],
     );
   }

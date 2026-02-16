@@ -2,7 +2,7 @@ import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/cards/stat_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_label/filter_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_card/your_project_card.dart';
-import 'package:blocnet/services/posts_store.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +29,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<ProjectsStore, PostsStore>(
+    return Consumer2<ProjectsStore, UpdatesStore>(
       builder: (context, projectsStore, postsStore, _) {
         if (projectsStore.isFetching && projectsStore.projects.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -83,7 +83,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
                 Expanded(
                   flex: 1,
                   child: StatCard(
-                    label: 'New Posts',
+                    label: 'New Updates',
                     value: postCount,
                     iconName: 'post',
                   ),
@@ -91,7 +91,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
                 Expanded(
                   flex: 1,
                   child: StatCard(
-                    label: 'High Urgency Posts',
+                    label: 'High Urgency Updates',
                     value: highUrgencyCount,
                     iconName: 'emergency',
                   ),

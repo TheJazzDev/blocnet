@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ class ProfileScreen extends StatelessWidget {
         ? auth.displayName!.trim()
         : email.split('@').first;
     final roles = auth.roles;
+    final canManageContent = auth.canSubmitProject || auth.canCreateUpdate;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -81,20 +83,47 @@ class ProfileScreen extends StatelessWidget {
                 .toList(),
           ),
           const SizedBox(height: 16),
+          if (canManageContent)
+            _ProfileTile(
+              icon: Icons.send_outlined,
+              title: 'Submit New Project',
+              subtitle: 'Send project for approval before publishing',
+              onTap: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.submitProject),
+            ),
+          if (canManageContent)
+            _ProfileTile(
+              icon: Icons.folder_copy_outlined,
+              title: 'Manage My Projects',
+              subtitle: 'See projects you created or contribute to',
+              onTap: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.manageProjects),
+            ),
+          if (canManageContent)
+            _ProfileTile(
+              icon: Icons.post_add_outlined,
+              title: 'Manage My Updates',
+              subtitle: 'Review and edit your project updates',
+              onTap: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.manageUpdates),
+            ),
           _ProfileTile(
             icon: Icons.bookmark_border,
-            title: 'Saved posts',
+            title: 'Saved updates',
             subtitle: 'Review updates you bookmarked',
+            onTap: () {},
           ),
           _ProfileTile(
             icon: Icons.groups_outlined,
             title: 'Followed projects',
             subtitle: 'Manage your tracked projects',
+            onTap: () {},
           ),
           _ProfileTile(
             icon: Icons.security_outlined,
             title: 'Security',
             subtitle: 'Password and account safety',
+            onTap: () {},
           ),
         ],
       ),
@@ -107,11 +136,13 @@ class _ProfileTile extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +158,7 @@ class _ProfileTile extends StatelessWidget {
         title: StyledBodyText700(title, size: 14),
         subtitle: StyledBodyText500(subtitle, size: 12),
         trailing: Icon(Icons.chevron_right, color: AppColors.darkGrey500),
-        onTap: () {},
+        onTap: onTap,
       ),
     );
   }

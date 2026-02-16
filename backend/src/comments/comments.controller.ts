@@ -22,26 +22,26 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
-  @Post('posts/:postId/comments')
+  @Post('updates/:updateId/comments')
   @UseGuards(AuthGuard)
   async createComment(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('postId') postId: string,
+    @Param('updateId') updateId: string,
     @Body() dto: CreateCommentDto,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.commentsService.createComment(user, postId, dto);
+    return this.commentsService.createComment(user, updateId, dto);
   }
 
-  @Get('posts/:postId/comments')
+  @Get('updates/:updateId/comments')
   async listComments(
-    @Param('postId') postId: string,
+    @Param('updateId') updateId: string,
     @Query() query: ListCommentsQuery,
   ) {
-    return this.commentsService.listComments(postId, query);
+    return this.commentsService.listComments(updateId, query);
   }
 
   @Patch('comments/:id')

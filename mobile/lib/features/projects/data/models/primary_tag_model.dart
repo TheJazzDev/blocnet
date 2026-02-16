@@ -1,63 +1,53 @@
-enum PrimaryTag {
-  none('None'),
-  core('Core'),
-  solana('Solana'),
-  ethereum('Ethereum'),
-  iceOpenNetwork('Ice Open Network'),
-  telegramNetwork('Telegram Network'),
-  binanceSmartChain('Binance Smart Chain');
+class PrimaryTag {
+  const PrimaryTag({required this.id, required this.name, this.slug = ''});
 
-  /// Display name for each tag
-  final String displayName;
+  final String id;
+  final String name;
+  final String slug;
 
-  /// Constructor to assign the display name
-  const PrimaryTag(this.displayName);
+  static const none = PrimaryTag(id: '', name: 'None', slug: 'none');
 
-  /// Get all tag display names
-  static List<String> getAll() {
-    return PrimaryTag.values
-        .where((e) => e != PrimaryTag.none)
-        .map((e) => e.displayName)
-        .toList();
-  }
-
-  /// Find a tag by its display name
-  static PrimaryTag fromJson(String json) {
-    final normalized = json.trim().toLowerCase();
-    return PrimaryTag.values.firstWhere(
-      (tag) => tag.displayName.toLowerCase() == normalized,
-      orElse: () => PrimaryTag.none,
+  factory PrimaryTag.fromApi(Map<String, dynamic> json) {
+    return PrimaryTag(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      slug: (json['slug'] ?? '').toString(),
     );
   }
 
-  /// Serialize the tag to JSON
-  String toJson() {
-    return displayName;
+  factory PrimaryTag.fromJson(String json) {
+    final value = json.trim();
+    if (value.isEmpty) return none;
+    return PrimaryTag(id: '', name: value, slug: _toSlug(value));
   }
 
-  /// Override toString to return the display name
-  @override
-  String toString() {
-    return displayName;
+  static String _toSlug(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9\s-]'), '')
+        .replaceAll(RegExp(r'\s+'), '-')
+        .replaceAll(RegExp(r'-+'), '-');
   }
 
-  /// Get the identifier (abbreviation) for each tag
+  String toJson() => name;
+
   String get identifier {
-    switch (this) {
-      case PrimaryTag.none:
-        return 'none';
-      case PrimaryTag.ethereum:
-        return 'eth';
-      case PrimaryTag.binanceSmartChain:
-        return 'bsc';
-      case PrimaryTag.core:
-        return 'core';
-      case PrimaryTag.solana:
-        return 'sol';
-      case PrimaryTag.iceOpenNetwork:
-        return 'ion';
-      case PrimaryTag.telegramNetwork:
-        return 'ton';
-    }
+    if (slug.isNotEmpty) return slug;
+    return _toSlug(name);
   }
+
+  @override
+  String toString() => name;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is PrimaryTag &&
+        other.id.toLowerCase() == id.toLowerCase() &&
+        other.name.toLowerCase() == name.toLowerCase();
+  }
+
+  @override
+  int get hashCode => Object.hash(id.toLowerCase(), name.toLowerCase());
 }

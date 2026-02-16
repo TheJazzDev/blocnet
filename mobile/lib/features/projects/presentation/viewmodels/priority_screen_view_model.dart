@@ -1,22 +1,22 @@
-import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 
 class PriorityScreenViewModel {
   final Priority priority;
-  List<Post> _allPosts = [];
-  List<Post> priorityPosts = [];
-  List<Post> filteredPosts = [];
+  List<Update> _allPosts = [];
+  List<Update> priorityPosts = [];
+  List<Update> filteredPosts = [];
   final Set<String> allSecondaryTags = {};
   final Set<String> selectedFilters = {};
 
   PriorityScreenViewModel({
     required this.priority,
-    List<Post> allPosts = const [],
+    List<Update> allPosts = const [],
   }) {
     setPosts(allPosts);
   }
 
-  void setPosts(List<Post> allPosts) {
+  void setPosts(List<Update> allPosts) {
     _allPosts = allPosts;
     _loadPosts();
   }

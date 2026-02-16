@@ -3,11 +3,11 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/more_from_project_name.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
-import 'package:blocnet/services/posts_store.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../more_from/urgent_post_in_project_name.dart';
+import '../more_from/urgent_update_in_project_name.dart';
 import 'project_details_header.dart';
 import 'project_details_info.dart';
 
@@ -19,7 +19,7 @@ class ProjectDetailsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final projectsStore = Provider.of<ProjectsStore>(context);
-    final postsStore = Provider.of<PostsStore>(context);
+    final postsStore = Provider.of<UpdatesStore>(context);
 
     final project = _resolveProject(
       projectId: projectId,
@@ -64,7 +64,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                         RenderMarkdownContent(content: detailsContent),
                         const SizedBox(height: 40),
                         MoreFromProjectName(
-                          label: 'Recent Posts in',
+                          label: 'Recent Updates in',
                           projectTitle: project.name,
                           posts: recentPostInProjectName,
                         ),
@@ -89,7 +89,7 @@ class ProjectDetailsDialog extends StatelessWidget {
   Project? _resolveProject({
     required String projectId,
     required ProjectsStore projectsStore,
-    required PostsStore postsStore,
+    required UpdatesStore postsStore,
   }) {
     final relatedPosts =
         postsStore.posts.where((post) => post.projectId == projectId).toList();

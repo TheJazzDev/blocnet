@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationType, PostUrgency } from '@prisma/client';
+import { NotificationType, UpdateUrgency } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ListNotificationsQuery } from './dto/list-notifications.query';
 
@@ -42,10 +42,10 @@ export class NotificationsService {
 
   async createForProjectFollowers(input: {
     projectId: string;
-    postId: string;
+    updateId: string;
     title: string;
     body: string;
-    urgency: PostUrgency;
+    urgency: UpdateUrgency;
   }) {
     const followers = await this.prisma.projectFollow.findMany({
       where: { projectId: input.projectId },
@@ -60,7 +60,7 @@ export class NotificationsService {
       userId: follow.userId,
       type: NotificationType.project_update,
       projectId: input.projectId,
-      postId: input.postId,
+      updateId: input.updateId,
       urgency: input.urgency,
       title: input.title,
       body: input.body,

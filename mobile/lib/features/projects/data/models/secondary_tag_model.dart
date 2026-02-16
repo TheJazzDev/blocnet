@@ -1,45 +1,49 @@
-enum SecondaryTag {
-  launching("Launching"),
-  ido("IDO"),
-  airdrops("Airdrops"),
-  mining("Mining"),
-  partnership("Partnership"),
-  governance("Governance"),
-  staking("Staking"),
-  tokenBurn("Token Burn"),
-  farming("Farming"),
-  nft("NFT"),
-  trading("Trading"),
-  icoIdo("ICO/IDO"),
-  gaming("Gaming"),
-  wallet("Wallet"),
-  security("Security"),
-  metaverse("Metaverse");
+class SecondaryTag {
+  const SecondaryTag({required this.id, required this.name, this.slug = ''});
 
+  final String id;
   final String name;
-  const SecondaryTag(this.name);
+  final String slug;
 
-  /// Method to get all tag names
-  static List<String> getAll() {
-    return SecondaryTag.values.map((e) => e.name).toList();
-  }
-
-  /// Convert enum value to a JSON string
-  String toJson() {
-    return name;
-  }
-
-  /// Create an enum value from a JSON string
-  static SecondaryTag fromJson(String json) {
-    final normalized = json.trim().toLowerCase();
-    return SecondaryTag.values.firstWhere(
-      (e) => e.name.toLowerCase() == normalized,
-      orElse: () => SecondaryTag.trading,
+  factory SecondaryTag.fromApi(Map<String, dynamic> json) {
+    return SecondaryTag(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      slug: (json['slug'] ?? '').toString(),
     );
   }
 
-  @override
-  String toString() {
-    return name;
+  factory SecondaryTag.fromJson(String json) {
+    final value = json.trim();
+    return SecondaryTag(
+      id: '',
+      name: value,
+      slug: _toSlug(value),
+    );
   }
+
+  static String _toSlug(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9\s-]'), '')
+        .replaceAll(RegExp(r'\s+'), '-')
+        .replaceAll(RegExp(r'-+'), '-');
+  }
+
+  String toJson() => name;
+
+  @override
+  String toString() => name;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is SecondaryTag &&
+        other.id.toLowerCase() == id.toLowerCase() &&
+        other.name.toLowerCase() == name.toLowerCase();
+  }
+
+  @override
+  int get hashCode => Object.hash(id.toLowerCase(), name.toLowerCase());
 }

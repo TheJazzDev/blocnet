@@ -1,5 +1,14 @@
 import { ProjectStatus } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateProjectDto {
   @IsOptional()
@@ -23,9 +32,14 @@ export class UpdateProjectDto {
   description?: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  primaryTag?: string;
+  @IsUUID()
+  primaryTagId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('4', { each: true })
+  secondaryTagIds?: string[];
 
   @IsOptional()
   @IsEnum(ProjectStatus)

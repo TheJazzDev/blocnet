@@ -1,11 +1,9 @@
-import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
-import 'package:blocnet/features/projects/data/models/secondary_tag_model.dart';
 
 class BottomSheetFilterController {
   // State for selected/unselected tags and priorities
-  Set<String> primaryTags = Set.from(PrimaryTag.getAll());
-  Set<String> secondaryTags = Set.from(SecondaryTag.getAll());
+  Set<String> primaryTags = {};
+  Set<String> secondaryTags = {};
   Set<Priority> priorities = Set.from(Priority.getAll());
 
   Set<String> selectedPrimaryTags = {};

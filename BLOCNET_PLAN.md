@@ -35,28 +35,28 @@ Long-term vision (post-MVP):
 ## Canonical Content Hierarchy (Critical Product Context)
 Blocknet content structure is:
 1. `Project` (root entity)
-2. `Post` (update under a project)
-3. `Comment` (discussion under a post)
+2. `Update` (entry under a project)
+3. `Comment` (discussion under an update)
 
 Core invariants:
-- A post MUST belong to exactly one project (`post.project_id` required).
-- A comment MUST belong to exactly one post (`comment.post_id` required).
+- An update MUST belong to exactly one project (`update.project_id` required).
+- A comment MUST belong to exactly one update (`comment.update_id` required).
 - A project is unique by canonical identity (slug/symbol/domain); duplicates are not allowed.
-- Posts can be consumed as standalone updates in feeds/notifications, but remain linked to their project.
+- Updates can be consumed as standalone feed items, but remain linked to their project.
 - The original project creator is the primary maintainer of that project.
 
 ## Project Ownership + Collaboration Model
 For each project:
 - Exactly one primary maintainer (creator/owner) exists.
 - Additional collaborators can be assigned to co-maintain updates.
-- Collaborators can create posts under the project if granted assignment.
+- Collaborators can create updates under the project if granted assignment.
 - Ownership transfer and collaborator removal must be auditable.
 - Primary maintainer can be an admin, or an approved poster granted project-publisher rights.
 
 This supports your intended flow:
 - `Codawoo` project is created once.
 - Updates are posted under `Codawoo` over time.
-- Followers receive notifications per new post.
+- Followers receive notifications per new update.
 - Other approved posters/admins can collaborate on `Codawoo` when accepted.
 
 ## Role and Permission Matrix (Updated)
@@ -73,18 +73,18 @@ Users can hold multiple roles simultaneously.
 - Create/manage projects.
 - Approve/promote posters.
 - Assign/remove project collaborators.
-- Moderate posts/comments and apply sanctions per policy.
+- Moderate updates/comments and apply sanctions per policy.
 
 ### `poster`
 - Content contributor.
-- Create project posts where assigned (or where primary maintainer).
+- Create project updates where assigned (or where primary maintainer).
 - Can create a new project only when granted project-publisher permission by owner/admin.
 - Cannot modify system-wide roles/policies.
 
 ### `user`
 - Follow/unfollow projects.
 - Read feeds and notifications.
-- Comment under posts.
+- Comment under updates.
 - Apply for elevation (poster/admin workflow).
 
 ## Public Profile Model (Required for Trust)
@@ -95,7 +95,7 @@ Each account has:
 Public profile should expose:
 - roles (multi-role badges),
 - projects created,
-- posts created,
+- updates created,
 - quality/reliability metrics,
 - future: donations and wallet reputation.
 
@@ -107,7 +107,7 @@ Implemented scaffold:
 - `admin-applications`
 - `projects`
 - `project-assignments`
-- `posts`
+- `updates`
 - `follows`
 - `notifications`
 - `device-tokens`
@@ -138,10 +138,10 @@ Current scaffold routes:
 - `POST /api/projects/:projectId/posters/:posterId/assign`
 - `POST /api/projects/:projectId/follow`
 - `DELETE /api/projects/:projectId/follow`
-- `POST /api/projects/:projectId/posts`
-- `GET /api/posts`
-- `GET /api/posts/:id`
-- `PATCH /api/posts/:id`
+- `POST /api/projects/:projectId/updates`
+- `GET /api/updates`
+- `GET /api/updates/:id`
+- `PATCH /api/updates/:id`
 - `GET /api/notifications`
 - `PATCH /api/notifications/:id/read`
 - `POST /api/device-tokens/register`
@@ -150,8 +150,8 @@ Current scaffold routes:
 - `GET /api/audit-log`
 
 Next required routes:
-- `POST /api/posts/:postId/comments`
-- `GET /api/posts/:postId/comments`
+- `POST /api/updates/:updateId/comments`
+- `GET /api/updates/:updateId/comments`
 - `PATCH /api/comments/:id`
 - `DELETE /api/comments/:id`
 - `GET /api/profiles/:id/public`
@@ -165,7 +165,7 @@ Current schema file:
 Current migration sequence (locked):
 1. `profiles`, `user_roles`
 2. `projects`, `project_posters`
-3. `posts`
+3. `updates`
 4. `project_follows`
 5. `notifications`
 6. `device_tokens`
@@ -179,9 +179,9 @@ Next migration additions:
 12. `profile_metrics` (for public trust stats)
 
 ## Notification Architecture
-On project post creation:
+On project update creation:
 1. Enforce creator permission (owner/admin/collaborator poster).
-2. Persist post under project.
+2. Persist update under project.
 3. Resolve followers of that project.
 4. Insert one in-app notification record per follower.
 5. Dispatch push via FCM to registered device tokens.
@@ -190,14 +190,14 @@ On project post creation:
 Client behavior:
 - Notification center from `/api/notifications`.
 - Mark read with `/api/notifications/:id/read`.
-- Open linked post when available.
+- Open linked update when available.
 - Refresh on app foreground and notification-open.
 
 ## Flutter Refactor Targets
 - All runtime data from NestJS API (no dummy production flow).
 - Role-aware UI behavior (owner/admin/poster/user).
-- Create-post flow always project-bound.
-- Notification center linked to real project posts.
+- Create-update flow always project-bound.
+- Notification center linked to real project updates.
 - Public profile route/screen for contributor transparency.
 
 ## Week-by-Week Execution Plan (Updated)
@@ -210,12 +210,12 @@ Client behavior:
 - Admin/poster assignment and collaborator lifecycle.
 
 ### Week 3
-- Harden project/post operations around canonical hierarchy.
-- Enforce: all posts must be attached to a project.
+- Harden project/update operations around canonical hierarchy.
+- Enforce: all updates must be attached to a project.
 
 ### Week 4
-- Implement comments under posts.
-- Add moderation actions for comments/posts.
+- Implement comments under updates.
+- Add moderation actions for comments/updates.
 
 ### Week 5
 - Public profile and contributor metrics.
@@ -227,11 +227,11 @@ Client behavior:
 ## Testing and Release Gates
 Release is blocked unless all are true:
 - duplicate project creation is prevented,
-- posts cannot exist without a parent project,
-- comments cannot exist without a parent post,
+- updates cannot exist without a parent project,
+- comments cannot exist without a parent update,
 - unauthorized role escalation is blocked,
-- unassigned posters cannot post to a project,
-- followers get in-app notifications on new project posts,
+- unassigned posters cannot create updates in a project,
+- followers get in-app notifications on new project updates,
 - feed/urgency ordering matches backend truth,
 - no dummy data is used in production paths.
 
@@ -312,11 +312,36 @@ Reference file:
 Completed in this pass:
 - Backend `comments` module scaffolded.
 - API endpoints added:
-  - `POST /api/posts/:postId/comments`
-  - `GET /api/posts/:postId/comments`
+  - `POST /api/updates/:updateId/comments`
+  - `GET /api/updates/:updateId/comments`
   - `PATCH /api/comments/:id`
   - `DELETE /api/comments/:id`
 - Prisma `Comment` model added with strict relations:
-  - comment -> post (required)
+  - comment -> update (required)
   - comment -> author profile (required)
 - Audit log events wired for comment create/update/delete.
+- Project canonical uniqueness checks added in service layer:
+  - normalized name conflict check
+  - symbol conflict check
+  - website domain conflict check
+- Collaborator invitation flow added:
+  - `POST /api/projects/:projectId/posters/:posterId/invite`
+  - `GET /api/projects/:projectId/invites`
+  - `GET /api/project-invites/mine`
+  - `PATCH /api/project-invites/:inviteId/respond`
+- Public profile endpoint added:
+  - `GET /api/profiles/:id/public`
+- Mobile comments integrated into update details:
+  - list comments
+  - create comment
+  - edit/delete own comment
+- Project proposal workflow implemented:
+  - `POST /api/project-proposals` (poster/admin/owner submit)
+  - `GET /api/project-proposals/mine`
+  - `GET /api/project-proposals` (owner/admin review queue)
+  - `PATCH /api/project-proposals/:id/review` (approve/reject)
+- Approval behavior:
+  - approved proposal creates real project
+  - applicant is auto-assigned as poster on that project
+  - updates can then be created under approved project
+- Mobile `Submit Project` UI added and wired from root composer action menu.

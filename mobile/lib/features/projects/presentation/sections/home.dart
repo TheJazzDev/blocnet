@@ -1,11 +1,11 @@
-import 'package:blocnet/features/projects/data/models/post_model.dart';
-import 'package:blocnet/services/posts_store.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:provider/provider.dart';
 import 'explore/explore.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/toggle_button.dart';
 import 'package:flutter/material.dart';
 
@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ProjectsStore>(context, listen: false).fetchProjectsOnce();
-      Provider.of<PostsStore>(context, listen: false).fetchPostsOnce();
+      Provider.of<UpdatesStore>(context, listen: false).fetchUpdatesOnce();
     });
     super.initState();
   }
@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onToggle: _handleToggle,
               ),
               const SizedBox(height: 16),
-              Consumer<PostsStore>(builder: (context, store, _) {
+              Consumer<UpdatesStore>(builder: (context, store, _) {
                 return activeSection == Sections.forYou
                     ? _buildForYouSection(store.posts)
                     : ExploreSection(allPosts: store.posts);
@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildForYouSection(List<Post> allPosts) {
+  Widget _buildForYouSection(List<Update> allPosts) {
     final enrichedPosts = allPosts
         .where((post) => post.project != null && post.admin != null)
         .toList();
@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: List.generate(
         enrichedPosts.length,
-        (index) => PostCard(post: enrichedPosts[index]),
+        (index) => UpdateCard(post: enrichedPosts[index]),
       ),
     );
   }

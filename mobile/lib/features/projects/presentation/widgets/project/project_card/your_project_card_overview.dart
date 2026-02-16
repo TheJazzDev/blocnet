@@ -4,7 +4,7 @@ import 'package:blocnet/features/projects/presentation/widgets/follow_bottom_she
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
-import '../../post/shared/post_project_logo.dart';
+import '../../update/shared/update_project_logo.dart';
 
 class YourProjectCardOverview extends StatefulWidget {
   const YourProjectCardOverview({required this.project, super.key});
@@ -21,7 +21,7 @@ class _YourProjectCardOverviewState extends State<YourProjectCardOverview> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        PostProjectLogo(logoUrl: widget.project.logo, size: 52),
+        UpdateProjectLogo(logoUrl: widget.project.logo, size: 52),
         SizedBox(width: 16),
         Expanded(
           child: Column(

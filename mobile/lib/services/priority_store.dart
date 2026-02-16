@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
-import 'package:blocnet/services/posts_store.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:provider/provider.dart';
 
 class PriorityStore extends ChangeNotifier {
   final Priority priority;
-  List<Post> _priorityPosts = [];
-  List<Post> _filteredPosts = [];
+  List<Update> _priorityPosts = [];
+  List<Update> _filteredPosts = [];
   final Set<String> _allSecondaryTags = {};
   final Set<String> _selectedFilters = {};
 
@@ -15,13 +15,13 @@ class PriorityStore extends ChangeNotifier {
     _loadPosts(context);
   }
 
-  List<Post> get filteredPosts => _filteredPosts;
+  List<Update> get filteredPosts => _filteredPosts;
   Set<String> get allSecondaryTags => _allSecondaryTags;
   Set<String> get selectedFilters => _selectedFilters;
 
   void _loadPosts(BuildContext context) {
-    _priorityPosts = Provider.of<PostsStore>(context, listen: false)
-        .getPostsByPriority(priority);
+    _priorityPosts = Provider.of<UpdatesStore>(context, listen: false)
+        .getUpdatesByPriority(priority);
     _extractSecondaryTags();
     _applyFilters();
   }

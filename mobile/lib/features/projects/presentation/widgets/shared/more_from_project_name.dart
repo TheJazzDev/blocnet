@@ -1,9 +1,9 @@
-import 'package:blocnet/features/projects/data/models/post_model.dart';
-import 'package:blocnet/features/projects/presentation/widgets/post/shared/post_project_title.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/shared/update_project_title.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../post/more_from/more_from_project_name_card.dart';
+import '../update/more_from/more_from_project_name_card.dart';
 
 class MoreFromProjectName extends StatelessWidget {
   const MoreFromProjectName({
@@ -15,7 +15,7 @@ class MoreFromProjectName extends StatelessWidget {
 
   final String label;
   final String projectTitle;
-  final List<Post> posts;
+  final List<Update> posts;
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +29,13 @@ class MoreFromProjectName extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 StyledBodyText600(label),
-                PostProjectTitle(projectTitle: projectTitle, margin: false),
+                UpdateProjectTitle(projectTitle: projectTitle, margin: false),
               ],
             ),
           ],
         ),
         posts.isEmpty
-            ? StyledBodyText500("No posts available for this $projectTitle!")
+            ? StyledBodyText500("No updates available for this $projectTitle!")
             : Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Row(
@@ -57,7 +57,7 @@ class MoreFromProjectName extends StatelessWidget {
                             final post = posts[index];
                             return Padding(
                               padding: const EdgeInsets.only(right: 20),
-                              child: MoreFromProjectNameCard(post: post),
+                              child: MoreFromProjectNameUpdateCard(post: post),
                             );
                           }),
                         ),

@@ -5,8 +5,10 @@ import 'package:blocnet/services/admins_store.dart';
 import 'package:blocnet/services/app_store.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
-import 'package:blocnet/services/posts_store.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/tags_store.dart';
+import 'package:blocnet/services/comments_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'constants/app_routes.dart';
@@ -46,8 +48,10 @@ void main() async {
       providers: [
         ChangeNotifierProvider<AuthStore>.value(value: authStore),
         ChangeNotifierProvider(create: (_) => AppStore()),
-        ChangeNotifierProvider(create: (_) => PostsStore()),
+        ChangeNotifierProvider(create: (_) => UpdatesStore()),
         ChangeNotifierProvider(create: (_) => NotificationsStore()),
+        ChangeNotifierProvider(create: (_) => CommentsStore()),
+        ChangeNotifierProvider(create: (_) => TagsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),
         // ChangeNotifierProvider(create: (_) => PriorityStore()),
         ChangeNotifierProvider(create: (_) => ProjectsStore()),

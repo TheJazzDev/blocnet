@@ -46,4 +46,41 @@ export class UsersService {
       },
     });
   }
+
+  async getPublicProfile(userId: string) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { id: userId },
+      include: {
+        roles: {
+          select: {
+            role: true,
+          },
+        },
+        _count: {
+          select: {
+            authoredUpdates: true,
+            authoredComments: true,
+            ownedProjects: true,
+          },
+        },
+      },
+    });
+
+    if (!profile) {
+      return null;
+    }
+
+    return {
+      id: profile.id,
+      displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl,
+      roles: profile.roles.map((row) => row.role),
+      stats: {
+        projectsCreated: profile._count.ownedProjects,
+        updatesCreated: profile._count.authoredUpdates,
+        commentsCreated: profile._count.authoredComments,
+      },
+      createdAt: profile.createdAt,
+    };
+  }
 }

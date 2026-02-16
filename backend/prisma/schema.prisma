@@ -30,12 +30,12 @@ enum ProjectStatus {
   archived
 }
 
-enum PostStatus {
+enum UpdateStatus {
   published
   archived
 }
 
-enum PostUrgency {
+enum UpdateUrgency {
   high
   medium
   low
@@ -53,6 +53,12 @@ enum InviteStatus {
   cancelled
 }
 
+enum ProjectProposalStatus {
+  pending
+  approved
+  rejected
+}
+
 model Profile {
   id                String             @id @db.Uuid
   email             String             @unique
@@ -63,11 +69,13 @@ model Profile {
   roles             UserRole[]
   ownedProjects     Project[]          @relation("OwnedProjects")
   posterAssignments ProjectPoster[]
-  authoredPosts     Post[]             @relation("AuthoredPosts")
+  authoredUpdates   Update[]           @relation("AuthoredUpdates")
   authoredComments  Comment[]          @relation("AuthoredComments")
   posterInvites     ProjectPosterInvite[] @relation("InvitePoster")
   sentInvites       ProjectPosterInvite[] @relation("InviteSender")
   reviewedInvites   ProjectPosterInvite[] @relation("InviteReviewer")
+  projectProposals  ProjectProposal[]     @relation("ProjectProposalApplicant")
+  reviewedProposals ProjectProposal[]     @relation("ProjectProposalReviewer")
   follows           ProjectFollow[]
   notifications     Notification[]
   deviceTokens      DeviceToken[]
@@ -92,21 +100,24 @@ model Project {
   id            String          @id @default(uuid()) @db.Uuid
   name          String
   slug          String          @unique
-  normalizedName String         @unique
+  normalizedName String?        @unique
   symbol        String?         @unique
   websiteUrl    String?
   websiteDomain String?         @unique
   description   String
-  primaryTag    String
+  primaryTagId  String          @db.Uuid
   status        ProjectStatus   @default(active)
   ownerAdminId  String          @db.Uuid
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
   ownerAdmin    Profile         @relation("OwnedProjects", fields: [ownerAdminId], references: [id])
+  primaryTag    PrimaryTag      @relation(fields: [primaryTagId], references: [id], onDelete: Restrict)
+  secondaryTags ProjectSecondaryTag[]
   posters       ProjectPoster[]
   invites       ProjectPosterInvite[]
-  posts         Post[]
+  proposals     ProjectProposal[]
+  updates       Update[]
   follows       ProjectFollow[]
   notifications Notification[]
 
@@ -149,38 +160,114 @@ model ProjectPosterInvite {
   @@index([projectId, status])
 }
 
-model Post {
+model ProjectProposal {
+  id             String               @id @default(uuid()) @db.Uuid
+  applicantId    String               @db.Uuid
+  name           String
+  normalizedName String
+  symbol         String?
+  websiteUrl     String?
+  websiteDomain  String?
+  description    String
+  primaryTagId   String               @db.Uuid
+  reason         String?
+  status         ProjectProposalStatus @default(pending)
+  reviewerId     String?              @db.Uuid
+  reviewNote     String?
+  reviewedAt     DateTime?
+  createdProjectId String?            @db.Uuid
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  applicant      Profile              @relation("ProjectProposalApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+  reviewer       Profile?             @relation("ProjectProposalReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  createdProject Project?             @relation(fields: [createdProjectId], references: [id], onDelete: SetNull)
+  primaryTag     PrimaryTag           @relation(fields: [primaryTagId], references: [id], onDelete: Restrict)
+
+  @@index([applicantId, status])
+  @@index([status, createdAt])
+  @@index([normalizedName, status])
+}
+
+model Update {
   id            String          @id @default(uuid()) @db.Uuid
   projectId     String          @db.Uuid
   authorId      String          @db.Uuid
-  urgency       PostUrgency
+  urgency       UpdateUrgency
   title         String
   contentMd     String
-  status        PostStatus      @default(published)
+  status        UpdateStatus    @default(published)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
   project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  author        Profile         @relation("AuthoredPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  author        Profile         @relation("AuthoredUpdates", fields: [authorId], references: [id], onDelete: Cascade)
   notifications Notification[]
   comments      Comment[]
+  secondaryTags UpdateSecondaryTag[]
 
   @@index([projectId, urgency])
   @@index([authorId])
 }
 
+model PrimaryTag {
+  id          String            @id @default(uuid()) @db.Uuid
+  name        String            @unique
+  slug        String            @unique
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  projects    Project[]
+  proposals   ProjectProposal[]
+}
+
+model SecondaryTag {
+  id          String             @id @default(uuid()) @db.Uuid
+  name        String             @unique
+  slug        String             @unique
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  projects    ProjectSecondaryTag[]
+  updates     UpdateSecondaryTag[]
+}
+
+model ProjectSecondaryTag {
+  id             String       @id @default(uuid()) @db.Uuid
+  projectId      String       @db.Uuid
+  secondaryTagId String       @db.Uuid
+  createdAt      DateTime     @default(now())
+
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  secondaryTag   SecondaryTag @relation(fields: [secondaryTagId], references: [id], onDelete: Restrict)
+
+  @@unique([projectId, secondaryTagId])
+  @@index([secondaryTagId])
+}
+
+model UpdateSecondaryTag {
+  id             String       @id @default(uuid()) @db.Uuid
+  updateId       String       @db.Uuid
+  secondaryTagId String       @db.Uuid
+  createdAt      DateTime     @default(now())
+
+  update         Update       @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  secondaryTag   SecondaryTag @relation(fields: [secondaryTagId], references: [id], onDelete: Restrict)
+
+  @@unique([updateId, secondaryTagId])
+  @@index([secondaryTagId])
+}
+
 model Comment {
   id        String   @id @default(uuid()) @db.Uuid
-  postId    String   @db.Uuid
+  updateId  String   @db.Uuid
   authorId  String   @db.Uuid
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  update    Update   @relation(fields: [updateId], references: [id], onDelete: Cascade)
   author    Profile  @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
 
-  @@index([postId, createdAt])
+  @@index([updateId, createdAt])
   @@index([authorId])
 }
 
@@ -202,8 +289,8 @@ model Notification {
   userId       String          @db.Uuid
   type         NotificationType
   projectId    String?         @db.Uuid
-  postId       String?         @db.Uuid
-  urgency      PostUrgency?
+  updateId     String?         @db.Uuid
+  urgency      UpdateUrgency?
   title        String
   body         String
   isRead       Boolean         @default(false)
@@ -212,7 +299,7 @@ model Notification {
 
   user         Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
   project      Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  post         Post?           @relation(fields: [postId], references: [id], onDelete: SetNull)
+  update       Update?         @relation(fields: [updateId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([projectId])

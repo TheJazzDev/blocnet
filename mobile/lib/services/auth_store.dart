@@ -48,10 +48,13 @@ class AuthStore extends ChangeNotifier {
   String? get displayName => _displayName;
   String? get avatarUrl => _avatarUrl;
   List<String> get roles => List.unmodifiable(_roles);
-  bool get canCreatePost =>
-      _roles.contains('owner') ||
-      _roles.contains('admin') ||
-      _roles.contains('poster');
+  bool get isOwner => _roles.contains('owner');
+  bool get isAdmin => _roles.contains('admin');
+  bool get isPoster => _roles.contains('poster');
+  bool get isUser => _roles.contains('user');
+  bool get canModerateRoles => isOwner || isAdmin;
+  bool get canCreateUpdate => isOwner || isAdmin || isPoster;
+  bool get canSubmitProject => isOwner || isAdmin || isPoster;
   String? get lastError => _lastError;
   bool get isSupabaseConfigured => AppConfig.isSupabaseConfigured;
 

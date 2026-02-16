@@ -1,8 +1,8 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
   NotificationType,
-  PostStatus,
-  PostUrgency,
+  UpdateStatus,
+  UpdateUrgency,
   PrismaClient,
   ProjectStatus,
   RoleName,
@@ -46,6 +46,32 @@ type SeedProjectKey =
   | 'tonDropDesk'
   | 'bscLaunchFlow';
 
+type PrimaryTagKey =
+  | 'core'
+  | 'solana'
+  | 'ethereum'
+  | 'iceOpenNetwork'
+  | 'telegramNetwork'
+  | 'binanceSmartChain';
+
+type SecondaryTagKey =
+  | 'launching'
+  | 'ido'
+  | 'airdrops'
+  | 'mining'
+  | 'partnership'
+  | 'governance'
+  | 'staking'
+  | 'tokenBurn'
+  | 'farming'
+  | 'nft'
+  | 'trading'
+  | 'icoIdo'
+  | 'gaming'
+  | 'wallet'
+  | 'security'
+  | 'metaverse';
+
 const fallbackOwnerId = '8c244a0e-71f4-4a39-8d30-3d32f2ee9012';
 const fallbackOwnerEmail = 'owner@blocknet.local';
 
@@ -58,7 +84,7 @@ async function main() {
       key: 'owner',
       id: ownerUserId,
       email: ownerEmail,
-      displayName: 'Blocknet Owner',
+      displayName: 'Jazzdev',
       roles: [RoleName.owner, RoleName.user],
     },
     {
@@ -133,6 +159,70 @@ async function main() {
 
   const ownerProfileId = profileByKey.get('owner')!.id;
 
+  const primaryTags: Array<{ key: PrimaryTagKey; name: string; slug: string }> = [
+    { key: 'core', name: 'Core', slug: 'core' },
+    { key: 'solana', name: 'Solana', slug: 'solana' },
+    { key: 'ethereum', name: 'Ethereum', slug: 'ethereum' },
+    {
+      key: 'iceOpenNetwork',
+      name: 'Ice Open Network',
+      slug: 'ice-open-network',
+    },
+    {
+      key: 'telegramNetwork',
+      name: 'Telegram Network',
+      slug: 'telegram-network',
+    },
+    {
+      key: 'binanceSmartChain',
+      name: 'Binance Smart Chain',
+      slug: 'binance-smart-chain',
+    },
+  ];
+
+  const secondaryTags: Array<{ key: SecondaryTagKey; name: string; slug: string }> = [
+    { key: 'launching', name: 'Launching', slug: 'launching' },
+    { key: 'ido', name: 'IDO', slug: 'ido' },
+    { key: 'airdrops', name: 'Airdrops', slug: 'airdrops' },
+    { key: 'mining', name: 'Mining', slug: 'mining' },
+    { key: 'partnership', name: 'Partnership', slug: 'partnership' },
+    { key: 'governance', name: 'Governance', slug: 'governance' },
+    { key: 'staking', name: 'Staking', slug: 'staking' },
+    { key: 'tokenBurn', name: 'Token Burn', slug: 'token-burn' },
+    { key: 'farming', name: 'Farming', slug: 'farming' },
+    { key: 'nft', name: 'NFT', slug: 'nft' },
+    { key: 'trading', name: 'Trading', slug: 'trading' },
+    { key: 'icoIdo', name: 'ICO/IDO', slug: 'ico-ido' },
+    { key: 'gaming', name: 'Gaming', slug: 'gaming' },
+    { key: 'wallet', name: 'Wallet', slug: 'wallet' },
+    { key: 'security', name: 'Security', slug: 'security' },
+    { key: 'metaverse', name: 'Metaverse', slug: 'metaverse' },
+  ];
+
+  const primaryTagByKey = new Map<PrimaryTagKey, { id: string }>();
+  for (const tag of primaryTags) {
+    const row = await prisma.primaryTag.upsert({
+      where: { slug: tag.slug },
+      update: { name: tag.name },
+      create: { name: tag.name, slug: tag.slug },
+      select: { id: true },
+    });
+
+    primaryTagByKey.set(tag.key, row);
+  }
+
+  const secondaryTagByKey = new Map<SecondaryTagKey, { id: string }>();
+  for (const tag of secondaryTags) {
+    const row = await prisma.secondaryTag.upsert({
+      where: { slug: tag.slug },
+      update: { name: tag.name },
+      create: { name: tag.name, slug: tag.slug },
+      select: { id: true },
+    });
+
+    secondaryTagByKey.set(tag.key, row);
+  }
+
   for (const user of users) {
     const profile = profileByKey.get(user.key)!;
 
@@ -164,7 +254,8 @@ async function main() {
       name: 'Solana Radar',
       description:
         'Curated Solana ecosystem updates: validator changes, ecosystem grants, and high-quality airdrop opportunities with verified timelines.',
-      primaryTag: 'Solana',
+      primaryTagKey: 'solana' as const,
+      secondaryTagKeys: ['airdrops', 'governance'] as const,
       status: ProjectStatus.active,
       ownerAdminId: profileByKey.get('adminAlpha')!.id,
     },
@@ -175,7 +266,8 @@ async function main() {
       name: 'Ethereum Watch',
       description:
         'Ethereum project watchlist focused on staking, governance, and protocol upgrades with concise action items for members.',
-      primaryTag: 'Ethereum',
+      primaryTagKey: 'ethereum' as const,
+      secondaryTagKeys: ['staking', 'governance'] as const,
       status: ProjectStatus.active,
       ownerAdminId: profileByKey.get('adminDelta')!.id,
     },
@@ -186,7 +278,8 @@ async function main() {
       name: 'Core Mines',
       description:
         'Mining and node operation opportunities on Core with profitability checkpoints, setup notes, and risk flags.',
-      primaryTag: 'Core',
+      primaryTagKey: 'core' as const,
+      secondaryTagKeys: ['mining', 'wallet'] as const,
       status: ProjectStatus.active,
       ownerAdminId: ownerProfileId,
     },
@@ -197,7 +290,8 @@ async function main() {
       name: 'TON Drop Desk',
       description:
         'Telegram/TON ecosystem updates for mini-app launches, eligibility windows, and reward claim schedules.',
-      primaryTag: 'Telegram Network',
+      primaryTagKey: 'telegramNetwork' as const,
+      secondaryTagKeys: ['airdrops', 'partnership'] as const,
       status: ProjectStatus.active,
       ownerAdminId: profileByKey.get('adminAlpha')!.id,
     },
@@ -208,7 +302,8 @@ async function main() {
       name: 'BSC Launch Flow',
       description:
         'Binance Smart Chain launch tracking with KYC requirements, token claim windows, and urgent listing alerts.',
-      primaryTag: 'Binance Smart Chain',
+      primaryTagKey: 'binanceSmartChain' as const,
+      secondaryTagKeys: ['launching', 'ido'] as const,
       status: ProjectStatus.active,
       ownerAdminId: profileByKey.get('adminDelta')!.id,
     },
@@ -217,12 +312,20 @@ async function main() {
   const projectByKey = new Map<SeedProjectKey, { id: string; slug: string }>();
 
   for (const project of projects) {
+    const normalizedName = project.name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
     const row = await prisma.project.upsert({
       where: { slug: project.slug },
       update: {
         name: project.name,
+        normalizedName,
         description: project.description,
-        primaryTag: project.primaryTag,
+        primaryTagId: primaryTagByKey.get(project.primaryTagKey)!.id,
         status: project.status,
         ownerAdminId: project.ownerAdminId,
       },
@@ -230,8 +333,9 @@ async function main() {
         id: project.id,
         slug: project.slug,
         name: project.name,
+        normalizedName,
         description: project.description,
-        primaryTag: project.primaryTag,
+        primaryTagId: primaryTagByKey.get(project.primaryTagKey)!.id,
         status: project.status,
         ownerAdminId: project.ownerAdminId,
       },
@@ -239,6 +343,20 @@ async function main() {
     });
 
     projectByKey.set(project.key, row);
+
+    await prisma.projectSecondaryTag.deleteMany({
+      where: { projectId: row.id },
+    });
+
+    if (project.secondaryTagKeys.length > 0) {
+      await prisma.projectSecondaryTag.createMany({
+        data: project.secondaryTagKeys.map((secondaryTagKey) => ({
+          projectId: row.id,
+          secondaryTagId: secondaryTagByKey.get(secondaryTagKey)!.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
   }
 
   const posterAssignments = [
@@ -291,13 +409,14 @@ async function main() {
     });
   }
 
-  const posts = [
+  const updates = [
     {
       id: '68a39068-c3c2-47f1-8689-90864d183c31',
       projectKey: 'solanaRadar' as const,
       authorKey: 'adminAlpha' as const,
-      urgency: PostUrgency.high,
+      urgency: UpdateUrgency.high,
       title: 'Solana Epoch Upgrade Window',
+      secondaryTagKeys: ['launching', 'wallet'] as const,
       contentMd:
         'Validator upgrade opens in **48 hours**.\n\n- Snapshot starts: tomorrow 14:00 UTC\n- Eligible wallets: active before snapshot\n- Action: complete wallet signing before deadline.',
     },
@@ -305,8 +424,9 @@ async function main() {
       id: '2588f558-f380-46fe-99bb-3026f6417c26',
       projectKey: 'solanaRadar' as const,
       authorKey: 'posterNexa' as const,
-      urgency: PostUrgency.medium,
+      urgency: UpdateUrgency.medium,
       title: 'Solana Staking Reward Checklist',
+      secondaryTagKeys: ['staking', 'governance'] as const,
       contentMd:
         'Quick checklist for this week:\n\n1. Verify staking pool fees.\n2. Confirm validator uptime.\n3. Rebalance rewards every Friday.',
     },
@@ -314,8 +434,9 @@ async function main() {
       id: '453bc9cb-40d4-4bbe-b379-5ef3c4e9bd4e',
       projectKey: 'ethWatch' as const,
       authorKey: 'adminDelta' as const,
-      urgency: PostUrgency.high,
+      urgency: UpdateUrgency.high,
       title: 'Ethereum L2 Governance Vote Live',
+      secondaryTagKeys: ['governance', 'ido'] as const,
       contentMd:
         'Governance proposal is now live.\n\n- Vote closes in 36 hours\n- Minimum token threshold applies\n- Focus: treasury allocation and validator incentives.',
     },
@@ -323,8 +444,9 @@ async function main() {
       id: '264491cf-f4e1-40a2-b8de-203860241205',
       projectKey: 'ethWatch' as const,
       authorKey: 'posterSage' as const,
-      urgency: PostUrgency.low,
+      urgency: UpdateUrgency.low,
       title: 'Ethereum Ecosystem Weekly Recap',
+      secondaryTagKeys: ['partnership'] as const,
       contentMd:
         'No urgent action today.\n\nHighlights include updated docs, new partnerships, and security advisory follow-ups.',
     },
@@ -332,8 +454,9 @@ async function main() {
       id: 'f53093e9-da89-4f7d-aadf-c8f4477e4ffa',
       projectKey: 'coreMines' as const,
       authorKey: 'owner' as const,
-      urgency: PostUrgency.medium,
+      urgency: UpdateUrgency.medium,
       title: 'Core Mining Pool Difficulty Update',
+      secondaryTagKeys: ['mining'] as const,
       contentMd:
         'Mining difficulty adjusted upward.\n\n- Estimated yield reduced by ~8%\n- Recompute electricity break-even\n- Consider auto-switch pools.',
     },
@@ -341,8 +464,9 @@ async function main() {
       id: '2cedde8c-c577-46e5-b753-c1f101ef181f',
       projectKey: 'coreMines' as const,
       authorKey: 'posterNexa' as const,
-      urgency: PostUrgency.high,
+      urgency: UpdateUrgency.high,
       title: 'Core Node Snapshot Required',
+      secondaryTagKeys: ['security', 'wallet'] as const,
       contentMd:
         'Node snapshot deadline moved earlier.\n\nRequired:\n- Backup keys\n- Sync latest snapshot\n- Confirm node health check before 22:00 UTC.',
     },
@@ -350,8 +474,9 @@ async function main() {
       id: '3f2d7796-6fbc-4ebc-be77-bfb746f9e9cc',
       projectKey: 'tonDropDesk' as const,
       authorKey: 'adminAlpha' as const,
-      urgency: PostUrgency.medium,
+      urgency: UpdateUrgency.medium,
       title: 'TON Mini App Airdrop Eligibility',
+      secondaryTagKeys: ['airdrops'] as const,
       contentMd:
         'Eligibility criteria published.\n\n- Account age > 14 days\n- Activity score minimum required\n- Claim window opens next Monday.',
     },
@@ -359,8 +484,9 @@ async function main() {
       id: '4baf1ea7-cd09-43d8-bf43-fd9eb6af90f2',
       projectKey: 'tonDropDesk' as const,
       authorKey: 'posterSage' as const,
-      urgency: PostUrgency.low,
+      urgency: UpdateUrgency.low,
       title: 'TON Ecosystem New Partnership',
+      secondaryTagKeys: ['partnership'] as const,
       contentMd:
         'Partnership announced with payments provider.\n\nNo immediate action needed. Monitoring integration milestones.',
     },
@@ -368,8 +494,9 @@ async function main() {
       id: 'd3e85f87-eb7f-4f9d-ab7d-88f8460288c0',
       projectKey: 'bscLaunchFlow' as const,
       authorKey: 'adminDelta' as const,
-      urgency: PostUrgency.high,
+      urgency: UpdateUrgency.high,
       title: 'BSC Launchpad KYC Deadline',
+      secondaryTagKeys: ['security', 'ido'] as const,
       contentMd:
         'KYC deadline is in 24 hours.\n\n- Complete verification in-app\n- Document mismatch leads to rejection\n- Re-submit early to avoid queue delays.',
     },
@@ -377,34 +504,49 @@ async function main() {
       id: '44172153-90bc-47c8-bb2a-454c5ca63b6c',
       projectKey: 'bscLaunchFlow' as const,
       authorKey: 'posterNexa' as const,
-      urgency: PostUrgency.medium,
+      urgency: UpdateUrgency.medium,
       title: 'BSC Token Claim Process',
+      secondaryTagKeys: ['launching', 'wallet'] as const,
       contentMd:
         'Claim process checklist:\n\n1. Confirm wallet network is BSC.\n2. Approve claim transaction.\n3. Verify receipt hash in tracker.',
     },
   ];
 
-  for (const post of posts) {
-    await prisma.post.upsert({
-      where: { id: post.id },
+  for (const update of updates) {
+    const row = await prisma.update.upsert({
+      where: { id: update.id },
       update: {
-        title: post.title,
-        contentMd: post.contentMd,
-        urgency: post.urgency,
-        status: PostStatus.published,
-        projectId: projectByKey.get(post.projectKey)!.id,
-        authorId: profileByKey.get(post.authorKey)!.id,
+        title: update.title,
+        contentMd: update.contentMd,
+        urgency: update.urgency,
+        status: UpdateStatus.published,
+        projectId: projectByKey.get(update.projectKey)!.id,
+        authorId: profileByKey.get(update.authorKey)!.id,
       },
       create: {
-        id: post.id,
-        title: post.title,
-        contentMd: post.contentMd,
-        urgency: post.urgency,
-        status: PostStatus.published,
-        projectId: projectByKey.get(post.projectKey)!.id,
-        authorId: profileByKey.get(post.authorKey)!.id,
+        id: update.id,
+        title: update.title,
+        contentMd: update.contentMd,
+        urgency: update.urgency,
+        status: UpdateStatus.published,
+        projectId: projectByKey.get(update.projectKey)!.id,
+        authorId: profileByKey.get(update.authorKey)!.id,
       },
     });
+
+    await prisma.updateSecondaryTag.deleteMany({
+      where: { updateId: row.id },
+    });
+
+    if (update.secondaryTagKeys.length > 0) {
+      await prisma.updateSecondaryTag.createMany({
+        data: update.secondaryTagKeys.map((secondaryTagKey) => ({
+          updateId: row.id,
+          secondaryTagId: secondaryTagByKey.get(secondaryTagKey)!.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
   }
 
   const follows = [
@@ -440,8 +582,8 @@ async function main() {
       id: '16cbf5ea-ae97-4445-b1e8-63559095cde4',
       userKey: 'memberRae' as const,
       projectKey: 'solanaRadar' as const,
-      postId: '68a39068-c3c2-47f1-8689-90864d183c31',
-      urgency: PostUrgency.high,
+      updateId: '68a39068-c3c2-47f1-8689-90864d183c31',
+      urgency: UpdateUrgency.high,
       title: 'Urgent: Solana Epoch Upgrade',
       body: 'Snapshot opens soon. Complete wallet signing before deadline.',
     },
@@ -449,8 +591,8 @@ async function main() {
       id: 'cae4d98b-e0a5-4f14-84f0-72e9fc68957d',
       userKey: 'memberKai' as const,
       projectKey: 'coreMines' as const,
-      postId: '2cedde8c-c577-46e5-b753-c1f101ef181f',
-      urgency: PostUrgency.high,
+      updateId: '2cedde8c-c577-46e5-b753-c1f101ef181f',
+      urgency: UpdateUrgency.high,
       title: 'Action Needed: Core Node Snapshot',
       body: 'Snapshot deadline moved earlier. Sync and validate node today.',
     },
@@ -458,8 +600,8 @@ async function main() {
       id: 'f8f0141d-9c27-47be-8b1c-669ff84ae2ea',
       userKey: 'memberMila' as const,
       projectKey: 'bscLaunchFlow' as const,
-      postId: 'd3e85f87-eb7f-4f9d-ab7d-88f8460288c0',
-      urgency: PostUrgency.high,
+      updateId: 'd3e85f87-eb7f-4f9d-ab7d-88f8460288c0',
+      urgency: UpdateUrgency.high,
       title: 'Reminder: BSC KYC Deadline',
       body: 'Complete KYC in the next 24 hours to remain eligible.',
     },
@@ -467,8 +609,8 @@ async function main() {
       id: '301fede7-f3f3-4b77-a7d6-e9222fca44d0',
       userKey: 'owner' as const,
       projectKey: 'ethWatch' as const,
-      postId: '453bc9cb-40d4-4bbe-b379-5ef3c4e9bd4e',
-      urgency: PostUrgency.medium,
+      updateId: '453bc9cb-40d4-4bbe-b379-5ef3c4e9bd4e',
+      urgency: UpdateUrgency.medium,
       title: 'Review: Ethereum Governance Vote',
       body: 'Admin Delta posted a governance vote summary for member action.',
     },
@@ -481,7 +623,7 @@ async function main() {
         type: NotificationType.project_update,
         userId: profileByKey.get(notification.userKey)!.id,
         projectId: projectByKey.get(notification.projectKey)!.id,
-        postId: notification.postId,
+        updateId: notification.updateId,
         urgency: notification.urgency,
         title: notification.title,
         body: notification.body,
@@ -491,7 +633,7 @@ async function main() {
         type: NotificationType.project_update,
         userId: profileByKey.get(notification.userKey)!.id,
         projectId: projectByKey.get(notification.projectKey)!.id,
-        postId: notification.postId,
+        updateId: notification.updateId,
         urgency: notification.urgency,
         title: notification.title,
         body: notification.body,
@@ -503,13 +645,13 @@ async function main() {
     prisma.profile.count(),
     prisma.userRole.count(),
     prisma.project.count(),
-    prisma.post.count(),
+    prisma.update.count(),
     prisma.projectFollow.count(),
     prisma.notification.count(),
   ]);
 
   console.log(
-    `[seed] completed | profiles=${stats[0]} roles=${stats[1]} projects=${stats[2]} posts=${stats[3]} follows=${stats[4]} notifications=${stats[5]}`,
+    `[seed] completed | profiles=${stats[0]} roles=${stats[1]} projects=${stats[2]} updates=${stats[3]} follows=${stats[4]} notifications=${stats[5]}`,
   );
   console.log(`[seed] owner email: ${ownerEmail}`);
 }

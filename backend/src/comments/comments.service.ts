@@ -30,19 +30,19 @@ export class CommentsService {
     private readonly auditLogService: AuditLogService,
   ) {}
 
-  async createComment(actor: AuthUser, postId: string, dto: CreateCommentDto) {
-    const post = await this.prisma.post.findUnique({
-      where: { id: postId },
+  async createComment(actor: AuthUser, updateId: string, dto: CreateCommentDto) {
+    const update = await this.prisma.update.findUnique({
+      where: { id: updateId },
       select: { id: true, projectId: true },
     });
 
-    if (!post) {
-      throw new NotFoundException('Post not found');
+    if (!update) {
+      throw new NotFoundException('Update not found');
     }
 
     const comment = await this.prisma.comment.create({
       data: {
-        postId,
+        updateId: updateId,
         authorId: actor.id,
         content: dto.content,
       },
@@ -54,27 +54,27 @@ export class CommentsService {
       action: 'comment.create',
       resourceType: 'comment',
       resourceId: comment.id,
-      metadata: { postId, projectId: post.projectId },
+      metadata: { updateId, projectId: update.projectId },
     });
 
     return this.toCommentResponse(comment);
   }
 
-  async listComments(postId: string, query: ListCommentsQuery) {
-    const post = await this.prisma.post.findUnique({
-      where: { id: postId },
+  async listComments(updateId: string, query: ListCommentsQuery) {
+    const update = await this.prisma.update.findUnique({
+      where: { id: updateId },
       select: { id: true },
     });
 
-    if (!post) {
-      throw new NotFoundException('Post not found');
+    if (!update) {
+      throw new NotFoundException('Update not found');
     }
 
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
 
     const comments = await this.prisma.comment.findMany({
-      where: { postId },
+      where: { updateId: updateId },
       orderBy: { createdAt: 'asc' },
       skip: offset,
       take: limit,
@@ -90,8 +90,8 @@ export class CommentsService {
       select: {
         id: true,
         authorId: true,
-        postId: true,
-        post: {
+        updateId: true,
+        update: {
           select: {
             projectId: true,
             project: {
@@ -111,7 +111,7 @@ export class CommentsService {
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
       actor.roles.includes(AppRole.ADMIN) &&
-      comment.post.project.ownerAdminId === actor.id;
+      comment.update.project.ownerAdminId === actor.id;
     const isAuthor = comment.authorId === actor.id;
 
     if (!isOwner && !isAdminOwner && !isAuthor) {
@@ -132,8 +132,8 @@ export class CommentsService {
       resourceType: 'comment',
       resourceId: updated.id,
       metadata: {
-        postId: updated.postId,
-        projectId: comment.post.projectId,
+        updateId: updated.updateId,
+        projectId: comment.update.projectId,
       },
     });
 
@@ -146,8 +146,8 @@ export class CommentsService {
       select: {
         id: true,
         authorId: true,
-        postId: true,
-        post: {
+        updateId: true,
+        update: {
           select: {
             projectId: true,
             project: {
@@ -167,7 +167,7 @@ export class CommentsService {
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
       actor.roles.includes(AppRole.ADMIN) &&
-      comment.post.project.ownerAdminId === actor.id;
+      comment.update.project.ownerAdminId === actor.id;
     const isAuthor = comment.authorId === actor.id;
 
     if (!isOwner && !isAdminOwner && !isAuthor) {
@@ -182,8 +182,8 @@ export class CommentsService {
       resourceType: 'comment',
       resourceId: comment.id,
       metadata: {
-        postId: comment.postId,
-        projectId: comment.post.projectId,
+        updateId: comment.updateId,
+        projectId: comment.update.projectId,
       },
     });
 

@@ -1,15 +1,15 @@
-import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/cards/tag_card.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 
 class ExploreSection extends StatelessWidget {
   const ExploreSection({required this.allPosts, super.key});
 
-  final List<Post> allPosts;
+  final List<Update> allPosts;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +65,7 @@ class ExploreSection extends StatelessWidget {
             physics: NeverScrollableScrollPhysics(),
             itemCount: allPosts.length,
             itemBuilder: (context, index) {
-              return PostCard(post: allPosts[index]);
+              return UpdateCard(post: allPosts[index]);
             },
           ),
         ],

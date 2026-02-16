@@ -1,5 +1,8 @@
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/projects/presentation/pages/create_post_screen.dart';
+import 'package:blocnet/features/projects/presentation/pages/create_update_screen.dart';
+import 'package:blocnet/features/projects/presentation/pages/manage_updates_screen.dart';
+import 'package:blocnet/features/projects/presentation/pages/manage_projects_screen.dart';
+import 'package:blocnet/features/projects/presentation/pages/submit_project_screen.dart';
 import 'package:blocnet/screen/main_screen.dart';
 import 'package:flutter/material.dart';
 import '../screen/notifications.dart';
@@ -12,7 +15,10 @@ class ProtectedRoutes {
   static const String profile = AppRoutes.profile;
   static const String settings = AppRoutes.settings;
   static const String notifications = AppRoutes.notifications;
-  static const String createPost = AppRoutes.createPost;
+  static const String createUpdate = AppRoutes.createUpdate;
+  static const String submitProject = AppRoutes.submitProject;
+  static const String manageProjects = AppRoutes.manageProjects;
+  static const String manageUpdates = AppRoutes.manageUpdates;
 
   // Projects
   static const String home = AppRoutes.home;
@@ -27,13 +33,23 @@ class ProtectedRoutes {
     return _allRoutes.contains(route);
   }
 
+  static bool hasRoleAccess(String? route, List<String> roles) {
+    if (route == null) return false;
+    final requiredRoles = _routeRoleAccess[route];
+    if (requiredRoles == null || requiredRoles.isEmpty) return true;
+    return roles.any(requiredRoles.contains);
+  }
+
   static Map<String, WidgetBuilder> getAll() {
     return {
       // Global
       main: (context) => const MainScreen(initialIndex: 0),
       profile: (context) => const MainScreen(initialIndex: 2),
       settings: (context) => const MainScreen(initialIndex: 3),
-      createPost: (context) => const CreatePostScreen(),
+      createUpdate: (context) => const CreateUpdateScreen(),
+      submitProject: (context) => const SubmitProjectScreen(),
+      manageProjects: (context) => const ManageProjectsScreen(),
+      manageUpdates: (context) => const ManageUpdatesScreen(),
 
       // Projects
       home: (context) => const MainScreen(initialIndex: 0),
@@ -51,12 +67,28 @@ class ProtectedRoutes {
     profile,
     settings,
     notifications,
-    createPost,
+    createUpdate,
+    submitProject,
+    manageProjects,
+    manageUpdates,
     home,
     discover,
     trending,
     midPriority,
     lowPriority,
     highPriority,
+  };
+
+  static const Set<String> _contributorRoles = {
+    'owner',
+    'admin',
+    'poster',
+  };
+
+  static const Map<String, Set<String>> _routeRoleAccess = {
+    createUpdate: _contributorRoles,
+    submitProject: _contributorRoles,
+    manageProjects: _contributorRoles,
+    manageUpdates: _contributorRoles,
   };
 }

@@ -9,11 +9,13 @@ import { DeviceTokensModule } from './device-tokens/device-tokens.module';
 import { FollowsModule } from './follows/follows.module';
 import { HealthModule } from './health/health.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { PostsModule } from './posts/posts.module';
+import { UpdatesModule } from './updates/updates.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProjectAssignmentsModule } from './project-assignments/project-assignments.module';
+import { ProjectProposalsModule } from './project-proposals/project-proposals.module';
 import { ProjectsModule } from './projects/projects.module';
 import { RolesModule } from './roles/roles.module';
+import { TagsModule } from './tags/tags.module';
 import { UsersModule } from './users/users.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -38,7 +40,9 @@ import { envValidationSchema } from './config/env.validation';
     AdminApplicationsModule,
     ProjectsModule,
     ProjectAssignmentsModule,
-    PostsModule,
+    ProjectProposalsModule,
+    TagsModule,
+    UpdatesModule,
     CommentsModule,
     FollowsModule,
     NotificationsModule,

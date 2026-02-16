@@ -1,6 +1,7 @@
 import 'admin_model.dart';
-import 'post_model.dart';
+import 'update_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
+import 'package:blocnet/features/projects/data/models/secondary_tag_model.dart';
 
 class Project {
   final String id;
@@ -10,12 +11,15 @@ class Project {
   final String adminId;
   final String details;
   final String? website;
-  final List<Post>? posts;
+  final List<Update>? posts;
   final int followersCount;
   final String description;
   final DateTime createdAt;
-  final Set<String> postIds;
+  final Set<String> updateIds;
+  final String primaryTagId;
   final PrimaryTag primaryTag;
+  final List<String> secondaryTagIds;
+  final List<SecondaryTag> secondaryTags;
   // final DateTime? lastEditedAt;
   final Map<String, String?> apps;
   final Map<String, String?> socials;
@@ -30,16 +34,19 @@ class Project {
     required this.details,
     required this.adminId,
     required this.createdAt,
+    required this.primaryTagId,
     required this.primaryTag,
     required this.description,
     required this.followersCount,
+    this.secondaryTagIds = const [],
+    this.secondaryTags = const [],
     this.apps = const {},
     this.socials = const {},
-    this.postIds = const {},
+    this.updateIds = const {},
   });
 
   Project copyWith({
-    List<Post>? posts,
+    List<Update>? posts,
     Admin? admin,
     String? website,
     int? followersCount,
@@ -51,15 +58,18 @@ class Project {
       apps: apps,
       socials: socials,
       adminId: adminId,
-      postIds: postIds,
+      updateIds: updateIds,
       details: details,
       createdAt: createdAt,
-      primaryTag: primaryTag,
       description: description,
       posts: posts ?? this.posts,
       admin: admin ?? this.admin,
       website: website ?? this.website,
       followersCount: followersCount ?? this.followersCount,
+      primaryTagId: primaryTagId,
+      primaryTag: primaryTag,
+      secondaryTagIds: secondaryTagIds,
+      secondaryTags: secondaryTags,
     );
   }
 
@@ -75,9 +85,12 @@ class Project {
       'socials': socials,
       'adminId': adminId,
       'description': description,
-      'postIds': postIds.toList(),
+      'updateIds': updateIds.toList(),
       'followersCount': followersCount,
+      'primaryTagId': primaryTagId,
       'primaryTag': primaryTag.toJson(),
+      'secondaryTagIds': secondaryTagIds,
+      'secondaryTags': secondaryTags.map((tag) => tag.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -96,10 +109,22 @@ class Project {
       website: json['website']?.toString(),
       description: (json['description'] ?? '').toString(),
       followersCount: _toInt(json['followersCount']),
+      primaryTagId: (json['primaryTagId'] ?? '').toString(),
       createdAt: createdAt,
-      primaryTag: PrimaryTag.fromJson(
-        (json['primaryTag'] ?? PrimaryTag.none.displayName).toString(),
-      ),
+      primaryTag: _readPrimaryTag(json),
+      secondaryTagIds: (json['secondaryTagIds'] as List<dynamic>?)
+              ?.map((value) => value.toString())
+              .toList() ??
+          const [],
+      secondaryTags: (json['secondaryTags'] as List<dynamic>?)
+              ?.map((rawTag) {
+                if (rawTag is Map<String, dynamic>) {
+                  return SecondaryTag.fromApi(rawTag);
+                }
+                return SecondaryTag.fromJson(rawTag.toString());
+              })
+              .toList() ??
+          const [],
       apps: _toNullableStringMap(json['apps']) ??
           {
             'ios': json['iosApp']?.toString(),
@@ -112,7 +137,7 @@ class Project {
             'discord': json['discord']?.toString(),
             'telegram': json['telegram']?.toString(),
           },
-      postIds: (json['postIds'] as List<dynamic>?)
+      updateIds: (json['updateIds'] as List<dynamic>?)
               ?.map((value) => value.toString())
               .toSet() ??
           {},
@@ -147,5 +172,14 @@ class Project {
     }
 
     return null;
+  }
+
+  static PrimaryTag _readPrimaryTag(Map<String, dynamic> json) {
+    final rawPrimaryTag = json['primaryTag'];
+    if (rawPrimaryTag is Map<String, dynamic>) {
+      return PrimaryTag.fromApi(rawPrimaryTag);
+    }
+
+    return PrimaryTag.fromJson(rawPrimaryTag?.toString() ?? '');
   }
 }

@@ -26,7 +26,7 @@ bun run start:dev
 - Use the `Authorize` button with a Supabase bearer token for protected endpoints.
 
 ## Bootstrap Notes
-- `bun run prisma:seed` now inserts demo projects/posts/follows/notifications for local testing.
+- `bun run prisma:seed` now inserts demo projects/updates/follows/notifications for local testing.
 - Set `OWNER_USER_ID` and `OWNER_EMAIL` in `.env.local` if you want seed ownership tied to your real Supabase account.
 - If owner env values are omitted, seed falls back to `owner@blocknet.local`.
 - Use either `SUPABASE_JWKS_URL` or `SUPABASE_JWT_SECRET` for JWT verification.
@@ -47,8 +47,8 @@ All routes are served under `/api`.
 - Public read endpoints:
   - `GET /api/projects`
   - `GET /api/projects/:id`
-  - `GET /api/posts`
-  - `GET /api/posts/:id`
+  - `GET /api/updates`
+  - `GET /api/updates/:id`
 - Authenticated endpoints:
   - all mutations (create/update/follow/notifications/roles/admin review).
 

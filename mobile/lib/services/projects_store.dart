@@ -1,7 +1,7 @@
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
-import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
-import 'package:blocnet/features/projects/data/repositories/posts_api_repository.dart';
+import 'package:blocnet/features/projects/data/repositories/updates_api_repository.dart';
 import 'package:blocnet/features/projects/data/repositories/projects_api_repository.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:flutter/material.dart';
@@ -9,14 +9,14 @@ import 'package:flutter/material.dart';
 class ProjectsStore extends ChangeNotifier {
   ProjectsStore({
     ProjectsApiRepository? projectsRepository,
-    PostsApiRepository? postsRepository,
+    UpdatesApiRepository? postsRepository,
     UsersApiRepository? usersRepository,
   })  : _projectsRepository = projectsRepository ?? ProjectsApiRepository(),
-        _postsRepository = postsRepository ?? PostsApiRepository(),
+        _postsRepository = postsRepository ?? UpdatesApiRepository(),
         _usersRepository = usersRepository ?? UsersApiRepository();
 
   final ProjectsApiRepository _projectsRepository;
-  final PostsApiRepository _postsRepository;
+  final UpdatesApiRepository _postsRepository;
   final UsersApiRepository _usersRepository;
 
   final List<Project> _projects = [];
@@ -46,7 +46,7 @@ class ProjectsStore extends ChangeNotifier {
       final projects = await _projectsRepository.fetchProjects(limit: 500);
       final posts = await _postsRepository.fetchPosts(limit: 500);
 
-      final postsByProject = <String, List<Post>>{};
+      final postsByProject = <String, List<Update>>{};
       for (final post in posts) {
         postsByProject.putIfAbsent(post.projectId, () => []).add(post);
       }
@@ -56,7 +56,7 @@ class ProjectsStore extends ChangeNotifier {
         ..addAll(
           projects.map((project) {
             final admin = project.admin ?? _fallbackAdmin(project.adminId);
-            final relatedPosts = postsByProject[project.id] ?? const <Post>[];
+            final relatedPosts = postsByProject[project.id] ?? const <Update>[];
 
             return project.copyWith(
               posts: relatedPosts,

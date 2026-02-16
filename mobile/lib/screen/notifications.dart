@@ -1,7 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
-import 'package:blocnet/features/projects/presentation/widgets/post/post_details/post_details_dialog.dart';
-import 'package:blocnet/services/posts_store.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
@@ -138,21 +138,27 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _openNotificationTarget(NotificationModel item) async {
-    final postId = item.postId;
-    if (postId == null || postId.isEmpty) {
+    final updateId = item.updateId;
+    if (updateId == null || updateId.isEmpty) {
       return;
     }
 
-    final postsStore = context.read<PostsStore>();
-    final exists = postsStore.posts.any((post) => post.id == postId);
+    final updatesStore = context.read<UpdatesStore>();
+    final exists = updatesStore.updates.any((update) => update.id == updateId);
 
     if (!exists) {
-      await postsStore.refreshPosts();
+      await updatesStore.refreshUpdates();
       if (!mounted) return;
     }
 
-    final resolved = postsStore.posts.any((post) => post.id == postId);
+    final resolved =
+        updatesStore.updates.any((update) => update.id == updateId);
     if (!resolved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Update not found. It may have been removed.'),
+        ),
+      );
       return;
     }
 
@@ -162,7 +168,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       barrierLabel: 'Dismiss',
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
-        return PostDetailsDialog(id: postId);
+        return UpdateDetailsDialog(id: updateId);
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return SlideTransition(
@@ -193,7 +199,7 @@ class _EmptyNotificationsState extends StatelessWidget {
             StyledBodyText700('No notifications yet'),
             SizedBox(height: 6),
             StyledBodyText500(
-              'Follow projects to receive urgency updates and post alerts.',
+              'Follow projects to receive urgency and update alerts.',
             ),
           ],
         ),

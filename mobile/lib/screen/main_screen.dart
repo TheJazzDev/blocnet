@@ -49,11 +49,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final canCreatePost = context.select<AuthStore, bool>(
-      (store) => store.canCreatePost,
+    final canCreateUpdate = context.select<AuthStore, bool>(
+      (store) => store.canCreateUpdate,
     );
-    final showCreateButton =
-        canCreatePost && (_currentIndex == 0 || _currentIndex == 1);
+    final showActionButton =
+        (_currentIndex == 0 || _currentIndex == 1) && canCreateUpdate;
 
     return Scaffold(
       body: PageView(
@@ -92,16 +92,109 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               icon: Icon(Icons.settings), label: 'Settings'),
         ],
       ),
-      floatingActionButton: showCreateButton
+      floatingActionButton: showActionButton
           ? FloatingActionButton(
-              heroTag: 'create-post-fab',
-              onPressed: () {
-                Navigator.of(context).pushNamed(AppRoutes.createPost);
-              },
+              heroTag: 'composer-fab',
+              onPressed: () =>
+                  _openComposerSheet(canCreateUpdate: canCreateUpdate),
               backgroundColor: AppColors.primary500,
               child: const Icon(Icons.add, color: Colors.black),
             )
           : null,
+    );
+  }
+
+  Future<void> _openComposerSheet({
+    required bool canCreateUpdate,
+  }) async {
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.darkGrey100,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 44,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkGrey300,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                if (canCreateUpdate)
+                  _ComposerActionTile(
+                    title: 'Create Update',
+                    subtitle: 'Updates are created under approved projects',
+                    icon: Icons.post_add_outlined,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(this.context)
+                          .pushNamed(AppRoutes.createUpdate);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ComposerActionTile extends StatelessWidget {
+  const _ComposerActionTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.darkGrey75,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.darkGrey200),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: Icon(icon, color: AppColors.darkGrey700),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: AppColors.darkGrey700,
+            fontSize: 14,
+            fontFamily: 'Geist',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            color: AppColors.darkGrey500,
+            fontSize: 12,
+            fontFamily: 'Geist',
+          ),
+        ),
+      ),
     );
   }
 }

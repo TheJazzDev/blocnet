@@ -2,8 +2,8 @@ import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/viewmodels/priority_screen_view_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_label/filter_label.dart';
-import 'package:blocnet/features/projects/presentation/widgets/post/post_card/post_card.dart';
-import 'package:blocnet/services/posts_store.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -31,7 +31,7 @@ class _PriorityScreensState extends State<PriorityScreens> {
 
     priority = args?['priority'] ?? Priority.high;
     viewModel = PriorityScreenViewModel(priority: priority);
-    Provider.of<PostsStore>(context, listen: false).fetchPostsOnce();
+    Provider.of<UpdatesStore>(context, listen: false).fetchUpdatesOnce();
 
     _isInitialized = true;
   }
@@ -42,7 +42,7 @@ class _PriorityScreensState extends State<PriorityScreens> {
       appBar: const CustomAppBar(title: ''),
       body: Container(
         padding: const EdgeInsets.all(16),
-        child: Consumer<PostsStore>(
+        child: Consumer<UpdatesStore>(
           builder: (context, postsStore, _) {
             viewModel.setPosts(postsStore.posts);
 
@@ -70,7 +70,7 @@ class _PriorityScreensState extends State<PriorityScreens> {
                       children: List.generate(
                         viewModel.filteredPosts.length,
                         (index) =>
-                            PostCard(post: viewModel.filteredPosts[index]),
+                            UpdateCard(post: viewModel.filteredPosts[index]),
                       ),
                     ),
                   ),
