@@ -7,7 +7,7 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMe(userId: string) {
-    return this.prisma.profile.findUnique({
+    const profile = await this.prisma.profile.findUnique({
       where: { id: userId },
       include: {
         roles: {
@@ -15,8 +15,26 @@ export class UsersService {
             role: true,
           },
         },
+        follows: {
+          select: {
+            projectId: true,
+          },
+        },
       },
     });
+
+    if (!profile) {
+      return null;
+    }
+
+    return {
+      id: profile.id,
+      email: profile.email,
+      displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl,
+      roles: profile.roles.map((row) => row.role),
+      followedProjectIds: profile.follows.map((row) => row.projectId),
+    };
   }
 
   async updateMe(userId: string, dto: UpdateMeDto) {

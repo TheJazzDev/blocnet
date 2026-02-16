@@ -73,14 +73,34 @@ class Post {
     final content = (json['content'] ?? json['contentMd'] ?? '').toString();
     final createdAtValue = json['createdAt']?.toString();
     final editedAtValue = json['updatedAt']?.toString();
-    final projectId = (json['projectId'] ?? '').toString();
-    final adminId = (json['adminId'] ?? json['authorId'] ?? '').toString();
+    final rawAdmin = json['admin'] ?? json['author'];
+    final admin =
+        rawAdmin is Map<String, dynamic> ? Admin.fromApi(rawAdmin) : null;
+
+    final rawProject = json['project'];
+    final project =
+        rawProject is Map<String, dynamic> ? Project.fromApi(rawProject) : null;
+
+    final projectId = (json['projectId'] ?? project?.id ?? '').toString();
+    final adminId =
+        (json['adminId'] ?? json['authorId'] ?? admin?.id ?? '').toString();
 
     final secondaryTags = (json['secondaryTags'] as List<dynamic>?)
-            ?.map((rawTag) => SecondaryTag.fromJson(rawTag.toString()))
+            ?.map((rawTag) {
+              if (rawTag is Map<String, dynamic>) {
+                return SecondaryTag.fromJson(
+                  rawTag['value']?.toString() ??
+                      rawTag['label']?.toString() ??
+                      '',
+                );
+              }
+              return SecondaryTag.fromJson(rawTag.toString());
+            })
             .toSet()
             .toList() ??
         [];
+
+    final derivedDescription = content.replaceAll('\n', ' ');
 
     return Post(
       id: (json['id'] ?? '').toString(),
@@ -89,15 +109,17 @@ class Post {
       adminId: adminId,
       projectId: projectId,
       description: (json['description'] ??
-              (content.length > 140
-                  ? '${content.substring(0, 140)}...'
-                  : content))
+              (derivedDescription.length > 140
+                  ? '${derivedDescription.substring(0, 140)}...'
+                  : derivedDescription))
           .toString(),
       priority: Priority.fromJson(
           (json['priority'] ?? json['urgency'] ?? 'low').toString()),
       createdAt: DateTime.tryParse(createdAtValue ?? '') ?? DateTime.now(),
       lastEditedAt: DateTime.tryParse(editedAtValue ?? ''),
       secondaryTags: secondaryTags,
+      admin: admin,
+      project: project,
     );
   }
 }

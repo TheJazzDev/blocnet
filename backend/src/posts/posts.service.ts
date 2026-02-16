@@ -12,6 +12,28 @@ import { ListPostsQuery } from './dto/list-posts.query';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FcmService } from '../notifications/fcm.service';
+import { Prisma } from '@prisma/client';
+
+const postInclude = {
+  author: {
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      avatarUrl: true,
+    },
+  },
+  project: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      primaryTag: true,
+      ownerAdminId: true,
+      createdAt: true,
+    },
+  },
+} satisfies Prisma.PostInclude;
 
 @Injectable()
 export class PostsService {
@@ -39,6 +61,7 @@ export class PostsService {
         contentMd: dto.contentMd,
         urgency: dto.urgency,
       },
+      include: postInclude,
     });
 
     await this.notificationsService.createForProjectFollowers({
@@ -65,14 +88,14 @@ export class PostsService {
       metadata: { projectId },
     });
 
-    return post;
+    return this.toPostResponse(post);
   }
 
   async listPosts(query: ListPostsQuery) {
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
 
-    return this.prisma.post.findMany({
+    const posts = await this.prisma.post.findMany({
       where: {
         projectId: query.projectId,
         urgency: query.urgency,
@@ -80,17 +103,23 @@ export class PostsService {
       orderBy: { createdAt: 'desc' },
       skip: offset,
       take: limit,
+      include: postInclude,
     });
+
+    return posts.map((post) => this.toPostResponse(post));
   }
 
   async getPost(id: string) {
-    const post = await this.prisma.post.findUnique({ where: { id } });
+    const post = await this.prisma.post.findUnique({
+      where: { id },
+      include: postInclude,
+    });
 
     if (!post) {
       throw new NotFoundException('Post not found');
     }
 
-    return post;
+    return this.toPostResponse(post);
   }
 
   async updatePost(actor: AuthUser, id: string, dto: UpdatePostDto) {
@@ -125,6 +154,7 @@ export class PostsService {
         urgency: dto.urgency,
         status: dto.status,
       },
+      include: postInclude,
     });
 
     await this.auditLogService.create({
@@ -135,7 +165,7 @@ export class PostsService {
       metadata: { projectId: updated.projectId },
     });
 
-    return updated;
+    return this.toPostResponse(updated);
   }
 
   private async assertCanPost(
@@ -168,5 +198,40 @@ export class PostsService {
     throw new ForbiddenException(
       'Only assigned posters or owning admins can post to this project',
     );
+  }
+
+  private toPostResponse(
+    post: Prisma.PostGetPayload<{
+      include: typeof postInclude;
+    }>,
+  ) {
+    const rawUsername = post.author.email?.split('@')[0] ?? post.author.id;
+    const normalized = rawUsername
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]/g, '')
+      .trim();
+    const fallbackUsername = post.author.id.slice(0, 6);
+    const username = `@${normalized || fallbackUsername}`;
+
+    return {
+      ...post,
+      author: post.author,
+      admin: {
+        id: post.author.id,
+        name: post.author.displayName ?? post.author.email ?? 'Admin',
+        username,
+        imageUrl: post.author.avatarUrl ?? '',
+        followers: 0,
+      },
+      project: {
+        id: post.project.id,
+        name: post.project.name,
+        description: post.project.description,
+        details: post.project.description,
+        primaryTag: post.project.primaryTag,
+        adminId: post.project.ownerAdminId,
+        createdAt: post.project.createdAt,
+      },
+    };
   }
 }

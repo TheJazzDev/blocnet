@@ -48,7 +48,7 @@ class _PostCardState extends State<PostCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             PostProjectTitle(
-              projectTitle: widget.post.project?.name ?? 'No project name',
+              projectTitle: widget.post.project?.name ?? 'Project',
               applyOverflow: true,
             ),
             _buildContent(),

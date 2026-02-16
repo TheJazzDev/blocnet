@@ -4,9 +4,12 @@ import 'package:blocnet/features/projects/presentation/widgets/dividers/dot_divi
 import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/post/shared/post_project_logo.dart';
+import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
+import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:blocnet/shared/widgets/app_secondary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ProjectDetailsInfo extends StatelessWidget {
   const ProjectDetailsInfo({required this.project, super.key});
@@ -20,7 +23,7 @@ class ProjectDetailsInfo extends StatelessWidget {
       children: [
         _buildHeader(),
         const SizedBox(height: 16),
-        _buildTitleRow(),
+        _buildTitleRow(context),
         const SizedBox(height: 16),
         _buildDescription(),
         const SizedBox(height: 8),
@@ -45,16 +48,24 @@ class ProjectDetailsInfo extends StatelessWidget {
     );
   }
 
-  Widget _buildTitleRow() {
+  Widget _buildTitleRow(BuildContext context) {
     return Row(
       children: [
-        StyledLabelLarge(project.name),
-        const Spacer(),
-        SecondaryButton(
-          onPressed: () {},
-          title: 'Following',
-          isEnabled: true,
-          variant: ButtonVariant.small,
+        Expanded(
+          child: StyledLabelLarge(project.name),
+        ),
+        Consumer<ProjectsStore>(
+          builder: (context, store, _) {
+            final isFollowed = store.isProjectFollowed(project.id);
+            return SecondaryButton(
+              onPressed: () {
+                store.toggleFollowProject(project.id);
+              },
+              title: isFollowed ? 'Following' : 'Follow',
+              isEnabled: true,
+              variant: ButtonVariant.small,
+            );
+          },
         ),
       ],
     );
@@ -77,25 +88,31 @@ class ProjectDetailsInfo extends StatelessWidget {
   }
 
   Widget _buildStatsRow() {
+    final postsCount = project.posts?.length ?? 0;
     return Row(
       children: [
-        StyledBodyText600('1,700 Followers', size: 12),
+        StyledBodyText600('${project.followersCount} Followers', size: 12),
         DotDivider(12),
-        StyledBodyText600('700 Total Posts', size: 12),
+        StyledBodyText600('$postsCount Total Posts', size: 12),
       ],
     );
   }
 
   Widget _buildAdditionalDetails() {
+    final ownerName = project.admin?.name ?? 'Admin';
+
     return Wrap(
       runSpacing: 12,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        _buildDetailCard('Market Cap', '\$1.2B'),
+        _buildDetailCard('Owner', ownerName),
         DotDivider(12),
-        _buildDetailCard('Active Users', '45,000'),
+        _buildDetailCard(
+          'Primary Tag',
+          project.primaryTag.toString(),
+        ),
         DotDivider(12),
-        _buildDetailCard('Launched', '2021'),
+        _buildDetailCard('Created', formatDateWithSuffix(project.createdAt)),
       ],
     );
   }

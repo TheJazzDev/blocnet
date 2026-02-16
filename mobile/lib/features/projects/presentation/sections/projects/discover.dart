@@ -24,7 +24,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Blocnet', backButton: true),
+      appBar: const CustomAppBar(title: 'Blocnet', backButton: false),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16),

@@ -1,12 +1,21 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthStore>();
+    final email = auth.email ?? 'No email';
+    final displayName = auth.displayName?.trim().isNotEmpty == true
+        ? auth.displayName!.trim()
+        : email.split('@').first;
+    final roles = auth.roles;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -21,25 +30,55 @@ class ProfileScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: AppColors.darkGrey300,
-                  child: Icon(Icons.person, color: AppColors.darkGrey700),
-                ),
+                auth.avatarUrl != null && auth.avatarUrl!.isNotEmpty
+                    ? CircleAvatar(
+                        radius: 26,
+                        backgroundImage: NetworkImage(auth.avatarUrl!),
+                        onBackgroundImageError: (_, __) {},
+                      )
+                    : CircleAvatar(
+                        radius: 26,
+                        backgroundColor: AppColors.darkGrey300,
+                        child: Icon(Icons.person, color: AppColors.darkGrey700),
+                      ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      StyledBodyText700('Your Profile', size: 16),
-                      SizedBox(height: 4),
-                      StyledBodyText500('profile@blocnet.app'),
+                      StyledBodyText700(displayName, size: 16),
+                      const SizedBox(height: 4),
+                      StyledBodyText500(email),
                     ],
                   ),
                 ),
                 Icon(Icons.chevron_right, color: AppColors.darkGrey500),
               ],
             ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: roles
+                .map(
+                  (role) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.darkGrey100,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.darkGrey200),
+                    ),
+                    child: StyledBodyText600(
+                      role.toUpperCase(),
+                      size: 11,
+                    ),
+                  ),
+                )
+                .toList(),
           ),
           const SizedBox(height: 16),
           _ProfileTile(

@@ -3,17 +3,21 @@ import 'package:blocnet/features/projects/data/models/post_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/repositories/posts_api_repository.dart';
 import 'package:blocnet/features/projects/data/repositories/projects_api_repository.dart';
+import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:flutter/material.dart';
 
 class ProjectsStore extends ChangeNotifier {
   ProjectsStore({
     ProjectsApiRepository? projectsRepository,
     PostsApiRepository? postsRepository,
+    UsersApiRepository? usersRepository,
   })  : _projectsRepository = projectsRepository ?? ProjectsApiRepository(),
-        _postsRepository = postsRepository ?? PostsApiRepository();
+        _postsRepository = postsRepository ?? PostsApiRepository(),
+        _usersRepository = usersRepository ?? UsersApiRepository();
 
   final ProjectsApiRepository _projectsRepository;
   final PostsApiRepository _postsRepository;
+  final UsersApiRepository _usersRepository;
 
   final List<Project> _projects = [];
   final Set<String> _followedProjectIds = <String>{};
@@ -60,6 +64,15 @@ class ProjectsStore extends ChangeNotifier {
             );
           }),
         );
+
+      try {
+        final followedIds = await _usersRepository.fetchFollowedProjectIds();
+        _followedProjectIds
+          ..clear()
+          ..addAll(followedIds);
+      } catch (_) {
+        // Ignore profile sync failures and keep local follow cache.
+      }
 
       _lastError = null;
     } catch (error) {
@@ -113,8 +126,10 @@ class ProjectsStore extends ChangeNotifier {
 
     if (shouldFollow) {
       _followedProjectIds.add(projectId);
+      _updateProjectFollowerCount(projectId, 1);
     } else {
       _followedProjectIds.remove(projectId);
+      _updateProjectFollowerCount(projectId, -1);
     }
     notifyListeners();
 
@@ -127,8 +142,10 @@ class ProjectsStore extends ChangeNotifier {
     } catch (error) {
       if (shouldFollow) {
         _followedProjectIds.remove(projectId);
+        _updateProjectFollowerCount(projectId, -1);
       } else {
         _followedProjectIds.add(projectId);
+        _updateProjectFollowerCount(projectId, 1);
       }
       _lastError = error.toString();
     } finally {
@@ -140,14 +157,21 @@ class ProjectsStore extends ChangeNotifier {
   Admin _fallbackAdmin(String adminId) {
     return Admin(
       id: adminId,
-      name: adminId.isEmpty
-          ? 'Unknown Admin'
-          : 'Admin ${adminId.substring(0, adminId.length >= 6 ? 6 : adminId.length)}',
+      name: 'Admin',
       username: adminId.isEmpty
-          ? '@unknown'
+          ? '@admin'
           : '@${adminId.substring(0, adminId.length >= 6 ? 6 : adminId.length)}',
-      imageUrl: 'https://placehold.co/80x80/png',
+      imageUrl: '',
       followers: 0,
     );
+  }
+
+  void _updateProjectFollowerCount(String projectId, int delta) {
+    final index = _projects.indexWhere((project) => project.id == projectId);
+    if (index == -1) return;
+
+    final current = _projects[index];
+    final nextFollowers = (current.followersCount + delta).clamp(0, 1 << 31);
+    _projects[index] = current.copyWith(followersCount: nextFollowers);
   }
 }

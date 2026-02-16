@@ -1,5 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/post/post_details/post_details_dialog.dart';
+import 'package:blocnet/services/posts_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
@@ -62,7 +64,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           final item = store.notifications[index];
                           return InkWell(
                             borderRadius: BorderRadius.circular(16),
-                            onTap: () => store.markAsRead(item.id),
+                            onTap: () async {
+                              await store.markAsRead(item.id);
+                              if (!mounted) return;
+                              await _openNotificationTarget(item);
+                            },
                             child: Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
@@ -129,6 +135,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (difference.inMinutes < 60) return '${difference.inMinutes}m';
     if (difference.inHours < 24) return '${difference.inHours}h';
     return '${difference.inDays}d';
+  }
+
+  Future<void> _openNotificationTarget(NotificationModel item) async {
+    final postId = item.postId;
+    if (postId == null || postId.isEmpty) {
+      return;
+    }
+
+    final postsStore = context.read<PostsStore>();
+    final exists = postsStore.posts.any((post) => post.id == postId);
+
+    if (!exists) {
+      await postsStore.refreshPosts();
+      if (!mounted) return;
+    }
+
+    final resolved = postsStore.posts.any((post) => post.id == postId);
+    if (!resolved) {
+      return;
+    }
+
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return PostDetailsDialog(id: postId);
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      },
+    );
   }
 }
 

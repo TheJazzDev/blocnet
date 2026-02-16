@@ -83,17 +83,39 @@ class PostsStore extends ChangeNotifier {
     }
   }
 
-  Future<void> addPost(Post post) async {
+  Future<Post?> createPost({
+    required String projectId,
+    required String title,
+    required String content,
+    required Priority priority,
+  }) async {
     try {
-      final created = await _postsRepository.createPost(post);
-      final nextPost = created ?? post;
+      final created = await _postsRepository.createPost(
+        projectId: projectId,
+        title: title,
+        content: content,
+        priority: priority,
+      );
+      final nextPost = created;
 
-      _posts.add(nextPost);
-      notifyListeners();
+      if (nextPost != null) {
+        _posts.insert(0, nextPost);
+        notifyListeners();
+      }
+      return nextPost;
     } catch (error) {
       debugPrint('Failed to create post: $error');
       rethrow;
     }
+  }
+
+  Future<void> addPost(Post post) async {
+    await createPost(
+      projectId: post.projectId,
+      title: post.title,
+      content: post.content,
+      priority: post.priority,
+    );
   }
 
   Post getPostById(String id) {
@@ -150,13 +172,11 @@ class PostsStore extends ChangeNotifier {
   Admin _fallbackAdmin(String adminId) {
     return Admin(
       id: adminId,
-      name: adminId.isEmpty
-          ? 'Unknown Admin'
-          : 'Admin ${adminId.substring(0, adminId.length >= 6 ? 6 : adminId.length)}',
+      name: 'Admin',
       username: adminId.isEmpty
-          ? '@unknown'
+          ? '@admin'
           : '@${adminId.substring(0, adminId.length >= 6 ? 6 : adminId.length)}',
-      imageUrl: 'https://placehold.co/80x80/png',
+      imageUrl: '',
       followers: 0,
     );
   }

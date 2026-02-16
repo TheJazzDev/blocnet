@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Blocnet'),
+      appBar: const CustomAppBar(title: 'Blocnet', backButton: false),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16),

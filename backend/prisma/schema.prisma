@@ -46,6 +46,13 @@ enum NotificationType {
   system
 }
 
+enum InviteStatus {
+  pending
+  accepted
+  rejected
+  cancelled
+}
+
 model Profile {
   id                String             @id @db.Uuid
   email             String             @unique
@@ -57,6 +64,10 @@ model Profile {
   ownedProjects     Project[]          @relation("OwnedProjects")
   posterAssignments ProjectPoster[]
   authoredPosts     Post[]             @relation("AuthoredPosts")
+  authoredComments  Comment[]          @relation("AuthoredComments")
+  posterInvites     ProjectPosterInvite[] @relation("InvitePoster")
+  sentInvites       ProjectPosterInvite[] @relation("InviteSender")
+  reviewedInvites   ProjectPosterInvite[] @relation("InviteReviewer")
   follows           ProjectFollow[]
   notifications     Notification[]
   deviceTokens      DeviceToken[]
@@ -81,6 +92,10 @@ model Project {
   id            String          @id @default(uuid()) @db.Uuid
   name          String
   slug          String          @unique
+  normalizedName String         @unique
+  symbol        String?         @unique
+  websiteUrl    String?
+  websiteDomain String?         @unique
   description   String
   primaryTag    String
   status        ProjectStatus   @default(active)
@@ -90,6 +105,7 @@ model Project {
 
   ownerAdmin    Profile         @relation("OwnedProjects", fields: [ownerAdminId], references: [id])
   posters       ProjectPoster[]
+  invites       ProjectPosterInvite[]
   posts         Post[]
   follows       ProjectFollow[]
   notifications Notification[]
@@ -111,6 +127,28 @@ model ProjectPoster {
   @@index([posterId])
 }
 
+model ProjectPosterInvite {
+  id          String       @id @default(uuid()) @db.Uuid
+  projectId   String       @db.Uuid
+  posterId    String       @db.Uuid
+  invitedBy   String       @db.Uuid
+  note        String?
+  status      InviteStatus @default(pending)
+  reviewedBy  String?      @db.Uuid
+  reviewedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  poster      Profile      @relation("InvitePoster", fields: [posterId], references: [id], onDelete: Cascade)
+  inviter     Profile      @relation("InviteSender", fields: [invitedBy], references: [id], onDelete: Cascade)
+  reviewer    Profile?     @relation("InviteReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, posterId])
+  @@index([posterId, status])
+  @@index([projectId, status])
+}
+
 model Post {
   id            String          @id @default(uuid()) @db.Uuid
   projectId     String          @db.Uuid
@@ -125,8 +163,24 @@ model Post {
   project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   author        Profile         @relation("AuthoredPosts", fields: [authorId], references: [id], onDelete: Cascade)
   notifications Notification[]
+  comments      Comment[]
 
   @@index([projectId, urgency])
+  @@index([authorId])
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @db.Uuid
+  authorId  String   @db.Uuid
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    Profile  @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
   @@index([authorId])
 }
 

@@ -1,64 +1,106 @@
 # Blocknet Build + Learning Master Plan
 
 ## Product Premise and Mission
-Blocknet is a structured crypto update network that solves update overload in large communities.
+Blocknet is a structured crypto update network for communities that miss critical opportunities because chat streams are noisy.
 
 Problem:
-- Critical project updates are lost in high-noise chat streams.
-- Users miss launch windows, KYC requirements, and urgent project actions.
+- Important project actions (launch, KYC, claim windows, upgrades) get buried.
+- Users miss high-value deadlines because no one owns structured tracking.
 
 Mission:
-- Organize updates into projects and project posts.
-- Let users follow projects they care about.
-- Deliver urgency-aware notifications (high/medium/low).
-- Build a trust-led contribution system where quality research is rewarded.
+- Convert noisy chat updates into structured, followable project intelligence.
+- Assign clear ownership for each project and keep followers continuously updated.
+- Deliver urgency-based notifications and trust-based contributor reputation.
 
 Long-term vision (post-MVP):
-- tokenized contributor rewards,
-- wallet integrations,
-- stronger trust and safety scoring.
+- contributor wallet and tokenized donations,
+- performance and trust scores for posters,
+- stronger moderation and safety controls.
 
 ## Monorepo Structure (Locked)
-- `mobile/` Flutter app (existing product UI)
+- `mobile/` Flutter app (user-facing product)
 - `backend/` NestJS API (single source of business logic)
 - `admin/` reserved for future Next.js admin panel
 
 ## Locked Architecture Decisions
 - Backend: NestJS (shared API for mobile now and admin web later).
 - Database: Supabase Postgres.
-- ORM: Prisma.
-- Prisma runtime mode: Prisma 7 + `prisma.config.ts` + Postgres adapter (`@prisma/adapter-pg`).
+- ORM: Prisma 7 (`prisma.config.ts` + `@prisma/adapter-pg`).
 - Auth issuer: Supabase Auth.
 - Authorization authority: NestJS role + resource guards.
 - Signup: open (not invite-only).
-- Role chain: owner promotes admins, admins promote posters.
-- Poster scope: posters can only post in assigned projects.
-- Notifications: Postgres in-app notification records + FCM push.
 - Package manager: `bun` (use `bunx` instead of `npx`).
+- Notifications: Postgres in-app notifications + FCM push for device delivery.
 
-## Role and Permission Matrix (Locked)
+## Canonical Content Hierarchy (Critical Product Context)
+Blocknet content structure is:
+1. `Project` (root entity)
+2. `Post` (update under a project)
+3. `Comment` (discussion under a post)
+
+Core invariants:
+- A post MUST belong to exactly one project (`post.project_id` required).
+- A comment MUST belong to exactly one post (`comment.post_id` required).
+- A project is unique by canonical identity (slug/symbol/domain); duplicates are not allowed.
+- Posts can be consumed as standalone updates in feeds/notifications, but remain linked to their project.
+- The original project creator is the primary maintainer of that project.
+
+## Project Ownership + Collaboration Model
+For each project:
+- Exactly one primary maintainer (creator/owner) exists.
+- Additional collaborators can be assigned to co-maintain updates.
+- Collaborators can create posts under the project if granted assignment.
+- Ownership transfer and collaborator removal must be auditable.
+- Primary maintainer can be an admin, or an approved poster granted project-publisher rights.
+
+This supports your intended flow:
+- `Codawoo` project is created once.
+- Updates are posted under `Codawoo` over time.
+- Followers receive notifications per new post.
+- Other approved posters/admins can collaborate on `Codawoo` when accepted.
+
+## Role and Permission Matrix (Updated)
+Users can hold multiple roles simultaneously.
+
 ### `owner`
+- Global authority.
 - Promote/demote admins.
-- Access full moderation and audit logs.
-- Global oversight.
+- Override moderation decisions.
+- Access full audit logs.
 
 ### `admin`
+- High-trust operators under owner.
 - Create/manage projects.
-- Promote users to posters.
-- Assign posters to projects.
-- Moderate posts in owned/managed projects.
+- Approve/promote posters.
+- Assign/remove project collaborators.
+- Moderate posts/comments and apply sanctions per policy.
 
 ### `poster`
-- Create/edit posts only in assigned projects.
-- Cannot create projects.
-- Cannot change roles.
+- Content contributor.
+- Create project posts where assigned (or where primary maintainer).
+- Can create a new project only when granted project-publisher permission by owner/admin.
+- Cannot modify system-wide roles/policies.
 
 ### `user`
 - Follow/unfollow projects.
 - Read feeds and notifications.
-- Apply for elevated roles.
+- Comment under posts.
+- Apply for elevation (poster/admin workflow).
 
-## Backend Modules (Implemented Scaffold)
+## Public Profile Model (Required for Trust)
+Each account has:
+- private account profile (auth/account settings),
+- public contributor profile (viewable by other users).
+
+Public profile should expose:
+- roles (multi-role badges),
+- projects created,
+- posts created,
+- quality/reliability metrics,
+- future: donations and wallet reputation.
+
+## Backend Modules (Implemented + Planned)
+Implemented scaffold:
 - `auth`
 - `users`
 - `roles`
@@ -73,8 +115,14 @@ Long-term vision (post-MVP):
 - `audit-log`
 - `prisma`
 
-## API Contract (MVP Surface)
-Implemented route scaffolding:
+Planned next modules:
+- `comments`
+- `project-collaborators` (if separated from current assignment semantics)
+- `moderation-actions`
+- `public-profiles`
+
+## API Contract (MVP + Next Additions)
+Current scaffold routes:
 - `POST /api/auth/session/verify`
 - `GET /api/me`
 - `PATCH /api/me`
@@ -101,11 +149,20 @@ Implemented route scaffolding:
 - `GET /api/health`
 - `GET /api/audit-log`
 
+Next required routes:
+- `POST /api/posts/:postId/comments`
+- `GET /api/posts/:postId/comments`
+- `PATCH /api/comments/:id`
+- `DELETE /api/comments/:id`
+- `GET /api/profiles/:id/public`
+- `POST /api/projects/:projectId/collaborators/:userId`
+- `DELETE /api/projects/:projectId/collaborators/:userId`
+
 ## Database Schema and Migration Order
-Prisma schema is defined in:
+Current schema file:
 - `backend/prisma/schema.prisma`
 
-Migration sequence (locked):
+Current migration sequence (locked):
 1. `profiles`, `user_roles`
 2. `projects`, `project_posters`
 3. `posts`
@@ -115,103 +172,101 @@ Migration sequence (locked):
 7. `admin_applications`
 8. `audit_logs`
 
+Next migration additions:
+9. `comments`
+10. `project_collaborators` (if distinct)
+11. `moderation_actions`
+12. `profile_metrics` (for public trust stats)
+
 ## Notification Architecture
-On post creation:
-1. Validate author permissions (owner/admin ownership/assigned poster).
-2. Save post in Postgres.
-3. Resolve project followers.
-4. Insert one in-app notification row per follower.
-5. Resolve device tokens and send FCM pushes.
-6. Track delivery outcomes for retries.
+On project post creation:
+1. Enforce creator permission (owner/admin/collaborator poster).
+2. Persist post under project.
+3. Resolve followers of that project.
+4. Insert one in-app notification record per follower.
+5. Dispatch push via FCM to registered device tokens.
+6. Persist failures/retry metadata.
 
 Client behavior:
-- Notification center reads from `/api/notifications`.
-- Read actions call `/api/notifications/:id/read`.
-- Refresh on foreground and push-open.
+- Notification center from `/api/notifications`.
+- Mark read with `/api/notifications/:id/read`.
+- Open linked post when available.
+- Refresh on app foreground and notification-open.
 
 ## Flutter Refactor Targets
-Current target state:
-- Replace Firebase data services with NestJS API repositories.
-- Remove runtime dummy-data dependencies from active flows.
-- Keep Provider for MVP speed.
-- Add role-aware route guards and auth-aware API client.
+- All runtime data from NestJS API (no dummy production flow).
+- Role-aware UI behavior (owner/admin/poster/user).
+- Create-post flow always project-bound.
+- Notification center linked to real project posts.
+- Public profile route/screen for contributor transparency.
 
-Already implemented now:
-- moved Flutter app into `mobile/`.
-- replaced deprecated `flutter_markdown` with `flutter_markdown_plus`.
-- fixed Explore list indexing bug to use live list length.
-
-## Week-by-Week Execution Plan
+## Week-by-Week Execution Plan (Updated)
 ### Week 1
-- Scaffold backend and wire Prisma/Supabase connection.
-- Implement auth verify endpoint and guard baseline.
-- Commit initial schema and migration plan.
+- Stabilize auth/session, role hydration, API connectivity.
+- Lock project uniqueness and ownership semantics.
 
 ### Week 2
-- Implement roles and admin application workflows.
-- Implement owner/admin promotions.
-- Add audit logs on role lifecycle.
+- Finish role operations + audit trails.
+- Admin/poster assignment and collaborator lifecycle.
 
 ### Week 3
-- Implement project and post modules.
-- Enforce poster assignment checks.
-- Integrate mobile feed with API reads.
+- Harden project/post operations around canonical hierarchy.
+- Enforce: all posts must be attached to a project.
 
 ### Week 4
-- Implement follow/unfollow and notification fanout.
-- Implement device token registration and FCM delivery.
-- Integrate notification center in mobile.
+- Implement comments under posts.
+- Add moderation actions for comments/posts.
 
 ### Week 5
-- Add validation hardening, pagination, rate-limits.
-- Add permission negative tests.
-- Replace template Flutter tests with feature tests.
+- Public profile and contributor metrics.
+- Follow-state accuracy and notification UX hardening.
 
 ### Week 6
-- Beta hardening and query tuning.
-- Fix edge-case bugs and finalize RC.
+- Beta hardening, query tuning, release gates.
 
 ## Testing and Release Gates
 Release is blocked unless all are true:
+- duplicate project creation is prevented,
+- posts cannot exist without a parent project,
+- comments cannot exist without a parent post,
 - unauthorized role escalation is blocked,
-- posters cannot post outside assigned projects,
-- followers receive in-app notifications on new project posts,
-- push notifications deliver to subscribed devices,
-- urgency/feed results match backend truth,
-- no dummy data is used in production code paths.
+- unassigned posters cannot post to a project,
+- followers get in-app notifications on new project posts,
+- feed/urgency ordering matches backend truth,
+- no dummy data is used in production paths.
 
 ## Learning Track (Yardstick)
-### NestJS learning milestones
-- Module architecture and dependency boundaries.
-- Guards/decorators for RBAC.
-- DTO validation and request contracts.
-- Prisma transactions and data modeling.
-- Background job/push delivery patterns.
+### NestJS milestones
+- Modules + dependency boundaries,
+- guards/decorators for RBAC,
+- DTO validation and contracts,
+- Prisma relational modeling for hierarchy constraints,
+- queue/push patterns + failure handling.
 
 Weekly deliverable:
-- add one ADR entry summarizing one key technical decision and tradeoff.
+- one ADR entry documenting one architecture decision and tradeoff.
 
-### Flutter learning milestones
-- Repository integration against API.
-- Provider state boundaries and async flow control.
-- Role-gated UI and navigation.
-- Error/loading/empty state quality.
-- Widget tests for critical flows.
+### Flutter milestones
+- API repository boundaries,
+- Provider state composition for auth/content/notifications,
+- role-based UI paths,
+- profile + feed + notification integration,
+- widget tests for key user journeys.
 
 Weekly deliverable:
-- add one short before/after implementation note.
+- one before/after technical note.
 
 ## Operational Details to Keep Documented
-- environment variable list and ownership,
-- setup steps for new machines,
+- environment variable ownership,
+- local setup order,
 - seed strategy for dev/staging,
 - backup/restore plan,
 - notification incident runbook,
 - API versioning policy,
-- Definition of Done checklist template.
+- Definition of Done checklist.
 
 ## Environment Variables
-Backend `.env.local` should include:
+Backend `.env.local`:
 - `DATABASE_URL`
 - `DIRECT_URL`
 - `SUPABASE_URL`
@@ -220,8 +275,8 @@ Backend `.env.local` should include:
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
-- `OWNER_USER_ID` (optional; for owner bootstrap seed)
-- `OWNER_EMAIL` (optional; for owner bootstrap seed)
+- `OWNER_USER_ID` (optional)
+- `OWNER_EMAIL` (optional)
 - `PORT`
 - `NODE_ENV`
 
@@ -244,37 +299,24 @@ Reference file:
 - `cd mobile`
 - `flutter pub get`
 - `flutter analyze`
+- `flutter test`
 - `flutter run`
 
-## Current Implementation Status (This Iteration)
-Completed:
-- Monorepo restructure: root + `mobile/` + `backend/` + `admin/`.
-- NestJS backend scaffold with all planned modules.
-- Prisma schema created for role/project/post/follow/notification lifecycle.
-- Initial SQL migration snapshot generated at `backend/prisma/migrations/0001_init/migration.sql`.
-- Auth/session verification + role-aware guards baseline.
-- Environment validation wired through `ConfigModule` with schema checks.
-- Core API route scaffolding across modules.
-- Prisma upgraded to v7 with adapter-based runtime connection in NestJS (`PrismaPg` + `pg`).
-- Prisma CLI moved to `backend/prisma.config.ts`; schema `datasource.url` removed per Prisma 7 requirements.
-- FCM service scaffolding and notification fanout integration point.
-- Build + unit test + e2e health test passing in backend.
-- Backend CI workflow added: `.github/workflows/backend-ci.yml`.
-- Mobile markdown dependency deprecation fixed.
-- Mobile explore indexing runtime risk fixed.
-- Mobile data layer migrated to API repositories (`PostsApiRepository`, `ProjectsApiRepository`) with `ApiClient`.
-- Runtime Firestore/dummy service dependencies removed from active screens/stores.
-- Priority/project-details/related-post flows now read from API-backed Provider stores.
-- Backend read endpoints (`projects`/`posts`) are currently public for mobile bootstrap.
+## Assumptions and Deferred Scope
+- Android-first and iOS simulator support for MVP.
+- Wallet/token donation system remains post-MVP but planned in profile model.
+- Next.js admin panel will consume existing NestJS API.
+- Policy details for sanctions and moderation thresholds will be finalized separately.
 
-Pending (next implementation wave):
-- Implement authenticated mobile flows (Supabase session -> bearer token injection).
-- Replace placeholder admin/project metadata with richer backend fields.
-- Run and verify Prisma migration application in your target Supabase instance.
-- Add advanced observability, rate limits, and moderation tooling.
-
-## Assumptions and Defaults
-- Android-first MVP.
-- Admin panel will be a future `admin/` Next.js app consuming the same backend API.
-- Token/wallet systems are post-MVP.
-- Provider remains in mobile for MVP speed; large state refactor deferred.
+## Implementation Progress (Live)
+Completed in this pass:
+- Backend `comments` module scaffolded.
+- API endpoints added:
+  - `POST /api/posts/:postId/comments`
+  - `GET /api/posts/:postId/comments`
+  - `PATCH /api/comments/:id`
+  - `DELETE /api/comments/:id`
+- Prisma `Comment` model added with strict relations:
+  - comment -> post (required)
+  - comment -> author profile (required)
+- Audit log events wired for comment create/update/delete.

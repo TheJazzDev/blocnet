@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/presentation/widgets/dividers/dot_divider.dart';
 import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
@@ -15,6 +17,8 @@ class PostDetailsInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final readMinutes = _estimateReadMinutes(post.content);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -47,9 +51,14 @@ class PostDetailsInfo extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
                   child: Image.network(
-                    post.project?.logo ?? '',
+                    post.admin?.imageUrl ?? post.project?.logo ?? '',
                     width: 20,
                     height: 20,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 20,
+                      height: 20,
+                      color: AppColors.darkGrey200,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -64,7 +73,7 @@ class PostDetailsInfo extends StatelessWidget {
             ),
             DotDivider(12),
             StyledBodyText600(
-              '12 mins read',
+              '$readMinutes mins read',
               size: 12,
               fontWeight: FontWeight.w400,
             ),
@@ -97,5 +106,16 @@ class PostDetailsInfo extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  int _estimateReadMinutes(String content) {
+    final words = content
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((value) => value.isNotEmpty)
+        .length;
+
+    if (words == 0) return 1;
+    return max(1, (words / 220).ceil());
   }
 }

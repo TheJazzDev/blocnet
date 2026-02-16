@@ -4,6 +4,7 @@ import { join } from 'path';
 import { AdminApplicationsModule } from './admin-applications/admin-applications.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AuthModule } from './auth/auth.module';
+import { CommentsModule } from './comments/comments.module';
 import { DeviceTokensModule } from './device-tokens/device-tokens.module';
 import { FollowsModule } from './follows/follows.module';
 import { HealthModule } from './health/health.module';
@@ -38,6 +39,7 @@ import { envValidationSchema } from './config/env.validation';
     ProjectsModule,
     ProjectAssignmentsModule,
     PostsModule,
+    CommentsModule,
     FollowsModule,
     NotificationsModule,
     DeviceTokensModule,

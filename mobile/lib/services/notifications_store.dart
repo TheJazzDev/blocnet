@@ -36,7 +36,6 @@ class NotificationsStore extends ChangeNotifier {
         ..addAll(response);
     } catch (error) {
       _lastError = error.toString();
-      _notifications.clear();
     } finally {
       _isFetching = false;
       notifyListeners();

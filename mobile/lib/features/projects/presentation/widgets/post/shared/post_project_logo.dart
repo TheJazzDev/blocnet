@@ -30,7 +30,35 @@ class PostProjectLogo extends StatelessWidget {
         ),
         ClipRRect(
           borderRadius: BorderRadius.circular(size == 40 ? 10 : 15),
-          child: Image.network(logoUrl, width: size, height: size),
+          child: logoUrl.trim().isEmpty
+              ? Container(
+                  width: size,
+                  height: size,
+                  color: AppColors.darkGrey200,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.layers,
+                    color: AppColors.darkGrey600,
+                    size: size / 2.8,
+                  ),
+                )
+              : Image.network(
+                  logoUrl,
+                  width: size,
+                  height: size,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: size,
+                    height: size,
+                    color: AppColors.darkGrey200,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.layers,
+                      color: AppColors.darkGrey600,
+                      size: size / 2.8,
+                    ),
+                  ),
+                ),
         ),
       ],
     );

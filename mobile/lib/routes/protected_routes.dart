@@ -1,4 +1,5 @@
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/projects/presentation/pages/create_post_screen.dart';
 import 'package:blocnet/screen/main_screen.dart';
 import 'package:flutter/material.dart';
 import '../screen/notifications.dart';
@@ -11,6 +12,7 @@ class ProtectedRoutes {
   static const String profile = AppRoutes.profile;
   static const String settings = AppRoutes.settings;
   static const String notifications = AppRoutes.notifications;
+  static const String createPost = AppRoutes.createPost;
 
   // Projects
   static const String home = AppRoutes.home;
@@ -31,6 +33,7 @@ class ProtectedRoutes {
       main: (context) => const MainScreen(initialIndex: 0),
       profile: (context) => const MainScreen(initialIndex: 2),
       settings: (context) => const MainScreen(initialIndex: 3),
+      createPost: (context) => const CreatePostScreen(),
 
       // Projects
       home: (context) => const MainScreen(initialIndex: 0),
@@ -48,6 +51,7 @@ class ProtectedRoutes {
     profile,
     settings,
     notifications,
+    createPost,
     home,
     discover,
     trending,

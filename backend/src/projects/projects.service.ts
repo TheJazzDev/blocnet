@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { Project } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -11,6 +11,23 @@ import { ListProjectsQuery } from './dto/list-projects.query';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { AppRole } from '../common/enums/role.enum';
 import { AuditLogService } from '../audit-log/audit-log.service';
+
+const projectInclude = {
+  ownerAdmin: {
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      avatarUrl: true,
+    },
+  },
+  _count: {
+    select: {
+      follows: true,
+      posts: true,
+    },
+  },
+} satisfies Prisma.ProjectInclude;
 
 @Injectable()
 export class ProjectsService {
@@ -28,14 +45,7 @@ export class ProjectsService {
         primaryTag: dto.primaryTag,
         ownerAdminId: actor.id,
       },
-      include: {
-        _count: {
-          select: {
-            follows: true,
-            posts: true,
-          },
-        },
-      },
+      include: projectInclude,
     });
 
     await this.auditLogService.create({
@@ -56,14 +66,7 @@ export class ProjectsService {
       skip: offset,
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: {
-            follows: true,
-            posts: true,
-          },
-        },
-      },
+      include: projectInclude,
     });
 
     return projects.map((project) => this.toProjectResponse(project));
@@ -72,14 +75,7 @@ export class ProjectsService {
   async getProject(id: string) {
     const project = await this.prisma.project.findUnique({
       where: { id },
-      include: {
-        _count: {
-          select: {
-            follows: true,
-            posts: true,
-          },
-        },
-      },
+      include: projectInclude,
     });
 
     if (!project) {
@@ -112,14 +108,7 @@ export class ProjectsService {
         status: dto.status,
         slug: dto.name ? this.toSlug(dto.name) : undefined,
       },
-      include: {
-        _count: {
-          select: {
-            follows: true,
-            posts: true,
-          },
-        },
-      },
+      include: projectInclude,
     });
 
     await this.auditLogService.create({
@@ -142,19 +131,29 @@ export class ProjectsService {
   }
 
   private toProjectResponse(
-    project: Project & {
-      _count: {
-        follows: number;
-        posts: number;
-      };
-    },
+    project: Prisma.ProjectGetPayload<{
+      include: typeof projectInclude;
+    }>,
   ) {
-    const { _count, ...rest } = project;
+    const { _count, ownerAdmin, ...rest } = project;
+    const rawUsername = ownerAdmin.email?.split('@')[0] ?? ownerAdmin.id;
+    const normalized = rawUsername
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]/g, '')
+      .trim();
+    const username = `@${normalized || ownerAdmin.id.slice(0, 6)}`;
 
     return {
       ...rest,
       followersCount: _count.follows,
       postsCount: _count.posts,
+      admin: {
+        id: ownerAdmin.id,
+        name: ownerAdmin.displayName ?? ownerAdmin.email ?? 'Admin',
+        username,
+        imageUrl: ownerAdmin.avatarUrl ?? '',
+        followers: _count.follows,
+      },
     };
   }
 }

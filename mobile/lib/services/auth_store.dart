@@ -35,6 +35,9 @@ class AuthStore extends ChangeNotifier {
   String? _accessToken;
   String? _userId;
   String? _email;
+  String? _displayName;
+  String? _avatarUrl;
+  List<String> _roles = const ['user'];
   String? _lastError;
 
   bool get isAuthenticated => _isAuthenticated;
@@ -42,6 +45,13 @@ class AuthStore extends ChangeNotifier {
   String? get accessToken => _accessToken;
   String? get userId => _userId;
   String? get email => _email;
+  String? get displayName => _displayName;
+  String? get avatarUrl => _avatarUrl;
+  List<String> get roles => List.unmodifiable(_roles);
+  bool get canCreatePost =>
+      _roles.contains('owner') ||
+      _roles.contains('admin') ||
+      _roles.contains('poster');
   String? get lastError => _lastError;
   bool get isSupabaseConfigured => AppConfig.isSupabaseConfigured;
 
@@ -299,6 +309,9 @@ class AuthStore extends ChangeNotifier {
       _syncAccessToken(token);
       _userId = user['id']?.toString();
       _email = user['email']?.toString() ?? _email;
+      _roles = _parseRoles(user['roles']);
+
+      await _hydrateProfileFromMe();
       _isAuthenticated = true;
       _lastError = null;
       return true;
@@ -340,6 +353,9 @@ class AuthStore extends ChangeNotifier {
     _accessToken = null;
     _userId = null;
     _email = null;
+    _displayName = null;
+    _avatarUrl = null;
+    _roles = const ['user'];
     _isAuthenticated = false;
     _lastError = null;
     ApiClient.setAuthToken(null);
@@ -352,5 +368,40 @@ class AuthStore extends ChangeNotifier {
   void dispose() {
     _authSubscription?.cancel();
     super.dispose();
+  }
+
+  Future<void> _hydrateProfileFromMe() async {
+    try {
+      final response = await _apiClient.get('/me');
+      if (response is! Map<String, dynamic>) return;
+
+      _displayName = response['displayName']?.toString() ?? _displayName;
+      _avatarUrl = response['avatarUrl']?.toString() ?? _avatarUrl;
+
+      final responseRoles = _parseRoles(response['roles']);
+      if (responseRoles.isNotEmpty) {
+        _roles = responseRoles;
+      }
+    } catch (_) {
+      // Keep auth successful even when profile enrichment fails.
+    }
+  }
+
+  List<String> _parseRoles(dynamic input) {
+    if (input is! List) {
+      return _roles;
+    }
+
+    final normalized = input
+        .map((value) => value.toString().trim().toLowerCase())
+        .where((value) => value.isNotEmpty)
+        .toSet()
+        .toList();
+
+    if (normalized.isEmpty) {
+      return const ['user'];
+    }
+
+    return normalized;
   }
 }

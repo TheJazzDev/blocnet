@@ -25,14 +25,16 @@ class Admin {
 
   factory Admin.fromApi(Map<String, dynamic> json) {
     final id = (json['id'] ?? json['authorId'] ?? '').toString();
-    final name = (json['name'] ?? json['displayName'] ?? 'Admin').toString();
-    final username = (json['username'] ??
-            '@${id.substring(0, id.length >= 6 ? 6 : id.length)}')
-        .toString();
-    final imageUrl = (json['imageUrl'] ??
-            json['avatarUrl'] ??
-            'https://placehold.co/80x80/png')
-        .toString();
+    final email = json['email']?.toString();
+    final fallbackName =
+        email != null && email.isNotEmpty ? email.split('@').first : 'Admin';
+    final name =
+        (json['name'] ?? json['displayName'] ?? fallbackName).toString();
+    final usernameSource =
+        (json['username'] ?? json['displayName'] ?? fallbackName).toString();
+    final username =
+        '@${usernameSource.replaceAll('@', '').toLowerCase().replaceAll(' ', '_')}';
+    final imageUrl = (json['imageUrl'] ?? json['avatarUrl'] ?? '').toString();
     final followersRaw = json['followers'];
     final followers = followersRaw is int
         ? followersRaw

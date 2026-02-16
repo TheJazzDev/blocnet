@@ -1,4 +1,5 @@
 import 'package:blocnet/features/projects/data/models/post_model.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/services/api/api_client.dart';
 
 class PostsApiRepository {
@@ -26,13 +27,18 @@ class PostsApiRepository {
         .toList();
   }
 
-  Future<Post?> createPost(Post post) async {
+  Future<Post?> createPost({
+    required String projectId,
+    required String title,
+    required String content,
+    required Priority priority,
+  }) async {
     final response = await _apiClient.post(
-      '/projects/${post.projectId}/posts',
+      '/projects/$projectId/posts',
       body: {
-        'title': post.title,
-        'contentMd': post.content,
-        'urgency': _priorityToUrgency(post.priority),
+        'title': title,
+        'contentMd': content,
+        'urgency': _priorityToUrgency(priority),
       },
     );
 
@@ -60,7 +66,7 @@ class PostsApiRepository {
     return Post.fromApi(response);
   }
 
-  String _priorityToUrgency(dynamic priority) {
+  String _priorityToUrgency(Priority priority) {
     final value = priority.toString().toLowerCase();
 
     if (value.contains('high')) return 'high';

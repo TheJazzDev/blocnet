@@ -4,6 +4,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String settings = '/settings';
   static const String notifications = '/notifications';
+  static const String createPost = '/create-post';
 
   // Auth routes
   static const String signIn = '/signin';

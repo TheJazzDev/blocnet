@@ -42,6 +42,7 @@ class Project {
     List<Post>? posts,
     Admin? admin,
     String? website,
+    int? followersCount,
   }) {
     return Project(
       id: id,
@@ -58,7 +59,7 @@ class Project {
       posts: posts ?? this.posts,
       admin: admin ?? this.admin,
       website: website ?? this.website,
-      followersCount: followersCount,
+      followersCount: followersCount ?? this.followersCount,
     );
   }
 
@@ -88,7 +89,7 @@ class Project {
 
     return Project(
       id: (json['id'] ?? '').toString(),
-      logo: (json['logo'] ?? 'https://placehold.co/120x120/png').toString(),
+      logo: (json['logo'] ?? '').toString(),
       name: (json['name'] ?? 'Untitled Project').toString(),
       details: (json['details'] ?? json['description'] ?? '').toString(),
       adminId: adminId,
@@ -115,6 +116,7 @@ class Project {
               ?.map((value) => value.toString())
               .toSet() ??
           {},
+      admin: _readAdmin(json),
     );
   }
 
@@ -131,5 +133,19 @@ class Project {
       mapped[entry.key.toString()] = entry.value?.toString();
     }
     return mapped;
+  }
+
+  static Admin? _readAdmin(Map<String, dynamic> json) {
+    final rawAdmin = json['admin'];
+    if (rawAdmin is Map<String, dynamic>) {
+      return Admin.fromApi(rawAdmin);
+    }
+
+    final rawOwner = json['ownerAdmin'];
+    if (rawOwner is Map<String, dynamic>) {
+      return Admin.fromApi(rawOwner);
+    }
+
+    return null;
   }
 }
