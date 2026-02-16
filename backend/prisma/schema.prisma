@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleName {
+  owner
+  admin
+  poster
+  user
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum ApplicationTargetRole {
+  admin
+  poster
+}
+
+enum ProjectStatus {
+  active
+  paused
+  archived
+}
+
+enum PostStatus {
+  published
+  archived
+}
+
+enum PostUrgency {
+  high
+  medium
+  low
+}
+
+enum NotificationType {
+  project_update
+  system
+}
+
+model Profile {
+  id                String             @id @db.Uuid
+  email             String             @unique
+  displayName       String?
+  avatarUrl         String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  roles             UserRole[]
+  ownedProjects     Project[]          @relation("OwnedProjects")
+  posterAssignments ProjectPoster[]
+  authoredPosts     Post[]             @relation("AuthoredPosts")
+  follows           ProjectFollow[]
+  notifications     Notification[]
+  deviceTokens      DeviceToken[]
+  adminApplications AdminApplication[] @relation("AdminApplicationApplicant")
+  audits            AuditLog[]         @relation("ActorAuditLogs")
+}
+
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  role      RoleName
+  grantedBy String?  @db.Uuid
+  createdAt DateTime @default(now())
+
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@index([role])
+}
+
+model Project {
+  id            String          @id @default(uuid()) @db.Uuid
+  name          String
+  slug          String          @unique
+  description   String
+  primaryTag    String
+  status        ProjectStatus   @default(active)
+  ownerAdminId  String          @db.Uuid
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  ownerAdmin    Profile         @relation("OwnedProjects", fields: [ownerAdminId], references: [id])
+  posters       ProjectPoster[]
+  posts         Post[]
+  follows       ProjectFollow[]
+  notifications Notification[]
+
+  @@index([ownerAdminId])
+}
+
+model ProjectPoster {
+  id         String   @id @default(uuid()) @db.Uuid
+  projectId  String   @db.Uuid
+  posterId   String   @db.Uuid
+  assignedBy String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  poster     Profile  @relation(fields: [posterId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, posterId])
+  @@index([posterId])
+}
+
+model Post {
+  id            String          @id @default(uuid()) @db.Uuid
+  projectId     String          @db.Uuid
+  authorId      String          @db.Uuid
+  urgency       PostUrgency
+  title         String
+  contentMd     String
+  status        PostStatus      @default(published)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author        Profile         @relation("AuthoredPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  @@index([projectId, urgency])
+  @@index([authorId])
+}
+
+model ProjectFollow {
+  id         String   @id @default(uuid()) @db.Uuid
+  projectId  String   @db.Uuid
+  userId     String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+}
+
+model Notification {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId       String          @db.Uuid
+  type         NotificationType
+  projectId    String?         @db.Uuid
+  postId       String?         @db.Uuid
+  urgency      PostUrgency?
+  title        String
+  body         String
+  isRead       Boolean         @default(false)
+  readAt       DateTime?
+  createdAt    DateTime        @default(now())
+
+  user         Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project      Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  post         Post?           @relation(fields: [postId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([projectId])
+}
+
+model DeviceToken {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  token       String   @unique
+  platform    String
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user        Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AdminApplication {
+  id          String                @id @default(uuid()) @db.Uuid
+  userId      String                @db.Uuid
+  targetRole  ApplicationTargetRole @default(admin)
+  reason      String
+  status      ApplicationStatus     @default(pending)
+  reviewedBy  String?               @db.Uuid
+  reviewedAt  DateTime?
+  createdAt   DateTime              @default(now())
+
+  user        Profile               @relation("AdminApplicationApplicant", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorId      String? @db.Uuid
+  action       String
+  resourceType String
+  resourceId   String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  actor        Profile? @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([action, createdAt])
+}
