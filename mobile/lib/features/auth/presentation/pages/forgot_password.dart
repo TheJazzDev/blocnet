@@ -1,7 +1,7 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
 import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +27,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
+    FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
@@ -41,6 +42,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authStore.lastError ?? 'Failed to send reset email'),
+          backgroundColor: AppColors.darkGrey200,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -57,17 +60,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return AuthScreenShell(
       appBarTitle: 'Forgot Password',
       heading: 'Reset your password',
-      subtitle: 'Enter your email and we will send reset instructions.',
+      subtitle: 'Enter your email and we\'ll send you reset instructions.',
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextFormField(
+            AuthInputField(
               controller: _emailController,
+              label: 'Email address',
               keyboardType: TextInputType.emailAddress,
-              style: TextStyle(color: AppColors.darkGrey700),
-              decoration: _fieldDecoration('Email'),
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.email],
+              onFieldSubmitted: (_) => _submit(),
               validator: (value) {
                 final email = value?.trim() ?? '';
                 if (email.isEmpty) return 'Email is required';
@@ -75,46 +80,88 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 return null;
               },
             ),
+
+            // Success confirmation card
             if (_linkSent) ...[
-              const SizedBox(height: 12),
-              StyledBodyText500(
-                'If an account exists for ${_emailController.text.trim()}, '
-                'a reset link has been sent.',
-              ),
+              const SizedBox(height: 16),
+              _SuccessCard(email: _emailController.text.trim()),
             ],
-            const SizedBox(height: 20),
+
+            const SizedBox(height: 24),
+
             Row(
               children: [
                 PrimaryButton(
-                  title: isBusy ? 'Sending...' : 'Send reset link',
+                  title: _linkSent ? 'Resend link' : 'Send reset link',
                   isEnabled: !isBusy && authStore.isSupabaseConfigured,
+                  isLoading: isBusy,
                   onPressed: _submit,
                 ),
               ],
+            ),
+
+            const SizedBox(height: 20),
+
+            Center(
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Text(
+                  'Back to sign in',
+                  style: TextStyle(
+                    color: AppColors.teal400,
+                    fontSize: 13,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  InputDecoration _fieldDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(color: AppColors.darkGrey500),
-      filled: true,
-      fillColor: AppColors.darkGrey100,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppColors.darkGrey300),
+class _SuccessCard extends StatelessWidget {
+  const _SuccessCard({required this.email});
+
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.successColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.successColor.withValues(alpha: 0.25),
+          width: 1,
+        ),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppColors.darkGrey300),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppColors.primary500),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.check_circle_outline_rounded,
+            color: AppColors.successColor,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'If an account exists for $email, a reset link has been sent.',
+              style: TextStyle(
+                color: AppColors.successColor,
+                fontSize: 12,
+                fontFamily: 'Geist',
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

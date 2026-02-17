@@ -7,39 +7,77 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     required this.title,
     required this.isEnabled,
+    this.isLoading = false,
   });
 
-  final Function()? onPressed;
+  final VoidCallback? onPressed;
   final String title;
   final bool isEnabled;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: TextButton(
-        onPressed: isEnabled ? onPressed : null,
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.zero,
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: Container(
+      child: GestureDetector(
+        onTap: isEnabled && !isLoading ? onPressed : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: isEnabled ? AppColors.primary500 : AppColors.darkGrey200,
-            borderRadius: const BorderRadius.all(Radius.circular(25)),
+            gradient: isEnabled
+                ? LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      AppColors.teal500,
+                      AppColors.primary500,
+                    ],
+                  )
+                : null,
+            color: isEnabled ? null : AppColors.darkGrey200,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isEnabled
+                ? [
+                    BoxShadow(
+                      color: AppColors.teal500.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                      spreadRadius: -2,
+                    ),
+                    BoxShadow(
+                      color: AppColors.primary500.withValues(alpha: 0.2),
+                      blurRadius: 30,
+                      offset: const Offset(0, 6),
+                      spreadRadius: -4,
+                    ),
+                  ]
+                : null,
           ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isEnabled ? Colors.black : AppColors.darkGrey500,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Geist',
-            ),
-          ),
+          child: isLoading
+              ? const Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+              : Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isEnabled
+                        ? Colors.white
+                        : AppColors.darkGrey500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Geist',
+                    letterSpacing: 0.3,
+                  ),
+                ),
         ),
       ),
     );

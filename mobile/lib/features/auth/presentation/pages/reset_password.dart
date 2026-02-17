@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
@@ -17,6 +18,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _passwordFocus = FocusNode();
+  final _confirmFocus = FocusNode();
 
   bool _isSubmitting = false;
   bool _obscurePassword = true;
@@ -26,11 +29,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   void dispose() {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _passwordFocus.dispose();
+    _confirmFocus.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
+    FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
@@ -43,13 +49,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authStore.lastError ?? 'Password update failed'),
+          backgroundColor: AppColors.darkGrey200,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password updated successfully')),
+      SnackBar(
+        content: const Text('Password updated successfully'),
+        backgroundColor: AppColors.darkGrey200,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRoutes.signIn,
@@ -71,20 +83,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextFormField(
+            AuthInputField(
               controller: _passwordController,
+              label: 'New password',
               obscureText: _obscurePassword,
-              style: TextStyle(color: AppColors.darkGrey700),
-              decoration: _fieldDecoration('New password').copyWith(
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    color: AppColors.darkGrey500,
-                  ),
-                  onPressed: () {
-                    setState(() => _obscurePassword = !_obscurePassword);
-                  },
-                ),
+              focusNode: _passwordFocus,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.newPassword],
+              onFieldSubmitted: (_) =>
+                  FocusScope.of(context).requestFocus(_confirmFocus),
+              suffixIcon: PasswordVisibilityToggle(
+                isObscured: _obscurePassword,
+                onTap: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
               validator: (value) {
                 if ((value ?? '').length < 6) {
@@ -94,23 +105,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               },
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            AuthInputField(
               controller: _confirmPasswordController,
+              label: 'Confirm password',
               obscureText: _obscureConfirmPassword,
-              style: TextStyle(color: AppColors.darkGrey700),
-              decoration: _fieldDecoration('Confirm password').copyWith(
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureConfirmPassword
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-                    color: AppColors.darkGrey500,
-                  ),
-                  onPressed: () {
-                    setState(
-                      () => _obscureConfirmPassword = !_obscureConfirmPassword,
-                    );
-                  },
+              focusNode: _confirmFocus,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.newPassword],
+              onFieldSubmitted: (_) => _submit(),
+              suffixIcon: PasswordVisibilityToggle(
+                isObscured: _obscureConfirmPassword,
+                onTap: () => setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword,
                 ),
               ),
               validator: (value) {
@@ -120,39 +126,20 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
+
             Row(
               children: [
                 PrimaryButton(
-                  title: isBusy ? 'Updating...' : 'Update password',
+                  title: 'Update password',
                   isEnabled: !isBusy && authStore.isSupabaseConfigured,
+                  isLoading: isBusy,
                   onPressed: _submit,
                 ),
               ],
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  InputDecoration _fieldDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(color: AppColors.darkGrey500),
-      filled: true,
-      fillColor: AppColors.darkGrey100,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppColors.darkGrey300),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppColors.darkGrey300),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppColors.primary500),
       ),
     );
   }

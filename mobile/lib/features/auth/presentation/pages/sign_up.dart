@@ -1,9 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
-import 'package:blocnet/shared/widgets/app_secondary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,6 +21,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  final _nameFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  final _confirmFocus = FocusNode();
+
   bool _isSubmitting = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -31,11 +36,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _nameFocus.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    _confirmFocus.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
+    FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
@@ -46,12 +56,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
       password: _passwordController.text,
     );
     if (!mounted) return;
-
     setState(() => _isSubmitting = false);
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authStore.lastError ?? 'Sign up failed')),
+        SnackBar(
+          content: Text(authStore.lastError ?? 'Sign up failed'),
+          backgroundColor: AppColors.darkGrey200,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
@@ -79,16 +92,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return AuthScreenShell(
       appBarTitle: 'Create Account',
       heading: 'Join Blocnet',
-      subtitle: 'Create your account and start following project updates.',
+      subtitle: 'Create your account to start following projects.',
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextFormField(
+            AuthInputField(
               controller: _nameController,
-              style: TextStyle(color: AppColors.darkGrey700),
-              decoration: _fieldDecoration('Username'),
+              label: 'Username',
+              focusNode: _nameFocus,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.username],
+              onFieldSubmitted: (_) =>
+                  FocusScope.of(context).requestFocus(_emailFocus),
               validator: (value) {
                 if ((value ?? '').trim().isEmpty) {
                   return 'Username is required';
@@ -97,11 +114,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
               },
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            AuthInputField(
               controller: _emailController,
+              label: 'Email address',
               keyboardType: TextInputType.emailAddress,
-              style: TextStyle(color: AppColors.darkGrey700),
-              decoration: _fieldDecoration('Email'),
+              focusNode: _emailFocus,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.email],
+              onFieldSubmitted: (_) =>
+                  FocusScope.of(context).requestFocus(_passwordFocus),
               validator: (value) {
                 final email = value?.trim() ?? '';
                 if (email.isEmpty) return 'Email is required';
@@ -110,20 +131,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
               },
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            AuthInputField(
               controller: _passwordController,
+              label: 'Password',
               obscureText: _obscurePassword,
-              style: TextStyle(color: AppColors.darkGrey700),
-              decoration: _fieldDecoration('Password').copyWith(
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    color: AppColors.darkGrey500,
-                  ),
-                  onPressed: () {
-                    setState(() => _obscurePassword = !_obscurePassword);
-                  },
-                ),
+              focusNode: _passwordFocus,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.newPassword],
+              onFieldSubmitted: (_) =>
+                  FocusScope.of(context).requestFocus(_confirmFocus),
+              suffixIcon: PasswordVisibilityToggle(
+                isObscured: _obscurePassword,
+                onTap: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
               validator: (value) {
                 if ((value ?? '').length < 6) {
@@ -133,23 +153,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
               },
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            AuthInputField(
               controller: _confirmPasswordController,
+              label: 'Confirm password',
               obscureText: _obscureConfirmPassword,
-              style: TextStyle(color: AppColors.darkGrey700),
-              decoration: _fieldDecoration('Confirm password').copyWith(
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureConfirmPassword
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-                    color: AppColors.darkGrey500,
-                  ),
-                  onPressed: () {
-                    setState(
-                      () => _obscureConfirmPassword = !_obscureConfirmPassword,
-                    );
-                  },
+              focusNode: _confirmFocus,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.newPassword],
+              onFieldSubmitted: (_) => _submit(),
+              suffixIcon: PasswordVisibilityToggle(
+                isObscured: _obscureConfirmPassword,
+                onTap: () => setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword,
                 ),
               ),
               validator: (value) {
@@ -159,45 +174,53 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
+
+            // Primary CTA
             Row(
               children: [
-                SecondaryButton(
-                  title: 'Back',
-                  isEnabled: !isBusy,
-                  onPressed: () => Navigator.pop(context),
-                ),
-                const SizedBox(width: 12),
                 PrimaryButton(
-                  title: isBusy ? 'Creating...' : 'Create account',
+                  title: 'Create account',
                   isEnabled: !isBusy && authStore.isSupabaseConfigured,
+                  isLoading: isBusy,
                   onPressed: _submit,
                 ),
               ],
             ),
+
+            const SizedBox(height: 20),
+
+            // Back to sign in
+            Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Already have an account?',
+                    style: TextStyle(
+                      color: AppColors.darkGrey500,
+                      fontSize: 13,
+                      fontFamily: 'Geist',
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: isBusy ? null : () => Navigator.pop(context),
+                    child: Text(
+                      'Sign in',
+                      style: TextStyle(
+                        color: AppColors.teal400,
+                        fontSize: 13,
+                        fontFamily: 'Geist',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  InputDecoration _fieldDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(color: AppColors.darkGrey500),
-      filled: true,
-      fillColor: AppColors.darkGrey100,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppColors.darkGrey300),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppColors.darkGrey300),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppColors.primary500),
       ),
     );
   }

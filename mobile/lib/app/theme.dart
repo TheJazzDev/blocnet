@@ -27,6 +27,11 @@ class AppColors {
   static Color darkGrey900 = const Color(0xFFF5F5F5);
   static Color darkGrey950 = const Color(0xFFFAFAFA);
 
+  // Brand teal — extracted from logo gradient (top accent)
+  static Color teal300 = const Color(0xFF4DFFD6);
+  static Color teal400 = const Color(0xFF00E5B8);
+  static Color teal500 = const Color(0xFF00C9A0);
+
   static Color error500 = const Color(0xFFCB1A14);
   static Color error900 = const Color(0xFF591000);
   static Color textColor = const Color(0xFFA3A3A3);
