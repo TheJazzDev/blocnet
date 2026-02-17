@@ -15,7 +15,9 @@ export class FcmService {
   ) {
     const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = this.configService.get<string>('FIREBASE_CLIENT_EMAIL');
-    const privateKeyRaw = this.configService.get<string>('FIREBASE_PRIVATE_KEY');
+    const privateKeyRaw = this.configService.get<string>(
+      'FIREBASE_PRIVATE_KEY',
+    );
 
     if (!projectId || !clientEmail || !privateKeyRaw) {
       return;
@@ -54,7 +56,9 @@ export class FcmService {
     urgency: string;
   }) {
     if (!this.app) {
-      this.logger.warn('FCM credentials are not configured; skipping push send');
+      this.logger.warn(
+        'FCM credentials are not configured; skipping push send',
+      );
       return { sentCount: 0, skipped: true };
     }
 

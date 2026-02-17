@@ -84,10 +84,7 @@ export class ProjectProposalsService {
     return proposal;
   }
 
-  async listMine(
-    userId: string,
-    query: ListProjectProposalsQuery,
-  ) {
+  async listMine(userId: string, query: ListProjectProposalsQuery) {
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
 
@@ -118,6 +115,9 @@ export class ProjectProposalsService {
             displayName: true,
           },
         },
+        primaryTag: {
+          select: { id: true, name: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
       skip: offset,
@@ -134,7 +134,9 @@ export class ProjectProposalsService {
       dto.status !== ProjectProposalStatus.approved &&
       dto.status !== ProjectProposalStatus.rejected
     ) {
-      throw new BadRequestException('Only approved/rejected statuses are allowed');
+      throw new BadRequestException(
+        'Only approved/rejected statuses are allowed',
+      );
     }
 
     const proposal = await this.prisma.projectProposal.findUnique({
@@ -146,7 +148,9 @@ export class ProjectProposalsService {
     }
 
     if (proposal.status !== ProjectProposalStatus.pending) {
-      throw new BadRequestException('Project proposal has already been reviewed');
+      throw new BadRequestException(
+        'Project proposal has already been reviewed',
+      );
     }
 
     let createdProjectId: string | null = null;

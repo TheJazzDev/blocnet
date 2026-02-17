@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -12,8 +12,10 @@ import {
   Menu,
   X,
   Hexagon,
+  LogOut,
 } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,7 +30,13 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-function SidebarContent({ pathname }: { pathname: string }) {
+function SidebarContent({
+  pathname,
+  onSignOut,
+}: {
+  pathname: string;
+  onSignOut: () => void;
+}) {
   return (
     <>
       <div className="flex items-center gap-2.5 px-4 py-5">
@@ -65,12 +73,15 @@ function SidebarContent({ pathname }: { pathname: string }) {
       </ScrollArea>
       <Separator />
       <div className="p-4">
-        <div className="rounded-lg border bg-card p-3">
-          <p className="text-xs font-medium">Shell Mode</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Auth wired to mock cookies. Connect backend to go live.
-          </p>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+          onClick={onSignOut}
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </Button>
       </div>
     </>
   );
@@ -78,13 +89,21 @@ function SidebarContent({ pathname }: { pathname: string }) {
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    await fetch("/api/auth/sign-out", { method: "POST" });
+    router.push("/signin");
+    router.refresh();
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden w-[260px] shrink-0 flex-col border-r bg-sidebar lg:flex">
-        <SidebarContent pathname={pathname} />
+        <SidebarContent pathname={pathname} onSignOut={handleSignOut} />
       </aside>
 
       {/* Mobile overlay */}
@@ -102,7 +121,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <SidebarContent pathname={pathname} />
+        <SidebarContent pathname={pathname} onSignOut={handleSignOut} />
       </aside>
 
       {/* Main content */}

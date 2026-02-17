@@ -30,6 +30,11 @@ export class AuditLogService {
     return this.prisma.auditLog.findMany({
       orderBy: { createdAt: 'desc' },
       take: Math.min(Math.max(limit, 1), 500),
+      include: {
+        actor: {
+          select: { id: true, email: true, displayName: true },
+        },
+      },
     });
   }
 }

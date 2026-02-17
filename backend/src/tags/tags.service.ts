@@ -41,7 +41,9 @@ export class TagsService {
         data: { name, slug },
       });
     } catch {
-      throw new ConflictException('Secondary tag with this name already exists');
+      throw new ConflictException(
+        'Secondary tag with this name already exists',
+      );
     }
   }
 

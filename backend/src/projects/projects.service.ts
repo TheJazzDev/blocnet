@@ -83,15 +83,15 @@ export class ProjectsService {
         description: dto.description,
         primaryTagId: dto.primaryTagId,
         secondaryTags: dto.secondaryTagIds?.length
-            ? {
-                createMany: {
-                  data: dto.secondaryTagIds.map((secondaryTagId) => ({
-                    secondaryTagId,
-                  })),
-                  skipDuplicates: true,
-                },
-              }
-            : undefined,
+          ? {
+              createMany: {
+                data: dto.secondaryTagIds.map((secondaryTagId) => ({
+                  secondaryTagId,
+                })),
+                skipDuplicates: true,
+              },
+            }
+          : undefined,
         ownerAdminId: actor.id,
       },
       include: projectInclude,
@@ -140,15 +140,15 @@ export class ProjectsService {
         description: input.dto.description,
         primaryTagId: input.dto.primaryTagId,
         secondaryTags: input.dto.secondaryTagIds?.length
-            ? {
-                createMany: {
-                  data: input.dto.secondaryTagIds.map((secondaryTagId) => ({
-                    secondaryTagId,
-                  })),
-                  skipDuplicates: true,
-                },
-              }
-            : undefined,
+          ? {
+              createMany: {
+                data: input.dto.secondaryTagIds.map((secondaryTagId) => ({
+                  secondaryTagId,
+                })),
+                skipDuplicates: true,
+              },
+            }
+          : undefined,
         ownerAdminId: input.ownerUserId,
       },
       include: projectInclude,
@@ -208,7 +208,9 @@ export class ProjectsService {
 
     const nextName = dto.name ?? project.name;
     const normalizedName = this.normalizeName(nextName);
-    const symbol = this.normalizeSymbol(dto.symbol ?? project.symbol ?? undefined);
+    const symbol = this.normalizeSymbol(
+      dto.symbol ?? project.symbol ?? undefined,
+    );
     const websiteUrl = dto.websiteUrl ?? project.websiteUrl ?? undefined;
     const websiteDomain = this.toWebsiteDomain(websiteUrl);
 
@@ -239,16 +241,16 @@ export class ProjectsService {
         status: dto.status,
         slug: dto.name ? this.toSlug(dto.name) : undefined,
         secondaryTags: dto.secondaryTagIds
-            ? {
-                deleteMany: {},
-                createMany: {
-                  data: dto.secondaryTagIds.map((secondaryTagId) => ({
-                    secondaryTagId,
-                  })),
-                  skipDuplicates: true,
-                },
-              }
-            : undefined,
+          ? {
+              deleteMany: {},
+              createMany: {
+                data: dto.secondaryTagIds.map((secondaryTagId) => ({
+                  secondaryTagId,
+                })),
+                skipDuplicates: true,
+              },
+            }
+          : undefined,
       },
       include: projectInclude,
     });
@@ -311,18 +313,18 @@ export class ProjectsService {
     const existing = await this.prisma.project.findFirst({
       where: {
         ...(input.excludeProjectId
-            ? {
-                id: {
-                  not: input.excludeProjectId,
-                },
-              }
-            : {}),
+          ? {
+              id: {
+                not: input.excludeProjectId,
+              },
+            }
+          : {}),
         OR: [
           { normalizedName: input.normalizedName },
           ...(input.symbol ? [{ symbol: input.symbol }] : []),
           ...(input.websiteDomain
-              ? [{ websiteDomain: input.websiteDomain }]
-              : []),
+            ? [{ websiteDomain: input.websiteDomain }]
+            : []),
         ],
       },
       select: {

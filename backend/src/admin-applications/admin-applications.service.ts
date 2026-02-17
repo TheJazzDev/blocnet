@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ApplicationStatus, ApplicationTargetRole } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -51,22 +55,27 @@ export class AdminApplicationsService {
   async list() {
     return this.prisma.adminApplication.findMany({
       orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: { id: true, email: true, displayName: true, avatarUrl: true },
+        },
+      },
     });
   }
 
-  async review(
-    reviewerId: string,
-    id: string,
-    dto: ReviewAdminApplicationDto,
-  ) {
+  async review(reviewerId: string, id: string, dto: ReviewAdminApplicationDto) {
     if (
       dto.status !== ApplicationStatus.approved &&
       dto.status !== ApplicationStatus.rejected
     ) {
-      throw new BadRequestException('Only approved/rejected statuses are allowed');
+      throw new BadRequestException(
+        'Only approved/rejected statuses are allowed',
+      );
     }
 
-    const app = await this.prisma.adminApplication.findUnique({ where: { id } });
+    const app = await this.prisma.adminApplication.findUnique({
+      where: { id },
+    });
 
     if (!app) {
       throw new NotFoundException('Application not found');
@@ -83,11 +92,19 @@ export class AdminApplicationsService {
 
     if (dto.status === ApplicationStatus.approved) {
       if (app.targetRole === ApplicationTargetRole.admin) {
-        await this.rolesService.promoteToAdmin(reviewerId, app.userId, 'Application approved');
+        await this.rolesService.promoteToAdmin(
+          reviewerId,
+          app.userId,
+          'Application approved',
+        );
       }
 
       if (app.targetRole === ApplicationTargetRole.poster) {
-        await this.rolesService.promoteToPoster(reviewerId, app.userId, 'Application approved');
+        await this.rolesService.promoteToPoster(
+          reviewerId,
+          app.userId,
+          'Application approved',
+        );
       }
     }
 
@@ -96,7 +113,11 @@ export class AdminApplicationsService {
       action: 'admin_application.review',
       resourceType: 'admin_application',
       resourceId: reviewed.id,
-      metadata: { status: dto.status, targetRole: app.targetRole, targetUserId: app.userId },
+      metadata: {
+        status: dto.status,
+        targetRole: app.targetRole,
+        targetUserId: app.userId,
+      },
     });
 
     return reviewed;

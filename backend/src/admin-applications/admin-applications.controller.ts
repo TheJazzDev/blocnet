@@ -21,7 +21,9 @@ import { ReviewAdminApplicationDto } from './dto/review-admin-application.dto';
 @Controller('admin-applications')
 @UseGuards(AuthGuard, RolesGuard)
 export class AdminApplicationsController {
-  constructor(private readonly adminApplicationsService: AdminApplicationsService) {}
+  constructor(
+    private readonly adminApplicationsService: AdminApplicationsService,
+  ) {}
 
   @Post()
   async create(

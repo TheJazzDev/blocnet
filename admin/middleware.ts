@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const hasSession = Boolean(request.cookies.get("admin_session")?.value);
+  const hasSession = Boolean(request.cookies.get("admin_token")?.value);
   if (!hasSession) {
     const url = request.nextUrl.clone();
     url.pathname = "/signin";

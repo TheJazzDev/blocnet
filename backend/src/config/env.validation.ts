@@ -18,5 +18,7 @@ export const envValidationSchema = Joi.object({
   FIREBASE_PRIVATE_KEY: Joi.string().allow('').optional(),
 
   OWNER_USER_ID: Joi.string().min(1).optional(),
-  OWNER_EMAIL: Joi.string().email({ tlds: { allow: false } }).optional(),
+  OWNER_EMAIL: Joi.string()
+    .email({ tlds: { allow: false } })
+    .optional(),
 }).or('SUPABASE_JWKS_URL', 'SUPABASE_JWT_SECRET');

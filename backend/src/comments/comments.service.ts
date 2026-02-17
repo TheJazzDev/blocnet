@@ -30,7 +30,11 @@ export class CommentsService {
     private readonly auditLogService: AuditLogService,
   ) {}
 
-  async createComment(actor: AuthUser, updateId: string, dto: CreateCommentDto) {
+  async createComment(
+    actor: AuthUser,
+    updateId: string,
+    dto: CreateCommentDto,
+  ) {
     const update = await this.prisma.update.findUnique({
       where: { id: updateId },
       select: { id: true, projectId: true },
@@ -195,7 +199,8 @@ export class CommentsService {
       include: typeof commentInclude;
     }>,
   ) {
-    const rawUsername = comment.author.email?.split('@')[0] ?? comment.author.id;
+    const rawUsername =
+      comment.author.email?.split('@')[0] ?? comment.author.id;
     const normalized = rawUsername
       .toLowerCase()
       .replace(/[^a-z0-9._-]/g, '')

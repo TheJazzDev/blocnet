@@ -22,7 +22,9 @@ export class ProjectAssignmentsService {
     posterId: string,
     note?: string,
   ) {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
 
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -32,7 +34,9 @@ export class ProjectAssignmentsService {
     const canManage = isPlatformOwner || project.ownerAdminId === actor.id;
 
     if (!canManage) {
-      throw new ForbiddenException('Only owner or project admin can assign posters');
+      throw new ForbiddenException(
+        'Only owner or project admin can assign posters',
+      );
     }
 
     const posterRole = await this.prisma.userRole.findFirst({
@@ -81,7 +85,9 @@ export class ProjectAssignmentsService {
     posterId: string,
     note?: string,
   ) {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
 
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -91,7 +97,9 @@ export class ProjectAssignmentsService {
     const canManage = isPlatformOwner || project.ownerAdminId === actor.id;
 
     if (!canManage) {
-      throw new ForbiddenException('Only owner or project admin can invite posters');
+      throw new ForbiddenException(
+        'Only owner or project admin can invite posters',
+      );
     }
 
     const posterRole = await this.prisma.userRole.findFirst({
@@ -146,7 +154,9 @@ export class ProjectAssignmentsService {
     offset = 0,
     limit = 30,
   ) {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
 
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -156,7 +166,9 @@ export class ProjectAssignmentsService {
     const canManage = isPlatformOwner || project.ownerAdminId === actor.id;
 
     if (!canManage) {
-      throw new ForbiddenException('Only owner or project admin can view invites');
+      throw new ForbiddenException(
+        'Only owner or project admin can view invites',
+      );
     }
 
     return this.prisma.projectPosterInvite.findMany({
@@ -211,7 +223,9 @@ export class ProjectAssignmentsService {
     status: InviteStatus,
   ) {
     if (status !== InviteStatus.accepted && status !== InviteStatus.rejected) {
-      throw new ForbiddenException('Only accepted or rejected status is allowed');
+      throw new ForbiddenException(
+        'Only accepted or rejected status is allowed',
+      );
     }
 
     const invite = await this.prisma.projectPosterInvite.findUnique({

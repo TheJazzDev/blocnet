@@ -63,7 +63,9 @@ export class UpdatesService {
   ) {}
 
   async createUpdate(actor: AuthUser, projectId: string, dto: CreateUpdateDto) {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
 
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -80,15 +82,15 @@ export class UpdatesService {
         contentMd: dto.contentMd,
         urgency: dto.urgency,
         secondaryTags: dto.secondaryTagIds?.length
-            ? {
-                createMany: {
-                  data: dto.secondaryTagIds.map((secondaryTagId) => ({
-                    secondaryTagId,
-                  })),
-                  skipDuplicates: true,
-                },
-              }
-            : undefined,
+          ? {
+              createMany: {
+                data: dto.secondaryTagIds.map((secondaryTagId) => ({
+                  secondaryTagId,
+                })),
+                skipDuplicates: true,
+              },
+            }
+          : undefined,
       },
       include: updateInclude,
     });
@@ -173,7 +175,8 @@ export class UpdatesService {
 
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
-      actor.roles.includes(AppRole.ADMIN) && update.project.ownerAdminId === actor.id;
+      actor.roles.includes(AppRole.ADMIN) &&
+      update.project.ownerAdminId === actor.id;
     const isAuthor = update.authorId === actor.id;
 
     if (!isOwner && !isAdminOwner && !isAuthor) {
@@ -190,16 +193,16 @@ export class UpdatesService {
         urgency: dto.urgency,
         status: dto.status,
         secondaryTags: dto.secondaryTagIds
-            ? {
-                deleteMany: {},
-                createMany: {
-                  data: dto.secondaryTagIds.map((secondaryTagId) => ({
-                    secondaryTagId,
-                  })),
-                  skipDuplicates: true,
-                },
-              }
-            : undefined,
+          ? {
+              deleteMany: {},
+              createMany: {
+                data: dto.secondaryTagIds.map((secondaryTagId) => ({
+                  secondaryTagId,
+                })),
+                skipDuplicates: true,
+              },
+            }
+          : undefined,
       },
       include: updateInclude,
     });

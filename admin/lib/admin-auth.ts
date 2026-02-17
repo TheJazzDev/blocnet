@@ -1,13 +1,16 @@
 import { cookies } from "next/headers";
 
-export async function getAdminSession() {
+/**
+ * Returns the Supabase access token stored in the session cookie,
+ * or null if the user is not signed in.
+ */
+export async function getAdminSession(): Promise<{ token: string | null }> {
   const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session")?.value ?? null;
-  const role = cookieStore.get("admin_role")?.value ?? "admin";
-  return { session, role };
+  const token = cookieStore.get("admin_token")?.value ?? null;
+  return { token };
 }
 
-export async function isAdminAuthorized() {
-  const { session, role } = await getAdminSession();
-  return Boolean(session) && (role === "owner" || role === "admin");
+export async function isAdminAuthorized(): Promise<boolean> {
+  const { token } = await getAdminSession();
+  return Boolean(token);
 }

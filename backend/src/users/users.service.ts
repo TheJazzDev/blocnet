@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { RoleName } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateMeDto } from './dto/update-me.dto';
 
@@ -45,6 +46,87 @@ export class UsersService {
         avatarUrl: dto.avatarUrl,
       },
     });
+  }
+
+  async getAdminStats() {
+    const [
+      totalProjects,
+      totalUsers,
+      pendingAdminApps,
+      totalUpdates,
+      totalComments,
+      activePosters,
+      pendingProposals,
+      totalTags,
+    ] = await Promise.all([
+      this.prisma.project.count(),
+      this.prisma.profile.count(),
+      this.prisma.adminApplication.count({ where: { status: 'pending' } }),
+      this.prisma.update.count(),
+      this.prisma.comment.count(),
+      this.prisma.userRole.count({ where: { role: 'poster' } }),
+      this.prisma.projectProposal.count({ where: { status: 'pending' } }),
+      this.prisma.primaryTag.count(),
+    ]);
+
+    return {
+      totalProjects,
+      totalUsers,
+      pendingAdminApps,
+      totalUpdates,
+      totalComments,
+      activePosters,
+      pendingProposals,
+      totalTags,
+    };
+  }
+
+  async listAllUsers(opts: { limit?: number; offset?: number; role?: string }) {
+    const { limit = 50, offset = 0, role } = opts;
+
+    const validRoles = Object.values(RoleName);
+    const roleFilter =
+      role && validRoles.includes(role as RoleName)
+        ? (role as RoleName)
+        : undefined;
+    const where = roleFilter
+      ? { roles: { some: { role: roleFilter } } }
+      : undefined;
+
+    const [users, total] = await Promise.all([
+      this.prisma.profile.findMany({
+        where,
+        skip: offset,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          roles: { select: { role: true } },
+          _count: {
+            select: {
+              posterAssignments: true,
+              authoredUpdates: true,
+            },
+          },
+        },
+      }),
+      this.prisma.profile.count({ where }),
+    ]);
+
+    return {
+      data: users.map((u) => ({
+        id: u.id,
+        email: u.email,
+        displayName: u.displayName,
+        avatarUrl: u.avatarUrl,
+        roles: u.roles.map((r) => r.role),
+        projectsAssigned: u._count.posterAssignments,
+        updatesPosted: u._count.authoredUpdates,
+        createdAt: u.createdAt,
+      })),
+      total,
+      limit,
+      offset,
+    };
   }
 
   async getPublicProfile(userId: string) {
