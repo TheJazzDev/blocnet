@@ -1,9 +1,9 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/shared/update_project_title.dart';
 import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -50,7 +50,15 @@ class _UrgentPostInProjectNameState extends State<UrgentPostInProjectName> {
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                StyledBodyText600("Urgent Update In"),
+                Text(
+                  'Urgent Update In',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 UpdateProjectTitle(
                   projectTitle: widget.projectName,
                   margin: false,
@@ -61,11 +69,19 @@ class _UrgentPostInProjectNameState extends State<UrgentPostInProjectName> {
         ),
         const SizedBox(height: 16),
         urgentPosts.isEmpty
-            ? const Text("No urgent updates available for this project!")
+            ? Text(
+                'No urgent updates available for this project!',
+                style: TextStyle(
+                  color: AppColors.textFaint,
+                  fontSize: 12,
+                  fontFamily: 'Geist',
+                ),
+              )
             : Column(
                 children: List.generate(
                   urgentPosts.length,
-                  (index) => UpdateCard(post: urgentPosts[index], miniCard: true),
+                  (index) =>
+                      UpdateCard(post: urgentPosts[index], miniCard: true),
                 ),
               ),
       ],

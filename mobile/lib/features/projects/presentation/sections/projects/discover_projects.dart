@@ -1,7 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -34,17 +33,27 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
     return Consumer<ProjectsStore>(
       builder: (context, store, _) {
         if (store.isFetching && store.projects.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.only(top: 40),
-            child: Center(child: CircularProgressIndicator()),
+          return Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Center(
+              child: CircularProgressIndicator(
+                color: AppColors.teal400,
+                strokeWidth: 2,
+              ),
+            ),
           );
         }
 
         if (store.projects.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.only(top: 28),
-            child: StyledBodyText500(
+          return Padding(
+            padding: const EdgeInsets.only(top: 28),
+            child: Text(
               'No projects available yet. Check back soon.',
+              style: TextStyle(
+                color: AppColors.textFaint,
+                fontSize: 13,
+                fontFamily: 'Geist',
+              ),
             ),
           );
         }
@@ -62,7 +71,14 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
-            const StyledBodyText500('Discover and follow relevant projects.'),
+            Text(
+              'Discover and follow relevant projects.',
+              style: TextStyle(
+                color: AppColors.textFaint,
+                fontSize: 13,
+                fontFamily: 'Geist',
+              ),
+            ),
             const SizedBox(height: 12),
             ...store.projects.map((project) {
               final isFollowed = store.isProjectFollowed(project.id);
@@ -70,9 +86,9 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.darkGrey100,
+                  color: AppColors.bgSurface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.darkGrey200),
+                  border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,12 +103,12 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                         errorBuilder: (_, __, ___) => Container(
                           width: 44,
                           height: 44,
-                          color: AppColors.darkGrey200,
+                          color: AppColors.bgElevated,
                           alignment: Alignment.center,
                           child: Icon(
                             Icons.layers,
                             size: 18,
-                            color: AppColors.darkGrey600,
+                            color: AppColors.textFaint,
                           ),
                         ),
                       ),
@@ -102,35 +118,45 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          StyledBodyText700(project.name, size: 14),
+                          Text(
+                            project.name,
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 14,
+                              fontFamily: 'Geist',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          StyledBodyText500(
+                          Text(
                             project.description.isEmpty
                                 ? project.details
                                 : project.description,
-                            size: 12,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.textFaint,
+                              fontSize: 12,
+                              fontFamily: 'Geist',
+                            ),
                           ),
                           const SizedBox(height: 8),
-                          StyledBodyText500(
+                          Text(
                             '${project.followersCount} followers',
-                            size: 12,
+                            style: TextStyle(
+                              color: AppColors.textFaint,
+                              fontSize: 11,
+                              fontFamily: 'Geist',
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 10),
-                    TextButton(
-                      onPressed: store.isTogglingFollow
-                          ? null
-                          : () => _toggleFollow(project),
-                      style: TextButton.styleFrom(
-                        backgroundColor: isFollowed
-                            ? AppColors.darkGrey200
-                            : AppColors.primary500,
-                        foregroundColor:
-                            isFollowed ? AppColors.darkGrey700 : Colors.black,
-                      ),
-                      child: Text(isFollowed ? 'Following' : 'Follow'),
+                    _FollowButton(
+                      isFollowed: isFollowed,
+                      isLoading: store.isTogglingFollow,
+                      onTap: () => _toggleFollow(project),
                     ),
                   ],
                 ),
@@ -139,6 +165,51 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
           ],
         );
       },
+    );
+  }
+}
+
+// ─── Follow Button ────────────────────────────────────────────────────────────
+
+class _FollowButton extends StatelessWidget {
+  const _FollowButton({
+    required this.isFollowed,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  final bool isFollowed;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          gradient: isFollowed
+              ? null
+              : LinearGradient(
+                  colors: [AppColors.teal500, AppColors.primary500],
+                ),
+          color: isFollowed ? AppColors.bgElevated : null,
+          borderRadius: BorderRadius.circular(20),
+          border: isFollowed
+              ? Border.all(color: AppColors.borderSubtle)
+              : null,
+        ),
+        child: Text(
+          isFollowed ? 'Following' : 'Follow',
+          style: TextStyle(
+            color: isFollowed ? AppColors.textMuted : Colors.white,
+            fontSize: 12,
+            fontFamily: 'Geist',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

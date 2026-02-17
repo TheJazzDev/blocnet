@@ -35,7 +35,7 @@ class PrimaryButton extends StatelessWidget {
                     ],
                   )
                 : null,
-            color: isEnabled ? null : AppColors.darkGrey200,
+            color: isEnabled ? null : AppColors.bgElevated,
             borderRadius: BorderRadius.circular(12),
             boxShadow: isEnabled
                 ? [
@@ -71,7 +71,7 @@ class PrimaryButton extends StatelessWidget {
                   style: TextStyle(
                     color: isEnabled
                         ? Colors.white
-                        : AppColors.darkGrey500,
+                        : AppColors.textMuted,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Geist',

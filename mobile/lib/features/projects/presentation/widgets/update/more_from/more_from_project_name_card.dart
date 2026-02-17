@@ -4,7 +4,6 @@ import 'package:blocnet/features/projects/presentation/widgets/update/shared/upd
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
 
 class MoreFromProjectNameUpdateCard extends StatelessWidget {
@@ -19,24 +18,51 @@ class MoreFromProjectNameUpdateCard extends StatelessWidget {
       height: 216,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkGrey100,
-        border: Border.all(color: AppColors.darkGrey200),
-        borderRadius: const BorderRadius.all(Radius.circular(24)),
+        color: AppColors.bgSurface,
+        border: Border.all(color: AppColors.borderSubtle),
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UpdateTagRow(post: post, moreFrom: true),
           const SizedBox(height: 12),
-          StyledTitleMedium(post.title),
+          Text(
+            post.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
           const SizedBox(height: 8),
           Expanded(
-            child: StyledBodyText(post.description, applyOverflow: true),
+            child: Text(
+              post.description,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 3,
+              style: TextStyle(
+                color: AppColors.textFaint,
+                fontSize: 12,
+                fontFamily: 'Geist',
+              ),
+            ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              StyledBodyText500(formatDateWithSuffix(post.createdAt), size: 12),
+              Text(
+                formatDateWithSuffix(post.createdAt),
+                style: TextStyle(
+                  color: AppColors.textFaint,
+                  fontSize: 12,
+                  fontFamily: 'Geist',
+                ),
+              ),
               const SizedBox(width: 12),
               CustomVerticalDivider(height: 20),
               const SizedBox(width: 12),

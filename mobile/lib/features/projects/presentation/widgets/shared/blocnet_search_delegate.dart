@@ -19,12 +19,25 @@ class BlocnetSearchDelegate extends SearchDelegate<void> {
   ThemeData appBarTheme(BuildContext context) {
     final theme = Theme.of(context);
     return theme.copyWith(
+      scaffoldBackgroundColor: AppColors.bgBase,
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.bgBase,
+        elevation: 0,
+        iconTheme: IconThemeData(color: AppColors.textMuted),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         hintStyle: TextStyle(
-          color: AppColors.darkGrey500,
+          color: AppColors.textFaint,
           fontFamily: 'Geist',
         ),
         border: InputBorder.none,
+      ),
+      textTheme: theme.textTheme.copyWith(
+        titleLarge: TextStyle(
+          color: AppColors.textPrimary,
+          fontFamily: 'Geist',
+          fontSize: 16,
+        ),
       ),
     );
   }
@@ -33,7 +46,7 @@ class BlocnetSearchDelegate extends SearchDelegate<void> {
   List<Widget>? buildActions(BuildContext context) {
     return [
       IconButton(
-        icon: const Icon(Icons.clear),
+        icon: Icon(Icons.clear, color: AppColors.textMuted),
         onPressed: () {
           query = '';
         },
@@ -44,7 +57,7 @@ class BlocnetSearchDelegate extends SearchDelegate<void> {
   @override
   Widget? buildLeading(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.arrow_back),
+      icon: Icon(Icons.arrow_back, color: AppColors.textMuted),
       onPressed: () => close(context, null),
     );
   }
@@ -90,96 +103,101 @@ class BlocnetSearchDelegate extends SearchDelegate<void> {
         child: Text(
           'No matches found',
           style: TextStyle(
-            color: AppColors.darkGrey500,
+            color: AppColors.textFaint,
             fontFamily: 'Geist',
           ),
         ),
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      children: [
-        if (projectMatches.isNotEmpty) ...[
-          Text(
-            'Projects',
-            style: TextStyle(
-              color: AppColors.darkGrey600,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...projectMatches.map(
-            (project) => ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                Icons.layers_outlined,
-                color: AppColors.darkGrey600,
-                size: 20,
-              ),
-              title: Text(
-                project.name,
-                style: TextStyle(
-                  color: AppColors.darkGrey700,
-                  fontFamily: 'Geist',
-                  fontSize: 14,
-                ),
-              ),
-              subtitle: Text(
-                project.primaryTag.toString(),
-                style: TextStyle(
-                  color: AppColors.darkGrey500,
-                  fontFamily: 'Geist',
-                  fontSize: 12,
-                ),
+    return Container(
+      color: AppColors.bgBase,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        children: [
+          if (projectMatches.isNotEmpty) ...[
+            Text(
+              'Projects',
+              style: TextStyle(
+                color: AppColors.textFaint,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+                letterSpacing: 0.8,
               ),
             ),
-          ),
-          const SizedBox(height: 10),
+            const SizedBox(height: 8),
+            ...projectMatches.map(
+              (project) => ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  Icons.layers_outlined,
+                  color: AppColors.textMuted,
+                  size: 20,
+                ),
+                title: Text(
+                  project.name,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontFamily: 'Geist',
+                    fontSize: 14,
+                  ),
+                ),
+                subtitle: Text(
+                  project.primaryTag.toString(),
+                  style: TextStyle(
+                    color: AppColors.textFaint,
+                    fontFamily: 'Geist',
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (postMatches.isNotEmpty) ...[
+            Text(
+              'Updates',
+              style: TextStyle(
+                color: AppColors.textFaint,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...postMatches.map(
+              (post) => ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  Icons.article_outlined,
+                  color: AppColors.textMuted,
+                  size: 20,
+                ),
+                title: Text(
+                  post.title,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontFamily: 'Geist',
+                    fontSize: 14,
+                  ),
+                ),
+                subtitle: Text(
+                  post.project?.name ?? 'Unknown Project',
+                  style: TextStyle(
+                    color: AppColors.textFaint,
+                    fontFamily: 'Geist',
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
-        if (postMatches.isNotEmpty) ...[
-          Text(
-            'Updates',
-            style: TextStyle(
-              color: AppColors.darkGrey600,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...postMatches.map(
-            (post) => ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                Icons.article_outlined,
-                color: AppColors.darkGrey600,
-                size: 20,
-              ),
-              title: Text(
-                post.title,
-                style: TextStyle(
-                  color: AppColors.darkGrey700,
-                  fontFamily: 'Geist',
-                  fontSize: 14,
-                ),
-              ),
-              subtitle: Text(
-                post.project?.name ?? 'Unknown Project',
-                style: TextStyle(
-                  color: AppColors.darkGrey500,
-                  fontFamily: 'Geist',
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ],
+      ),
     );
   }
 }

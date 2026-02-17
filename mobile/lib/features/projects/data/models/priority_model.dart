@@ -8,9 +8,9 @@ class Priority {
   const Priority._(this.label, this.color);
 
   // Define the different urgency levels
-  static final high = Priority._('High', AppColors.error500);
-  static final low = Priority._('Low', AppColors.successColor);
-  static final mid = Priority._('Mid', AppColors.warning500);
+  static final high = Priority._('High', AppColors.teal400);
+  static final mid = Priority._('Mid', AppColors.primary400);
+  static final low = Priority._('Low', AppColors.textMuted);
 
   /// Get all priority levels
   static List<Priority> getAll() {

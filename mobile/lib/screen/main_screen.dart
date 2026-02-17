@@ -5,8 +5,9 @@ import 'package:blocnet/features/projects/presentation/sections/projects/discove
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/screen/profile_screen.dart';
-import 'package:blocnet/screen/settings_screen.dart';
+import 'package:blocnet/screen/wallet_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
@@ -47,6 +48,16 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     context.read<NotificationsStore>().refreshNotifications();
   }
 
+  void _onNavTap(int index) {
+    if (_currentIndex == index) return;
+    HapticFeedback.selectionClick();
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final canCreateUpdate = context.select<AuthStore, bool>(
@@ -56,6 +67,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         (_currentIndex == 0 || _currentIndex == 1) && canCreateUpdate;
 
     return Scaffold(
+      backgroundColor: AppColors.bgBase,
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
@@ -66,39 +78,18 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         children: const [
           HomeScreen(),
           DiscoverScreen(),
+          WalletScreen(),
           _ProfileTabScreen(),
-          _SettingsTabScreen(),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
+      bottomNavigationBar: _BottomNav(
         currentIndex: _currentIndex,
-        onTap: (value) {
-          if (_currentIndex == value) return;
-          _pageController.animateToPage(
-            value,
-            duration: const Duration(milliseconds: 240),
-            curve: Curves.easeOutCubic,
-          );
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.explore_outlined),
-            label: 'Projects',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.settings), label: 'Settings'),
-        ],
+        onTap: _onNavTap,
       ),
       floatingActionButton: showActionButton
-          ? FloatingActionButton(
-              heroTag: 'composer-fab',
+          ? _ComposerFab(
               onPressed: () =>
                   _openComposerSheet(canCreateUpdate: canCreateUpdate),
-              backgroundColor: AppColors.primary500,
-              child: const Icon(Icons.add, color: Colors.black),
             )
           : null,
     );
@@ -111,7 +102,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.darkGrey100,
+      backgroundColor: AppColors.bgSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -123,19 +114,35 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Drag handle
                 Container(
-                  width: 44,
+                  width: 40,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: AppColors.darkGrey300,
+                    color: AppColors.borderMuted,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
+                // Section label
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Create',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 if (canCreateUpdate)
                   _ComposerActionTile(
-                    title: 'Create Update',
-                    subtitle: 'Updates are created under approved projects',
+                    title: 'New Update',
+                    subtitle: 'Post an update under an approved project',
                     icon: Icons.post_add_outlined,
                     onTap: () {
                       Navigator.of(context).pop();
@@ -152,6 +159,131 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Bottom navigation bar
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BottomNav extends StatelessWidget {
+  const _BottomNav({required this.currentIndex, required this.onTap});
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  static const _items = [
+    (icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home'),
+    (
+      icon: Icons.explore_outlined,
+      activeIcon: Icons.explore_rounded,
+      label: 'Projects'
+    ),
+    (
+      icon: Icons.account_balance_wallet_outlined,
+      activeIcon: Icons.account_balance_wallet_rounded,
+      label: 'Wallet'
+    ),
+    (
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: 'Profile'
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        border: Border(
+          top: BorderSide(color: AppColors.borderSubtle, width: 1),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 58,
+          child: Row(
+            children: List.generate(_items.length, (i) {
+              final item = _items[i];
+              final isActive = currentIndex == i;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onTap(i),
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isActive ? item.activeIcon : item.icon,
+                        size: 22,
+                        color:
+                            isActive ? AppColors.teal400 : AppColors.textMuted,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          color: isActive
+                              ? AppColors.teal400
+                              : AppColors.textMuted,
+                          fontSize: 10,
+                          fontFamily: 'Geist',
+                          fontWeight: isActive
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FAB
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ComposerFab extends StatelessWidget {
+  const _ComposerFab({required this.onPressed});
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.teal500, AppColors.primary500],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.teal500.withValues(alpha: 0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Composer bottom sheet tile
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _ComposerActionTile extends StatelessWidget {
   const _ComposerActionTile({
     required this.title,
@@ -167,64 +299,73 @@ class _ComposerActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: AppColors.darkGrey75,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.darkGrey200),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(icon, color: AppColors.darkGrey700),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: AppColors.darkGrey700,
-            fontSize: 14,
-            fontFamily: 'Geist',
-            fontWeight: FontWeight.w600,
-          ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.bgElevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.borderSubtle, width: 1),
         ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: AppColors.darkGrey500,
-            fontSize: 12,
-            fontFamily: 'Geist',
-          ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.teal500.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: AppColors.teal400, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                      fontFamily: 'Geist',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: AppColors.textFaint,
+              size: 13,
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab wrappers
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _ProfileTabScreen extends StatelessWidget {
   const _ProfileTabScreen();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        automaticallyImplyLeading: false,
-      ),
-      body: const SafeArea(child: ProfileScreen()),
-    );
-  }
-}
-
-class _SettingsTabScreen extends StatelessWidget {
-  const _SettingsTabScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        automaticallyImplyLeading: false,
-      ),
-      body: const SafeArea(child: SettingsScreen()),
-    );
+    return const ProfileScreen();
   }
 }

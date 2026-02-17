@@ -5,7 +5,6 @@ import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/services/tags_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -62,14 +61,17 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
 
     if (!auth.canCreateUpdate) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Create Update'),
-          centerTitle: false,
-        ),
-        body: const Padding(
-          padding: EdgeInsets.all(16),
-          child: StyledBodyText500(
+        backgroundColor: AppColors.bgBase,
+        appBar: _buildAppBar(),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
             'Your current role does not allow creating updates.',
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              fontFamily: 'Geist',
+            ),
           ),
         ),
       );
@@ -77,34 +79,38 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
 
     if (projectsStore.isFetching && projectsStore.projects.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Create Update'),
-          centerTitle: false,
+        backgroundColor: AppColors.bgBase,
+        appBar: _buildAppBar(),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.teal400,
+            strokeWidth: 2,
+          ),
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (projectsStore.projects.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Create Update'),
-          centerTitle: false,
-        ),
-        body: const Padding(
-          padding: EdgeInsets.all(16),
-          child: StyledBodyText500(
+        backgroundColor: AppColors.bgBase,
+        appBar: _buildAppBar(),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
             'No project is available for updates yet.',
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              fontFamily: 'Geist',
+            ),
           ),
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Update'),
-        centerTitle: false,
-      ),
+      backgroundColor: AppColors.bgBase,
+      appBar: _buildAppBar(),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -123,17 +129,30 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 ),
                 const SizedBox(height: 10),
               ],
-              const StyledBodyText500('Project', size: 12),
+              _FieldLabel('Project'),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedProjectId,
                 decoration: _fieldDecoration(),
-                dropdownColor: AppColors.darkGrey100,
+                dropdownColor: AppColors.bgElevated,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  fontFamily: 'Geist',
+                ),
                 items: projectsStore.projects
                     .map(
                       (project) => DropdownMenuItem<String>(
                         value: project.id,
-                        child: StyledBodyText600(project.name, size: 13),
+                        child: Text(
+                          project.name,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontFamily: 'Geist',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     )
                     .toList(),
@@ -148,19 +167,29 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 },
               ),
               const SizedBox(height: 14),
-              const StyledBodyText500('Urgency', size: 12),
+              _FieldLabel('Urgency'),
               const SizedBox(height: 8),
               DropdownButtonFormField<Priority>(
                 value: _selectedPriority,
                 decoration: _fieldDecoration(),
-                dropdownColor: AppColors.darkGrey100,
+                dropdownColor: AppColors.bgElevated,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  fontFamily: 'Geist',
+                ),
                 items: Priority.getAll()
                     .map(
                       (priority) => DropdownMenuItem<Priority>(
                         value: priority,
-                        child: StyledBodyText600(
+                        child: Text(
                           '${priority.label} Urgency',
-                          size: 13,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontFamily: 'Geist',
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     )
@@ -171,12 +200,16 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 },
               ),
               const SizedBox(height: 14),
-              const StyledBodyText500('Secondary tags', size: 12),
+              _FieldLabel('Secondary tags'),
               const SizedBox(height: 8),
               if (tagsStore.secondaryTags.isEmpty)
-                const StyledBodyText500(
+                Text(
                   'No secondary tags available',
-                  size: 12,
+                  style: TextStyle(
+                    color: AppColors.textFaint,
+                    fontSize: 12,
+                    fontFamily: 'Geist',
+                  ),
                 )
               else
                 Wrap(
@@ -199,26 +232,34 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                       label: Text(
                         tag.name,
                         style: TextStyle(
-                          color: AppColors.darkGrey700,
+                          color: isSelected
+                              ? AppColors.teal400
+                              : AppColors.textMuted,
                           fontSize: 12,
                           fontFamily: 'Geist',
                         ),
                       ),
-                      selectedColor: AppColors.primary500.withValues(
-                        alpha: 0.25,
+                      selectedColor: AppColors.teal500.withValues(alpha: 0.15),
+                      backgroundColor: AppColors.bgElevated,
+                      side: BorderSide(
+                        color: isSelected
+                            ? AppColors.teal500
+                            : AppColors.borderSubtle,
                       ),
-                      backgroundColor: AppColors.darkGrey100,
-                      side: BorderSide(color: AppColors.darkGrey200),
                       showCheckmark: false,
                     );
                   }).toList(),
                 ),
               const SizedBox(height: 14),
-              const StyledBodyText500('Title', size: 12),
+              _FieldLabel('Title'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _titleController,
-                style: TextStyle(color: AppColors.darkGrey700, fontSize: 14),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontFamily: 'Geist',
+                ),
                 decoration: _fieldDecoration(hintText: 'Update title'),
                 validator: (value) {
                   final next = value?.trim() ?? '';
@@ -228,13 +269,17 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 },
               ),
               const SizedBox(height: 14),
-              const StyledBodyText500('Content', size: 12),
+              _FieldLabel('Content'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _contentController,
                 minLines: 7,
                 maxLines: 12,
-                style: TextStyle(color: AppColors.darkGrey700, fontSize: 14),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontFamily: 'Geist',
+                ),
                 decoration: _fieldDecoration(
                   hintText: 'Write your update (markdown supported)',
                 ),
@@ -248,23 +293,41 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                child: TextButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primary500,
+                child: GestureDetector(
+                  onTap: _isSubmitting ? null : _submit,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
+                    decoration: BoxDecoration(
+                      gradient: _isSubmitting
+                          ? null
+                          : LinearGradient(
+                              colors: [AppColors.teal500, AppColors.primary500],
+                            ),
+                      color: _isSubmitting ? AppColors.bgElevated : null,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                  ),
-                  child: Text(
-                    _isSubmitting ? 'Publishing...' : 'Publish Update',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w600,
-                    ),
+                    child: _isSubmitting
+                        ? Center(
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.teal400,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Publish Update',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontFamily: 'Geist',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -275,27 +338,45 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
     );
   }
 
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.bgBase,
+      elevation: 0,
+      centerTitle: false,
+      iconTheme: IconThemeData(color: AppColors.textMuted),
+      title: Text(
+        'Create Update',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 16,
+          fontFamily: 'Geist',
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
   InputDecoration _fieldDecoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
       hintStyle: TextStyle(
-        color: AppColors.darkGrey500,
+        color: AppColors.textFaint,
         fontSize: 13,
         fontFamily: 'Geist',
       ),
       filled: true,
-      fillColor: AppColors.darkGrey100,
+      fillColor: AppColors.bgElevated,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.darkGrey200),
+        borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.darkGrey200),
+        borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.primary500),
+        borderSide: BorderSide(color: AppColors.teal500),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -359,5 +440,25 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+}
+
+// ─── Field Label ──────────────────────────────────────────────────────────────
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: TextStyle(
+        color: AppColors.textMuted,
+        fontSize: 12,
+        fontFamily: 'Geist',
+        fontWeight: FontWeight.w500,
+      ),
+    );
   }
 }

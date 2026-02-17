@@ -13,7 +13,7 @@ class DotDivider extends StatelessWidget {
       width: 4,
       height: 4,
       decoration: BoxDecoration(
-        color: AppColors.darkGrey200,
+        color: AppColors.borderSubtle,
         shape: BoxShape.circle,
       ),
     );

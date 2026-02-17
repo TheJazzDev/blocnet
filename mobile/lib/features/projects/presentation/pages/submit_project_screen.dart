@@ -2,7 +2,6 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/tags_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -60,14 +59,17 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
 
     if (!auth.canSubmitProject) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Submit Project'),
-          centerTitle: false,
-        ),
-        body: const Padding(
-          padding: EdgeInsets.all(16),
-          child: StyledBodyText500(
+        backgroundColor: AppColors.bgBase,
+        appBar: _buildAppBar(),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
             'Your current role does not allow project submission.',
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              fontFamily: 'Geist',
+            ),
           ),
         ),
       );
@@ -75,34 +77,38 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
 
     if (tagsStore.isLoading && tagsStore.primaryTags.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Submit Project'),
-          centerTitle: false,
+        backgroundColor: AppColors.bgBase,
+        appBar: _buildAppBar(),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.teal400,
+            strokeWidth: 2,
+          ),
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (tagsStore.primaryTags.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Submit Project'),
-          centerTitle: false,
-        ),
-        body: const Padding(
-          padding: EdgeInsets.all(16),
-          child: StyledBodyText500(
+        backgroundColor: AppColors.bgBase,
+        appBar: _buildAppBar(),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
             'Primary tags are not configured yet. Contact admin.',
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              fontFamily: 'Geist',
+            ),
           ),
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Submit Project'),
-        centerTitle: false,
-      ),
+      backgroundColor: AppColors.bgBase,
+      appBar: _buildAppBar(),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -121,11 +127,15 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 ),
                 const SizedBox(height: 10),
               ],
-              const StyledBodyText500('Project name', size: 12),
+              _FieldLabel('Project name'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
-                style: TextStyle(color: AppColors.darkGrey700, fontSize: 14),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontFamily: 'Geist',
+                ),
                 decoration: _fieldDecoration(hintText: 'e.g. Codawoo'),
                 validator: (value) {
                   final next = value?.trim() ?? '';
@@ -135,33 +145,54 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 },
               ),
               const SizedBox(height: 14),
-              const StyledBodyText500('Symbol (optional)', size: 12),
+              _FieldLabel('Symbol (optional)'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _symbolController,
-                style: TextStyle(color: AppColors.darkGrey700, fontSize: 14),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontFamily: 'Geist',
+                ),
                 decoration: _fieldDecoration(hintText: 'e.g. COD'),
               ),
               const SizedBox(height: 14),
-              const StyledBodyText500('Website URL (optional)', size: 12),
+              _FieldLabel('Website URL (optional)'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _websiteController,
-                style: TextStyle(color: AppColors.darkGrey700, fontSize: 14),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontFamily: 'Geist',
+                ),
                 decoration: _fieldDecoration(hintText: 'https://example.com'),
               ),
               const SizedBox(height: 14),
-              const StyledBodyText500('Primary tag', size: 12),
+              _FieldLabel('Primary tag'),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedPrimaryTagId,
                 decoration: _fieldDecoration(),
-                dropdownColor: AppColors.darkGrey100,
+                dropdownColor: AppColors.bgElevated,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  fontFamily: 'Geist',
+                ),
                 items: tagsStore.primaryTags
                     .map(
                       (tag) => DropdownMenuItem<String>(
                         value: tag.id,
-                        child: StyledBodyText600(tag.name, size: 13),
+                        child: Text(
+                          tag.name,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontFamily: 'Geist',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     )
                     .toList(),
@@ -177,13 +208,17 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 },
               ),
               const SizedBox(height: 14),
-              const StyledBodyText500('Description', size: 12),
+              _FieldLabel('Description'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descriptionController,
                 minLines: 6,
                 maxLines: 10,
-                style: TextStyle(color: AppColors.darkGrey700, fontSize: 14),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontFamily: 'Geist',
+                ),
                 decoration: _fieldDecoration(
                   hintText: 'Explain what this project is about.',
                 ),
@@ -195,14 +230,17 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 },
               ),
               const SizedBox(height: 14),
-              const StyledBodyText500('Why should we approve? (optional)',
-                  size: 12),
+              _FieldLabel('Why should we approve? (optional)'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _reasonController,
                 minLines: 3,
                 maxLines: 6,
-                style: TextStyle(color: AppColors.darkGrey700, fontSize: 14),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontFamily: 'Geist',
+                ),
                 decoration: _fieldDecoration(
                   hintText: 'Credibility, risk checks, relevance, etc.',
                 ),
@@ -210,23 +248,41 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                child: TextButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primary500,
+                child: GestureDetector(
+                  onTap: _isSubmitting ? null : _submit,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
+                    decoration: BoxDecoration(
+                      gradient: _isSubmitting
+                          ? null
+                          : LinearGradient(
+                              colors: [AppColors.teal500, AppColors.primary500],
+                            ),
+                      color: _isSubmitting ? AppColors.bgElevated : null,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                  ),
-                  child: Text(
-                    _isSubmitting ? 'Submitting...' : 'Submit For Approval',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w600,
-                    ),
+                    child: _isSubmitting
+                        ? Center(
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.teal400,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Submit For Approval',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontFamily: 'Geist',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -237,27 +293,45 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
     );
   }
 
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.bgBase,
+      elevation: 0,
+      centerTitle: false,
+      iconTheme: IconThemeData(color: AppColors.textMuted),
+      title: Text(
+        'Submit Project',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 16,
+          fontFamily: 'Geist',
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
   InputDecoration _fieldDecoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
       hintStyle: TextStyle(
-        color: AppColors.darkGrey500,
+        color: AppColors.textFaint,
         fontSize: 13,
         fontFamily: 'Geist',
       ),
       filled: true,
-      fillColor: AppColors.darkGrey100,
+      fillColor: AppColors.bgElevated,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.darkGrey200),
+        borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.darkGrey200),
+        borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.primary500),
+        borderSide: BorderSide(color: AppColors.teal500),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -317,5 +391,25 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+}
+
+// ─── Field Label ──────────────────────────────────────────────────────────────
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: TextStyle(
+        color: AppColors.textMuted,
+        fontSize: 12,
+        fontFamily: 'Geist',
+        fontWeight: FontWeight.w500,
+      ),
+    );
   }
 }

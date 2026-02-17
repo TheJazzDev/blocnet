@@ -39,15 +39,15 @@ class SecondaryButton extends StatelessWidget {
             horizontal: horizontalPadding,
           ),
           decoration: BoxDecoration(
-            color: AppColors.darkGrey100,
+            color: AppColors.bgElevated,
             borderRadius: const BorderRadius.all(Radius.circular(25)),
-            border: Border.all(color: AppColors.darkGrey300),
+            border: Border.all(color: AppColors.borderSubtle),
           ),
           child: Text(
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isEnabled ? AppColors.darkGrey700 : AppColors.darkGrey500,
+              color: isEnabled ? AppColors.textSecondary : AppColors.textMuted,
               fontSize: fontSize,
               fontWeight: FontWeight.w500,
               fontFamily: 'Geist',

@@ -3,6 +3,7 @@ class AppRoutes {
   static const String main = '/main';
   static const String profile = '/profile';
   static const String settings = '/settings';
+  static const String wallet = '/wallet';
   static const String notifications = '/notifications';
   static const String createUpdate = '/create-update';
   static const String submitProject = '/submit-project';

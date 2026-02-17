@@ -1,7 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 
 class TagSelector extends StatefulWidget {
   const TagSelector({
@@ -29,17 +28,25 @@ class _TagSelectorState extends State<TagSelector> {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        tilePadding: EdgeInsets.all(0),
+        tilePadding: EdgeInsets.zero,
         title: Row(
           children: [
-            Icon(widget.icon, color: AppColors.darkGrey500, size: 16),
+            Icon(widget.icon, color: AppColors.textMuted, size: 16),
             const SizedBox(width: 8),
-            StyledBodyText500(widget.title),
+            Text(
+              widget.title,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
         trailing: Icon(
           Icons.arrow_drop_down,
-          color: AppColors.darkGrey500,
+          color: AppColors.textMuted,
           size: 20,
         ),
         children: [
@@ -66,21 +73,34 @@ class _TagSelectorState extends State<TagSelector> {
       return GestureDetector(
         onTap: () => widget.onTagToggle(tag),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 12),
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.darkGrey200),
+            color: isSelected
+                ? AppColors.teal500.withValues(alpha: 0.12)
+                : AppColors.bgElevated,
+            border: Border.all(
+              color: isSelected ? AppColors.teal500 : AppColors.borderSubtle,
+            ),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Wrap(
-            spacing: 8,
+            spacing: 6,
             children: [
               if (isSelected)
                 Icon(
                   Icons.check_circle,
-                  color: AppColors.darkGrey500,
-                  size: 16,
+                  color: AppColors.teal400,
+                  size: 14,
                 ),
-              StyledBodyText(tag),
+              Text(
+                tag,
+                style: TextStyle(
+                  color: isSelected ? AppColors.teal400 : AppColors.textMuted,
+                  fontSize: 12,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),

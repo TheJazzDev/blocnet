@@ -1,12 +1,10 @@
 import 'dart:math';
 
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/projects/presentation/widgets/dividers/dot_divider.dart';
-import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import '../shared/update_project_logo.dart';
 import '../shared/update_project_title.dart';
 
@@ -22,89 +20,75 @@ class UpdateDetailsInfo extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Project logo + name
         Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            UpdateProjectLogo(logoUrl: post.project?.logo ?? '', size: 60),
-            const SizedBox(width: 24),
+            UpdateProjectLogo(logoUrl: post.project?.logo ?? '', size: 44),
+            const SizedBox(width: 12),
             Flexible(
               child: UpdateProjectTitle(
                 projectTitle: post.project?.name ?? '',
                 margin: false,
+                applyOverflow: true,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        StyledLabelLarge(post.title),
-        const SizedBox(height: 4),
-        const CustomHorizontalDivider(margin: 12),
+        const SizedBox(height: 14),
+        // Title
+        Text(
+          post.title,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 20,
+            fontFamily: 'Geist',
+            fontWeight: FontWeight.w700,
+            height: 1.3,
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Meta row
         Wrap(
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                StyledBodyText400('By'),
-                const SizedBox(width: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.network(
-                    post.admin?.imageUrl ?? post.project?.logo ?? '',
-                    width: 20,
-                    height: 20,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 20,
-                      height: 20,
-                      color: AppColors.darkGrey200,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                StyledBodyText600(post.admin?.name ?? 'No admin name'),
-              ],
+            _MetaChip(
+              icon: Symbols.person,
+              label: post.admin?.name ?? 'Unknown',
             ),
-            DotDivider(12),
-            StyledBodyText600(
-              formatDateWithSuffix(post.createdAt),
-              size: 12,
-              fontWeight: FontWeight.w400,
+            _dot(),
+            _MetaChip(
+              icon: Symbols.calendar_today,
+              label: formatDateWithSuffix(post.createdAt),
             ),
-            DotDivider(12),
-            StyledBodyText600(
-              '$readMinutes mins read',
-              size: 12,
-              fontWeight: FontWeight.w400,
+            _dot(),
+            _MetaChip(
+              icon: Symbols.schedule,
+              label: '$readMinutes min read',
             ),
-            SizedBox(width: 12),
-            // DotDivider(12),
-            if (post.lastEditedAt != null)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.darkGrey75,
-                  borderRadius: const BorderRadius.all(Radius.circular(20)),
-                  border: Border.all(color: AppColors.darkGrey300),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    StyledBodyText400('last edited', size: 12),
-                    const SizedBox(width: 8),
-                    StyledBodyText600(
-                      formatDateWithSuffix(post.lastEditedAt!),
-                      size: 12,
-                    ),
-                  ],
-                ),
+            if (post.lastEditedAt != null) ...[
+              _dot(),
+              _MetaChip(
+                icon: Symbols.edit,
+                label: 'Edited ${formatDateWithSuffix(post.lastEditedAt!)}',
               ),
+            ],
           ],
         ),
       ],
+    );
+  }
+
+  Widget _dot() {
+    return Container(
+      width: 3,
+      height: 3,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.textFaint,
+      ),
     );
   }
 
@@ -112,10 +96,36 @@ class UpdateDetailsInfo extends StatelessWidget {
     final words = content
         .trim()
         .split(RegExp(r'\s+'))
-        .where((value) => value.isNotEmpty)
+        .where((v) => v.isNotEmpty)
         .length;
-
     if (words == 0) return 1;
     return max(1, (words / 220).ceil());
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: AppColors.textFaint),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 12,
+            fontFamily: 'Geist',
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
   }
 }

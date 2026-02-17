@@ -1,10 +1,10 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/viewmodels/priority_screen_view_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_label/filter_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
 import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,7 +20,6 @@ class _PriorityScreensState extends State<PriorityScreens> {
   late Priority priority;
   bool _isInitialized = false;
 
-  // Get priority from the page and pass it to the fetchposts
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -39,6 +38,7 @@ class _PriorityScreensState extends State<PriorityScreens> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.bgBase,
       appBar: const CustomAppBar(title: ''),
       body: Container(
         padding: const EdgeInsets.all(16),
@@ -51,7 +51,15 @@ class _PriorityScreensState extends State<PriorityScreens> {
               children: [
                 Wrap(
                   children: [
-                    StyledBodyText700('${priority.toString()} Urgency'),
+                    Text(
+                      '${priority.toString()} Urgency',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontFamily: 'Geist',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     FilterLabel(
                       selectedTags: viewModel.selectedFilters,
                       unselectedTags: viewModel.allSecondaryTags,

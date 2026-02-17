@@ -1,6 +1,5 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class PrimaryLabel extends StatelessWidget {
@@ -11,12 +10,21 @@ class PrimaryLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
       decoration: BoxDecoration(
-        color: AppColors.darkGrey50,
-        borderRadius: BorderRadius.all(Radius.circular(20)),
+        color: AppColors.bgElevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderSubtle, width: 1),
       ),
-      child: StyledBodyText(primaryTag.toString()),
+      child: Text(
+        primaryTag.toString(),
+        style: TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 11,
+          fontFamily: 'Geist',
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }

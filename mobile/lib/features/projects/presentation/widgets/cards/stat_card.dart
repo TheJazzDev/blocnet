@@ -1,5 +1,4 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -23,35 +22,54 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    IconData? iconData = iconMap[iconName];
+    final IconData? iconData = iconMap[iconName];
 
     return Container(
       height: 131,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.darkGrey200,
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        color: AppColors.bgSurface,
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
+        border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          //  CustomIconButton(svgAsset: svgAssetUrl),
           Container(
-            padding: EdgeInsets.all(10),
+            padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: AppColors.darkGrey300,
+              color: AppColors.bgElevated,
               borderRadius: const BorderRadius.all(Radius.circular(100)),
             ),
-            child: Icon(iconData, size: 20, color: AppColors.darkGrey600),
+            child: Icon(iconData, size: 18, color: AppColors.textMuted),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: 80, child: StyledBodyText500(label, size: 10)),
-              SizedBox(height: 4),
-              StyledBodyText700('$value', size: 14),
+              SizedBox(
+                width: 80,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: AppColors.textFaint,
+                    fontSize: 10,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$value',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ],

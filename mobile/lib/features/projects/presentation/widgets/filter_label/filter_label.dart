@@ -22,7 +22,7 @@ class _FilterLabelState extends State<FilterLabel> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: 12, bottom: 16),
+      padding: const EdgeInsets.only(top: 12, bottom: 16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -45,7 +45,6 @@ class _FilterLabelState extends State<FilterLabel> {
     );
   }
 
-  // Helper method to build buttons for each tag
   List<Widget> _buildTagList(Set<String> tags, bool isSelected) {
     final sortedTags = tags.toList();
 
@@ -76,19 +75,23 @@ class TagButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 14),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.darkGrey200),
+          border: Border.all(
+            color: isSelected ? AppColors.teal500 : AppColors.borderSubtle,
+          ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? AppColors.primary600 : Colors.transparent,
+          color: isSelected
+              ? AppColors.teal500.withValues(alpha: 0.12)
+              : Colors.transparent,
         ),
         child: Wrap(
-          spacing: 8,
+          spacing: 6,
           children: [
             Text(
               tag,
               style: TextStyle(
-                color: isSelected ? Colors.black : AppColors.darkGrey600,
+                color: isSelected ? AppColors.teal400 : AppColors.textMuted,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'Geist',

@@ -38,6 +38,8 @@ class AuthStore extends ChangeNotifier {
   String? _displayName;
   String? _avatarUrl;
   List<String> _roles = const ['user'];
+  String? _username;
+  DateTime? _memberSince;
   String? _lastError;
 
   bool get isAuthenticated => _isAuthenticated;
@@ -47,6 +49,8 @@ class AuthStore extends ChangeNotifier {
   String? get email => _email;
   String? get displayName => _displayName;
   String? get avatarUrl => _avatarUrl;
+  String? get username => _username;
+  DateTime? get memberSince => _memberSince;
   List<String> get roles => List.unmodifiable(_roles);
   bool get isOwner => _roles.contains('owner');
   bool get isAdmin => _roles.contains('admin');
@@ -380,6 +384,12 @@ class AuthStore extends ChangeNotifier {
 
       _displayName = response['displayName']?.toString() ?? _displayName;
       _avatarUrl = response['avatarUrl']?.toString() ?? _avatarUrl;
+      _username = response['username']?.toString() ?? _username;
+
+      final rawMemberSince = response['createdAt'] ?? response['memberSince'];
+      if (rawMemberSince != null) {
+        _memberSince = DateTime.tryParse(rawMemberSince.toString());
+      }
 
       final responseRoles = _parseRoles(response['roles']);
       if (responseRoles.isNotEmpty) {

@@ -1,10 +1,10 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/cards/tag_card.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 
 class ExploreSection extends StatelessWidget {
   const ExploreSection({required this.allPosts, super.key});
@@ -58,11 +58,19 @@ class ExploreSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          StyledBodyText400('Latest News'),
+          Text(
+            'Latest News',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 8),
           ListView.builder(
             shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: allPosts.length,
             itemBuilder: (context, index) {
               return UpdateCard(post: allPosts[index]);

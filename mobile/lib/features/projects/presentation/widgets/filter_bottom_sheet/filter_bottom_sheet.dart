@@ -3,7 +3,6 @@ import 'package:blocnet/features/projects/presentation/controllers/bottom_sheet_
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
 import 'package:blocnet/shared/widgets/app_secondary_button.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import '../shared/custom_backdrop_filter.dart';
 import '../dividers/horizontal_divider.dart';
@@ -49,14 +48,22 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           borderRadius: const BorderRadius.all(Radius.circular(16)),
           child: Container(
             padding: const EdgeInsets.all(20),
-            color: AppColors.darkGrey100,
+            color: AppColors.bgSurface,
             child: SingleChildScrollView(
               child: Column(
                 children: [
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      StyledLabelLarge('Filters'),
+                      Text(
+                        'Filters',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15,
+                          fontFamily: 'Geist',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       FilterDropdownSection(
                         title: 'Primary Tag',

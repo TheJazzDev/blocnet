@@ -4,6 +4,7 @@ import 'package:blocnet/features/projects/presentation/pages/manage_updates_scre
 import 'package:blocnet/features/projects/presentation/pages/manage_projects_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/submit_project_screen.dart';
 import 'package:blocnet/screen/main_screen.dart';
+import 'package:blocnet/screen/wallet_screen.dart';
 import 'package:flutter/material.dart';
 import '../screen/notifications.dart';
 import '../features/projects/presentation/sections/explore/trending.dart';
@@ -14,6 +15,7 @@ class ProtectedRoutes {
   static const String main = AppRoutes.main;
   static const String profile = AppRoutes.profile;
   static const String settings = AppRoutes.settings;
+  static const String wallet = AppRoutes.wallet;
   static const String notifications = AppRoutes.notifications;
   static const String createUpdate = AppRoutes.createUpdate;
   static const String submitProject = AppRoutes.submitProject;
@@ -44,8 +46,9 @@ class ProtectedRoutes {
     return {
       // Global
       main: (context) => const MainScreen(initialIndex: 0),
-      profile: (context) => const MainScreen(initialIndex: 2),
+      profile: (context) => const MainScreen(initialIndex: 3),
       settings: (context) => const MainScreen(initialIndex: 3),
+      wallet: (context) => const WalletScreen(),
       createUpdate: (context) => const CreateUpdateScreen(),
       submitProject: (context) => const SubmitProjectScreen(),
       manageProjects: (context) => const ManageProjectsScreen(),
@@ -66,6 +69,7 @@ class ProtectedRoutes {
     main,
     profile,
     settings,
+    wallet,
     notifications,
     createUpdate,
     submitProject,

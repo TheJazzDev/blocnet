@@ -22,7 +22,7 @@ class UpdateProjectLogo extends StatelessWidget {
               width: size,
               height: size,
               decoration: BoxDecoration(
-                color: AppColors.darkGrey300,
+                color: AppColors.borderSubtle,
                 borderRadius: BorderRadius.circular(size == 40 ? 10 : 15),
               ),
             ),
@@ -34,11 +34,11 @@ class UpdateProjectLogo extends StatelessWidget {
               ? Container(
                   width: size,
                   height: size,
-                  color: AppColors.darkGrey200,
+                  color: AppColors.bgElevated,
                   alignment: Alignment.center,
                   child: Icon(
                     Icons.layers,
-                    color: AppColors.darkGrey600,
+                    color: AppColors.textFaint,
                     size: size / 2.8,
                   ),
                 )
@@ -50,11 +50,11 @@ class UpdateProjectLogo extends StatelessWidget {
                   errorBuilder: (_, __, ___) => Container(
                     width: size,
                     height: size,
-                    color: AppColors.darkGrey200,
+                    color: AppColors.bgElevated,
                     alignment: Alignment.center,
                     child: Icon(
                       Icons.layers,
-                      color: AppColors.darkGrey600,
+                      color: AppColors.textFaint,
                       size: size / 2.8,
                     ),
                   ),

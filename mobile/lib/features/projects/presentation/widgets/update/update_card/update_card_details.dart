@@ -1,13 +1,15 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
-import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';
-import 'package:blocnet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
 import '../shared/update_project_logo.dart';
 
 class UpdateCardDetails extends StatelessWidget {
-  const UpdateCardDetails({required this.post, this.miniCard = false, super.key});
+  const UpdateCardDetails({
+    required this.post,
+    this.miniCard = false,
+    super.key,
+  });
 
   final Update post;
   final bool miniCard;
@@ -17,27 +19,49 @@ class UpdateCardDetails extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        UpdateProjectLogo(logoUrl: post.project?.logo ?? '', size: 40),
-        const SizedBox(width: 16),
+        UpdateProjectLogo(logoUrl: post.project?.logo ?? '', size: 36),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              StyledTitleMedium(post.title),
-              const SizedBox(height: 8),
-              StyledBodyText(post.description, applyOverflow: true),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  StyledBodyText500(
-                    formatDateWithSuffix(post.createdAt),
-                    size: 12,
-                  ),
-                  const SizedBox(width: 12),
-                  CustomVerticalDivider(height: 12.9),
-                  const SizedBox(width: 12),
-                  PriorityLabel(priority: post.priority, miniCard: miniCard),
-                ],
+              // Title
+              Text(
+                post.title,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: miniCard ? 13 : 14,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w600,
+                  height: 1.3,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 5),
+              // Description
+              Text(
+                post.description,
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 12,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w400,
+                  height: 1.5,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 10),
+              // Date
+              Text(
+                formatDateWithSuffix(post.createdAt),
+                style: TextStyle(
+                  color: AppColors.textFaint,
+                  fontSize: 11,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ],
           ),

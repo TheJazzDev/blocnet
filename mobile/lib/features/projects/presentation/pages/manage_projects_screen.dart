@@ -4,7 +4,6 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,11 +19,9 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final projects = context.read<ProjectsStore>();
-      final updates = context.read<UpdatesStore>();
       await Future.wait([
-        projects.fetchProjectsOnce(),
-        updates.fetchUpdatesOnce(),
+        context.read<ProjectsStore>().fetchProjectsOnce(),
+        context.read<UpdatesStore>().fetchUpdatesOnce(),
       ]);
     });
   }
@@ -32,14 +29,15 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
+
     if (!auth.canSubmitProject) {
       return Scaffold(
-        appBar:
-            AppBar(title: const Text('Manage Projects'), centerTitle: false),
+        backgroundColor: AppColors.bgBase,
+        appBar: _buildAppBar(context, auth, showAdd: false),
         body: const Padding(
           padding: EdgeInsets.all(16),
-          child: StyledBodyText500(
-            'Your current role does not allow managing projects.',
+          child: _AccessDenied(
+            message: 'Your current role does not allow managing projects.',
           ),
         ),
       );
@@ -48,38 +46,32 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     return Consumer2<ProjectsStore, UpdatesStore>(
       builder: (context, projectsStore, updatesStore, _) {
         final userId = auth.userId ?? '';
-        final ownedProjects = projectsStore.projects
-            .where((project) => project.adminId == userId)
+        final owned = projectsStore.projects
+            .where((p) => p.adminId == userId)
             .toList();
 
-        final contributedProjectIds = updatesStore.updates
-            .where((update) => update.adminId == userId)
-            .map((update) => update.projectId)
+        final contributedIds = updatesStore.updates
+            .where((u) => u.adminId == userId)
+            .map((u) => u.projectId)
             .toSet();
 
-        final contributedProjects = projectsStore.projects
-            .where((project) =>
-                project.adminId != userId &&
-                contributedProjectIds.contains(project.id))
+        final contributed = projectsStore.projects
+            .where((p) => p.adminId != userId && contributedIds.contains(p.id))
             .toList();
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Manage Projects'),
-            centerTitle: false,
-            actions: [
-              IconButton(
-                onPressed: auth.canSubmitProject
-                    ? () =>
-                        Navigator.of(context).pushNamed(AppRoutes.submitProject)
-                    : null,
-                icon: const Icon(Icons.add),
-              ),
-            ],
-          ),
+          backgroundColor: AppColors.bgBase,
+          appBar: _buildAppBar(context, auth, showAdd: true),
           body: projectsStore.isFetching && projectsStore.projects.isEmpty
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.teal400,
+                    strokeWidth: 2,
+                  ),
+                )
               : RefreshIndicator(
+                  color: AppColors.teal400,
+                  backgroundColor: AppColors.bgSurface,
                   onRefresh: () async {
                     await Future.wait([
                       projectsStore.refreshProjects(),
@@ -91,30 +83,29 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                     children: [
                       if (projectsStore.lastError != null &&
                           projectsStore.lastError!.isNotEmpty) ...[
-                        StyledBodyText500(projectsStore.lastError!, size: 12),
+                        Text(
+                          projectsStore.lastError!,
+                          style: TextStyle(
+                            color: AppColors.error500,
+                            fontSize: 12,
+                            fontFamily: 'Geist',
+                          ),
+                        ),
                         const SizedBox(height: 10),
                       ],
-                      const StyledBodyText700('Projects Created By You',
-                          size: 14),
+                      _SectionLabel('Created by you'),
                       const SizedBox(height: 8),
-                      if (ownedProjects.isEmpty)
-                        const StyledBodyText500(
-                          'No approved projects created by you yet.',
-                          size: 12,
-                        )
+                      if (owned.isEmpty)
+                        _EmptyHint('No approved projects created by you yet.')
                       else
-                        ...ownedProjects.map(_projectTile),
+                        ...owned.map(_buildProjectTile),
                       const SizedBox(height: 20),
-                      const StyledBodyText700('Projects You Contribute To',
-                          size: 14),
+                      _SectionLabel('Projects you contribute to'),
                       const SizedBox(height: 8),
-                      if (contributedProjects.isEmpty)
-                        const StyledBodyText500(
-                          'No contribution projects yet.',
-                          size: 12,
-                        )
+                      if (contributed.isEmpty)
+                        _EmptyHint('No contribution projects yet.')
                       else
-                        ...contributedProjects.map(_projectTile),
+                        ...contributed.map(_buildProjectTile),
                     ],
                   ),
                 ),
@@ -123,27 +114,149 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     );
   }
 
-  Widget _projectTile(Project project) {
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    AuthStore auth, {
+    required bool showAdd,
+  }) {
+    return AppBar(
+      backgroundColor: AppColors.bgBase,
+      title: Text(
+        'Manage Projects',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontFamily: 'Geist',
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
+      ),
+      centerTitle: false,
+      elevation: 0,
+      iconTheme: IconThemeData(color: AppColors.textMuted),
+      actions: [
+        if (showAdd)
+          GestureDetector(
+            onTap: () =>
+                Navigator.of(context).pushNamed(AppRoutes.submitProject),
+            child: Container(
+              margin: const EdgeInsets.only(right: 16),
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(10),
+                border:
+                    Border.all(color: AppColors.borderSubtle, width: 1),
+              ),
+              child: Icon(Icons.add, size: 18, color: AppColors.textMuted),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildProjectTile(Project project) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.darkGrey100,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.darkGrey200),
+        border: Border.all(color: AppColors.borderSubtle, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          StyledBodyText700(project.name, size: 13),
+          Text(
+            project.name,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 4),
-          StyledBodyText500(project.primaryTag.toString(), size: 12),
+          Text(
+            project.primaryTag.toString(),
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 12,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w400,
+            ),
+          ),
           const SizedBox(height: 6),
-          StyledBodyText500(
+          Text(
             '${project.followersCount} followers',
-            size: 11,
+            style: TextStyle(
+              color: AppColors.textFaint,
+              fontSize: 11,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: TextStyle(
+        color: AppColors.textFaint,
+        fontSize: 10,
+        fontFamily: 'Geist',
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.8,
+      ),
+    );
+  }
+}
+
+class _EmptyHint extends StatelessWidget {
+  const _EmptyHint(this.message);
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        message,
+        style: TextStyle(
+          color: AppColors.textFaint,
+          fontSize: 13,
+          fontFamily: 'Geist',
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+    );
+  }
+}
+
+class _AccessDenied extends StatelessWidget {
+  const _AccessDenied({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      message,
+      style: TextStyle(
+        color: AppColors.textMuted,
+        fontSize: 14,
+        fontFamily: 'Geist',
+        fontWeight: FontWeight.w400,
       ),
     );
   }

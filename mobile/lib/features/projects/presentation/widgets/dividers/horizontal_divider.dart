@@ -9,13 +9,10 @@ class CustomHorizontalDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 2,
+      height: 1,
       width: double.infinity,
       margin: EdgeInsets.symmetric(vertical: margin),
-      decoration: BoxDecoration(
-        color: AppColors.darkGrey200,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
+      color: AppColors.borderSubtle,
     );
   }
 }

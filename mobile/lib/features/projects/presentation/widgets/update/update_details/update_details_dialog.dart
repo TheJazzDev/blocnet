@@ -1,12 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/comments/data/models/comment_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/comments_store.dart';
 import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../more_from/more_from_primary_tag.dart';
@@ -48,78 +46,81 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
   @override
   Widget build(BuildContext context) {
     final updatesStore = Provider.of<UpdatesStore>(context);
-    final matchingUpdates =
-        updatesStore.updates.where((item) => item.id == widget.id).toList();
-    if (matchingUpdates.isEmpty) {
-      return const SafeArea(
-        child: Center(child: CircularProgressIndicator()),
+    final match = updatesStore.updates.where((u) => u.id == widget.id).toList();
+    if (match.isEmpty) {
+      return SafeArea(
+        child: Center(child: CircularProgressIndicator(color: AppColors.teal400)),
       );
     }
-    final post = matchingUpdates.first;
-
+    final post = match.first;
     if (post.project == null) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: AppColors.teal400));
     }
 
     final moreFromProjectName = post.project?.posts ?? [];
 
     return SafeArea(
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: AppColors.darkGrey100,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(32),
-              topRight: Radius.circular(32),
-            ),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
           ),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Column(
-              children: [
-                UpdateDetailsHeader(priority: post.priority),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        UpdateDetailsInfo(post: post),
-                        const CustomHorizontalDivider(margin: 12),
-                        UpdateDetailsTags(post),
-                        const CustomHorizontalDivider(margin: 12),
-                        RenderMarkdownContent(content: post.content),
-                        const SizedBox(height: 20),
-                        _CommentsSection(
-                          updateId: widget.id,
-                          controller: _commentController,
-                          isSubmitting: _isSubmittingComment,
-                          error: _commentError,
-                          onSubmit: _createComment,
-                        ),
-                        const SizedBox(height: 28),
-                        MoreFromProjectName(
-                          label: 'More from',
-                          projectTitle: post.project?.name ?? '',
-                          posts: moreFromProjectName,
-                        ),
-                        const CustomHorizontalDivider(margin: 16),
-                        const SizedBox(height: 16),
-                        MoreFromUpdatePrimaryTag(
-                          primaryTag:
-                              post.project?.primaryTag ?? PrimaryTag.none,
-                        ),
-                        const SizedBox(height: 8),
-                        const CustomHorizontalDivider(margin: 16),
-                        const SizedBox(height: 8),
-                        MoreFromUpdateSecondaryTags(post: post),
-                      ],
-                    ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Column(
+            children: [
+              UpdateDetailsHeader(priority: post.priority),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      UpdateDetailsInfo(post: post),
+                      const SizedBox(height: 16),
+                      _Divider(),
+                      const SizedBox(height: 12),
+                      UpdateDetailsTags(post),
+                      const SizedBox(height: 12),
+                      _Divider(),
+                      const SizedBox(height: 16),
+                      RenderMarkdownContent(content: post.content),
+                      const SizedBox(height: 24),
+                      _CommentsSection(
+                        updateId: widget.id,
+                        controller: _commentController,
+                        isSubmitting: _isSubmittingComment,
+                        error: _commentError,
+                        onSubmit: _createComment,
+                      ),
+                      const SizedBox(height: 32),
+                      _Divider(),
+                      const SizedBox(height: 20),
+                      MoreFromProjectName(
+                        label: 'More from',
+                        projectTitle: post.project?.name ?? '',
+                        posts: moreFromProjectName,
+                      ),
+                      const SizedBox(height: 16),
+                      _Divider(),
+                      const SizedBox(height: 16),
+                      MoreFromUpdatePrimaryTag(
+                        primaryTag: post.project?.primaryTag ?? PrimaryTag.none,
+                      ),
+                      const SizedBox(height: 8),
+                      _Divider(),
+                      const SizedBox(height: 8),
+                      MoreFromUpdateSecondaryTags(post: post),
+                      const SizedBox(height: 32),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -137,24 +138,29 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
             content: content,
           );
       _commentController.clear();
-      setState(() {
-        _commentError = null;
-      });
+      setState(() => _commentError = null);
     } catch (error) {
       if (!mounted) return;
-      setState(() {
-        _commentError = error.toString();
-      });
+      setState(() => _commentError = error.toString());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to comment: $error')),
       );
     } finally {
-      if (mounted) {
-        setState(() => _isSubmittingComment = false);
-      }
+      if (mounted) setState(() => _isSubmittingComment = false);
     }
   }
 }
+
+// ─── Divider ──────────────────────────────────────────────────────────────────
+
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(height: 1, color: AppColors.borderSubtle);
+  }
+}
+
+// ─── Comments Section ─────────────────────────────────────────────────────────
 
 class _CommentsSection extends StatelessWidget {
   const _CommentsSection({
@@ -185,19 +191,44 @@ class _CommentsSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                const StyledTitleLarge('Comments'),
+                Text(
+                  'Comments',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 15,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(width: 8),
-                StyledBodyText500('${comments.length}', size: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgElevated,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.borderSubtle),
+                  ),
+                  child: Text(
+                    '${comments.length}',
+                    style: TextStyle(
+                      color: AppColors.textFaint,
+                      fontSize: 11,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 10),
+            // Comment input
             Container(
               decoration: BoxDecoration(
-                color: AppColors.darkGrey75,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.darkGrey200),
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderSubtle),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
                 children: [
                   Expanded(
@@ -206,46 +237,53 @@ class _CommentsSection extends StatelessWidget {
                       minLines: 1,
                       maxLines: 4,
                       style: TextStyle(
-                        color: AppColors.darkGrey700,
+                        color: AppColors.textSecondary,
                         fontSize: 13,
                         fontFamily: 'Geist',
                       ),
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: 'Add a comment',
+                        hintText: 'Add a comment…',
                         hintStyle: TextStyle(
-                          color: AppColors.darkGrey500,
-                          fontSize: 12,
+                          color: AppColors.textFaint,
+                          fontSize: 13,
                           fontFamily: 'Geist',
                         ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 6),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  TextButton(
-                    onPressed: isSubmitting ? null : onSubmit,
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppColors.primary500,
+                  GestureDetector(
+                    onTap: isSubmitting ? null : onSubmit,
+                    child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 8,
+                        vertical: 7,
                       ),
-                    ),
-                    child: Text(
-                      isSubmitting ? '...' : 'Send',
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 12,
-                        fontFamily: 'Geist',
-                        fontWeight: FontWeight.w600,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppColors.teal500, AppColors.primary500],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        isSubmitting ? '…' : 'Send',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontFamily: 'Geist',
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
             if (error != null && error!.isNotEmpty) ...[
+              const SizedBox(height: 6),
               Text(
                 error!,
                 style: TextStyle(
@@ -254,19 +292,29 @@ class _CommentsSection extends StatelessWidget {
                   fontFamily: 'Geist',
                 ),
               ),
-              const SizedBox(height: 8),
             ],
+            const SizedBox(height: 12),
             if (isLoading && comments.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 child: SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.teal400,
+                  ),
                 ),
               )
             else if (comments.isEmpty)
-              const StyledBodyText500('No comments yet', size: 12)
+              Text(
+                'No comments yet',
+                style: TextStyle(
+                  color: AppColors.textFaint,
+                  fontSize: 12,
+                  fontFamily: 'Geist',
+                ),
+              )
             else
               Column(
                 children: comments
@@ -286,6 +334,8 @@ class _CommentsSection extends StatelessWidget {
   }
 }
 
+// ─── Comment Tile ─────────────────────────────────────────────────────────────
+
 class _CommentTile extends StatelessWidget {
   const _CommentTile({
     required this.comment,
@@ -302,28 +352,47 @@ class _CommentTile extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.darkGrey75,
+        color: AppColors.bgElevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.darkGrey200),
+        border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              StyledBodyText600(
+              Text(
                 comment.admin?.name ?? 'User',
-                size: 12,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(width: 8),
-              StyledBodyText500(_relativeTime(comment.createdAt), size: 11),
+              Text(
+                _relativeTime(comment.createdAt),
+                style: TextStyle(
+                  color: AppColors.textFaint,
+                  fontSize: 11,
+                  fontFamily: 'Geist',
+                ),
+              ),
               const Spacer(),
               if (canEdit) ...[
                 InkWell(
                   onTap: () => _showEditDialog(context),
-                  child: StyledBodyText500('Edit', size: 11),
+                  child: Text(
+                    'Edit',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                      fontFamily: 'Geist',
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 InkWell(
@@ -346,35 +415,71 @@ class _CommentTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          StyledBodyText500(comment.content, size: 12),
+          Text(
+            comment.content,
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 12,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w400,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Future<void> _showEditDialog(BuildContext context) async {
-    final controller = TextEditingController(text: comment.content);
+    final ctrl = TextEditingController(text: comment.content);
 
     await showDialog<void>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: AppColors.darkGrey100,
-          title: const Text('Edit comment'),
+          backgroundColor: AppColors.bgSurface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.borderSubtle),
+          ),
+          title: Text(
+            'Edit comment',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           content: TextField(
-            controller: controller,
+            controller: ctrl,
             minLines: 1,
             maxLines: 6,
-            style: TextStyle(color: AppColors.darkGrey700),
+            style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Geist'),
+            decoration: InputDecoration(
+              hintText: 'Edit your comment…',
+              hintStyle: TextStyle(color: AppColors.textFaint, fontFamily: 'Geist'),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: AppColors.borderSubtle),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: AppColors.teal500),
+              ),
+              fillColor: AppColors.bgElevated,
+              filled: true,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textMuted, fontFamily: 'Geist'),
+              ),
             ),
             TextButton(
               onPressed: () async {
-                final next = controller.text.trim();
+                final next = ctrl.text.trim();
                 if (next.isEmpty) return;
                 await context.read<CommentsStore>().updateComment(
                       updateId: updateId,
@@ -384,14 +489,17 @@ class _CommentTile extends StatelessWidget {
                 if (!context.mounted) return;
                 Navigator.of(context).pop();
               },
-              child: const Text('Save'),
+              child: Text(
+                'Save',
+                style: TextStyle(color: AppColors.teal400, fontFamily: 'Geist', fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         );
       },
     );
 
-    controller.dispose();
+    ctrl.dispose();
   }
 
   String _relativeTime(DateTime value) {

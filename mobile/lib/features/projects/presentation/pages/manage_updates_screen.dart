@@ -1,9 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,106 +26,206 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
+
     if (!auth.canCreateUpdate) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Manage Updates'), centerTitle: false),
-        body: const Padding(
-          padding: EdgeInsets.all(16),
-          child: StyledBodyText500(
+        backgroundColor: AppColors.bgBase,
+        appBar: _appBar(context, showAdd: false),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
             'Your current role does not allow managing updates.',
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 14,
+              fontFamily: 'Geist',
+            ),
           ),
         ),
       );
     }
 
     return Consumer<UpdatesStore>(
-      builder: (context, updatesStore, _) {
+      builder: (context, store, _) {
         final userId = auth.userId ?? '';
-        final ownUpdates = updatesStore.updates
-            .where((update) => update.adminId == userId)
-            .toList();
+        final own = store.updates.where((u) => u.adminId == userId).toList();
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Manage Updates'),
-            centerTitle: false,
-            actions: [
-              IconButton(
-                onPressed: auth.canCreateUpdate
-                    ? () =>
-                        Navigator.of(context).pushNamed(AppRoutes.createUpdate)
-                    : null,
-                icon: const Icon(Icons.add),
-              ),
-            ],
-          ),
-          body: updatesStore.isFetching && updatesStore.updates.isEmpty
-              ? const Center(child: CircularProgressIndicator())
+          backgroundColor: AppColors.bgBase,
+          appBar: _appBar(context, showAdd: true),
+          body: store.isFetching && store.updates.isEmpty
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.teal400,
+                    strokeWidth: 2,
+                  ),
+                )
               : RefreshIndicator(
-                  onRefresh: updatesStore.refreshUpdates,
+                  color: AppColors.teal400,
+                  backgroundColor: AppColors.bgSurface,
+                  onRefresh: store.refreshUpdates,
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      if (updatesStore.lastError != null &&
-                          updatesStore.lastError!.isNotEmpty) ...[
-                        StyledBodyText500(
-                          updatesStore.lastError!,
-                          size: 12,
+                      if (store.lastError != null &&
+                          store.lastError!.isNotEmpty) ...[
+                        Text(
+                          store.lastError!,
+                          style: TextStyle(
+                            color: AppColors.error500,
+                            fontSize: 12,
+                            fontFamily: 'Geist',
+                          ),
                         ),
                         const SizedBox(height: 10),
                       ],
-                      if (ownUpdates.isEmpty)
-                        const StyledBodyText500(
-                          'You have not created updates yet.',
-                          size: 12,
-                        )
-                      else
-                        ...ownUpdates.map(
-                          (update) => InkWell(
-                            onTap: () => showGeneralDialog<void>(
-                              context: context,
-                              barrierDismissible: true,
-                              barrierLabel: 'Dismiss',
-                              transitionDuration:
-                                  const Duration(milliseconds: 300),
-                              pageBuilder:
-                                  (context, animation, secondaryAnimation) {
-                                return UpdateDetailsDialog(id: update.id);
-                              },
-                            ),
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.darkGrey100,
-                                borderRadius: BorderRadius.circular(14),
-                                border:
-                                    Border.all(color: AppColors.darkGrey200),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  StyledBodyText700(update.title, size: 13),
-                                  const SizedBox(height: 4),
-                                  StyledBodyText500(
-                                    update.project?.name ?? 'Project',
-                                    size: 12,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  StyledBodyText500(
-                                    update.description,
-                                    size: 11,
-                                  ),
-                                ],
-                              ),
+                      if (own.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            'You have not created any updates yet.',
+                            style: TextStyle(
+                              color: AppColors.textFaint,
+                              fontSize: 13,
+                              fontFamily: 'Geist',
                             ),
                           ),
-                        ),
+                        )
+                      else
+                        ...own.map((update) => _UpdateTile(update: update)),
                     ],
                   ),
                 ),
         );
       },
+    );
+  }
+
+  PreferredSizeWidget _appBar(BuildContext context, {required bool showAdd}) {
+    return AppBar(
+      backgroundColor: AppColors.bgBase,
+      title: Text(
+        'Manage Updates',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontFamily: 'Geist',
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
+      ),
+      centerTitle: false,
+      elevation: 0,
+      iconTheme: IconThemeData(color: AppColors.textMuted),
+      actions: [
+        if (showAdd)
+          GestureDetector(
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.createUpdate),
+            child: Container(
+              margin: const EdgeInsets.only(right: 16),
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.borderSubtle, width: 1),
+              ),
+              child: Icon(Icons.add, size: 18, color: AppColors.textMuted),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ─── Update Tile ──────────────────────────────────────────────────────────────
+
+class _UpdateTile extends StatelessWidget {
+  const _UpdateTile({required this.update});
+
+  final Update update;
+
+  void _openDetails(BuildContext context) {
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      transitionDuration: const Duration(milliseconds: 320),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return UpdateDetailsDialog(id: update.id);
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _openDetails(context),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.borderSubtle, width: 1),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    update.title,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    update.project?.name ?? 'Project',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    update.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textFaint,
+                      fontSize: 11,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right, size: 18, color: AppColors.textFaint),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -32,62 +32,49 @@ class _StyledToggleButtonState extends State<StyledToggleButton> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: AppColors.darkGrey100,
-        borderRadius: const BorderRadius.all(Radius.circular(40)),
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildButton(
-            text: widget.section1.label,
-            isActive: _activeSection == widget.section1,
-            onPressed: () {
-              setState(() {
-                _activeSection = widget.section1;
-              });
-              widget.onToggle(widget.section1);
-            },
-          ),
-          _buildButton(
-            text: widget.section2.label,
-            isActive: _activeSection == widget.section2,
-            onPressed: () {
-              setState(() {
-                _activeSection = widget.section2;
-              });
-              widget.onToggle(widget.section2);
-            },
-          ),
+          _buildTab(widget.section1),
+          const SizedBox(width: 3),
+          _buildTab(widget.section2),
         ],
       ),
     );
   }
 
-  Widget _buildButton({
-    required String text,
-    required bool isActive,
-    required VoidCallback onPressed,
-  }) {
-    return TextButton(
-      onPressed: onPressed,
-      style: TextButton.styleFrom(
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        backgroundColor: isActive ? AppColors.darkGrey800 : Colors.transparent,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(40)),
+  Widget _buildTab(Section section) {
+    final isActive = _activeSection == section;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _activeSection = section);
+        widget.onToggle(section);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 18),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.bgElevated : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+          border: isActive
+              ? Border.all(color: AppColors.borderMuted, width: 1)
+              : null,
         ),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: isActive ? AppColors.darkGrey100 : AppColors.darkGrey400,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Britti',
+        child: Text(
+          section.label,
+          style: TextStyle(
+            color: isActive ? AppColors.textPrimary : AppColors.textMuted,
+            fontSize: 13,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+            fontFamily: 'Geist',
+          ),
         ),
       ),
     );

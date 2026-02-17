@@ -1,29 +1,39 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/secondary_tag_model.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class SecondaryLabel extends StatelessWidget {
-  const SecondaryLabel(this.title, {super.key, this.useDisplayText = true});
+  const SecondaryLabel(this.tag, {super.key, this.useDisplayText = true});
 
-  final SecondaryTag title;
+  final SecondaryTag tag;
   final bool useDisplayText;
 
   @override
   Widget build(BuildContext context) {
-    String displayText = title.toString();
-    
-    if (useDisplayText && displayText.length > 7) {
-      displayText = '${displayText.substring(0, 7)}...';
-    }
+    final raw = tag.toString();
+    final displayText = (useDisplayText && raw.length > 8)
+        ? '${raw.substring(0, 8)}…'
+        : raw;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
       decoration: BoxDecoration(
-        color: AppColors.darkGrey200,
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        color: AppColors.primary500.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primary500.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
-      child: StyledBodyText(useDisplayText ? displayText : title.toString()),
+      child: Text(
+        useDisplayText ? displayText : raw,
+        style: TextStyle(
+          color: AppColors.primary300,
+          fontSize: 11,
+          fontFamily: 'Geist',
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }

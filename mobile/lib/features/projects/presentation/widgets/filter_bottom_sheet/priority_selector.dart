@@ -2,7 +2,6 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 class PrioritySelector extends StatefulWidget {
@@ -29,16 +28,24 @@ class _PrioritySelectorState extends State<PrioritySelector> {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        tilePadding: EdgeInsets.all(0),
+        tilePadding: EdgeInsets.zero,
         title: Row(
           children: [
             Icon(
               Symbols.e911_emergency,
-              color: AppColors.darkGrey500,
+              color: AppColors.textMuted,
               size: 16,
             ),
             const SizedBox(width: 8),
-            StyledBodyText500('Priority Level'),
+            Text(
+              'Priority Level',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
         trailing: AnimatedRotation(
@@ -46,7 +53,7 @@ class _PrioritySelectorState extends State<PrioritySelector> {
           duration: const Duration(milliseconds: 200),
           child: Icon(
             Icons.arrow_drop_down,
-            color: AppColors.darkGrey500,
+            color: AppColors.textMuted,
             size: 20,
           ),
         ),

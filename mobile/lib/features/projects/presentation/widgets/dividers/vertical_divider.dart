@@ -28,7 +28,7 @@ class CustomVerticalDivider extends StatelessWidget {
       width: 2,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.darkGrey200,
+        color: AppColors.borderSubtle,
         shape: BoxShape.rectangle,
         borderRadius: const BorderRadius.all(Radius.circular(10)),
       ),

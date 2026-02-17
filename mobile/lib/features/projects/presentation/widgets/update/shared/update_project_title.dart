@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
+import 'package:flutter/material.dart';
 
+/// Inline project name badge — used in "more from" horizontal scroll cards.
 class UpdateProjectTitle extends StatelessWidget {
   const UpdateProjectTitle({
     required this.projectTitle,
@@ -17,49 +17,29 @@ class UpdateProjectTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(2),
       margin: margin
-          ? const EdgeInsets.only(top: 8, left: 16, bottom: 4)
+          ? const EdgeInsets.only(bottom: 6)
           : EdgeInsets.zero,
-      decoration: BoxDecoration(
-        color: AppColors.darkGrey100,
-        borderRadius: BorderRadius.all(Radius.circular(40)),
-      ),
-      child: _TitleContent(
-        projectTitle: projectTitle,
-        applyOverflow: applyOverflow,
-      ),
-    );
-  }
-}
-
-class _TitleContent extends StatelessWidget {
-  const _TitleContent({
-    required this.projectTitle,
-    required this.applyOverflow,
-  });
-
-  final String projectTitle;
-  final bool applyOverflow;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.darkGrey400),
-        borderRadius: const BorderRadius.all(Radius.circular(40)),
-      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(Icons.style, size: 24, color: AppColors.darkGrey400),
-          const SizedBox(width: 8),
+          Icon(
+            Icons.workspaces_outlined,
+            size: 12,
+            color: AppColors.textFaint,
+          ),
+          const SizedBox(width: 5),
           Flexible(
-            child: StyledPostProjectTitle(
+            child: Text(
               projectTitle,
-              applyOverflow: applyOverflow,
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 11,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w500,
+              ),
+              overflow:
+                  applyOverflow ? TextOverflow.ellipsis : TextOverflow.visible,
             ),
           ),
         ],

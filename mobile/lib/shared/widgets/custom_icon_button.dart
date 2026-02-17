@@ -23,12 +23,13 @@ class CustomIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.darkGrey100,
+        color: AppColors.bgElevated,
         borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: AppColors.borderSubtle),
       ),
       child: IconButton(
         style: IconButton.styleFrom(
-          backgroundColor: AppColors.darkGrey100,
+          backgroundColor: AppColors.bgElevated,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         icon: svgAsset != null
@@ -37,7 +38,7 @@ class CustomIconButton extends StatelessWidget {
                 width: svgDimentions,
                 height: svgDimentions,
               )
-            : Icon(iconData, size: 26, color: AppColors.darkGrey500),
+            : Icon(iconData, size: 24, color: AppColors.textMuted),
         onPressed: onPressed,
       ),
     );

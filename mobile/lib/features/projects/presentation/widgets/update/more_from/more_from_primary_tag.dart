@@ -1,8 +1,8 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
 import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,7 +25,15 @@ class MoreFromUpdatePrimaryTag extends StatelessWidget {
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                StyledBodyText600("More From"),
+                Text(
+                  'More From',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 PrimaryLabel(primaryTag: primaryTag),
               ],
             ),
@@ -33,7 +41,14 @@ class MoreFromUpdatePrimaryTag extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         morePosts.isEmpty
-            ? const Text("No updates available for this tag!")
+            ? Text(
+                'No updates available for this tag!',
+                style: TextStyle(
+                  color: AppColors.textFaint,
+                  fontSize: 12,
+                  fontFamily: 'Geist',
+                ),
+              )
             : Column(
                 children: List.generate(
                   morePosts.length,

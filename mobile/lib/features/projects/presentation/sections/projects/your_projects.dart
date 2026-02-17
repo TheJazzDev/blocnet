@@ -1,10 +1,10 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/cards/stat_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_label/filter_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_card/your_project_card.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -32,13 +32,25 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
     return Consumer2<ProjectsStore, UpdatesStore>(
       builder: (context, projectsStore, postsStore, _) {
         if (projectsStore.isFetching && projectsStore.projects.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              color: AppColors.teal400,
+              strokeWidth: 2,
+            ),
+          );
         }
 
         if (projectsStore.projects.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.only(top: 24),
-            child: StyledBodyText500('No projects available yet.'),
+          return Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: Text(
+              'No projects available yet.',
+              style: TextStyle(
+                color: AppColors.textFaint,
+                fontSize: 13,
+                fontFamily: 'Geist',
+              ),
+            ),
           );
         }
 
@@ -48,13 +60,15 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
         final filteredProjects = _selectedFilters.isEmpty
             ? allProjects
             : allProjects.where((project) {
-                return _selectedFilters.contains(project.primaryTag.toString());
+                return _selectedFilters
+                    .contains(project.primaryTag.toString());
               }).toList();
 
         final followedIds = projectsStore.followedProjectIds;
         final projectsForStats = followedIds.isEmpty
             ? allProjects
-            : allProjects.where((project) => followedIds.contains(project.id));
+            : allProjects
+                .where((project) => followedIds.contains(project.id));
         final postsForStats = postsStore.posts.where((post) {
           if (followedIds.isEmpty) return true;
           return followedIds.contains(post.projectId);
@@ -121,7 +135,8 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
             Wrap(
               children: List.generate(
                 filteredProjects.length,
-                (index) => YourProjectCard(project: filteredProjects[index]),
+                (index) =>
+                    YourProjectCard(project: filteredProjects[index]),
               ),
             ),
           ],

@@ -1,7 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 
@@ -12,62 +11,115 @@ class YourProjectCardUpdate extends StatelessWidget {
 
   final Update post;
 
+  void _openDetails(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return UpdateDetailsDialog(id: post.id);
+      },
+      transitionDuration: const Duration(milliseconds: 320),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Color get _priorityColor {
+    if (post.priority == Priority.high) return AppColors.priorityHigh;
+    if (post.priority == Priority.mid) return AppColors.priorityMid;
+    return AppColors.priorityLow;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final accentColor = _priorityColor;
+
     return GestureDetector(
-      onTap: () => showGeneralDialog(
-        context: context,
-        barrierDismissible: true,
-        barrierLabel: 'Dismiss',
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return UpdateDetailsDialog(id: post.id);
-        },
-        transitionDuration: const Duration(milliseconds: 300),
-        transitionBuilder: (context, animation, secondaryAnimation, child) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          );
-        },
-      ),
+      onTap: () => _openDetails(context),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
-          borderRadius: const BorderRadius.all(Radius.circular(12)),
-          color: post.priority == Priority.high
-              ? AppColors.error900
-              : post.priority == Priority.mid
-                  ? AppColors.warning900
-                  : AppColors.darkGrey200,
+          color: AppColors.bgElevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.borderSubtle, width: 1),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: 54,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    StyledBodyText500(getTimeStamp(post.createdAt), size: 10),
-                    const SizedBox(height: 4),
-                    StyledBodyText600(post.title, size: 12),
-                  ],
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Priority accent bar
+              Container(
+                width: 3,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
+                  ),
                 ),
               ),
-            ),
-            Container(
-              margin: EdgeInsets.only(left: 24),
-              child: Icon(
-                Icons.keyboard_arrow_right,
-                color: AppColors.darkGrey600,
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              post.title,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                fontFamily: 'Geist',
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              getTimeStamp(post.createdAt),
+                              style: TextStyle(
+                                color: AppColors.textFaint,
+                                fontSize: 10,
+                                fontFamily: 'Geist',
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: AppColors.textFaint,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

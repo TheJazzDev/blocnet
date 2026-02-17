@@ -1,6 +1,5 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/shared/styles/app_text_styles.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 class FollowBottomSheet extends StatefulWidget {
@@ -11,11 +10,6 @@ class FollowBottomSheet extends StatefulWidget {
 }
 
 class _FollowBottomSheetState extends State<FollowBottomSheet> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Stack(children: [_buildBottomSheetContent()]);
@@ -32,24 +26,32 @@ class _FollowBottomSheetState extends State<FollowBottomSheet> {
           borderRadius: const BorderRadius.all(Radius.circular(16)),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            color: AppColors.darkGrey100,
+            color: AppColors.bgSurface,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 InkWell(
                   onTap: () => Navigator.of(context).pop(),
-                  splashColor: AppColors.primary600,
-                  highlightColor: AppColors.darkGrey900,
+                  splashColor: AppColors.teal500.withValues(alpha: 0.1),
+                  highlightColor: AppColors.bgElevated,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Row(
                       children: [
                         Icon(
                           Symbols.adaptive_audio_mic_off,
-                          color: AppColors.darkGrey400,
+                          color: AppColors.textMuted,
                         ),
-                        SizedBox(width: 8),
-                        StyledBodyText500('Unfollow'),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Unfollow',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontFamily: 'Geist',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                   ),
