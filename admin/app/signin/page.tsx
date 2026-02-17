@@ -1,5 +1,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { Hexagon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function SignInPage() {
   async function mockSignIn(formData: FormData) {
@@ -17,37 +22,73 @@ export default function SignInPage() {
     store.set("admin_session", "shell-session", {
       httpOnly: true,
       sameSite: "lax",
-      path: "/"
+      path: "/",
     });
     store.set("admin_role", "admin", {
       httpOnly: true,
       sameSite: "lax",
-      path: "/"
+      path: "/",
     });
 
     redirect(nextPath.startsWith("/") ? nextPath : "/dashboard");
   }
 
   return (
-    <div className="signin-wrap">
-      <form action={mockSignIn} className="signin-card">
-        <h2>Blocnet Admin Sign In</h2>
-        <p className="muted">Shell auth only. Replace with backend auth next.</p>
-        <div className="field">
-          <label htmlFor="email">Email</label>
-          <input id="email" name="email" type="email" required />
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
+            <Hexagon className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-xl font-bold tracking-tight">Blocnet Admin</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Sign in to manage the platform.
+            </p>
+          </div>
         </div>
-        <div className="field">
-          <label htmlFor="password">Password</label>
-          <input id="password" name="password" type="password" required />
-        </div>
-        <input name="next" type="hidden" value="/dashboard" />
-        <div style={{ marginTop: 14 }}>
-          <button className="button" type="submit">
-            Sign In
-          </button>
-        </div>
-      </form>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Sign In</CardTitle>
+            <CardDescription>
+              Shell auth only. Connect backend to enable real authentication.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={mockSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="admin@blocnet.io"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+              <input name="next" type="hidden" value="/dashboard" />
+              <Button type="submit" className="w-full">
+                Sign In
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Only users with <strong>owner</strong> or <strong>admin</strong> roles can access this panel.
+        </p>
+      </div>
     </div>
   );
 }
