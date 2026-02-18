@@ -3,15 +3,16 @@ FROM oven/bun:1.2 AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Copy prisma schema BEFORE install so postinstall (prisma generate) can find it
 COPY package.json bun.lock ./
+COPY prisma ./prisma
+
 RUN bun install --frozen-lockfile
 
-# Copy source
+# Copy remaining source
 COPY . .
 
-# Generate Prisma client then build NestJS
-RUN bunx prisma generate
+# Build NestJS (prisma generate already ran in postinstall)
 RUN bun run build
 
 # ── Stage 2: Production image ──────────────────────────────────────────────────
@@ -20,6 +21,9 @@ FROM oven/bun:1.2-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+
+# Install OpenSSL required by Prisma
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Only copy what's needed to run
 COPY --from=builder /app/node_modules ./node_modules
