@@ -21,5 +21,23 @@ describe('Health (e2e)', () => {
     const response = await request(server).get('/api/health').expect(200);
 
     expect(response.body).toMatchObject({ status: 'ok' });
+    expect(response.body).toMatchObject({ service: 'blocnet-backend' });
+  });
+
+  it('/api/health/live (GET)', async () => {
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+    const response = await request(server).get('/api/health/live').expect(200);
+
+    expect(response.body).toMatchObject({ status: 'ok' });
+  });
+
+  it('/api/health/ready (GET)', async () => {
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+    const response = await request(server).get('/api/health/ready').expect(200);
+
+    expect(response.body).toMatchObject({ status: 'ok' });
+    expect(
+      Object.prototype.hasOwnProperty.call(response.body as object, 'checks'),
+    ).toBe(true);
   });
 });

@@ -1,10 +1,13 @@
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { randomUUID } from 'crypto';
+import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const logger = new Logger('RequestLogger');
 
   const allowedOrigins = [
     'http://localhost:3081', // admin panel (local)
@@ -22,6 +25,20 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const startedAt = Date.now();
+    const requestId = req.header('x-request-id') ?? randomUUID();
+
+    res.setHeader('x-request-id', requestId);
+    res.on('finish', () => {
+      const durationMs = Date.now() - startedAt;
+      logger.log(
+        `${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms requestId=${requestId}`,
+      );
+    });
+
+    next();
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

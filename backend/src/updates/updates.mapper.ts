@@ -38,7 +38,7 @@ export const updateInclude = {
   },
 } satisfies Prisma.UpdateInclude;
 
-type UpdateWithRelations = Prisma.UpdateGetPayload<{
+export type UpdateWithRelations = Prisma.UpdateGetPayload<{
   include: typeof updateInclude;
 }>;
 

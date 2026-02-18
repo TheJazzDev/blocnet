@@ -30,6 +30,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   late final PageController _userPageController;
   late final PageController _hunterPageController;
+  bool? _lastIsHunterSpace;
 
   int _userIndex = 0;
   int _hunterIndex = 0;
@@ -60,6 +61,34 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed || !mounted) return;
     context.read<NotificationsStore>().refreshNotifications();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+
+    if (_lastIsHunterSpace == null) {
+      _lastIsHunterSpace = isHunterSpace;
+      return;
+    }
+
+    if (_lastIsHunterSpace == isHunterSpace) return;
+
+    // When switching spaces, keep the user on Profile in the target space.
+    if (isHunterSpace) {
+      _hunterIndex = 4;
+      if (_hunterPageController.hasClients) {
+        _hunterPageController.jumpToPage(4);
+      }
+    } else {
+      _userIndex = 4;
+      if (_userPageController.hasClients) {
+        _userPageController.jumpToPage(4);
+      }
+    }
+
+    _lastIsHunterSpace = isHunterSpace;
   }
 
   void _onUserNavTap(int pageIndex) {

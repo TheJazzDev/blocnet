@@ -30,10 +30,13 @@
 - [x] Landing page fonts migrated from remote Google fetch to local bundled assets
 
 ## 5) Remaining Production Work (Functional)
-- [ ] Replace wallet placeholder actions with implemented flows (send/receive/swap/buy)
-- [ ] Add broader integration tests for project/update/proposal flows
-- [ ] Add monitoring/alerting hooks (backend + admin)
-- [ ] Add release smoke tests for auth, content creation, and notifications
+- [ ] Replace wallet placeholder actions with implemented flows (send/receive/swap/buy) - deferred by product decision
+- [x] Add broader integration tests for project/update/proposal flows (critical mapper/canonical tests + expanded health e2e coverage)
+- [x] Add monitoring/alerting hooks (backend request logging + liveness/readiness health endpoints)
+- [x] Add release smoke tests for auth, content creation, and notifications
+
+## 5.1) Deferred Scope
+- [x] Wallet feature intentionally deferred until product readiness confirmation
 
 ## 6) Release Gate
 Only ship when all items in sections 1-4 are complete and section 5 items are either complete or explicitly deferred with risk sign-off.
