@@ -28,7 +28,7 @@ export class ProjectProposalsController {
   ) {}
 
   @Post()
-  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.POSTER)
+  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.HUNTER)
   async create(
     @CurrentUser() user: AuthUser | undefined,
     @Body() dto: CreateProjectProposalDto,

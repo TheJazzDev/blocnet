@@ -55,7 +55,7 @@ export class UsersService {
       pendingAdminApps,
       totalUpdates,
       totalComments,
-      activePosters,
+      activeHunters,
       pendingProposals,
       totalTags,
     ] = await Promise.all([
@@ -64,7 +64,7 @@ export class UsersService {
       this.prisma.adminApplication.count({ where: { status: 'pending' } }),
       this.prisma.update.count(),
       this.prisma.comment.count(),
-      this.prisma.userRole.count({ where: { role: 'poster' } }),
+      this.prisma.userRole.count({ where: { role: 'hunter' } }),
       this.prisma.projectProposal.count({ where: { status: 'pending' } }),
       this.prisma.primaryTag.count(),
     ]);
@@ -75,7 +75,7 @@ export class UsersService {
       pendingAdminApps,
       totalUpdates,
       totalComments,
-      activePosters,
+      activeHunters,
       pendingProposals,
       totalTags,
     };
@@ -103,7 +103,7 @@ export class UsersService {
           roles: { select: { role: true } },
           _count: {
             select: {
-              posterAssignments: true,
+              hunterAssignments: true,
               authoredUpdates: true,
             },
           },
@@ -119,7 +119,7 @@ export class UsersService {
         displayName: u.displayName,
         avatarUrl: u.avatarUrl,
         roles: u.roles.map((r) => r.role),
-        projectsAssigned: u._count.posterAssignments,
+        projectsAssigned: u._count.hunterAssignments,
         updatesPosted: u._count.authoredUpdates,
         createdAt: u.createdAt,
       })),

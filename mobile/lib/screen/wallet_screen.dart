@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class WalletScreen extends StatelessWidget {
   const WalletScreen({super.key});
@@ -9,7 +10,6 @@ class WalletScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      appBar: _WalletAppBar(),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -17,93 +17,50 @@ class WalletScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              _BalanceCard(),
+              const _BalanceCard(),
               const SizedBox(height: 16),
-              _ActionRow(),
+              const _ActionRow(),
               const SizedBox(height: 24),
-              _SectionLabel('Wallet Address'),
+              const _SectionLabel('Wallet Address'),
               const SizedBox(height: 8),
-              _WalletAddressTile(),
+              const _WalletAddressTile(),
               const SizedBox(height: 24),
-              _SectionLabel("What's Coming"),
+              const _SectionLabel("What's Coming"),
               const SizedBox(height: 8),
-              _FeatureTile(
+              const _FeatureTile(
                 icon: Icons.account_balance_wallet_outlined,
                 title: 'Fund Wallet',
                 description:
                     'Deposit funds and convert to BNT at the live exchange rate.',
               ),
-              _FeatureTile(
+              const _FeatureTile(
                 icon: Icons.card_giftcard_outlined,
-                title: 'Tip Posters',
+                title: 'Tip Hunters',
                 description:
-                    'Send BNT directly to creators whose updates you find valuable.',
+                    'Send BNT directly to hunters whose updates you find valuable.',
               ),
-              _FeatureTile(
+              const _FeatureTile(
                 icon: Icons.emoji_events_outlined,
                 title: 'Earn Rewards',
                 description:
                     'Get BNT for quality engagement, consistent reading, and referrals.',
               ),
-              _FeatureTile(
+              const _FeatureTile(
                 icon: Icons.swap_horiz_rounded,
                 title: 'Transfer & Withdraw',
                 description:
                     'Send BNT to other users or withdraw to your external wallet.',
               ),
               const SizedBox(height: 24),
-              _SectionLabel('Recent Transactions'),
+              const _SectionLabel('Recent Transactions'),
               const SizedBox(height: 8),
-              _TransactionsList(),
+              const _TransactionsList(),
               const SizedBox(height: 24),
-              _NotifyButton(),
+              const _NotifyButton(),
               const SizedBox(height: 16),
-              _DisclaimerText(),
+              const _DisclaimerText(),
               const SizedBox(height: 32),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── App Bar ──────────────────────────────────────────────────────────────────
-
-class _WalletAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _WalletAppBar();
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        border: Border(
-          bottom: BorderSide(color: AppColors.borderSubtle, width: 1),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: SizedBox(
-          height: kToolbarHeight,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Text(
-                  'Wallet',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -114,6 +71,8 @@ class _WalletAppBar extends StatelessWidget implements PreferredSizeWidget {
 // ─── Balance Card ─────────────────────────────────────────────────────────────
 
 class _BalanceCard extends StatelessWidget {
+  const _BalanceCard();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -128,10 +87,8 @@ class _BalanceCard extends StatelessWidget {
             AppColors.primary500.withValues(alpha: 0.12),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.teal500.withValues(alpha: 0.3),
-        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.teal500.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,10 +109,9 @@ class _BalanceCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     'B',
-                    style: TextStyle(
+                    style: GoogleFonts.spaceGrotesk(
                       color: Colors.white,
                       fontSize: 18,
-                      fontFamily: 'Geist',
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -167,19 +123,17 @@ class _BalanceCard extends StatelessWidget {
                 children: [
                   Text(
                     'BlocNet Token',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textPrimary,
                       fontSize: 13,
-                      fontFamily: 'Geist',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     'BNT',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textMuted,
                       fontSize: 11,
-                      fontFamily: 'Geist',
                     ),
                   ),
                 ],
@@ -188,13 +142,12 @@ class _BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'Total Balance',
-            style: TextStyle(
+            'TOTAL BALANCE',
+            style: GoogleFonts.inter(
               color: AppColors.textMuted,
-              fontSize: 11,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.5,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
             ),
           ),
           const SizedBox(height: 4),
@@ -203,10 +156,9 @@ class _BalanceCard extends StatelessWidget {
             children: [
               Text(
                 '0',
-                style: TextStyle(
+                style: GoogleFonts.spaceGrotesk(
                   color: AppColors.textPrimary,
                   fontSize: 40,
-                  fontFamily: 'Geist',
                   fontWeight: FontWeight.w800,
                   height: 1.0,
                 ),
@@ -216,10 +168,9 @@ class _BalanceCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
                   'BNT',
-                  style: TextStyle(
+                  style: GoogleFonts.spaceGrotesk(
                     color: AppColors.teal400,
                     fontSize: 16,
-                    fontFamily: 'Geist',
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -229,10 +180,9 @@ class _BalanceCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             '≈ \$0.00 USD',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.textFaint,
               fontSize: 12,
-              fontFamily: 'Geist',
             ),
           ),
         ],
@@ -244,6 +194,21 @@ class _BalanceCard extends StatelessWidget {
 // ─── Action Row ───────────────────────────────────────────────────────────────
 
 class _ActionRow extends StatelessWidget {
+  const _ActionRow();
+
+  void _showComingSoon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'This feature is coming soon!',
+          style: GoogleFonts.inter(),
+        ),
+        backgroundColor: AppColors.bgSurface,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -274,19 +239,6 @@ class _ActionRow extends StatelessWidget {
       ],
     );
   }
-
-  void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'This feature is coming soon!',
-          style: TextStyle(fontFamily: 'Geist'),
-        ),
-        backgroundColor: AppColors.bgSurface,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
 }
 
 class _ActionButton extends StatelessWidget {
@@ -309,7 +261,7 @@ class _ActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.borderSubtle),
           ),
           child: Column(
@@ -326,10 +278,9 @@ class _ActionButton extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 label,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.textSecondary,
                   fontSize: 11,
-                  fontFamily: 'Geist',
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -344,7 +295,8 @@ class _ActionButton extends StatelessWidget {
 // ─── Wallet Address ───────────────────────────────────────────────────────────
 
 class _WalletAddressTile extends StatelessWidget {
-  // Placeholder address — will be populated from the user profile/backend
+  const _WalletAddressTile();
+
   static const String _placeholder = 'BNT-XXXX-XXXX-XXXX-XXXX';
 
   @override
@@ -356,7 +308,7 @@ class _WalletAddressTile extends StatelessWidget {
           SnackBar(
             content: Text(
               'Address copied to clipboard',
-              style: TextStyle(fontFamily: 'Geist'),
+              style: GoogleFonts.inter(),
             ),
             backgroundColor: AppColors.bgSurface,
             behavior: SnackBarBehavior.floating,
@@ -367,7 +319,7 @@ class _WalletAddressTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.borderSubtle),
         ),
         child: Row(
@@ -393,21 +345,18 @@ class _WalletAddressTile extends StatelessWidget {
                 children: [
                   Text(
                     'Your BNT Address',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textSecondary,
                       fontSize: 12,
-                      fontFamily: 'Geist',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _placeholder,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textFaint,
                       fontSize: 11,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w400,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -424,18 +373,13 @@ class _WalletAddressTile extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.copy_rounded,
-                    size: 12,
-                    color: AppColors.textMuted,
-                  ),
+                  Icon(Icons.copy_rounded, size: 12, color: AppColors.textMuted),
                   const SizedBox(width: 4),
                   Text(
                     'Copy',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textMuted,
                       fontSize: 10,
-                      fontFamily: 'Geist',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -459,10 +403,9 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: TextStyle(
+      style: GoogleFonts.inter(
         color: AppColors.textFaint,
         fontSize: 10,
-        fontFamily: 'Geist',
         fontWeight: FontWeight.w600,
         letterSpacing: 1.0,
       ),
@@ -486,25 +429,25 @@ class _FeatureTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: AppColors.bgElevated,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.borderSubtle),
             ),
-            child: Icon(icon, size: 18, color: AppColors.textMuted),
+            child: Icon(icon, size: 17, color: AppColors.textMuted),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -515,10 +458,9 @@ class _FeatureTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         color: AppColors.textSecondary,
                         fontSize: 13,
-                        fontFamily: 'Geist',
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -535,10 +477,9 @@ class _FeatureTile extends StatelessWidget {
                       ),
                       child: Text(
                         'Soon',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           color: AppColors.textFaint,
                           fontSize: 9,
-                          fontFamily: 'Geist',
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.3,
                         ),
@@ -549,10 +490,9 @@ class _FeatureTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     color: AppColors.textFaint,
                     fontSize: 12,
-                    fontFamily: 'Geist',
                     height: 1.5,
                   ),
                 ),
@@ -568,14 +508,15 @@ class _FeatureTile extends StatelessWidget {
 // ─── Transactions List ────────────────────────────────────────────────────────
 
 class _TransactionsList extends StatelessWidget {
+  const _TransactionsList();
+
   @override
   Widget build(BuildContext context) {
-    // Empty state — no transactions yet
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -597,10 +538,9 @@ class _TransactionsList extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'No transactions yet',
-            style: TextStyle(
+            style: GoogleFonts.spaceGrotesk(
               color: AppColors.textSecondary,
-              fontSize: 13,
-              fontFamily: 'Geist',
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -608,10 +548,9 @@ class _TransactionsList extends StatelessWidget {
           Text(
             'Your BNT transaction history will appear here once the wallet launches.',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.textFaint,
               fontSize: 12,
-              fontFamily: 'Geist',
               height: 1.5,
             ),
           ),
@@ -624,6 +563,8 @@ class _TransactionsList extends StatelessWidget {
 // ─── Notify Button ────────────────────────────────────────────────────────────
 
 class _NotifyButton extends StatelessWidget {
+  const _NotifyButton();
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -634,7 +575,7 @@ class _NotifyButton extends StatelessWidget {
             SnackBar(
               content: Text(
                 "We'll notify you when BNT goes live!",
-                style: TextStyle(fontFamily: 'Geist'),
+                style: GoogleFonts.inter(),
               ),
               backgroundColor: AppColors.bgSurface,
               behavior: SnackBarBehavior.floating,
@@ -647,19 +588,22 @@ class _NotifyButton extends StatelessWidget {
             gradient: LinearGradient(
               colors: [AppColors.teal500, AppColors.primary500],
             ),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.notifications_outlined, color: Colors.white, size: 16),
+              const Icon(
+                Icons.notifications_outlined,
+                color: Colors.white,
+                size: 16,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Notify Me at Launch',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 14,
-                  fontFamily: 'Geist',
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -674,16 +618,17 @@ class _NotifyButton extends StatelessWidget {
 // ─── Disclaimer ───────────────────────────────────────────────────────────────
 
 class _DisclaimerText extends StatelessWidget {
+  const _DisclaimerText();
+
   @override
   Widget build(BuildContext context) {
     return Text(
       "BNT is Blocnet's native utility token. It is not a security or financial instrument. "
       'All wallet features are under active development and subject to change.',
       textAlign: TextAlign.center,
-      style: TextStyle(
+      style: GoogleFonts.inter(
         color: AppColors.textFaint,
         fontSize: 10,
-        fontFamily: 'Geist',
         height: 1.6,
       ),
     );

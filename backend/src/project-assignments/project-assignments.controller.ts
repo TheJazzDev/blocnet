@@ -15,8 +15,8 @@ import { AppRole } from '../common/enums/role.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
-import { AssignPosterDto } from './dto/assign-poster.dto';
-import { InvitePosterDto } from './dto/invite-poster.dto';
+import { AssignHunterDto } from './dto/assign-hunter.dto';
+import { InviteHunterDto } from './dto/invite-hunter.dto';
 import { ListInvitesQuery } from './dto/list-invites.query';
 import { RespondInviteDto } from './dto/respond-invite.dto';
 import { ProjectAssignmentsService } from './project-assignments.service';
@@ -28,42 +28,42 @@ export class ProjectAssignmentsController {
     private readonly projectAssignmentsService: ProjectAssignmentsService,
   ) {}
 
-  @Post('projects/:projectId/posters/:posterId/assign')
+  @Post('projects/:projectId/hunters/:hunterId/assign')
   @Roles(AppRole.OWNER, AppRole.ADMIN)
-  async assignPoster(
+  async assignHunter(
     @CurrentUser() user: AuthUser | undefined,
     @Param('projectId') projectId: string,
-    @Param('posterId') posterId: string,
-    @Body() dto: AssignPosterDto,
+    @Param('hunterId') hunterId: string,
+    @Body() dto: AssignHunterDto,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.projectAssignmentsService.assignPoster(
+    return this.projectAssignmentsService.assignHunter(
       user,
       projectId,
-      posterId,
+      hunterId,
       dto.note,
     );
   }
 
-  @Post('projects/:projectId/posters/:posterId/invite')
+  @Post('projects/:projectId/hunters/:hunterId/invite')
   @Roles(AppRole.OWNER, AppRole.ADMIN)
-  async invitePoster(
+  async inviteHunter(
     @CurrentUser() user: AuthUser | undefined,
     @Param('projectId') projectId: string,
-    @Param('posterId') posterId: string,
-    @Body() dto: InvitePosterDto,
+    @Param('hunterId') hunterId: string,
+    @Body() dto: InviteHunterDto,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.projectAssignmentsService.invitePoster(
+    return this.projectAssignmentsService.inviteHunter(
       user,
       projectId,
-      posterId,
+      hunterId,
       dto.note,
     );
   }

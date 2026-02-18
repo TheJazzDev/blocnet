@@ -6,7 +6,6 @@ class AppConfig {
     defaultValue: '',
   );
 
-  /// Override with: --dart-define=API_BASE_URL=http://localhost:3080/api
   static String get apiBaseUrl {
     final override = _apiBaseUrlOverride.trim();
     if (override.isNotEmpty) return override;
@@ -18,15 +17,13 @@ class AppConfig {
     return 'http://localhost:3080/api';
   }
 
-  /// Override with: --dart-define=SUPABASE_URL=https://project-ref.supabase.co
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
     defaultValue: '',
   );
 
-  /// Override with: --dart-define=SUPABASE_ANON_KEY=your-anon-key
   static const String supabaseAnonKey = String.fromEnvironment(
-    'SUPABASE_ANON_KEY',
+    'PUBLISHABLE_KEY',
     defaultValue: '',
   );
 

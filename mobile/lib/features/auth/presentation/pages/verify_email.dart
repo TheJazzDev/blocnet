@@ -57,7 +57,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         : 'We sent a verification link to $email.';
 
     return AuthScreenShell(
-      appBarTitle: 'Verify Email',
+      appBarTitle: '',
       heading: 'Check your inbox',
       subtitle: subtitle,
       child: Column(

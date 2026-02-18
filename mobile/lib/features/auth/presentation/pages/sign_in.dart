@@ -50,8 +50,11 @@ class _SignInScreenState extends State<SignInScreen> {
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authStore.lastError ?? 'Sign in failed'),
-          backgroundColor: AppColors.darkGrey200,
+          content: Text(
+            authStore.lastError ?? 'Sign in failed',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.error500,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -70,13 +73,12 @@ class _SignInScreenState extends State<SignInScreen> {
     final isBusy = _isSubmitting || authStore.isSubmitting;
 
     return AuthScreenShell(
-      appBarTitle: 'Sign In',
+      appBarTitle: '',
       showBack: false,
-      heading: 'Welcome back',
-      subtitle: 'Sign in to stay connected with the projects that matter.',
-      notice: !authStore.isSupabaseConfigured
-          ? _ConfigWarning()
-          : null,
+      heading: 'Sign in to Blocnet',
+      subtitle:
+          'Connect to your account and track the latest signals from your favorite projects.',
+      notice: !authStore.isSupabaseConfigured ? _ConfigWarning() : null,
       child: Form(
         key: _formKey,
         child: Column(
@@ -181,7 +183,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   Text(
                     "Don't have an account?",
                     style: TextStyle(
-                      color: AppColors.darkGrey500,
+                      color: AppColors.textMuted,
                       fontSize: 13,
                       fontFamily: 'Geist',
                     ),
@@ -190,8 +192,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   GestureDetector(
                     onTap: isBusy
                         ? null
-                        : () =>
-                            Navigator.pushNamed(context, AppRoutes.signUp),
+                        : () => Navigator.pushNamed(context, AppRoutes.signUp),
                     child: Text(
                       'Create account',
                       style: TextStyle(
@@ -227,7 +228,7 @@ class _ConfigWarning extends StatelessWidget {
         ),
       ),
       child: Text(
-        'Supabase config missing. Add SUPABASE_URL and SUPABASE_ANON_KEY via --dart-define.',
+        'Supabase config missing. Add SUPABASE_URL and PUBLISHABLE_KEY via --dart-define.',
         style: TextStyle(
           color: AppColors.warning500,
           fontSize: 11,
@@ -247,7 +248,7 @@ class _OrDivider extends StatelessWidget {
         Expanded(
           child: Container(
             height: 1,
-            color: AppColors.darkGrey200,
+            color: AppColors.borderSubtle,
           ),
         ),
         Padding(
@@ -255,7 +256,7 @@ class _OrDivider extends StatelessWidget {
           child: Text(
             'or',
             style: TextStyle(
-              color: AppColors.darkGrey400,
+              color: AppColors.textFaint,
               fontSize: 12,
               fontFamily: 'Geist',
             ),
@@ -264,7 +265,7 @@ class _OrDivider extends StatelessWidget {
         Expanded(
           child: Container(
             height: 1,
-            color: AppColors.darkGrey200,
+            color: AppColors.bgElevated,
           ),
         ),
       ],

@@ -1,13 +1,16 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
 import 'package:blocnet/features/projects/presentation/sections/home.dart';
 import 'package:blocnet/features/projects/presentation/sections/projects/discover.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/notifications_store.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/screen/profile_screen.dart';
 import 'package:blocnet/screen/wallet_screen.dart';
+import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/notifications_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
@@ -20,15 +23,23 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
-  late final PageController _pageController;
-  int _currentIndex = 0;
+  late final PageController _userPageController;
+  late final PageController _hunterPageController;
+
+  // User space: 0=Home, 1=Discover, 2=Wallet, 3=Profile
+  int _userIndex = 0;
+
+  // Hunter space: 0=Home, 1=Discover, 2=Hub, 3=Profile
+  int _hunterIndex = 0;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _currentIndex = widget.initialIndex.clamp(0, 3);
-    _pageController = PageController(initialPage: _currentIndex);
+    _userIndex = widget.initialIndex.clamp(0, 3);
+    _hunterIndex = 0;
+    _userPageController = PageController(initialPage: _userIndex);
+    _hunterPageController = PageController(initialPage: _hunterIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<NotificationsStore>().fetchNotificationsOnce();
@@ -38,7 +49,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _pageController.dispose();
+    _userPageController.dispose();
+    _hunterPageController.dispose();
     super.dispose();
   }
 
@@ -48,108 +60,109 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     context.read<NotificationsStore>().refreshNotifications();
   }
 
-  void _onNavTap(int index) {
-    if (_currentIndex == index) return;
+  void _onUserNavTap(int pageIndex) {
+    if (_userIndex == pageIndex) return;
     HapticFeedback.selectionClick();
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 240),
-      curve: Curves.easeOutCubic,
-    );
+    setState(() => _userIndex = pageIndex);
+    _userPageController.jumpToPage(pageIndex);
+  }
+
+  void _onHunterNavTap(int pageIndex) {
+    if (_hunterIndex == pageIndex) return;
+    HapticFeedback.selectionClick();
+    setState(() => _hunterIndex = pageIndex);
+    _hunterPageController.jumpToPage(pageIndex);
+  }
+
+  void _onFabTap(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    _openComposerSheet(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final canCreateUpdate = context.select<AuthStore, bool>(
-      (store) => store.canCreateUpdate,
-    );
-    final showActionButton =
-        (_currentIndex == 0 || _currentIndex == 1) && canCreateUpdate;
+    final auth = context.watch<AuthStore>();
+    final isHunterSpace = auth.isInHunterSpace;
 
-    return Scaffold(
-      backgroundColor: AppColors.bgBase,
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        onPageChanged: (index) {
-          if (_currentIndex == index) return;
-          setState(() => _currentIndex = index);
-        },
-        children: const [
-          HomeScreen(),
-          DiscoverScreen(),
-          WalletScreen(),
-          _ProfileTabScreen(),
-        ],
-      ),
-      bottomNavigationBar: _BottomNav(
-        currentIndex: _currentIndex,
-        onTap: _onNavTap,
-      ),
-      floatingActionButton: showActionButton
-          ? _ComposerFab(
-              onPressed: () =>
-                  _openComposerSheet(canCreateUpdate: canCreateUpdate),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      child: isHunterSpace
+          ? _HunterSpaceShell(
+              key: const ValueKey('hunter'),
+              currentIndex: _hunterIndex,
+              pageController: _hunterPageController,
+              onNavTap: _onHunterNavTap,
+              onFabTap: () => _onFabTap(context),
             )
-          : null,
+          : _UserSpaceShell(
+              key: const ValueKey('user'),
+              currentIndex: _userIndex,
+              pageController: _userPageController,
+              onNavTap: _onUserNavTap,
+            ),
     );
   }
 
-  Future<void> _openComposerSheet({
-    required bool canCreateUpdate,
-  }) async {
+  Future<void> _openComposerSheet(BuildContext context) async {
     if (!mounted) return;
 
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.bgSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) {
+      builder: (ctx) {
         return SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Drag handle
                 Container(
                   width: 40,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
                     color: AppColors.borderMuted,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                // Section label
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Create',
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 11,
-                      fontFamily: 'Geist',
+                    'CREATE',
+                    style: GoogleFonts.inter(
+                      color: AppColors.textFaint,
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                _ComposerTile(
+                  title: 'Post Hunter Update',
+                  subtitle: 'Share intel about a project you track',
+                  icon: Icons.bolt_rounded,
+                  iconColor: AppColors.teal400,
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.of(context).pushNamed(AppRoutes.createUpdate);
+                  },
+                ),
                 const SizedBox(height: 8),
-                if (canCreateUpdate)
-                  _ComposerActionTile(
-                    title: 'New Update',
-                    subtitle: 'Post an update under an approved project',
-                    icon: Icons.post_add_outlined,
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(this.context)
-                          .pushNamed(AppRoutes.createUpdate);
-                    },
-                  ),
+                _ComposerTile(
+                  title: 'Submit New Gem',
+                  subtitle: 'Propose a project to be listed on Blocnet',
+                  icon: Icons.diamond_outlined,
+                  iconColor: AppColors.primary400,
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.of(context).pushNamed(AppRoutes.submitProject);
+                  },
+                ),
               ],
             ),
           ),
@@ -160,33 +173,320 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Bottom navigation bar
+// User Space Shell: Home | Discover | Wallet | Profile  (4 tabs)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _BottomNav extends StatelessWidget {
-  const _BottomNav({required this.currentIndex, required this.onTap});
+// Tab meta for user space
+const _userTabs = [
+  _TabMeta(
+      title: 'Blocnet',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
+      showNotificationBell: true),
+  _TabMeta(
+      title: 'Discover',
+      showSearch: true,
+      showFilter: true,
+      showSpaceSwitcher: false,
+      showNotificationBell: false),
+  _TabMeta(
+      title: 'Wallet',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
+      showNotificationBell: false),
+  _TabMeta(
+      title: 'Profile',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
+      showNotificationBell: false),
+];
+
+class _UserSpaceShell extends StatelessWidget {
+  const _UserSpaceShell({
+    super.key,
+    required this.currentIndex,
+    required this.pageController,
+    required this.onNavTap,
+  });
+
+  final int currentIndex;
+  final PageController pageController;
+  final ValueChanged<int> onNavTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tab = _userTabs[currentIndex];
+    return Scaffold(
+      backgroundColor: AppColors.bgBase,
+      appBar: CustomAppBar(
+        title: tab.title,
+        backButton: false,
+        showSearch: tab.showSearch,
+        showFilter: tab.showFilter,
+        showSpaceSwitcher: currentIndex == 3,
+        showNotificationBell: tab.showNotificationBell,
+      ),
+      body: PageView(
+        controller: pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: const [
+          HomeScreen(), // 0
+          DiscoverScreen(), // 1
+          WalletScreen(), // 2
+          ProfileScreen(), // 3
+        ],
+      ),
+      bottomNavigationBar: _UserNav(
+        currentIndex: currentIndex,
+        onTap: onNavTap,
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hunter Space Shell: Home | Discover | [FAB] | Hub | Profile  (5 slots)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Tab meta for hunter space (index 2 is FAB — no app bar entry needed, uses index mapping 0,1,2,3)
+const _hunterTabs = [
+  _TabMeta(
+      title: 'Blocnet',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
+      showNotificationBell: true),
+  _TabMeta(
+      title: 'Discover',
+      showSearch: true,
+      showFilter: true,
+      showSpaceSwitcher: false,
+      showNotificationBell: false),
+  _TabMeta(
+      title: 'Hunter Hub',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
+      showNotificationBell: true),
+  _TabMeta(
+      title: 'Profile',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
+      showNotificationBell: false),
+];
+
+class _HunterSpaceShell extends StatelessWidget {
+  const _HunterSpaceShell({
+    super.key,
+    required this.currentIndex,
+    required this.pageController,
+    required this.onNavTap,
+    required this.onFabTap,
+  });
+
+  final int currentIndex;
+  final PageController pageController;
+  final ValueChanged<int> onNavTap;
+  final VoidCallback onFabTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tab = _hunterTabs[currentIndex];
+    return Scaffold(
+      backgroundColor: AppColors.bgBase,
+      appBar: CustomAppBar(
+        title: tab.title,
+        backButton: false,
+        showSearch: tab.showSearch,
+        showFilter: tab.showFilter,
+        showSpaceSwitcher: currentIndex == 3,
+        showNotificationBell: tab.showNotificationBell,
+      ),
+      body: PageView(
+        controller: pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: const [
+          HomeScreen(), // 0
+          DiscoverScreen(), // 1
+          HunterHubScreen(), // 2
+          ProfileScreen(), // 3
+        ],
+      ),
+      bottomNavigationBar: _HunterNav(
+        currentIndex: currentIndex,
+        onTap: onNavTap,
+        onFabTap: onFabTap,
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User Nav Bar — 4 items
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _UserNav extends StatelessWidget {
+  const _UserNav({
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  static const _items = [
-    (icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home'),
-    (
-      icon: Icons.explore_outlined,
-      activeIcon: Icons.explore_rounded,
-      label: 'Projects'
-    ),
-    (
-      icon: Icons.account_balance_wallet_outlined,
-      activeIcon: Icons.account_balance_wallet_rounded,
-      label: 'Wallet'
-    ),
-    (
-      icon: Icons.person_outline_rounded,
-      activeIcon: Icons.person_rounded,
-      label: 'Profile'
-    ),
-  ];
+  @override
+  Widget build(BuildContext context) {
+    final unreadCount = context.watch<NotificationsStore>().unreadCount;
+
+    return _NavContainer(
+      child: Row(
+        children: [
+          _NavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: 'Home',
+            isActive: currentIndex == 0,
+            onTap: () => onTap(0),
+          ),
+          _NavItem(
+            icon: Icons.explore_outlined,
+            activeIcon: Icons.explore_rounded,
+            label: 'Discover',
+            isActive: currentIndex == 1,
+            onTap: () => onTap(1),
+          ),
+          _NavItem(
+            icon: Icons.account_balance_wallet_outlined,
+            activeIcon: Icons.account_balance_wallet_rounded,
+            label: 'Wallet',
+            isActive: currentIndex == 2,
+            onTap: () => onTap(2),
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
+            label: 'Profile',
+            isActive: currentIndex == 3,
+            badgeCount: unreadCount,
+            onTap: () => onTap(3),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hunter Nav Bar — 5 slots (Home | Discover | FAB | Hub | Profile)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _HunterNav extends StatelessWidget {
+  const _HunterNav({
+    required this.currentIndex,
+    required this.onTap,
+    required this.onFabTap,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final VoidCallback onFabTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _NavContainer(
+      child: Row(
+        children: [
+          _NavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: 'Home',
+            isActive: currentIndex == 0,
+            onTap: () => onTap(0),
+          ),
+          _NavItem(
+            icon: Icons.explore_outlined,
+            activeIcon: Icons.explore_rounded,
+            label: 'Discover',
+            isActive: currentIndex == 1,
+            onTap: () => onTap(1),
+          ),
+          // Centre FAB
+          Expanded(
+            child: GestureDetector(
+              onTap: onFabTap,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Transform.translate(
+                    offset: const Offset(0, -14),
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.primary400,
+                            AppColors.primary600,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.bgBase,
+                          width: 3,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary500.withValues(alpha: 0.45),
+                            blurRadius: 18,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.add_rounded,
+                        color: Colors.black,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          _NavItem(
+            icon: Icons.radar_outlined,
+            activeIcon: Icons.radar_rounded,
+            label: 'Hub',
+            isActive: currentIndex == 2,
+            onTap: () => onTap(2),
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
+            label: 'Profile',
+            isActive: currentIndex == 3,
+            onTap: () => onTap(3),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared nav container
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _NavContainer extends StatelessWidget {
+  const _NavContainer({required this.child});
+
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -196,48 +496,19 @@ class _BottomNav extends StatelessWidget {
         border: Border(
           top: BorderSide(color: AppColors.borderSubtle, width: 1),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 24,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 58,
-          child: Row(
-            children: List.generate(_items.length, (i) {
-              final item = _items[i];
-              final isActive = currentIndex == i;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onTap(i),
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isActive ? item.activeIcon : item.icon,
-                        size: 22,
-                        color:
-                            isActive ? AppColors.teal400 : AppColors.textMuted,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        item.label,
-                        style: TextStyle(
-                          color: isActive
-                              ? AppColors.teal400
-                              : AppColors.textMuted,
-                          fontSize: 10,
-                          fontFamily: 'Geist',
-                          fontWeight: isActive
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
+          height: 60,
+          child: child,
         ),
       ),
     );
@@ -245,36 +516,71 @@ class _BottomNav extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FAB
+// Single nav item
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ComposerFab extends StatelessWidget {
-  const _ComposerFab({required this.onPressed});
-  final VoidCallback onPressed;
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
+
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.teal500, AppColors.primary500],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.teal500.withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+    final color = isActive ? AppColors.primary400 : AppColors.textMuted;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(isActive ? activeIcon : icon, size: 21, color: color),
+                if (badgeCount > 0)
+                  Positioned(
+                    top: -2,
+                    right: -4,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.bgSurface,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: color,
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
             ),
           ],
         ),
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
       ),
     );
   }
@@ -284,17 +590,19 @@ class _ComposerFab extends StatelessWidget {
 // Composer bottom sheet tile
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ComposerActionTile extends StatelessWidget {
-  const _ComposerActionTile({
+class _ComposerTile extends StatelessWidget {
+  const _ComposerTile({
     required this.title,
     required this.subtitle,
     required this.icon,
+    required this.iconColor,
     required this.onTap,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
+  final Color iconColor;
   final VoidCallback onTap;
 
   @override
@@ -302,44 +610,42 @@ class _ComposerActionTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.borderSubtle, width: 1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderSubtle),
         ),
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: AppColors.teal500.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                color: iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppColors.teal400, size: 18),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: GoogleFonts.spaceGrotesk(
                       color: AppColors.textPrimary,
                       fontSize: 14,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textMuted,
-                      fontSize: 11,
-                      fontFamily: 'Geist',
+                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -358,14 +664,21 @@ class _ComposerActionTile extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tab wrappers
+// Tab metadata — drives the shared app bar per tab
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ProfileTabScreen extends StatelessWidget {
-  const _ProfileTabScreen();
+class _TabMeta {
+  const _TabMeta({
+    required this.title,
+    required this.showSearch,
+    required this.showFilter,
+    required this.showSpaceSwitcher,
+    required this.showNotificationBell,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    return const ProfileScreen();
-  }
+  final String title;
+  final bool showSearch;
+  final bool showFilter;
+  final bool showSpaceSwitcher;
+  final bool showNotificationBell;
 }

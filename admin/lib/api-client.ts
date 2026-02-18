@@ -95,8 +95,8 @@ export const clientApi = {
       body: JSON.stringify({}),
     }),
 
-  promoteToPoster: (userId: string) =>
-    apiFetch(`/roles/posters/${userId}/promote`, {
+  promoteToHunter: (userId: string) =>
+    apiFetch(`/roles/hunters/${userId}/promote`, {
       method: "POST",
       body: JSON.stringify({}),
     }),

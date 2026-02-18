@@ -58,7 +58,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final isBusy = _isSubmitting || authStore.isSubmitting;
 
     return AuthScreenShell(
-      appBarTitle: 'Forgot Password',
+      appBarTitle: '',
       heading: 'Reset your password',
       subtitle: 'Enter your email and we\'ll send you reset instructions.',
       child: Form(

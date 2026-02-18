@@ -1,6 +1,6 @@
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 
-export class InvitePosterDto {
+export class InviteHunterDto {
   @IsOptional()
   @IsString()
   @MaxLength(500)

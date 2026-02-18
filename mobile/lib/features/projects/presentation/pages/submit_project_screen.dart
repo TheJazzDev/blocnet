@@ -3,6 +3,7 @@ import 'package:blocnet/features/projects/data/repositories/project_proposals_ap
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/tags_store.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class SubmitProjectScreen extends StatefulWidget {
@@ -65,10 +66,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Your current role does not allow project submission.',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.textMuted,
               fontSize: 13,
-              fontFamily: 'Geist',
             ),
           ),
         ),
@@ -96,10 +96,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Primary tags are not configured yet. Contact admin.',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.textMuted,
               fontSize: 13,
-              fontFamily: 'Geist',
             ),
           ),
         ),
@@ -119,22 +118,20 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               if (_submitError != null && _submitError!.isNotEmpty) ...[
                 Text(
                   _submitError!,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     color: AppColors.error500,
                     fontSize: 12,
-                    fontFamily: 'Geist',
                   ),
                 ),
                 const SizedBox(height: 10),
               ],
-              _FieldLabel('Project name'),
+              _FieldLabel('Gem name'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.textSecondary,
                   fontSize: 14,
-                  fontFamily: 'Geist',
                 ),
                 decoration: _fieldDecoration(hintText: 'e.g. Codawoo'),
                 validator: (value) {
@@ -149,10 +146,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _symbolController,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.textSecondary,
                   fontSize: 14,
-                  fontFamily: 'Geist',
                 ),
                 decoration: _fieldDecoration(hintText: 'e.g. COD'),
               ),
@@ -161,10 +157,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _websiteController,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.textSecondary,
                   fontSize: 14,
-                  fontFamily: 'Geist',
                 ),
                 decoration: _fieldDecoration(hintText: 'https://example.com'),
               ),
@@ -175,10 +170,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 value: _selectedPrimaryTagId,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.textSecondary,
                   fontSize: 13,
-                  fontFamily: 'Geist',
                 ),
                 items: tagsStore.primaryTags
                     .map(
@@ -186,10 +180,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                         value: tag.id,
                         child: Text(
                           tag.name,
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             color: AppColors.textSecondary,
                             fontSize: 13,
-                            fontFamily: 'Geist',
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -214,13 +207,12 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 controller: _descriptionController,
                 minLines: 6,
                 maxLines: 10,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.textSecondary,
                   fontSize: 14,
-                  fontFamily: 'Geist',
                 ),
                 decoration: _fieldDecoration(
-                  hintText: 'Explain what this project is about.',
+                  hintText: 'Explain what this gem is about.',
                 ),
                 validator: (value) {
                   final next = value?.trim() ?? '';
@@ -236,10 +228,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 controller: _reasonController,
                 minLines: 3,
                 maxLines: 6,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: AppColors.textSecondary,
                   fontSize: 14,
-                  fontFamily: 'Geist',
                 ),
                 decoration: _fieldDecoration(
                   hintText: 'Credibility, risk checks, relevance, etc.',
@@ -276,10 +267,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                         : Text(
                             'Submit For Approval',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               color: Colors.white,
                               fontSize: 14,
-                              fontFamily: 'Geist',
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -300,11 +290,10 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
       centerTitle: false,
       iconTheme: IconThemeData(color: AppColors.textMuted),
       title: Text(
-        'Submit Project',
-        style: TextStyle(
+        'Submit New Gem',
+        style: GoogleFonts.spaceGrotesk(
           color: AppColors.textPrimary,
           fontSize: 16,
-          fontFamily: 'Geist',
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -314,10 +303,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
   InputDecoration _fieldDecoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: TextStyle(
+      hintStyle: GoogleFonts.inter(
         color: AppColors.textFaint,
         fontSize: 13,
-        fontFamily: 'Geist',
       ),
       filled: true,
       fillColor: AppColors.bgElevated,
@@ -370,12 +358,12 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
             : _reasonController.text.trim(),
       );
       if (response == null) {
-        throw Exception('Could not submit project proposal. Please retry.');
+        throw Exception('Could not submit gem proposal. Please retry.');
       }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Project submitted for approval')),
+        const SnackBar(content: Text('Gem submitted for approval')),
       );
       Navigator.of(context).pop();
     } catch (error) {
@@ -404,10 +392,9 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: TextStyle(
+      style: GoogleFonts.inter(
         color: AppColors.textMuted,
         fontSize: 12,
-        fontFamily: 'Geist',
         fontWeight: FontWeight.w500,
       ),
     );

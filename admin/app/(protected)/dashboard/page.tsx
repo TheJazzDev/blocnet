@@ -101,7 +101,7 @@ export default function DashboardPage() {
         {
           title: "Total Users",
           value: stats.totalUsers.toLocaleString(),
-          change: `${stats.activePosters} active posters`,
+          change: `${stats.activeHunters} active hunters`,
           icon: Users,
         },
         {
@@ -221,8 +221,8 @@ export default function DashboardPage() {
                       <span className="text-sm font-medium">{stats.totalComments.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Active Posters</span>
-                      <span className="text-sm font-medium">{stats.activePosters}</span>
+                      <span className="text-sm text-muted-foreground">Active Hunters</span>
+                      <span className="text-sm font-medium">{stats.activeHunters}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Project Proposals</span>

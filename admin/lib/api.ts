@@ -44,7 +44,7 @@ export interface AdminStats {
   pendingAdminApps: number;
   totalUpdates: number;
   totalComments: number;
-  activePosters: number;
+  activeHunters: number;
   pendingProposals: number;
   totalTags: number;
 }
@@ -89,7 +89,7 @@ export interface AdminApplication {
     displayName: string | null;
     avatarUrl: string | null;
   };
-  targetRole: "admin" | "poster";
+  targetRole: "admin" | "hunter";
   reason: string;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
@@ -196,9 +196,9 @@ export const api = {
       body: JSON.stringify({ note }),
     }),
 
-  /** POST /roles/posters/:userId/promote */
-  promoteToPoster: (userId: string, note?: string) =>
-    apiFetch(`/roles/posters/${userId}/promote`, {
+  /** POST /roles/hunters/:userId/promote */
+  promoteToHunter: (userId: string, note?: string) =>
+    apiFetch(`/roles/hunters/${userId}/promote`, {
       method: "POST",
       body: JSON.stringify({ note }),
     }),

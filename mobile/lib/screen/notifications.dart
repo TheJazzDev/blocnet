@@ -1,9 +1,11 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:provider/provider.dart';
 
@@ -41,25 +43,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.bgBase,
-          appBar: AppBar(
-            backgroundColor: AppColors.bgBase,
-            title: Text(
-              'Notifications',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontFamily: 'Geist',
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-            ),
-            centerTitle: true,
-            elevation: 0,
+          appBar: CustomAppBar(
+            title: 'Alerts',
+            backButton: true,
+            showSearch: false,
+            showFilter: false,
             actions: [
               if (store.unreadCount > 0)
                 GestureDetector(
                   onTap: store.markAllRead,
                   child: Container(
-                    margin: const EdgeInsets.only(right: 16),
+                    margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 6,
@@ -67,17 +61,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.bgElevated,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.borderSubtle,
-                        width: 1,
-                      ),
+                      border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: Text(
                       'Mark all read',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         color: AppColors.textMuted,
-                        fontSize: 12,
-                        fontFamily: 'Geist',
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -99,7 +89,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       backgroundColor: AppColors.bgSurface,
                       onRefresh: store.refreshNotifications,
                       child: ListView.separated(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
                         itemBuilder: (context, index) {
                           final item = store.notifications[index];
                           return _NotificationTile(
@@ -111,8 +101,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             },
                           );
                         },
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 8),
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemCount: store.notifications.length,
                       ),
                     ),
@@ -135,6 +124,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     final resolved = updatesStore.updates.any((u) => u.id == updateId);
     if (!resolved) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Update not found. It may have been removed.'),
@@ -168,7 +158,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 }
 
-// ─── Notification Tile ────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification tile
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _NotificationTile extends StatelessWidget {
   const _NotificationTile({required this.item, required this.onTap});
@@ -196,23 +188,26 @@ class _NotificationTile extends StatelessWidget {
           color: isUnread
               ? AppColors.teal500.withValues(alpha: 0.06)
               : AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isUnread ? AppColors.teal500.withValues(alpha: 0.3) : AppColors.borderSubtle,
-            width: 1,
+            color: isUnread
+                ? AppColors.teal500.withValues(alpha: 0.3)
+                : AppColors.borderSubtle,
           ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Unread dot
-            Container(
-              width: 7,
-              height: 7,
-              margin: const EdgeInsets.only(top: 5),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isUnread ? AppColors.teal400 : Colors.transparent,
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isUnread ? AppColors.teal400 : Colors.transparent,
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -223,23 +218,21 @@ class _NotificationTile extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: isUnread
                           ? AppColors.textPrimary
                           : AppColors.textSecondary,
-                      fontSize: 14,
-                      fontFamily: 'Geist',
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     item.body,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textMuted,
-                      fontSize: 13,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                      height: 1.45,
                     ),
                   ),
                 ],
@@ -248,11 +241,9 @@ class _NotificationTile extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               _timeLabel(),
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 color: AppColors.textFaint,
                 fontSize: 11,
-                fontFamily: 'Geist',
-                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -262,7 +253,9 @@ class _NotificationTile extends StatelessWidget {
   }
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Empty state
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _EmptyNotificationsState extends StatelessWidget {
   const _EmptyNotificationsState();
@@ -276,38 +269,35 @@ class _EmptyNotificationsState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 60,
-              height: 60,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: AppColors.bgElevated,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.borderSubtle, width: 1),
+                border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Icon(
                 Symbols.notifications_off,
-                size: 26,
+                size: 24,
                 color: AppColors.textFaint,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Text(
-              'No notifications yet',
-              style: TextStyle(
+              'No alerts yet',
+              style: GoogleFonts.spaceGrotesk(
                 color: AppColors.textPrimary,
                 fontSize: 15,
-                fontFamily: 'Geist',
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              'Follow projects to receive urgency and update alerts.',
+              'Follow gems to receive priority and update alerts.',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 color: AppColors.textMuted,
-                fontSize: 13,
-                fontFamily: 'Geist',
-                fontWeight: FontWeight.w400,
+                fontSize: 12,
                 height: 1.5,
               ),
             ),

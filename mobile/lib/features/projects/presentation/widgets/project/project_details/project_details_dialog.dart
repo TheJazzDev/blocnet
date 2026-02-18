@@ -38,49 +38,42 @@ class ProjectDetailsDialog extends StatelessWidget {
         project.details.isEmpty ? project.description : project.details;
 
     return SafeArea(
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: const BoxDecoration(
-            color: AppColors.bgSurface,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
-            ),
-          ),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Column(
-              children: [
-                ProjectDetailsHeader(projectId: project.id),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ProjectDetailsInfo(project: project),
-                        const SizedBox(height: 32),
-                        RenderMarkdownContent(content: detailsContent),
-                        const SizedBox(height: 40),
-                        MoreFromProjectName(
-                          label: 'Recent Updates in',
-                          projectTitle: project.name,
-                          posts: recentPostInProjectName,
-                        ),
-                        const CustomHorizontalDivider(margin: 16),
-                        UrgentPostInProjectName(
-                          projectName: project.name,
-                          projectId: project.id,
-                        ),
-                        const CustomHorizontalDivider(margin: 16),
-                      ],
-                    ),
-                  ),
+      child: Scaffold(
+        backgroundColor: AppColors.bgBase,
+        body: Column(
+          children: [
+            ProjectDetailsHeader(projectId: project.id),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  12,
+                  16,
+                  16 + MediaQuery.paddingOf(context).bottom,
                 ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ProjectDetailsInfo(project: project),
+                    const SizedBox(height: 24),
+                    RenderMarkdownContent(content: detailsContent),
+                    const SizedBox(height: 28),
+                    MoreFromProjectName(
+                      label: 'Recent Humber Updates in',
+                      projectTitle: project.name,
+                      posts: recentPostInProjectName,
+                    ),
+                    const CustomHorizontalDivider(margin: 16),
+                    UrgentPostInProjectName(
+                      projectName: project.name,
+                      projectId: project.id,
+                    ),
+                    const CustomHorizontalDivider(margin: 16),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

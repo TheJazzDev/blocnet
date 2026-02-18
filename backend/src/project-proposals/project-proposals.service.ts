@@ -175,11 +175,11 @@ export class ProjectProposalsService {
 
       createdProjectId = project.id;
 
-      await this.prisma.projectPoster.upsert({
+      await this.prisma.projectHunter.upsert({
         where: {
-          projectId_posterId: {
+          projectId_hunterId: {
             projectId: project.id,
-            posterId: proposal.applicantId,
+            hunterId: proposal.applicantId,
           },
         },
         update: {
@@ -187,7 +187,7 @@ export class ProjectProposalsService {
         },
         create: {
           projectId: project.id,
-          posterId: proposal.applicantId,
+          hunterId: proposal.applicantId,
           assignedBy: reviewer.id,
         },
       });

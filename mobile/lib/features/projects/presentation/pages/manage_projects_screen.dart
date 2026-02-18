@@ -5,6 +5,7 @@ import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class ManageProjectsScreen extends StatefulWidget {
@@ -85,10 +86,9 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                           projectsStore.lastError!.isNotEmpty) ...[
                         Text(
                           projectsStore.lastError!,
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             color: AppColors.error500,
                             fontSize: 12,
-                            fontFamily: 'Geist',
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -96,14 +96,14 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                       _SectionLabel('Created by you'),
                       const SizedBox(height: 8),
                       if (owned.isEmpty)
-                        _EmptyHint('No approved projects created by you yet.')
+                        _EmptyHint('No approved gems created by you yet.')
                       else
                         ...owned.map(_buildProjectTile),
                       const SizedBox(height: 20),
-                      _SectionLabel('Projects you contribute to'),
+                      _SectionLabel('Gems you contribute to'),
                       const SizedBox(height: 8),
                       if (contributed.isEmpty)
-                        _EmptyHint('No contribution projects yet.')
+                        _EmptyHint('No contribution gems yet.')
                       else
                         ...contributed.map(_buildProjectTile),
                     ],
@@ -122,10 +122,9 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     return AppBar(
       backgroundColor: AppColors.bgBase,
       title: Text(
-        'Manage Projects',
-        style: TextStyle(
+        'Manage My Gems',
+        style: GoogleFonts.spaceGrotesk(
           color: AppColors.textPrimary,
-          fontFamily: 'Geist',
           fontWeight: FontWeight.w600,
           fontSize: 16,
         ),
@@ -145,8 +144,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
               decoration: BoxDecoration(
                 color: AppColors.bgElevated,
                 borderRadius: BorderRadius.circular(10),
-                border:
-                    Border.all(color: AppColors.borderSubtle, width: 1),
+                border: Border.all(color: AppColors.borderSubtle, width: 1),
               ),
               child: Icon(Icons.add, size: 18, color: AppColors.textMuted),
             ),
@@ -169,31 +167,26 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
         children: [
           Text(
             project.name,
-            style: TextStyle(
+            style: GoogleFonts.spaceGrotesk(
               color: AppColors.textPrimary,
               fontSize: 14,
-              fontFamily: 'Geist',
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             project.primaryTag.toString(),
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.textMuted,
               fontSize: 12,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w400,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             '${project.followersCount} followers',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.textFaint,
               fontSize: 11,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w400,
             ),
           ),
         ],
@@ -212,10 +205,9 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: TextStyle(
+      style: GoogleFonts.inter(
         color: AppColors.textFaint,
         fontSize: 10,
-        fontFamily: 'Geist',
         fontWeight: FontWeight.w600,
         letterSpacing: 0.8,
       ),
@@ -233,11 +225,9 @@ class _EmptyHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
         message,
-        style: TextStyle(
+        style: GoogleFonts.inter(
           color: AppColors.textFaint,
           fontSize: 13,
-          fontFamily: 'Geist',
-          fontWeight: FontWeight.w400,
         ),
       ),
     );
@@ -252,11 +242,9 @@ class _AccessDenied extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       message,
-      style: TextStyle(
+      style: GoogleFonts.inter(
         color: AppColors.textMuted,
         fontSize: 14,
-        fontFamily: 'Geist',
-        fontWeight: FontWeight.w400,
       ),
     );
   }

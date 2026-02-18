@@ -99,8 +99,8 @@ export class AdminApplicationsService {
         );
       }
 
-      if (app.targetRole === ApplicationTargetRole.poster) {
-        await this.rolesService.promoteToPoster(
+      if (app.targetRole === ApplicationTargetRole.hunter) {
+        await this.rolesService.promoteToHunter(
           reviewerId,
           app.userId,
           'Application approved',

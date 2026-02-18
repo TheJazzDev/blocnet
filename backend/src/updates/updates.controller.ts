@@ -26,7 +26,7 @@ export class UpdatesController {
 
   @Post('projects/:projectId/updates')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.POSTER)
+  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.HUNTER)
   async createUpdate(
     @CurrentUser() user: AuthUser | undefined,
     @Param('projectId') projectId: string,
@@ -51,7 +51,7 @@ export class UpdatesController {
 
   @Patch('updates/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.POSTER)
+  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.HUNTER)
   async updateUpdate(
     @CurrentUser() user: AuthUser | undefined,
     @Param('id') id: string,

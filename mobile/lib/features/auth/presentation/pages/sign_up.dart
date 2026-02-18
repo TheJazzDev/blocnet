@@ -90,7 +90,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final isBusy = _isSubmitting || authStore.isSubmitting;
 
     return AuthScreenShell(
-      appBarTitle: 'Create Account',
+      appBarTitle: '',
       heading: 'Join Blocnet',
       subtitle: 'Create your account to start following projects.',
       child: Form(

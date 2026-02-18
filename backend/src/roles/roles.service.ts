@@ -41,12 +41,12 @@ export class RolesService {
     return result;
   }
 
-  async promoteToPoster(actorId: string, userId: string, note?: string) {
+  async promoteToHunter(actorId: string, userId: string, note?: string) {
     const result = await this.prisma.userRole.upsert({
       where: {
         userId_role: {
           userId,
-          role: RoleName.poster,
+          role: RoleName.hunter,
         },
       },
       update: {
@@ -54,14 +54,14 @@ export class RolesService {
       },
       create: {
         userId,
-        role: RoleName.poster,
+        role: RoleName.hunter,
         grantedBy: actorId,
       },
     });
 
     await this.auditLogService.create({
       actorId,
-      action: 'role.promote.poster',
+      action: 'role.promote.hunter',
       resourceType: 'user_role',
       resourceId: result.id,
       metadata: { targetUserId: userId, note },

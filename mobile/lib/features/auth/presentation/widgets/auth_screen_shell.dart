@@ -1,14 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 
-/// Full-screen immersive Web3 auth shell.
-///
-/// Design language:
-/// - Deep near-black background with subtle blue-teal radial atmosphere
-/// - Decorative grid mesh overlay for depth
-/// - Centered logo (no wordmark — logo speaks for itself)
-/// - Teal accent gradient on heading text
-/// - Form sits in a frosted-dark card anchored at bottom of screen
 class AuthScreenShell extends StatelessWidget {
   const AuthScreenShell({
     super.key,
@@ -30,7 +22,7 @@ class AuthScreenShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF060810),
+      backgroundColor: AppColors.bgBase,
       body: Stack(
         children: [
           // ── Layer 1: Deep background ──────────────────────────
@@ -44,37 +36,51 @@ class AuthScreenShell extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Back button
-                if (showBack)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8, top: 6),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: _BackButton(),
-                    ),
-                  )
-                else
-                  const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 44,
+                        child:
+                            showBack ? const _BackButton() : const SizedBox(),
+                      ),
+                      Expanded(
+                        child: Text(
+                          appBarTitle ?? 'Blocnet',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 18,
+                            fontFamily: 'Geist',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 44),
+                    ],
+                  ),
+                ),
 
-                // Logo — centered, no wordmark
                 const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
+                  padding: EdgeInsets.symmetric(vertical: 16),
                   child: _LogoMark(),
                 ),
 
                 // Heading + subtitle
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       _GradientHeading(heading),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
                         subtitle,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppColors.darkGrey400,
-                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
                           fontFamily: 'Geist',
                           fontWeight: FontWeight.w400,
                           height: 1.55,
@@ -115,7 +121,7 @@ class _DeepBackground extends StatelessWidget {
     return Stack(
       children: [
         // Base dark canvas
-        Container(color: const Color(0xFF060810)),
+        Container(color: AppColors.bgBase),
 
         // Top-left teal orb
         Positioned(
@@ -128,8 +134,8 @@ class _DeepBackground extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.teal500.withValues(alpha: 0.22),
-                  AppColors.teal500.withValues(alpha: 0.06),
+                  AppColors.primary500.withValues(alpha: 0.24),
+                  AppColors.primary500.withValues(alpha: 0.08),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.45, 1.0],
@@ -149,8 +155,8 @@ class _DeepBackground extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.primary600.withValues(alpha: 0.25),
-                  AppColors.primary600.withValues(alpha: 0.07),
+                  AppColors.secondary500.withValues(alpha: 0.24),
+                  AppColors.secondary500.withValues(alpha: 0.08),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.4, 1.0],
@@ -171,7 +177,7 @@ class _DeepBackground extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primary700.withValues(alpha: 0.18),
+                    AppColors.primary700.withValues(alpha: 0.2),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 1.0],
@@ -200,7 +206,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF1A2540).withValues(alpha: 0.55)
+      ..color = AppColors.borderSubtle.withValues(alpha: 0.55)
       ..strokeWidth = 0.5
       ..style = PaintingStyle.stroke;
 
@@ -241,8 +247,8 @@ class _LogoMark extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.teal400.withValues(alpha: 0.18),
-                  AppColors.primary500.withValues(alpha: 0.10),
+                  AppColors.primary400.withValues(alpha: 0.22),
+                  AppColors.secondary500.withValues(alpha: 0.14),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.55, 1.0],
@@ -254,20 +260,20 @@ class _LogoMark extends StatelessWidget {
             width: 62,
             height: 62,
             decoration: BoxDecoration(
-              color: const Color(0xFF0D1120),
+              color: AppColors.bgSurface,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: AppColors.teal500.withValues(alpha: 0.35),
+                color: AppColors.primary500.withValues(alpha: 0.35),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.teal500.withValues(alpha: 0.25),
+                  color: AppColors.primary500.withValues(alpha: 0.22),
                   blurRadius: 24,
                   spreadRadius: 0,
                 ),
                 BoxShadow(
-                  color: AppColors.primary500.withValues(alpha: 0.15),
+                  color: AppColors.secondary500.withValues(alpha: 0.15),
                   blurRadius: 32,
                   spreadRadius: 4,
                 ),
@@ -301,13 +307,14 @@ class _GradientHeading extends StatelessWidget {
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
         colors: [
-          AppColors.darkGrey800,
-          AppColors.teal400.withValues(alpha: 0.85),
+          AppColors.textPrimary,
+          AppColors.primary300.withValues(alpha: 0.9),
         ],
         stops: const [0.0, 1.0],
       ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
       child: Text(
         text,
+        textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white,
           fontSize: 24,
@@ -332,9 +339,10 @@ class _FormCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const radius = BorderRadius.only(
-      topLeft: Radius.circular(28),
-      topRight: Radius.circular(28),
-    );
+        topLeft: Radius.circular(28),
+        topRight: Radius.circular(28),
+        bottomLeft: Radius.circular(28),
+        bottomRight: Radius.circular(28));
 
     return ClipRRect(
       borderRadius: radius,
@@ -343,10 +351,10 @@ class _FormCard extends StatelessWidget {
           // Base card
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF0D1120),
+              color: AppColors.bgSurface,
               borderRadius: radius,
               border: Border.all(
-                color: AppColors.darkGrey200.withValues(alpha: 0.15),
+                color: AppColors.borderSubtle,
                 width: 1,
               ),
             ),
@@ -367,8 +375,8 @@ class _FormCard extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    AppColors.teal500.withValues(alpha: 0.5),
-                    AppColors.primary500.withValues(alpha: 0.3),
+                    AppColors.primary500.withValues(alpha: 0.5),
+                    AppColors.secondary500.withValues(alpha: 0.32),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 0.3, 0.7, 1.0],
@@ -387,6 +395,8 @@ class _FormCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _BackButton extends StatelessWidget {
+  const _BackButton();
+
   @override
   Widget build(BuildContext context) {
     if (!Navigator.canPop(context)) return const SizedBox.shrink();
@@ -399,7 +409,7 @@ class _BackButton extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkGrey500,
+            color: AppColors.textSecondary,
             size: 17,
           ),
         ),

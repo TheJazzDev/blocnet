@@ -75,7 +75,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final isBusy = _isSubmitting || authStore.isSubmitting;
 
     return AuthScreenShell(
-      appBarTitle: 'Reset Password',
+      appBarTitle: '',
       heading: 'Set a new password',
       subtitle: 'Choose a strong password to secure your account.',
       child: Form(

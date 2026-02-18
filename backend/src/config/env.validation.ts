@@ -9,7 +9,7 @@ export const envValidationSchema = Joi.object({
   DATABASE_URL: Joi.string().min(1).required(),
 
   SUPABASE_URL: Joi.string().uri().required(),
-  SUPABASE_ANON_KEY: Joi.string().allow('').optional(),
+  PUBLISHABLE_KEY: Joi.string().allow('').optional(),
   SUPABASE_JWKS_URL: Joi.string().uri().allow('').empty('').optional(),
   SUPABASE_JWT_SECRET: Joi.string().min(1).allow('').empty('').optional(),
 

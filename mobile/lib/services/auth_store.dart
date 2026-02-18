@@ -42,6 +42,9 @@ class AuthStore extends ChangeNotifier {
   DateTime? _memberSince;
   String? _lastError;
 
+  // ── Space switcher — 'user' | 'hunter' ───────────────────────────────────
+  String _activeSpace = 'user';
+
   bool get isAuthenticated => _isAuthenticated;
   bool get isSubmitting => _isSubmitting;
   String? get accessToken => _accessToken;
@@ -54,13 +57,36 @@ class AuthStore extends ChangeNotifier {
   List<String> get roles => List.unmodifiable(_roles);
   bool get isOwner => _roles.contains('owner');
   bool get isAdmin => _roles.contains('admin');
-  bool get isPoster => _roles.contains('poster');
+  bool get isHunter => _roles.contains('hunter');
   bool get isUser => _roles.contains('user');
   bool get canModerateRoles => isOwner || isAdmin;
-  bool get canCreateUpdate => isOwner || isAdmin || isPoster;
-  bool get canSubmitProject => isOwner || isAdmin || isPoster;
+  bool get canCreateUpdate => isOwner || isAdmin || isHunter;
+  bool get canSubmitProject => isOwner || isAdmin || isHunter;
   String? get lastError => _lastError;
   bool get isSupabaseConfigured => AppConfig.isSupabaseConfigured;
+
+  // ── Space switcher getters ────────────────────────────────────────────────
+  /// Whether the user has any elevated role that grants hunter space access.
+  bool get hasHunterSpace => isOwner || isAdmin || isHunter;
+
+  /// The currently active space: 'user' or 'hunter'.
+  String get activeSpace => _activeSpace;
+
+  /// True when the user is viewing/interacting from the hunter perspective.
+  bool get isInHunterSpace => _activeSpace == 'hunter' && hasHunterSpace;
+
+  /// Toggle or set the active space. Silently ignores if the user has no
+  /// hunter role — they stay in user space.
+  void setActiveSpace(String space) {
+    final target = (space == 'hunter' && hasHunterSpace) ? 'hunter' : 'user';
+    if (_activeSpace == target) return;
+    _activeSpace = target;
+    notifyListeners();
+  }
+
+  void toggleSpace() {
+    setActiveSpace(_activeSpace == 'user' ? 'hunter' : 'user');
+  }
 
   Future<void> bootstrapFromSession() async {
     if (!isSupabaseConfigured) return;
@@ -365,6 +391,7 @@ class AuthStore extends ChangeNotifier {
     _roles = const ['user'];
     _isAuthenticated = false;
     _lastError = null;
+    _activeSpace = 'user';
     ApiClient.setAuthToken(null);
     if (notify) {
       notifyListeners();

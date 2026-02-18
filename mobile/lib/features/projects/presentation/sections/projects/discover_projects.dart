@@ -1,7 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/project/project_card/gem_card.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class DiscoverProjectsSection extends StatefulWidget {
@@ -17,6 +19,7 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       Provider.of<ProjectsStore>(context, listen: false).fetchProjectsOnce();
     });
   }
@@ -33,183 +36,102 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
     return Consumer<ProjectsStore>(
       builder: (context, store, _) {
         if (store.isFetching && store.projects.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 40),
+          return const Padding(
+            padding: EdgeInsets.only(top: 40),
             child: Center(
-              child: CircularProgressIndicator(
-                color: AppColors.teal400,
-                strokeWidth: 2,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
           );
         }
 
         if (store.projects.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.only(top: 28),
-            child: Text(
-              'No projects available yet. Check back soon.',
-              style: TextStyle(
-                color: AppColors.textFaint,
-                fontSize: 13,
-                fontFamily: 'Geist',
-              ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.diamond_outlined,
+                  size: 40,
+                  color: AppColors.textFaint,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No gems found',
+                  style: GoogleFonts.spaceGrotesk(
+                    color: AppColors.textSecondary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Gems will appear here when projects are listed.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    color: AppColors.textFaint,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
           );
-        }
-
-        if (store.lastError != null && store.lastError!.isNotEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(store.lastError!)),
-            );
-          });
         }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
-            Text(
-              'Discover and follow relevant projects.',
-              style: TextStyle(
-                color: AppColors.textFaint,
-                fontSize: 13,
-                fontFamily: 'Geist',
+            // Section header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'CURATED FEED',
+                    style: GoogleFonts.inter(
+                      color: AppColors.textFaint,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.9,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgSurface,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.borderSubtle),
+                    ),
+                    child: Text(
+                      'Sort: Hype Score',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textFaint,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            ...store.projects.map((project) {
-              final isFollowed = store.isProjectFollowed(project.id);
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.borderSubtle),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        project.logo,
-                        width: 44,
-                        height: 44,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 44,
-                          height: 44,
-                          color: AppColors.bgElevated,
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.layers,
-                            size: 18,
-                            color: AppColors.textFaint,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            project.name,
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 14,
-                              fontFamily: 'Geist',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            project.description.isEmpty
-                                ? project.details
-                                : project.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: AppColors.textFaint,
-                              fontSize: 12,
-                              fontFamily: 'Geist',
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${project.followersCount} followers',
-                            style: TextStyle(
-                              color: AppColors.textFaint,
-                              fontSize: 11,
-                              fontFamily: 'Geist',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    _FollowButton(
-                      isFollowed: isFollowed,
-                      isLoading: store.isTogglingFollow,
-                      onTap: () => _toggleFollow(project),
-                    ),
-                  ],
-                ),
-              );
-            }),
+            // Gem cards
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: store.projects.map((project) {
+                  final isFollowed = store.isProjectFollowed(project.id);
+                  return GemCard(
+                    project: project,
+                    isFollowed: isFollowed,
+                    isLoading: store.isTogglingFollow,
+                    onFollowToggle: () => _toggleFollow(project),
+                  );
+                }).toList(),
+              ),
+            ),
           ],
         );
       },
-    );
-  }
-}
-
-// ─── Follow Button ────────────────────────────────────────────────────────────
-
-class _FollowButton extends StatelessWidget {
-  const _FollowButton({
-    required this.isFollowed,
-    required this.isLoading,
-    required this.onTap,
-  });
-
-  final bool isFollowed;
-  final bool isLoading;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: isLoading ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          gradient: isFollowed
-              ? null
-              : LinearGradient(
-                  colors: [AppColors.teal500, AppColors.primary500],
-                ),
-          color: isFollowed ? AppColors.bgElevated : null,
-          borderRadius: BorderRadius.circular(20),
-          border: isFollowed
-              ? Border.all(color: AppColors.borderSubtle)
-              : null,
-        ),
-        child: Text(
-          isFollowed ? 'Following' : 'Follow',
-          style: TextStyle(
-            color: isFollowed ? AppColors.textMuted : Colors.white,
-            fontSize: 12,
-            fontFamily: 'Geist',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
     );
   }
 }

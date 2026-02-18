@@ -25,8 +25,8 @@ type SeedUserKey =
   | 'owner'
   | 'adminAlpha'
   | 'adminDelta'
-  | 'posterNexa'
-  | 'posterSage'
+  | 'hunterNexa'
+  | 'hunterSage'
   | 'memberRae'
   | 'memberKai'
   | 'memberMila';
@@ -102,18 +102,18 @@ async function main() {
       roles: [RoleName.admin, RoleName.user],
     },
     {
-      key: 'posterNexa',
+      key: 'hunterNexa',
       id: '6d4ec119-bbb0-4d5a-b72e-569c5fb73916',
-      email: 'poster.nexa@blocknet.local',
-      displayName: 'Poster Nexa',
-      roles: [RoleName.poster, RoleName.user],
+      email: 'hunter.nexa@blocknet.local',
+      displayName: 'Hunter Nexa',
+      roles: [RoleName.hunter, RoleName.user],
     },
     {
-      key: 'posterSage',
+      key: 'hunterSage',
       id: '006a2a8f-f88c-4fc1-a895-0f8d6ceb35f4',
-      email: 'poster.sage@blocknet.local',
-      displayName: 'Poster Sage',
-      roles: [RoleName.poster, RoleName.user],
+      email: 'hunter.sage@blocknet.local',
+      displayName: 'Hunter Sage',
+      roles: [RoleName.hunter, RoleName.user],
     },
     {
       key: 'memberRae',
@@ -142,8 +142,9 @@ async function main() {
 
   for (const user of users) {
     const profile = await prisma.profile.upsert({
-      where: { email: user.email },
+      where: { id: user.id },
       update: {
+        email: user.email,
         displayName: user.displayName,
       },
       create: {
@@ -362,40 +363,40 @@ async function main() {
   const posterAssignments = [
     {
       projectKey: 'solanaRadar' as const,
-      posterKey: 'posterNexa' as const,
+      hunterKey: 'hunterNexa' as const,
       assignedBy: profileByKey.get('adminAlpha')!.id,
     },
     {
       projectKey: 'ethWatch' as const,
-      posterKey: 'posterSage' as const,
+      hunterKey: 'hunterSage' as const,
       assignedBy: profileByKey.get('adminDelta')!.id,
     },
     {
       projectKey: 'coreMines' as const,
-      posterKey: 'posterNexa' as const,
+      hunterKey: 'hunterNexa' as const,
       assignedBy: ownerProfileId,
     },
     {
       projectKey: 'tonDropDesk' as const,
-      posterKey: 'posterSage' as const,
+      hunterKey: 'hunterSage' as const,
       assignedBy: profileByKey.get('adminAlpha')!.id,
     },
     {
       projectKey: 'bscLaunchFlow' as const,
-      posterKey: 'posterNexa' as const,
+      hunterKey: 'hunterNexa' as const,
       assignedBy: profileByKey.get('adminDelta')!.id,
     },
   ];
 
   for (const assignment of posterAssignments) {
     const projectId = projectByKey.get(assignment.projectKey)!.id;
-    const posterId = profileByKey.get(assignment.posterKey)!.id;
+    const hunterId = profileByKey.get(assignment.hunterKey)!.id;
 
-    await prisma.projectPoster.upsert({
+    await prisma.projectHunter.upsert({
       where: {
-        projectId_posterId: {
+        projectId_hunterId: {
           projectId,
-          posterId,
+          hunterId,
         },
       },
       update: {
@@ -403,7 +404,7 @@ async function main() {
       },
       create: {
         projectId,
-        posterId,
+        hunterId,
         assignedBy: assignment.assignedBy,
       },
     });
@@ -423,7 +424,7 @@ async function main() {
     {
       id: '2588f558-f380-46fe-99bb-3026f6417c26',
       projectKey: 'solanaRadar' as const,
-      authorKey: 'posterNexa' as const,
+      authorKey: 'hunterNexa' as const,
       urgency: UpdateUrgency.medium,
       title: 'Solana Staking Reward Checklist',
       secondaryTagKeys: ['staking', 'governance'] as const,
@@ -443,7 +444,7 @@ async function main() {
     {
       id: '264491cf-f4e1-40a2-b8de-203860241205',
       projectKey: 'ethWatch' as const,
-      authorKey: 'posterSage' as const,
+      authorKey: 'hunterSage' as const,
       urgency: UpdateUrgency.low,
       title: 'Ethereum Ecosystem Weekly Recap',
       secondaryTagKeys: ['partnership'] as const,
@@ -463,7 +464,7 @@ async function main() {
     {
       id: '2cedde8c-c577-46e5-b753-c1f101ef181f',
       projectKey: 'coreMines' as const,
-      authorKey: 'posterNexa' as const,
+      authorKey: 'hunterNexa' as const,
       urgency: UpdateUrgency.high,
       title: 'Core Node Snapshot Required',
       secondaryTagKeys: ['security', 'wallet'] as const,
@@ -483,7 +484,7 @@ async function main() {
     {
       id: '4baf1ea7-cd09-43d8-bf43-fd9eb6af90f2',
       projectKey: 'tonDropDesk' as const,
-      authorKey: 'posterSage' as const,
+      authorKey: 'hunterSage' as const,
       urgency: UpdateUrgency.low,
       title: 'TON Ecosystem New Partnership',
       secondaryTagKeys: ['partnership'] as const,
@@ -503,7 +504,7 @@ async function main() {
     {
       id: '44172153-90bc-47c8-bb2a-454c5ca63b6c',
       projectKey: 'bscLaunchFlow' as const,
-      authorKey: 'posterNexa' as const,
+      authorKey: 'hunterNexa' as const,
       urgency: UpdateUrgency.medium,
       title: 'BSC Token Claim Process',
       secondaryTagKeys: ['launching', 'wallet'] as const,

@@ -50,11 +50,11 @@ function roleBadge(role: string) {
           Admin
         </Badge>
       );
-    case "poster":
+    case "hunter":
       return (
         <Badge className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400" variant="outline">
           <Pen className="mr-1 h-3 w-3" />
-          Poster
+          Hunter
         </Badge>
       );
     default:
@@ -97,17 +97,17 @@ function UserRoleActions({
 
   const isOwner = user.roles.includes("owner");
   const isAdmin = user.roles.includes("admin");
-  const isPoster = user.roles.includes("poster");
+  const isHunter = user.roles.includes("hunter");
 
-  if (isOwner || (isAdmin && isPoster)) return null;
+  if (isOwner || (isAdmin && isHunter)) return null;
 
-  async function promote(target: "admin" | "poster") {
+  async function promote(target: "admin" | "hunter") {
     setLoading(true);
     try {
       if (target === "admin") {
         await clientApi.promoteToAdmin(user.id);
       } else {
-        await clientApi.promoteToPoster(user.id);
+        await clientApi.promoteToHunter(user.id);
       }
       onRefresh();
     } finally {
@@ -135,10 +135,10 @@ function UserRoleActions({
             Promote to Admin
           </DropdownMenuItem>
         )}
-        {!isPoster && (
-          <DropdownMenuItem onClick={() => promote("poster")}>
+        {!isHunter && (
+          <DropdownMenuItem onClick={() => promote("hunter")}>
             <ChevronUp className="h-4 w-4" />
-            Promote to Poster
+            Promote to Hunter
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
@@ -207,7 +207,7 @@ export default function UsersPage() {
   }, []);
 
   const admins = users.filter((u) => u.roles.includes("admin")).length;
-  const posters = users.filter((u) => u.roles.includes("poster")).length;
+  const hunters = users.filter((u) => u.roles.includes("hunter")).length;
   const regularUsers = users.filter(
     (u) => u.roles.length === 0 || (u.roles.length === 1 && u.roles[0] === "user")
   ).length;
@@ -255,8 +255,8 @@ export default function UsersPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Posters</p>
-                    <p className="text-2xl font-bold">{posters}</p>
+                    <p className="text-sm text-muted-foreground">Hunters</p>
+                    <p className="text-2xl font-bold">{hunters}</p>
                   </div>
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
                     <Pen className="h-5 w-5 text-emerald-400" />

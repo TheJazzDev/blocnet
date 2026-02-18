@@ -16,10 +16,10 @@ export class ProjectAssignmentsService {
     private readonly auditLogService: AuditLogService,
   ) {}
 
-  async assignPoster(
+  async assignHunter(
     actor: AuthUser,
     projectId: string,
-    posterId: string,
+    hunterId: string,
     note?: string,
   ) {
     const project = await this.prisma.project.findUnique({
@@ -35,27 +35,27 @@ export class ProjectAssignmentsService {
 
     if (!canManage) {
       throw new ForbiddenException(
-        'Only owner or project admin can assign posters',
+        'Only owner or project admin can assign hunters',
       );
     }
 
-    const posterRole = await this.prisma.userRole.findFirst({
+    const hunterRole = await this.prisma.userRole.findFirst({
       where: {
-        userId: posterId,
-        role: RoleName.poster,
+        userId: hunterId,
+        role: RoleName.hunter,
       },
       select: { id: true },
     });
 
-    if (!posterRole) {
-      throw new ForbiddenException('Target user is not a poster');
+    if (!hunterRole) {
+      throw new ForbiddenException('Target user is not a hunter');
     }
 
-    const assignment = await this.prisma.projectPoster.upsert({
+    const assignment = await this.prisma.projectHunter.upsert({
       where: {
-        projectId_posterId: {
+        projectId_hunterId: {
           projectId,
-          posterId,
+          hunterId,
         },
       },
       update: {
@@ -63,26 +63,26 @@ export class ProjectAssignmentsService {
       },
       create: {
         projectId,
-        posterId,
+        hunterId,
         assignedBy: actor.id,
       },
     });
 
     await this.auditLogService.create({
       actorId: actor.id,
-      action: 'project.poster.assign',
-      resourceType: 'project_poster',
+      action: 'project.hunter.assign',
+      resourceType: 'project_hunter',
       resourceId: assignment.id,
-      metadata: { projectId, posterId, note },
+      metadata: { projectId, hunterId, note },
     });
 
     return assignment;
   }
 
-  async invitePoster(
+  async inviteHunter(
     actor: AuthUser,
     projectId: string,
-    posterId: string,
+    hunterId: string,
     note?: string,
   ) {
     const project = await this.prisma.project.findUnique({
@@ -98,27 +98,27 @@ export class ProjectAssignmentsService {
 
     if (!canManage) {
       throw new ForbiddenException(
-        'Only owner or project admin can invite posters',
+        'Only owner or project admin can invite hunters',
       );
     }
 
-    const posterRole = await this.prisma.userRole.findFirst({
+    const hunterRole = await this.prisma.userRole.findFirst({
       where: {
-        userId: posterId,
-        role: RoleName.poster,
+        userId: hunterId,
+        role: RoleName.hunter,
       },
       select: { id: true },
     });
 
-    if (!posterRole) {
-      throw new ForbiddenException('Target user is not a poster');
+    if (!hunterRole) {
+      throw new ForbiddenException('Target user is not a hunter');
     }
 
-    const invite = await this.prisma.projectPosterInvite.upsert({
+    const invite = await this.prisma.projectHunterInvite.upsert({
       where: {
-        projectId_posterId: {
+        projectId_hunterId: {
           projectId,
-          posterId,
+          hunterId,
         },
       },
       update: {
@@ -130,7 +130,7 @@ export class ProjectAssignmentsService {
       },
       create: {
         projectId,
-        posterId,
+        hunterId,
         invitedBy: actor.id,
         note,
       },
@@ -138,10 +138,10 @@ export class ProjectAssignmentsService {
 
     await this.auditLogService.create({
       actorId: actor.id,
-      action: 'project.poster.invite',
-      resourceType: 'project_poster_invite',
+      action: 'project.hunter.invite',
+      resourceType: 'project_hunter_invite',
       resourceId: invite.id,
-      metadata: { projectId, posterId, note },
+      metadata: { projectId, hunterId, note },
     });
 
     return invite;
@@ -171,13 +171,13 @@ export class ProjectAssignmentsService {
       );
     }
 
-    return this.prisma.projectPosterInvite.findMany({
+    return this.prisma.projectHunterInvite.findMany({
       where: {
         projectId,
         status,
       },
       include: {
-        poster: {
+        hunter: {
           select: {
             id: true,
             email: true,
@@ -197,9 +197,9 @@ export class ProjectAssignmentsService {
     offset = 0,
     limit = 30,
   ) {
-    return this.prisma.projectPosterInvite.findMany({
+    return this.prisma.projectHunterInvite.findMany({
       where: {
-        posterId: actor.id,
+        hunterId: actor.id,
         status,
       },
       include: {
@@ -228,7 +228,7 @@ export class ProjectAssignmentsService {
       );
     }
 
-    const invite = await this.prisma.projectPosterInvite.findUnique({
+    const invite = await this.prisma.projectHunterInvite.findUnique({
       where: { id: inviteId },
       include: {
         project: {
@@ -243,11 +243,11 @@ export class ProjectAssignmentsService {
       throw new NotFoundException('Invite not found');
     }
 
-    if (invite.posterId !== actor.id) {
+    if (invite.hunterId !== actor.id) {
       throw new ForbiddenException('You can only respond to your own invites');
     }
 
-    const updatedInvite = await this.prisma.projectPosterInvite.update({
+    const updatedInvite = await this.prisma.projectHunterInvite.update({
       where: { id: invite.id },
       data: {
         status,
@@ -257,11 +257,11 @@ export class ProjectAssignmentsService {
     });
 
     if (status === InviteStatus.accepted) {
-      await this.prisma.projectPoster.upsert({
+      await this.prisma.projectHunter.upsert({
         where: {
-          projectId_posterId: {
+          projectId_hunterId: {
             projectId: invite.projectId,
-            posterId: invite.posterId,
+            hunterId: invite.hunterId,
           },
         },
         update: {
@@ -269,7 +269,7 @@ export class ProjectAssignmentsService {
         },
         create: {
           projectId: invite.projectId,
-          posterId: invite.posterId,
+          hunterId: invite.hunterId,
           assignedBy: invite.invitedBy,
         },
       });
@@ -277,8 +277,8 @@ export class ProjectAssignmentsService {
 
     await this.auditLogService.create({
       actorId: actor.id,
-      action: 'project.poster.invite.respond',
-      resourceType: 'project_poster_invite',
+      action: 'project.hunter.invite.respond',
+      resourceType: 'project_hunter_invite',
       resourceId: invite.id,
       metadata: {
         projectId: invite.projectId,

@@ -231,11 +231,11 @@ export class UpdatesService {
       return;
     }
 
-    if (actor.roles.includes(AppRole.POSTER)) {
-      const assignment = await this.prisma.projectPoster.findFirst({
+    if (actor.roles.includes(AppRole.HUNTER)) {
+      const assignment = await this.prisma.projectHunter.findFirst({
         where: {
           projectId,
-          posterId: actor.id,
+          hunterId: actor.id,
         },
         select: { id: true },
       });
@@ -246,7 +246,7 @@ export class UpdatesService {
     }
 
     throw new ForbiddenException(
-      'Only assigned posters or owning admins can create updates in this project',
+      'Only assigned hunters or owning admins can create updates in this project',
     );
   }
 

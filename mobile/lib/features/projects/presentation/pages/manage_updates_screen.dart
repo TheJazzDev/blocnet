@@ -5,6 +5,7 @@ import 'package:blocnet/features/projects/presentation/widgets/update/update_det
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class ManageUpdatesScreen extends StatefulWidget {
@@ -35,10 +36,9 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Your current role does not allow managing updates.',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.textMuted,
               fontSize: 14,
-              fontFamily: 'Geist',
             ),
           ),
         ),
@@ -71,10 +71,9 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                           store.lastError!.isNotEmpty) ...[
                         Text(
                           store.lastError!,
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             color: AppColors.error500,
                             fontSize: 12,
-                            fontFamily: 'Geist',
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -84,10 +83,9 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
                             'You have not created any updates yet.',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               color: AppColors.textFaint,
                               fontSize: 13,
-                              fontFamily: 'Geist',
                             ),
                           ),
                         )
@@ -106,9 +104,8 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
       backgroundColor: AppColors.bgBase,
       title: Text(
         'Manage Updates',
-        style: TextStyle(
+        style: GoogleFonts.spaceGrotesk(
           color: AppColors.textPrimary,
-          fontFamily: 'Geist',
           fontWeight: FontWeight.w600,
           fontSize: 16,
         ),
@@ -189,21 +186,18 @@ class _UpdateTile extends StatelessWidget {
                 children: [
                   Text(
                     update.title,
-                    style: TextStyle(
+                    style: GoogleFonts.spaceGrotesk(
                       color: AppColors.textPrimary,
                       fontSize: 14,
-                      fontFamily: 'Geist',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     update.project?.name ?? 'Project',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textMuted,
                       fontSize: 12,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w400,
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -211,11 +205,9 @@ class _UpdateTile extends StatelessWidget {
                     update.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.textFaint,
                       fontSize: 11,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],

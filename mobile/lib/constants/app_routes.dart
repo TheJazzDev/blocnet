@@ -1,5 +1,5 @@
 class AppRoutes {
-  // Global route
+  // Global routes
   static const String main = '/main';
   static const String profile = '/profile';
   static const String settings = '/settings';
@@ -10,6 +10,12 @@ class AppRoutes {
   static const String manageProjects = '/manage-projects';
   static const String manageUpdates = '/manage-updates';
 
+  // Hunter routes
+  static const String hunterHub = '/hunter-hub';
+  static const String becomeHunter = '/become-hunter';
+  static const String hunterProfile = '/hunter-profile';
+  static const String projectDetail = '/project-detail';
+
   // Auth routes
   static const String signIn = '/signin';
   static const String signUp = '/signup';
@@ -17,7 +23,7 @@ class AppRoutes {
   static const String resetPassword = '/reset-password';
   static const String forgotPassword = '/forgot-password';
 
-  // projects reoutes
+  // Project routes
   static const String home = '/home';
   static const String trending = '/trending';
   static const String discover = '/discover';

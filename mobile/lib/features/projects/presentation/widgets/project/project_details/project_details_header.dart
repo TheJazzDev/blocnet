@@ -2,9 +2,14 @@ import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 
 class ProjectDetailsHeader extends StatelessWidget {
-  const ProjectDetailsHeader({required this.projectId, super.key});
+  const ProjectDetailsHeader({
+    required this.projectId,
+    this.title = 'Project Detail',
+    super.key,
+  });
 
   final String projectId;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -13,10 +18,28 @@ class ProjectDetailsHeader extends StatelessWidget {
       child: Row(
         children: [
           _HeaderIconButton(
-            icon: Icons.close,
+            icon: Icons.arrow_back_rounded,
             onTap: () => Navigator.of(context).pop(),
           ),
-          const Spacer(),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          _HeaderIconButton(
+            icon: Icons.share_outlined,
+            onTap: () {},
+          ),
+          const SizedBox(width: 8),
           _HeaderIconButton(
             icon: Icons.bookmark_border,
             onTap: () {},
@@ -38,14 +61,14 @@ class _HeaderIconButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 36,
-        height: 36,
+        width: 38,
+        height: 38,
         decoration: BoxDecoration(
           color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.borderSubtle, width: 1),
         ),
-        child: Icon(icon, size: 18, color: AppColors.textMuted),
+        child: Icon(icon, size: 18, color: AppColors.textSecondary),
       ),
     );
   }

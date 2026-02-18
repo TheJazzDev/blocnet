@@ -95,7 +95,7 @@ export class AuthService {
   toRolePriority(roles: AppRole[]): number {
     if (roles.includes(AppRole.OWNER)) return 4;
     if (roles.includes(AppRole.ADMIN)) return 3;
-    if (roles.includes(AppRole.POSTER)) return 2;
+    if (roles.includes(AppRole.HUNTER)) return 2;
     return 1;
   }
 }

@@ -1,12 +1,14 @@
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
+import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/create_update_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/manage_updates_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/manage_projects_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/submit_project_screen.dart';
 import 'package:blocnet/screen/main_screen.dart';
+import 'package:blocnet/screen/notifications.dart';
 import 'package:blocnet/screen/wallet_screen.dart';
 import 'package:flutter/material.dart';
-import '../screen/notifications.dart';
 import '../features/projects/presentation/sections/explore/trending.dart';
 import '../features/projects/presentation/sections/explore/priority.dart';
 
@@ -21,6 +23,10 @@ class ProtectedRoutes {
   static const String submitProject = AppRoutes.submitProject;
   static const String manageProjects = AppRoutes.manageProjects;
   static const String manageUpdates = AppRoutes.manageUpdates;
+
+  // Hunter
+  static const String hunterHub = AppRoutes.hunterHub;
+  static const String becomeHunter = AppRoutes.becomeHunter;
 
   // Projects
   static const String home = AppRoutes.home;
@@ -49,10 +55,16 @@ class ProtectedRoutes {
       profile: (context) => const MainScreen(initialIndex: 3),
       settings: (context) => const MainScreen(initialIndex: 3),
       wallet: (context) => const WalletScreen(),
+      // Notifications is now a push route (not a main tab)
+      notifications: (context) => const NotificationsScreen(),
       createUpdate: (context) => const CreateUpdateScreen(),
       submitProject: (context) => const SubmitProjectScreen(),
       manageProjects: (context) => const ManageProjectsScreen(),
       manageUpdates: (context) => const ManageUpdatesScreen(),
+
+      // Hunter
+      hunterHub: (context) => const HunterHubScreen(),
+      becomeHunter: (context) => const BecomeHunterScreen(),
 
       // Projects
       home: (context) => const MainScreen(initialIndex: 0),
@@ -61,7 +73,6 @@ class ProtectedRoutes {
       midPriority: (context) => const PriorityScreens(),
       lowPriority: (context) => const PriorityScreens(),
       highPriority: (context) => const PriorityScreens(),
-      notifications: (context) => const NotificationsScreen(),
     };
   }
 
@@ -75,6 +86,8 @@ class ProtectedRoutes {
     submitProject,
     manageProjects,
     manageUpdates,
+    hunterHub,
+    becomeHunter,
     home,
     discover,
     trending,
@@ -86,7 +99,7 @@ class ProtectedRoutes {
   static const Set<String> _contributorRoles = {
     'owner',
     'admin',
-    'poster',
+    'hunter',
   };
 
   static const Map<String, Set<String>> _routeRoleAccess = {
@@ -94,5 +107,6 @@ class ProtectedRoutes {
     submitProject: _contributorRoles,
     manageProjects: _contributorRoles,
     manageUpdates: _contributorRoles,
+    hunterHub: _contributorRoles,
   };
 }

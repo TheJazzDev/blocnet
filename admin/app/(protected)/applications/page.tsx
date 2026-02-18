@@ -144,7 +144,7 @@ export default function ApplicationsPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold">{app.user.displayName ?? app.user.email}</h3>
                           {statusBadge(app.status)}
-                          <Badge variant="secondary">{app.targetRole === "admin" ? "Admin Role" : "Poster Role"}</Badge>
+                          <Badge variant="secondary">{app.targetRole === "admin" ? "Admin Role" : "Hunter Role"}</Badge>
                         </div>
                         <p className="mt-0.5 text-sm text-muted-foreground">{app.user.email}</p>
                         <p className="mt-3 text-sm leading-relaxed">{app.reason}</p>

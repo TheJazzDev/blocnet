@@ -9,7 +9,7 @@ datasource db {
 enum RoleName {
   owner
   admin
-  poster
+  hunter
   user
 }
 
@@ -21,7 +21,7 @@ enum ApplicationStatus {
 
 enum ApplicationTargetRole {
   admin
-  poster
+  hunter
 }
 
 enum ProjectStatus {
@@ -68,12 +68,12 @@ model Profile {
   updatedAt         DateTime           @updatedAt
   roles             UserRole[]
   ownedProjects     Project[]          @relation("OwnedProjects")
-  posterAssignments ProjectPoster[]
+  hunterAssignments ProjectHunter[]
   authoredUpdates   Update[]           @relation("AuthoredUpdates")
   authoredComments  Comment[]          @relation("AuthoredComments")
-  posterInvites     ProjectPosterInvite[] @relation("InvitePoster")
-  sentInvites       ProjectPosterInvite[] @relation("InviteSender")
-  reviewedInvites   ProjectPosterInvite[] @relation("InviteReviewer")
+  hunterInvites     ProjectHunterInvite[] @relation("InviteHunter")
+  sentInvites       ProjectHunterInvite[] @relation("InviteSender")
+  reviewedInvites   ProjectHunterInvite[] @relation("InviteReviewer")
   projectProposals  ProjectProposal[]     @relation("ProjectProposalApplicant")
   reviewedProposals ProjectProposal[]     @relation("ProjectProposalReviewer")
   follows           ProjectFollow[]
@@ -114,8 +114,8 @@ model Project {
   ownerAdmin    Profile         @relation("OwnedProjects", fields: [ownerAdminId], references: [id])
   primaryTag    PrimaryTag      @relation(fields: [primaryTagId], references: [id], onDelete: Restrict)
   secondaryTags ProjectSecondaryTag[]
-  posters       ProjectPoster[]
-  invites       ProjectPosterInvite[]
+  hunters       ProjectHunter[]
+  invites       ProjectHunterInvite[]
   proposals     ProjectProposal[]
   updates       Update[]
   follows       ProjectFollow[]
@@ -124,24 +124,24 @@ model Project {
   @@index([ownerAdminId])
 }
 
-model ProjectPoster {
+model ProjectHunter {
   id         String   @id @default(uuid()) @db.Uuid
   projectId  String   @db.Uuid
-  posterId   String   @db.Uuid
+  hunterId   String   @db.Uuid
   assignedBy String   @db.Uuid
   createdAt  DateTime @default(now())
 
   project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  poster     Profile  @relation(fields: [posterId], references: [id], onDelete: Cascade)
+  hunter     Profile  @relation(fields: [hunterId], references: [id], onDelete: Cascade)
 
-  @@unique([projectId, posterId])
-  @@index([posterId])
+  @@unique([projectId, hunterId])
+  @@index([hunterId])
 }
 
-model ProjectPosterInvite {
+model ProjectHunterInvite {
   id          String       @id @default(uuid()) @db.Uuid
   projectId   String       @db.Uuid
-  posterId    String       @db.Uuid
+  hunterId    String       @db.Uuid
   invitedBy   String       @db.Uuid
   note        String?
   status      InviteStatus @default(pending)
@@ -151,12 +151,12 @@ model ProjectPosterInvite {
   updatedAt   DateTime     @updatedAt
 
   project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  poster      Profile      @relation("InvitePoster", fields: [posterId], references: [id], onDelete: Cascade)
+  hunter      Profile      @relation("InviteHunter", fields: [hunterId], references: [id], onDelete: Cascade)
   inviter     Profile      @relation("InviteSender", fields: [invitedBy], references: [id], onDelete: Cascade)
   reviewer    Profile?     @relation("InviteReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
 
-  @@unique([projectId, posterId])
-  @@index([posterId, status])
+  @@unique([projectId, hunterId])
+  @@index([hunterId, status])
   @@index([projectId, status])
 }
 

@@ -34,9 +34,9 @@ export class RolesController {
     return this.rolesService.promoteToAdmin(user.id, userId, dto.note);
   }
 
-  @Post('posters/:userId/promote')
+  @Post('hunters/:userId/promote')
   @Roles(AppRole.OWNER, AppRole.ADMIN)
-  async promotePoster(
+  async promoteHunter(
     @CurrentUser() user: AuthUser | undefined,
     @Param('userId') userId: string,
     @Body() dto: PromoteUserDto,
@@ -45,6 +45,6 @@ export class RolesController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.rolesService.promoteToPoster(user.id, userId, dto.note);
+    return this.rolesService.promoteToHunter(user.id, userId, dto.note);
   }
 }

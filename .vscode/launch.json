@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Mobile Flutter (dev env)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "mobile",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=.env.dev.json"
+      ]
+    },
+    {
+      "name": "Mobile Flutter (prod env)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "mobile",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=.env.prod.json"
+      ]
+    }
+  ]
+}
