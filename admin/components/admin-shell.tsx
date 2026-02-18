@@ -11,9 +11,9 @@ import {
   Settings,
   Menu,
   X,
-  Hexagon,
   LogOut,
 } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -40,9 +40,7 @@ function SidebarContent({
   return (
     <>
       <div className="flex items-center gap-2.5 px-4 py-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <Hexagon className="h-4 w-4 text-primary-foreground" />
-        </div>
+        <Image src="/logo2.png" alt="Blocnet" width={32} height={32} className="rounded-lg" />
         <div>
           <h1 className="text-sm font-bold tracking-tight">Blocnet</h1>
           <p className="text-[11px] text-muted-foreground">Admin Panel</p>
@@ -136,7 +134,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
           <div className="flex items-center gap-2">
-            <Hexagon className="h-4 w-4 text-primary" />
+            <Image src="/logo2.png" alt="Blocnet" width={24} height={24} className="rounded" />
             <span className="text-sm font-bold">Blocnet Admin</span>
           </div>
         </div>
