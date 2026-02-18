@@ -9,6 +9,8 @@ import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/services/tags_store.dart';
 import 'package:blocnet/services/comments_store.dart';
+import 'package:blocnet/services/community_posts_store.dart';
+import 'package:blocnet/services/user_profile_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'constants/app_routes.dart';
@@ -49,8 +51,10 @@ void main() async {
         ChangeNotifierProvider<AuthStore>.value(value: authStore),
         ChangeNotifierProvider(create: (_) => AppStore()),
         ChangeNotifierProvider(create: (_) => UpdatesStore()),
+        ChangeNotifierProvider(create: (_) => CommunityPostsStore()),
         ChangeNotifierProvider(create: (_) => NotificationsStore()),
         ChangeNotifierProvider(create: (_) => CommentsStore()),
+        ChangeNotifierProvider(create: (_) => UserProfileStore()),
         ChangeNotifierProvider(create: (_) => TagsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),
         // ChangeNotifierProvider(create: (_) => PriorityStore()),

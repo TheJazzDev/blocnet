@@ -46,6 +46,16 @@ enum NotificationType {
   system
 }
 
+enum CommunityTopic {
+  general
+  market_talk
+  introductions
+}
+
+enum CommunityReactionKind {
+  like
+}
+
 enum InviteStatus {
   pending
   accepted
@@ -71,6 +81,12 @@ model Profile {
   hunterAssignments ProjectHunter[]
   authoredUpdates   Update[]           @relation("AuthoredUpdates")
   authoredComments  Comment[]          @relation("AuthoredComments")
+  communityPosts    CommunityPost[]    @relation("CommunityPostAuthor")
+  communityPostComments CommunityPostComment[] @relation("CommunityPostCommentAuthor")
+  communityPostReactions CommunityPostReaction[] @relation("CommunityPostReactionUser")
+  bookmarks         Bookmark[]
+  followerLinks     UserFollow[]       @relation("UserFollowFollowee")
+  followingLinks    UserFollow[]       @relation("UserFollowFollower")
   hunterInvites     ProjectHunterInvite[] @relation("InviteHunter")
   sentInvites       ProjectHunterInvite[] @relation("InviteSender")
   reviewedInvites   ProjectHunterInvite[] @relation("InviteReviewer")
@@ -282,6 +298,81 @@ model ProjectFollow {
 
   @@unique([projectId, userId])
   @@index([userId])
+}
+
+model UserFollow {
+  id         String   @id @default(uuid()) @db.Uuid
+  followerId String   @db.Uuid
+  followeeId String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  follower   Profile  @relation("UserFollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  followee   Profile  @relation("UserFollowFollowee", fields: [followeeId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followeeId])
+  @@index([followeeId, createdAt])
+  @@index([followerId, createdAt])
+}
+
+model CommunityPost {
+  id         String          @id @default(uuid()) @db.Uuid
+  authorId   String          @db.Uuid
+  topic      CommunityTopic  @default(general)
+  content    String
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  author     Profile         @relation("CommunityPostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  comments   CommunityPostComment[]
+  reactions  CommunityPostReaction[]
+  bookmarks  Bookmark[]
+
+  @@index([topic, createdAt])
+  @@index([authorId, createdAt])
+}
+
+model CommunityPostComment {
+  id         String        @id @default(uuid()) @db.Uuid
+  postId     String        @db.Uuid
+  authorId   String        @db.Uuid
+  content    String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  post       CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author     Profile       @relation("CommunityPostCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@index([authorId])
+}
+
+model CommunityPostReaction {
+  id         String                @id @default(uuid()) @db.Uuid
+  postId     String                @db.Uuid
+  userId     String                @db.Uuid
+  kind       CommunityReactionKind @default(like)
+  createdAt  DateTime              @default(now())
+
+  post       CommunityPost         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user       Profile               @relation("CommunityPostReactionUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId, kind])
+  @@index([userId, createdAt])
+  @@index([postId, kind])
+}
+
+model Bookmark {
+  id              String        @id @default(uuid()) @db.Uuid
+  userId          String        @db.Uuid
+  communityPostId String        @db.Uuid
+  createdAt       DateTime      @default(now())
+
+  user            Profile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityPost   CommunityPost @relation(fields: [communityPostId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityPostId])
+  @@index([userId, createdAt])
+  @@index([communityPostId])
 }
 
 model Notification {

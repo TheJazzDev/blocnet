@@ -65,28 +65,39 @@ class _BookmarksTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final profileStore = context.watch<UserProfileStore>();
+    final bookmarks = profileStore.bookmarks;
+
+    if (profileStore.isLoadingBookmarks && bookmarks.isEmpty) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primary400,
+          strokeWidth: 2,
+        ),
+      );
+    }
+
+    if (bookmarks.isEmpty) {
+      return const _BookmarksEmptyState();
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
-        children: const [
-          _BookmarkItem(
-            title: 'Gem Alert: New L2 Launching',
-            subtitle:
-                'Detailed breakdown of the upcoming zkEVM scaling solution.',
-            author: '@AlphaHunter',
-            tag: 'Analysis',
-            timeAgo: '2h ago',
-          ),
-          _BookmarkItem(
-            title: 'Yield Farming Strategy v2',
-            subtitle: 'Optimizing stablecoin pairs on Curve for maximum APY.',
-            author: '@DeFiDegan',
-            tag: 'Strategy',
-            timeAgo: '1d ago',
-          ),
-          SizedBox(height: 16),
-          _BookmarksEmptyState(),
-        ],
+        children: bookmarks
+            .map(
+              (post) => _BookmarkItem(
+                post: post,
+                onRemove: () async {
+                  await context
+                      .read<CommunityPostsStore>()
+                      .toggleBookmark(post.id);
+                  if (!context.mounted) return;
+                  await context.read<UserProfileStore>().refreshBookmarks();
+                },
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -97,39 +108,39 @@ class _BookmarksEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(Icons.bookmark_add_outlined, size: 36, color: AppColors.textFaint),
-        const SizedBox(height: 8),
-        Text(
-          'Explore more projects to add bookmarks',
-          style: GoogleFonts.inter(
-            color: AppColors.textMuted,
-            fontSize: 12,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Column(
+        children: [
+          Icon(Icons.bookmark_add_outlined,
+              size: 36, color: AppColors.textFaint),
+          const SizedBox(height: 8),
+          Text(
+            'Bookmark posts from Community to save them here',
+            style: GoogleFonts.inter(
+              color: AppColors.textMuted,
+              fontSize: 12,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
 class _BookmarkItem extends StatelessWidget {
   const _BookmarkItem({
-    required this.title,
-    required this.subtitle,
-    required this.author,
-    required this.tag,
-    required this.timeAgo,
+    required this.post,
+    required this.onRemove,
   });
 
-  final String title;
-  final String subtitle;
-  final String author;
-  final String tag;
-  final String timeAgo;
+  final CommunityPost post;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
+    final author = post.admin?.name ?? 'Blocnet User';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -156,7 +167,8 @@ class _BookmarkItem extends StatelessWidget {
                 ],
               ),
             ),
-            child: Icon(Icons.article_outlined, size: 22, color: AppColors.textFaint),
+            child: Icon(Icons.forum_outlined,
+                size: 22, color: AppColors.textFaint),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -168,19 +180,19 @@ class _BookmarkItem extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        title,
+                        post.content,
                         style: GoogleFonts.inter(
                           color: AppColors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      timeAgo,
+                      getTimeStamp(post.createdAt),
                       style: GoogleFonts.inter(
                         color: AppColors.textFaint,
                         fontSize: 10,
@@ -188,22 +200,11 @@ class _BookmarkItem extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.inter(
-                    color: AppColors.textMuted,
-                    fontSize: 11,
-                    height: 1.4,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     Text(
-                      author,
+                      '@${author.toLowerCase().replaceAll(' ', '_')}',
                       style: GoogleFonts.inter(
                         color: AppColors.textFaint,
                         fontSize: 10,
@@ -211,19 +212,30 @@ class _BookmarkItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppColors.bgElevated,
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: AppColors.borderSubtle),
                       ),
                       child: Text(
-                        tag,
+                        post.topic.label,
                         style: GoogleFonts.inter(
                           color: AppColors.textFaint,
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
                         ),
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: onRemove,
+                      behavior: HitTestBehavior.opaque,
+                      child: Icon(
+                        Icons.bookmark_remove_outlined,
+                        size: 16,
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -239,6 +251,38 @@ class _BookmarkItem extends StatelessWidget {
 
 class _WatchlistTab extends StatelessWidget {
   const _WatchlistTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final profileStore = context.watch<UserProfileStore>();
+    final watchlist = profileStore.watchlist;
+
+    if (profileStore.isLoadingWatchlist && watchlist.isEmpty) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primary400,
+          strokeWidth: 2,
+        ),
+      );
+    }
+
+    if (watchlist.isEmpty) {
+      return const _WatchlistEmptyState();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Column(
+        children: watchlist
+            .map((project) => _WatchlistItem(project: project))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _WatchlistEmptyState extends StatelessWidget {
+  const _WatchlistEmptyState();
 
   @override
   Widget build(BuildContext context) {
@@ -261,8 +305,119 @@ class _WatchlistTab extends StatelessWidget {
   }
 }
 
+class _WatchlistItem extends StatelessWidget {
+  const _WatchlistItem({required this.project});
+
+  final Project project;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  project.name,
+                  style: GoogleFonts.inter(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.bgElevated,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.borderSubtle),
+                ),
+                child: Text(
+                  project.primaryTag.name,
+                  style: GoogleFonts.inter(
+                    color: AppColors.textFaint,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            project.description,
+            style: GoogleFonts.inter(
+              color: AppColors.textMuted,
+              fontSize: 11,
+              height: 1.4,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.people_outline, size: 14, color: AppColors.textFaint),
+              const SizedBox(width: 5),
+              Text(
+                '${project.followersCount} followers',
+                style: GoogleFonts.inter(
+                  color: AppColors.textFaint,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _HistoryTab extends StatelessWidget {
   const _HistoryTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final profileStore = context.watch<UserProfileStore>();
+    final items = profileStore.activity;
+
+    if (profileStore.isLoadingActivity && items.isEmpty) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primary400,
+          strokeWidth: 2,
+        ),
+      );
+    }
+
+    if (items.isEmpty) {
+      return const _HistoryEmptyState();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Column(
+        children: items.map((item) => _HistoryItem(item: item)).toList(),
+      ),
+    );
+  }
+}
+
+class _HistoryEmptyState extends StatelessWidget {
+  const _HistoryEmptyState();
 
   @override
   Widget build(BuildContext context) {
@@ -277,6 +432,55 @@ class _HistoryTab extends StatelessWidget {
             style: GoogleFonts.inter(
               color: AppColors.textMuted,
               fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryItem extends StatelessWidget {
+  const _HistoryItem({required this.item});
+
+  final ActivityItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.bolt_rounded, size: 16, color: AppColors.primary400),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.label,
+                  style: GoogleFonts.inter(
+                    color: AppColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  getTimeStamp(item.createdAt),
+                  style: GoogleFonts.inter(
+                    color: AppColors.textFaint,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

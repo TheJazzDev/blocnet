@@ -5,6 +5,7 @@ import { AdminApplicationsModule } from './admin-applications/admin-applications
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
+import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { DeviceTokensModule } from './device-tokens/device-tokens.module';
 import { FollowsModule } from './follows/follows.module';
 import { HealthModule } from './health/health.module';
@@ -44,6 +45,7 @@ import { envValidationSchema } from './config/env.validation';
     TagsModule,
     UpdatesModule,
     CommentsModule,
+    CommunityPostsModule,
     FollowsModule,
     NotificationsModule,
     DeviceTokensModule,

@@ -1,4 +1,16 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthGuard } from '../common/guards/auth.guard';
+import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { UsersService } from './users.service';
 
 @Controller('profiles')
@@ -14,5 +26,31 @@ export class ProfilesController {
     }
 
     return profile;
+  }
+
+  @Post(':id/follow')
+  @UseGuards(AuthGuard)
+  async followProfile(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.usersService.followProfile(user.id, id);
+  }
+
+  @Delete(':id/follow')
+  @UseGuards(AuthGuard)
+  async unfollowProfile(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.usersService.unfollowProfile(user.id, id);
   }
 }

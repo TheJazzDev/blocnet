@@ -1,18 +1,17 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/comments/data/models/comment_model.dart';
-import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
+import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/services/comments_store.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class CommunityPostDiscussionScreen extends StatefulWidget {
-  const CommunityPostDiscussionScreen({super.key, this.updateId});
+  const CommunityPostDiscussionScreen({super.key, this.postId});
 
-  final String? updateId;
+  final String? postId;
 
   @override
   State<CommunityPostDiscussionScreen> createState() =>
@@ -22,19 +21,21 @@ class CommunityPostDiscussionScreen extends StatefulWidget {
 class _CommunityPostDiscussionScreenState
     extends State<CommunityPostDiscussionScreen> {
   final TextEditingController _commentCtrl = TextEditingController();
-  String? _updateId;
+  String? _postId;
   bool _isSending = false;
 
   @override
   void initState() {
     super.initState();
-    _updateId = widget.updateId;
+    _postId = widget.postId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<UpdatesStore>().fetchUpdatesOnce();
-      final id = _updateId;
+      final store = context.read<CommunityPostsStore>();
+      store.fetchPostsOnce();
+      final id = _postId;
       if (id != null && id.isNotEmpty) {
-        context.read<CommentsStore>().fetchComments(id);
+        store.fetchPostById(id);
+        store.fetchComments(id);
       }
     });
   }
@@ -42,13 +43,16 @@ class _CommunityPostDiscussionScreenState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_updateId != null && _updateId!.isNotEmpty) return;
+    if (_postId != null && _postId!.isNotEmpty) return;
+
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is String && args.isNotEmpty) {
-      _updateId = args;
+      _postId = args;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        context.read<CommentsStore>().fetchComments(args);
+        final store = context.read<CommunityPostsStore>();
+        store.fetchPostById(args);
+        store.fetchComments(args);
       });
     }
   }
@@ -59,16 +63,20 @@ class _CommunityPostDiscussionScreenState
     super.dispose();
   }
 
-  Future<void> _sendComment(String updateId) async {
+  Future<void> _sendComment(String postId) async {
     final text = _commentCtrl.text.trim();
     if (text.isEmpty || _isSending) return;
+
     setState(() => _isSending = true);
     try {
-      await context.read<CommentsStore>().createComment(
-            updateId: updateId,
+      final created = await context.read<CommunityPostsStore>().createComment(
+            postId: postId,
             content: text,
           );
-      _commentCtrl.clear();
+
+      if (created != null) {
+        _commentCtrl.clear();
+      }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,8 +89,8 @@ class _CommunityPostDiscussionScreenState
 
   @override
   Widget build(BuildContext context) {
-    final updateId = _updateId;
-    if (updateId == null || updateId.isEmpty) {
+    final postId = _postId;
+    if (postId == null || postId.isEmpty) {
       return Scaffold(
         backgroundColor: AppColors.bgBase,
         appBar: const CustomAppBar(
@@ -100,10 +108,10 @@ class _CommunityPostDiscussionScreenState
       );
     }
 
-    return Consumer2<UpdatesStore, CommentsStore>(
-      builder: (context, updatesStore, commentsStore, _) {
-        final post = _findPost(updatesStore.posts, updateId);
-        final comments = commentsStore.commentsForUpdate(updateId);
+    return Consumer<CommunityPostsStore>(
+      builder: (context, store, _) {
+        final post = store.postById(postId);
+        final comments = store.commentsForPost(postId);
 
         return Scaffold(
           backgroundColor: AppColors.bgBase,
@@ -126,7 +134,11 @@ class _CommunityPostDiscussionScreenState
                     : ListView(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                         children: [
-                          _PostDetailsCard(post: post),
+                          _PostDetailsCard(
+                            post: post,
+                            onLike: () => store.toggleLike(post.id),
+                            onBookmark: () => store.toggleBookmark(post.id),
+                          ),
                           const SizedBox(height: 14),
                           Row(
                             children: [
@@ -186,7 +198,7 @@ class _CommunityPostDiscussionScreenState
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: _isSending ? null : () => _sendComment(updateId),
+                        onTap: _isSending ? null : () => _sendComment(postId),
                         child: Container(
                           width: 42,
                           height: 42,
@@ -211,23 +223,22 @@ class _CommunityPostDiscussionScreenState
       },
     );
   }
-
-  Update? _findPost(List<Update> posts, String updateId) {
-    for (final post in posts) {
-      if (post.id == updateId) return post;
-    }
-    return null;
-  }
 }
 
 class _PostDetailsCard extends StatelessWidget {
-  const _PostDetailsCard({required this.post});
+  const _PostDetailsCard({
+    required this.post,
+    required this.onLike,
+    required this.onBookmark,
+  });
 
-  final Update post;
+  final CommunityPost post;
+  final VoidCallback onLike;
+  final VoidCallback onBookmark;
 
   @override
   Widget build(BuildContext context) {
-    final adminName = post.admin?.name ?? 'Blocnet';
+    final adminName = post.admin?.name ?? 'Blocnet User';
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -278,16 +289,7 @@ class _PostDetailsCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            post.title,
-            style: GoogleFonts.spaceGrotesk(
-              color: AppColors.textPrimary,
-              fontSize: 26 - 6,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            post.content.trim().isEmpty ? post.description : post.content,
+            post.content,
             style: GoogleFonts.inter(
               color: AppColors.textSecondary,
               fontSize: 14,
@@ -297,15 +299,32 @@ class _PostDetailsCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.favorite_rounded,
-                  size: 18, color: AppColors.warning500),
-              const SizedBox(width: 5),
-              Text(
-                '${100 + (post.title.length % 90)}',
-                style: GoogleFonts.inter(
-                  color: AppColors.warning500,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              GestureDetector(
+                onTap: onLike,
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: [
+                    Icon(
+                      post.isLiked
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      size: 18,
+                      color: post.isLiked
+                          ? AppColors.warning500
+                          : AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      '${post.likesCount}',
+                      style: GoogleFonts.inter(
+                        color: post.isLiked
+                            ? AppColors.warning500
+                            : AppColors.textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 16),
@@ -313,14 +332,26 @@ class _PostDetailsCard extends StatelessWidget {
                   size: 18, color: AppColors.textMuted),
               const SizedBox(width: 5),
               Text(
-                '${12 + (post.description.length % 20)}',
+                '${post.commentsCount}',
                 style: GoogleFonts.inter(
                   color: AppColors.textMuted,
                   fontSize: 13,
                 ),
               ),
-              const SizedBox(width: 16),
-              Icon(Icons.share_outlined, size: 18, color: AppColors.textMuted),
+              const Spacer(),
+              GestureDetector(
+                onTap: onBookmark,
+                behavior: HitTestBehavior.opaque,
+                child: Icon(
+                  post.isBookmarked
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_outline_rounded,
+                  size: 18,
+                  color: post.isBookmarked
+                      ? AppColors.primary400
+                      : AppColors.textMuted,
+                ),
+              ),
             ],
           ),
         ],
@@ -353,7 +384,7 @@ class _EmptyDiscussion extends StatelessWidget {
 class _CommentCard extends StatelessWidget {
   const _CommentCard({required this.comment});
 
-  final CommentModel comment;
+  final CommunityPostComment comment;
 
   @override
   Widget build(BuildContext context) {

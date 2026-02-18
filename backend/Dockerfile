@@ -13,7 +13,7 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 # Build NestJS (prisma generate already ran in postinstall)
-RUN bun run build
+RUN bun run build && ls -la dist/
 
 # ── Stage 2: Production image ──────────────────────────────────────────────────
 FROM oven/bun:1.2-slim AS runner

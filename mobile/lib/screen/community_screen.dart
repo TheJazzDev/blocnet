@@ -1,9 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/community/data/models/community_post_model.dart';
+import 'package:blocnet/features/community/data/models/community_topic.dart';
+import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
-import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -21,8 +21,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<ProjectsStore>().fetchProjectsOnce();
-      context.read<UpdatesStore>().fetchUpdatesOnce();
+      context.read<CommunityPostsStore>().fetchPostsOnce();
     });
   }
 
@@ -39,11 +38,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
         elevation: 0,
         child: const Icon(Icons.add_rounded, color: Colors.black),
       ),
-      body: Consumer<UpdatesStore>(
+      body: Consumer<CommunityPostsStore>(
         builder: (context, store, _) {
-          final posts = store.posts
-              .where((post) => post.project != null && post.admin != null)
-              .toList();
+          final posts = store.posts;
+
+          if (store.isFetchingPosts && posts.isEmpty) {
+            return Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary400,
+                strokeWidth: 2,
+              ),
+            );
+          }
 
           if (posts.isEmpty) {
             return const Center(
@@ -60,16 +66,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   child: TabBarView(
                     children: [
                       _CommunityFeedList(
-                        posts: _filterPosts(posts, _CommunityTab.general),
+                        posts: _filterPosts(posts, CommunityTopic.general),
                         bottomPad: bottomPad,
+                        onLike: store.toggleLike,
+                        onBookmark: store.toggleBookmark,
                       ),
                       _CommunityFeedList(
-                        posts: _filterPosts(posts, _CommunityTab.marketTalk),
+                        posts: _filterPosts(posts, CommunityTopic.marketTalk),
                         bottomPad: bottomPad,
+                        onLike: store.toggleLike,
+                        onBookmark: store.toggleBookmark,
                       ),
                       _CommunityFeedList(
-                        posts: _filterPosts(posts, _CommunityTab.introductions),
+                        posts:
+                            _filterPosts(posts, CommunityTopic.introductions),
                         bottomPad: bottomPad,
+                        onLike: store.toggleLike,
+                        onBookmark: store.toggleBookmark,
                       ),
                     ],
                   ),
@@ -82,34 +95,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
-  List<Update> _filterPosts(List<Update> posts, _CommunityTab tab) {
-    switch (tab) {
-      case _CommunityTab.general:
-        return posts;
-      case _CommunityTab.marketTalk:
-        return posts.where((post) {
-          final text =
-              '${post.title} ${post.content} ${post.description}'.toLowerCase();
-          return text.contains('market') ||
-              text.contains('price') ||
-              text.contains('token') ||
-              text.contains('chart') ||
-              text.contains('trend');
-        }).toList();
-      case _CommunityTab.introductions:
-        return posts.where((post) {
-          final text =
-              '${post.title} ${post.content} ${post.description}'.toLowerCase();
-          return text.contains('introduce') ||
-              text.contains('hello') ||
-              text.contains('new here') ||
-              text.contains('welcome');
-        }).toList();
+  List<CommunityPost> _filterPosts(
+      List<CommunityPost> posts, CommunityTopic tab) {
+    if (tab == CommunityTopic.general) {
+      return posts;
     }
+
+    return posts.where((post) => post.topic == tab).toList();
   }
 }
-
-enum _CommunityTab { general, marketTalk, introductions }
 
 class _CommunityTabs extends StatelessWidget {
   const _CommunityTabs();
@@ -152,10 +146,14 @@ class _CommunityFeedList extends StatelessWidget {
   const _CommunityFeedList({
     required this.posts,
     required this.bottomPad,
+    required this.onLike,
+    required this.onBookmark,
   });
 
-  final List<Update> posts;
+  final List<CommunityPost> posts;
   final double bottomPad;
+  final Future<void> Function(String postId) onLike;
+  final Future<void> Function(String postId) onBookmark;
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +180,8 @@ class _CommunityFeedList extends StatelessWidget {
           AppRoutes.communityDiscussion,
           arguments: posts[index].id,
         ),
+        onLike: () => onLike(posts[index].id),
+        onBookmark: () => onBookmark(posts[index].id),
       ),
     );
   }
@@ -191,10 +191,14 @@ class _CommunityCard extends StatelessWidget {
   const _CommunityCard({
     required this.post,
     required this.onTap,
+    required this.onLike,
+    required this.onBookmark,
   });
 
-  final Update post;
+  final CommunityPost post;
   final VoidCallback onTap;
+  final VoidCallback onLike;
+  final VoidCallback onBookmark;
 
   @override
   Widget build(BuildContext context) {
@@ -203,12 +207,8 @@ class _CommunityCard extends StatelessWidget {
         admin?.name.trim().isNotEmpty == true ? admin!.name : 'Blocnet User';
     final role = _resolveRole(post);
     final roleColor =
-        role == 'ADMIN' ? AppColors.primary400 : const Color(0xFFC084FC);
-    final content = post.content.trim().isNotEmpty
-        ? post.content.trim()
-        : post.description.trim();
-    final likes = 20 + (post.title.length * 3) % 180;
-    final comments = 3 + (post.description.length % 40);
+        role == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
+    final content = post.content.trim();
 
     return GestureDetector(
       onTap: onTap,
@@ -287,15 +287,32 @@ class _CommunityCard extends StatelessWidget {
             const SizedBox(height: 11),
             Row(
               children: [
-                Icon(Icons.thumb_up_alt_rounded,
-                    size: 20, color: AppColors.primary400),
-                const SizedBox(width: 7),
-                Text(
-                  '$likes',
-                  style: GoogleFonts.inter(
-                    color: AppColors.primary400,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                GestureDetector(
+                  onTap: onLike,
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
+                    children: [
+                      Icon(
+                        post.isLiked
+                            ? Icons.thumb_up_alt_rounded
+                            : Icons.thumb_up_alt_outlined,
+                        size: 20,
+                        color: post.isLiked
+                            ? AppColors.primary400
+                            : AppColors.textMuted,
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        '${post.likesCount}',
+                        style: GoogleFonts.inter(
+                          color: post.isLiked
+                              ? AppColors.primary400
+                              : AppColors.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 18),
@@ -303,7 +320,7 @@ class _CommunityCard extends StatelessWidget {
                     size: 20, color: AppColors.textMuted),
                 const SizedBox(width: 7),
                 Text(
-                  '$comments',
+                  '${post.commentsCount}',
                   style: GoogleFonts.inter(
                     color: AppColors.textMuted,
                     fontSize: 12,
@@ -311,8 +328,19 @@ class _CommunityCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                Icon(Icons.share_outlined,
-                    size: 20, color: AppColors.textMuted),
+                GestureDetector(
+                  onTap: onBookmark,
+                  behavior: HitTestBehavior.opaque,
+                  child: Icon(
+                    post.isBookmarked
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_outline_rounded,
+                    size: 20,
+                    color: post.isBookmarked
+                        ? AppColors.primary400
+                        : AppColors.textMuted,
+                  ),
+                ),
               ],
             ),
           ],
@@ -321,10 +349,10 @@ class _CommunityCard extends StatelessWidget {
     );
   }
 
-  String _resolveRole(Update post) {
+  String _resolveRole(CommunityPost post) {
     final raw = (post.admin?.username ?? post.admin?.name ?? '').toLowerCase();
     if (raw.contains('hunter')) return 'HUNTER';
-    return 'ADMIN';
+    return 'USER';
   }
 }
 

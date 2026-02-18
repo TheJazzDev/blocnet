@@ -1,7 +1,12 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/community/data/models/community_post_model.dart';
+import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
+import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/community_posts_store.dart';
+import 'package:blocnet/services/user_profile_store.dart';
+import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -30,9 +35,17 @@ class _UserProfileBodyState extends State<UserProfileBody> {
   int _tabIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<UserProfileStore>().fetchInitialOnce();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final followingCount =
-        context.watch<ProjectsStore>().followedProjectIds.length;
+    final followingCount = context.watch<UserProfileStore>().watchlist.length;
     final auth = widget.auth;
 
     final displayName = auth.displayName?.trim().isNotEmpty == true
@@ -99,7 +112,8 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                   icon: Icons.settings_outlined,
                   title: 'Settings',
                   subtitle: 'Account preferences',
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.settings),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.settings),
                 ),
                 const SizedBox(height: 12),
                 const _SectionLabel('Account'),

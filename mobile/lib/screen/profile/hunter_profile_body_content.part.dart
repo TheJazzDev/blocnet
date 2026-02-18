@@ -147,7 +147,8 @@ class _HunterSignalsSection extends StatelessWidget {
               ),
               const Spacer(),
               GestureDetector(
-                onTap: () {},
+                onTap: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.manageUpdates),
                 child: Text(
                   'View All',
                   style: GoogleFonts.inter(
@@ -240,7 +241,8 @@ class _SignalCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
-                child: Icon(Icons.token_outlined, size: 18, color: AppColors.textMuted),
+                child: Icon(Icons.token_outlined,
+                    size: 18, color: AppColors.textMuted),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -270,7 +272,8 @@ class _SignalCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: sentimentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: sentimentColor.withValues(alpha: 0.25)),
+                  border:
+                      Border.all(color: sentimentColor.withValues(alpha: 0.25)),
                 ),
                 child: Text(
                   sentiment.toUpperCase(),
@@ -300,7 +303,8 @@ class _SignalCard extends StatelessWidget {
             children: [
               _SignalAction(icon: Icons.favorite_border_rounded, count: likes),
               const SizedBox(width: 16),
-              _SignalAction(icon: Icons.chat_bubble_outline_rounded, count: comments),
+              _SignalAction(
+                  icon: Icons.chat_bubble_outline_rounded, count: comments),
               const Spacer(),
               Icon(Icons.share_outlined, size: 16, color: AppColors.textFaint),
             ],

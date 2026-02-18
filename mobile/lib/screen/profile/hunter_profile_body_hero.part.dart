@@ -55,7 +55,8 @@ class _HunterHero extends StatelessWidget {
                 bottom: -2,
                 right: -2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.primary500,
                     borderRadius: BorderRadius.circular(6),
@@ -64,7 +65,8 @@ class _HunterHero extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.verified_rounded, size: 10, color: Colors.black),
+                      Icon(Icons.verified_rounded,
+                          size: 10, color: Colors.black),
                       const SizedBox(width: 3),
                       Text(
                         'Hunter',
@@ -126,7 +128,8 @@ class _HunterHero extends StatelessWidget {
                 child: SizedBox(
                   height: 40,
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.settings),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColors.borderMuted),
                       shape: RoundedRectangleBorder(
@@ -134,7 +137,7 @@ class _HunterHero extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Follow',
+                      'Edit Profile',
                       style: GoogleFonts.inter(
                         color: AppColors.textPrimary,
                         fontSize: 13,
@@ -149,7 +152,7 @@ class _HunterHero extends StatelessWidget {
                 child: SizedBox(
                   height: 40,
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: null,
                     icon: const Icon(Icons.payments_outlined,
                         size: 16, color: Colors.black),
                     label: Text(

@@ -30,6 +30,54 @@ export class UsersController {
     return this.usersService.getMe(user.id);
   }
 
+  @Get('watchlist')
+  async getWatchlist(
+    @CurrentUser() user: AuthUser | undefined,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.usersService.listWatchlist(user.id, {
+      limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
+  }
+
+  @Get('bookmarks')
+  async getBookmarks(
+    @CurrentUser() user: AuthUser | undefined,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.usersService.listBookmarks(user.id, {
+      limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
+  }
+
+  @Get('activity')
+  async getActivity(
+    @CurrentUser() user: AuthUser | undefined,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.usersService.listMyActivity(user.id, {
+      limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
+  }
+
   @Patch()
   async updateMe(
     @CurrentUser() user: AuthUser | undefined,

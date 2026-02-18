@@ -1,6 +1,8 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/community/data/models/community_topic.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/community_posts_store.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -15,13 +17,12 @@ class CommunityCreatePostScreen extends StatefulWidget {
 
 class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
   final TextEditingController _contentCtrl = TextEditingController();
-  final List<String> _topics = const [
-    'Market Talk',
-    'Introductions',
-    'DeFi',
-    'Alpha',
+  final List<CommunityTopic> _topics = const [
+    CommunityTopic.general,
+    CommunityTopic.marketTalk,
+    CommunityTopic.introductions,
   ];
-  String _selectedTopic = 'Market Talk';
+  CommunityTopic _selectedTopic = CommunityTopic.general;
 
   @override
   void dispose() {
@@ -29,19 +30,39 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
     super.dispose();
   }
 
-  void _submitPost() {
+  Future<void> _submitPost() async {
     final content = _contentCtrl.text.trim();
     if (content.isEmpty) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Post composer UI is ready. API hookup next.')),
-    );
-    Navigator.of(context).pop();
+
+    try {
+      final created = await context.read<CommunityPostsStore>().createPost(
+            content: content,
+            topic: _selectedTopic,
+          );
+
+      if (!mounted) return;
+
+      if (created == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to create post')),
+        );
+        return;
+      }
+
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to create post')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
+    final store = context.watch<CommunityPostsStore>();
+
     final displayName = auth.displayName?.trim().isNotEmpty == true
         ? auth.displayName!.trim()
         : (auth.email ?? 'Blocnet User').split('@').first;
@@ -169,7 +190,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                               ),
                             ),
                             child: Text(
-                              topic,
+                              topic.label,
                               style: GoogleFonts.inter(
                                 color: isActive
                                     ? AppColors.primary400
@@ -181,28 +202,6 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                           ),
                         );
                       }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderSubtle),
-                      ),
-                      child: Row(
-                        children: const [
-                          _ComposerAction(
-                              icon: Icons.photo_outlined, label: 'Photo'),
-                          SizedBox(width: 18),
-                          _ComposerAction(
-                              icon: Icons.poll_outlined, label: 'Poll'),
-                          SizedBox(width: 18),
-                          _ComposerAction(
-                              icon: Icons.link_rounded, label: 'Link'),
-                        ],
-                      ),
                     ),
                   ],
                 ),
@@ -216,22 +215,33 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                   width: double.infinity,
                   height: 44,
                   child: ElevatedButton(
-                    onPressed: _submitPost,
+                    onPressed: store.isSubmittingPost ? null : _submitPost,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary500,
                       foregroundColor: Colors.black,
                       elevation: 0,
+                      disabledBackgroundColor:
+                          AppColors.primary500.withValues(alpha: 0.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(
-                      'Post',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: store.isSubmittingPost
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              color: Colors.black,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Post',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -239,31 +249,6 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ComposerAction extends StatelessWidget {
-  const _ComposerAction({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: AppColors.textMuted),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            color: AppColors.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }
