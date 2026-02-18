@@ -105,7 +105,7 @@ class CommunityPostsApiRepository {
 
   Future<CommunityPost?> unlikePost(String postId) async {
     final response =
-        await _apiClient.delete('/community-posts/$postId/reactions?kind=like');
+        await _apiClient.delete('/community-posts/$postId/reactions');
     if (response is! Map<String, dynamic>) {
       return null;
     }

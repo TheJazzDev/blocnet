@@ -2,7 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Flutter (dev env)",
+      "name": "Mobile Flutter (local env)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=.env.local.json"
+      ]
+    },
+    {
+      "name": "Mobile Flutter (dev env)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
@@ -11,7 +20,7 @@
       ]
     },
     {
-      "name": "Flutter (prod env)",
+      "name": "Mobile Flutter (prod env)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
