@@ -33,4 +33,4 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/package.json ./package.json
 
 # Run migrations then start the server
-CMD bunx prisma migrate deploy && node dist/main
+CMD bunx prisma migrate deploy && node dist/src/main
