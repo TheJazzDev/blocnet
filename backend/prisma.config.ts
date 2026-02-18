@@ -7,6 +7,7 @@ loadEnv({ quiet: true });
 loadEnv({ path: '.env.local', override: true, quiet: true });
 
 const fallbackEnvPath = join(process.cwd(), 'backend/.env.local');
+
 if (existsSync(fallbackEnvPath)) {
   loadEnv({ path: fallbackEnvPath, override: true, quiet: true });
 }

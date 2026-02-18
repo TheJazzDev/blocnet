@@ -32,4 +32,4 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 
 # Run migrations then start the server
-CMD bunx prisma migrate deploy && node dist/main
+CMD bunx prisma migrate deploy --schema prisma/schema.prisma --url "$DIRECT_URL" && node dist/main
