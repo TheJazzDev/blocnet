@@ -40,3 +40,4 @@ flutter run
 - Health endpoint: `/api/health`.
 - Swagger UI: `http://localhost:3080/api/docs`.
 - For seed bootstrap, set `OWNER_USER_ID` and `OWNER_EMAIL` in `backend/.env.local`.
+
