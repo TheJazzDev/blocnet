@@ -19,6 +19,7 @@ class ExploreSection extends StatelessWidget {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 TagCard(
@@ -58,23 +59,31 @@ class ExploreSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          Text(
-            'Latest News',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w500,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Latest News',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: allPosts.length,
+                  itemBuilder: (context, index) {
+                    return UpdateCard(post: allPosts[index]);
+                  },
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: allPosts.length,
-            itemBuilder: (context, index) {
-              return UpdateCard(post: allPosts[index]);
-            },
           ),
         ],
       ),

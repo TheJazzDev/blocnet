@@ -7,13 +7,13 @@ const PROTECTED_PREFIXES = [
   "/users",
   "/applications",
   "/audit-log",
-  "/settings"
+  "/settings",
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix)
+    pathname.startsWith(prefix),
   );
 
   if (!isProtected) {
@@ -32,5 +32,12 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/projects/:path*", "/users/:path*", "/applications/:path*", "/audit-log/:path*", "/settings/:path*"]
+  matcher: [
+    "/dashboard/:path*",
+    "/projects/:path*",
+    "/users/:path*",
+    "/applications/:path*",
+    "/audit-log/:path*",
+    "/settings/:path*",
+  ],
 };

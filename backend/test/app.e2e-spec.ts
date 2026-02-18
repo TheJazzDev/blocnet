@@ -16,12 +16,10 @@ describe('Health (e2e)', () => {
     await app.init();
   });
 
-  it('/api/health (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/api/health')
-      .expect(200)
-      .expect((res) => {
-        expect(res.body.status).toBe('ok');
-      });
+  it('/api/health (GET)', async () => {
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+    const response = await request(server).get('/api/health').expect(200);
+
+    expect(response.body).toMatchObject({ status: 'ok' });
   });
 });

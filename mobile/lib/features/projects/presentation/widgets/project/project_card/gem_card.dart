@@ -4,7 +4,6 @@ import 'package:blocnet/features/projects/presentation/widgets/project/project_d
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Discover screen card with hype score bar, "View Alpha" + "Tip Project" buttons.
 class GemCard extends StatelessWidget {
   const GemCard({
     super.key,
@@ -147,7 +146,8 @@ class GemCard extends StatelessWidget {
                                 color: AppColors.teal400.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: AppColors.teal400.withValues(alpha: 0.3),
+                                  color:
+                                      AppColors.teal400.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Text(
@@ -218,11 +218,14 @@ class GemCard extends StatelessWidget {
 
               // ── Hunted by row ──
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
                   borderRadius: BorderRadius.circular(7),
-                  border: Border.all(color: AppColors.borderSubtle),
+                  border: Border.all(
+                    color: AppColors.borderMuted.withValues(alpha: 0.95),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -248,15 +251,16 @@ class GemCard extends StatelessWidget {
                             TextSpan(
                               text: 'Hunted by ',
                               style: GoogleFonts.inter(
-                                color: AppColors.textFaint,
-                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             TextSpan(
                               text: admin?.name ?? 'Unknown',
                               style: GoogleFonts.inter(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
+                                color: AppColors.textPrimary,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -267,7 +271,7 @@ class GemCard extends StatelessWidget {
                     Icon(
                       Icons.trending_up_rounded,
                       size: 14,
-                      color: AppColors.textFaint,
+                      color: AppColors.textSecondary,
                     ),
                   ],
                 ),
@@ -277,55 +281,53 @@ class GemCard extends StatelessWidget {
 
               // ── Action row ──
               Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => _openDetails(context),
+                  GestureDetector(
+                    onTap: isLoading ? null : onFollowToggle,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 150),
+                      opacity: isLoading ? 0.6 : 1,
                       child: Container(
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: AppColors.textPrimary,
-                          borderRadius: BorderRadius.circular(8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'View Alpha',
-                          style: GoogleFonts.inter(
-                            color: AppColors.bgBase,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: isLoading ? null : onFollowToggle,
-                      child: Container(
-                        height: 38,
                         decoration: BoxDecoration(
                           color: isFollowed
-                              ? AppColors.bgElevated
-                              : AppColors.teal400.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
+                              ? AppColors.primary500.withValues(alpha: 0.14)
+                              : AppColors.bgElevated,
+                          borderRadius: BorderRadius.circular(999),
                           border: Border.all(
                             color: isFollowed
-                                ? AppColors.borderSubtle
-                                : AppColors.teal400.withValues(alpha: 0.5),
+                                ? AppColors.primary500.withValues(alpha: 0.45)
+                                : AppColors.borderSubtle,
                           ),
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          isFollowed ? 'Following' : 'Follow',
-                          style: GoogleFonts.inter(
-                            color: isFollowed
-                                ? AppColors.textMuted
-                                : AppColors.teal400,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isFollowed
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              size: 14,
+                              color: isFollowed
+                                  ? AppColors.primary400
+                                  : AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              isFollowed ? 'Following' : 'Follow',
+                              style: GoogleFonts.inter(
+                                color: isFollowed
+                                    ? AppColors.primary400
+                                    : AppColors.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

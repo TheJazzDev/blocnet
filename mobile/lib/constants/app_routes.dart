@@ -13,8 +13,6 @@ class AppRoutes {
   // Hunter routes
   static const String hunterHub = '/hunter-hub';
   static const String becomeHunter = '/become-hunter';
-  static const String hunterProfile = '/hunter-profile';
-  static const String projectDetail = '/project-detail';
 
   // Auth routes
   static const String signIn = '/signin';
@@ -30,4 +28,6 @@ class AppRoutes {
   static const String midPriority = '/mid-priority';
   static const String lowPriority = '/low-priority';
   static const String highPriority = '/high-priority';
+  static const String communityCreatePost = '/community-create-post';
+  static const String communityDiscussion = '/community-discussion';
 }

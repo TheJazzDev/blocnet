@@ -6,7 +6,10 @@ import 'package:blocnet/features/projects/presentation/pages/manage_updates_scre
 import 'package:blocnet/features/projects/presentation/pages/manage_projects_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/submit_project_screen.dart';
 import 'package:blocnet/screen/main_screen.dart';
+import 'package:blocnet/screen/community_create_post_screen.dart';
+import 'package:blocnet/screen/community_post_discussion_screen.dart';
 import 'package:blocnet/screen/notifications.dart';
+import 'package:blocnet/screen/settings_screen.dart';
 import 'package:blocnet/screen/wallet_screen.dart';
 import 'package:flutter/material.dart';
 import '../features/projects/presentation/sections/explore/trending.dart';
@@ -23,6 +26,8 @@ class ProtectedRoutes {
   static const String submitProject = AppRoutes.submitProject;
   static const String manageProjects = AppRoutes.manageProjects;
   static const String manageUpdates = AppRoutes.manageUpdates;
+  static const String communityCreatePost = AppRoutes.communityCreatePost;
+  static const String communityDiscussion = AppRoutes.communityDiscussion;
 
   // Hunter
   static const String hunterHub = AppRoutes.hunterHub;
@@ -52,8 +57,8 @@ class ProtectedRoutes {
     return {
       // Global
       main: (context) => const MainScreen(initialIndex: 0),
-      profile: (context) => const MainScreen(initialIndex: 3),
-      settings: (context) => const MainScreen(initialIndex: 3),
+      profile: (context) => const MainScreen(initialIndex: 4),
+      settings: (context) => const SettingsScreen(),
       wallet: (context) => const WalletScreen(),
       // Notifications is now a push route (not a main tab)
       notifications: (context) => const NotificationsScreen(),
@@ -61,6 +66,8 @@ class ProtectedRoutes {
       submitProject: (context) => const SubmitProjectScreen(),
       manageProjects: (context) => const ManageProjectsScreen(),
       manageUpdates: (context) => const ManageUpdatesScreen(),
+      communityCreatePost: (context) => const CommunityCreatePostScreen(),
+      communityDiscussion: (context) => const CommunityPostDiscussionScreen(),
 
       // Hunter
       hunterHub: (context) => const HunterHubScreen(),
@@ -86,6 +93,8 @@ class ProtectedRoutes {
     submitProject,
     manageProjects,
     manageUpdates,
+    communityCreatePost,
+    communityDiscussion,
     hunterHub,
     becomeHunter,
     home,

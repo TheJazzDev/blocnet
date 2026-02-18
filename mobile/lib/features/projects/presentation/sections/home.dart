@@ -50,7 +50,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 12)),
-          const SliverToBoxAdapter(child: TopHuntersRow()),
+          const SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(child: TopHuntersRow()),
+          ),
           const SliverToBoxAdapter(child: SizedBox(height: 12)),
           Consumer<UpdatesStore>(
             builder: (context, store, _) {
@@ -62,12 +65,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
               if (_activeSection == Sections.forYou) {
                 if (enrichedPosts.isEmpty) {
-                  return const SliverToBoxAdapter(child: _EmptyFeed());
+                  return const SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverToBoxAdapter(child: _EmptyFeed()),
+                  );
                 }
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => FeedCard(post: enrichedPosts[index]),
-                    childCount: enrichedPosts.length,
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => FeedCard(post: enrichedPosts[index]),
+                      childCount: enrichedPosts.length,
+                    ),
                   ),
                 );
               }
@@ -205,7 +214,7 @@ class _EmptyFeed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      margin: const EdgeInsets.fromLTRB(0, 16, 0, 0),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,

@@ -83,6 +83,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

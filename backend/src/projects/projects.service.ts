@@ -5,7 +5,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -13,41 +12,13 @@ import { ListProjectsQuery } from './dto/list-projects.query';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { AppRole } from '../common/enums/role.enum';
 import { AuditLogService } from '../audit-log/audit-log.service';
-
-const projectInclude = {
-  primaryTag: {
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-    },
-  },
-  secondaryTags: {
-    select: {
-      secondaryTag: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-        },
-      },
-    },
-  },
-  ownerAdmin: {
-    select: {
-      id: true,
-      email: true,
-      displayName: true,
-      avatarUrl: true,
-    },
-  },
-  _count: {
-    select: {
-      follows: true,
-      updates: true,
-    },
-  },
-} satisfies Prisma.ProjectInclude;
+import {
+  normalizeName,
+  normalizeSymbol,
+  toSlug,
+  toWebsiteDomain,
+} from './projects.canonical';
+import { projectInclude, toProjectResponse } from './projects.mapper';
 
 @Injectable()
 export class ProjectsService {
@@ -57,9 +28,9 @@ export class ProjectsService {
   ) {}
 
   async createProject(actor: AuthUser, dto: CreateProjectDto) {
-    const normalizedName = this.normalizeName(dto.name);
-    const symbol = this.normalizeSymbol(dto.symbol);
-    const websiteDomain = this.toWebsiteDomain(dto.websiteUrl);
+    const normalizedName = normalizeName(dto.name);
+    const symbol = normalizeSymbol(dto.symbol);
+    const websiteDomain = toWebsiteDomain(dto.websiteUrl);
 
     await this.assertNoCanonicalConflict({
       normalizedName,
@@ -75,7 +46,7 @@ export class ProjectsService {
     const project = await this.prisma.project.create({
       data: {
         name: dto.name,
-        slug: this.toSlug(dto.name),
+        slug: toSlug(dto.name),
         normalizedName,
         symbol,
         websiteUrl: dto.websiteUrl?.trim(),
@@ -104,7 +75,7 @@ export class ProjectsService {
       resourceId: project.id,
     });
 
-    return this.toProjectResponse(project);
+    return toProjectResponse(project);
   }
 
   async createProjectForUser(input: {
@@ -114,9 +85,9 @@ export class ProjectsService {
     auditAction?: string;
     auditMetadata?: Record<string, unknown>;
   }) {
-    const normalizedName = this.normalizeName(input.dto.name);
-    const symbol = this.normalizeSymbol(input.dto.symbol);
-    const websiteDomain = this.toWebsiteDomain(input.dto.websiteUrl);
+    const normalizedName = normalizeName(input.dto.name);
+    const symbol = normalizeSymbol(input.dto.symbol);
+    const websiteDomain = toWebsiteDomain(input.dto.websiteUrl);
 
     await this.assertNoCanonicalConflict({
       normalizedName,
@@ -132,7 +103,7 @@ export class ProjectsService {
     const project = await this.prisma.project.create({
       data: {
         name: input.dto.name,
-        slug: this.toSlug(input.dto.name),
+        slug: toSlug(input.dto.name),
         normalizedName,
         symbol,
         websiteUrl: input.dto.websiteUrl?.trim(),
@@ -162,7 +133,7 @@ export class ProjectsService {
       metadata: input.auditMetadata,
     });
 
-    return this.toProjectResponse(project);
+    return toProjectResponse(project);
   }
 
   async listProjects(query: ListProjectsQuery) {
@@ -176,7 +147,7 @@ export class ProjectsService {
       include: projectInclude,
     });
 
-    return projects.map((project) => this.toProjectResponse(project));
+    return projects.map((project) => toProjectResponse(project));
   }
 
   async getProject(id: string) {
@@ -189,7 +160,7 @@ export class ProjectsService {
       throw new NotFoundException('Project not found');
     }
 
-    return this.toProjectResponse(project);
+    return toProjectResponse(project);
   }
 
   async updateProject(actor: AuthUser, id: string, dto: UpdateProjectDto) {
@@ -207,12 +178,10 @@ export class ProjectsService {
     }
 
     const nextName = dto.name ?? project.name;
-    const normalizedName = this.normalizeName(nextName);
-    const symbol = this.normalizeSymbol(
-      dto.symbol ?? project.symbol ?? undefined,
-    );
+    const normalizedName = normalizeName(nextName);
+    const symbol = normalizeSymbol(dto.symbol ?? project.symbol ?? undefined);
     const websiteUrl = dto.websiteUrl ?? project.websiteUrl ?? undefined;
-    const websiteDomain = this.toWebsiteDomain(websiteUrl);
+    const websiteDomain = toWebsiteDomain(websiteUrl);
 
     await this.assertNoCanonicalConflict({
       normalizedName,
@@ -239,7 +208,7 @@ export class ProjectsService {
         description: dto.description,
         primaryTagId: dto.primaryTagId,
         status: dto.status,
-        slug: dto.name ? this.toSlug(dto.name) : undefined,
+        slug: dto.name ? toSlug(dto.name) : undefined,
         secondaryTags: dto.secondaryTagIds
           ? {
               deleteMany: {},
@@ -262,46 +231,23 @@ export class ProjectsService {
       resourceId: updated.id,
     });
 
-    return this.toProjectResponse(updated);
-  }
-
-  private toSlug(value: string): string {
-    return value
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
+    return toProjectResponse(updated);
   }
 
   normalizeName(value: string): string {
-    return value
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    return normalizeName(value);
   }
 
   normalizeSymbol(symbol?: string): string | undefined {
-    if (!symbol) return undefined;
-    const next = symbol.trim().toUpperCase();
-    return next.length > 0 ? next : undefined;
+    return normalizeSymbol(symbol);
   }
 
   toWebsiteDomain(rawUrl?: string): string | undefined {
-    if (!rawUrl || rawUrl.trim() === '') return undefined;
+    return toWebsiteDomain(rawUrl);
+  }
 
-    try {
-      const url = new URL(rawUrl.trim());
-      const hostname = url.hostname.trim().toLowerCase();
-      const normalized = hostname.startsWith('www.')
-        ? hostname.slice(4)
-        : hostname;
-      return normalized || undefined;
-    } catch {
-      throw new BadRequestException('Invalid websiteUrl');
-    }
+  toSlug(value: string): string {
+    return toSlug(value);
   }
 
   async assertNoCanonicalConflict(input: {
@@ -380,36 +326,5 @@ export class ProjectsService {
     if (count !== secondaryTagIds.length) {
       throw new BadRequestException('One or more secondaryTagIds are invalid');
     }
-  }
-
-  private toProjectResponse(
-    project: Prisma.ProjectGetPayload<{
-      include: typeof projectInclude;
-    }>,
-  ) {
-    const { _count, ownerAdmin, primaryTag, secondaryTags, ...rest } = project;
-    const rawUsername = ownerAdmin.email?.split('@')[0] ?? ownerAdmin.id;
-    const normalized = rawUsername
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]/g, '')
-      .trim();
-    const username = `@${normalized || ownerAdmin.id.slice(0, 6)}`;
-
-    return {
-      ...rest,
-      primaryTagId: primaryTag.id,
-      primaryTag: primaryTag.name,
-      secondaryTagIds: secondaryTags.map((row) => row.secondaryTag.id),
-      secondaryTags: secondaryTags.map((row) => row.secondaryTag.name),
-      followersCount: _count.follows,
-      updatesCount: _count.updates,
-      admin: {
-        id: ownerAdmin.id,
-        name: ownerAdmin.displayName ?? ownerAdmin.email ?? 'Admin',
-        username,
-        imageUrl: ownerAdmin.avatarUrl ?? '',
-        followers: _count.follows,
-      },
-    };
   }
 }

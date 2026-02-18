@@ -70,7 +70,7 @@ class PrimaryButton extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isEnabled
-                        ? Colors.white
+                        ? AppColors.bgBase
                         : AppColors.textMuted,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

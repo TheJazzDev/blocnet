@@ -83,7 +83,7 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
           children: [
             // Section header
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              padding: const EdgeInsets.fromLTRB(0, 16, 0, 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -115,9 +115,7 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
               ),
             ),
             // Gem cards
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
+            Column(
                 children: store.projects.map((project) {
                   final isFollowed = store.isProjectFollowed(project.id);
                   return GemCard(
@@ -128,7 +126,6 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                   );
                 }).toList(),
               ),
-            ),
           ],
         );
       },

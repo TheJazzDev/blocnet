@@ -98,7 +98,10 @@ class AuthScreenShell extends StatelessWidget {
 
                 // Form card — frosted dark panel
                 Expanded(
-                  child: _FormCard(child: child),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _FormCard(child: child),
+                  ),
                 ),
               ],
             ),

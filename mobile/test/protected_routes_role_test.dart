@@ -10,7 +10,7 @@ void main() {
         isFalse,
       );
       expect(
-        ProtectedRoutes.hasRoleAccess(AppRoutes.createUpdate, ['poster']),
+        ProtectedRoutes.hasRoleAccess(AppRoutes.createUpdate, ['hunter']),
         isTrue,
       );
       expect(
@@ -33,11 +33,11 @@ void main() {
         isFalse,
       );
       expect(
-        ProtectedRoutes.hasRoleAccess(AppRoutes.manageProjects, ['poster']),
+        ProtectedRoutes.hasRoleAccess(AppRoutes.manageProjects, ['hunter']),
         isTrue,
       );
       expect(
-        ProtectedRoutes.hasRoleAccess(AppRoutes.manageUpdates, ['poster']),
+        ProtectedRoutes.hasRoleAccess(AppRoutes.manageUpdates, ['hunter']),
         isTrue,
       );
     });

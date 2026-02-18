@@ -13,7 +13,7 @@ class DiscoverScreen extends StatefulWidget {
 }
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
-  Section _activeSection = Sections.yourProjects;
+  Section _activeSection = Sections.discoverProjects;
 
   void _onTabChanged(Section section) {
     if (_activeSection == section) return;
@@ -35,10 +35,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             ),
           ),
           // Content
-          SliverToBoxAdapter(
-            child: _activeSection == Sections.yourProjects
-                ? const _YourGemsWrapper()
-                : const DiscoverProjectsSection(),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(
+              child: _activeSection == Sections.yourProjects
+                  ? const _YourGemsWrapper()
+                  : const DiscoverProjectsSection(),
+            ),
           ),
         ],
       ),
@@ -100,19 +103,22 @@ class _DiscoverTabBar extends StatelessWidget {
           bottom: BorderSide(color: AppColors.borderSubtle, width: 1),
         ),
       ),
-      child: Row(
-        children: [
-          _Tab(
-            label: 'My Gems',
-            isActive: activeSection == Sections.yourProjects,
-            onTap: () => onTabChanged(Sections.yourProjects),
-          ),
-          _Tab(
-            label: 'Discover',
-            isActive: activeSection == Sections.discoverProjects,
-            onTap: () => onTabChanged(Sections.discoverProjects),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Row(
+          children: [
+            _Tab(
+              label: 'Discover',
+              isActive: activeSection == Sections.discoverProjects,
+              onTap: () => onTabChanged(Sections.discoverProjects),
+            ),
+            _Tab(
+              label: 'My Gems',
+              isActive: activeSection == Sections.yourProjects,
+              onTap: () => onTabChanged(Sections.yourProjects),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -144,7 +150,7 @@ class _Tab extends StatelessWidget {
           ),
         ),
         alignment: Alignment.center,
-        height: 44,
+        height: 40,
         child: Text(
           label,
           style: GoogleFonts.inter(

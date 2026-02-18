@@ -18,10 +18,10 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome back'), findsOneWidget);
-    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Sign in to Blocnet'), findsOneWidget);
+    expect(find.text('Email address'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
-    expect(find.text('Sign up'), findsOneWidget);
+    expect(find.text('Create account'), findsOneWidget);
   });
 }

@@ -38,6 +38,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final navigator = Navigator.of(context);
     final showBack = backButton && navigator.canPop();
+    final showSpaceSwitcherInProfile = showSpaceSwitcher && title == 'Profile';
 
     return Container(
       decoration: BoxDecoration(
@@ -94,7 +95,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ...actions,
-                      if (showSpaceSwitcher) ...[
+                      if (showSpaceSwitcherInProfile) ...[
                         const SizedBox(width: 6),
                         const SpaceSwitcher(),
                       ],
