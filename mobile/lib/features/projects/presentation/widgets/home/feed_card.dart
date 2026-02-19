@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
+import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -34,10 +35,17 @@ class FeedCard extends StatelessWidget {
     );
   }
 
+  void _openAuthorProfile(BuildContext context) {
+    final author = post.admin;
+    if (author == null) return;
+    PublicProfileScreen.showSheet(context, author);
+  }
+
   @override
   Widget build(BuildContext context) {
     final author = post.admin!;
     final project = post.project!;
+    final priorityColor = post.priority.color;
     final previewText = post.description.trim().isEmpty
         ? post.content.trim()
         : post.description.trim();
@@ -59,27 +67,48 @@ class FeedCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.bgElevated,
-                  backgroundImage: author.imageUrl.isNotEmpty
-                      ? NetworkImage(author.imageUrl)
-                      : null,
-                  child: author.imageUrl.isEmpty
-                      ? Icon(Icons.person, size: 16, color: AppColors.textMuted)
-                      : null,
+                GestureDetector(
+                  onTap: () => _openAuthorProfile(context),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    padding: const EdgeInsets.all(1.6),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: priorityColor.withValues(alpha: 0.55),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppColors.bgElevated,
+                      backgroundImage: author.imageUrl.isNotEmpty
+                          ? NetworkImage(author.imageUrl)
+                          : null,
+                      child: author.imageUrl.isEmpty
+                          ? Icon(Icons.person,
+                              size: 16, color: AppColors.textMuted)
+                          : null,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        author.name,
-                        style: GoogleFonts.inter(
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                      GestureDetector(
+                        onTap: () => _openAuthorProfile(context),
+                        behavior: HitTestBehavior.opaque,
+                        child: Text(
+                          author.name,
+                          style: GoogleFonts.inter(
+                            color: AppColors.textPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       Text(

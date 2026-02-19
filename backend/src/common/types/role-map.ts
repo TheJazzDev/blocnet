@@ -7,6 +7,8 @@ export function roleNameToAppRole(role: RoleName): AppRole {
       return AppRole.OWNER;
     case RoleName.admin:
       return AppRole.ADMIN;
+    case RoleName.moderator:
+      return AppRole.MODERATOR;
     case RoleName.hunter:
       return AppRole.HUNTER;
     case RoleName.user:
@@ -22,6 +24,8 @@ export function appRoleToRoleName(role: AppRole): RoleName {
       return RoleName.owner;
     case AppRole.ADMIN:
       return RoleName.admin;
+    case AppRole.MODERATOR:
+      return RoleName.moderator;
     case AppRole.HUNTER:
       return RoleName.hunter;
     case AppRole.USER:

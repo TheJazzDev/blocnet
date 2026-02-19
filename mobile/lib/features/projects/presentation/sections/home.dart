@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/presentation/sections/explore/explore.dart';
@@ -18,20 +20,103 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Section _activeSection = Sections.forYou;
+  bool _isInitialLoading = true;
+  final ScrollController _scrollController = ScrollController();
+  final Set<String> _pendingNewPostIds = <String>{};
+  Timer? _newPostsPollTimer;
+  bool _isCheckingForNewPosts = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    _scrollController.addListener(_handleScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      Provider.of<ProjectsStore>(context, listen: false).fetchProjectsOnce();
-      Provider.of<UpdatesStore>(context, listen: false).fetchUpdatesOnce();
+      final projectsStore = context.read<ProjectsStore>();
+      final updatesStore = context.read<UpdatesStore>();
+      await projectsStore.fetchProjectsOnce();
+      await updatesStore.fetchUpdatesOnce();
+      if (!mounted) return;
+      setState(() => _isInitialLoading = false);
     });
+    _newPostsPollTimer = Timer.periodic(
+      const Duration(seconds: 12),
+      (_) => _checkForNewPosts(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _newPostsPollTimer?.cancel();
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
+    super.dispose();
   }
 
   void _onTabChanged(Section section) {
     if (_activeSection == section) return;
-    setState(() => _activeSection = section);
+    setState(() {
+      _activeSection = section;
+      if (section != Sections.forYou) {
+        _pendingNewPostIds.clear();
+      }
+    });
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.offset <= 20 && _pendingNewPostIds.isNotEmpty) {
+      setState(() => _pendingNewPostIds.clear());
+    }
+  }
+
+  Future<void> _checkForNewPosts() async {
+    if (!mounted ||
+        _activeSection != Sections.forYou ||
+        _isCheckingForNewPosts) {
+      return;
+    }
+
+    final updatesStore = context.read<UpdatesStore>();
+    final existingIds = updatesStore.posts.map((post) => post.id).toSet();
+
+    _isCheckingForNewPosts = true;
+    try {
+      await updatesStore.refreshUpdates();
+    } finally {
+      _isCheckingForNewPosts = false;
+    }
+
+    if (!mounted) return;
+
+    final refreshedPosts = updatesStore.posts;
+    final newIds = refreshedPosts
+        .where((post) => !existingIds.contains(post.id))
+        .map((post) => post.id)
+        .toSet();
+
+    if (newIds.isEmpty) return;
+
+    final isNearTop =
+        _scrollController.hasClients && _scrollController.offset < 80;
+    if (isNearTop) return;
+
+    setState(() {
+      _pendingNewPostIds.addAll(newIds);
+    });
+  }
+
+  Future<void> _jumpToLatest() async {
+    if (_scrollController.hasClients) {
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    if (!mounted) return;
+    setState(() => _pendingNewPostIds.clear());
   }
 
   @override
@@ -40,52 +125,107 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      body: CustomScrollView(
-        slivers: [
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _FeedTabDelegate(
-              activeSection: _activeSection,
-              onTabChanged: _onTabChanged,
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
-          const SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverToBoxAdapter(child: TopHuntersRow()),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
-          Consumer<UpdatesStore>(
-            builder: (context, store, _) {
-              final enrichedPosts = store.posts
-                  .where(
-                    (post) => post.project != null && post.admin != null,
-                  )
-                  .toList();
+      body: Stack(
+        children: [
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _FeedTabDelegate(
+                  activeSection: _activeSection,
+                  onTabChanged: _onTabChanged,
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              const SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverToBoxAdapter(child: TopHuntersRow()),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              Consumer<UpdatesStore>(
+                builder: (context, store, _) {
+                  final enrichedPosts = store.posts
+                      .where(
+                        (post) => post.project != null && post.admin != null,
+                      )
+                      .toList();
 
-              if (_activeSection == Sections.forYou) {
-                if (enrichedPosts.isEmpty) {
-                  return const SliverPadding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverToBoxAdapter(child: _EmptyFeed()),
-                  );
-                }
-                return SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => FeedCard(post: enrichedPosts[index]),
-                      childCount: enrichedPosts.length,
+                  if (_activeSection == Sections.forYou) {
+                    if (_isInitialLoading && enrichedPosts.isEmpty) {
+                      return const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 40),
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
+                    if (store.isFetching && store.posts.isEmpty) {
+                      return const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 40),
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
+                    if (enrichedPosts.isEmpty) {
+                      return const SliverPadding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        sliver: SliverToBoxAdapter(child: _EmptyFeed()),
+                      );
+                    }
+                    return SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) =>
+                              FeedCard(post: enrichedPosts[index]),
+                          childCount: enrichedPosts.length,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SliverToBoxAdapter(
+                      child: ExploreSection(allPosts: store.posts));
+                },
+              ),
+              SliverToBoxAdapter(child: SizedBox(height: bottomPad)),
+            ],
+          ),
+          if (_activeSection == Sections.forYou &&
+              _pendingNewPostIds.isNotEmpty)
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTap: _jumpToLatest,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${_pendingNewPostIds.length} new updates',
+                      style: GoogleFonts.inter(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                );
-              }
-
-              return SliverToBoxAdapter(
-                  child: ExploreSection(allPosts: store.posts));
-            },
-          ),
-          SliverToBoxAdapter(child: SizedBox(height: bottomPad)),
+                ),
+              ),
+            ),
         ],
       ),
     );

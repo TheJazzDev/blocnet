@@ -30,4 +30,5 @@ class AppRoutes {
   static const String highPriority = '/high-priority';
   static const String communityCreatePost = '/community-create-post';
   static const String communityDiscussion = '/community-discussion';
+  static const String editProfile = '/edit-profile';
 }

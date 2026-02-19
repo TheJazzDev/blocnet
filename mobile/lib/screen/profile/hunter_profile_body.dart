@@ -73,34 +73,46 @@ class HunterProfileBody extends StatelessWidget {
                   icon: Icons.send_outlined,
                   title: 'Submit New Gem',
                   subtitle: 'Send a project for approval before publishing',
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.submitProject),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.submitProject),
                 ),
                 _HunterTile(
                   icon: Icons.folder_copy_outlined,
                   title: 'Manage My Gems',
                   subtitle: 'See projects you created or contribute to',
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.manageProjects),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.manageProjects),
                 ),
                 _HunterTile(
                   icon: Icons.post_add_outlined,
                   title: 'Manage My Updates',
                   subtitle: 'Review and edit your hunter updates',
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.manageUpdates),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.manageUpdates),
                 ),
                 const SizedBox(height: 12),
                 const _HunterSectionLabel('More'),
                 const SizedBox(height: 8),
                 _HunterTile(
+                  icon: Icons.edit_outlined,
+                  title: 'Edit Profile',
+                  subtitle: 'Update your avatar and public details',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.editProfile),
+                ),
+                _HunterTile(
                   icon: Icons.notifications_outlined,
                   title: 'Notifications',
                   subtitle: 'View alerts and activity',
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.notifications),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.notifications),
                 ),
                 _HunterTile(
                   icon: Icons.settings_outlined,
                   title: 'Settings',
                   subtitle: 'Account preferences',
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.settings),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.settings),
                 ),
                 const SizedBox(height: 12),
                 const _HunterSectionLabel('Account'),

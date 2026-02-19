@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
+import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -72,6 +73,8 @@ class TopHuntersRow extends StatelessWidget {
                         imageUrl: admin.imageUrl,
                         name: admin.name,
                         hasRing: true,
+                        onTap: () =>
+                            PublicProfileScreen.showSheet(context, admin),
                       ),
                     )),
               ],
@@ -90,89 +93,96 @@ class _HunterAvatar extends StatelessWidget {
     required this.imageUrl,
     required this.name,
     this.hasRing = false,
+    this.onTap,
   }) : isCreate = false;
 
   const _HunterAvatar.create()
       : imageUrl = '',
         name = 'My Updates',
         hasRing = false,
-        isCreate = true;
+        isCreate = true,
+        onTap = null;
 
   final String imageUrl;
   final String name;
   final bool hasRing;
   final bool isCreate;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 56,
-      child: Column(
-        children: [
-          if (isCreate)
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.borderMuted,
-                  width: 1.5,
-                ),
-                color: AppColors.bgElevated,
-              ),
-              child: Icon(
-                Icons.add_rounded,
-                color: AppColors.teal400,
-                size: 20,
-              ),
-            )
-          else if (hasRing)
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppColors.teal400, AppColors.primary500],
-                ),
-              ),
-              padding: const EdgeInsets.all(2),
-              child: Container(
-                decoration: const BoxDecoration(
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 56,
+        child: Column(
+          children: [
+            if (isCreate)
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.bgBase,
+                  border: Border.all(
+                    color: AppColors.borderMuted,
+                    width: 1.5,
+                  ),
+                  color: AppColors.bgElevated,
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: AppColors.teal400,
+                  size: 20,
+                ),
+              )
+            else if (hasRing)
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.teal400, AppColors.primary500],
+                  ),
+                ),
+                padding: const EdgeInsets.all(2),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.bgBase,
+                  ),
+                  padding: const EdgeInsets.all(2),
+                  child: _buildAvatarCircle(),
+                ),
+              )
+            else
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.borderMuted, width: 1),
                 ),
                 padding: const EdgeInsets.all(2),
                 child: _buildAvatarCircle(),
               ),
-            )
-          else
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderMuted, width: 1),
+            const SizedBox(height: 5),
+            Text(
+              isCreate ? 'My Updates' : name,
+              style: GoogleFonts.inter(
+                color: isCreate ? AppColors.teal400 : AppColors.textMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
               ),
-              padding: const EdgeInsets.all(2),
-              child: _buildAvatarCircle(),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          const SizedBox(height: 5),
-          Text(
-            isCreate ? 'My Updates' : name,
-            style: GoogleFonts.inter(
-              color: isCreate ? AppColors.teal400 : AppColors.textMuted,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

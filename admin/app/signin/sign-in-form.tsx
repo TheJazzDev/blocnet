@@ -35,7 +35,7 @@ export function SignInForm() {
 
       const { access_token } = data.session;
 
-      // Verify the user has admin/owner role by calling the backend
+      // Verify the user has panel-access role by calling the backend
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3080/api"}/me`,
         {
@@ -54,11 +54,13 @@ export function SignInForm() {
       };
 
       const hasAccess =
-        profile.roles.includes("owner") || profile.roles.includes("admin");
+        profile.roles.includes("owner") ||
+        profile.roles.includes("admin") ||
+        profile.roles.includes("moderator");
 
       if (!hasAccess) {
         setError(
-          "Access denied. Only owners and admins can access this panel."
+          "Access denied. Only owners, admins, and moderators can access this panel."
         );
         await supabase.auth.signOut();
         return;

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { join } from 'path';
 import { AdminApplicationsModule } from './admin-applications/admin-applications.module';
+import { AdminContentModule } from './admin-content/admin-content.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
@@ -39,6 +40,7 @@ import { envValidationSchema } from './config/env.validation';
     UsersModule,
     RolesModule,
     AdminApplicationsModule,
+    AdminContentModule,
     ProjectsModule,
     ProjectAssignmentsModule,
     ProjectProposalsModule,

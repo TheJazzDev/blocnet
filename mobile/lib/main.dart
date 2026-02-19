@@ -4,7 +4,9 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/services/admins_store.dart';
 import 'package:blocnet/services/app_store.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/deep_link_service.dart';
 import 'package:blocnet/services/notifications_store.dart';
+import 'package:blocnet/services/push_notification_service.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/services/tags_store.dart';
@@ -20,7 +22,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // firebase
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
+
+final _navigatorKey = GlobalKey<NavigatorState>();
+
+// Must be top-level for firebase_messaging background handler.
+// Delegate to the handler defined in push_notification_service.dart.
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) =>
+    firebaseMessagingBackgroundHandler(message);
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +39,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Register the background message handler before any other Firebase calls.
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   if (AppConfig.isSupabaseConfigured) {
     await Supabase.initialize(
@@ -44,6 +58,37 @@ void main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await Future.delayed(Duration(seconds: 3));
   FlutterNativeSplash.remove();
+
+  // Initialise deep link handling (email verify, magic link, password reset)
+  final deepLinkService = DeepLinkService(
+    navigatorKey: _navigatorKey,
+    authStore: authStore,
+  );
+  deepLinkService.init();
+
+  // Initialise push notifications tied to auth state.
+  // - If already authenticated on cold start: init immediately.
+  // - If the user signs in later (or signs out): react via listener.
+  final pushNotificationService = PushNotificationService();
+  bool pushInitialised = false;
+
+  void onAuthChanged() {
+    if (authStore.isAuthenticated && !pushInitialised) {
+      pushInitialised = true;
+      pushNotificationService.init();
+    } else if (!authStore.isAuthenticated && pushInitialised) {
+      pushInitialised = false;
+      pushNotificationService.dispose();
+    }
+  }
+
+  authStore.addListener(onAuthChanged);
+
+  // Trigger immediately in case the user is already authenticated.
+  if (authStore.isAuthenticated) {
+    pushInitialised = true;
+    pushNotificationService.init();
+  }
 
   runApp(
     MultiProvider(
@@ -63,6 +108,7 @@ void main() async {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: primaryTheme,
+        navigatorKey: _navigatorKey,
         onGenerateRoute: CustomAppRouter.generateRoute,
         initialRoute: initialRoute,
         onUnknownRoute: (settings) =>

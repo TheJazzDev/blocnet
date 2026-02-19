@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
+import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'discover_projects.dart';
 import 'your_projects.dart';
 
@@ -14,35 +18,147 @@ class DiscoverScreen extends StatefulWidget {
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
   Section _activeSection = Sections.discoverProjects;
+  final ScrollController _scrollController = ScrollController();
+  final Set<String> _pendingNewProjectIds = <String>{};
+  Timer? _newProjectsPollTimer;
+  bool _isCheckingForNewProjects = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_handleScroll);
+    _newProjectsPollTimer = Timer.periodic(
+      const Duration(seconds: 14),
+      (_) => _checkForNewProjects(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _newProjectsPollTimer?.cancel();
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
+    super.dispose();
+  }
 
   void _onTabChanged(Section section) {
     if (_activeSection == section) return;
-    setState(() => _activeSection = section);
+    setState(() {
+      _activeSection = section;
+      if (section != Sections.discoverProjects) {
+        _pendingNewProjectIds.clear();
+      }
+    });
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.offset <= 20 && _pendingNewProjectIds.isNotEmpty) {
+      setState(() => _pendingNewProjectIds.clear());
+    }
+  }
+
+  Future<void> _checkForNewProjects() async {
+    if (!mounted ||
+        _activeSection != Sections.discoverProjects ||
+        _isCheckingForNewProjects) {
+      return;
+    }
+
+    final projectsStore = context.read<ProjectsStore>();
+    final existingIds = projectsStore.projects.map((p) => p.id).toSet();
+
+    _isCheckingForNewProjects = true;
+    try {
+      await projectsStore.refreshProjects();
+    } finally {
+      _isCheckingForNewProjects = false;
+    }
+
+    if (!mounted) return;
+
+    final refreshed = projectsStore.projects;
+    final newIds =
+        refreshed.where((p) => !existingIds.contains(p.id)).map((p) => p.id);
+
+    if (newIds.isEmpty) return;
+    final isNearTop =
+        _scrollController.hasClients && _scrollController.offset < 80;
+    if (isNearTop) return;
+
+    setState(() => _pendingNewProjectIds.addAll(newIds));
+  }
+
+  Future<void> _jumpToLatest() async {
+    if (_scrollController.hasClients) {
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    if (!mounted) return;
+    setState(() => _pendingNewProjectIds.clear());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      body: CustomScrollView(
-        slivers: [
-          // Sticky underline tab bar
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _DiscoverTabDelegate(
-              activeSection: _activeSection,
-              onTabChanged: _onTabChanged,
-            ),
+      body: Stack(
+        children: [
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // Sticky underline tab bar
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _DiscoverTabDelegate(
+                  activeSection: _activeSection,
+                  onTabChanged: _onTabChanged,
+                ),
+              ),
+              // Content
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverToBoxAdapter(
+                  child: _activeSection == Sections.yourProjects
+                      ? const _YourGemsWrapper()
+                      : const DiscoverProjectsSection(),
+                ),
+              ),
+            ],
           ),
-          // Content
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverToBoxAdapter(
-              child: _activeSection == Sections.yourProjects
-                  ? const _YourGemsWrapper()
-                  : const DiscoverProjectsSection(),
+          if (_activeSection == Sections.discoverProjects &&
+              _pendingNewProjectIds.isNotEmpty)
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTap: _jumpToLatest,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${_pendingNewProjectIds.length} new projects',
+                      style: GoogleFonts.inter(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
         ],
       ),
     );

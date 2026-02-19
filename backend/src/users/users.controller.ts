@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -15,6 +16,28 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UsersService } from './users.service';
+
+// Public endpoint — no AuthGuard, called before signup to check uniqueness
+@Controller('users')
+export class PublicUsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get('check-username')
+  async checkUsername(@Query('username') username?: string) {
+    if (!username?.trim()) {
+      throw new BadRequestException('username query param is required');
+    }
+
+    const normalized = username.trim().toLowerCase();
+    const usernameRegExp = /^[a-z0-9_]{3,24}$/;
+    if (!usernameRegExp.test(normalized)) {
+      return { available: false, reason: 'invalid_format' };
+    }
+
+    const taken = await this.usersService.isUsernameTaken(normalized);
+    return { available: !taken };
+  }
+}
 
 @Controller('me')
 @UseGuards(AuthGuard)
@@ -93,7 +116,7 @@ export class UsersController {
 
 @Controller('admin/users')
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(AppRole.OWNER, AppRole.ADMIN)
+@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
 export class AdminUsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -102,11 +125,13 @@ export class AdminUsersController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
     @Query('role') role?: string,
+    @Query('q') q?: string,
   ) {
     return this.usersService.listAllUsers({
       limit: limit ? Number(limit) : 50,
       offset: offset ? Number(offset) : 0,
       role: role && role !== 'all' ? role : undefined,
+      q: q?.trim() || undefined,
     });
   }
 

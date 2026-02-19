@@ -102,6 +102,13 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                 const _SectionLabel('More'),
                 const SizedBox(height: 8),
                 _ProfileTile(
+                  icon: Icons.edit_outlined,
+                  title: 'Edit Profile',
+                  subtitle: 'Update your avatar and public details',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.editProfile),
+                ),
+                _ProfileTile(
                   icon: Icons.notifications_outlined,
                   title: 'Notifications',
                   subtitle: 'View alerts and activity',

@@ -1,9 +1,10 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { ContentModerationStatus, Prisma, UpdateStatus } from '@prisma/client';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { AppRole } from '../common/enums/role.enum';
 import { PrismaService } from '../prisma/prisma.service';
@@ -37,11 +38,15 @@ export class CommentsService {
   ) {
     const update = await this.prisma.update.findUnique({
       where: { id: updateId },
-      select: { id: true, projectId: true },
+      select: { id: true, projectId: true, status: true },
     });
 
     if (!update) {
       throw new NotFoundException('Update not found');
+    }
+
+    if (update.status !== UpdateStatus.published) {
+      throw new ForbiddenException('Comments are disabled for this update');
     }
 
     const comment = await this.prisma.comment.create({
@@ -67,18 +72,25 @@ export class CommentsService {
   async listComments(updateId: string, query: ListCommentsQuery) {
     const update = await this.prisma.update.findUnique({
       where: { id: updateId },
-      select: { id: true },
+      select: { id: true, status: true },
     });
 
     if (!update) {
       throw new NotFoundException('Update not found');
     }
 
+    if (update.status !== UpdateStatus.published) {
+      throw new ForbiddenException('Comments are disabled for this update');
+    }
+
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
 
     const comments = await this.prisma.comment.findMany({
-      where: { updateId: updateId },
+      where: {
+        updateId: updateId,
+        status: ContentModerationStatus.active,
+      },
       orderBy: { createdAt: 'asc' },
       skip: offset,
       take: limit,
@@ -94,6 +106,7 @@ export class CommentsService {
       select: {
         id: true,
         authorId: true,
+        status: true,
         updateId: true,
         update: {
           select: {
@@ -110,6 +123,12 @@ export class CommentsService {
 
     if (!comment) {
       throw new NotFoundException('Comment not found');
+    }
+
+    if (comment.status !== ContentModerationStatus.active) {
+      throw new BadRequestException(
+        'Comment is moderated and cannot be edited',
+      );
     }
 
     const isOwner = actor.roles.includes(AppRole.OWNER);
@@ -150,6 +169,7 @@ export class CommentsService {
       select: {
         id: true,
         authorId: true,
+        status: true,
         updateId: true,
         update: {
           select: {
@@ -166,6 +186,12 @@ export class CommentsService {
 
     if (!comment) {
       return { deleted: false };
+    }
+
+    if (comment.status !== ContentModerationStatus.active) {
+      throw new BadRequestException(
+        'Comment is moderated and cannot be deleted',
+      );
     }
 
     const isOwner = actor.roles.includes(AppRole.OWNER);

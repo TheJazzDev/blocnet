@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/data/models/community_topic.dart';
+import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
@@ -16,13 +19,123 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
+  late final TabController _tabController;
+  final Map<CommunityTopic, ScrollController> _scrollControllers = {
+    CommunityTopic.general: ScrollController(),
+    CommunityTopic.marketTalk: ScrollController(),
+    CommunityTopic.introductions: ScrollController(),
+  };
+  final Set<String> _pendingNewPostIds = <String>{};
+  Timer? _newPostsPollTimer;
+  bool _isCheckingForNewPosts = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _tabController = TabController(length: 3, vsync: Scaffold.of(context));
+  }
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: NavigatorState());
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) return;
+      if (_isActiveListNearTop() && _pendingNewPostIds.isNotEmpty) {
+        setState(() => _pendingNewPostIds.clear());
+      } else {
+        setState(() {});
+      }
+    });
+    for (final controller in _scrollControllers.values) {
+      controller.addListener(_handleScroll);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<CommunityPostsStore>().fetchPostsOnce();
     });
+    _newPostsPollTimer = Timer.periodic(
+      const Duration(seconds: 12),
+      (_) => _checkForNewPosts(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _newPostsPollTimer?.cancel();
+    for (final controller in _scrollControllers.values) {
+      controller
+        ..removeListener(_handleScroll)
+        ..dispose();
+    }
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _handleScroll() {
+    if (_isActiveListNearTop() && _pendingNewPostIds.isNotEmpty) {
+      setState(() => _pendingNewPostIds.clear());
+    }
+  }
+
+  CommunityTopic _activeTopic() {
+    switch (_tabController.index) {
+      case 1:
+        return CommunityTopic.marketTalk;
+      case 2:
+        return CommunityTopic.introductions;
+      default:
+        return CommunityTopic.general;
+    }
+  }
+
+  bool _isActiveListNearTop() {
+    final controller = _scrollControllers[_activeTopic()];
+    if (controller == null || !controller.hasClients) return true;
+    return controller.offset < 80;
+  }
+
+  Future<void> _checkForNewPosts() async {
+    if (!mounted || _isCheckingForNewPosts) return;
+
+    final store = context.read<CommunityPostsStore>();
+    final existingIds = store.posts.map((post) => post.id).toSet();
+
+    _isCheckingForNewPosts = true;
+    try {
+      await store.refreshPosts();
+    } finally {
+      _isCheckingForNewPosts = false;
+    }
+
+    if (!mounted) return;
+
+    final newIds = store.posts
+        .where((post) => !existingIds.contains(post.id))
+        .map((post) => post.id);
+
+    if (newIds.isEmpty || _isActiveListNearTop()) return;
+
+    setState(() => _pendingNewPostIds.addAll(newIds));
+  }
+
+  int _pendingCountForActiveTopic(List<CommunityPost> posts) {
+    final active = _activeTopic();
+    final visible = _filterPosts(posts, active);
+    return visible.where((post) => _pendingNewPostIds.contains(post.id)).length;
+  }
+
+  Future<void> _jumpToLatest() async {
+    final controller = _scrollControllers[_activeTopic()];
+    if (controller != null && controller.hasClients) {
+      await controller.animateTo(
+        0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    if (!mounted) return;
+    setState(() => _pendingNewPostIds.clear());
   }
 
   @override
@@ -57,38 +170,75 @@ class _CommunityScreenState extends State<CommunityScreen> {
             );
           }
 
-          return DefaultTabController(
-            length: 3,
-            child: Column(
-              children: [
-                const _CommunityTabs(),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _CommunityFeedList(
-                        posts: _filterPosts(posts, CommunityTopic.general),
-                        bottomPad: bottomPad,
-                        onLike: store.toggleLike,
-                        onBookmark: store.toggleBookmark,
+          final pendingCount = _pendingCountForActiveTopic(posts);
+
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  _CommunityTabs(controller: _tabController),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _CommunityFeedList(
+                          posts: _filterPosts(posts, CommunityTopic.general),
+                          bottomPad: bottomPad,
+                          controller: _scrollControllers[CommunityTopic.general]!,
+                          onLike: store.toggleLike,
+                          onBookmark: store.toggleBookmark,
+                        ),
+                        _CommunityFeedList(
+                          posts: _filterPosts(posts, CommunityTopic.marketTalk),
+                          bottomPad: bottomPad,
+                          controller:
+                              _scrollControllers[CommunityTopic.marketTalk]!,
+                          onLike: store.toggleLike,
+                          onBookmark: store.toggleBookmark,
+                        ),
+                        _CommunityFeedList(
+                          posts:
+                              _filterPosts(posts, CommunityTopic.introductions),
+                          bottomPad: bottomPad,
+                          controller:
+                              _scrollControllers[CommunityTopic.introductions]!,
+                          onLike: store.toggleLike,
+                          onBookmark: store.toggleBookmark,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (pendingCount > 0)
+                Positioned(
+                  top: 8,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: _jumpToLatest,
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary500,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '$pendingCount new posts',
+                          style: GoogleFonts.inter(
+                            color: Colors.black,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                      _CommunityFeedList(
-                        posts: _filterPosts(posts, CommunityTopic.marketTalk),
-                        bottomPad: bottomPad,
-                        onLike: store.toggleLike,
-                        onBookmark: store.toggleBookmark,
-                      ),
-                      _CommunityFeedList(
-                        posts:
-                            _filterPosts(posts, CommunityTopic.introductions),
-                        bottomPad: bottomPad,
-                        onLike: store.toggleLike,
-                        onBookmark: store.toggleBookmark,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+            ],
           );
         },
       ),
@@ -106,7 +256,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
 }
 
 class _CommunityTabs extends StatelessWidget {
-  const _CommunityTabs();
+  const _CommunityTabs({required this.controller});
+
+  final TabController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +271,7 @@ class _CommunityTabs extends StatelessWidget {
         ),
       ),
       child: TabBar(
+        controller: controller,
         labelColor: AppColors.primary400,
         unselectedLabelColor: AppColors.textMuted,
         indicatorColor: AppColors.primary400,
@@ -146,12 +299,14 @@ class _CommunityFeedList extends StatelessWidget {
   const _CommunityFeedList({
     required this.posts,
     required this.bottomPad,
+    required this.controller,
     required this.onLike,
     required this.onBookmark,
   });
 
   final List<CommunityPost> posts;
   final double bottomPad;
+  final ScrollController controller;
   final Future<void> Function(String postId) onLike;
   final Future<void> Function(String postId) onBookmark;
 
@@ -171,6 +326,7 @@ class _CommunityFeedList extends StatelessWidget {
     }
 
     return ListView.separated(
+      controller: controller,
       padding: EdgeInsets.fromLTRB(16, 14, 16, bottomPad),
       itemCount: posts.length,
       separatorBuilder: (_, __) => const SizedBox(height: 14),
@@ -200,6 +356,12 @@ class _CommunityCard extends StatelessWidget {
   final VoidCallback onLike;
   final VoidCallback onBookmark;
 
+  void _openAuthorProfile(BuildContext context) {
+    final admin = post.admin;
+    if (admin == null) return;
+    PublicProfileScreen.showSheet(context, admin);
+  }
+
   @override
   Widget build(BuildContext context) {
     final admin = post.admin;
@@ -228,7 +390,12 @@ class _CommunityCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Avatar(adminName: displayName, imageUrl: admin?.imageUrl),
+                GestureDetector(
+                  onTap: () => _openAuthorProfile(context),
+                  behavior: HitTestBehavior.opaque,
+                  child: _Avatar(
+                      adminName: displayName, imageUrl: admin?.imageUrl),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -240,14 +407,18 @@ class _CommunityCard extends StatelessWidget {
                             child: Row(
                               children: [
                                 Flexible(
-                                  child: Text(
-                                    displayName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
+                                  child: GestureDetector(
+                                    onTap: () => _openAuthorProfile(context),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Text(
+                                      displayName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.inter(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ),

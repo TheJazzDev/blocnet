@@ -110,19 +110,23 @@ class _BookmarksEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Column(
-        children: [
-          Icon(Icons.bookmark_add_outlined,
-              size: 36, color: AppColors.textFaint),
-          const SizedBox(height: 8),
-          Text(
-            'Bookmark posts from Community to save them here',
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 12,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.bookmark_add_outlined,
+                size: 36, color: AppColors.textFaint),
+            const SizedBox(height: 8),
+            Text(
+              'Bookmark posts from Community to save them here',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                color: AppColors.textMuted,
+                fontSize: 12,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

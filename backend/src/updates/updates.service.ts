@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { UpdateStatus } from '@prisma/client';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
@@ -96,6 +97,7 @@ export class UpdatesService {
       where: {
         projectId: query.projectId,
         urgency: query.urgency,
+        status: { not: UpdateStatus.hidden },
       },
       orderBy: { createdAt: 'desc' },
       skip: offset,
@@ -107,8 +109,11 @@ export class UpdatesService {
   }
 
   async getUpdate(id: string) {
-    const update = await this.prisma.update.findUnique({
-      where: { id },
+    const update = await this.prisma.update.findFirst({
+      where: {
+        id,
+        status: { not: UpdateStatus.hidden },
+      },
       include: updateInclude,
     });
 

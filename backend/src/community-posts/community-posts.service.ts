@@ -1,4 +1,9 @@
-import { CommunityReactionKind, CommunityTopic, Prisma } from '@prisma/client';
+import {
+  CommunityReactionKind,
+  CommunityTopic,
+  ContentModerationStatus,
+  Prisma,
+} from '@prisma/client';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
@@ -29,6 +34,7 @@ export class CommunityPostsService {
     const where: Prisma.CommunityPostWhereInput = {
       topic: query.topic,
       authorId: query.authorId,
+      status: ContentModerationStatus.active,
     };
 
     const posts = await this.prisma.communityPost.findMany({
@@ -43,8 +49,11 @@ export class CommunityPostsService {
   }
 
   async getPost(actor: AuthUser, id: string) {
-    const post = await this.prisma.communityPost.findUnique({
-      where: { id },
+    const post = await this.prisma.communityPost.findFirst({
+      where: {
+        id,
+        status: ContentModerationStatus.active,
+      },
       include: buildCommunityPostInclude(actor.id),
     });
 
@@ -77,13 +86,16 @@ export class CommunityPostsService {
   }
 
   async listComments(postId: string, query: ListCommunityCommentsQuery) {
-    await this.ensurePostExists(postId);
+    await this.ensurePostIsActive(postId);
 
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
 
     const comments = await this.prisma.communityPostComment.findMany({
-      where: { postId },
+      where: {
+        postId,
+        status: ContentModerationStatus.active,
+      },
       orderBy: { createdAt: 'asc' },
       skip: offset,
       take: limit,
@@ -98,7 +110,7 @@ export class CommunityPostsService {
     postId: string,
     dto: CreateCommunityPostCommentDto,
   ) {
-    await this.ensurePostExists(postId);
+    await this.ensurePostIsActive(postId);
 
     const comment = await this.prisma.communityPostComment.create({
       data: {
@@ -125,7 +137,7 @@ export class CommunityPostsService {
     postId: string,
     dto: ReactCommunityPostDto,
   ) {
-    await this.ensurePostExists(postId);
+    await this.ensurePostIsActive(postId);
 
     const kind = dto.kind ?? CommunityReactionKind.like;
 
@@ -161,7 +173,7 @@ export class CommunityPostsService {
     postId: string,
     dto: ReactCommunityPostDto,
   ) {
-    await this.ensurePostExists(postId);
+    await this.ensurePostIsActive(postId);
 
     const kind = dto.kind ?? CommunityReactionKind.like;
 
@@ -194,7 +206,7 @@ export class CommunityPostsService {
   }
 
   async bookmarkPost(actor: AuthUser, postId: string) {
-    await this.ensurePostExists(postId);
+    await this.ensurePostIsActive(postId);
 
     const bookmark = await this.prisma.bookmark.upsert({
       where: {
@@ -222,7 +234,7 @@ export class CommunityPostsService {
   }
 
   async unbookmarkPost(actor: AuthUser, postId: string) {
-    await this.ensurePostExists(postId);
+    await this.ensurePostIsActive(postId);
 
     const bookmark = await this.prisma.bookmark.findUnique({
       where: {
@@ -249,9 +261,12 @@ export class CommunityPostsService {
     return this.getPost(actor, postId);
   }
 
-  private async ensurePostExists(postId: string) {
-    const post = await this.prisma.communityPost.findUnique({
-      where: { id: postId },
+  private async ensurePostIsActive(postId: string) {
+    const post = await this.prisma.communityPost.findFirst({
+      where: {
+        id: postId,
+        status: ContentModerationStatus.active,
+      },
       select: { id: true },
     });
 

@@ -3,7 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { RoleName } from '@prisma/client';
+import {
+  ContentModerationStatus,
+  ProjectStatus,
+  RoleName,
+} from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import {
   buildCommunityPostInclude,
@@ -61,8 +65,10 @@ export class UsersService {
     return {
       id: profile.id,
       email: profile.email,
+      username: profile.username,
       displayName: profile.displayName,
       avatarUrl: profile.avatarUrl,
+      bio: profile.bio,
       createdAt: profile.createdAt,
       roles: profile.roles.map((row) => row.role),
       followedProjectIds: profile.follows.map((row) => row.projectId),
@@ -73,12 +79,27 @@ export class UsersService {
     };
   }
 
+  async isUsernameTaken(username: string, excludeUserId?: string): Promise<boolean> {
+    const profile = await this.prisma.profile.findUnique({
+      where: { username: username.toLowerCase() },
+      select: { id: true },
+    });
+    if (!profile) return false;
+    if (excludeUserId && profile.id === excludeUserId) return false;
+    return true;
+  }
+
   async updateMe(userId: string, dto: UpdateMeDto) {
+    if (dto.bio !== undefined && dto.bio.length > 300) {
+      throw new BadRequestException('Bio must be 300 characters or less');
+    }
+
     return this.prisma.profile.update({
       where: { id: userId },
       data: {
         displayName: dto.displayName,
         avatarUrl: dto.avatarUrl,
+        bio: dto.bio,
       },
     });
   }
@@ -116,24 +137,45 @@ export class UsersService {
     };
   }
 
-  async listAllUsers(opts: { limit?: number; offset?: number; role?: string }) {
-    const { limit = 50, offset = 0, role } = opts;
+  async listAllUsers(opts: {
+    limit?: number;
+    offset?: number;
+    role?: string;
+    q?: string;
+  }) {
+    const { limit = 50, offset = 0, role, q } = opts;
 
     const validRoles = Object.values(RoleName);
     const roleFilter =
       role && validRoles.includes(role as RoleName)
         ? (role as RoleName)
         : undefined;
-    const where = roleFilter
-      ? { roles: { some: { role: roleFilter } } }
-      : undefined;
+
+    // Only include UUID filter if q looks like a valid UUID to avoid Postgres cast errors
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isUuid = q ? uuidRegex.test(q.trim()) : false;
+
+    const where = {
+      ...(roleFilter ? { roles: { some: { role: roleFilter } } } : {}),
+      ...(q
+        ? {
+            OR: [
+              { email: { contains: q, mode: 'insensitive' as const } },
+              { displayName: { contains: q, mode: 'insensitive' as const } },
+              { username: { contains: q, mode: 'insensitive' as const } },
+              ...(isUuid ? [{ id: { equals: q } }] : []),
+            ],
+          }
+        : {}),
+    };
 
     const [users, total] = await Promise.all([
       this.prisma.profile.findMany({
         where,
         skip: offset,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         include: {
           roles: { select: { role: true } },
           _count: {
@@ -151,6 +193,7 @@ export class UsersService {
       data: users.map((u) => ({
         id: u.id,
         email: u.email,
+        username: u.username,
         displayName: u.displayName,
         avatarUrl: u.avatarUrl,
         roles: u.roles.map((r) => r.role),
@@ -280,7 +323,12 @@ export class UsersService {
     const { limit, offset } = this.normalizePagination(opts);
 
     const follows = await this.prisma.projectFollow.findMany({
-      where: { userId },
+      where: {
+        userId,
+        project: {
+          status: { not: ProjectStatus.hidden },
+        },
+      },
       orderBy: { createdAt: 'desc' },
       skip: offset,
       take: limit,
@@ -301,7 +349,12 @@ export class UsersService {
     const { limit, offset } = this.normalizePagination(opts);
 
     const bookmarks = await this.prisma.bookmark.findMany({
-      where: { userId },
+      where: {
+        userId,
+        communityPost: {
+          status: ContentModerationStatus.active,
+        },
+      },
       orderBy: { createdAt: 'desc' },
       skip: offset,
       take: limit,

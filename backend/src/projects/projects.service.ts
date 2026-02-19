@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ProjectStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -141,6 +142,9 @@ export class ProjectsService {
     const limit = Math.min(query.limit ?? 30, 100);
 
     const projects = await this.prisma.project.findMany({
+      where: {
+        status: { not: ProjectStatus.hidden },
+      },
       skip: offset,
       take: limit,
       orderBy: { createdAt: 'desc' },
@@ -151,8 +155,11 @@ export class ProjectsService {
   }
 
   async getProject(id: string) {
-    const project = await this.prisma.project.findUnique({
-      where: { id },
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id,
+        status: { not: ProjectStatus.hidden },
+      },
       include: projectInclude,
     });
 

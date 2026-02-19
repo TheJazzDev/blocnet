@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   // ── Brand primary — bright cyan (#0deef2) ────────────────────────────────
-  static Color primary50  = const Color(0xFFECFEFF);
-  static Color primary75  = const Color(0xFFCFFAFE);
+  static Color primary50 = const Color(0xFFECFEFF);
+  static Color primary75 = const Color(0xFFCFFAFE);
   static Color primary100 = const Color(0xFFA5F3FC);
   static Color primary200 = const Color(0xFF67E8F9);
   static Color primary300 = const Color(0xFF22D3EE);
@@ -45,58 +45,61 @@ class AppColors {
 
   // ── Text ──────────────────────────────────────────────────────────────────
   /// #FAFAFA — zinc-50
-  static Color textPrimary   = const Color(0xFFFAFAFA);
-  /// #A1A1AA — zinc-400
-  static Color textSecondary = const Color(0xFFA1A1AA);
-  /// #71717A — zinc-500
-  static Color textMuted     = const Color(0xFF71717A);
-  /// #52525B — zinc-600
-  static Color textFaint     = const Color(0xFF52525B);
+  static Color textPrimary = const Color(0xFFFAFAFA);
+
+  /// Brightened for better readability on dark backgrounds.
+  static Color textSecondary = const Color(0xFFC7CBD5);
+  static Color textMuted = const Color(0xFFA5ADBA);
+  static Color textFaint = const Color(0xFF7D8797);
 
   // ── Status ────────────────────────────────────────────────────────────────
-  static Color error500    = const Color(0xFFCB1A14);
-  static Color error900    = const Color(0xFF591000);
-  static Color warning500  = const Color(0xFFDD900D);
-  static Color warning900  = const Color(0xFF523300);
+  static Color error500 = const Color(0xFFCB1A14);
+  static Color error900 = const Color(0xFF591000);
+  static Color warning500 = const Color(0xFFDD900D);
+  static Color warning900 = const Color(0xFF523300);
   static Color successColor = const Color(0xFF10B981);
 
   // ── Signal / tag palette ──────────────────────────────────────────────────
   /// ALPHA tag — green
-  static const Color tagAlpha       = Color(0xFF10B981);
-  static const Color tagAlphaBg     = Color(0x1A10B981);
+  static const Color tagAlpha = Color(0xFF10B981);
+  static const Color tagAlphaBg = Color(0x1A10B981);
   static const Color tagAlphaBorder = Color(0x3310B981);
+
   /// PARTNERSHIP — purple
-  static const Color tagPartnership       = Color(0xFFA855F7);
-  static const Color tagPartnershipBg     = Color(0x1AA855F7);
+  static const Color tagPartnership = Color(0xFFA855F7);
+  static const Color tagPartnershipBg = Color(0x1AA855F7);
   static const Color tagPartnershipBorder = Color(0x33A855F7);
+
   /// WARNING / RUG — red
-  static const Color tagWarning       = Color(0xFFEF4444);
-  static const Color tagWarningBg     = Color(0x1AEF4444);
+  static const Color tagWarning = Color(0xFFEF4444);
+  static const Color tagWarningBg = Color(0x1AEF4444);
   static const Color tagWarningBorder = Color(0x33EF4444);
+
   /// GENERAL — neutral
-  static const Color tagGeneral       = Color(0xFF94A3B8);
-  static const Color tagGeneralBg     = Color(0x1A94A3B8);
+  static const Color tagGeneral = Color(0xFF94A3B8);
+  static const Color tagGeneralBg = Color(0x1A94A3B8);
   static const Color tagGeneralBorder = Color(0x3394A3B8);
+
   /// AIRDROP — orange
-  static const Color tagAirdrop       = Color(0xFFF97316);
-  static const Color tagAirdropBg     = Color(0x1AF97316);
+  static const Color tagAirdrop = Color(0xFFF97316);
+  static const Color tagAirdropBg = Color(0x1AF97316);
   static const Color tagAirdropBorder = Color(0x33F97316);
 
   // ── Hype score colors ─────────────────────────────────────────────────────
   static Color hypeHigh = const Color(0xFF10B981);
-  static Color hypeMid  = const Color(0xFF0deef2);
-  static Color hypeLow  = const Color(0xFF52525B);
+  static Color hypeMid = const Color(0xFF0deef2);
+  static Color hypeLow = const Color(0xFF52525B);
 
   // ── Legacy aliases ────────────────────────────────────────────────────────
-  static Color textColor  = const Color(0xFFA1A1AA);
+  static Color textColor = const Color(0xFFA1A1AA);
   static Color titleColor = const Color(0xFFFAFAFA);
-  static Color priorityHigh = const Color(0xFF10B981);
-  static Color priorityMid  = const Color(0xFF0deef2);
-  static Color priorityLow  = const Color(0xFF52525B);
+  static Color priorityHigh = const Color(0xFFEF4444);
+  static Color priorityMid = const Color(0xFFF59E0B);
+  static Color priorityLow = const Color(0xFF10B981);
 
   // ── Grey scale (legacy) ───────────────────────────────────────────────────
-  static Color darkGrey50  = const Color(0xFF0A0A0A);
-  static Color darkGrey75  = const Color(0xFF141414);
+  static Color darkGrey50 = const Color(0xFF0A0A0A);
+  static Color darkGrey75 = const Color(0xFF141414);
   static Color darkGrey100 = const Color(0xFF171717);
   static Color darkGrey200 = const Color(0xFF262626);
   static Color darkGrey300 = const Color(0xFF404040);
@@ -238,28 +241,33 @@ ThemeData primaryTheme = ThemeData(
   // Text theme — Inter body, Space Grotesk display
   textTheme: TextTheme(
     // Display — Space Grotesk bold
-    displayLarge:  _spaceGrotesk(56, FontWeight.w800, AppColors.primary500),
+    displayLarge: _spaceGrotesk(56, FontWeight.w800, AppColors.primary500),
     displayMedium: _spaceGrotesk(40, FontWeight.w800, AppColors.primary400),
-    displaySmall:  _spaceGrotesk(32, FontWeight.w700, AppColors.primary300),
+    displaySmall: _spaceGrotesk(32, FontWeight.w700, AppColors.primary300),
 
     // Headlines — Space Grotesk
-    headlineLarge:  _spaceGrotesk(24, FontWeight.w700, AppColors.textPrimary),
+    headlineLarge: _spaceGrotesk(24, FontWeight.w700, AppColors.textPrimary),
     headlineMedium: _spaceGrotesk(20, FontWeight.w700, AppColors.textPrimary),
-    headlineSmall:  _spaceGrotesk(17, FontWeight.w700, AppColors.textPrimary),
+    headlineSmall: _spaceGrotesk(17, FontWeight.w700, AppColors.textPrimary),
 
     // Titles — Inter semi-bold
-    titleLarge:  _inter(16, FontWeight.w600, AppColors.textPrimary),
+    titleLarge: _inter(16, FontWeight.w600, AppColors.textPrimary),
     titleMedium: _inter(14, FontWeight.w600, AppColors.textPrimary),
-    titleSmall:  _inter(12, FontWeight.w600, AppColors.textPrimary),
+    titleSmall: _inter(12, FontWeight.w600, AppColors.textPrimary),
 
     // Body — Inter regular
-    bodyLarge:  _inter(15, FontWeight.w400, AppColors.textSecondary, height: 1.6),
-    bodyMedium: _inter(13, FontWeight.w400, AppColors.textSecondary, height: 1.5),
-    bodySmall:  _inter(12, FontWeight.w400, AppColors.textMuted,     height: 1.5),
+    bodyLarge:
+        _inter(15, FontWeight.w400, AppColors.textSecondary, height: 1.6),
+    bodyMedium:
+        _inter(13, FontWeight.w400, AppColors.textSecondary, height: 1.5),
+    bodySmall: _inter(12, FontWeight.w400, AppColors.textMuted, height: 1.5),
 
     // Labels — Inter medium
-    labelLarge:  _inter(12, FontWeight.w500, AppColors.teal400,     letterSpacing: 0.3),
-    labelMedium: _inter(11, FontWeight.w500, AppColors.textMuted,   letterSpacing: 0.2),
-    labelSmall:  _inter(10, FontWeight.w600, AppColors.textFaint,   letterSpacing: 0.8),
+    labelLarge:
+        _inter(12, FontWeight.w500, AppColors.teal400, letterSpacing: 0.3),
+    labelMedium:
+        _inter(11, FontWeight.w500, AppColors.textMuted, letterSpacing: 0.2),
+    labelSmall:
+        _inter(10, FontWeight.w600, AppColors.textFaint, letterSpacing: 0.8),
   ),
 );

@@ -1,7 +1,3 @@
-/**
- * Server-side API client for the Blocnet admin panel.
- * Uses the stored Supabase token from cookies to authenticate requests.
- */
 import { cookies } from "next/headers";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3080/api";
@@ -11,12 +7,18 @@ async function getToken(): Promise<string | null> {
   return store.get("admin_token")?.value ?? null;
 }
 
-async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = await getToken();
+function toQuery(params: Record<string, string | number | undefined | null>): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "") continue;
+    query.set(key, String(value));
+  }
+  const encoded = query.toString();
+  return encoded ? `?${encoded}` : "";
+}
 
+async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = await getToken();
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
@@ -24,7 +26,6 @@ async function apiFetch<T>(
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
-    // Disable Next.js caching for admin data
     cache: "no-store",
   });
 
@@ -36,7 +37,13 @@ async function apiFetch<T>(
   return res.json() as Promise<T>;
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+export interface AdminMe {
+  id: string;
+  email: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  roles: string[];
+}
 
 export interface AdminStats {
   totalProjects: number;
@@ -67,22 +74,116 @@ export interface AdminUsersResponse {
   offset: number;
 }
 
-export interface Project {
+export type ProjectStatus = "active" | "paused" | "hidden" | "archived";
+export type UpdateStatus = "published" | "hidden" | "archived";
+export type ContentStatus = "active" | "hidden" | "archived";
+export type CommunityTopic = "general" | "market_talk" | "introductions";
+
+export interface ActorSummary {
+  id: string;
+  email: string;
+  displayName: string | null;
+}
+
+export interface ModerationInfo {
+  moderatedBy: ActorSummary | null;
+  moderatedAt: string | null;
+  moderationReason: string | null;
+}
+
+export interface AdminProject {
   id: string;
   name: string;
   symbol: string | null;
-  status: "active" | "paused" | "archived";
-  primaryTag: string | null;
-  primaryTagId: string;
-  followersCount: number;
-  updatesCount: number;
+  status: ProjectStatus;
+  description: string;
+  slug: string;
+  primaryTag: { id: string; name: string } | null;
+  owner: ActorSummary | null;
+  moderation: ModerationInfo;
+  counts: {
+    updates: number;
+    followers: number;
+  };
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUpdate {
+  id: string;
+  projectId: string;
+  authorId: string;
+  title: string;
+  contentMd: string;
+  urgency: "high" | "medium" | "low";
+  status: UpdateStatus;
+  author: ActorSummary;
+  project: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  moderation: ModerationInfo;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminComment {
+  id: string;
+  updateId: string;
+  authorId: string;
+  content: string;
+  status: ContentStatus;
+  author: ActorSummary;
+  update: {
+    id: string;
+    title: string;
+    project: {
+      id: string;
+      name: string;
+    };
+  };
+  moderation: ModerationInfo;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminCommunityPost {
+  id: string;
+  authorId: string;
+  topic: CommunityTopic;
+  content: string;
+  status: ContentStatus;
+  author: ActorSummary;
+  moderation: ModerationInfo;
+  counts: {
+    comments: number;
+    reactions: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminCommunityComment {
+  id: string;
+  postId: string;
+  authorId: string;
+  content: string;
+  status: ContentStatus;
+  author: ActorSummary;
+  post: {
+    id: string;
+    topic: CommunityTopic;
+    preview: string;
+  };
+  moderation: ModerationInfo;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AdminApplication {
   id: string;
   userId: string;
-  /** Backend includes the user as `user` */
   user: {
     id: string;
     email: string;
@@ -128,78 +229,237 @@ export interface AuditLog {
   createdAt: string;
 }
 
-// ─── API Functions ────────────────────────────────────────────────────────────
+export interface Tag {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export const api = {
-  /** GET /admin/users/stats */
+  getMe: () => apiFetch<AdminMe>("/me"),
+
   getStats: () => apiFetch<AdminStats>("/admin/users/stats"),
 
-  /** GET /admin/users */
-  listUsers: (params?: { limit?: number; offset?: number; role?: string }) => {
-    const q = new URLSearchParams();
-    if (params?.limit) q.set("limit", String(params.limit));
-    if (params?.offset) q.set("offset", String(params.offset));
-    if (params?.role) q.set("role", params.role);
-    return apiFetch<AdminUsersResponse>(`/admin/users?${q}`);
-  },
+  listUsers: (params?: { limit?: number; offset?: number; role?: string; q?: string }) =>
+    apiFetch<AdminUsersResponse>(
+      `/admin/users${toQuery({
+        limit: params?.limit,
+        offset: params?.offset,
+        role: params?.role,
+        q: params?.q,
+      })}`,
+    ),
 
-  /** GET /projects */
-  listProjects: (params?: { status?: string }) => {
-    const q = new URLSearchParams();
-    if (params?.status && params.status !== "all") q.set("status", params.status);
-    return apiFetch<Project[]>(`/projects?${q}`);
-  },
+  listAdminProjects: (params?: {
+    q?: string;
+    status?: ProjectStatus;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminProject[]>(
+      `/admin/content/projects${toQuery({
+        q: params?.q,
+        status: params?.status,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
 
-  /** PATCH /projects/:id */
-  updateProject: (id: string, body: { status: string }) =>
-    apiFetch(`/projects/${id}`, {
+  moderateProjectStatus: (id: string, body: { status: ProjectStatus; reason: string }) =>
+    apiFetch<AdminProject>(`/admin/content/projects/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
 
-  /** GET /admin-applications */
-  listAdminApplications: () =>
-    apiFetch<AdminApplication[]>("/admin-applications"),
+  listAdminUpdates: (params?: {
+    q?: string;
+    status?: UpdateStatus;
+    projectId?: string;
+    authorId?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminUpdate[]>(
+      `/admin/content/updates${toQuery({
+        q: params?.q,
+        status: params?.status,
+        projectId: params?.projectId,
+        authorId: params?.authorId,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
 
-  /** PATCH /admin-applications/:id/review */
+  moderateUpdateStatus: (id: string, body: { status: UpdateStatus; reason: string }) =>
+    apiFetch<AdminUpdate>(`/admin/content/updates/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listAdminComments: (params?: {
+    q?: string;
+    status?: ContentStatus;
+    updateId?: string;
+    authorId?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminComment[]>(
+      `/admin/content/comments${toQuery({
+        q: params?.q,
+        status: params?.status,
+        updateId: params?.updateId,
+        authorId: params?.authorId,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  moderateCommentStatus: (id: string, body: { status: ContentStatus; reason: string }) =>
+    apiFetch<AdminComment>(`/admin/content/comments/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listAdminCommunityPosts: (params?: {
+    q?: string;
+    status?: ContentStatus;
+    topic?: CommunityTopic;
+    authorId?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminCommunityPost[]>(
+      `/admin/content/community-posts${toQuery({
+        q: params?.q,
+        status: params?.status,
+        topic: params?.topic,
+        authorId: params?.authorId,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  moderateCommunityPostStatus: (
+    id: string,
+    body: { status: ContentStatus; reason: string },
+  ) =>
+    apiFetch<AdminCommunityPost>(`/admin/content/community-posts/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listAdminCommunityComments: (params?: {
+    q?: string;
+    status?: ContentStatus;
+    postId?: string;
+    authorId?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminCommunityComment[]>(
+      `/admin/content/community-comments${toQuery({
+        q: params?.q,
+        status: params?.status,
+        postId: params?.postId,
+        authorId: params?.authorId,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  moderateCommunityCommentStatus: (
+    id: string,
+    body: { status: ContentStatus; reason: string },
+  ) =>
+    apiFetch<AdminCommunityComment>(`/admin/content/community-comments/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listAdminApplications: () => apiFetch<AdminApplication[]>("/admin-applications"),
+
   reviewAdminApplication: (
     id: string,
-    body: { status: "approved" | "rejected"; note?: string }
+    body: { status: "approved" | "rejected"; note?: string },
   ) =>
     apiFetch(`/admin-applications/${id}/review`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
 
-  /** GET /project-proposals */
-  listProjectProposals: () =>
-    apiFetch<ProjectProposal[]>("/project-proposals"),
+  listProjectProposals: () => apiFetch<ProjectProposal[]>("/project-proposals"),
 
-  /** PATCH /project-proposals/:id/review */
   reviewProjectProposal: (
     id: string,
-    body: { status: "approved" | "rejected"; note?: string }
+    body: { status: "approved" | "rejected"; note?: string },
   ) =>
     apiFetch(`/project-proposals/${id}/review`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
 
-  /** GET /audit-log */
-  listAuditLog: (limit = 100) =>
-    apiFetch<AuditLog[]>(`/audit-log?limit=${limit}`),
+  listAuditLog: (limit = 100) => apiFetch<AuditLog[]>(`/audit-log${toQuery({ limit })}`),
 
-  /** POST /roles/admins/:userId/promote */
   promoteToAdmin: (userId: string, note?: string) =>
     apiFetch(`/roles/admins/${userId}/promote`, {
       method: "POST",
       body: JSON.stringify({ note }),
     }),
 
-  /** POST /roles/hunters/:userId/promote */
+  demoteAdmin: (userId: string) =>
+    apiFetch(`/roles/admins/${userId}`, {
+      method: "DELETE",
+    }),
+
+  promoteToModerator: (userId: string, note?: string) =>
+    apiFetch(`/roles/moderators/${userId}/promote`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    }),
+
+  demoteModerator: (userId: string) =>
+    apiFetch(`/roles/moderators/${userId}`, {
+      method: "DELETE",
+    }),
+
   promoteToHunter: (userId: string, note?: string) =>
     apiFetch(`/roles/hunters/${userId}/promote`, {
       method: "POST",
       body: JSON.stringify({ note }),
+    }),
+
+  demoteHunter: (userId: string) =>
+    apiFetch(`/roles/hunters/${userId}`, {
+      method: "DELETE",
+    }),
+
+  listPrimaryTags: () => apiFetch<Tag[]>("/tags/primary"),
+  listSecondaryTags: () => apiFetch<Tag[]>("/tags/secondary"),
+
+  createPrimaryTag: (body: { name: string }) =>
+    apiFetch<Tag>("/tags/primary", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  createSecondaryTag: (body: { name: string }) =>
+    apiFetch<Tag>("/tags/secondary", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updatePrimaryTag: (id: string, body: { name: string }) =>
+    apiFetch<Tag>(`/tags/primary/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  updateSecondaryTag: (id: string, body: { name: string }) =>
+    apiFetch<Tag>(`/tags/secondary/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
     }),
 };

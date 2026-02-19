@@ -111,8 +111,7 @@ export default function AuditLogPage() {
             <TableSkeleton />
           ) : logs.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              No audit events found. Make sure the backend is running and you
-              have owner access.
+              No audit events found. Make sure the backend is running.
             </p>
           ) : (
             <Table>

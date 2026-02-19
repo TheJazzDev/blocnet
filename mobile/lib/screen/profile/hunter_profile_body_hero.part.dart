@@ -122,58 +122,27 @@ class _HunterHero extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: OutlinedButton(
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed(AppRoutes.settings),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.borderMuted),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      'Edit Profile',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: OutlinedButton(
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.editProfile),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: AppColors.borderMuted),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: ElevatedButton.icon(
-                    onPressed: null,
-                    icon: const Icon(Icons.payments_outlined,
-                        size: 16, color: Colors.black),
-                    label: Text(
-                      'Tip Hunter',
-                      style: GoogleFonts.inter(
-                        color: Colors.black,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary500,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
+              child: Text(
+                'Edit Profile',
+                style: GoogleFonts.inter(
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),

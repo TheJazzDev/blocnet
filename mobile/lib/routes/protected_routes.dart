@@ -8,6 +8,7 @@ import 'package:blocnet/features/projects/presentation/pages/submit_project_scre
 import 'package:blocnet/screen/main_screen.dart';
 import 'package:blocnet/screen/community_create_post_screen.dart';
 import 'package:blocnet/screen/community_post_discussion_screen.dart';
+import 'package:blocnet/screen/edit_profile_screen.dart';
 import 'package:blocnet/screen/notifications.dart';
 import 'package:blocnet/screen/settings_screen.dart';
 import 'package:blocnet/screen/wallet_screen.dart';
@@ -28,6 +29,7 @@ class ProtectedRoutes {
   static const String manageUpdates = AppRoutes.manageUpdates;
   static const String communityCreatePost = AppRoutes.communityCreatePost;
   static const String communityDiscussion = AppRoutes.communityDiscussion;
+  static const String editProfile = AppRoutes.editProfile;
 
   // Hunter
   static const String hunterHub = AppRoutes.hunterHub;
@@ -68,6 +70,7 @@ class ProtectedRoutes {
       manageUpdates: (context) => const ManageUpdatesScreen(),
       communityCreatePost: (context) => const CommunityCreatePostScreen(),
       communityDiscussion: (context) => const CommunityPostDiscussionScreen(),
+      editProfile: (context) => const EditProfileScreen(),
 
       // Hunter
       hunterHub: (context) => const HunterHubScreen(),
@@ -95,6 +98,7 @@ class ProtectedRoutes {
     manageUpdates,
     communityCreatePost,
     communityDiscussion,
+    editProfile,
     hunterHub,
     becomeHunter,
     home,

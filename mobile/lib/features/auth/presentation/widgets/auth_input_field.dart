@@ -1,11 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Styled text field for all auth screens — Web3 dark panel variant.
-///
-/// Designed to sit inside the frosted-dark form card (#0D1120 bg):
-/// - Slightly elevated fill (#131829)
-/// - Subtle border at rest, teal glow on focus
 class AuthInputField extends StatelessWidget {
   const AuthInputField({
     super.key,
@@ -32,9 +28,6 @@ class AuthInputField extends StatelessWidget {
   final Iterable<String>? autofillHints;
   final FocusNode? focusNode;
 
-  static const _fillColor = Color(0xFF131829);
-  static const _borderColor = Color(0xFF1E2A45);
-
   @override
   Widget build(BuildContext context) {
     return TextFormField(
@@ -45,59 +38,56 @@ class AuthInputField extends StatelessWidget {
       onFieldSubmitted: onFieldSubmitted,
       autofillHints: autofillHints,
       focusNode: focusNode,
-      style: TextStyle(
-        color: AppColors.darkGrey700,
+      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+      style: GoogleFonts.inter(
+        color: AppColors.textSecondary,
         fontSize: 14,
-        fontFamily: 'Geist',
         fontWeight: FontWeight.w400,
       ),
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(
-          color: AppColors.darkGrey400,
+        labelStyle: GoogleFonts.inter(
+          color: AppColors.textMuted,
           fontSize: 13,
-          fontFamily: 'Geist',
         ),
-        floatingLabelStyle: TextStyle(
-          color: AppColors.teal400,
+        floatingLabelStyle: GoogleFonts.inter(
+          color: AppColors.primary400,
           fontSize: 12,
-          fontFamily: 'Geist',
           fontWeight: FontWeight.w500,
         ),
         filled: true,
-        fillColor: _fillColor,
+        fillColor: AppColors.bgElevated,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderColor, width: 1),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppColors.borderSubtle, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderColor, width: 1),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppColors.borderSubtle, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: AppColors.teal500,
+            color: AppColors.primary400,
             width: 1.5,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: AppColors.error500, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: AppColors.error500, width: 1.5),
         ),
-        errorStyle: TextStyle(
+        errorStyle: GoogleFonts.inter(
           color: AppColors.error500,
           fontSize: 11,
-          fontFamily: 'Geist',
         ),
         suffixIcon: suffixIcon,
       ),
@@ -121,7 +111,7 @@ class PasswordVisibilityToggle extends StatelessWidget {
     return IconButton(
       icon: Icon(
         isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-        color: AppColors.darkGrey400,
+        color: AppColors.textMuted,
         size: 18,
       ),
       onPressed: onTap,

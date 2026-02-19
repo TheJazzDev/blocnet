@@ -41,6 +41,7 @@ class UpdateCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => _openDetails(context),
       child: Container(
+        clipBehavior: Clip.antiAlias,
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
@@ -53,7 +54,7 @@ class UpdateCard extends StatelessWidget {
             children: [
               // Left priority accent bar
               Container(
-                width: 3,
+                width: 4,
                 decoration: BoxDecoration(
                   color: priorityColor,
                   borderRadius: const BorderRadius.only(

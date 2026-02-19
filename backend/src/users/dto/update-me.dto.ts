@@ -10,4 +10,9 @@ export class UpdateMeDto {
   @IsString()
   @MaxLength(2048)
   avatarUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  bio?: string;
 }

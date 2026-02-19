@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
+import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+enum _UsernameStatus { idle, checking, available, taken, invalid }
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -30,8 +35,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  // Username availability
+  _UsernameStatus _usernameStatus = _UsernameStatus.idle;
+  Timer? _usernameDebounce;
+  final _apiClient = ApiClient();
+  final _usernameRegExp = RegExp(r'^[a-z0-9_]{3,24}$');
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_onUsernameChanged);
+  }
+
   @override
   void dispose() {
+    _usernameDebounce?.cancel();
+    _nameController.removeListener(_onUsernameChanged);
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -43,15 +62,72 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  void _onUsernameChanged() {
+    final raw = _nameController.text.trim().toLowerCase();
+
+    _usernameDebounce?.cancel();
+
+    if (raw.isEmpty) {
+      setState(() => _usernameStatus = _UsernameStatus.idle);
+      return;
+    }
+
+    if (!_usernameRegExp.hasMatch(raw)) {
+      setState(() => _usernameStatus = _UsernameStatus.invalid);
+      return;
+    }
+
+    setState(() => _usernameStatus = _UsernameStatus.checking);
+
+    _usernameDebounce = Timer(const Duration(milliseconds: 500), () {
+      _checkUsernameAvailability(raw);
+    });
+  }
+
+  Future<void> _checkUsernameAvailability(String username) async {
+    try {
+      final response = await _apiClient.get(
+        '/users/check-username',
+        query: {'username': username},
+      );
+      if (!mounted) return;
+      if (response is Map<String, dynamic>) {
+        final available = response['available'] == true;
+        setState(() {
+          _usernameStatus =
+              available ? _UsernameStatus.available : _UsernameStatus.taken;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _usernameStatus = _UsernameStatus.idle);
+    }
+  }
+
   Future<void> _submit() async {
     if (_isSubmitting) return;
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
+    // Block submit if username is not confirmed available
+    if (_usernameStatus != _UsernameStatus.available) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _usernameStatus == _UsernameStatus.taken
+                ? 'That username is already taken'
+                : 'Please wait for username availability check',
+          ),
+          backgroundColor: AppColors.darkGrey200,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
     final authStore = context.read<AuthStore>();
     final success = await authStore.signUpWithEmailPassword(
-      username: _nameController.text.trim(),
+      username: _nameController.text.trim().toLowerCase(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
@@ -84,10 +160,92 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
+  Widget _buildUsernameHint() {
+    switch (_usernameStatus) {
+      case _UsernameStatus.checking:
+        return Row(
+          children: [
+            SizedBox(
+              width: 10,
+              height: 10,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: AppColors.textFaint,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Checking availability…',
+              style: TextStyle(
+                color: AppColors.textFaint,
+                fontSize: 11,
+                fontFamily: 'Geist',
+              ),
+            ),
+          ],
+        );
+      case _UsernameStatus.available:
+        return Row(
+          children: [
+            Icon(Icons.check_circle_outline, size: 12, color: AppColors.teal400),
+            const SizedBox(width: 4),
+            Text(
+              'Username is available',
+              style: TextStyle(
+                color: AppColors.teal400,
+                fontSize: 11,
+                fontFamily: 'Geist',
+              ),
+            ),
+          ],
+        );
+      case _UsernameStatus.taken:
+        return Row(
+          children: [
+            Icon(Icons.cancel_outlined, size: 12, color: Colors.redAccent),
+            const SizedBox(width: 4),
+            Text(
+              'Username is already taken',
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontSize: 11,
+                fontFamily: 'Geist',
+              ),
+            ),
+          ],
+        );
+      case _UsernameStatus.invalid:
+      case _UsernameStatus.idle:
+        return Text(
+          'Username must be unique and cannot be changed later.',
+          style: TextStyle(
+            color: AppColors.textFaint,
+            fontSize: 11,
+            fontFamily: 'Geist',
+          ),
+        );
+    }
+  }
+
+  String? _validateUsername(String? value) {
+    final username = (value ?? '').trim().toLowerCase();
+    if (username.isEmpty) return 'Username is required';
+    if (!_usernameRegExp.hasMatch(username)) {
+      return 'Use 3–24 chars: lowercase letters, numbers, underscore only';
+    }
+    if (_usernameStatus == _UsernameStatus.taken) {
+      return 'Username is already taken';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final authStore = context.watch<AuthStore>();
     final isBusy = _isSubmitting || authStore.isSubmitting;
+    final canSubmit = !isBusy &&
+        authStore.isSupabaseConfigured &&
+        _usernameStatus == _UsernameStatus.available;
 
     return AuthScreenShell(
       appBarTitle: '',
@@ -106,13 +264,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
               autofillHints: const [AutofillHints.username],
               onFieldSubmitted: (_) =>
                   FocusScope.of(context).requestFocus(_emailFocus),
-              validator: (value) {
-                if ((value ?? '').trim().isEmpty) {
-                  return 'Username is required';
-                }
-                return null;
-              },
+              validator: _validateUsername,
             ),
+            const SizedBox(height: 4),
+            _buildUsernameHint(),
             const SizedBox(height: 12),
             AuthInputField(
               controller: _emailController,
@@ -176,12 +331,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Primary CTA
             Row(
               children: [
                 PrimaryButton(
                   title: 'Create account',
-                  isEnabled: !isBusy && authStore.isSupabaseConfigured,
+                  isEnabled: canSubmit,
                   isLoading: isBusy,
                   onPressed: _submit,
                 ),
@@ -190,7 +344,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
             const SizedBox(height: 20),
 
-            // Back to sign in
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

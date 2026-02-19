@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,39 +19,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SettingsHeader(),
-          const SizedBox(height: 20),
-          _SectionLabel('Notifications'),
-          const SizedBox(height: 8),
-          _SettingSwitchTile(
-            icon: Icons.notifications_outlined,
-            title: 'Push notifications',
-            subtitle: 'Get in-app and device alerts',
-            value: _pushNotifications,
-            onChanged: (v) => setState(() => _pushNotifications = v),
-          ),
-          _SettingSwitchTile(
-            icon: Icons.mail_outline,
-            title: 'Email digest',
-            subtitle: 'Receive daily summary email',
-            value: _emailDigest,
-            onChanged: (v) => setState(() => _emailDigest = v),
-          ),
-          _SettingSwitchTile(
-            icon: Icons.priority_high,
-            title: 'High urgency only',
-            subtitle: 'Mute low and mid urgency alerts',
-            value: _highUrgencyOnly,
-            onChanged: (v) => setState(() => _highUrgencyOnly = v),
-          ),
-          const SizedBox(height: 20),
-          _SignOutButton(),
-        ],
+    return Scaffold(
+      backgroundColor: AppColors.bgBase,
+      appBar: const CustomAppBar(
+        title: 'Settings',
+        backButton: true,
+        showSearch: false,
+        showFilter: false,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SettingsHeader(),
+            const SizedBox(height: 20),
+            _SectionLabel('Notifications'),
+            const SizedBox(height: 8),
+            _SettingSwitchTile(
+              icon: Icons.notifications_outlined,
+              title: 'Push notifications',
+              subtitle: 'Get in-app and device alerts',
+              value: _pushNotifications,
+              onChanged: (v) => setState(() => _pushNotifications = v),
+            ),
+            _SettingSwitchTile(
+              icon: Icons.mail_outline,
+              title: 'Email digest',
+              subtitle: 'Receive daily summary email',
+              value: _emailDigest,
+              onChanged: (v) => setState(() => _emailDigest = v),
+            ),
+            _SettingSwitchTile(
+              icon: Icons.priority_high,
+              title: 'High urgency only',
+              subtitle: 'Mute low and mid urgency alerts',
+              value: _highUrgencyOnly,
+              onChanged: (v) => setState(() => _highUrgencyOnly = v),
+            ),
+            const SizedBox(height: 20),
+            _SignOutButton(),
+          ],
+        ),
       ),
     );
   }

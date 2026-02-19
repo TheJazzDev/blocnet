@@ -9,6 +9,7 @@ datasource db {
 enum RoleName {
   owner
   admin
+  moderator
   hunter
   user
 }
@@ -27,11 +28,13 @@ enum ApplicationTargetRole {
 enum ProjectStatus {
   active
   paused
+  hidden
   archived
 }
 
 enum UpdateStatus {
   published
+  hidden
   archived
 }
 
@@ -69,11 +72,19 @@ enum ProjectProposalStatus {
   rejected
 }
 
+enum ContentModerationStatus {
+  active
+  hidden
+  archived
+}
+
 model Profile {
   id                String             @id @db.Uuid
   email             String             @unique
+  username          String?            @unique
   displayName       String?
   avatarUrl         String?
+  bio               String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   roles             UserRole[]
@@ -81,8 +92,13 @@ model Profile {
   hunterAssignments ProjectHunter[]
   authoredUpdates   Update[]           @relation("AuthoredUpdates")
   authoredComments  Comment[]          @relation("AuthoredComments")
+  moderatedProjects Project[]          @relation("ProjectModerator")
+  moderatedUpdates  Update[]           @relation("UpdateModerator")
+  moderatedComments Comment[]          @relation("CommentModerator")
   communityPosts    CommunityPost[]    @relation("CommunityPostAuthor")
+  moderatedCommunityPosts CommunityPost[] @relation("CommunityPostModerator")
   communityPostComments CommunityPostComment[] @relation("CommunityPostCommentAuthor")
+  moderatedCommunityPostComments CommunityPostComment[] @relation("CommunityPostCommentModerator")
   communityPostReactions CommunityPostReaction[] @relation("CommunityPostReactionUser")
   bookmarks         Bookmark[]
   followerLinks     UserFollow[]       @relation("UserFollowFollowee")
@@ -123,11 +139,15 @@ model Project {
   description   String
   primaryTagId  String          @db.Uuid
   status        ProjectStatus   @default(active)
+  moderatedBy   String?         @db.Uuid
+  moderatedAt   DateTime?
+  moderationReason String?
   ownerAdminId  String          @db.Uuid
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
   ownerAdmin    Profile         @relation("OwnedProjects", fields: [ownerAdminId], references: [id])
+  moderator     Profile?        @relation("ProjectModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
   primaryTag    PrimaryTag      @relation(fields: [primaryTagId], references: [id], onDelete: Restrict)
   secondaryTags ProjectSecondaryTag[]
   hunters       ProjectHunter[]
@@ -138,6 +158,7 @@ model Project {
   notifications Notification[]
 
   @@index([ownerAdminId])
+  @@index([status, createdAt])
 }
 
 model ProjectHunter {
@@ -213,17 +234,22 @@ model Update {
   title         String
   contentMd     String
   status        UpdateStatus    @default(published)
+  moderatedBy   String?         @db.Uuid
+  moderatedAt   DateTime?
+  moderationReason String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
   project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   author        Profile         @relation("AuthoredUpdates", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator     Profile?        @relation("UpdateModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
   notifications Notification[]
   comments      Comment[]
   secondaryTags UpdateSecondaryTag[]
 
   @@index([projectId, urgency])
   @@index([authorId])
+  @@index([status, createdAt])
 }
 
 model PrimaryTag {
@@ -277,14 +303,20 @@ model Comment {
   updateId  String   @db.Uuid
   authorId  String   @db.Uuid
   content   String
+  status    ContentModerationStatus @default(active)
+  moderatedBy String? @db.Uuid
+  moderatedAt DateTime?
+  moderationReason String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   update    Update   @relation(fields: [updateId], references: [id], onDelete: Cascade)
   author    Profile  @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator Profile? @relation("CommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
 
-  @@index([updateId, createdAt])
+  @@index([updateId, status, createdAt])
   @@index([authorId])
+  @@index([status, createdAt])
 }
 
 model ProjectFollow {
@@ -319,16 +351,22 @@ model CommunityPost {
   authorId   String          @db.Uuid
   topic      CommunityTopic  @default(general)
   content    String
+  status     ContentModerationStatus @default(active)
+  moderatedBy String?        @db.Uuid
+  moderatedAt DateTime?
+  moderationReason String?
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
 
   author     Profile         @relation("CommunityPostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator  Profile?        @relation("CommunityPostModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
   comments   CommunityPostComment[]
   reactions  CommunityPostReaction[]
   bookmarks  Bookmark[]
 
-  @@index([topic, createdAt])
+  @@index([topic, status, createdAt])
   @@index([authorId, createdAt])
+  @@index([status, createdAt])
 }
 
 model CommunityPostComment {
@@ -336,14 +374,20 @@ model CommunityPostComment {
   postId     String        @db.Uuid
   authorId   String        @db.Uuid
   content    String
+  status     ContentModerationStatus @default(active)
+  moderatedBy String?      @db.Uuid
+  moderatedAt DateTime?
+  moderationReason String?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
   post       CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   author     Profile       @relation("CommunityPostCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator  Profile?      @relation("CommunityPostCommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
 
-  @@index([postId, createdAt])
+  @@index([postId, status, createdAt])
   @@index([authorId])
+  @@index([status, createdAt])
 }
 
 model CommunityPostReaction {

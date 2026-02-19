@@ -53,13 +53,13 @@ export class ProjectProposalsController {
   }
 
   @Get()
-  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
   async listAll(@Query() query: ListProjectProposalsQuery) {
     return this.projectProposalsService.listAll(query);
   }
 
   @Patch(':id/review')
-  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
   async review(
     @CurrentUser() user: AuthUser | undefined,
     @Param('id') id: string,

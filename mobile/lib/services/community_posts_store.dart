@@ -1,8 +1,12 @@
+import 'dart:async';
+
+import 'package:blocnet/app/config.dart';
 import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/data/models/community_topic.dart';
 import 'package:blocnet/features/community/data/repositories/community_posts_api_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CommunityPostsStore extends ChangeNotifier {
   CommunityPostsStore({CommunityPostsApiRepository? repository})
@@ -15,6 +19,7 @@ class CommunityPostsStore extends ChangeNotifier {
   final Set<String> _loadingCommentPostIds = <String>{};
   final Set<String> _pendingLikePostIds = <String>{};
   final Set<String> _pendingBookmarkPostIds = <String>{};
+  final Map<String, RealtimeChannel> _commentChannelsByPostId = {};
 
   bool _isFetchingPosts = false;
   bool _isSubmittingPost = false;
@@ -158,6 +163,48 @@ class CommunityPostsStore extends ChangeNotifier {
     return created;
   }
 
+  void watchCommentsRealtime(String postId) {
+    if (!AppConfig.isSupabaseConfigured || postId.isEmpty) return;
+    if (_commentChannelsByPostId.containsKey(postId)) return;
+
+    debugPrint('[RT][CommunityComment] subscribe start postId=$postId');
+    final channel = Supabase.instance.client
+        .channel('community-comments-$postId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'CommunityPostComment',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'postId',
+            value: postId,
+          ),
+          callback: (payload) {
+            debugPrint(
+              '[RT][CommunityComment] insert received postId=$postId '
+              'new=${payload.newRecord}',
+            );
+            unawaited(fetchComments(postId, force: true));
+            unawaited(fetchPostById(postId));
+          },
+        )
+        .subscribe((status, [error]) {
+      debugPrint(
+        '[RT][CommunityComment] subscribe status postId=$postId '
+        'status=$status error=$error',
+      );
+    });
+
+    _commentChannelsByPostId[postId] = channel;
+  }
+
+  void unwatchCommentsRealtime(String postId) {
+    final channel = _commentChannelsByPostId.remove(postId);
+    if (channel == null) return;
+    debugPrint('[RT][CommunityComment] unsubscribe postId=$postId');
+    Supabase.instance.client.removeChannel(channel);
+  }
+
   Future<void> toggleLike(String postId) async {
     if (_pendingLikePostIds.contains(postId)) return;
 
@@ -218,5 +265,14 @@ class CommunityPostsStore extends ChangeNotifier {
     }
 
     _posts[index] = post;
+  }
+
+  @override
+  void dispose() {
+    for (final channel in _commentChannelsByPostId.values) {
+      Supabase.instance.client.removeChannel(channel);
+    }
+    _commentChannelsByPostId.clear();
+    super.dispose();
   }
 }

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { App, cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
+import type { BroadcastTarget } from './dto/broadcast-notification.dto';
 
 @Injectable()
 export class FcmService {
@@ -106,6 +107,94 @@ export class FcmService {
       sentCount: response.successCount,
       skipped: false,
       failureCount: response.failureCount,
+    };
+  }
+
+  async sendBroadcast(input: {
+    title: string;
+    body: string;
+    target: BroadcastTarget;
+    userIds?: string[];
+    roles?: string[];
+  }) {
+    if (!this.app) {
+      this.logger.warn('FCM credentials are not configured; skipping broadcast');
+      return { sentCount: 0, skipped: true };
+    }
+
+    // Resolve target user IDs
+    let resolvedUserIds: string[] = [];
+
+    if (input.target === 'specific' && input.userIds?.length) {
+      resolvedUserIds = input.userIds;
+    } else if (input.target === 'hunters') {
+      const roles = await this.prisma.userRole.findMany({
+        where: { role: { in: ['hunter', 'admin', 'owner'] as any } },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      resolvedUserIds = roles.map((r) => r.userId);
+    } else if (input.target === 'users') {
+      // Users who only have the base 'user' role (no elevated roles)
+      const elevated = await this.prisma.userRole.findMany({
+        where: { role: { in: ['hunter', 'admin', 'owner'] as any } },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      const elevatedIds = new Set(elevated.map((r) => r.userId));
+      const all = await this.prisma.userRole.findMany({
+        where: { role: 'user' as any },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      resolvedUserIds = all
+        .map((r) => r.userId)
+        .filter((id) => !elevatedIds.has(id));
+    } else {
+      // 'all' — everyone with a device token
+      const allTokens = await this.prisma.deviceToken.findMany({
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      resolvedUserIds = allTokens.map((t) => t.userId);
+    }
+
+    if (resolvedUserIds.length === 0) {
+      return { sentCount: 0, skipped: false, recipientCount: 0 };
+    }
+
+    // Fetch FCM tokens in batches (FCM multicast max = 500)
+    const tokens = await this.prisma.deviceToken.findMany({
+      where: { userId: { in: resolvedUserIds } },
+      select: { token: true },
+    });
+
+    if (tokens.length === 0) {
+      return { sentCount: 0, skipped: false, recipientCount: resolvedUserIds.length };
+    }
+
+    const messaging = getMessaging(this.app);
+    const tokenList = tokens.map((t) => t.token);
+    const batchSize = 500;
+    let totalSent = 0;
+    let totalFailed = 0;
+
+    for (let i = 0; i < tokenList.length; i += batchSize) {
+      const batch = tokenList.slice(i, i + batchSize);
+      const response = await messaging.sendEachForMulticast({
+        tokens: batch,
+        notification: { title: input.title, body: input.body },
+        data: { type: 'broadcast' },
+      });
+      totalSent += response.successCount;
+      totalFailed += response.failureCount;
+    }
+
+    return {
+      sentCount: totalSent,
+      failureCount: totalFailed,
+      recipientCount: resolvedUserIds.length,
+      skipped: false,
     };
   }
 }

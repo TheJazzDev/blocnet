@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthStore extends ChangeNotifier {
@@ -29,6 +30,7 @@ class AuthStore extends ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
   StreamSubscription<AuthState>? _authSubscription;
   static const Duration _authTimeout = Duration(seconds: 15);
+  static const String _spaceKeyPrefix = 'blocnet_active_space_';
 
   bool _isAuthenticated = false;
   bool _isSubmitting = false;
@@ -37,6 +39,7 @@ class AuthStore extends ChangeNotifier {
   String? _email;
   String? _displayName;
   String? _avatarUrl;
+  String? _bio;
   List<String> _roles = const ['user'];
   String? _username;
   DateTime? _memberSince;
@@ -52,6 +55,7 @@ class AuthStore extends ChangeNotifier {
   String? get email => _email;
   String? get displayName => _displayName;
   String? get avatarUrl => _avatarUrl;
+  String? get bio => _bio;
   String? get username => _username;
   DateTime? get memberSince => _memberSince;
   List<String> get roles => List.unmodifiable(_roles);
@@ -81,6 +85,7 @@ class AuthStore extends ChangeNotifier {
     final target = (space == 'hunter' && hasHunterSpace) ? 'hunter' : 'user';
     if (_activeSpace == target) return;
     _activeSpace = target;
+    unawaited(_persistActiveSpacePreference());
     notifyListeners();
   }
 
@@ -131,7 +136,12 @@ class AuthStore extends ChangeNotifier {
 
       return verifyAndSignIn(session.accessToken, setSubmitting: false);
     } on AuthException catch (error) {
-      _lastError = error.message;
+      final message = error.message.toLowerCase();
+      if (message.contains('username') && message.contains('exist')) {
+        _lastError = 'Username is already taken';
+      } else {
+        _lastError = error.message;
+      }
       return false;
     } on TimeoutException {
       _lastError =
@@ -303,6 +313,39 @@ class AuthStore extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateProfile({
+    String? displayName,
+    String? avatarUrl,
+    String? bio,
+  }) async {
+    final nextDisplayName = displayName?.trim();
+    final nextAvatarUrl = avatarUrl?.trim();
+    final nextBio = bio?.trim();
+
+    _displayName =
+        nextDisplayName?.isNotEmpty == true ? nextDisplayName : _displayName;
+    _avatarUrl = nextAvatarUrl?.isNotEmpty == true ? nextAvatarUrl : _avatarUrl;
+    _bio = nextBio ?? _bio;
+    notifyListeners();
+
+    try {
+      await _apiClient.patch(
+        '/me',
+        body: {
+          if (nextDisplayName != null) 'displayName': nextDisplayName,
+          if (nextAvatarUrl != null) 'avatarUrl': nextAvatarUrl,
+          if (nextBio != null) 'bio': nextBio,
+        },
+      );
+      _lastError = null;
+      return true;
+    } catch (error) {
+      _lastError = error.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> verifyAndSignIn(
     String accessToken, {
     bool setSubmitting = true,
@@ -345,6 +388,10 @@ class AuthStore extends ChangeNotifier {
       _roles = _parseRoles(user['roles']);
 
       await _hydrateProfileFromMe();
+      await _restoreActiveSpacePreference();
+      if (!hasHunterSpace) {
+        _activeSpace = 'user';
+      }
       _isAuthenticated = true;
       _lastError = null;
       return true;
@@ -388,6 +435,7 @@ class AuthStore extends ChangeNotifier {
     _email = null;
     _displayName = null;
     _avatarUrl = null;
+    _bio = null;
     _roles = const ['user'];
     _isAuthenticated = false;
     _lastError = null;
@@ -411,6 +459,7 @@ class AuthStore extends ChangeNotifier {
 
       _displayName = response['displayName']?.toString() ?? _displayName;
       _avatarUrl = response['avatarUrl']?.toString() ?? _avatarUrl;
+      _bio = response['bio']?.toString() ?? _bio;
       _username = response['username']?.toString() ?? _username;
 
       final rawMemberSince = response['createdAt'] ?? response['memberSince'];
@@ -424,6 +473,33 @@ class AuthStore extends ChangeNotifier {
       }
     } catch (_) {
       // Keep auth successful even when profile enrichment fails.
+    }
+  }
+
+  Future<void> _restoreActiveSpacePreference() async {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString('$_spaceKeyPrefix$userId');
+      if (saved == 'hunter' && hasHunterSpace) {
+        _activeSpace = 'hunter';
+      } else {
+        _activeSpace = 'user';
+      }
+    } catch (_) {
+      _activeSpace = 'user';
+    }
+  }
+
+  Future<void> _persistActiveSpacePreference() async {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('$_spaceKeyPrefix$userId', _activeSpace);
+    } catch (_) {
+      // Ignore persistence failure; runtime state still updates.
     }
   }
 

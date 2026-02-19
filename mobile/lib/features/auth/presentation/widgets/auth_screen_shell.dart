@@ -33,77 +33,81 @@ class AuthScreenShell extends StatelessWidget {
 
           // ── Layer 3: Content ──────────────────────────────────
           SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 44,
-                        child:
-                            showBack ? const _BackButton() : const SizedBox(),
-                      ),
-                      Expanded(
-                        child: Text(
-                          appBarTitle ?? 'Blocnet',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 18,
-                            fontFamily: 'Geist',
-                            fontWeight: FontWeight.w700,
+            child: GestureDetector(
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              behavior: HitTestBehavior.translucent,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 44,
+                          child:
+                              showBack ? const _BackButton() : const SizedBox(),
+                        ),
+                        Expanded(
+                          child: Text(
+                            appBarTitle ?? 'Blocnet',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 18,
+                              fontFamily: 'Geist',
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 44),
-                    ],
-                  ),
-                ),
-
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: _LogoMark(),
-                ),
-
-                // Heading + subtitle
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _GradientHeading(heading),
-                      const SizedBox(height: 8),
-                      Text(
-                        subtitle,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                          fontFamily: 'Geist',
-                          fontWeight: FontWeight.w400,
-                          height: 1.55,
-                        ),
-                      ),
-                      if (notice != null) ...[
-                        const SizedBox(height: 12),
-                        notice!,
+                        const SizedBox(width: 44),
                       ],
-                    ],
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 20),
-
-                // Form card — frosted dark panel
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _FormCard(child: child),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: _LogoMark(),
                   ),
-                ),
-              ],
+
+                  // Heading + subtitle
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _GradientHeading(heading),
+                        const SizedBox(height: 8),
+                        Text(
+                          subtitle,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            fontFamily: 'Geist',
+                            fontWeight: FontWeight.w400,
+                            height: 1.55,
+                          ),
+                        ),
+                        if (notice != null) ...[
+                          const SizedBox(height: 12),
+                          notice!,
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Form card — frosted dark panel
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _FormCard(child: child),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

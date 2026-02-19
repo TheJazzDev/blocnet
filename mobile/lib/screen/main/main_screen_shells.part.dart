@@ -70,12 +70,10 @@ class _UserSpaceShell extends StatelessWidget {
   const _UserSpaceShell({
     super.key,
     required this.currentIndex,
-    required this.pageController,
     required this.onNavTap,
   });
 
   final int currentIndex;
-  final PageController pageController;
   final ValueChanged<int> onNavTap;
 
   @override
@@ -91,9 +89,8 @@ class _UserSpaceShell extends StatelessWidget {
         showSpaceSwitcher: currentIndex == 4,
         showNotificationBell: tab.showNotificationBell,
       ),
-      body: PageView(
-        controller: pageController,
-        physics: const NeverScrollableScrollPhysics(),
+      body: IndexedStack(
+        index: currentIndex,
         children: const [
           HomeScreen(),
           DiscoverScreen(),
@@ -114,13 +111,11 @@ class _HunterSpaceShell extends StatelessWidget {
   const _HunterSpaceShell({
     super.key,
     required this.currentIndex,
-    required this.pageController,
     required this.onNavTap,
     required this.onFabTap,
   });
 
   final int currentIndex;
-  final PageController pageController;
   final ValueChanged<int> onNavTap;
   final VoidCallback onFabTap;
 
@@ -140,9 +135,8 @@ class _HunterSpaceShell extends StatelessWidget {
         showSpaceSwitcher: currentIndex == 4,
         showNotificationBell: tab.showNotificationBell,
       ),
-      body: PageView(
-        controller: pageController,
-        physics: const NeverScrollableScrollPhysics(),
+      body: IndexedStack(
+        index: currentIndex,
         children: const [
           HomeScreen(),
           DiscoverScreen(),

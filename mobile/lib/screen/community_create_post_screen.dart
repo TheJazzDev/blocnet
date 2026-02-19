@@ -17,6 +17,7 @@ class CommunityCreatePostScreen extends StatefulWidget {
 
 class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
   final TextEditingController _contentCtrl = TextEditingController();
+  final FocusNode _contentFocus = FocusNode();
   final List<CommunityTopic> _topics = const [
     CommunityTopic.general,
     CommunityTopic.marketTalk,
@@ -25,8 +26,18 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
   CommunityTopic _selectedTopic = CommunityTopic.general;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _contentFocus.requestFocus();
+    });
+  }
+
+  @override
   void dispose() {
     _contentCtrl.dispose();
+    _contentFocus.dispose();
     super.dispose();
   }
 
@@ -76,177 +87,187 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
         showSearch: false,
         showFilter: false,
       ),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: AppColors.bgElevated,
-                          backgroundImage:
-                              avatarUrl != null && avatarUrl.isNotEmpty
-                                  ? NetworkImage(avatarUrl)
-                                  : null,
-                          child: avatarUrl == null || avatarUrl.isEmpty
-                              ? Text(
-                                  displayName.isNotEmpty
-                                      ? displayName[0].toUpperCase()
-                                      : 'B',
+      body: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: AppColors.bgElevated,
+                            backgroundImage:
+                                avatarUrl != null && avatarUrl.isNotEmpty
+                                    ? NetworkImage(avatarUrl)
+                                    : null,
+                            child: avatarUrl == null || avatarUrl.isEmpty
+                                ? Text(
+                                    displayName.isNotEmpty
+                                        ? displayName[0].toUpperCase()
+                                        : 'B',
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.primary400,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  displayName,
                                   style: GoogleFonts.inter(
-                                    color: AppColors.primary400,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                displayName,
-                                style: GoogleFonts.inter(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
                                 ),
-                              ),
-                              Text(
-                                auth.email ?? '@blocnet.user',
-                                style: GoogleFonts.inter(
-                                  color: AppColors.textMuted,
-                                  fontSize: 12,
+                                Text(
+                                  auth.email ?? '@blocnet.user',
+                                  style: GoogleFonts.inter(
+                                    color: AppColors.textMuted,
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _contentCtrl,
-                      minLines: 8,
-                      maxLines: 12,
-                      style: GoogleFonts.inter(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                        height: 1.45,
+                        ],
                       ),
-                      decoration: InputDecoration(
-                        hintText: "What's on your mind?",
-                        hintStyle: GoogleFonts.inter(
-                          color: AppColors.textFaint,
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: _contentCtrl,
+                        focusNode: _contentFocus,
+                        autofocus: true,
+                        minLines: 8,
+                        maxLines: 12,
+                        onTapOutside: (_) =>
+                            FocusManager.instance.primaryFocus?.unfocus(),
+                        style: GoogleFonts.inter(
+                          color: AppColors.textSecondary,
                           fontSize: 14,
+                          height: 1.45,
                         ),
-                        filled: false,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 2),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
+                        decoration: InputDecoration(
+                          hintText: "What's on your mind?",
+                          hintStyle: GoogleFonts.inter(
+                            color: AppColors.textFaint,
+                            fontSize: 14,
+                          ),
+                          filled: false,
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 2),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'TOPIC',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textFaint,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.8,
+                      const SizedBox(height: 16),
+                      Text(
+                        'TOPIC',
+                        style: GoogleFonts.inter(
+                          color: AppColors.textFaint,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.8,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _topics.map((topic) {
-                        final isActive = _selectedTopic == topic;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedTopic = topic),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? AppColors.primary500.withValues(alpha: 0.15)
-                                  : AppColors.bgSurface,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _topics.map((topic) {
+                          final isActive = _selectedTopic == topic;
+                          return GestureDetector(
+                            onTap: () => setState(() => _selectedTopic = topic),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
                                 color: isActive
-                                    ? AppColors.primary400
-                                        .withValues(alpha: 0.6)
-                                    : AppColors.borderSubtle,
+                                    ? AppColors.primary500
+                                        .withValues(alpha: 0.15)
+                                    : AppColors.bgSurface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isActive
+                                      ? AppColors.primary400
+                                          .withValues(alpha: 0.6)
+                                      : AppColors.borderSubtle,
+                                ),
+                              ),
+                              child: Text(
+                                topic.label,
+                                style: GoogleFonts.inter(
+                                  color: isActive
+                                      ? AppColors.primary400
+                                      : AppColors.textSecondary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                            child: Text(
-                              topic.label,
-                              style: GoogleFonts.inter(
-                                color: isActive
-                                    ? AppColors.primary400
-                                    : AppColors.textSecondary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: store.isSubmittingPost ? null : _submitPost,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary500,
-                      foregroundColor: Colors.black,
-                      elevation: 0,
-                      disabledBackgroundColor:
-                          AppColors.primary500.withValues(alpha: 0.5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                          );
+                        }).toList(),
                       ),
-                    ),
-                    child: store.isSubmittingPost
-                        ? SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              color: Colors.black,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'Post',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                    ],
                   ),
                 ),
               ),
-            ),
-          ],
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: store.isSubmittingPost ? null : _submitPost,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary500,
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        disabledBackgroundColor:
+                            AppColors.primary500.withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: store.isSubmittingPost
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.black,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'Post',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

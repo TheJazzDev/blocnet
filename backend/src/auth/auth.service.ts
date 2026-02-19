@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 type JwtPayload = {
   sub?: string;
   email?: string;
+  user_metadata?: Record<string, unknown>;
 };
 
 @Injectable()
@@ -34,12 +35,21 @@ export class AuthService {
       throw new UnauthorizedException('Invalid token payload');
     }
 
+    // Extract username from Supabase user_metadata (set at signup)
+    const rawUsername = payload.user_metadata?.['username'];
+    const username =
+      typeof rawUsername === 'string' && rawUsername.trim().length > 0
+        ? rawUsername.trim().toLowerCase()
+        : undefined;
+
     await this.prisma.profile.upsert({
       where: { id: userId },
       update: { email: payload.email ?? `${userId}@unknown.local` },
       create: {
         id: userId,
         email: payload.email ?? `${userId}@unknown.local`,
+        // Only set username on profile creation — it must not change after signup
+        ...(username ? { username } : {}),
       },
     });
 
@@ -95,7 +105,8 @@ export class AuthService {
   toRolePriority(roles: AppRole[]): number {
     if (roles.includes(AppRole.OWNER)) return 4;
     if (roles.includes(AppRole.ADMIN)) return 3;
-    if (roles.includes(AppRole.HUNTER)) return 2;
+    if (roles.includes(AppRole.MODERATOR)) return 2;
+    if (roles.includes(AppRole.HUNTER)) return 1;
     return 1;
   }
 }

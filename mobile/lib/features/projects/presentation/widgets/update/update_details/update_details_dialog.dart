@@ -33,12 +33,15 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<CommentsStore>().fetchComments(widget.id);
+      final commentsStore = context.read<CommentsStore>();
+      commentsStore.fetchComments(widget.id);
+      commentsStore.watchCommentsRealtime(widget.id);
     });
   }
 
   @override
   void dispose() {
+    context.read<CommentsStore>().unwatchCommentsRealtime(widget.id);
     _commentController.dispose();
     super.dispose();
   }
@@ -49,7 +52,8 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
     final match = updatesStore.updates.where((u) => u.id == widget.id).toList();
     if (match.isEmpty) {
       return SafeArea(
-        child: Center(child: CircularProgressIndicator(color: AppColors.teal400)),
+        child:
+            Center(child: CircularProgressIndicator(color: AppColors.teal400)),
       );
     }
     final post = match.first;
@@ -202,7 +206,8 @@ class _CommentsSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.bgElevated,
                     borderRadius: BorderRadius.circular(20),
@@ -224,9 +229,8 @@ class _CommentsSection extends StatelessWidget {
             // Comment input
             Container(
               decoration: BoxDecoration(
-                color: AppColors.bgElevated,
+                color: AppColors.bgSurface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderSubtle),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
@@ -453,10 +457,12 @@ class _CommentTile extends StatelessWidget {
             controller: ctrl,
             minLines: 1,
             maxLines: 6,
-            style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Geist'),
+            style:
+                TextStyle(color: AppColors.textSecondary, fontFamily: 'Geist'),
             decoration: InputDecoration(
               hintText: 'Edit your comment…',
-              hintStyle: TextStyle(color: AppColors.textFaint, fontFamily: 'Geist'),
+              hintStyle:
+                  TextStyle(color: AppColors.textFaint, fontFamily: 'Geist'),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(color: AppColors.borderSubtle),
@@ -474,7 +480,8 @@ class _CommentTile extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Cancel',
-                style: TextStyle(color: AppColors.textMuted, fontFamily: 'Geist'),
+                style:
+                    TextStyle(color: AppColors.textMuted, fontFamily: 'Geist'),
               ),
             ),
             TextButton(
@@ -491,7 +498,10 @@ class _CommentTile extends StatelessWidget {
               },
               child: Text(
                 'Save',
-                style: TextStyle(color: AppColors.teal400, fontFamily: 'Geist', fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    color: AppColors.teal400,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w600),
               ),
             ),
           ],

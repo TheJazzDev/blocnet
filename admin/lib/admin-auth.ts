@@ -1,16 +1,16 @@
-import { cookies } from "next/headers";
+import { api, type AdminMe } from "@/lib/api";
+import { canAccessAdminPanel } from "@/lib/rbac";
 
-/**
- * Returns the Supabase access token stored in the session cookie,
- * or null if the user is not signed in.
- */
-export async function getAdminSession(): Promise<{ token: string | null }> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_token")?.value ?? null;
-  return { token };
+export async function getAdminProfile(): Promise<AdminMe | null> {
+  try {
+    return await api.getMe();
+  } catch {
+    return null;
+  }
 }
 
-export async function isAdminAuthorized(): Promise<boolean> {
-  const { token } = await getAdminSession();
-  return Boolean(token);
+export async function getAuthorizedAdminProfile(): Promise<AdminMe | null> {
+  const profile = await getAdminProfile();
+  if (!profile) return null;
+  return canAccessAdminPanel(profile.roles) ? profile : null;
 }
