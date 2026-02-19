@@ -168,8 +168,11 @@ class _NavContainer extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 60,
-          child: child,
+          height: 64,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: child,
+          ),
         ),
       ),
     );

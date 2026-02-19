@@ -54,6 +54,7 @@ export interface AdminStats {
   activeHunters: number;
   pendingProposals: number;
   totalTags: number;
+  usersWithPushEnabled: number;
 }
 
 export interface AdminUser {

@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.blocnet"
+    namespace = "io.blocnet.app"
     compileSdk = 35
     ndkVersion = "25.1.8937393"
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.blocnet"
+        applicationId = "io.blocnet.app"
         minSdk = 21
         targetSdk = 35
         versionCode = flutter.versionCode

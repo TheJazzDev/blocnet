@@ -18,7 +18,8 @@ class CommunityScreen extends StatefulWidget {
   State<CommunityScreen> createState() => _CommunityScreenState();
 }
 
-class _CommunityScreenState extends State<CommunityScreen> {
+class _CommunityScreenState extends State<CommunityScreen>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   final Map<CommunityTopic, ScrollController> _scrollControllers = {
     CommunityTopic.general: ScrollController(),
@@ -30,15 +31,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
   bool _isCheckingForNewPosts = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _tabController = TabController(length: 3, vsync: Scaffold.of(context));
-  }
-
-  @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: NavigatorState());
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
       if (_isActiveListNearTop() && _pendingNewPostIds.isNotEmpty) {
@@ -184,7 +179,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         _CommunityFeedList(
                           posts: _filterPosts(posts, CommunityTopic.general),
                           bottomPad: bottomPad,
-                          controller: _scrollControllers[CommunityTopic.general]!,
+                          controller:
+                              _scrollControllers[CommunityTopic.general]!,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
                         ),

@@ -114,6 +114,7 @@ export class UsersService {
       activeHunters,
       pendingProposals,
       totalTags,
+      usersWithPushEnabled,
     ] = await Promise.all([
       this.prisma.project.count(),
       this.prisma.profile.count(),
@@ -123,6 +124,10 @@ export class UsersService {
       this.prisma.userRole.count({ where: { role: 'hunter' } }),
       this.prisma.projectProposal.count({ where: { status: 'pending' } }),
       this.prisma.primaryTag.count(),
+      // Count distinct users who have at least one device token registered
+      this.prisma.deviceToken
+        .findMany({ select: { userId: true }, distinct: ['userId'] })
+        .then((rows) => rows.length),
     ]);
 
     return {
@@ -134,6 +139,7 @@ export class UsersService {
       activeHunters,
       pendingProposals,
       totalTags,
+      usersWithPushEnabled,
     };
   }
 

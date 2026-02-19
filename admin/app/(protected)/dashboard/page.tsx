@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   Activity,
   Clock,
+  Bell,
 } from "lucide-react";
 import {
   Card,
@@ -208,7 +209,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {loading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
+                  Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="flex items-center justify-between">
                       <Skeleton className="h-4 w-28" />
                       <Skeleton className="h-4 w-10" />
@@ -231,6 +232,13 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Primary Tags</span>
                       <span className="text-sm font-medium">{stats.totalTags} total</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t pt-3">
+                      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Bell className="h-3.5 w-3.5" />
+                        Push Enabled
+                      </span>
+                      <span className="text-sm font-medium">{stats.usersWithPushEnabled} users</span>
                     </div>
                   </>
                 ) : null}
