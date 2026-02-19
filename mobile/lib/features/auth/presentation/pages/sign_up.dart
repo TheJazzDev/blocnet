@@ -160,6 +160,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
+  Future<void> _continueWithGoogle() async {
+    if (_isSubmitting) return;
+    FocusScope.of(context).unfocus();
+
+    setState(() => _isSubmitting = true);
+    final authStore = context.read<AuthStore>();
+    final started = await authStore.signInWithGoogle();
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (!started) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authStore.lastError ?? 'Google sign-up failed'),
+          backgroundColor: AppColors.darkGrey200,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Continue with Google in your browser'),
+        backgroundColor: AppColors.bgSurface,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Widget _buildUsernameHint() {
     switch (_usernameStatus) {
       case _UsernameStatus.checking:
@@ -187,7 +217,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       case _UsernameStatus.available:
         return Row(
           children: [
-            Icon(Icons.check_circle_outline, size: 12, color: AppColors.teal400),
+            Icon(Icons.check_circle_outline,
+                size: 12, color: AppColors.teal400),
             const SizedBox(width: 4),
             Text(
               'Username is available',
@@ -330,7 +361,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               },
             ),
             const SizedBox(height: 24),
-
             Row(
               children: [
                 PrimaryButton(
@@ -341,9 +371,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ],
             ),
-
+            const SizedBox(height: 12),
+            _GoogleAuthButton(
+              label: 'Sign up with Google',
+              isEnabled: !isBusy && authStore.isSupabaseConfigured,
+              isLoading: false,
+              onPressed: _continueWithGoogle,
+            ),
             const SizedBox(height: 20),
-
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -374,6 +409,79 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _GoogleAuthButton extends StatelessWidget {
+  const _GoogleAuthButton({
+    required this.label,
+    required this.isEnabled,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isEnabled;
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 44,
+      child: OutlinedButton(
+        onPressed: isEnabled ? onPressed : null,
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: AppColors.borderSubtle),
+          backgroundColor: AppColors.bgSurface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: isLoading
+            ? SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary400,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'G',
+                      style: TextStyle(
+                        color: Colors.red.shade600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

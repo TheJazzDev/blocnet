@@ -19,6 +19,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { RolesModule } from './roles/roles.module';
 import { TagsModule } from './tags/tags.module';
 import { UsersModule } from './users/users.module';
+import { WalletModule } from './wallet/wallet.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { envValidationSchema } from './config/env.validation';
@@ -51,6 +52,7 @@ import { envValidationSchema } from './config/env.validation';
     FollowsModule,
     NotificationsModule,
     DeviceTokensModule,
+    WalletModule,
     HealthModule,
     AuditLogModule,
   ],

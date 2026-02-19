@@ -33,7 +33,7 @@ export function SignInForm() {
         return;
       }
 
-      const { access_token } = data.session;
+      const { access_token, refresh_token } = data.session;
 
       // Verify the user has panel-access role by calling the backend
       const res = await fetch(
@@ -66,11 +66,11 @@ export function SignInForm() {
         return;
       }
 
-      // Persist token via route handler (server sets httpOnly cookie)
+      // Persist tokens via route handler (server sets httpOnly cookies)
       const tokenRes = await fetch("/api/auth/set-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: access_token }),
+        body: JSON.stringify({ token: access_token, refreshToken: refresh_token }),
       });
 
       if (!tokenRes.ok) {

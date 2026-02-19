@@ -3,13 +3,34 @@ part of '../wallet_screen.dart';
 class _WalletAddressTile extends StatelessWidget {
   const _WalletAddressTile();
 
-  static const String _placeholder = 'BNT-XXXX-XXXX-XXXX-XXXX';
-
   @override
   Widget build(BuildContext context) {
+    final snapshot = context.watch<WalletStore>().snapshot;
+    final address = snapshot?.walletAddress;
+    final status = snapshot?.walletStatus ?? 'provisioning';
+    final subtitle = address ??
+        (status == 'disabled'
+            ? 'Wallet feature disabled'
+            : status == 'error'
+                ? 'Provisioning error'
+                : 'Provisioning wallet...');
+
     return GestureDetector(
       onTap: () {
-        Clipboard.setData(const ClipboardData(text: _placeholder));
+        if (address == null || address.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Wallet address is not ready yet',
+                style: GoogleFonts.inter(),
+              ),
+              backgroundColor: AppColors.bgSurface,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+        Clipboard.setData(ClipboardData(text: address));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -59,7 +80,7 @@ class _WalletAddressTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _placeholder,
+                    subtitle,
                     style: GoogleFonts.inter(
                       color: AppColors.textFaint,
                       fontSize: 11,
@@ -79,10 +100,11 @@ class _WalletAddressTile extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.copy_rounded, size: 12, color: AppColors.textMuted),
+                  Icon(Icons.copy_rounded,
+                      size: 12, color: AppColors.textMuted),
                   const SizedBox(width: 4),
                   Text(
-                    'Copy',
+                    address == null ? 'Wait' : 'Copy',
                     style: GoogleFonts.inter(
                       color: AppColors.textMuted,
                       fontSize: 10,

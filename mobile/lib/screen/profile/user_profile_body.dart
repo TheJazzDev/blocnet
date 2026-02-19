@@ -59,7 +59,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
           _UserHero(
             displayName: displayName,
             avatarUrl: auth.avatarUrl,
-            walletAddress: null,
+            walletAddress: auth.walletAddress,
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
@@ -72,18 +72,6 @@ class _UserProfileBodyState extends State<UserProfileBody> {
             ),
           ),
           const SizedBox(height: 16),
-          if (!auth.hasHunterSpace) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _RoadToHunterCard(
-                progress: 0.65,
-                level: 3,
-                onViewRequirements: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.becomeHunter),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
           _ProfileTabBar(
             tabs: const ['Bookmarks', 'Watchlist', 'History'],
             activeIndex: _tabIndex,

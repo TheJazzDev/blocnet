@@ -78,6 +78,73 @@ enum ContentModerationStatus {
   archived
 }
 
+enum ChainEnvironment {
+  testnet
+  mainnet
+}
+
+enum WalletProvider {
+  turnkey
+}
+
+enum WalletStatus {
+  provisioning
+  ready
+  error
+  disabled
+}
+
+enum LedgerAccountType {
+  user
+  treasury
+  fee
+  hold
+}
+
+enum LedgerReason {
+  deposit_credit
+  deposit_sweep
+  internal_transfer
+  withdrawal_hold
+  withdrawal_finalize
+  withdrawal_reject_release
+  withdrawal_fee
+  manual_adjustment
+}
+
+enum OnchainDepositStatus {
+  detected
+  credited
+  swept
+  ignored
+  failed
+}
+
+enum SweepJobStatus {
+  queued
+  processing
+  completed
+  failed
+}
+
+enum WithdrawalStatus {
+  requested
+  pending_review
+  approved
+  rejected
+  broadcasting
+  confirmed
+  failed
+  reverted
+}
+
+enum KycStatus {
+  not_submitted
+  pending
+  approved
+  rejected
+}
+
 model Profile {
   id                String             @id @db.Uuid
   email             String             @unique
@@ -112,6 +179,12 @@ model Profile {
   notifications     Notification[]
   deviceTokens      DeviceToken[]
   adminApplications AdminApplication[] @relation("AdminApplicationApplicant")
+  wallet            UserWallet?
+  ledgerAccounts    LedgerAccount[]
+  kycProfile        KycProfile?
+  withdrawalRequests WithdrawalRequest[] @relation("WithdrawalRequester")
+  reviewedWithdrawals WithdrawalRequest[] @relation("WithdrawalReviewer")
+  reviewedKycProfiles KycProfile[] @relation("KycReviewer")
   audits            AuditLog[]         @relation("ActorAuditLogs")
 }
 
@@ -480,4 +553,213 @@ model AuditLog {
   actor        Profile? @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([action, createdAt])
+}
+
+model UserWallet {
+  id                      String           @id @default(uuid()) @db.Uuid
+  userId                  String           @unique @db.Uuid
+  provider                WalletProvider   @default(turnkey)
+  providerWalletId        String?          @unique
+  chainEnvironment        ChainEnvironment @default(testnet)
+  chainId                 Int
+  address                 String?          @unique
+  status                  WalletStatus     @default(provisioning)
+  lastProvisionAttemptAt  DateTime?
+  provisionedAt           DateTime?
+  failureReason           String?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  user                    Profile          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerAccounts          LedgerAccount[]
+  deposits                OnchainDeposit[]
+  sweepJobs               SweepJob[]
+  withdrawalRequests      WithdrawalRequest[]
+
+  @@index([status, createdAt])
+  @@index([chainEnvironment, status, createdAt])
+}
+
+model LedgerAccount {
+  id                      String           @id @default(uuid()) @db.Uuid
+  userId                  String?          @db.Uuid
+  walletId                String?          @db.Uuid
+  accountType             LedgerAccountType @default(user)
+  currency                String           @default("BNT")
+  available               Decimal          @default(0) @db.Decimal(38, 18)
+  pending                 Decimal          @default(0) @db.Decimal(38, 18)
+  locked                  Decimal          @default(0) @db.Decimal(38, 18)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  user                    Profile?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  wallet                  UserWallet?      @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  debitEntries            LedgerEntry[]    @relation("LedgerDebitAccount")
+  creditEntries           LedgerEntry[]    @relation("LedgerCreditAccount")
+
+  @@unique([userId, accountType, currency])
+  @@index([accountType, currency])
+  @@index([userId, currency])
+  @@index([walletId, accountType, currency])
+}
+
+model LedgerEntry {
+  id                      String           @id @default(uuid()) @db.Uuid
+  debitAccountId          String           @db.Uuid
+  creditAccountId         String           @db.Uuid
+  amount                  Decimal          @db.Decimal(38, 18)
+  feeAmount               Decimal          @default(0) @db.Decimal(38, 18)
+  reason                  LedgerReason
+  idempotencyKey          String           @unique
+  referenceId             String?
+  metadata                Json?
+  createdAt               DateTime         @default(now())
+
+  debitAccount            LedgerAccount    @relation("LedgerDebitAccount", fields: [debitAccountId], references: [id], onDelete: Restrict)
+  creditAccount           LedgerAccount    @relation("LedgerCreditAccount", fields: [creditAccountId], references: [id], onDelete: Restrict)
+  creditedDeposit         OnchainDeposit?
+  holdForWithdrawals      WithdrawalRequest[] @relation("WithdrawalHoldEntry")
+  finalizeForWithdrawals  WithdrawalRequest[] @relation("WithdrawalFinalizeEntry")
+
+  @@index([reason, createdAt])
+  @@index([debitAccountId, createdAt])
+  @@index([creditAccountId, createdAt])
+}
+
+model OnchainDeposit {
+  id                      String           @id @default(uuid()) @db.Uuid
+  walletId                String           @db.Uuid
+  fromAddress             String
+  toAddress               String
+  amount                  Decimal          @db.Decimal(38, 18)
+  txHash                  String
+  logIndex                Int
+  blockNumber             BigInt
+  confirmations           Int              @default(0)
+  status                  OnchainDepositStatus @default(detected)
+  creditedLedgerEntryId   String?          @unique @db.Uuid
+  sweepJobId              String?          @unique @db.Uuid
+  idempotencyKey          String           @unique
+  detectedAt              DateTime         @default(now())
+  creditedAt              DateTime?
+  sweptAt                 DateTime?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  wallet                  UserWallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  creditedLedgerEntry     LedgerEntry?     @relation(fields: [creditedLedgerEntryId], references: [id], onDelete: SetNull)
+  sweepJob                SweepJob?        @relation(fields: [sweepJobId], references: [id], onDelete: SetNull)
+
+  @@unique([txHash, logIndex])
+  @@index([status, createdAt])
+  @@index([walletId, status, createdAt])
+}
+
+model SweepJob {
+  id                      String           @id @default(uuid()) @db.Uuid
+  walletId                String           @db.Uuid
+  fromAddress             String
+  toAddress               String
+  amount                  Decimal          @db.Decimal(38, 18)
+  status                  SweepJobStatus   @default(queued)
+  attemptCount            Int              @default(0)
+  txHash                  String?          @unique
+  idempotencyKey          String           @unique
+  failureReason           String?
+  scheduledAt             DateTime         @default(now())
+  startedAt               DateTime?
+  finishedAt              DateTime?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  wallet                  UserWallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  deposit                 OnchainDeposit?
+
+  @@index([status, createdAt])
+  @@index([walletId, status, createdAt])
+}
+
+model WithdrawalRequest {
+  id                      String           @id @default(uuid()) @db.Uuid
+  userId                  String           @db.Uuid
+  walletId                String           @db.Uuid
+  toAddress               String
+  amount                  Decimal          @db.Decimal(38, 18)
+  feeAmount               Decimal          @default(0) @db.Decimal(38, 18)
+  netAmount               Decimal          @db.Decimal(38, 18)
+  status                  WithdrawalStatus @default(requested)
+  reason                  String
+  rejectReason            String?
+  idempotencyKey          String           @unique
+  broadcastTxHash         String?
+  confirmations           Int              @default(0)
+  requestedAt             DateTime         @default(now())
+  reviewedBy              String?          @db.Uuid
+  reviewedAt              DateTime?
+  broadcastAt             DateTime?
+  confirmedAt             DateTime?
+  failedAt                DateTime?
+  failureReason           String?
+  holdLedgerEntryId       String?          @unique @db.Uuid
+  finalizeLedgerEntryId   String?          @unique @db.Uuid
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  requester               Profile          @relation("WithdrawalRequester", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer                Profile?         @relation("WithdrawalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  wallet                  UserWallet       @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  holdLedgerEntry         LedgerEntry?     @relation("WithdrawalHoldEntry", fields: [holdLedgerEntryId], references: [id], onDelete: SetNull)
+  finalizeLedgerEntry     LedgerEntry?     @relation("WithdrawalFinalizeEntry", fields: [finalizeLedgerEntryId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@index([walletId, status, createdAt])
+}
+
+model KycProfile {
+  id                      String           @id @default(uuid()) @db.Uuid
+  userId                  String           @unique @db.Uuid
+  status                  KycStatus        @default(not_submitted)
+  tier                    String           @default("basic")
+  country                 String?
+  fullName                String?
+  documentType            String?
+  documentNumberLast4     String?
+  documentUrl             String?
+  submittedAt             DateTime?
+  reviewedBy              String?          @db.Uuid
+  reviewedAt              DateTime?
+  reviewNote              String?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  user                    Profile          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer                Profile?         @relation("KycReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([tier])
+}
+
+model RiskLimit {
+  id                        String         @id @default(uuid()) @db.Uuid
+  tier                      String         @unique
+  description               String?
+  requiresKyc               Boolean        @default(false)
+  maxWithdrawalPerTx        Decimal        @db.Decimal(38, 18)
+  maxWithdrawalPerDay       Decimal        @db.Decimal(38, 18)
+  maxInternalTransferPerDay Decimal        @db.Decimal(38, 18)
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+}
+
+model WalletFeeConfig {
+  id                        String         @id @default(uuid()) @db.Uuid
+  key                       String         @unique
+  flatFee                   Decimal        @default(0) @db.Decimal(38, 18)
+  percentFee                Decimal        @default(0) @db.Decimal(10, 6)
+  minFee                    Decimal        @default(0) @db.Decimal(38, 18)
+  maxFee                    Decimal?       @db.Decimal(38, 18)
+  isActive                  Boolean        @default(true)
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
 }

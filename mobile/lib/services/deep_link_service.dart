@@ -39,14 +39,79 @@ class DeepLinkService {
     // Only handle our scheme
     if (uri.scheme != 'io.blocnet.app') return;
 
-    final fragment = uri.fragment; // e.g. access_token=xxx&type=signup
-    if (fragment.isEmpty) return;
+    // Supabase sends auth callbacks in two formats:
+    // 1. Hash fragment: io.blocnet.app://#access_token=xxx&refresh_token=yyy&type=signup
+    // 2. Query params: io.blocnet.app://?code=xxx (email confirmation)
 
-    final params = Uri.splitQueryString(fragment);
+    Map<String, String> params = {};
+
+    // Try fragment first (magic links, OAuth)
+    if (uri.fragment.isNotEmpty) {
+      params = Uri.splitQueryString(uri.fragment);
+    }
+    // Fall back to query params (email confirmation)
+    else if (uri.queryParameters.isNotEmpty) {
+      params = uri.queryParameters;
+    }
+
+    if (params.isEmpty) return;
+
     final type = params['type'];
     final accessToken = params['access_token'];
     final refreshToken = params['refresh_token'];
+    final code = params['code']; // OAuth PKCE / email verification code
 
+    // Handle auth code:
+    // 1) Try OAuth PKCE exchange first.
+    // 2) Fall back to email verification OTP.
+    if (code != null) {
+      try {
+        final oauth =
+            await Supabase.instance.client.auth.exchangeCodeForSession(
+          code,
+        );
+        final success = await authStore.verifyAndSignIn(
+          oauth.session.accessToken,
+        );
+        navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          success ? AppRoutes.main : AppRoutes.signIn,
+          (route) => false,
+        );
+        return;
+      } catch (_) {
+        // Ignore and try email OTP fallback.
+      }
+
+      try {
+        final otp = await Supabase.instance.client.auth.verifyOTP(
+          token: code,
+          type: OtpType.email,
+        );
+
+        if (otp.session != null) {
+          final success = await authStore.verifyAndSignIn(
+            otp.session!.accessToken,
+          );
+          navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            success ? AppRoutes.main : AppRoutes.signIn,
+            (route) => false,
+          );
+        } else {
+          navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            AppRoutes.signIn,
+            (route) => false,
+          );
+        }
+      } catch (_) {
+        navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          AppRoutes.signIn,
+          (route) => false,
+        );
+      }
+      return;
+    }
+
+    // Handle token-based auth (magic links, OAuth)
     if (accessToken == null || refreshToken == null) return;
 
     try {

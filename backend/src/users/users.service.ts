@@ -55,6 +55,17 @@ export class UsersService {
             bookmarks: true,
           },
         },
+        wallet: {
+          select: {
+            status: true,
+            address: true,
+          },
+        },
+        kycProfile: {
+          select: {
+            status: true,
+          },
+        },
       },
     });
 
@@ -76,6 +87,9 @@ export class UsersService {
       followersCount: profile._count.followerLinks,
       followingCount: profile._count.followingLinks,
       bookmarkCount: profile._count.bookmarks,
+      walletStatus: profile.wallet?.status ?? null,
+      walletAddress: profile.wallet?.address ?? null,
+      kycStatus: profile.kycProfile?.status ?? null,
     };
   }
 

@@ -21,6 +21,14 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     },
   });
 
+  if (res.status === 401) {
+    // Access token expired and no valid refresh token — redirect to sign-in
+    if (typeof window !== "undefined") {
+      window.location.href = `/signin?next=${encodeURIComponent(window.location.pathname)}`;
+    }
+    throw new Error("Unauthorized");
+  }
+
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
     throw new Error(`API ${res.status}: ${text}`);
@@ -47,6 +55,17 @@ export type {
   ProjectProposal,
   AuditLog,
   Tag,
+  WalletStatus,
+  WalletKycStatus,
+  WalletWithdrawalStatus,
+  AdminWalletUser,
+  AdminWalletUsersResponse,
+  AdminWalletWithdrawal,
+  AdminWalletWithdrawalsResponse,
+  AdminWalletKycRecord,
+  AdminWalletKycResponse,
+  WalletRiskLimit,
+  WalletFeeConfig,
 } from "./api";
 
 import type {
@@ -66,6 +85,16 @@ import type {
   ProjectProposal,
   AuditLog,
   Tag,
+  WalletStatus,
+  WalletKycStatus,
+  WalletWithdrawalStatus,
+  AdminWalletUsersResponse,
+  AdminWalletWithdrawalsResponse,
+  AdminWalletWithdrawal,
+  AdminWalletKycRecord,
+  AdminWalletKycResponse,
+  WalletRiskLimit,
+  WalletFeeConfig,
 } from "./api";
 
 export const clientApi = {
@@ -294,6 +323,105 @@ export const clientApi = {
       body: JSON.stringify(body),
     }),
 
+  listWalletUsers: (params?: {
+    q?: string;
+    walletStatus?: WalletStatus;
+    kycStatus?: WalletKycStatus;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminWalletUsersResponse>(
+      `/admin/wallet/users${toQuery({
+        q: params?.q,
+        walletStatus: params?.walletStatus,
+        kycStatus: params?.kycStatus,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  listWalletWithdrawals: (params?: {
+    q?: string;
+    status?: WalletWithdrawalStatus;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminWalletWithdrawalsResponse>(
+      `/admin/wallet/withdrawals${toQuery({
+        q: params?.q,
+        status: params?.status,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  reviewWalletWithdrawal: (
+    id: string,
+    body: { status: "approved" | "rejected"; reason: string },
+  ) =>
+    apiFetch<AdminWalletWithdrawal>(`/admin/wallet/withdrawals/${id}/review`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listWalletKyc: (params?: {
+    q?: string;
+    status?: WalletKycStatus;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminWalletKycResponse>(
+      `/admin/wallet/kyc${toQuery({
+        q: params?.q,
+        status: params?.status,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  reviewWalletKyc: (
+    userId: string,
+    body: { status: "approved" | "rejected"; note: string; tier?: string },
+  ) =>
+    apiFetch<AdminWalletKycRecord>(`/admin/wallet/kyc/${userId}/review`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listWalletRiskLimits: () => apiFetch<WalletRiskLimit[]>("/admin/wallet/settings/risk-limits"),
+
+  updateWalletRiskLimit: (
+    tier: string,
+    body: Partial<{
+      description: string;
+      requiresKyc: boolean;
+      maxWithdrawalPerTx: string;
+      maxWithdrawalPerDay: string;
+      maxInternalTransferPerDay: string;
+    }>,
+  ) =>
+    apiFetch<WalletRiskLimit>(`/admin/wallet/settings/risk-limits/${tier}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listWalletFeeConfigs: () => apiFetch<WalletFeeConfig[]>("/admin/wallet/settings/fees"),
+
+  updateWalletFeeConfig: (
+    key: string,
+    body: Partial<{
+      flatFee: string;
+      percentFee: string;
+      minFee: string;
+      maxFee: string | null;
+      isActive: boolean;
+    }>,
+  ) =>
+    apiFetch<WalletFeeConfig>(`/admin/wallet/settings/fees/${key}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
   broadcastNotification: (body: {
     title: string;
     body: string;
@@ -306,6 +434,7 @@ export const clientApi = {
       failureCount: number;
       recipientCount: number;
       skipped: boolean;
+      skipReason?: string | null;
     }>("/notifications/broadcast", {
       method: "POST",
       body: JSON.stringify(body),

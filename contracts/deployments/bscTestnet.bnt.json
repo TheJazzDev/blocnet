@@ -1,0 +1,11 @@
+{
+  "network": "bscTestnet",
+  "chainId": 97,
+  "address": "0xD07479cd4f293D3423A30b6dFfF0aB561422a7ba",
+  "deployTxHash": "0x8587085630287d95081bc8ef654fca188cef113b418a3dd9881d90e353b83bc2",
+  "treasury": "0x308C293c0298D6acA8c721CE4fD7D619D8fDC250",
+  "totalSupplyHuman": "100000000",
+  "totalSupplyWei": "100000000000000000000000000",
+  "ownerMultisig": "0x8879b04402c5aBa6A81cB8aE338791b58dee5E41",
+  "deployedAt": "2026-02-19T23:19:38.197Z"
+}

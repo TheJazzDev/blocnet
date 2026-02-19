@@ -238,6 +238,146 @@ export interface Tag {
   updatedAt: string;
 }
 
+export type WalletStatus = "provisioning" | "ready" | "error" | "disabled";
+export type WalletKycStatus = "not_submitted" | "pending" | "approved" | "rejected";
+export type WalletWithdrawalStatus =
+  | "requested"
+  | "pending_review"
+  | "approved"
+  | "rejected"
+  | "broadcasting"
+  | "confirmed"
+  | "failed"
+  | "reverted";
+
+export interface AdminWalletUser {
+  id: string;
+  email: string;
+  displayName: string | null;
+  username: string | null;
+  roles: string[];
+  createdAt: string;
+  wallet: {
+    id: string;
+    status: WalletStatus;
+    address: string | null;
+    providerWalletId: string | null;
+    chainId: number;
+  } | null;
+  balances: {
+    available: string;
+    pending: string;
+    locked: string;
+  } | null;
+  kyc: {
+    status: WalletKycStatus;
+    tier: string;
+    submittedAt: string | null;
+    reviewedAt: string | null;
+  } | null;
+}
+
+export interface AdminWalletUsersResponse {
+  data: AdminWalletUser[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminWalletWithdrawal {
+  id: string;
+  status: WalletWithdrawalStatus;
+  toAddress: string;
+  amount: string;
+  feeAmount: string;
+  netAmount: string;
+  reason: string;
+  rejectReason: string | null;
+  failureReason: string | null;
+  broadcastTxHash: string | null;
+  confirmations: number;
+  requester: {
+    id: string;
+    email: string;
+    displayName: string | null;
+  };
+  reviewer: {
+    id: string;
+    email: string;
+    displayName: string | null;
+  } | null;
+  requestedAt: string;
+  reviewedAt: string | null;
+  confirmedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminWalletWithdrawalsResponse {
+  data: AdminWalletWithdrawal[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminWalletKycRecord {
+  id: string;
+  userId: string;
+  user: {
+    id: string;
+    email: string;
+    displayName: string | null;
+  };
+  status: WalletKycStatus;
+  tier: string;
+  country: string | null;
+  fullName: string | null;
+  documentType: string | null;
+  documentNumberLast4: string | null;
+  documentUrl: string | null;
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  reviewer: {
+    id: string;
+    email: string;
+    displayName: string | null;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminWalletKycResponse {
+  data: AdminWalletKycRecord[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface WalletRiskLimit {
+  id: string;
+  tier: string;
+  description: string | null;
+  requiresKyc: boolean;
+  maxWithdrawalPerTx: string;
+  maxWithdrawalPerDay: string;
+  maxInternalTransferPerDay: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WalletFeeConfig {
+  id: string;
+  key: string;
+  flatFee: string;
+  percentFee: string;
+  minFee: string;
+  maxFee: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const api = {
   getMe: () => apiFetch<AdminMe>("/me"),
 
@@ -460,6 +600,105 @@ export const api = {
 
   updateSecondaryTag: (id: string, body: { name: string }) =>
     apiFetch<Tag>(`/tags/secondary/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listWalletUsers: (params?: {
+    q?: string;
+    walletStatus?: WalletStatus;
+    kycStatus?: WalletKycStatus;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminWalletUsersResponse>(
+      `/admin/wallet/users${toQuery({
+        q: params?.q,
+        walletStatus: params?.walletStatus,
+        kycStatus: params?.kycStatus,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  listWalletWithdrawals: (params?: {
+    q?: string;
+    status?: WalletWithdrawalStatus;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminWalletWithdrawalsResponse>(
+      `/admin/wallet/withdrawals${toQuery({
+        q: params?.q,
+        status: params?.status,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  reviewWalletWithdrawal: (
+    id: string,
+    body: { status: "approved" | "rejected"; reason: string },
+  ) =>
+    apiFetch<AdminWalletWithdrawal>(`/admin/wallet/withdrawals/${id}/review`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listWalletKyc: (params?: {
+    q?: string;
+    status?: WalletKycStatus;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminWalletKycResponse>(
+      `/admin/wallet/kyc${toQuery({
+        q: params?.q,
+        status: params?.status,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  reviewWalletKyc: (
+    userId: string,
+    body: { status: "approved" | "rejected"; note: string; tier?: string },
+  ) =>
+    apiFetch<AdminWalletKycRecord>(`/admin/wallet/kyc/${userId}/review`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listWalletRiskLimits: () => apiFetch<WalletRiskLimit[]>("/admin/wallet/settings/risk-limits"),
+
+  updateWalletRiskLimit: (
+    tier: string,
+    body: Partial<{
+      description: string;
+      requiresKyc: boolean;
+      maxWithdrawalPerTx: string;
+      maxWithdrawalPerDay: string;
+      maxInternalTransferPerDay: string;
+    }>,
+  ) =>
+    apiFetch<WalletRiskLimit>(`/admin/wallet/settings/risk-limits/${tier}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listWalletFeeConfigs: () => apiFetch<WalletFeeConfig[]>("/admin/wallet/settings/fees"),
+
+  updateWalletFeeConfig: (
+    key: string,
+    body: Partial<{
+      flatFee: string;
+      percentFee: string;
+      minFee: string;
+      maxFee: string | null;
+      isActive: boolean;
+    }>,
+  ) =>
+    apiFetch<WalletFeeConfig>(`/admin/wallet/settings/fees/${key}`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }),

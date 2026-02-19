@@ -5,7 +5,7 @@ import { Download, Filter, Clock, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PageHeader } from "@/components/page-header";
 import {
   Table,
@@ -52,22 +52,6 @@ function formatTimestamp(dateStr: string) {
   });
 }
 
-function TableSkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 py-2">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-4 w-28" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function AuditLogPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +92,7 @@ export default function AuditLogPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <TableSkeleton />
+            <LoadingSpinner className="py-10" />
           ) : logs.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               No audit events found. Make sure the backend is running.

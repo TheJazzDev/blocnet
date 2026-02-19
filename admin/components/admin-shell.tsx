@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -19,6 +19,8 @@ import {
   MessagesSquare,
   Tags,
   Bell,
+  Wallet,
+  Shield,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { canManageTags, canMutateSettings, canSendNotifications } from "@/lib/rbac";
@@ -45,30 +47,52 @@ export function useAdminSession(): AdminShellUser {
 }
 
 function buildNavItems(userRoles: string[]) {
-  const items = [
+  const overviewItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  ];
+
+  const contentItems = [
     { href: "/projects", label: "Projects", icon: FolderKanban },
     { href: "/updates", label: "Updates", icon: Newspaper },
     { href: "/comments", label: "Comments", icon: MessageSquare },
     { href: "/community", label: "Community", icon: MessagesSquare },
+  ];
+
+  const walletItems = [
+    { href: "/wallet-users", label: "Wallet Users", icon: Wallet },
+    { href: "/wallet-withdrawals", label: "Withdrawals", icon: ScrollText },
+    { href: "/wallet-kyc", label: "KYC Reviews", icon: Shield },
+    { href: "/wallet-settings", label: "Wallet Settings", icon: Settings },
+  ];
+
+  const accessItems = [
     { href: "/users", label: "Users & Roles", icon: Users },
     { href: "/applications", label: "Applications", icon: FileCheck },
+  ];
+
+  const systemItems = [
     { href: "/audit-log", label: "Audit Log", icon: ScrollText },
   ];
 
   if (canManageTags(userRoles)) {
-    items.push({ href: "/tags", label: "Tags", icon: Tags });
+    contentItems.push({ href: "/tags", label: "Tags", icon: Tags });
   }
 
   if (canSendNotifications(userRoles)) {
-    items.push({ href: "/notifications", label: "Notifications", icon: Bell });
+    systemItems.push({ href: "/notifications", label: "Notifications", icon: Bell });
   }
 
   if (canMutateSettings(userRoles)) {
-    items.push({ href: "/settings", label: "Settings", icon: Settings });
+    systemItems.push({ href: "/settings", label: "Settings", icon: Settings });
   }
 
-  return items;
+  return [
+    { label: "Overview", items: overviewItems },
+    { label: "Content", items: contentItems },
+    { label: "Wallet", items: walletItems },
+    { label: "Access", items: accessItems },
+    { label: "System", items: systemItems },
+  ].filter((group) => group.items.length > 0);
 }
 
 function SidebarContent({
@@ -80,7 +104,7 @@ function SidebarContent({
   onSignOut: () => void;
   user: AdminShellUser;
 }) {
-  const navItems = useMemo(() => buildNavItems(user.roles), [user.roles]);
+  const navGroups = useMemo(() => buildNavItems(user.roles), [user.roles]);
 
   return (
     <>
@@ -93,25 +117,32 @@ function SidebarContent({
       </div>
       <Separator />
       <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="flex flex-col gap-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                )}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="space-y-4">
+          {navGroups.map((group) => (
+            <div key={group.label} className="space-y-1">
+              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+                {group.label}
+              </p>
+              {group.items.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    )}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
       </ScrollArea>
       <Separator />
@@ -136,6 +167,19 @@ function SidebarContent({
   );
 }
 
+// Refresh the httpOnly access-token cookie before it expires.
+// Supabase access tokens last 1 hour; we refresh every 50 minutes.
+const REFRESH_INTERVAL_MS = 50 * 60 * 1000;
+
+async function refreshSession(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/auth/refresh-token", { method: "POST" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export function AdminShell({
   children,
   currentUser,
@@ -146,6 +190,24 @@ export function AdminShell({
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Silently refresh the access-token cookie on mount and every 50 minutes
+  useEffect(() => {
+    refreshSession();
+
+    intervalRef.current = setInterval(async () => {
+      const ok = await refreshSession();
+      if (!ok) {
+        // Refresh token expired — force sign-in
+        router.push("/signin?next=" + encodeURIComponent(pathname));
+      }
+    }, REFRESH_INTERVAL_MS);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSignOut() {
     await supabase.auth.signOut();

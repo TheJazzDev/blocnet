@@ -5,6 +5,11 @@ class _BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final walletStore = context.watch<WalletStore>();
+    final snapshot = walletStore.snapshot;
+    final available = snapshot?.available ?? '0';
+    final status = snapshot?.walletStatus ?? 'provisioning';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -68,6 +73,24 @@ class _BalanceCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.bgElevated,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.borderSubtle),
+                ),
+                child: Text(
+                  status.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    color: AppColors.textFaint,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -85,10 +108,10 @@ class _BalanceCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '0',
+                available,
                 style: GoogleFonts.spaceGrotesk(
                   color: AppColors.textPrimary,
-                  fontSize: 40,
+                  fontSize: 30,
                   fontWeight: FontWeight.w800,
                   height: 1.0,
                 ),
@@ -109,7 +132,7 @@ class _BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '≈ \$0.00 USD',
+            'On-ledger available balance',
             style: GoogleFonts.inter(
               color: AppColors.textFaint,
               fontSize: 12,
@@ -191,7 +214,8 @@ class _FeatureTile extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppColors.bgElevated,
                         borderRadius: BorderRadius.circular(20),
@@ -232,49 +256,145 @@ class _TransactionsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final walletStore = context.watch<WalletStore>();
+    final rows = walletStore.transactions;
+
+    if (walletStore.isLoadingTransactions && rows.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.teal400,
+            strokeWidth: 2.2,
+          ),
+        ),
+      );
+    }
+
+    if (rows.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Icon(
+                Icons.receipt_long_outlined,
+                color: AppColors.textFaint,
+                size: 22,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No transactions yet',
+              style: GoogleFonts.spaceGrotesk(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Your wallet activity will appear here after your first transfer.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                color: AppColors.textFaint,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.bgElevated,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.borderSubtle),
+        children: rows.take(8).map((tx) {
+          final isOutgoing = tx.direction == 'outgoing';
+          final isIncoming = tx.direction == 'incoming';
+          final icon = isOutgoing
+              ? Icons.arrow_upward_rounded
+              : isIncoming
+                  ? Icons.arrow_downward_rounded
+                  : Icons.swap_horiz_rounded;
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.bgElevated,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.borderSubtle),
+                  ),
+                  child: Icon(icon, size: 16, color: AppColors.textMuted),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tx.reason.replaceAll('_', ' ').toUpperCase(),
+                        style: GoogleFonts.inter(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tx.createdAt == null
+                            ? 'just now'
+                            : tx.createdAt!.toLocal().toString(),
+                        style: GoogleFonts.inter(
+                          color: AppColors.textFaint,
+                          fontSize: 10,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${isOutgoing ? '-' : isIncoming ? '+' : ''}${tx.amount} BNT',
+                  style: GoogleFonts.spaceGrotesk(
+                    color: isOutgoing ? AppColors.textMuted : AppColors.teal400,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            child: Icon(
-              Icons.receipt_long_outlined,
-              color: AppColors.textFaint,
-              size: 22,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'No transactions yet',
-            style: GoogleFonts.spaceGrotesk(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Your BNT transaction history will appear here once the wallet launches.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              color: AppColors.textFaint,
-              fontSize: 12,
-              height: 1.5,
-            ),
-          ),
-        ],
+          );
+        }).toList(),
       ),
     );
   }

@@ -33,7 +33,7 @@ class HunterProfileBody extends StatelessWidget {
           _HunterHero(
             displayName: displayName,
             avatarUrl: auth.avatarUrl,
-            walletAddress: null,
+            walletAddress: auth.walletAddress,
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

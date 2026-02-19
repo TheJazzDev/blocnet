@@ -5,7 +5,7 @@ import { Edit2, Loader2, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { useAdminSession } from "@/components/admin-shell";
@@ -34,20 +34,6 @@ function formatDate(dateStr: string) {
     month: "short",
     day: "numeric",
   });
-}
-
-function TableSkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 py-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="ml-auto h-4 w-20" />
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export default function TagsPage() {
@@ -185,7 +171,7 @@ export default function TagsPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <TableSkeleton />
+              <LoadingSpinner className="py-10" />
             ) : primaryTags.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">No primary tags found.</p>
             ) : (
@@ -245,7 +231,7 @@ export default function TagsPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <TableSkeleton />
+              <LoadingSpinner className="py-10" />
             ) : secondaryTags.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">No secondary tags found.</p>
             ) : (

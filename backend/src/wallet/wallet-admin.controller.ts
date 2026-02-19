@@ -1,0 +1,108 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { AppRole } from '../common/enums/role.enum';
+import { AuthGuard } from '../common/guards/auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { ListWalletAdminWithdrawalsQuery } from './dto/list-wallet-admin-withdrawals.query';
+import { ListWalletKycQuery } from './dto/list-wallet-kyc.query';
+import { ListWalletUsersQuery } from './dto/list-wallet-users.query';
+import { ReviewWithdrawalDto } from './dto/review-withdrawal.dto';
+import { ReviewKycDto } from './dto/review-kyc.dto';
+import { UpdateRiskLimitDto } from './dto/update-risk-limit.dto';
+import { UpdateWalletFeeDto } from './dto/update-wallet-fee.dto';
+import { WalletAdminService } from './wallet-admin.service';
+
+@Controller('admin/wallet')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+export class WalletAdminController {
+  constructor(private readonly walletAdminService: WalletAdminService) {}
+
+  @Get('users')
+  async listWalletUsers(@Query() query: ListWalletUsersQuery) {
+    return this.walletAdminService.listWalletUsers(query);
+  }
+
+  @Get('withdrawals')
+  async listWithdrawals(@Query() query: ListWalletAdminWithdrawalsQuery) {
+    return this.walletAdminService.listWithdrawals(query);
+  }
+
+  @Patch('withdrawals/:id/review')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async reviewWithdrawal(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('id') id: string,
+    @Body() dto: ReviewWithdrawalDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.walletAdminService.reviewWithdrawal(user.id, id, dto);
+  }
+
+  @Get('kyc')
+  async listKyc(@Query() query: ListWalletKycQuery) {
+    return this.walletAdminService.listKyc(query);
+  }
+
+  @Patch('kyc/:userId/review')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async reviewKyc(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+    @Body() dto: ReviewKycDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.walletAdminService.reviewKyc(user.id, userId, dto);
+  }
+
+  @Get('settings/risk-limits')
+  async listRiskLimits() {
+    return this.walletAdminService.listRiskLimits();
+  }
+
+  @Patch('settings/risk-limits/:tier')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async updateRiskLimit(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('tier') tier: string,
+    @Body() dto: UpdateRiskLimitDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.walletAdminService.updateRiskLimit(user.id, tier, dto);
+  }
+
+  @Get('settings/fees')
+  async listFeeConfigs() {
+    return this.walletAdminService.listFeeConfigs();
+  }
+
+  @Patch('settings/fees/:key')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async updateFeeConfig(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('key') key: string,
+    @Body() dto: UpdateWalletFeeDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.walletAdminService.updateFeeConfig(user.id, key, dto);
+  }
+}

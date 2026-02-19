@@ -40,6 +40,7 @@ interface BroadcastResult {
   failureCount: number;
   recipientCount: number;
   skipped: boolean;
+  skipReason?: string | null;
 }
 
 export default function NotificationsPage() {
@@ -71,7 +72,7 @@ export default function NotificationsPage() {
     try {
       const res = await clientApi.listUsers({ q: query, limit: 10 });
       setSearchResults(
-        (res.data ?? []).map((u: any) => ({
+        (res.data ?? []).map((u) => ({
           id: u.id,
           displayName: u.displayName ?? null,
           email: u.email,
@@ -158,7 +159,11 @@ export default function NotificationsPage() {
                 <span>Push failed: <strong className="text-destructive">{result.failureCount}</strong></span>
               )}
               <span>In-app created: <strong className="text-foreground">{result.insertedCount}</strong></span>
-              {result.skipped && <span className="text-amber-400">FCM skipped (not configured)</span>}
+              {result.skipped && (
+                <span className="text-amber-400">
+                  FCM skipped ({result.skipReason ?? "not configured"})
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>

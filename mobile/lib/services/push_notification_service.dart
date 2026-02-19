@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/services/api/api_client.dart';
@@ -16,40 +17,58 @@ class PushNotificationService {
 
   StreamSubscription<RemoteMessage>? _foregroundSub;
   StreamSubscription<String>? _tokenRefreshSub;
+  static const int _apnsMaxAttempts = 8;
+  static const Duration _apnsPollInterval = Duration(seconds: 1);
 
   /// Request permission, fetch token, register with backend, and set up
   /// foreground message handling. Safe to call multiple times — only
   /// registers subscriptions once.
   Future<void> init() async {
-    // Request permission (iOS prompts dialog; Android 13+ also needs this).
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    try {
+      // Request permission (iOS prompts dialog; Android 13+ also needs this).
+      final settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-    final status = settings.authorizationStatus;
-    if (status == AuthorizationStatus.denied) {
-      // User declined — we won't register a token but won't crash.
-      return;
+      final status = settings.authorizationStatus;
+      if (status == AuthorizationStatus.denied) {
+        // User declined — we won't register a token but won't crash.
+        return;
+      }
+
+      // On iOS, APNS may not be immediately available at startup.
+      // We wait briefly, then continue gracefully even if still unavailable.
+      if (Platform.isIOS) {
+        final hasApns = await _waitForApnsToken();
+        if (!hasApns) {
+          debugPrint(
+            '[PushNotificationService] APNS token not ready; '
+            'skipping immediate FCM token fetch.',
+          );
+        }
+      }
+
+      await _registerCurrentFcmTokenBestEffort();
+
+      // Re-register whenever the token rotates.
+      _tokenRefreshSub ??= _messaging.onTokenRefresh.listen(
+        _registerToken,
+        onError: (Object error, StackTrace stackTrace) {
+          debugPrint(
+            '[PushNotificationService] onTokenRefresh stream error: $error',
+          );
+        },
+      );
+
+      // Handle messages that arrive while the app is in the foreground.
+      _foregroundSub ??=
+          FirebaseMessaging.onMessage.listen(_onForegroundMessage);
+    } catch (error) {
+      // Push registration is best-effort and must never crash app startup.
+      debugPrint('[PushNotificationService] init failed: $error');
     }
-
-    // On iOS, request the APNs token first (no-op on Android).
-    if (Platform.isIOS) {
-      await _messaging.getAPNSToken();
-    }
-
-    // Get the current FCM token and register it.
-    final token = await _messaging.getToken();
-    if (token != null) {
-      await _registerToken(token);
-    }
-
-    // Re-register whenever the token rotates.
-    _tokenRefreshSub ??= _messaging.onTokenRefresh.listen(_registerToken);
-
-    // Handle messages that arrive while the app is in the foreground.
-    _foregroundSub ??= FirebaseMessaging.onMessage.listen(_onForegroundMessage);
   }
 
   /// Release subscriptions. Call when the user signs out.
@@ -63,6 +82,61 @@ class PushNotificationService {
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
+
+  Future<void> _registerCurrentFcmTokenBestEffort() async {
+    try {
+      final token = await _messaging.getToken();
+      if (token != null && token.isNotEmpty) {
+        await _registerToken(token);
+      }
+    } on FirebaseException catch (error) {
+      if (_isApnsNotReadyError(error)) {
+        // Common on iOS simulator and during very early startup.
+        debugPrint(
+          '[PushNotificationService] FCM token unavailable yet (${error.code}).',
+        );
+        return;
+      }
+      debugPrint(
+        '[PushNotificationService] getToken FirebaseException: '
+        '${error.code} ${error.message}',
+      );
+    } catch (error) {
+      debugPrint('[PushNotificationService] getToken failed: $error');
+    }
+  }
+
+  Future<bool> _waitForApnsToken() async {
+    if (!Platform.isIOS) return true;
+
+    for (var attempt = 0; attempt < _apnsMaxAttempts; attempt++) {
+      try {
+        final apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken != null && apnsToken.isNotEmpty) {
+          return true;
+        }
+      } on FirebaseException catch (error) {
+        if (!_isApnsNotReadyError(error)) {
+          debugPrint(
+            '[PushNotificationService] getAPNSToken FirebaseException: '
+            '${error.code} ${error.message}',
+          );
+          return false;
+        }
+      } catch (error) {
+        debugPrint('[PushNotificationService] getAPNSToken failed: $error');
+        return false;
+      }
+
+      await Future.delayed(_apnsPollInterval);
+    }
+
+    return false;
+  }
+
+  bool _isApnsNotReadyError(FirebaseException error) {
+    return error.code == 'apns-token-not-set';
+  }
 
   Future<void> _registerToken(String token) async {
     try {

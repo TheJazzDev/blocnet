@@ -13,6 +13,7 @@ import 'package:blocnet/services/tags_store.dart';
 import 'package:blocnet/services/comments_store.dart';
 import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/services/user_profile_store.dart';
+import 'package:blocnet/services/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'constants/app_routes.dart';
@@ -47,6 +48,10 @@ void main() async {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
       anonKey: AppConfig.supabaseAnonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+        autoRefreshToken: true,
+      ),
     );
   }
 
@@ -100,6 +105,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => NotificationsStore()),
         ChangeNotifierProvider(create: (_) => CommentsStore()),
         ChangeNotifierProvider(create: (_) => UserProfileStore()),
+        ChangeNotifierProvider(create: (_) => WalletStore()),
         ChangeNotifierProvider(create: (_) => TagsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),
         // ChangeNotifierProvider(create: (_) => PriorityStore()),

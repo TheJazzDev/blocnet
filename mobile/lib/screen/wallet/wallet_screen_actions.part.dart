@@ -18,6 +18,8 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final address = context.watch<WalletStore>().snapshot?.walletAddress;
+
     return Row(
       children: [
         _ActionButton(
@@ -29,7 +31,23 @@ class _ActionRow extends StatelessWidget {
         _ActionButton(
           icon: Icons.arrow_downward_rounded,
           label: 'Receive',
-          onTap: () => _showComingSoon(context),
+          onTap: () {
+            if (address == null || address.isEmpty) {
+              _showComingSoon(context);
+              return;
+            }
+            Clipboard.setData(ClipboardData(text: address));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Wallet address copied',
+                  style: GoogleFonts.inter(),
+                ),
+                backgroundColor: AppColors.bgSurface,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
         ),
         const SizedBox(width: 10),
         _ActionButton(

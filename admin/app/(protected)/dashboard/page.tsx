@@ -19,7 +19,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PageHeader } from "@/components/page-header";
 import { clientApi, type AdminStats, type AuditLog } from "@/lib/api-client";
 import { DashboardHealthCard } from "./dashboard-health-card";
@@ -38,41 +38,6 @@ function getActionBadgeVariant(action: string) {
   if (action.includes("review") || action.includes("approve")) return "secondary";
   if (action.includes("delete") || action.includes("archive")) return "destructive";
   return "outline" as const;
-}
-
-function StatCardSkeleton() {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-4 w-4" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-8 w-16" />
-        <Skeleton className="mt-2 h-3 w-32" />
-      </CardContent>
-    </Card>
-  );
-}
-
-function ActivitySkeleton() {
-  return (
-    <div className="space-y-4">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex items-start justify-between gap-4 border-b pb-4 last:border-0 last:pb-0">
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-          <div className="space-y-2 text-right">
-            <Skeleton className="ml-auto h-3 w-28" />
-            <Skeleton className="ml-auto h-3 w-16" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export default function DashboardPage() {
@@ -130,7 +95,7 @@ export default function DashboardPage() {
       {/* Stats grid */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {loading
-          ? Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+          ? <LoadingSpinner className="py-10 sm:col-span-2 xl:col-span-4" />
           : statCards.map((stat) => (
               <Card key={stat.title}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -162,7 +127,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <ActivitySkeleton />
+              <LoadingSpinner className="py-10" />
             ) : logs.length === 0 ? (
               <p className="text-sm text-muted-foreground">No audit events found.</p>
             ) : (
@@ -209,12 +174,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <Skeleton className="h-4 w-28" />
-                      <Skeleton className="h-4 w-10" />
-                    </div>
-                  ))
+                  <LoadingSpinner className="py-6" />
                 ) : stats ? (
                   <>
                     <div className="flex items-center justify-between">

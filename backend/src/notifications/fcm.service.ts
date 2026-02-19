@@ -9,25 +9,59 @@ import type { BroadcastTarget } from './dto/broadcast-notification.dto';
 export class FcmService {
   private readonly logger = new Logger(FcmService.name);
   private readonly app?: App;
+  private disabledReason: string | null = null;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
-    const clientEmail = this.configService.get<string>('FIREBASE_CLIENT_EMAIL');
-    const privateKeyRaw = this.configService.get<string>(
-      'FIREBASE_PRIVATE_KEY',
-    );
+    const projectId =
+      this.configService.get<string>('FIREBASE_PROJECT_ID')?.trim() ?? '';
+    const clientEmail =
+      this.configService.get<string>('FIREBASE_CLIENT_EMAIL')?.trim() ?? '';
+    const privateKeyRaw =
+      this.configService.get<string>('FIREBASE_PRIVATE_KEY') ?? '';
 
-    if (!projectId || !clientEmail || !privateKeyRaw) {
+    const missing: string[] = [];
+    if (!projectId) missing.push('FIREBASE_PROJECT_ID');
+    if (!clientEmail) missing.push('FIREBASE_CLIENT_EMAIL');
+    if (!privateKeyRaw.trim()) missing.push('FIREBASE_PRIVATE_KEY');
+
+    if (missing.length > 0) {
+      this.disabledReason = `Missing ${missing.join(', ')}`;
+      this.logger.warn(
+        `FCM disabled: missing ${missing.join(', ')} in backend env.`,
+      );
       return;
     }
 
-    const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
+    const privateKey = privateKeyRaw.replace(/\\n/g, '\n').trim();
+    if (!privateKey.includes('BEGIN PRIVATE KEY')) {
+      this.disabledReason = 'FIREBASE_PRIVATE_KEY format is invalid';
+      this.logger.warn(
+        'FCM disabled: FIREBASE_PRIVATE_KEY format looks invalid (missing BEGIN PRIVATE KEY).',
+      );
+      return;
+    }
 
     if (getApps().length > 0) {
-      this.app = getApps()[0];
+      const existing = getApps()[0];
+      this.app = existing;
+      const existingProjectId = (existing.options as { projectId?: string })
+        .projectId;
+      if (
+        existingProjectId != null &&
+        existingProjectId.trim().length > 0 &&
+        existingProjectId !== projectId
+      ) {
+        this.logger.warn(
+          `FCM using existing Firebase app projectId="${existingProjectId}", but FIREBASE_PROJECT_ID="${projectId}".`,
+        );
+      } else {
+        this.logger.log(
+          `FCM initialized with existing Firebase app (projectId="${existingProjectId ?? projectId}").`,
+        );
+      }
       return;
     }
 
@@ -39,13 +73,27 @@ export class FcmService {
           privateKey,
         }),
       });
+      this.logger.log(`FCM initialized (projectId="${projectId}").`);
+      this.disabledReason = null;
     } catch (error) {
+      this.disabledReason = error instanceof Error
+        ? error.message
+        : String(error);
       this.logger.warn(
         `Invalid FCM credentials; push delivery disabled. ${
           error instanceof Error ? error.message : String(error)
         }`,
       );
     }
+  }
+
+  getStatus() {
+    return {
+      configured: this.app != null,
+      reason: this.app == null
+        ? this.disabledReason ?? 'Firebase app is not initialized'
+        : null,
+    };
   }
 
   async sendProjectUpdate(input: {
@@ -60,7 +108,11 @@ export class FcmService {
       this.logger.warn(
         'FCM credentials are not configured; skipping push send',
       );
-      return { sentCount: 0, skipped: true };
+      return {
+        sentCount: 0,
+        skipped: true,
+        skipReason: this.disabledReason ?? 'FCM not configured',
+      };
     }
 
     const follows = await this.prisma.projectFollow.findMany({
@@ -119,7 +171,13 @@ export class FcmService {
   }) {
     if (!this.app) {
       this.logger.warn('FCM credentials are not configured; skipping broadcast');
-      return { sentCount: 0, skipped: true };
+      return {
+        sentCount: 0,
+        failureCount: 0,
+        recipientCount: 0,
+        skipped: true,
+        skipReason: this.disabledReason ?? 'FCM not configured',
+      };
     }
 
     // Resolve target user IDs

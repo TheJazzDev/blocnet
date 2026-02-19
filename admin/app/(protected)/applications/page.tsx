@@ -5,7 +5,7 @@ import { CheckCircle2, XCircle, Clock, FileText, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -56,24 +56,6 @@ function formatDate(date: string) {
     month: "short",
     day: "numeric",
   });
-}
-
-function CardSkeleton() {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex gap-3">
-          <Skeleton className="h-10 w-10 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-3 w-32" />
-            <Skeleton className="h-3 w-full" />
-            <Skeleton className="h-3 w-3/4" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 function ReviewButtons({
@@ -183,7 +165,7 @@ export default function ApplicationsPage() {
 
         <TabsContent value="admin-apps" className="space-y-4">
           {loading
-            ? Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)
+            ? <LoadingSpinner className="py-10" />
             : adminApps.length === 0
               ? <p className="py-8 text-center text-sm text-muted-foreground">No role applications found.</p>
               : adminApps.map((app) => (
@@ -228,7 +210,7 @@ export default function ApplicationsPage() {
 
         <TabsContent value="project-proposals" className="space-y-4">
           {loading
-            ? Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)
+            ? <LoadingSpinner className="py-10" />
             : proposals.length === 0
               ? <p className="py-8 text-center text-sm text-muted-foreground">No project proposals found.</p>
               : proposals.map((proposal) => (

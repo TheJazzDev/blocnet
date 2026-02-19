@@ -6,6 +6,7 @@ import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { roleNameToAppRole } from '../common/types/role-map';
 import { PrismaService } from '../prisma/prisma.service';
+import { WalletProvisioningService } from '../wallet/wallet-provisioning.service';
 
 type JwtPayload = {
   sub?: string;
@@ -20,6 +21,7 @@ export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly walletProvisioningService: WalletProvisioningService,
   ) {
     const jwksUrl = this.configService.get<string>('SUPABASE_JWKS_URL');
     if (jwksUrl) {
@@ -67,6 +69,11 @@ export class AuthService {
       });
       roleRows = [{ role: RoleName.user }];
     }
+
+    // Wallet provisioning is best-effort to avoid blocking auth flows.
+    void this.walletProvisioningService
+      .ensureWalletForUser(userId)
+      .catch(() => undefined);
 
     return {
       id: userId,

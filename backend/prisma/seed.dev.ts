@@ -9,6 +9,12 @@ import {
 } from '@prisma/client';
 import { Pool } from 'pg';
 import { config as loadEnv } from 'dotenv';
+import {
+  backfillWalletDomainForUsers,
+  parseBooleanEnv,
+  resolveWalletChainEnvironment,
+  resolveWalletChainId,
+} from './wallet-seed.util';
 
 loadEnv({ path: '.env.local', override: true, quiet: true });
 
@@ -159,6 +165,26 @@ async function main() {
   }
 
   const ownerProfileId = profileByKey.get('owner')!.id;
+  const walletChainEnvironment = resolveWalletChainEnvironment(
+    process.env.WALLET_CHAIN_ENVIRONMENT,
+  );
+  const walletChainId = resolveWalletChainId(walletChainEnvironment, process.env);
+  const walletEnabled = parseBooleanEnv(process.env.WALLET_ENABLED, false);
+  const seedReadyMockWallets = parseBooleanEnv(
+    process.env.WALLET_SEED_READY_MOCK,
+    true,
+  );
+
+  await backfillWalletDomainForUsers(
+    prisma,
+    users.map((user) => user.id),
+    {
+      chainEnvironment: walletChainEnvironment,
+      chainId: walletChainId,
+      walletEnabled,
+      forceReadyMock: walletEnabled && seedReadyMockWallets,
+    },
+  );
 
   const primaryTags: Array<{ key: PrimaryTagKey; name: string; slug: string }> = [
     { key: 'core', name: 'Core', slug: 'core' },
@@ -200,6 +226,33 @@ async function main() {
     { key: 'metaverse', name: 'Metaverse', slug: 'metaverse' },
   ];
 
+  const riskLimits = [
+    {
+      tier: 'basic',
+      description: 'Default tier for new users',
+      requiresKyc: false,
+      maxWithdrawalPerTx: '0',
+      maxWithdrawalPerDay: '0',
+      maxInternalTransferPerDay: '500',
+    },
+    {
+      tier: 'verified',
+      description: 'Manual KYC approved users',
+      requiresKyc: true,
+      maxWithdrawalPerTx: '1000',
+      maxWithdrawalPerDay: '3000',
+      maxInternalTransferPerDay: '5000',
+    },
+    {
+      tier: 'high_trust',
+      description: 'High-trust users with extended limits',
+      requiresKyc: true,
+      maxWithdrawalPerTx: '5000',
+      maxWithdrawalPerDay: '20000',
+      maxInternalTransferPerDay: '50000',
+    },
+  ] as const;
+
   const primaryTagByKey = new Map<PrimaryTagKey, { id: string }>();
   for (const tag of primaryTags) {
     const row = await prisma.primaryTag.upsert({
@@ -223,6 +276,46 @@ async function main() {
 
     secondaryTagByKey.set(tag.key, row);
   }
+
+  for (const limit of riskLimits) {
+    await prisma.riskLimit.upsert({
+      where: { tier: limit.tier },
+      update: {
+        description: limit.description,
+        requiresKyc: limit.requiresKyc,
+        maxWithdrawalPerTx: limit.maxWithdrawalPerTx,
+        maxWithdrawalPerDay: limit.maxWithdrawalPerDay,
+        maxInternalTransferPerDay: limit.maxInternalTransferPerDay,
+      },
+      create: {
+        tier: limit.tier,
+        description: limit.description,
+        requiresKyc: limit.requiresKyc,
+        maxWithdrawalPerTx: limit.maxWithdrawalPerTx,
+        maxWithdrawalPerDay: limit.maxWithdrawalPerDay,
+        maxInternalTransferPerDay: limit.maxInternalTransferPerDay,
+      },
+    });
+  }
+
+  await prisma.walletFeeConfig.upsert({
+    where: { key: 'withdrawal_bnt_v1' },
+    update: {
+      flatFee: '1',
+      percentFee: '0',
+      minFee: '1',
+      maxFee: null,
+      isActive: true,
+    },
+    create: {
+      key: 'withdrawal_bnt_v1',
+      flatFee: '1',
+      percentFee: '0',
+      minFee: '1',
+      maxFee: null,
+      isActive: true,
+    },
+  });
 
   for (const user of users) {
     const profile = profileByKey.get(user.key)!;
@@ -649,10 +742,11 @@ async function main() {
     prisma.update.count(),
     prisma.projectFollow.count(),
     prisma.notification.count(),
+    prisma.riskLimit.count(),
   ]);
 
   console.log(
-    `[seed] completed | profiles=${stats[0]} roles=${stats[1]} projects=${stats[2]} updates=${stats[3]} follows=${stats[4]} notifications=${stats[5]}`,
+    `[seed] completed | profiles=${stats[0]} roles=${stats[1]} projects=${stats[2]} updates=${stats[3]} follows=${stats[4]} notifications=${stats[5]} riskLimits=${stats[6]}`,
   );
   console.log(`[seed] owner email: ${ownerEmail}`);
 }

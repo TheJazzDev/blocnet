@@ -77,6 +77,7 @@ export class NotificationsController {
       failureCount: (fcmResult as any).failureCount ?? 0,
       recipientCount: (fcmResult as any).recipientCount ?? dbResult.insertedCount,
       skipped: fcmResult.skipped,
+      skipReason: (fcmResult as any).skipReason ?? null,
     };
   }
 }

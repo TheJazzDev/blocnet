@@ -51,3 +51,8 @@ app.*.map.json
 /backend/.env
 /backend/.env.*
 !/backend/.env.example
+
+# Environment files across workspaces
+**/.env*
+!**/.env.example
+!**/.env.example.*

@@ -43,6 +43,9 @@ class AuthStore extends ChangeNotifier {
   List<String> _roles = const ['user'];
   String? _username;
   DateTime? _memberSince;
+  String? _walletStatus;
+  String? _walletAddress;
+  String? _kycStatus;
   String? _lastError;
 
   // ── Space switcher — 'user' | 'hunter' ───────────────────────────────────
@@ -58,6 +61,9 @@ class AuthStore extends ChangeNotifier {
   String? get bio => _bio;
   String? get username => _username;
   DateTime? get memberSince => _memberSince;
+  String? get walletStatus => _walletStatus;
+  String? get walletAddress => _walletAddress;
+  String? get kycStatus => _kycStatus;
   List<String> get roles => List.unmodifiable(_roles);
   bool get isOwner => _roles.contains('owner');
   bool get isAdmin => _roles.contains('admin');
@@ -188,6 +194,48 @@ class AuthStore extends ChangeNotifier {
       }
 
       return verifyAndSignIn(session.accessToken, setSubmitting: false);
+    } on AuthException catch (error) {
+      _lastError = error.message;
+      return false;
+    } on TimeoutException {
+      _lastError =
+          'Auth request timed out after ${_authTimeout.inSeconds}s. Check your network and Supabase settings.';
+      return false;
+    } catch (error) {
+      _lastError = error.toString();
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> signInWithGoogle() async {
+    if (_isSubmitting) return false;
+    if (!isSupabaseConfigured) {
+      _lastError = 'Supabase is not configured in app runtime defines';
+      notifyListeners();
+      return false;
+    }
+
+    _isSubmitting = true;
+    _lastError = null;
+    notifyListeners();
+
+    try {
+      final launched = await Supabase.instance.client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'io.blocnet.app://login-callback',
+        queryParams: const {'prompt': 'select_account'},
+      ).timeout(_authTimeout);
+
+      if (!launched) {
+        _lastError = 'Failed to launch Google sign-in';
+        return false;
+      }
+
+      // OAuth completion continues asynchronously via deep link callback.
+      return true;
     } on AuthException catch (error) {
       _lastError = error.message;
       return false;
@@ -436,6 +484,11 @@ class AuthStore extends ChangeNotifier {
     _displayName = null;
     _avatarUrl = null;
     _bio = null;
+    _username = null;
+    _memberSince = null;
+    _walletStatus = null;
+    _walletAddress = null;
+    _kycStatus = null;
     _roles = const ['user'];
     _isAuthenticated = false;
     _lastError = null;
@@ -461,6 +514,9 @@ class AuthStore extends ChangeNotifier {
       _avatarUrl = response['avatarUrl']?.toString() ?? _avatarUrl;
       _bio = response['bio']?.toString() ?? _bio;
       _username = response['username']?.toString() ?? _username;
+      _walletStatus = response['walletStatus']?.toString() ?? _walletStatus;
+      _walletAddress = response['walletAddress']?.toString() ?? _walletAddress;
+      _kycStatus = response['kycStatus']?.toString() ?? _kycStatus;
 
       final rawMemberSince = response['createdAt'] ?? response['memberSince'];
       if (rawMemberSince != null) {

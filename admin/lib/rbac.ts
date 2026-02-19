@@ -40,6 +40,10 @@ export function canSendNotifications(roles: string[]): boolean {
   return hasRole(roles, "owner") || hasRole(roles, "admin");
 }
 
+export function canMutateWallet(roles: string[]): boolean {
+  return hasRole(roles, "owner") || hasRole(roles, "admin");
+}
+
 export function isModeratorOnly(roles: string[]): boolean {
   return hasRole(roles, "moderator") && !hasRole(roles, "owner") && !hasRole(roles, "admin");
 }
