@@ -267,6 +267,9 @@ class _CommentsSection extends StatelessWidget {
                       ),
                       decoration: InputDecoration(
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
                         hintText: 'Add a comment…',
                         hintStyle: TextStyle(
                           color: AppColors.textFaint,
@@ -446,7 +449,8 @@ class _CommentTile extends StatelessWidget {
                 InkWell(
                   onTap: () => _showEditDialog(context),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.primary500.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(6),
@@ -471,7 +475,8 @@ class _CommentTile extends StatelessWidget {
                         );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.error500.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(6),
@@ -566,8 +571,8 @@ class _CommentTile extends StatelessWidget {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                  color: AppColors.teal400,
-                  width: 2,
+                  color: AppColors.borderSubtle.withValues(alpha: 0.5),
+                  width: 1.5,
                 ),
               ),
               fillColor: AppColors.bgElevated,
@@ -579,7 +584,8 @@ class _CommentTile extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
               child: Text(
                 'Cancel',
@@ -604,7 +610,8 @@ class _CommentTile extends StatelessWidget {
                 Navigator.of(context).pop();
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 backgroundColor: AppColors.teal400.withValues(alpha: 0.12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
