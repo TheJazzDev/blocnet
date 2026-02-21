@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -15,8 +18,10 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _displayNameCtrl;
-  late final TextEditingController _avatarUrlCtrl;
   late final TextEditingController _bioCtrl;
+  final ImagePicker _imagePicker = ImagePicker();
+  File? _selectedAvatarFile;
+  bool _isPickingImage = false;
   bool _isSubmitting = false;
 
   @override
@@ -24,14 +29,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     final auth = context.read<AuthStore>();
     _displayNameCtrl = TextEditingController(text: auth.displayName ?? '');
-    _avatarUrlCtrl = TextEditingController(text: auth.avatarUrl ?? '');
     _bioCtrl = TextEditingController(text: auth.bio ?? '');
   }
 
   @override
   void dispose() {
     _displayNameCtrl.dispose();
-    _avatarUrlCtrl.dispose();
     _bioCtrl.dispose();
     super.dispose();
   }
@@ -41,11 +44,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
 
-    final success = await context.read<AuthStore>().updateProfile(
-          displayName: _displayNameCtrl.text,
-          avatarUrl: _avatarUrlCtrl.text,
-          bio: _bioCtrl.text,
+    final auth = context.read<AuthStore>();
+    if (_selectedAvatarFile != null) {
+      final avatarUploaded = await auth.uploadAvatarImage(_selectedAvatarFile!);
+      if (!mounted) return;
+      if (!avatarUploaded) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.lastError ?? 'Failed to upload avatar'),
+          ),
         );
+        return;
+      }
+    }
+
+    final success = await auth.updateProfile(
+      displayName: _displayNameCtrl.text,
+      bio: _bioCtrl.text,
+    );
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
@@ -62,6 +79,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     Navigator.of(context).pop();
+  }
+
+  Future<void> _pickAvatar() async {
+    if (_isPickingImage || _isSubmitting) return;
+    setState(() => _isPickingImage = true);
+
+    try {
+      final image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (image == null) {
+        return;
+      }
+
+      final pickedFile = File(image.path);
+      final fileSize = await pickedFile.length();
+      if (fileSize > 5 * 1024 * 1024) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Avatar must be 5MB or smaller')),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() => _selectedAvatarFile = pickedFile);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image selection failed: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPickingImage = false);
+      }
+    }
   }
 
   @override
@@ -86,6 +143,51 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _FieldLabel('Avatar'),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: AppColors.bgSurface,
+                      backgroundImage: _selectedAvatarFile != null
+                          ? FileImage(_selectedAvatarFile!)
+                          : (auth.avatarUrl != null &&
+                                  auth.avatarUrl!.isNotEmpty
+                              ? NetworkImage(auth.avatarUrl!) as ImageProvider
+                              : null),
+                      child: _selectedAvatarFile == null &&
+                              (auth.avatarUrl == null ||
+                                  auth.avatarUrl!.isEmpty)
+                          ? Icon(Icons.person, color: AppColors.textMuted)
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 40,
+                        child: OutlinedButton(
+                          onPressed: _isPickingImage ? null : _pickAvatar,
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.borderSubtle),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            _isPickingImage ? 'Opening...' : 'Choose image',
+                            style: AppTypography.custom(
+                              color: AppColors.textSecondary,
+                              size: 12,
+                              weight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 _FieldLabel('Username'),
                 const SizedBox(height: 6),
                 Container(
@@ -99,31 +201,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   child: Text(
                     auth.username ?? '@set-at-signup',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
+                    style: AppTypography.custom(color: AppColors.textSecondary,
+                      size: 13,
+                      weight: FontWeight.w400,),
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Username is unique and cannot be changed after signup.',
-                  style: GoogleFonts.inter(
-                    color: AppColors.textFaint,
-                    fontSize: 11,
-                  ),
+                  style: AppTypography.custom(color: AppColors.textFaint,
+                    size: 11,
+                    weight: FontWeight.w400,),
                 ),
                 const SizedBox(height: 16),
                 _FieldLabel('Display Name'),
                 const SizedBox(height: 6),
                 _Input(ctrl: _displayNameCtrl),
-                const SizedBox(height: 16),
-                _FieldLabel('Avatar URL'),
-                const SizedBox(height: 6),
-                _Input(
-                  ctrl: _avatarUrlCtrl,
-                  keyboardType: TextInputType.url,
-                ),
                 const SizedBox(height: 16),
                 _FieldLabel('Bio'),
                 const SizedBox(height: 6),
@@ -155,10 +248,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           )
                         : Text(
                             'Save Profile',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppTypography.custom(size: 13,
+                              color: Colors.black,
+                              weight: FontWeight.w700,),
                           ),
                   ),
                 ),
@@ -180,10 +272,10 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.inter(
+      style: AppTypography.custom(
         color: AppColors.textMuted,
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
+        size: 11,
+        weight: FontWeight.w600,
       ),
     );
   }
@@ -192,13 +284,11 @@ class _FieldLabel extends StatelessWidget {
 class _Input extends StatelessWidget {
   const _Input({
     required this.ctrl,
-    this.keyboardType,
     this.minLines = 1,
     this.maxLines = 1,
   });
 
   final TextEditingController ctrl;
-  final TextInputType? keyboardType;
   final int minLines;
   final int maxLines;
 
@@ -206,14 +296,12 @@ class _Input extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: ctrl,
-      keyboardType: keyboardType,
       minLines: minLines,
       maxLines: maxLines,
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-      style: GoogleFonts.inter(
-        color: AppColors.textSecondary,
-        fontSize: 13,
-      ),
+      style: AppTypography.custom(color: AppColors.textSecondary,
+        size: 13,
+        weight: FontWeight.w400,),
       decoration: InputDecoration(
         filled: true,
         fillColor: AppColors.bgSurface,

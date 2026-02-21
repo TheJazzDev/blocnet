@@ -5,6 +5,7 @@ import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dar
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -117,6 +118,15 @@ class _SignInScreenState extends State<SignInScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _GoogleAuthButton(
+              label: 'Continue with Google',
+              isEnabled: !isBusy && authStore.isSupabaseConfigured,
+              isLoading: false,
+              onPressed: _continueWithGoogle,
+            ),
+            const SizedBox(height: 14),
+            const _OrDivider(label: 'or sign in with email'),
+            const SizedBox(height: 18),
             AuthInputField(
               controller: _emailController,
               label: 'Email address',
@@ -200,20 +210,6 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ],
             ),
-
-            const SizedBox(height: 12),
-            _GoogleAuthButton(
-              label: 'Continue with Google',
-              isEnabled: !isBusy && authStore.isSupabaseConfigured,
-              isLoading: false,
-              onPressed: _continueWithGoogle,
-            ),
-
-            const SizedBox(height: 20),
-
-            // Divider with "or" text
-            _OrDivider(),
-
             const SizedBox(height: 20),
 
             // Sign up link — centered below divider
@@ -271,12 +267,14 @@ class _GoogleAuthButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 44,
-      child: OutlinedButton(
+      height: 50,
+      child: ElevatedButton(
         onPressed: isEnabled ? onPressed : null,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: AppColors.borderSubtle),
-          backgroundColor: AppColors.bgSurface,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 3,
+          shadowColor: Colors.black.withValues(alpha: 0.35),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -293,31 +291,19 @@ class _GoogleAuthButton extends StatelessWidget {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'G',
-                      style: TextStyle(
-                        color: Colors.red.shade600,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                  SvgPicture.asset(
+                    'assets/icons/google_g.svg',
+                    width: 22,
+                    height: 22,
                   ),
                   const SizedBox(width: 10),
                   Text(
                     label,
                     style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
+                      color: Colors.black,
+                      fontSize: 14,
                       fontFamily: 'Geist',
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -355,6 +341,10 @@ class _ConfigWarning extends StatelessWidget {
 }
 
 class _OrDivider extends StatelessWidget {
+  const _OrDivider({this.label = 'or'});
+
+  final String label;
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -368,7 +358,7 @@ class _OrDivider extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            'or',
+            label,
             style: TextStyle(
               color: AppColors.textFaint,
               fontSize: 12,

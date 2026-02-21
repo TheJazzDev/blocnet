@@ -46,6 +46,36 @@ enum UpdateUrgency {
 
 enum NotificationType {
   project_update
+  profile_followed
+  profile_unfollowed
+  project_followed
+  project_unfollowed
+  community_liked
+  community_bookmarked
+  comment_received
+  project_proposal_submitted
+  project_proposal_reviewed
+  admin_application_submitted
+  admin_application_reviewed
+  project_invite_received
+  project_invite_responded
+  project_assignment_changed
+  role_changed
+  wallet_transfer_sent
+  wallet_transfer_received
+  wallet_deposit_credited
+  wallet_withdrawal_requested
+  wallet_withdrawal_approved
+  wallet_withdrawal_rejected
+  wallet_withdrawal_broadcasted
+  wallet_withdrawal_confirmed
+  wallet_withdrawal_reverted
+  wallet_kyc_reviewed
+  wallet_provision_ready
+  wallet_provision_failed
+  mining_claimed
+  referral_bound
+  referral_admin_bound
   system
 }
 
@@ -92,6 +122,17 @@ enum WalletStatus {
   ready
   error
   disabled
+}
+
+enum WalletAsset {
+  BNT
+  BNB
+  USDT
+}
+
+enum WalletAssetKind {
+  erc20
+  native
 }
 
 enum LedgerAccountType {
@@ -145,47 +186,73 @@ enum KycStatus {
   rejected
 }
 
+enum MiningPointSource {
+  cycle_claim
+  admin_adjustment
+}
+
 model Profile {
-  id                String             @id @db.Uuid
-  email             String             @unique
-  username          String?            @unique
-  displayName       String?
-  avatarUrl         String?
-  bio               String?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  roles             UserRole[]
-  ownedProjects     Project[]          @relation("OwnedProjects")
-  hunterAssignments ProjectHunter[]
-  authoredUpdates   Update[]           @relation("AuthoredUpdates")
-  authoredComments  Comment[]          @relation("AuthoredComments")
-  moderatedProjects Project[]          @relation("ProjectModerator")
-  moderatedUpdates  Update[]           @relation("UpdateModerator")
-  moderatedComments Comment[]          @relation("CommentModerator")
-  communityPosts    CommunityPost[]    @relation("CommunityPostAuthor")
-  moderatedCommunityPosts CommunityPost[] @relation("CommunityPostModerator")
-  communityPostComments CommunityPostComment[] @relation("CommunityPostCommentAuthor")
-  moderatedCommunityPostComments CommunityPostComment[] @relation("CommunityPostCommentModerator")
-  communityPostReactions CommunityPostReaction[] @relation("CommunityPostReactionUser")
-  bookmarks         Bookmark[]
-  followerLinks     UserFollow[]       @relation("UserFollowFollowee")
-  followingLinks    UserFollow[]       @relation("UserFollowFollower")
-  hunterInvites     ProjectHunterInvite[] @relation("InviteHunter")
-  sentInvites       ProjectHunterInvite[] @relation("InviteSender")
-  reviewedInvites   ProjectHunterInvite[] @relation("InviteReviewer")
-  projectProposals  ProjectProposal[]     @relation("ProjectProposalApplicant")
-  reviewedProposals ProjectProposal[]     @relation("ProjectProposalReviewer")
-  follows           ProjectFollow[]
-  notifications     Notification[]
-  deviceTokens      DeviceToken[]
-  adminApplications AdminApplication[] @relation("AdminApplicationApplicant")
-  wallet            UserWallet?
-  ledgerAccounts    LedgerAccount[]
-  kycProfile        KycProfile?
-  withdrawalRequests WithdrawalRequest[] @relation("WithdrawalRequester")
-  reviewedWithdrawals WithdrawalRequest[] @relation("WithdrawalReviewer")
-  reviewedKycProfiles KycProfile[] @relation("KycReviewer")
-  audits            AuditLog[]         @relation("ActorAuditLogs")
+  id                             String                  @id @db.Uuid
+  email                          String                  @unique
+  username                       String?                 @unique
+  displayName                    String?
+  avatarUrl                      String?
+  bio                            String?
+  isDeactivated                  Boolean                 @default(false)
+  deactivatedAt                  DateTime?
+  deactivatedBy                  String?                 @db.Uuid
+  deactivationReason             String?
+  previousUsername               String?
+  previousDisplayName            String?
+  previousAvatarUrl              String?
+  previousBio                    String?
+  homeFeedLastSeenAt             DateTime?
+  referralCode                   String?                 @unique
+  referredById                   String?                 @db.Uuid
+  referredAt                     DateTime?
+  miningClaimedPoints            BigInt                  @default(0)
+  createdAt                      DateTime                @default(now())
+  updatedAt                      DateTime                @updatedAt
+  roles                          UserRole[]
+  ownedProjects                  Project[]               @relation("OwnedProjects")
+  hunterAssignments              ProjectHunter[]
+  authoredUpdates                Update[]                @relation("AuthoredUpdates")
+  authoredComments               Comment[]               @relation("AuthoredComments")
+  moderatedProjects              Project[]               @relation("ProjectModerator")
+  moderatedUpdates               Update[]                @relation("UpdateModerator")
+  moderatedComments              Comment[]               @relation("CommentModerator")
+  communityPosts                 CommunityPost[]         @relation("CommunityPostAuthor")
+  moderatedCommunityPosts        CommunityPost[]         @relation("CommunityPostModerator")
+  communityPostComments          CommunityPostComment[]  @relation("CommunityPostCommentAuthor")
+  moderatedCommunityPostComments CommunityPostComment[]  @relation("CommunityPostCommentModerator")
+  communityPostReactions         CommunityPostReaction[] @relation("CommunityPostReactionUser")
+  bookmarks                      Bookmark[]
+  followerLinks                  UserFollow[]            @relation("UserFollowFollowee")
+  followingLinks                 UserFollow[]            @relation("UserFollowFollower")
+  hunterInvites                  ProjectHunterInvite[]   @relation("InviteHunter")
+  sentInvites                    ProjectHunterInvite[]   @relation("InviteSender")
+  reviewedInvites                ProjectHunterInvite[]   @relation("InviteReviewer")
+  projectProposals               ProjectProposal[]       @relation("ProjectProposalApplicant")
+  reviewedProposals              ProjectProposal[]       @relation("ProjectProposalReviewer")
+  follows                        ProjectFollow[]
+  notifications                  Notification[]
+  actorNotifications             Notification[]          @relation("NotificationActor")
+  deviceTokens                   DeviceToken[]
+  adminApplications              AdminApplication[]      @relation("AdminApplicationApplicant")
+  wallet                         UserWallet?
+  ledgerAccounts                 LedgerAccount[]
+  kycProfile                     KycProfile?
+  withdrawalRequests             WithdrawalRequest[]     @relation("WithdrawalRequester")
+  reviewedWithdrawals            WithdrawalRequest[]     @relation("WithdrawalReviewer")
+  reviewedKycProfiles            KycProfile[]            @relation("KycReviewer")
+  audits                         AuditLog[]              @relation("ActorAuditLogs")
+  referrer                       Profile?                @relation("ProfileReferrer", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals                      Profile[]               @relation("ProfileReferrer")
+  miningSessions                 MiningSession[]
+  miningPointLedgerEntries       MiningPointLedger[]
+  miningHourlyCheckpoints        MiningHourlyCheckpoint[]
+
+  @@index([referredById])
 }
 
 model UserRole {
@@ -195,33 +262,33 @@ model UserRole {
   grantedBy String?  @db.Uuid
   createdAt DateTime @default(now())
 
-  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, role])
   @@index([role])
 }
 
 model Project {
-  id            String          @id @default(uuid()) @db.Uuid
-  name          String
-  slug          String          @unique
-  normalizedName String?        @unique
-  symbol        String?         @unique
-  websiteUrl    String?
-  websiteDomain String?         @unique
-  description   String
-  primaryTagId  String          @db.Uuid
-  status        ProjectStatus   @default(active)
-  moderatedBy   String?         @db.Uuid
-  moderatedAt   DateTime?
+  id               String        @id @default(uuid()) @db.Uuid
+  name             String
+  slug             String        @unique
+  normalizedName   String?       @unique
+  symbol           String?       @unique
+  websiteUrl       String?
+  websiteDomain    String?       @unique
+  description      String
+  primaryTagId     String        @db.Uuid
+  status           ProjectStatus @default(active)
+  moderatedBy      String?       @db.Uuid
+  moderatedAt      DateTime?
   moderationReason String?
-  ownerAdminId  String          @db.Uuid
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  ownerAdminId     String        @db.Uuid
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  ownerAdmin    Profile         @relation("OwnedProjects", fields: [ownerAdminId], references: [id])
-  moderator     Profile?        @relation("ProjectModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
-  primaryTag    PrimaryTag      @relation(fields: [primaryTagId], references: [id], onDelete: Restrict)
+  ownerAdmin    Profile               @relation("OwnedProjects", fields: [ownerAdminId], references: [id])
+  moderator     Profile?              @relation("ProjectModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  primaryTag    PrimaryTag            @relation(fields: [primaryTagId], references: [id], onDelete: Restrict)
   secondaryTags ProjectSecondaryTag[]
   hunters       ProjectHunter[]
   invites       ProjectHunterInvite[]
@@ -241,29 +308,29 @@ model ProjectHunter {
   assignedBy String   @db.Uuid
   createdAt  DateTime @default(now())
 
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  hunter     Profile  @relation(fields: [hunterId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  hunter  Profile @relation(fields: [hunterId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, hunterId])
   @@index([hunterId])
 }
 
 model ProjectHunterInvite {
-  id          String       @id @default(uuid()) @db.Uuid
-  projectId   String       @db.Uuid
-  hunterId    String       @db.Uuid
-  invitedBy   String       @db.Uuid
-  note        String?
-  status      InviteStatus @default(pending)
-  reviewedBy  String?      @db.Uuid
-  reviewedAt  DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id         String       @id @default(uuid()) @db.Uuid
+  projectId  String       @db.Uuid
+  hunterId   String       @db.Uuid
+  invitedBy  String       @db.Uuid
+  note       String?
+  status     InviteStatus @default(pending)
+  reviewedBy String?      @db.Uuid
+  reviewedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  hunter      Profile      @relation("InviteHunter", fields: [hunterId], references: [id], onDelete: Cascade)
-  inviter     Profile      @relation("InviteSender", fields: [invitedBy], references: [id], onDelete: Cascade)
-  reviewer    Profile?     @relation("InviteReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  hunter   Profile  @relation("InviteHunter", fields: [hunterId], references: [id], onDelete: Cascade)
+  inviter  Profile  @relation("InviteSender", fields: [invitedBy], references: [id], onDelete: Cascade)
+  reviewer Profile? @relation("InviteReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
 
   @@unique([projectId, hunterId])
   @@index([hunterId, status])
@@ -271,28 +338,28 @@ model ProjectHunterInvite {
 }
 
 model ProjectProposal {
-  id             String               @id @default(uuid()) @db.Uuid
-  applicantId    String               @db.Uuid
-  name           String
-  normalizedName String
-  symbol         String?
-  websiteUrl     String?
-  websiteDomain  String?
-  description    String
-  primaryTagId   String               @db.Uuid
-  reason         String?
-  status         ProjectProposalStatus @default(pending)
-  reviewerId     String?              @db.Uuid
-  reviewNote     String?
-  reviewedAt     DateTime?
-  createdProjectId String?            @db.Uuid
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  id               String                @id @default(uuid()) @db.Uuid
+  applicantId      String                @db.Uuid
+  name             String
+  normalizedName   String
+  symbol           String?
+  websiteUrl       String?
+  websiteDomain    String?
+  description      String
+  primaryTagId     String                @db.Uuid
+  reason           String?
+  status           ProjectProposalStatus @default(pending)
+  reviewerId       String?               @db.Uuid
+  reviewNote       String?
+  reviewedAt       DateTime?
+  createdProjectId String?               @db.Uuid
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
-  applicant      Profile              @relation("ProjectProposalApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
-  reviewer       Profile?             @relation("ProjectProposalReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
-  createdProject Project?             @relation(fields: [createdProjectId], references: [id], onDelete: SetNull)
-  primaryTag     PrimaryTag           @relation(fields: [primaryTagId], references: [id], onDelete: Restrict)
+  applicant      Profile    @relation("ProjectProposalApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+  reviewer       Profile?   @relation("ProjectProposalReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  createdProject Project?   @relation(fields: [createdProjectId], references: [id], onDelete: SetNull)
+  primaryTag     PrimaryTag @relation(fields: [primaryTagId], references: [id], onDelete: Restrict)
 
   @@index([applicantId, status])
   @@index([status, createdAt])
@@ -300,22 +367,22 @@ model ProjectProposal {
 }
 
 model Update {
-  id            String          @id @default(uuid()) @db.Uuid
-  projectId     String          @db.Uuid
-  authorId      String          @db.Uuid
-  urgency       UpdateUrgency
-  title         String
-  contentMd     String
-  status        UpdateStatus    @default(published)
-  moderatedBy   String?         @db.Uuid
-  moderatedAt   DateTime?
+  id               String        @id @default(uuid()) @db.Uuid
+  projectId        String        @db.Uuid
+  authorId         String        @db.Uuid
+  urgency          UpdateUrgency
+  title            String
+  contentMd        String
+  status           UpdateStatus  @default(published)
+  moderatedBy      String?       @db.Uuid
+  moderatedAt      DateTime?
   moderationReason String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  author        Profile         @relation("AuthoredUpdates", fields: [authorId], references: [id], onDelete: Cascade)
-  moderator     Profile?        @relation("UpdateModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  project       Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author        Profile              @relation("AuthoredUpdates", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator     Profile?             @relation("UpdateModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
   notifications Notification[]
   comments      Comment[]
   secondaryTags UpdateSecondaryTag[]
@@ -326,62 +393,62 @@ model Update {
 }
 
 model PrimaryTag {
-  id          String            @id @default(uuid()) @db.Uuid
-  name        String            @unique
-  slug        String            @unique
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  projects    Project[]
-  proposals   ProjectProposal[]
+  id        String            @id @default(uuid()) @db.Uuid
+  name      String            @unique
+  slug      String            @unique
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  projects  Project[]
+  proposals ProjectProposal[]
 }
 
 model SecondaryTag {
-  id          String             @id @default(uuid()) @db.Uuid
-  name        String             @unique
-  slug        String             @unique
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  projects    ProjectSecondaryTag[]
-  updates     UpdateSecondaryTag[]
+  id        String                @id @default(uuid()) @db.Uuid
+  name      String                @unique
+  slug      String                @unique
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  projects  ProjectSecondaryTag[]
+  updates   UpdateSecondaryTag[]
 }
 
 model ProjectSecondaryTag {
-  id             String       @id @default(uuid()) @db.Uuid
-  projectId      String       @db.Uuid
-  secondaryTagId String       @db.Uuid
-  createdAt      DateTime     @default(now())
+  id             String   @id @default(uuid()) @db.Uuid
+  projectId      String   @db.Uuid
+  secondaryTagId String   @db.Uuid
+  createdAt      DateTime @default(now())
 
-  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  secondaryTag   SecondaryTag @relation(fields: [secondaryTagId], references: [id], onDelete: Restrict)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  secondaryTag SecondaryTag @relation(fields: [secondaryTagId], references: [id], onDelete: Restrict)
 
   @@unique([projectId, secondaryTagId])
   @@index([secondaryTagId])
 }
 
 model UpdateSecondaryTag {
-  id             String       @id @default(uuid()) @db.Uuid
-  updateId       String       @db.Uuid
-  secondaryTagId String       @db.Uuid
-  createdAt      DateTime     @default(now())
+  id             String   @id @default(uuid()) @db.Uuid
+  updateId       String   @db.Uuid
+  secondaryTagId String   @db.Uuid
+  createdAt      DateTime @default(now())
 
-  update         Update       @relation(fields: [updateId], references: [id], onDelete: Cascade)
-  secondaryTag   SecondaryTag @relation(fields: [secondaryTagId], references: [id], onDelete: Restrict)
+  update       Update       @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  secondaryTag SecondaryTag @relation(fields: [secondaryTagId], references: [id], onDelete: Restrict)
 
   @@unique([updateId, secondaryTagId])
   @@index([secondaryTagId])
 }
 
 model Comment {
-  id        String   @id @default(uuid()) @db.Uuid
-  updateId  String   @db.Uuid
-  authorId  String   @db.Uuid
-  content   String
-  status    ContentModerationStatus @default(active)
-  moderatedBy String? @db.Uuid
-  moderatedAt DateTime?
+  id               String                  @id @default(uuid()) @db.Uuid
+  updateId         String                  @db.Uuid
+  authorId         String                  @db.Uuid
+  content          String
+  status           ContentModerationStatus @default(active)
+  moderatedBy      String?                 @db.Uuid
+  moderatedAt      DateTime?
   moderationReason String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
 
   update    Update   @relation(fields: [updateId], references: [id], onDelete: Cascade)
   author    Profile  @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
@@ -393,16 +460,20 @@ model Comment {
 }
 
 model ProjectFollow {
-  id         String   @id @default(uuid()) @db.Uuid
-  projectId  String   @db.Uuid
-  userId     String   @db.Uuid
-  createdAt  DateTime @default(now())
+  id              String        @id @default(uuid()) @db.Uuid
+  projectId       String        @db.Uuid
+  userId          String        @db.Uuid
+  alertMinUrgency UpdateUrgency @default(low)
+  mutedUntil      DateTime?
+  createdAt       DateTime      @default(now())
 
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user       Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
   @@index([userId])
+  @@index([projectId, alertMinUrgency])
+  @@index([projectId, mutedUntil])
 }
 
 model UserFollow {
@@ -411,8 +482,8 @@ model UserFollow {
   followeeId String   @db.Uuid
   createdAt  DateTime @default(now())
 
-  follower   Profile  @relation("UserFollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
-  followee   Profile  @relation("UserFollowFollowee", fields: [followeeId], references: [id], onDelete: Cascade)
+  follower Profile @relation("UserFollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  followee Profile @relation("UserFollowFollowee", fields: [followeeId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followeeId])
   @@index([followeeId, createdAt])
@@ -420,22 +491,22 @@ model UserFollow {
 }
 
 model CommunityPost {
-  id         String          @id @default(uuid()) @db.Uuid
-  authorId   String          @db.Uuid
-  topic      CommunityTopic  @default(general)
-  content    String
-  status     ContentModerationStatus @default(active)
-  moderatedBy String?        @db.Uuid
-  moderatedAt DateTime?
+  id               String                  @id @default(uuid()) @db.Uuid
+  authorId         String                  @db.Uuid
+  topic            CommunityTopic          @default(general)
+  content          String
+  status           ContentModerationStatus @default(active)
+  moderatedBy      String?                 @db.Uuid
+  moderatedAt      DateTime?
   moderationReason String?
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
 
-  author     Profile         @relation("CommunityPostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  moderator  Profile?        @relation("CommunityPostModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
-  comments   CommunityPostComment[]
-  reactions  CommunityPostReaction[]
-  bookmarks  Bookmark[]
+  author    Profile                 @relation("CommunityPostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator Profile?                @relation("CommunityPostModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  comments  CommunityPostComment[]
+  reactions CommunityPostReaction[]
+  bookmarks Bookmark[]
 
   @@index([topic, status, createdAt])
   @@index([authorId, createdAt])
@@ -443,20 +514,20 @@ model CommunityPost {
 }
 
 model CommunityPostComment {
-  id         String        @id @default(uuid()) @db.Uuid
-  postId     String        @db.Uuid
-  authorId   String        @db.Uuid
-  content    String
-  status     ContentModerationStatus @default(active)
-  moderatedBy String?      @db.Uuid
-  moderatedAt DateTime?
+  id               String                  @id @default(uuid()) @db.Uuid
+  postId           String                  @db.Uuid
+  authorId         String                  @db.Uuid
+  content          String
+  status           ContentModerationStatus @default(active)
+  moderatedBy      String?                 @db.Uuid
+  moderatedAt      DateTime?
   moderationReason String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
 
-  post       CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author     Profile       @relation("CommunityPostCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  moderator  Profile?      @relation("CommunityPostCommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    Profile       @relation("CommunityPostCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator Profile?      @relation("CommunityPostCommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
 
   @@index([postId, status, createdAt])
   @@index([authorId])
@@ -464,14 +535,14 @@ model CommunityPostComment {
 }
 
 model CommunityPostReaction {
-  id         String                @id @default(uuid()) @db.Uuid
-  postId     String                @db.Uuid
-  userId     String                @db.Uuid
-  kind       CommunityReactionKind @default(like)
-  createdAt  DateTime              @default(now())
+  id        String                @id @default(uuid()) @db.Uuid
+  postId    String                @db.Uuid
+  userId    String                @db.Uuid
+  kind      CommunityReactionKind @default(like)
+  createdAt DateTime              @default(now())
 
-  post       CommunityPost         @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user       Profile               @relation("CommunityPostReactionUser", fields: [userId], references: [id], onDelete: Cascade)
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user Profile       @relation("CommunityPostReactionUser", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId, kind])
   @@index([userId, createdAt])
@@ -479,13 +550,13 @@ model CommunityPostReaction {
 }
 
 model Bookmark {
-  id              String        @id @default(uuid()) @db.Uuid
-  userId          String        @db.Uuid
-  communityPostId String        @db.Uuid
-  createdAt       DateTime      @default(now())
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  communityPostId String   @db.Uuid
+  createdAt       DateTime @default(now())
 
-  user            Profile       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  communityPost   CommunityPost @relation(fields: [communityPostId], references: [id], onDelete: Cascade)
+  user          Profile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityPost CommunityPost @relation(fields: [communityPostId], references: [id], onDelete: Cascade)
 
   @@unique([userId, communityPostId])
   @@index([userId, createdAt])
@@ -493,109 +564,117 @@ model Bookmark {
 }
 
 model Notification {
-  id          String           @id @default(uuid()) @db.Uuid
-  userId       String          @db.Uuid
-  type         NotificationType
-  projectId    String?         @db.Uuid
-  updateId     String?         @db.Uuid
-  urgency      UpdateUrgency?
-  title        String
-  body         String
-  isRead       Boolean         @default(false)
-  readAt       DateTime?
-  createdAt    DateTime        @default(now())
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  actorUserId String?        @db.Uuid
+  projectId String?          @db.Uuid
+  updateId  String?          @db.Uuid
+  urgency   UpdateUrgency?
+  title     String
+  body      String
+  payload   Json?
+  deeplink  String?
+  dedupeKey String?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
 
-  user         Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project      Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  update       Update?         @relation(fields: [updateId], references: [id], onDelete: SetNull)
+  user    Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actor   Profile? @relation("NotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  update  Update?  @relation(fields: [updateId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+  @@index([userId, isRead, createdAt])
+  @@index([type, createdAt])
   @@index([projectId])
+  @@unique([userId, dedupeKey])
 }
 
 model DeviceToken {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @db.Uuid
-  token       String   @unique
-  platform    String
-  lastSeenAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  token      String   @unique
+  platform   String
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 
-  user        Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model AdminApplication {
-  id          String                @id @default(uuid()) @db.Uuid
-  userId      String                @db.Uuid
-  targetRole  ApplicationTargetRole @default(admin)
-  reason      String
-  status      ApplicationStatus     @default(pending)
-  reviewedBy  String?               @db.Uuid
-  reviewedAt  DateTime?
-  createdAt   DateTime              @default(now())
+  id         String                @id @default(uuid()) @db.Uuid
+  userId     String                @db.Uuid
+  targetRole ApplicationTargetRole @default(admin)
+  reason     String
+  status     ApplicationStatus     @default(pending)
+  reviewedBy String?               @db.Uuid
+  reviewedAt DateTime?
+  createdAt  DateTime              @default(now())
 
-  user        Profile               @relation("AdminApplicationApplicant", fields: [userId], references: [id], onDelete: Cascade)
+  user Profile @relation("AdminApplicationApplicant", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
 }
 
 model AuditLog {
-  id          String   @id @default(uuid()) @db.Uuid
-  actorId      String? @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
+  actorId      String?  @db.Uuid
   action       String
   resourceType String
   resourceId   String?
   metadata     Json?
   createdAt    DateTime @default(now())
 
-  actor        Profile? @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  actor Profile? @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([action, createdAt])
 }
 
 model UserWallet {
-  id                      String           @id @default(uuid()) @db.Uuid
-  userId                  String           @unique @db.Uuid
-  provider                WalletProvider   @default(turnkey)
-  providerWalletId        String?          @unique
-  chainEnvironment        ChainEnvironment @default(testnet)
-  chainId                 Int
-  address                 String?          @unique
-  status                  WalletStatus     @default(provisioning)
-  lastProvisionAttemptAt  DateTime?
-  provisionedAt           DateTime?
-  failureReason           String?
-  createdAt               DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
+  id                     String           @id @default(uuid()) @db.Uuid
+  userId                 String           @unique @db.Uuid
+  provider               WalletProvider   @default(turnkey)
+  providerWalletId       String?          @unique
+  chainEnvironment       ChainEnvironment @default(testnet)
+  chainId                Int
+  address                String?          @unique
+  status                 WalletStatus     @default(provisioning)
+  lastProvisionAttemptAt DateTime?
+  provisionedAt          DateTime?
+  failureReason          String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
 
-  user                    Profile          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ledgerAccounts          LedgerAccount[]
-  deposits                OnchainDeposit[]
-  sweepJobs               SweepJob[]
-  withdrawalRequests      WithdrawalRequest[]
+  user               Profile             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerAccounts     LedgerAccount[]
+  deposits           OnchainDeposit[]
+  sweepJobs          SweepJob[]
+  withdrawalRequests WithdrawalRequest[]
 
   @@index([status, createdAt])
   @@index([chainEnvironment, status, createdAt])
 }
 
 model LedgerAccount {
-  id                      String           @id @default(uuid()) @db.Uuid
-  userId                  String?          @db.Uuid
-  walletId                String?          @db.Uuid
-  accountType             LedgerAccountType @default(user)
-  currency                String           @default("BNT")
-  available               Decimal          @default(0) @db.Decimal(38, 18)
-  pending                 Decimal          @default(0) @db.Decimal(38, 18)
-  locked                  Decimal          @default(0) @db.Decimal(38, 18)
-  createdAt               DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
+  id          String            @id @default(uuid()) @db.Uuid
+  userId      String?           @db.Uuid
+  walletId    String?           @db.Uuid
+  accountType LedgerAccountType @default(user)
+  currency    String            @default("BNT")
+  available   Decimal           @default(0) @db.Decimal(38, 18)
+  pending     Decimal           @default(0) @db.Decimal(38, 18)
+  locked      Decimal           @default(0) @db.Decimal(38, 18)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
-  user                    Profile?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  wallet                  UserWallet?      @relation(fields: [walletId], references: [id], onDelete: SetNull)
-  debitEntries            LedgerEntry[]    @relation("LedgerDebitAccount")
-  creditEntries           LedgerEntry[]    @relation("LedgerCreditAccount")
+  user          Profile?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  wallet        UserWallet?   @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  debitEntries  LedgerEntry[] @relation("LedgerDebitAccount")
+  creditEntries LedgerEntry[] @relation("LedgerCreditAccount")
 
   @@unique([userId, accountType, currency])
   @@index([accountType, currency])
@@ -604,22 +683,22 @@ model LedgerAccount {
 }
 
 model LedgerEntry {
-  id                      String           @id @default(uuid()) @db.Uuid
-  debitAccountId          String           @db.Uuid
-  creditAccountId         String           @db.Uuid
-  amount                  Decimal          @db.Decimal(38, 18)
-  feeAmount               Decimal          @default(0) @db.Decimal(38, 18)
-  reason                  LedgerReason
-  idempotencyKey          String           @unique
-  referenceId             String?
-  metadata                Json?
-  createdAt               DateTime         @default(now())
+  id              String       @id @default(uuid()) @db.Uuid
+  debitAccountId  String       @db.Uuid
+  creditAccountId String       @db.Uuid
+  amount          Decimal      @db.Decimal(38, 18)
+  feeAmount       Decimal      @default(0) @db.Decimal(38, 18)
+  reason          LedgerReason
+  idempotencyKey  String       @unique
+  referenceId     String?
+  metadata        Json?
+  createdAt       DateTime     @default(now())
 
-  debitAccount            LedgerAccount    @relation("LedgerDebitAccount", fields: [debitAccountId], references: [id], onDelete: Restrict)
-  creditAccount           LedgerAccount    @relation("LedgerCreditAccount", fields: [creditAccountId], references: [id], onDelete: Restrict)
-  creditedDeposit         OnchainDeposit?
-  holdForWithdrawals      WithdrawalRequest[] @relation("WithdrawalHoldEntry")
-  finalizeForWithdrawals  WithdrawalRequest[] @relation("WithdrawalFinalizeEntry")
+  debitAccount           LedgerAccount       @relation("LedgerDebitAccount", fields: [debitAccountId], references: [id], onDelete: Restrict)
+  creditAccount          LedgerAccount       @relation("LedgerCreditAccount", fields: [creditAccountId], references: [id], onDelete: Restrict)
+  creditedDeposit        OnchainDeposit?
+  holdForWithdrawals     WithdrawalRequest[] @relation("WithdrawalHoldEntry")
+  finalizeForWithdrawals WithdrawalRequest[] @relation("WithdrawalFinalizeEntry")
 
   @@index([reason, createdAt])
   @@index([debitAccountId, createdAt])
@@ -627,139 +706,235 @@ model LedgerEntry {
 }
 
 model OnchainDeposit {
-  id                      String           @id @default(uuid()) @db.Uuid
-  walletId                String           @db.Uuid
-  fromAddress             String
-  toAddress               String
-  amount                  Decimal          @db.Decimal(38, 18)
-  txHash                  String
-  logIndex                Int
-  blockNumber             BigInt
-  confirmations           Int              @default(0)
-  status                  OnchainDepositStatus @default(detected)
-  creditedLedgerEntryId   String?          @unique @db.Uuid
-  sweepJobId              String?          @unique @db.Uuid
-  idempotencyKey          String           @unique
-  detectedAt              DateTime         @default(now())
-  creditedAt              DateTime?
-  sweptAt                 DateTime?
-  createdAt               DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
+  id                    String               @id @default(uuid()) @db.Uuid
+  walletId              String               @db.Uuid
+  asset                 WalletAsset          @default(BNT)
+  assetKind             WalletAssetKind      @default(erc20)
+  tokenAddress          String?
+  fromAddress           String
+  toAddress             String
+  amount                Decimal              @db.Decimal(38, 18)
+  txHash                String
+  logIndex              Int
+  blockNumber           BigInt
+  confirmations         Int                  @default(0)
+  status                OnchainDepositStatus @default(detected)
+  creditedLedgerEntryId String?              @unique @db.Uuid
+  sweepJobId            String?              @unique @db.Uuid
+  idempotencyKey        String               @unique
+  detectedAt            DateTime             @default(now())
+  creditedAt            DateTime?
+  sweptAt               DateTime?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 
-  wallet                  UserWallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  creditedLedgerEntry     LedgerEntry?     @relation(fields: [creditedLedgerEntryId], references: [id], onDelete: SetNull)
-  sweepJob                SweepJob?        @relation(fields: [sweepJobId], references: [id], onDelete: SetNull)
+  wallet              UserWallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  creditedLedgerEntry LedgerEntry? @relation(fields: [creditedLedgerEntryId], references: [id], onDelete: SetNull)
+  sweepJob            SweepJob?    @relation(fields: [sweepJobId], references: [id], onDelete: SetNull)
 
-  @@unique([txHash, logIndex])
+  @@unique([txHash, logIndex, asset])
   @@index([status, createdAt])
+  @@index([asset, status, createdAt])
   @@index([walletId, status, createdAt])
+  @@index([walletId, asset, status, createdAt])
 }
 
 model SweepJob {
-  id                      String           @id @default(uuid()) @db.Uuid
-  walletId                String           @db.Uuid
-  fromAddress             String
-  toAddress               String
-  amount                  Decimal          @db.Decimal(38, 18)
-  status                  SweepJobStatus   @default(queued)
-  attemptCount            Int              @default(0)
-  txHash                  String?          @unique
-  idempotencyKey          String           @unique
-  failureReason           String?
-  scheduledAt             DateTime         @default(now())
-  startedAt               DateTime?
-  finishedAt              DateTime?
-  createdAt               DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
+  id             String         @id @default(uuid()) @db.Uuid
+  walletId       String         @db.Uuid
+  asset          WalletAsset    @default(BNT)
+  assetKind      WalletAssetKind @default(erc20)
+  tokenAddress   String?
+  fromAddress    String
+  toAddress      String
+  amount         Decimal        @db.Decimal(38, 18)
+  status         SweepJobStatus @default(queued)
+  attemptCount   Int            @default(0)
+  txHash         String?        @unique
+  idempotencyKey String         @unique
+  failureReason  String?
+  scheduledAt    DateTime       @default(now())
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  wallet                  UserWallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  deposit                 OnchainDeposit?
+  wallet  UserWallet      @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  deposit OnchainDeposit?
 
   @@index([status, createdAt])
+  @@index([asset, status, createdAt])
   @@index([walletId, status, createdAt])
+  @@index([walletId, asset, status, createdAt])
 }
 
 model WithdrawalRequest {
-  id                      String           @id @default(uuid()) @db.Uuid
-  userId                  String           @db.Uuid
-  walletId                String           @db.Uuid
-  toAddress               String
-  amount                  Decimal          @db.Decimal(38, 18)
-  feeAmount               Decimal          @default(0) @db.Decimal(38, 18)
-  netAmount               Decimal          @db.Decimal(38, 18)
-  status                  WithdrawalStatus @default(requested)
-  reason                  String
-  rejectReason            String?
-  idempotencyKey          String           @unique
-  broadcastTxHash         String?
-  confirmations           Int              @default(0)
-  requestedAt             DateTime         @default(now())
-  reviewedBy              String?          @db.Uuid
-  reviewedAt              DateTime?
-  broadcastAt             DateTime?
-  confirmedAt             DateTime?
-  failedAt                DateTime?
-  failureReason           String?
-  holdLedgerEntryId       String?          @unique @db.Uuid
-  finalizeLedgerEntryId   String?          @unique @db.Uuid
-  createdAt               DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
+  id                    String           @id @default(uuid()) @db.Uuid
+  userId                String           @db.Uuid
+  walletId              String           @db.Uuid
+  asset                 WalletAsset      @default(BNT)
+  toAddress             String
+  amount                Decimal          @db.Decimal(38, 18)
+  feeAmount             Decimal          @default(0) @db.Decimal(38, 18)
+  netAmount             Decimal          @db.Decimal(38, 18)
+  status                WithdrawalStatus @default(requested)
+  reason                String
+  rejectReason          String?
+  idempotencyKey        String           @unique
+  broadcastTxHash       String?
+  confirmations         Int              @default(0)
+  requestedAt           DateTime         @default(now())
+  reviewedBy            String?          @db.Uuid
+  reviewedAt            DateTime?
+  broadcastAt           DateTime?
+  confirmedAt           DateTime?
+  failedAt              DateTime?
+  failureReason         String?
+  holdLedgerEntryId     String?          @unique @db.Uuid
+  finalizeLedgerEntryId String?          @unique @db.Uuid
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
-  requester               Profile          @relation("WithdrawalRequester", fields: [userId], references: [id], onDelete: Cascade)
-  reviewer                Profile?         @relation("WithdrawalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
-  wallet                  UserWallet       @relation(fields: [walletId], references: [id], onDelete: Restrict)
-  holdLedgerEntry         LedgerEntry?     @relation("WithdrawalHoldEntry", fields: [holdLedgerEntryId], references: [id], onDelete: SetNull)
-  finalizeLedgerEntry     LedgerEntry?     @relation("WithdrawalFinalizeEntry", fields: [finalizeLedgerEntryId], references: [id], onDelete: SetNull)
+  requester           Profile      @relation("WithdrawalRequester", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer            Profile?     @relation("WithdrawalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  wallet              UserWallet   @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  holdLedgerEntry     LedgerEntry? @relation("WithdrawalHoldEntry", fields: [holdLedgerEntryId], references: [id], onDelete: SetNull)
+  finalizeLedgerEntry LedgerEntry? @relation("WithdrawalFinalizeEntry", fields: [finalizeLedgerEntryId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
   @@index([userId, createdAt])
+  @@index([asset, status, createdAt])
+  @@index([userId, asset, createdAt])
   @@index([walletId, status, createdAt])
+  @@index([walletId, asset, status, createdAt])
 }
 
 model KycProfile {
-  id                      String           @id @default(uuid()) @db.Uuid
-  userId                  String           @unique @db.Uuid
-  status                  KycStatus        @default(not_submitted)
-  tier                    String           @default("basic")
-  country                 String?
-  fullName                String?
-  documentType            String?
-  documentNumberLast4     String?
-  documentUrl             String?
-  submittedAt             DateTime?
-  reviewedBy              String?          @db.Uuid
-  reviewedAt              DateTime?
-  reviewNote              String?
-  createdAt               DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
+  id                  String    @id @default(uuid()) @db.Uuid
+  userId              String    @unique @db.Uuid
+  status              KycStatus @default(not_submitted)
+  tier                String    @default("basic")
+  country             String?
+  fullName            String?
+  documentType        String?
+  documentNumberLast4 String?
+  documentUrl         String?
+  submittedAt         DateTime?
+  reviewedBy          String?   @db.Uuid
+  reviewedAt          DateTime?
+  reviewNote          String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  user                    Profile          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviewer                Profile?         @relation("KycReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  user     Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer Profile? @relation("KycReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
   @@index([tier])
 }
 
 model RiskLimit {
-  id                        String         @id @default(uuid()) @db.Uuid
-  tier                      String         @unique
+  id                        String   @id @default(uuid()) @db.Uuid
+  tier                      String   @unique
   description               String?
-  requiresKyc               Boolean        @default(false)
-  maxWithdrawalPerTx        Decimal        @db.Decimal(38, 18)
-  maxWithdrawalPerDay       Decimal        @db.Decimal(38, 18)
-  maxInternalTransferPerDay Decimal        @db.Decimal(38, 18)
-  createdAt                 DateTime       @default(now())
-  updatedAt                 DateTime       @updatedAt
+  requiresKyc               Boolean  @default(false)
+  maxWithdrawalPerTx        Decimal  @db.Decimal(38, 18)
+  maxWithdrawalPerDay       Decimal  @db.Decimal(38, 18)
+  maxInternalTransferPerDay Decimal  @db.Decimal(38, 18)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 }
 
 model WalletFeeConfig {
-  id                        String         @id @default(uuid()) @db.Uuid
-  key                       String         @unique
-  flatFee                   Decimal        @default(0) @db.Decimal(38, 18)
-  percentFee                Decimal        @default(0) @db.Decimal(10, 6)
-  minFee                    Decimal        @default(0) @db.Decimal(38, 18)
-  maxFee                    Decimal?       @db.Decimal(38, 18)
-  isActive                  Boolean        @default(true)
-  createdAt                 DateTime       @default(now())
-  updatedAt                 DateTime       @updatedAt
+  id         String   @id @default(uuid()) @db.Uuid
+  key        String   @unique
+  flatFee    Decimal  @default(0) @db.Decimal(38, 18)
+  percentFee Decimal  @default(0) @db.Decimal(10, 6)
+  minFee     Decimal  @default(0) @db.Decimal(38, 18)
+  maxFee     Decimal? @db.Decimal(38, 18)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model WalletAssetPriceConfig {
+  id               String      @id @default(uuid()) @db.Uuid
+  asset            WalletAsset @unique
+  providerId       String?
+  fallbackUsdPrice Decimal     @default(0) @db.Decimal(28, 12)
+  isActive         Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model MiningSession {
+  id                      String   @id @default(uuid()) @db.Uuid
+  userId                  String   @db.Uuid
+  startsAt                DateTime
+  endsAt                  DateTime
+  claimedAt               DateTime?
+  basePointsPerCycle      Int
+  activeReferralsSnapshot Int
+  boostBpsSnapshot        Int
+  effectivePointsPerCycle Int
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  user              Profile                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledger            MiningPointLedger[]
+  hourlyCheckpoints MiningHourlyCheckpoint[]
+
+  @@index([userId, createdAt])
+  @@index([userId, claimedAt])
+  @@index([userId, startsAt])
+}
+
+model MiningPointLedger {
+  id        String            @id @default(uuid()) @db.Uuid
+  userId    String            @db.Uuid
+  sessionId String?           @db.Uuid
+  source    MiningPointSource
+  points    Int
+  metadata  Json?
+  createdAt DateTime          @default(now())
+
+  user    Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session MiningSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
+model MiningHourlyCheckpoint {
+  id                      String   @id @default(uuid()) @db.Uuid
+  userId                  String   @db.Uuid
+  sessionId               String   @db.Uuid
+  hourIndex               Int
+  hourStartAt             DateTime
+  hourEndAt               DateTime
+  activeReferralsSnapshot Int
+  boostBpsSnapshot        Int
+  points                  Int
+  claimedAt               DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  user    Profile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session MiningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, hourIndex])
+  @@index([userId, hourEndAt])
+  @@index([sessionId, claimedAt])
+}
+
+model MiningConfig {
+  id                        String   @id
+  enabled                   Boolean  @default(true)
+  referralsEnabled          Boolean  @default(true)
+  cycleHours                Int      @default(24)
+  basePointsPerCycle        Int      @default(120)
+  perActiveReferralBoostBps Int      @default(500)
+  maxBoostBps               Int      @default(10000)
+  activeReferralWindowHours Int      @default(168)
+  referralBindWindowHours   Int      @default(24)
+  updatedAt                 DateTime @updatedAt
 }

@@ -10,12 +10,15 @@ import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { DeviceTokensModule } from './device-tokens/device-tokens.module';
 import { FollowsModule } from './follows/follows.module';
 import { HealthModule } from './health/health.module';
+import { MeRadarModule } from './me-radar/me-radar.module';
+import { MiningModule } from './mining/mining.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { UpdatesModule } from './updates/updates.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProjectAssignmentsModule } from './project-assignments/project-assignments.module';
 import { ProjectProposalsModule } from './project-proposals/project-proposals.module';
 import { ProjectsModule } from './projects/projects.module';
+import { ReferralsModule } from './referrals/referrals.module';
 import { RolesModule } from './roles/roles.module';
 import { TagsModule } from './tags/tags.module';
 import { UsersModule } from './users/users.module';
@@ -51,6 +54,9 @@ import { envValidationSchema } from './config/env.validation';
     CommunityPostsModule,
     FollowsModule,
     NotificationsModule,
+    MeRadarModule,
+    MiningModule,
+    ReferralsModule,
     DeviceTokensModule,
     WalletModule,
     HealthModule,

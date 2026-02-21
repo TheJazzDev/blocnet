@@ -81,7 +81,7 @@ function formatDate(dateStr: string) {
 
 export default function ProjectsPage() {
   const session = useAdminSession();
-  const moderatorOnly = isModeratorOnly(session.roles);
+  const moderatorOnly = isModeratorOnly(session.effectiveRoles);
 
   const [projects, setProjects] = useState<AdminProject[]>([]);
   const [loading, setLoading] = useState(true);

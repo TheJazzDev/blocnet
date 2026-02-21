@@ -1,6 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RoleName } from '@prisma/client';
+import { randomBytes } from 'crypto';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
@@ -44,16 +49,35 @@ export class AuthService {
         ? rawUsername.trim().toLowerCase()
         : undefined;
 
-    await this.prisma.profile.upsert({
+    const existingProfile = await this.prisma.profile.findUnique({
       where: { id: userId },
-      update: { email: payload.email ?? `${userId}@unknown.local` },
-      create: {
-        id: userId,
-        email: payload.email ?? `${userId}@unknown.local`,
-        // Only set username on profile creation — it must not change after signup
-        ...(username ? { username } : {}),
-      },
+      select: { id: true, isDeactivated: true, referralCode: true },
     });
+    if (existingProfile?.isDeactivated) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    if (!existingProfile) {
+      await this.prisma.profile.create({
+        data: {
+          id: userId,
+          email: payload.email ?? `${userId}@unknown.local`,
+          referralCode: await this.generateUniqueReferralCode(),
+          // Only set username on profile creation — it must not change after signup
+          ...(username ? { username } : {}),
+        },
+      });
+    } else {
+      await this.prisma.profile.update({
+        where: { id: userId },
+        data: {
+          email: payload.email ?? `${userId}@unknown.local`,
+          ...(existingProfile.referralCode
+            ? {}
+            : { referralCode: await this.generateUniqueReferralCode() }),
+        },
+      });
+    }
 
     let roleRows = await this.prisma.userRole.findMany({
       where: { userId },
@@ -115,5 +139,32 @@ export class AuthService {
     if (roles.includes(AppRole.MODERATOR)) return 2;
     if (roles.includes(AppRole.HUNTER)) return 1;
     return 1;
+  }
+
+  private async generateUniqueReferralCode(): Promise<string> {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const code = this.createReferralCodeCandidate(8);
+      const existing = await this.prisma.profile.findUnique({
+        where: { referralCode: code },
+        select: { id: true },
+      });
+      if (!existing) {
+        return code;
+      }
+    }
+
+    throw new InternalServerErrorException('Unable to assign referral code');
+  }
+
+  private createReferralCodeCandidate(length: number): string {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = randomBytes(length);
+    let code = '';
+
+    for (let index = 0; index < bytes.length; index += 1) {
+      code += alphabet[bytes[index] % alphabet.length];
+    }
+
+    return code;
   }
 }

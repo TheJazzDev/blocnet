@@ -22,6 +22,7 @@ void main() {
     expect(routes.containsKey(AppRoutes.settings), isTrue);
     expect(routes.containsKey(AppRoutes.wallet), isTrue);
     expect(routes.containsKey(AppRoutes.notifications), isTrue);
+    expect(routes.containsKey(AppRoutes.mining), isTrue);
     expect(routes.containsKey(AppRoutes.createUpdate), isTrue);
     expect(routes.containsKey(AppRoutes.submitProject), isTrue);
     expect(routes.containsKey(AppRoutes.manageProjects), isTrue);

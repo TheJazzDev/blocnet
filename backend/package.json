@@ -27,7 +27,8 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:seed:dev": "tsx prisma/seed.dev.ts",
     "prisma:seed:wallets": "tsx prisma/seed.wallets.ts",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "turnkey:resolve-api-key-id": "tsx scripts/turnkey/resolve-api-key-id.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -37,6 +38,9 @@
     "@nestjs/swagger": "^11.2.6",
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
+    "@supabase/supabase-js": "^2.97.0",
+    "@turnkey/api-key-stamper": "^0.6.1",
+    "@turnkey/http": "^3.16.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "dotenv": "^17.2.3",

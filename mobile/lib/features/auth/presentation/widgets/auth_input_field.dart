@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 
 class AuthInputField extends StatelessWidget {
   const AuthInputField({
@@ -15,6 +15,7 @@ class AuthInputField extends StatelessWidget {
     this.onFieldSubmitted,
     this.autofillHints,
     this.focusNode,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   final TextEditingController controller;
@@ -27,6 +28,7 @@ class AuthInputField extends StatelessWidget {
   final void Function(String)? onFieldSubmitted;
   final Iterable<String>? autofillHints;
   final FocusNode? focusNode;
+  final TextCapitalization textCapitalization;
 
   @override
   Widget build(BuildContext context) {
@@ -38,56 +40,71 @@ class AuthInputField extends StatelessWidget {
       onFieldSubmitted: onFieldSubmitted,
       autofillHints: autofillHints,
       focusNode: focusNode,
+      textCapitalization: textCapitalization,
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-      style: GoogleFonts.inter(
+      style: AppTypography.custom(
         color: AppColors.textSecondary,
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
+        size: 14,
+        weight: FontWeight.w400,
       ),
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.inter(
+        labelStyle: AppTypography.custom(
           color: AppColors.textMuted,
-          fontSize: 13,
+          size: 13,
+          weight: FontWeight.w500,
         ),
-        floatingLabelStyle: GoogleFonts.inter(
+        floatingLabelStyle: AppTypography.custom(
           color: AppColors.primary400,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
+          size: 12,
+          weight: FontWeight.w600,
         ),
         filled: true,
-        fillColor: AppColors.bgElevated,
+        fillColor: AppColors.bgSurface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 14,
+          vertical: 16,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.borderSubtle, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.borderSubtle.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.borderSubtle, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.borderSubtle.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
             color: AppColors.primary400,
-            width: 1.5,
+            width: 2,
           ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.error500, width: 1),
+          borderSide: BorderSide(
+            color: AppColors.error500,
+            width: 1.5,
+          ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.error500, width: 1.5),
+          borderSide: BorderSide(
+            color: AppColors.error500,
+            width: 2,
+          ),
         ),
-        errorStyle: GoogleFonts.inter(
+        errorStyle: AppTypography.custom(
           color: AppColors.error500,
-          fontSize: 11,
+          size: 11,
+          weight: FontWeight.w500,
         ),
         suffixIcon: suffixIcon,
       ),

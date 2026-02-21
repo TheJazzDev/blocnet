@@ -64,7 +64,7 @@ function formatDate(dateStr: string | null) {
 
 export default function WalletKycPage() {
   const session = useAdminSession();
-  const canMutate = canMutateWallet(session.roles);
+  const canMutate = canMutateWallet(session.effectiveRoles);
 
   const [rows, setRows] = useState<AdminWalletKycRecord[]>([]);
   const [total, setTotal] = useState(0);

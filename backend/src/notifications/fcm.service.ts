@@ -76,9 +76,8 @@ export class FcmService {
       this.logger.log(`FCM initialized (projectId="${projectId}").`);
       this.disabledReason = null;
     } catch (error) {
-      this.disabledReason = error instanceof Error
-        ? error.message
-        : String(error);
+      this.disabledReason =
+        error instanceof Error ? error.message : String(error);
       this.logger.warn(
         `Invalid FCM credentials; push delivery disabled. ${
           error instanceof Error ? error.message : String(error)
@@ -90,9 +89,107 @@ export class FcmService {
   getStatus() {
     return {
       configured: this.app != null,
-      reason: this.app == null
-        ? this.disabledReason ?? 'Firebase app is not initialized'
-        : null,
+      reason:
+        this.app == null
+          ? (this.disabledReason ?? 'Firebase app is not initialized')
+          : null,
+    };
+  }
+
+  async sendToUsers(input: {
+    userIds: string[];
+    title: string;
+    body: string;
+    data?: Record<string, string | number | boolean | null | undefined>;
+  }) {
+    if (!this.app) {
+      this.logger.warn(
+        'FCM credentials are not configured; skipping targeted push send',
+      );
+      return {
+        sentCount: 0,
+        failureCount: 0,
+        recipientCount: 0,
+        skipped: true,
+        skipReason: this.disabledReason ?? 'FCM not configured',
+      };
+    }
+
+    const userIds = [...new Set(input.userIds.filter(Boolean))];
+    if (userIds.length === 0) {
+      return {
+        sentCount: 0,
+        failureCount: 0,
+        recipientCount: 0,
+        skipped: false,
+      };
+    }
+
+    const tokens = await this.prisma.deviceToken.findMany({
+      where: {
+        userId: {
+          in: userIds,
+        },
+      },
+      select: { id: true, token: true },
+    });
+
+    if (tokens.length === 0) {
+      return {
+        sentCount: 0,
+        failureCount: 0,
+        recipientCount: userIds.length,
+        skipped: false,
+      };
+    }
+
+    const messaging = getMessaging(this.app);
+    const batchSize = 500;
+    let sentCount = 0;
+    let failureCount = 0;
+    const staleTokenIds: string[] = [];
+    const data = this.toPushData(input.data);
+
+    for (let i = 0; i < tokens.length; i += batchSize) {
+      const batch = tokens.slice(i, i + batchSize);
+      const response = await messaging.sendEachForMulticast({
+        tokens: batch.map((row) => row.token),
+        notification: {
+          title: input.title,
+          body: input.body,
+        },
+        data,
+      });
+
+      sentCount += response.successCount;
+      failureCount += response.failureCount;
+
+      response.responses.forEach((result, index) => {
+        const code = result.error?.code;
+        if (
+          code === 'messaging/invalid-registration-token' ||
+          code === 'messaging/registration-token-not-registered'
+        ) {
+          staleTokenIds.push(batch[index].id);
+        }
+      });
+    }
+
+    if (staleTokenIds.length > 0) {
+      await this.prisma.deviceToken.deleteMany({
+        where: {
+          id: {
+            in: [...new Set(staleTokenIds)],
+          },
+        },
+      });
+    }
+
+    return {
+      sentCount,
+      failureCount,
+      recipientCount: userIds.length,
+      skipped: false,
     };
   }
 
@@ -103,74 +200,12 @@ export class FcmService {
     title: string;
     body: string;
     urgency: string;
+    userIds?: string[];
   }) {
     if (!this.app) {
       this.logger.warn(
         'FCM credentials are not configured; skipping push send',
       );
-      return {
-        sentCount: 0,
-        skipped: true,
-        skipReason: this.disabledReason ?? 'FCM not configured',
-      };
-    }
-
-    const follows = await this.prisma.projectFollow.findMany({
-      where: { projectId: input.projectId },
-      select: { userId: true },
-    });
-
-    const userIds = follows.map((follow) => follow.userId);
-
-    if (userIds.length === 0) {
-      return { sentCount: 0, skipped: false };
-    }
-
-    const tokens = await this.prisma.deviceToken.findMany({
-      where: {
-        userId: {
-          in: userIds,
-        },
-      },
-      select: { token: true },
-    });
-
-    if (tokens.length === 0) {
-      return { sentCount: 0, skipped: false };
-    }
-
-    const messaging = getMessaging(this.app);
-    const response = await messaging.sendEachForMulticast({
-      tokens: tokens.map((tokenRow) => tokenRow.token),
-      notification: {
-        title: input.title,
-        body: input.body,
-      },
-      data: {
-        projectId: input.projectId,
-        updateId: input.updateId,
-        actorName: input.actorName,
-        urgency: input.urgency,
-        type: 'project_update',
-      },
-    });
-
-    return {
-      sentCount: response.successCount,
-      skipped: false,
-      failureCount: response.failureCount,
-    };
-  }
-
-  async sendBroadcast(input: {
-    title: string;
-    body: string;
-    target: BroadcastTarget;
-    userIds?: string[];
-    roles?: string[];
-  }) {
-    if (!this.app) {
-      this.logger.warn('FCM credentials are not configured; skipping broadcast');
       return {
         sentCount: 0,
         failureCount: 0,
@@ -180,79 +215,107 @@ export class FcmService {
       };
     }
 
-    // Resolve target user IDs
-    let resolvedUserIds: string[] = [];
+    const userIds =
+      input.userIds ??
+      (
+        await this.prisma.projectFollow.findMany({
+          where: { projectId: input.projectId },
+          select: { userId: true },
+        })
+      ).map((follow) => follow.userId);
 
-    if (input.target === 'specific' && input.userIds?.length) {
-      resolvedUserIds = input.userIds;
-    } else if (input.target === 'hunters') {
+    if (userIds.length === 0) {
+      return {
+        sentCount: 0,
+        failureCount: 0,
+        recipientCount: 0,
+        skipped: false,
+      };
+    }
+
+    return this.sendToUsers({
+      userIds,
+      title: input.title,
+      body: input.body,
+      data: {
+        projectId: input.projectId,
+        updateId: input.updateId,
+        actorName: input.actorName,
+        urgency: input.urgency,
+        type: 'project_update',
+      },
+    });
+  }
+
+  async sendBroadcast(input: {
+    title: string;
+    body: string;
+    target: BroadcastTarget;
+    userIds?: string[];
+    roles?: string[];
+  }) {
+    const resolvedUserIds = await this.resolveBroadcastUserIds(
+      input.target,
+      input.userIds,
+    );
+    return this.sendToUsers({
+      userIds: resolvedUserIds,
+      title: input.title,
+      body: input.body,
+      data: { type: 'broadcast', target: input.target },
+    });
+  }
+
+  private async resolveBroadcastUserIds(
+    target: BroadcastTarget,
+    userIds?: string[],
+  ) {
+    if (target === 'specific' && userIds?.length) {
+      return [...new Set(userIds)];
+    }
+
+    if (target === 'hunters') {
       const roles = await this.prisma.userRole.findMany({
         where: { role: { in: ['hunter', 'admin', 'owner'] as any } },
         select: { userId: true },
         distinct: ['userId'],
       });
-      resolvedUserIds = roles.map((r) => r.userId);
-    } else if (input.target === 'users') {
-      // Users who only have the base 'user' role (no elevated roles)
+      return roles.map((row) => row.userId);
+    }
+
+    if (target === 'users') {
       const elevated = await this.prisma.userRole.findMany({
         where: { role: { in: ['hunter', 'admin', 'owner'] as any } },
         select: { userId: true },
         distinct: ['userId'],
       });
-      const elevatedIds = new Set(elevated.map((r) => r.userId));
+      const elevatedIds = new Set(elevated.map((row) => row.userId));
       const all = await this.prisma.userRole.findMany({
         where: { role: 'user' as any },
         select: { userId: true },
         distinct: ['userId'],
       });
-      resolvedUserIds = all
-        .map((r) => r.userId)
-        .filter((id) => !elevatedIds.has(id));
-    } else {
-      // 'all' — everyone with a device token
-      const allTokens = await this.prisma.deviceToken.findMany({
-        select: { userId: true },
-        distinct: ['userId'],
-      });
-      resolvedUserIds = allTokens.map((t) => t.userId);
+      return all.map((row) => row.userId).filter((id) => !elevatedIds.has(id));
     }
 
-    if (resolvedUserIds.length === 0) {
-      return { sentCount: 0, skipped: false, recipientCount: 0 };
-    }
-
-    // Fetch FCM tokens in batches (FCM multicast max = 500)
-    const tokens = await this.prisma.deviceToken.findMany({
-      where: { userId: { in: resolvedUserIds } },
-      select: { token: true },
+    const profiles = await this.prisma.profile.findMany({
+      select: { id: true },
     });
+    return profiles.map((profile) => profile.id);
+  }
 
-    if (tokens.length === 0) {
-      return { sentCount: 0, skipped: false, recipientCount: resolvedUserIds.length };
+  private toPushData(
+    data?: Record<string, string | number | boolean | null | undefined>,
+  ): Record<string, string> {
+    if (!data) {
+      return {};
     }
 
-    const messaging = getMessaging(this.app);
-    const tokenList = tokens.map((t) => t.token);
-    const batchSize = 500;
-    let totalSent = 0;
-    let totalFailed = 0;
-
-    for (let i = 0; i < tokenList.length; i += batchSize) {
-      const batch = tokenList.slice(i, i + batchSize);
-      const response = await messaging.sendEachForMulticast({
-        tokens: batch,
-        notification: { title: input.title, body: input.body },
-        data: { type: 'broadcast' },
-      });
-      totalSent += response.successCount;
-      totalFailed += response.failureCount;
-    }
-
-    return {
-      sentCount: totalSent,
-      failureCount: totalFailed,
-      recipientCount: resolvedUserIds.length,
-      skipped: false,
-    };
+    const mapped: Record<string, string> = {};
+    Object.entries(data).forEach(([key, value]) => {
+      if (value == null) return;
+      mapped[key] = String(value);
+    });
+    return mapped;
   }
 }

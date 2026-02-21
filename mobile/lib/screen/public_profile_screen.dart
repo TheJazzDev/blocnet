@@ -1,10 +1,11 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
+import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class PublicProfileScreen extends StatefulWidget {
@@ -37,6 +38,30 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   final UsersApiRepository _usersRepository = UsersApiRepository();
   bool _isFollowing = false;
   bool _isSubmittingFollow = false;
+  bool _isLoadingPublicProfile = true;
+  PublicProfileModel? _publicProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPublicProfile();
+  }
+
+  Future<void> _loadPublicProfile() async {
+    try {
+      final profile =
+          await _usersRepository.fetchPublicProfile(widget.admin.id);
+      if (!mounted) return;
+      setState(() => _publicProfile = profile);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _publicProfile = null);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingPublicProfile = false);
+      }
+    }
+  }
 
   Future<void> _toggleFollow() async {
     if (_isSubmittingFollow) return;
@@ -63,10 +88,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final admin = widget.admin;
+    final publicProfile = _publicProfile;
     final username = admin.username.trim().isNotEmpty
         ? admin.username
         : '@${admin.name.toLowerCase().replaceAll(' ', '_')}';
-    final role = _resolveRole(admin);
+    final role = publicProfile != null
+        ? _resolveRoleFromRoles(publicProfile.roles)
+        : _resolveRole(admin);
 
     final content = Container(
       decoration: BoxDecoration(
@@ -97,10 +125,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 children: [
                   Text(
                     'Public Profile',
-                    style: GoogleFonts.spaceGrotesk(
+                    style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
+                      size: 17,
+                      weight: FontWeight.w700,
                     ),
                   ),
                   const Spacer(),
@@ -117,7 +145,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   final posts = updatesStore.posts
                       .where((p) => p.admin?.id == admin.id)
                       .toList();
-                  final projectCount =
+                  final stats = _publicProfile?.stats;
+                  final trust = _publicProfile?.trust;
+                  final followersCount =
+                      stats?.followersCount ?? admin.followers;
+                  final postsCount = stats?.updatesCreated ?? posts.length;
+                  final projectCount = stats?.projectsCreated ??
                       posts.map((post) => post.projectId).toSet().length;
 
                   return SingleChildScrollView(
@@ -135,30 +168,32 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                   admin.name.isNotEmpty
                                       ? admin.name[0].toUpperCase()
                                       : 'U',
-                                  style: GoogleFonts.spaceGrotesk(
+                                  style: AppTypography.custom(
                                     color: AppColors.primary400,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
+                                    size: 24,
+                                    weight: FontWeight.w700,
                                   ),
                                 )
                               : null,
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          admin.name,
-                          style: GoogleFonts.spaceGrotesk(
+                          (_publicProfile?.displayName?.trim().isNotEmpty ??
+                                  false)
+                              ? _publicProfile!.displayName!.trim()
+                              : admin.name,
+                          style: AppTypography.custom(
                             color: AppColors.textPrimary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
+                            size: 22,
+                            weight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           username,
-                          style: GoogleFonts.inter(
-                            color: AppColors.textMuted,
-                            fontSize: 13,
-                          ),
+                          style: AppTypography.custom(color: AppColors.textMuted,
+                            size: 13,
+                            weight: FontWeight.w400,),
                         ),
                         const SizedBox(height: 6),
                         Container(
@@ -180,12 +215,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ),
                           child: Text(
                             role,
-                            style: GoogleFonts.inter(
-                              color: role == 'HUNTER'
-                                  ? const Color(0xFFC084FC)
-                                  : AppColors.primary400,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                            style: AppTypography.custom(
+                                  color: role == 'HUNTER'
+                                      ? const Color(0xFFC084FC)
+                                      : AppColors.primary400,
+                                  size: 10,
+                                  weight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -193,15 +228,29 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         Row(
                           children: [
                             _StatCard(
-                                value: '${admin.followers}',
-                                label: 'Followers'),
+                                value: '$followersCount', label: 'Followers'),
                             const SizedBox(width: 8),
-                            _StatCard(value: '${posts.length}', label: 'Posts'),
+                            _StatCard(value: '$postsCount', label: 'Posts'),
                             const SizedBox(width: 8),
                             _StatCard(
                                 value: '$projectCount', label: 'Projects'),
                           ],
                         ),
+                        if (_isLoadingPublicProfile) ...[
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary400,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ],
+                        if (trust != null) ...[
+                          const SizedBox(height: 14),
+                          _TrustChips(trust: trust),
+                        ],
                         const SizedBox(height: 14),
                         SizedBox(
                           width: double.infinity,
@@ -234,9 +283,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                   )
                                 : Text(
                                     _isFollowing ? 'Following' : 'Follow',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
+                                    style: AppTypography.custom(
+                                      color: _isFollowing ? AppColors.textPrimary : Colors.black,
+                                      size: 13,
+                                      weight: FontWeight.w700,
                                     ),
                                   ),
                           ),
@@ -275,6 +325,92 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     if (raw.contains('admin')) return 'ADMIN';
     return 'USER';
   }
+
+  String _resolveRoleFromRoles(List<String> roles) {
+    final normalized = roles.map((role) => role.toLowerCase()).toSet();
+    if (normalized.contains('owner')) return 'OWNER';
+    if (normalized.contains('admin')) return 'ADMIN';
+    if (normalized.contains('hunter')) return 'HUNTER';
+    return 'USER';
+  }
+}
+
+class _TrustChips extends StatelessWidget {
+  const _TrustChips({required this.trust});
+
+  final PublicProfileTrust trust;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _TrustChip(
+          label: '7D Updates',
+          value: '${trust.updatesLast7d}',
+        ),
+        _TrustChip(
+          label: '30D Updates',
+          value: '${trust.updatesLast30d}',
+        ),
+        _TrustChip(
+          label: 'High Signal',
+          value: '${trust.highUrgencyShare30d.toStringAsFixed(0)}%',
+        ),
+        _TrustChip(
+          label: 'Median Cadence',
+          value: trust.medianHoursBetweenUpdates == null
+              ? 'N/A'
+              : '${trust.medianHoursBetweenUpdates!.toStringAsFixed(1)}h',
+        ),
+      ],
+    );
+  }
+}
+
+class _TrustChip extends StatelessWidget {
+  const _TrustChip({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: AppTypography.custom(
+            size: 10,
+            weight: FontWeight.w400,
+            color: AppColors.textFaint,
+          ),
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: TextStyle(color: AppColors.textFaint),
+            ),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _SectionLabel extends StatelessWidget {
@@ -287,10 +423,10 @@ class _SectionLabel extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Text(
         label.toUpperCase(),
-        style: GoogleFonts.inter(
+        style: AppTypography.custom(
           color: AppColors.textFaint,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
+          size: 10,
+          weight: FontWeight.w600,
           letterSpacing: 0.8,
         ),
       ),
@@ -317,18 +453,17 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(
               value,
-              style: GoogleFonts.spaceGrotesk(
+              style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
+                size: 17,
+                weight: FontWeight.w700,
               ),
             ),
             Text(
               label,
-              style: GoogleFonts.inter(
-                color: AppColors.textMuted,
-                fontSize: 11,
-              ),
+              style: AppTypography.custom(color: AppColors.textMuted,
+                size: 11,
+                weight: FontWeight.w400,),
             ),
           ],
         ),
@@ -369,19 +504,18 @@ class _ActivityCard extends StatelessWidget {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    size: 13,
+                    weight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: GoogleFonts.inter(
-                    color: AppColors.textMuted,
-                    fontSize: 11,
-                  ),
+                  style: AppTypography.custom(color: AppColors.textMuted,
+                    size: 11,
+                    weight: FontWeight.w400,),
                 ),
               ],
             ),
@@ -389,10 +523,9 @@ class _ActivityCard extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             time,
-            style: GoogleFonts.inter(
-              color: AppColors.textFaint,
-              fontSize: 10,
-            ),
+            style: AppTypography.custom(color: AppColors.textFaint,
+              size: 10,
+              weight: FontWeight.w400,),
           ),
         ],
       ),
@@ -413,10 +546,9 @@ class _EmptyActivityCard extends StatelessWidget {
       ),
       child: Text(
         'No public posts available yet.',
-        style: GoogleFonts.inter(
-          color: AppColors.textMuted,
-          fontSize: 12,
-        ),
+        style: AppTypography.custom(color: AppColors.textMuted,
+          size: 12,
+          weight: FontWeight.w400,),
       ),
     );
   }

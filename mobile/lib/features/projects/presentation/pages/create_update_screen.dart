@@ -6,7 +6,7 @@ import 'package:blocnet/services/tags_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class CreateUpdateScreen extends StatefulWidget {
@@ -68,10 +68,9 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Your current role does not allow creating updates.',
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 13,
-            ),
+            style: AppTypography.custom(color: AppColors.textMuted,
+              size: 13,
+              weight: FontWeight.w400,),
           ),
         ),
       );
@@ -98,10 +97,9 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'No project is available for updates yet.',
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 13,
-            ),
+            style: AppTypography.custom(color: AppColors.textMuted,
+              size: 13,
+              weight: FontWeight.w400,),
           ),
         ),
       );
@@ -120,10 +118,9 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
               if (_submitError != null && _submitError!.isNotEmpty) ...[
                 Text(
                   _submitError!,
-                  style: GoogleFonts.inter(
-                    color: AppColors.error500,
-                    fontSize: 12,
-                  ),
+                  style: AppTypography.custom(color: AppColors.error500,
+                    size: 12,
+                    weight: FontWeight.w400,),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -133,20 +130,19 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 value: _selectedProjectId,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 13,
+                  weight: FontWeight.w400,),
                 items: projectsStore.projects
                     .map(
                       (project) => DropdownMenuItem<String>(
                         value: project.id,
                         child: Text(
                           project.name,
-                          style: GoogleFonts.inter(
+                          style: AppTypography.custom(
                             color: AppColors.textSecondary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                            size: 13,
+                            weight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -169,20 +165,19 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 value: _selectedPriority,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 13,
+                  weight: FontWeight.w400,),
                 items: Priority.getAll()
                     .map(
                       (priority) => DropdownMenuItem<Priority>(
                         value: priority,
                         child: Text(
                           '${priority.label} Urgency',
-                          style: GoogleFonts.inter(
+                          style: AppTypography.custom(
                             color: AppColors.textSecondary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                            size: 13,
+                            weight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -199,10 +194,9 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
               if (tagsStore.secondaryTags.isEmpty)
                 Text(
                   'No secondary tags available',
-                  style: GoogleFonts.inter(
-                    color: AppColors.textFaint,
-                    fontSize: 12,
-                  ),
+                  style: AppTypography.custom(color: AppColors.textFaint,
+                    size: 12,
+                    weight: FontWeight.w400,),
                 )
               else
                 Wrap(
@@ -224,12 +218,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                       },
                       label: Text(
                         tag.name,
-                        style: GoogleFonts.inter(
-                          color: isSelected
+                        style: AppTypography.custom(color: isSelected
                               ? AppColors.teal400
                               : AppColors.textMuted,
-                          fontSize: 12,
-                        ),
+                          size: 12,
+                          weight: FontWeight.w400,),
                       ),
                       selectedColor: AppColors.teal500.withValues(alpha: 0.15),
                       backgroundColor: AppColors.bgElevated,
@@ -247,10 +240,9 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _titleController,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 14,
+                  weight: FontWeight.w400,),
                 decoration: _fieldDecoration(hintText: 'Update title'),
                 validator: (value) {
                   final next = value?.trim() ?? '';
@@ -266,10 +258,9 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 controller: _contentController,
                 minLines: 7,
                 maxLines: 12,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 14,
+                  weight: FontWeight.w400,),
                 decoration: _fieldDecoration(
                   hintText: 'Write your update (markdown supported)',
                 ),
@@ -311,10 +302,10 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                         : Text(
                             'Publish Update',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
+                            style: AppTypography.custom(
                               color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                              size: 14,
+                              weight: FontWeight.w600,
                             ),
                           ),
                   ),
@@ -335,10 +326,10 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       iconTheme: IconThemeData(color: AppColors.textMuted),
       title: Text(
         'Create Update',
-        style: GoogleFonts.spaceGrotesk(
+        style: AppTypography.custom(
           color: AppColors.textPrimary,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
+          size: 16,
+          weight: FontWeight.w600,
         ),
       ),
     );
@@ -347,10 +338,9 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
   InputDecoration _fieldDecoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: GoogleFonts.inter(
-        color: AppColors.textFaint,
-        fontSize: 13,
-      ),
+      hintStyle: AppTypography.custom(color: AppColors.textFaint,
+        size: 13,
+        weight: FontWeight.w400,),
       filled: true,
       fillColor: AppColors.bgElevated,
       border: OutlineInputBorder(
@@ -440,10 +430,10 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: GoogleFonts.inter(
+      style: AppTypography.custom(
         color: AppColors.textMuted,
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
+        size: 12,
+        weight: FontWeight.w500,
       ),
     );
   }

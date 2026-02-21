@@ -14,19 +14,19 @@ const _userTabs = [
     showNotificationBell: false,
   ),
   _TabMeta(
-    title: 'Community',
-    showSearch: true,
-    showFilter: false,
-    showNotificationBell: false,
-  ),
-  _TabMeta(
-    title: 'Wallet',
+    title: 'Mining',
     showSearch: false,
     showFilter: false,
     showNotificationBell: false,
   ),
   _TabMeta(
-    title: 'Profile',
+    title: 'Community',
+    showSearch: false,
+    showFilter: false,
+    showNotificationBell: false,
+  ),
+  _TabMeta(
+    title: 'Wallet',
     showSearch: false,
     showFilter: false,
     showNotificationBell: false,
@@ -47,6 +47,12 @@ const _hunterTabs = [
     showNotificationBell: false,
   ),
   _TabMeta(
+    title: 'Mining',
+    showSearch: false,
+    showFilter: false,
+    showNotificationBell: false,
+  ),
+  _TabMeta(
     title: 'Hunter Hub',
     showSearch: false,
     showFilter: false,
@@ -54,12 +60,6 @@ const _hunterTabs = [
   ),
   _TabMeta(
     title: 'Wallet',
-    showSearch: false,
-    showFilter: false,
-    showNotificationBell: false,
-  ),
-  _TabMeta(
-    title: 'Profile',
     showSearch: false,
     showFilter: false,
     showNotificationBell: false,
@@ -86,17 +86,18 @@ class _UserSpaceShell extends StatelessWidget {
         backButton: false,
         showSearch: tab.showSearch,
         showFilter: tab.showFilter,
-        showSpaceSwitcher: currentIndex == 4,
         showNotificationBell: tab.showNotificationBell,
+        showProfileShortcut: false,
+        showProfileAvatarLeading: currentIndex == 0,
       ),
       body: IndexedStack(
         index: currentIndex,
         children: const [
           HomeScreen(),
           DiscoverScreen(),
+          MiningScreen(),
           CommunityScreen(),
           WalletScreen(),
-          ProfileScreen(),
         ],
       ),
       bottomNavigationBar: _UserNav(
@@ -123,7 +124,7 @@ class _HunterSpaceShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final tab = _hunterTabs[currentIndex];
     final showComposerFab =
-        currentIndex == 0 || currentIndex == 1 || currentIndex == 2;
+        currentIndex == 0 || currentIndex == 1 || currentIndex == 3;
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -132,17 +133,18 @@ class _HunterSpaceShell extends StatelessWidget {
         backButton: false,
         showSearch: tab.showSearch,
         showFilter: tab.showFilter,
-        showSpaceSwitcher: currentIndex == 4,
         showNotificationBell: tab.showNotificationBell,
+        showProfileShortcut: false,
+        showProfileAvatarLeading: currentIndex == 0,
       ),
       body: IndexedStack(
         index: currentIndex,
         children: const [
           HomeScreen(),
           DiscoverScreen(),
+          MiningScreen(),
           HunterHubScreen(),
           WalletScreen(),
-          ProfileScreen(),
         ],
       ),
       bottomNavigationBar: _HunterNav(

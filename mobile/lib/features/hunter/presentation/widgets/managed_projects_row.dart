@@ -2,7 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 /// Horizontal scrollable row of the hunter's managed project cards.
@@ -64,10 +64,10 @@ class _ManagedProjectCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             name,
-            style: GoogleFonts.spaceGrotesk(
+            style: AppTypography.custom(
               color: AppColors.textPrimary,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
+              size: 13,
+              weight: FontWeight.w700,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -76,10 +76,10 @@ class _ManagedProjectCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               '\$$ticker',
-              style: GoogleFonts.inter(
+              style: AppTypography.custom(
                 color: AppColors.primary400,
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
+                size: 10,
+                weight: FontWeight.w500,
               ),
             ),
           ],
@@ -138,10 +138,10 @@ class _ProjectIcon extends StatelessWidget {
       child: Center(
         child: Text(
           initial,
-          style: GoogleFonts.spaceGrotesk(
+          style: AppTypography.custom(
             color: AppColors.primary400,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+            size: 13,
+            weight: FontWeight.w700,
           ),
         ),
       ),
@@ -174,10 +174,10 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         status,
-        style: GoogleFonts.inter(
+        style: AppTypography.custom(
           color: color,
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
+          size: 9,
+          weight: FontWeight.w600,
         ),
       ),
     );
@@ -208,10 +208,10 @@ class _ActionButton extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             label,
-            style: GoogleFonts.inter(
+            style: AppTypography.custom(
               color: AppColors.primary400,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+              size: 11,
+              weight: FontWeight.w600,
             ),
           ),
         ),
@@ -237,21 +237,20 @@ class _EmptyManagedProjects extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'No projects yet',
-            style: GoogleFonts.inter(
+            style: AppTypography.custom(
               color: AppColors.textMuted,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
+              size: 13,
+              weight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'Submit a gem to start managing projects',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              color: AppColors.textFaint,
-              fontSize: 11,
-              height: 1.4,
-            ),
+            style: AppTypography.custom(color: AppColors.textFaint,
+              size: 11,
+              weight: FontWeight.w400,
+              height: 1.4,),
           ),
         ],
       ),

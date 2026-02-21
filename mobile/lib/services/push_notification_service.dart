@@ -9,11 +9,15 @@ import 'package:blocnet/services/api/api_client.dart';
 /// Handles FCM token registration, permission requests, and foreground
 /// notification display. Call [init] once after the user is authenticated.
 class PushNotificationService {
-  PushNotificationService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+  PushNotificationService({
+    ApiClient? apiClient,
+    VoidCallback? onForegroundMessage,
+  })  : _apiClient = apiClient ?? ApiClient(),
+        _onForegroundMessageCallback = onForegroundMessage;
 
   final ApiClient _apiClient;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final VoidCallback? _onForegroundMessageCallback;
 
   StreamSubscription<RemoteMessage>? _foregroundSub;
   StreamSubscription<String>? _tokenRefreshSub;
@@ -64,7 +68,7 @@ class PushNotificationService {
 
       // Handle messages that arrive while the app is in the foreground.
       _foregroundSub ??=
-          FirebaseMessaging.onMessage.listen(_onForegroundMessage);
+          FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
     } catch (error) {
       // Push registration is best-effort and must never crash app startup.
       debugPrint('[PushNotificationService] init failed: $error');
@@ -157,16 +161,23 @@ class PushNotificationService {
     }
   }
 
-  void _onForegroundMessage(RemoteMessage message) {
+  void _handleForegroundMessage(RemoteMessage message) {
     // Firebase does NOT show a notification banner when the app is in the
     // foreground on Android. On iOS, foreground banners require explicit
-    // presentation options set below. We log here; the [NotificationsStore]
-    // refresh on app resume will pick up the in-app record created by the
-    // backend broadcast.
+    // presentation options set below. We log and trigger a store refresh so
+    // the in-app inbox updates immediately.
     debugPrint(
       '[PushNotificationService] Foreground message: '
       '${message.notification?.title}',
     );
+
+    try {
+      _onForegroundMessageCallback?.call();
+    } catch (error) {
+      debugPrint(
+        '[PushNotificationService] Foreground refresh callback failed: $error',
+      );
+    }
   }
 }
 

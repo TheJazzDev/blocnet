@@ -61,9 +61,10 @@ export class UpdatesService {
     const actorName =
       update.author.displayName ?? update.author.email ?? 'Someone';
 
-    await this.notificationsService.createForProjectFollowers({
+    const fanout = await this.notificationsService.createForProjectFollowers({
       projectId,
       updateId: update.id,
+      actorUserId: actor.id,
       title: `${actorName} posted an update`,
       body: update.title,
       urgency: update.urgency,
@@ -76,6 +77,7 @@ export class UpdatesService {
       title: `${actorName} posted an update`,
       body: update.title,
       urgency: update.urgency,
+      userIds: fanout.userIds,
     });
 
     await this.auditLogService.create({

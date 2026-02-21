@@ -9,6 +9,7 @@ import {
   LedgerAccountType,
   LedgerReason,
   Prisma,
+  WalletAsset,
   WithdrawalStatus,
   type LedgerEntry,
   type UserWallet,
@@ -33,6 +34,12 @@ import {
   parsePositiveDecimal,
   toDecimalString,
 } from './types/decimal';
+import {
+  getWithdrawalFeeKeyForAsset,
+  normalizeWalletAsset,
+  WALLET_ASSETS,
+} from './wallet-asset.util';
+import { WalletAssetPricingService } from './wallet-asset-pricing.service';
 import { WalletConfigService } from './wallet-config.service';
 import { WalletProvisioningService } from './wallet-provisioning.service';
 
@@ -46,14 +53,16 @@ export class WalletService {
     private readonly prisma: PrismaService,
     private readonly walletConfigService: WalletConfigService,
     private readonly walletProvisioningService: WalletProvisioningService,
+    private readonly walletAssetPricingService: WalletAssetPricingService,
     private readonly auditLogService: AuditLogService,
   ) {}
 
   async getWalletSummary(userId: string) {
-    const wallet = await this.walletProvisioningService.ensureWalletForUser(userId);
+    const wallet =
+      await this.walletProvisioningService.ensureWalletForUser(userId);
 
-    const [userAccount, kycProfile] = await Promise.all([
-      this.walletProvisioningService.ensureUserLedgerAccount(userId, wallet.id),
+    const supportedAssets = this.walletConfigService.supportedAssets;
+    const [kycProfile, prices] = await Promise.all([
       this.prisma.kycProfile.findUnique({
         where: { userId },
         select: {
@@ -63,14 +72,68 @@ export class WalletService {
           reviewedAt: true,
         },
       }),
+      this.walletAssetPricingService.getUsdPrices(supportedAssets),
     ]);
+
+    const userAccounts = await Promise.all(
+      supportedAssets.map((asset) =>
+        this.walletProvisioningService.ensureUserLedgerAccount(
+          userId,
+          wallet.id,
+          LedgerAccountType.user,
+          asset,
+        ),
+      ),
+    );
+
+    const accountByAsset = new Map<WalletAsset, (typeof userAccounts)[number]>();
+    for (const account of userAccounts) {
+      const currency = normalizeWalletAsset(account.currency);
+      if (!currency) continue;
+      accountByAsset.set(currency, account);
+    }
+
+    const bntAccount = accountByAsset.get(WalletAsset.BNT);
+
+    const assets = supportedAssets.map((asset) => {
+      const account = accountByAsset.get(asset);
+      const available = account ? toDecimalString(account.available) : '0';
+      const pending = account ? toDecimalString(account.pending) : '0';
+      const locked = account ? toDecimalString(account.locked) : '0';
+      const price = prices[asset];
+      const usdValue = new Prisma.Decimal(available)
+        .mul(new Prisma.Decimal(price.usdPrice))
+        .toString();
+
+      return {
+        asset,
+        symbol: asset,
+        name: this.getAssetLabel(asset),
+        network: 'BSC',
+        assetKind: this.walletConfigService.getAssetKind(asset),
+        available,
+        pending,
+        locked,
+        usdPrice: price.usdPrice,
+        usdValue,
+        priceSource: price.source,
+      };
+    });
+
+    const totalUsdValue = assets.reduce((total, item) => {
+      return total.add(new Prisma.Decimal(item.usdValue));
+    }, DECIMAL_ZERO);
 
     return {
       wallet: this.toWalletSummary(wallet),
       balances: {
-        available: toDecimalString(userAccount.available),
-        pending: toDecimalString(userAccount.pending),
-        locked: toDecimalString(userAccount.locked),
+        available: bntAccount ? toDecimalString(bntAccount.available) : '0',
+        pending: bntAccount ? toDecimalString(bntAccount.pending) : '0',
+        locked: bntAccount ? toDecimalString(bntAccount.locked) : '0',
+      },
+      assets,
+      totals: {
+        usdValue: totalUsdValue.toString(),
       },
       kyc: {
         status: kycProfile?.status ?? KycStatus.not_submitted,
@@ -82,6 +145,59 @@ export class WalletService {
         walletEnabled: this.walletConfigService.walletEnabled,
         depositsEnabled: this.walletConfigService.depositsEnabled,
         withdrawalsEnabled: this.walletConfigService.withdrawalsEnabled,
+        supportedAssets,
+        transferEnabledAssets: this.walletConfigService.withdrawalEnabledAssets,
+        withdrawalEnabledAssets: this.walletConfigService.withdrawalEnabledAssets,
+      },
+    };
+  }
+
+  async getWalletHealth(userId: string) {
+    const wallet =
+      await this.walletProvisioningService.ensureWalletForUser(userId);
+    const account =
+      await this.walletProvisioningService.ensureUserLedgerAccount(
+        userId,
+        wallet.id,
+      );
+
+    const isMainnet = wallet.chainEnvironment === 'mainnet';
+    const rpcUrl = isMainnet
+      ? this.walletConfigService.bscRpcMainnet
+      : this.walletConfigService.bscRpcTestnet;
+    const tokenAddress = isMainnet
+      ? this.walletConfigService.bntTokenAddressMainnet
+      : this.walletConfigService.bntTokenAddressTestnet;
+    const treasuryWalletId = isMainnet
+      ? this.walletConfigService.treasuryWalletIdMainnet
+      : this.walletConfigService.treasuryWalletIdTestnet;
+    const treasurySweepAddress = isMainnet
+      ? this.walletConfigService.treasurySweepAddressMainnet
+      : this.walletConfigService.treasurySweepAddressTestnet;
+
+    return {
+      timestamp: new Date().toISOString(),
+      flags: {
+        walletEnabled: this.walletConfigService.walletEnabled,
+        depositsEnabled: this.walletConfigService.depositsEnabled,
+        withdrawalsEnabled: this.walletConfigService.withdrawalsEnabled,
+        turnkeyMode: this.walletConfigService.turnkeyMode,
+        turnkeyExecutionMode: this.walletConfigService.turnkeyExecutionMode,
+      },
+      wallet: this.toWalletSummary(wallet),
+      balances: {
+        available: toDecimalString(account.available),
+        pending: toDecimalString(account.pending),
+        locked: toDecimalString(account.locked),
+      },
+      network: {
+        chainEnvironment: wallet.chainEnvironment,
+        chainId: wallet.chainId,
+        rpcConfigured: Boolean(rpcUrl),
+        tokenAddressConfigured: Boolean(tokenAddress),
+        tokenAddress: tokenAddress ?? null,
+        treasuryWalletIdConfigured: Boolean(treasuryWalletId),
+        treasurySweepAddressConfigured: Boolean(treasurySweepAddress),
       },
     };
   }
@@ -90,26 +206,34 @@ export class WalletService {
     userId: string,
     query: ListWalletTransactionsQuery,
   ) {
-    const wallet = await this.walletProvisioningService.ensureWalletForUser(userId);
-    const account = await this.walletProvisioningService.ensureUserLedgerAccount(
-      userId,
-      wallet.id,
-    );
-    const holdAccount = await this.walletProvisioningService.ensureUserLedgerAccount(
-      userId,
-      wallet.id,
-      LedgerAccountType.hold,
-    );
+    await this.walletProvisioningService.ensureWalletForUser(userId);
 
-    const { limit, offset } = this.normalizePagination(query.limit, query.offset);
+    const selectedAsset = query.asset
+      ? this.resolveRequestedAsset(query.asset)
+      : null;
+
+    const { limit, offset } = this.normalizePagination(
+      query.limit,
+      query.offset,
+    );
 
     const entries = await this.prisma.ledgerEntry.findMany({
       where: {
         OR: [
-          { debitAccountId: account.id },
-          { creditAccountId: account.id },
-          { debitAccountId: holdAccount.id },
-          { creditAccountId: holdAccount.id },
+          {
+            debitAccount: {
+              userId,
+              accountType: { in: [LedgerAccountType.user, LedgerAccountType.hold] },
+              ...(selectedAsset ? { currency: selectedAsset } : {}),
+            },
+          },
+          {
+            creditAccount: {
+              userId,
+              accountType: { in: [LedgerAccountType.user, LedgerAccountType.hold] },
+              ...(selectedAsset ? { currency: selectedAsset } : {}),
+            },
+          },
         ],
       },
       orderBy: { createdAt: 'desc' },
@@ -121,6 +245,18 @@ export class WalletService {
             userId: true,
             accountType: true,
             currency: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+              },
+            },
+            wallet: {
+              select: {
+                address: true,
+              },
+            },
           },
         },
         creditAccount: {
@@ -128,6 +264,18 @@ export class WalletService {
             userId: true,
             accountType: true,
             currency: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+              },
+            },
+            wallet: {
+              select: {
+                address: true,
+              },
+            },
           },
         },
       },
@@ -139,22 +287,50 @@ export class WalletService {
   async createInternalTransfer(userId: string, dto: CreateInternalTransferDto) {
     this.assertWalletFeatureEnabled();
 
+    const asset = this.resolveRequestedAsset(dto.asset);
+    if (!this.walletConfigService.isTransferEnabledForAsset(asset)) {
+      throw new ServiceUnavailableException(
+        `${asset} transfers are currently disabled`,
+      );
+    }
+
     const amount = parsePositiveDecimal(dto.amount, 'amount');
-    const senderWallet = await this.walletProvisioningService.ensureWalletForUser(userId);
-    const senderAccount = await this.walletProvisioningService.ensureUserLedgerAccount(
-      userId,
-      senderWallet.id,
-    );
+    const senderWallet =
+      await this.walletProvisioningService.ensureWalletForUser(userId);
+    const senderAccount =
+      await this.walletProvisioningService.ensureUserLedgerAccount(
+        userId,
+        senderWallet.id,
+        LedgerAccountType.user,
+        asset,
+      );
 
     if (dto.toUserId && dto.toUserId === userId) {
       throw new BadRequestException('Cannot transfer to yourself');
     }
 
+    const riskLimit = await this.resolveRiskLimitForUser(userId);
+    const maxPerDay = new Prisma.Decimal(riskLimit.maxInternalTransferPerDay);
+    if (maxPerDay.gt(DECIMAL_ZERO)) {
+      const [dailyUsedUsd, requestUsd] = await Promise.all([
+        this.getTodayInternalTransferUsdUsed(userId),
+        this.toUsdValue(asset, amount),
+      ]);
+      if (dailyUsedUsd.add(requestUsd).gt(maxPerDay)) {
+        throw new BadRequestException(
+          'Internal transfer amount exceeds daily tier limit',
+        );
+      }
+    }
+
     const recipientWallet = await this.resolveRecipientWallet(dto, userId);
-    const recipientAccount = await this.walletProvisioningService.ensureUserLedgerAccount(
-      recipientWallet.userId,
-      recipientWallet.id,
-    );
+    const recipientAccount =
+      await this.walletProvisioningService.ensureUserLedgerAccount(
+        recipientWallet.userId,
+        recipientWallet.id,
+        LedgerAccountType.user,
+        asset,
+      );
 
     const idempotencyKey =
       normalizeIdempotencyKey(dto.idempotencyKey) ??
@@ -162,6 +338,7 @@ export class WalletService {
         'internal-transfer',
         userId,
         recipientWallet.userId,
+        asset,
         amount.toString(),
         randomUUID(),
       );
@@ -171,8 +348,44 @@ export class WalletService {
         const existing = await tx.ledgerEntry.findUnique({
           where: { idempotencyKey },
           include: {
-            debitAccount: true,
-            creditAccount: true,
+            debitAccount: {
+              select: {
+                userId: true,
+                accountType: true,
+                currency: true,
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    displayName: true,
+                  },
+                },
+                wallet: {
+                  select: {
+                    address: true,
+                  },
+                },
+              },
+            },
+            creditAccount: {
+              select: {
+                userId: true,
+                accountType: true,
+                currency: true,
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    displayName: true,
+                  },
+                },
+                wallet: {
+                  select: {
+                    address: true,
+                  },
+                },
+              },
+            },
           },
         });
 
@@ -223,11 +436,51 @@ export class WalletService {
               note: dto.note ?? null,
               senderUserId: userId,
               recipientUserId: recipientWallet.userId,
+              senderAddress: senderWallet.address,
+              recipientAddress: recipientWallet.address,
+              recipientUsername: dto.toUsername?.trim().replace(/^@/, '') ?? null,
+              asset,
             },
           },
           include: {
-            debitAccount: true,
-            creditAccount: true,
+            debitAccount: {
+              select: {
+                userId: true,
+                accountType: true,
+                currency: true,
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    displayName: true,
+                  },
+                },
+                wallet: {
+                  select: {
+                    address: true,
+                  },
+                },
+              },
+            },
+            creditAccount: {
+              select: {
+                userId: true,
+                accountType: true,
+                currency: true,
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    displayName: true,
+                  },
+                },
+                wallet: {
+                  select: {
+                    address: true,
+                  },
+                },
+              },
+            },
           },
         });
       },
@@ -244,6 +497,7 @@ export class WalletService {
       metadata: {
         toUserId: recipientWallet.userId,
         amount: amount.toString(),
+        asset,
         idempotencyKey,
       },
     });
@@ -326,8 +580,11 @@ export class WalletService {
   async createWithdrawal(userId: string, dto: CreateWithdrawalDto) {
     this.assertWalletFeatureEnabled();
 
-    if (!this.walletConfigService.withdrawalsEnabled) {
-      throw new ServiceUnavailableException('Withdrawals are disabled');
+    const asset = this.resolveRequestedAsset(dto.asset);
+    if (!this.walletConfigService.isWithdrawalEnabledForAsset(asset)) {
+      throw new ServiceUnavailableException(
+        `${asset} withdrawals are currently disabled`,
+      );
     }
 
     if (!EVM_ADDRESS_PATTERN.test(dto.toAddress.trim())) {
@@ -336,34 +593,46 @@ export class WalletService {
 
     const amount = parsePositiveDecimal(dto.amount, 'amount');
 
-    const wallet = await this.walletProvisioningService.ensureWalletForUser(userId);
-    const userAccount = await this.walletProvisioningService.ensureUserLedgerAccount(
-      userId,
-      wallet.id,
-    );
-    const holdAccount = await this.walletProvisioningService.ensureUserLedgerAccount(
-      userId,
-      wallet.id,
-      LedgerAccountType.hold,
-    );
+    const wallet =
+      await this.walletProvisioningService.ensureWalletForUser(userId);
+    const userAccount =
+      await this.walletProvisioningService.ensureUserLedgerAccount(
+        userId,
+        wallet.id,
+        LedgerAccountType.user,
+        asset,
+      );
+    const holdAccount =
+      await this.walletProvisioningService.ensureUserLedgerAccount(
+        userId,
+        wallet.id,
+        LedgerAccountType.hold,
+        asset,
+      );
 
     const [kycProfile, riskLimit, feeConfig] = await Promise.all([
       this.prisma.kycProfile.findUnique({ where: { userId } }),
       this.resolveRiskLimitForUser(userId),
-      this.resolveActiveWithdrawalFeeConfig(),
+      this.resolveActiveWithdrawalFeeConfig(asset),
     ]);
 
-    if (!kycProfile || (riskLimit.requiresKyc && kycProfile.status !== KycStatus.approved)) {
+    if (
+      !kycProfile ||
+      (riskLimit.requiresKyc && kycProfile.status !== KycStatus.approved)
+    ) {
       throw new BadRequestException('KYC approval is required for withdrawals');
     }
 
     const maxPerTx = new Prisma.Decimal(riskLimit.maxWithdrawalPerTx);
-    if (maxPerTx.gt(DECIMAL_ZERO) && amount.gt(maxPerTx)) {
-      throw new BadRequestException('Withdrawal amount exceeds tier per-tx limit');
+    const amountUsd = await this.toUsdValue(asset, amount);
+    if (maxPerTx.gt(DECIMAL_ZERO) && amountUsd.gt(maxPerTx)) {
+      throw new BadRequestException(
+        'Withdrawal amount exceeds tier per-tx limit',
+      );
     }
 
     const dayStart = this.getUtcDayStart();
-    const todays = await this.prisma.withdrawalRequest.aggregate({
+    const todays = await this.prisma.withdrawalRequest.findMany({
       where: {
         userId,
         status: {
@@ -379,15 +648,18 @@ export class WalletService {
           gte: dayStart,
         },
       },
-      _sum: {
+      select: {
         amount: true,
+        asset: true,
       },
     });
 
-    const dailyUsed = todays._sum.amount ?? DECIMAL_ZERO;
+    const dailyUsed = await this.sumUsdByAssetRows(todays);
     const maxPerDay = new Prisma.Decimal(riskLimit.maxWithdrawalPerDay);
-    if (maxPerDay.gt(DECIMAL_ZERO) && dailyUsed.add(amount).gt(maxPerDay)) {
-      throw new BadRequestException('Withdrawal amount exceeds daily tier limit');
+    if (maxPerDay.gt(DECIMAL_ZERO) && dailyUsed.add(amountUsd).gt(maxPerDay)) {
+      throw new BadRequestException(
+        'Withdrawal amount exceeds daily tier limit',
+      );
     }
 
     const feeAmount = this.calculateWithdrawalFee(amount, feeConfig);
@@ -401,6 +673,7 @@ export class WalletService {
       createDeterministicIdempotencyKey(
         'withdrawal',
         userId,
+        asset,
         dto.toAddress.trim().toLowerCase(),
         amount.toString(),
         randomUUID(),
@@ -458,6 +731,7 @@ export class WalletService {
             metadata: {
               userId,
               toAddress: dto.toAddress.trim(),
+              asset,
             },
           },
         });
@@ -466,6 +740,7 @@ export class WalletService {
           data: {
             userId,
             walletId: wallet.id,
+            asset,
             toAddress: dto.toAddress.trim(),
             amount,
             feeAmount,
@@ -488,6 +763,7 @@ export class WalletService {
       resourceType: 'withdrawal_request',
       resourceId: created.id,
       metadata: {
+        asset,
         amount: created.amount.toString(),
         feeAmount: created.feeAmount.toString(),
         netAmount: created.netAmount.toString(),
@@ -501,12 +777,19 @@ export class WalletService {
 
   async listWithdrawals(userId: string, query: ListWithdrawalsQuery) {
     await this.walletProvisioningService.ensureWalletForUser(userId);
-    const { limit, offset } = this.normalizePagination(query.limit, query.offset);
+    const selectedAsset = query.asset
+      ? this.resolveRequestedAsset(query.asset)
+      : null;
+    const { limit, offset } = this.normalizePagination(
+      query.limit,
+      query.offset,
+    );
 
     const rows = await this.prisma.withdrawalRequest.findMany({
       where: {
         userId,
         ...(query.status ? { status: query.status } : {}),
+        ...(selectedAsset ? { asset: selectedAsset } : {}),
       },
       orderBy: { createdAt: 'desc' },
       skip: offset,
@@ -520,12 +803,42 @@ export class WalletService {
     dto: CreateInternalTransferDto,
     actorUserId: string,
   ): Promise<UserWallet> {
-    if (!dto.toUserId && !dto.toAddress) {
-      throw new BadRequestException('Either toUserId or toAddress is required');
+    if (!dto.toUserId && !dto.toAddress && !dto.toUsername) {
+      throw new BadRequestException(
+        'Either toUserId, toAddress, or toUsername is required',
+      );
     }
 
     if (dto.toUserId) {
+      if (dto.toUserId === actorUserId) {
+        throw new BadRequestException('Cannot transfer to yourself');
+      }
       return this.walletProvisioningService.ensureWalletForUser(dto.toUserId);
+    }
+
+    if (dto.toUsername) {
+      const normalized = dto.toUsername.trim().replace(/^@/, '').toLowerCase();
+      if (!normalized) {
+        throw new BadRequestException('Invalid recipient username');
+      }
+      const recipientProfile = await this.prisma.profile.findFirst({
+        where: {
+          username: {
+            equals: normalized,
+            mode: 'insensitive',
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+      if (!recipientProfile) {
+        throw new NotFoundException('Recipient user not found');
+      }
+      if (recipientProfile.id === actorUserId) {
+        throw new BadRequestException('Cannot transfer to yourself');
+      }
+      return this.walletProvisioningService.ensureWalletForUser(recipientProfile.id);
     }
 
     const address = dto.toAddress?.trim();
@@ -570,19 +883,86 @@ export class WalletService {
   private toTransactionResponse(
     userId: string,
     entry: LedgerEntry & {
-      debitAccount: { userId: string | null; accountType: LedgerAccountType };
-      creditAccount: { userId: string | null; accountType: LedgerAccountType };
+      debitAccount: {
+        userId: string | null;
+        accountType: LedgerAccountType;
+        currency: string;
+        user: {
+          id: string;
+          username: string | null;
+          displayName: string | null;
+        } | null;
+        wallet: {
+          address: string | null;
+        } | null;
+      };
+      creditAccount: {
+        userId: string | null;
+        accountType: LedgerAccountType;
+        currency: string;
+        user: {
+          id: string;
+          username: string | null;
+          displayName: string | null;
+        } | null;
+        wallet: {
+          address: string | null;
+        } | null;
+      };
     },
   ) {
     const isDebit = entry.debitAccount.userId === userId;
     const isCredit = entry.creditAccount.userId === userId;
+    const reason = entry.reason;
 
-    const direction = isDebit && !isCredit ? 'outgoing' : !isDebit && isCredit ? 'incoming' : 'internal';
+    let direction: 'outgoing' | 'incoming' | 'internal';
+    if (
+      reason === LedgerReason.withdrawal_hold ||
+      reason === LedgerReason.withdrawal_finalize ||
+      reason === LedgerReason.withdrawal_fee
+    ) {
+      direction = 'outgoing';
+    } else if (reason === LedgerReason.withdrawal_reject_release) {
+      direction = 'incoming';
+    } else {
+      direction =
+        isDebit && !isCredit
+          ? 'outgoing'
+          : !isDebit && isCredit
+            ? 'incoming'
+            : 'internal';
+    }
+
+    const metadata = this.normalizeLedgerMetadata(entry.metadata);
+
+    const asset =
+      normalizeWalletAsset(entry.debitAccount.currency) ??
+      normalizeWalletAsset(entry.creditAccount.currency) ??
+      WalletAsset.BNT;
+
+    const sourceAccount =
+      direction === 'incoming'
+        ? entry.debitAccount
+        : direction === 'outgoing'
+          ? entry.creditAccount
+          : null;
+    const counterparty =
+      sourceAccount &&
+      sourceAccount.userId &&
+      sourceAccount.userId !== userId
+        ? {
+            userId: sourceAccount.userId,
+            username: sourceAccount.user?.username ?? null,
+            displayName: sourceAccount.user?.displayName ?? null,
+            walletAddress: sourceAccount.wallet?.address ?? null,
+          }
+        : null;
 
     return {
       id: entry.id,
+      asset,
       direction,
-      reason: entry.reason,
+      reason,
       amount: toDecimalString(entry.amount),
       feeAmount: toDecimalString(entry.feeAmount),
       debit: {
@@ -594,13 +974,24 @@ export class WalletService {
         accountType: entry.creditAccount.accountType,
       },
       referenceId: entry.referenceId,
-      metadata: entry.metadata,
+      metadata,
+      counterparty,
       createdAt: entry.createdAt,
     };
   }
 
+  private normalizeLedgerMetadata(
+    input: Prisma.JsonValue | null,
+  ): Prisma.JsonObject | null {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      return null;
+    }
+    return input as Prisma.JsonObject;
+  }
+
   private toWithdrawalResponse(withdrawal: {
     id: string;
+    asset: WalletAsset;
     toAddress: string;
     amount: Prisma.Decimal;
     feeAmount: Prisma.Decimal;
@@ -618,6 +1009,7 @@ export class WalletService {
   }) {
     return {
       id: withdrawal.id,
+      asset: withdrawal.asset,
       toAddress: withdrawal.toAddress,
       amount: toDecimalString(withdrawal.amount),
       feeAmount: toDecimalString(withdrawal.feeAmount),
@@ -683,17 +1075,20 @@ export class WalletService {
     return fallback;
   }
 
-  private async resolveActiveWithdrawalFeeConfig() {
+  private async resolveActiveWithdrawalFeeConfig(asset: WalletAsset) {
+    const key = getWithdrawalFeeKeyForAsset(asset);
     const feeConfig = await this.prisma.walletFeeConfig.findFirst({
       where: {
-        key: 'withdrawal_bnt_v1',
+        key,
         isActive: true,
       },
       orderBy: { updatedAt: 'desc' },
     });
 
     if (!feeConfig) {
-      throw new ServiceUnavailableException('Withdrawal fee config is missing');
+      throw new ServiceUnavailableException(
+        `Withdrawal fee config is missing for ${asset}`,
+      );
     }
 
     return feeConfig;
@@ -716,6 +1111,86 @@ export class WalletService {
       fee = decimalMin(fee, new Prisma.Decimal(feeConfig.maxFee));
     }
     return fee;
+  }
+
+  private resolveRequestedAsset(rawAsset: WalletAsset | string | undefined) {
+    if (!rawAsset) {
+      return WalletAsset.BNT;
+    }
+    const parsed = normalizeWalletAsset(String(rawAsset));
+    if (!parsed || !WALLET_ASSETS.includes(parsed)) {
+      throw new BadRequestException('Unsupported wallet asset');
+    }
+    if (!this.walletConfigService.isAssetEnabled(parsed)) {
+      throw new BadRequestException(`${parsed} is not enabled`);
+    }
+    return parsed;
+  }
+
+  private async toUsdValue(asset: WalletAsset, amount: Prisma.Decimal) {
+    const price = await this.walletAssetPricingService.getUsdPrice(asset);
+    return amount.mul(new Prisma.Decimal(price.usdPrice));
+  }
+
+  private async getTodayInternalTransferUsdUsed(userId: string) {
+    const dayStart = this.getUtcDayStart();
+    const rows = await this.prisma.ledgerEntry.findMany({
+      where: {
+        reason: LedgerReason.internal_transfer,
+        createdAt: {
+          gte: dayStart,
+        },
+        debitAccount: {
+          userId,
+        },
+      },
+      select: {
+        amount: true,
+        debitAccount: {
+          select: {
+            currency: true,
+          },
+        },
+      },
+    });
+
+    const normalizedRows = rows.map((row) => ({
+      amount: row.amount,
+      asset:
+        normalizeWalletAsset(row.debitAccount.currency) ?? WalletAsset.BNT,
+    }));
+    return this.sumUsdByAssetRows(normalizedRows);
+  }
+
+  private async sumUsdByAssetRows(
+    rows: Array<{ amount: Prisma.Decimal; asset: WalletAsset }>,
+  ) {
+    if (rows.length === 0) {
+      return DECIMAL_ZERO;
+    }
+
+    const uniqueAssets = [...new Set(rows.map((row) => row.asset))];
+    const prices = await this.walletAssetPricingService.getUsdPrices(uniqueAssets);
+
+    return rows.reduce((total, row) => {
+      const price = prices[row.asset];
+      if (!price) return total;
+      return total.add(
+        row.amount.mul(new Prisma.Decimal(price.usdPrice)),
+      );
+    }, DECIMAL_ZERO);
+  }
+
+  private getAssetLabel(asset: WalletAsset) {
+    switch (asset) {
+      case WalletAsset.BNB:
+        return 'Binance Coin';
+      case WalletAsset.USDT:
+        return 'Tether';
+      case WalletAsset.BNT:
+      default:
+        return 'Blocnet';
+    }
   }
 
   private getUtcDayStart(): Date {

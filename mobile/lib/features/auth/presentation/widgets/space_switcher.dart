@@ -2,7 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 /// A pill toggle shown in the app bar for users who have the hunter role.
@@ -87,10 +87,10 @@ class _SpacePill extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: AppTypography.custom(
               color: isActive ? AppColors.primary400 : AppColors.textMuted,
-              fontSize: 11,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              size: 11,
+              weight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
         ],

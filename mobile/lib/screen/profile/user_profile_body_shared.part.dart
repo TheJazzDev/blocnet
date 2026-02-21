@@ -9,10 +9,10 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: GoogleFonts.inter(
+      style: AppTypography.custom(
         color: AppColors.textFaint,
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
+        size: 10,
+        weight: FontWeight.w600,
         letterSpacing: 1.0,
       ),
     );
@@ -67,19 +67,18 @@ class _ProfileTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.inter(
+                    style: AppTypography.custom(
                       color: titleColor ?? AppColors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                      size: 13,
+                      weight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: GoogleFonts.inter(
-                      color: AppColors.textMuted,
-                      fontSize: 11,
-                    ),
+                    style: AppTypography.custom(color: AppColors.textMuted,
+                      size: 11,
+                      weight: FontWeight.w400,),
                   ),
                 ],
               ),

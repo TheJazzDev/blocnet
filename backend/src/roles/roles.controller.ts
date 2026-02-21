@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   UnauthorizedException,
@@ -20,6 +21,12 @@ import { RolesService } from './roles.service';
 @UseGuards(AuthGuard, RolesGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
+
+  @Get('matrix')
+  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+  getMatrix() {
+    return this.rolesService.getRolesMatrix();
+  }
 
   @Post('admins/:userId/promote')
   @Roles(AppRole.OWNER)

@@ -141,7 +141,7 @@ export class CommunityPostsService {
 
     const kind = dto.kind ?? CommunityReactionKind.like;
 
-    const reaction = await this.prisma.communityPostReaction.upsert({
+    const existing = await this.prisma.communityPostReaction.findUnique({
       where: {
         postId_userId_kind: {
           postId,
@@ -149,21 +149,26 @@ export class CommunityPostsService {
           kind,
         },
       },
-      update: {},
-      create: {
-        postId,
-        userId: actor.id,
-        kind,
-      },
+      select: { id: true },
     });
 
-    await this.auditLogService.create({
-      actorId: actor.id,
-      action: 'community_post.reaction.add',
-      resourceType: 'community_post_reaction',
-      resourceId: reaction.id,
-      metadata: { postId, kind },
-    });
+    if (!existing) {
+      const reaction = await this.prisma.communityPostReaction.create({
+        data: {
+          postId,
+          userId: actor.id,
+          kind,
+        },
+      });
+
+      await this.auditLogService.create({
+        actorId: actor.id,
+        action: 'community_post.reaction.add',
+        resourceType: 'community_post_reaction',
+        resourceId: reaction.id,
+        metadata: { postId, kind },
+      });
+    }
 
     return this.getPost(actor, postId);
   }
@@ -208,27 +213,32 @@ export class CommunityPostsService {
   async bookmarkPost(actor: AuthUser, postId: string) {
     await this.ensurePostIsActive(postId);
 
-    const bookmark = await this.prisma.bookmark.upsert({
+    const existing = await this.prisma.bookmark.findUnique({
       where: {
         userId_communityPostId: {
           userId: actor.id,
           communityPostId: postId,
         },
       },
-      update: {},
-      create: {
-        userId: actor.id,
-        communityPostId: postId,
-      },
+      select: { id: true },
     });
 
-    await this.auditLogService.create({
-      actorId: actor.id,
-      action: 'community_post.bookmark.add',
-      resourceType: 'bookmark',
-      resourceId: bookmark.id,
-      metadata: { postId },
-    });
+    if (!existing) {
+      const bookmark = await this.prisma.bookmark.create({
+        data: {
+          userId: actor.id,
+          communityPostId: postId,
+        },
+      });
+
+      await this.auditLogService.create({
+        actorId: actor.id,
+        action: 'community_post.bookmark.add',
+        resourceType: 'bookmark',
+        resourceId: bookmark.id,
+        metadata: { postId },
+      });
+    }
 
     return this.getPost(actor, postId);
   }

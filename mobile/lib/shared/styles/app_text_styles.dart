@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
 class StyledBodyText extends StatelessWidget {
@@ -28,11 +29,10 @@ class StyledBodyText400 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: TextStyle(
+      style: AppTypography.custom(
+        size: size,
+        weight: FontWeight.w400,
         color: AppColors.darkGrey400,
-        fontSize: size,
-        fontWeight: FontWeight.w400,
-        fontFamily: 'Geist',
       ),
     );
   }
@@ -48,11 +48,10 @@ class StyledBodyText500 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: TextStyle(
+      style: AppTypography.custom(
+        size: size,
+        weight: FontWeight.w400,
         color: AppColors.darkGrey500,
-        fontSize: size,
-        fontWeight: FontWeight.w400,
-        fontFamily: 'Geist',
       ),
     );
   }
@@ -77,11 +76,10 @@ class StyledBodyText600 extends StatelessWidget {
     return Text(
       text,
       textAlign: textAlign,
-      style: TextStyle(
+      style: AppTypography.custom(
+        size: size,
+        weight: fontWeight,
         color: AppColors.darkGrey600,
-        fontSize: size,
-        fontWeight: fontWeight,
-        fontFamily: 'Geist',
       ),
     );
   }
@@ -97,11 +95,10 @@ class StyledBodyText700 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: TextStyle(
-        fontSize: size,
+      style: AppTypography.custom(
+        size: size ?? 14.0,
+        weight: FontWeight.w500,
         color: AppColors.darkGrey700,
-        fontWeight: FontWeight.w500,
-        fontFamily: 'Geist',
       ),
     );
   }

@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
+import { WalletAsset } from '@prisma/client';
 
 export class ListWalletTransactionsQuery {
   @IsOptional()
@@ -13,4 +14,8 @@ export class ListWalletTransactionsQuery {
   @IsInt()
   @Min(0)
   offset?: number;
+
+  @IsOptional()
+  @IsEnum(WalletAsset)
+  asset?: WalletAsset;
 }

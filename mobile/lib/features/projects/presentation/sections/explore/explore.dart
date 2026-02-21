@@ -38,7 +38,7 @@ class ExploreSection extends StatelessWidget {
                   ),
                 ),
                 TagCard(
-                  label: 'Mid Urgency',
+                  label: 'Medium Urgency',
                   iconName: 'brightness',
                   onTap: () => Navigator.pushNamed(
                     context,

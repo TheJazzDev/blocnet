@@ -11,6 +11,11 @@ const COOKIE_OPTS = {
   path: "/",
 };
 
+function isConcurrentRefreshError(message: string | undefined): boolean {
+  const normalized = message?.toLowerCase() ?? "";
+  return normalized.includes("already used") || normalized.includes("reuse interval");
+}
+
 async function refreshAccessToken(): Promise<string | undefined> {
   const store = await cookies();
   const refreshToken = store.get("admin_refresh_token")?.value;
@@ -22,8 +27,11 @@ async function refreshAccessToken(): Promise<string | undefined> {
   });
 
   if (error || !data.session) {
-    store.delete("admin_token");
-    store.delete("admin_refresh_token");
+    // Avoid deleting cookies when refresh rotation races across parallel requests.
+    if (!isConcurrentRefreshError(error?.message)) {
+      store.delete("admin_token");
+      store.delete("admin_refresh_token");
+    }
     return undefined;
   }
 
@@ -48,6 +56,7 @@ async function handler(
 ) {
   const store = await cookies();
   let token = store.get("admin_token")?.value;
+  const viewAsRole = store.get("admin_view_as_role")?.value;
 
   if (!token) {
     token = await refreshAccessToken();
@@ -72,6 +81,7 @@ async function handler(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
+        ...(viewAsRole ? { "x-admin-view-as-role": viewAsRole } : {}),
       },
       body,
     });

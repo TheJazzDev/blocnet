@@ -59,10 +59,8 @@ export function resolveWalletChainId(
   chainEnvironment: ChainEnvironment,
   env: NodeJS.ProcessEnv,
 ): number {
-  const raw =
-    chainEnvironment === 'mainnet'
-      ? env.BSC_CHAIN_ID_MAINNET ?? '56'
-      : env.BSC_CHAIN_ID_TESTNET ?? '97';
+  const defaultChainId = chainEnvironment === 'mainnet' ? '56' : '97';
+  const raw = env.BSC_CHAIN_ID?.trim() || defaultChainId;
   const parsed = Number(raw);
 
   if (!Number.isFinite(parsed) || parsed <= 0) {

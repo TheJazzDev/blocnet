@@ -48,6 +48,8 @@ export interface AdminMe {
 export interface AdminStats {
   totalProjects: number;
   totalUsers: number;
+  activeUsers: number;
+  deactivatedUsers: number;
   pendingAdminApps: number;
   totalUpdates: number;
   totalComments: number;
@@ -57,11 +59,16 @@ export interface AdminStats {
   usersWithPushEnabled: number;
 }
 
+export type AdminUserStatus = "active" | "deactivated";
+
 export interface AdminUser {
   id: string;
   email: string;
+  username: string | null;
   displayName: string | null;
   avatarUrl: string | null;
+  isDeactivated: boolean;
+  deactivatedAt: string | null;
   roles: string[];
   projectsAssigned: number;
   updatesPosted: number;
@@ -73,6 +80,71 @@ export interface AdminUsersResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface AdminUserDetail {
+  id: string;
+  email: string;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  isDeactivated: boolean;
+  deactivatedAt: string | null;
+  deactivatedBy: string | null;
+  deactivationReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  roles: string[];
+  wallet: {
+    id: string;
+    status: WalletStatus;
+    address: string | null;
+    providerWalletId: string | null;
+    chainEnvironment: "testnet" | "mainnet";
+    chainId: number;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+  kyc: {
+    status: WalletKycStatus;
+    tier: string;
+    submittedAt: string | null;
+    reviewedAt: string | null;
+    reviewNote: string | null;
+  } | null;
+  counts: {
+    followers: number;
+    following: number;
+    watchedProjects: number;
+    bookmarks: number;
+    updates: number;
+    comments: number;
+    communityPosts: number;
+    communityComments: number;
+    withdrawals: number;
+    deviceTokens: number;
+  };
+}
+
+export interface AdminDeleteUserResponse {
+  deleted: boolean;
+  reason?: string;
+  userId?: string;
+  deactivatedAt?: string;
+}
+
+export interface AdminReactivateUserResponse {
+  reactivated: boolean;
+  reason?: string;
+  userId?: string;
+  reactivatedAt?: string;
+}
+
+export interface AdminHardDeleteUserResponse {
+  hardDeleted: boolean;
+  userId?: string;
+  deletedAt?: string;
 }
 
 export type ProjectStatus = "active" | "paused" | "hidden" | "archived";
@@ -378,20 +450,234 @@ export interface WalletFeeConfig {
   updatedAt: string;
 }
 
+export type WalletAssetCode = "BNT" | "BNB" | "USDT";
+
+export interface WalletAssetPriceConfig {
+  id: string;
+  asset: WalletAssetCode;
+  providerId: string | null;
+  fallbackUsdPrice: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminWalletHealth {
+  timestamp: string;
+  flags: {
+    walletEnabled: boolean;
+    depositsEnabled: boolean;
+    withdrawalsEnabled: boolean;
+    turnkeyMode: string;
+    turnkeyExecutionMode: string;
+  };
+  turnkey: {
+    provider: string;
+    mode: string;
+    configured: {
+      organizationId: boolean;
+      apiPublicKey: boolean;
+      apiPrivateKey: boolean;
+      apiKeyId: boolean;
+    };
+    connectivity: {
+      ok: boolean;
+      simulated: boolean;
+      organizationId?: string;
+      organizationName?: string;
+      userId?: string;
+      username?: string;
+      error: string | null;
+    };
+  };
+  networks: Array<{
+    chainEnvironment: "testnet" | "mainnet";
+    chainId: number;
+    rpcConfigured: boolean;
+    rpcReachable: boolean;
+    latestBlock: string | null;
+    rpcError: string | null;
+    tokenAddressConfigured: boolean;
+    tokenAddress: string | null;
+    treasuryWalletIdConfigured: boolean;
+    treasurySweepAddressConfigured: boolean;
+    confirmationsRequired: number;
+    depositStartBlock: string | null;
+  }>;
+  counts: {
+    walletsByStatus: Record<string, number>;
+    depositsByStatus: Record<string, number>;
+    sweepJobsByStatus: Record<string, number>;
+    withdrawalsByStatus: Record<string, number>;
+  };
+}
+
+export interface AdminMiningConfig {
+  enabled: boolean;
+  referralsEnabled: boolean;
+  cycleHours: number;
+  basePointsPerCycle: number;
+  perActiveReferralBoostBps: number;
+  maxBoostBps: number;
+  activeReferralWindowHours: number;
+  referralBindWindowHours: number;
+}
+
+export interface AdminMiningMetrics {
+  asOf: string;
+  dauMiners: number;
+  startsDay: number;
+  claimsDay: number;
+  averageBoostBps: number;
+  referralBindRate: number;
+  activeReferralRatio: number;
+  totalDirectReferrals: number;
+  activeDirectReferrals: number;
+}
+
+export interface AdminMiningLeaderboardEntry {
+  rank: number;
+  userId: string;
+  email?: string;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  claimedTotalPoints: number;
+  maturedUnclaimedPoints: number;
+  lifetimeEarnedPoints: number;
+  sessionStatus: "idle" | "running" | "claimable";
+  sessionProgressPct: number;
+  sessionEndsAt: string | null;
+  boostBpsSnapshot: number;
+  activeReferralsSnapshot: number;
+}
+
+export interface AdminMiningLeaderboardResponse {
+  asOf: string;
+  total: number;
+  limit: number;
+  offset: number;
+  data: AdminMiningLeaderboardEntry[];
+}
+
+export interface AdminBindReferralRequest {
+  userIdOrEmail: string;
+  code: string;
+}
+
+export interface AdminBindReferralResponse {
+  ok: boolean;
+  targetUser: {
+    id: string;
+    email: string;
+    displayName: string | null;
+  };
+  referrer: {
+    id: string;
+    email: string;
+    displayName: string | null;
+    code: string | null;
+  };
+  referredAt: string;
+  source: "admin_override";
+}
+
+export type AdminGovernanceRole = "owner" | "admin" | "moderator";
+
+export interface GovernanceRoleDefinition {
+  role: AdminGovernanceRole;
+  label: string;
+  description: string;
+  order: number;
+}
+
+export interface RoleCapabilitySection {
+  id: "overview" | "content" | "wallet" | "engagement" | "access" | "system";
+  label: string;
+  description: string;
+}
+
+export interface RoleCapability {
+  key: string;
+  label: string;
+  description: string;
+  section: RoleCapabilitySection["id"];
+  roles: AdminGovernanceRole[];
+}
+
+export interface RoleMatrixSection extends RoleCapabilitySection {
+  capabilities: RoleCapability[];
+}
+
+export interface SpaceRoleDefinition {
+  role: "user" | "hunter";
+  label: string;
+  description: string;
+}
+
+export interface RolesMatrixResponse {
+  governanceRoles: GovernanceRoleDefinition[];
+  sections: RoleMatrixSection[];
+  spaceRoles: SpaceRoleDefinition[];
+}
+
 export const api = {
   getMe: () => apiFetch<AdminMe>("/me"),
 
+  getRolesMatrix: () => apiFetch<RolesMatrixResponse>("/roles/matrix"),
+
   getStats: () => apiFetch<AdminStats>("/admin/users/stats"),
 
-  listUsers: (params?: { limit?: number; offset?: number; role?: string; q?: string }) =>
+  listUsers: (params?: {
+    limit?: number;
+    offset?: number;
+    role?: string;
+    q?: string;
+    status?: AdminUserStatus | "all";
+  }) =>
     apiFetch<AdminUsersResponse>(
       `/admin/users${toQuery({
         limit: params?.limit,
         offset: params?.offset,
         role: params?.role,
         q: params?.q,
+        status: params?.status,
       })}`,
     ),
+
+  getUser: (id: string) => apiFetch<AdminUserDetail>(`/admin/users/${id}`),
+
+  updateUser: (
+    id: string,
+    body: Partial<{
+      displayName: string | null;
+      username: string | null;
+      avatarUrl: string | null;
+      bio: string | null;
+    }>,
+  ) =>
+    apiFetch<AdminUserDetail>(`/admin/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteUser: (id: string, body?: { reason?: string }) =>
+    apiFetch<AdminDeleteUserResponse>(`/admin/users/${id}`, {
+      method: "DELETE",
+      body: JSON.stringify(body ?? {}),
+    }),
+
+  reactivateUser: (id: string, body?: { reason?: string }) =>
+    apiFetch<AdminReactivateUserResponse>(`/admin/users/${id}/reactivate`, {
+      method: "PATCH",
+      body: JSON.stringify(body ?? {}),
+    }),
+
+  hardDeleteUser: (id: string, body?: { reason?: string }) =>
+    apiFetch<AdminHardDeleteUserResponse>(`/admin/users/${id}/hard`, {
+      method: "DELETE",
+      body: JSON.stringify(body ?? {}),
+    }),
 
   listAdminProjects: (params?: {
     q?: string;
@@ -621,6 +907,8 @@ export const api = {
       })}`,
     ),
 
+  getWalletHealth: () => apiFetch<AdminWalletHealth>("/admin/wallet/health"),
+
   listWalletWithdrawals: (params?: {
     q?: string;
     status?: WalletWithdrawalStatus;
@@ -700,6 +988,49 @@ export const api = {
   ) =>
     apiFetch<WalletFeeConfig>(`/admin/wallet/settings/fees/${key}`, {
       method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listWalletAssetPriceConfigs: () =>
+    apiFetch<WalletAssetPriceConfig[]>("/admin/wallet/settings/prices"),
+
+  updateWalletAssetPriceConfig: (
+    asset: WalletAssetCode,
+    body: Partial<{
+      providerId: string | null;
+      fallbackUsdPrice: string;
+      isActive: boolean;
+    }>,
+  ) =>
+    apiFetch<WalletAssetPriceConfig>(`/admin/wallet/settings/prices/${asset}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  getMiningConfig: () => apiFetch<AdminMiningConfig>("/admin/mining/config"),
+
+  updateMiningConfig: (
+    body: Partial<AdminMiningConfig>,
+  ) =>
+    apiFetch<AdminMiningConfig>("/admin/mining/config", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  getMiningMetrics: () => apiFetch<AdminMiningMetrics>("/admin/mining/metrics"),
+
+  getMiningLeaderboard: (params?: { q?: string; limit?: number; offset?: number }) =>
+    apiFetch<AdminMiningLeaderboardResponse>(
+      `/admin/mining/leaderboard${toQuery({
+        q: params?.q,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  adminBindReferral: (body: AdminBindReferralRequest) =>
+    apiFetch<AdminBindReferralResponse>("/admin/referrals/bind", {
+      method: "POST",
       body: JSON.stringify(body),
     }),
 };

@@ -38,7 +38,7 @@ function formatDate(dateStr: string) {
 
 export default function TagsPage() {
   const session = useAdminSession();
-  const canMutate = canManageTags(session.roles);
+  const canMutate = canManageTags(session.effectiveRoles);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

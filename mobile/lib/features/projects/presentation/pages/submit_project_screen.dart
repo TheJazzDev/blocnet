@@ -3,7 +3,7 @@ import 'package:blocnet/features/projects/data/repositories/project_proposals_ap
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/tags_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class SubmitProjectScreen extends StatefulWidget {
@@ -66,10 +66,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Your current role does not allow project submission.',
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 13,
-            ),
+            style: AppTypography.custom(color: AppColors.textMuted,
+              size: 13,
+              weight: FontWeight.w400,),
           ),
         ),
       );
@@ -96,10 +95,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Primary tags are not configured yet. Contact admin.',
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 13,
-            ),
+            style: AppTypography.custom(color: AppColors.textMuted,
+              size: 13,
+              weight: FontWeight.w400,),
           ),
         ),
       );
@@ -118,10 +116,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               if (_submitError != null && _submitError!.isNotEmpty) ...[
                 Text(
                   _submitError!,
-                  style: GoogleFonts.inter(
-                    color: AppColors.error500,
-                    fontSize: 12,
-                  ),
+                  style: AppTypography.custom(color: AppColors.error500,
+                    size: 12,
+                    weight: FontWeight.w400,),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -129,10 +126,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 14,
+                  weight: FontWeight.w400,),
                 decoration: _fieldDecoration(hintText: 'e.g. Codawoo'),
                 validator: (value) {
                   final next = value?.trim() ?? '';
@@ -146,10 +142,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _symbolController,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 14,
+                  weight: FontWeight.w400,),
                 decoration: _fieldDecoration(hintText: 'e.g. COD'),
               ),
               const SizedBox(height: 14),
@@ -157,10 +152,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _websiteController,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 14,
+                  weight: FontWeight.w400,),
                 decoration: _fieldDecoration(hintText: 'https://example.com'),
               ),
               const SizedBox(height: 14),
@@ -170,20 +164,19 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 value: _selectedPrimaryTagId,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 13,
+                  weight: FontWeight.w400,),
                 items: tagsStore.primaryTags
                     .map(
                       (tag) => DropdownMenuItem<String>(
                         value: tag.id,
                         child: Text(
                           tag.name,
-                          style: GoogleFonts.inter(
+                          style: AppTypography.custom(
                             color: AppColors.textSecondary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                            size: 13,
+                            weight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -207,10 +200,9 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 controller: _descriptionController,
                 minLines: 6,
                 maxLines: 10,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 14,
+                  weight: FontWeight.w400,),
                 decoration: _fieldDecoration(
                   hintText: 'Explain what this gem is about.',
                 ),
@@ -228,52 +220,80 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 controller: _reasonController,
                 minLines: 3,
                 maxLines: 6,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
+                style: AppTypography.custom(color: AppColors.textSecondary,
+                  size: 14,
+                  weight: FontWeight.w400,),
                 decoration: _fieldDecoration(
                   hintText: 'Credibility, risk checks, relevance, etc.',
                 ),
               ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: GestureDetector(
-                  onTap: _isSubmitting ? null : _submit,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: _isSubmitting
-                          ? null
-                          : LinearGradient(
-                              colors: [AppColors.teal500, AppColors.primary500],
-                            ),
-                      color: _isSubmitting ? AppColors.bgElevated : null,
-                      borderRadius: BorderRadius.circular(14),
+              const SizedBox(height: 24),
+              GestureDetector(
+                onTap: _isSubmitting ? null : _submit,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: _isSubmitting
+                        ? null
+                        : LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.teal400,
+                              AppColors.primary500,
+                            ],
+                          ),
+                    color: _isSubmitting ? AppColors.bgElevated : null,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _isSubmitting
+                          ? AppColors.borderSubtle
+                          : AppColors.teal400.withValues(alpha: 0.3),
+                      width: 1.5,
                     ),
-                    child: _isSubmitting
-                        ? Center(
-                            child: SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.teal400,
-                              ),
+                    boxShadow: _isSubmitting
+                        ? null
+                        : [
+                            BoxShadow(
+                              color: AppColors.teal400.withValues(alpha: 0.25),
+                              blurRadius: 16,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 4),
                             ),
-                          )
-                        : Text(
-                            'Submit For Approval',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                          ],
+                  ),
+                  child: _isSubmitting
+                      ? Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppColors.teal400,
                             ),
                           ),
-                  ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.send_rounded,
+                              size: 18,
+                              color: Colors.black,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Submit For Approval',
+                              style: AppTypography.custom(
+                                color: Colors.black,
+                                size: 15,
+                                weight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               ),
             ],
@@ -291,10 +311,10 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
       iconTheme: IconThemeData(color: AppColors.textMuted),
       title: Text(
         'Submit New Gem',
-        style: GoogleFonts.spaceGrotesk(
+        style: AppTypography.custom(
           color: AppColors.textPrimary,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
+          size: 16,
+          weight: FontWeight.w600,
         ),
       ),
     );
@@ -303,33 +323,49 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
   InputDecoration _fieldDecoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: GoogleFonts.inter(
+      hintStyle: AppTypography.custom(
         color: AppColors.textFaint,
-        fontSize: 13,
+        size: 13,
+        weight: FontWeight.w400,
       ),
       filled: true,
-      fillColor: AppColors.bgElevated,
+      fillColor: AppColors.bgSurface,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.borderSubtle),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: AppColors.borderSubtle.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.borderSubtle),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: AppColors.borderSubtle.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.teal500),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: AppColors.teal400,
+          width: 2,
+        ),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.error500),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: AppColors.error500,
+          width: 1.5,
+        ),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.error500),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: AppColors.error500,
+          width: 2,
+        ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 
@@ -392,10 +428,10 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: GoogleFonts.inter(
+      style: AppTypography.custom(
         color: AppColors.textMuted,
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
+        size: 12,
+        weight: FontWeight.w500,
       ),
     );
   }

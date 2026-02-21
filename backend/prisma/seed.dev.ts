@@ -298,16 +298,8 @@ async function main() {
     });
   }
 
-  await prisma.walletFeeConfig.upsert({
-    where: { key: 'withdrawal_bnt_v1' },
-    update: {
-      flatFee: '1',
-      percentFee: '0',
-      minFee: '1',
-      maxFee: null,
-      isActive: true,
-    },
-    create: {
+  const walletFeeConfigs = [
+    {
       key: 'withdrawal_bnt_v1',
       flatFee: '1',
       percentFee: '0',
@@ -315,7 +307,82 @@ async function main() {
       maxFee: null,
       isActive: true,
     },
-  });
+    {
+      key: 'withdrawal_bnb_v1',
+      flatFee: '0.0008',
+      percentFee: '0',
+      minFee: '0.0008',
+      maxFee: null,
+      isActive: true,
+    },
+    {
+      key: 'withdrawal_usdt_v1',
+      flatFee: '0.5',
+      percentFee: '0',
+      minFee: '0.5',
+      maxFee: null,
+      isActive: true,
+    },
+  ] as const;
+
+  for (const feeConfig of walletFeeConfigs) {
+    await prisma.walletFeeConfig.upsert({
+      where: { key: feeConfig.key },
+      update: {
+        flatFee: feeConfig.flatFee,
+        percentFee: feeConfig.percentFee,
+        minFee: feeConfig.minFee,
+        maxFee: feeConfig.maxFee,
+        isActive: feeConfig.isActive,
+      },
+      create: {
+        key: feeConfig.key,
+        flatFee: feeConfig.flatFee,
+        percentFee: feeConfig.percentFee,
+        minFee: feeConfig.minFee,
+        maxFee: feeConfig.maxFee,
+        isActive: feeConfig.isActive,
+      },
+    });
+  }
+
+  const assetPriceConfigs = [
+    {
+      asset: 'BNT' as const,
+      providerId: 'blocnet',
+      fallbackUsdPrice: '0.5',
+      isActive: true,
+    },
+    {
+      asset: 'BNB' as const,
+      providerId: 'binancecoin',
+      fallbackUsdPrice: '0',
+      isActive: true,
+    },
+    {
+      asset: 'USDT' as const,
+      providerId: 'tether',
+      fallbackUsdPrice: '1',
+      isActive: true,
+    },
+  ] as const;
+
+  for (const priceConfig of assetPriceConfigs) {
+    await prisma.walletAssetPriceConfig.upsert({
+      where: { asset: priceConfig.asset },
+      update: {
+        providerId: priceConfig.providerId,
+        fallbackUsdPrice: priceConfig.fallbackUsdPrice,
+        isActive: priceConfig.isActive,
+      },
+      create: {
+        asset: priceConfig.asset,
+        providerId: priceConfig.providerId,
+        fallbackUsdPrice: priceConfig.fallbackUsdPrice,
+        isActive: priceConfig.isActive,
+      },
+    });
+  }
 
   for (const user of users) {
     const profile = profileByKey.get(user.key)!;

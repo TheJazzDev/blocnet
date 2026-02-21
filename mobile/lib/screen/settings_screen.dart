@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
@@ -53,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _SettingSwitchTile(
               icon: Icons.priority_high,
               title: 'High urgency only',
-              subtitle: 'Mute low and mid urgency alerts',
+              subtitle: 'Mute low and medium urgency alerts',
               value: _highUrgencyOnly,
               onChanged: (v) => setState(() => _highUrgencyOnly = v),
             ),
@@ -139,57 +140,88 @@ class _SettingSwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = value ? AppColors.teal400 : AppColors.textMuted;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderSubtle, width: 1),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgSurface,
+            AppColors.bgSurface.withValues(alpha: 0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: value
+              ? AppColors.teal400.withValues(alpha: 0.25)
+              : AppColors.borderSubtle,
+          width: 1.5,
+        ),
+        boxShadow: value
+            ? [
+                BoxShadow(
+                  color: AppColors.teal400.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  spreadRadius: 0,
+                ),
+              ]
+            : null,
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: AppColors.bgElevated,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.borderSubtle, width: 1),
+              gradient: LinearGradient(
+                colors: [
+                  iconColor.withValues(alpha: 0.15),
+                  iconColor.withValues(alpha: 0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: iconColor.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
             ),
-            child: Icon(icon, size: 17, color: AppColors.textMuted),
+            child: Icon(icon, size: 20, color: iconColor),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    fontSize: 14,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w600,
+                    size: 14,
+                    weight: FontWeight.w700,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextStyle(
+                  style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    fontSize: 12,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w400,
+                    size: 12,
+                    weight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Switch(
             value: value,
             onChanged: onChanged,
             activeColor: AppColors.teal400,
-            activeTrackColor: AppColors.teal500.withValues(alpha: 0.3),
+            activeTrackColor: AppColors.teal500.withValues(alpha: 0.35),
             inactiveThumbColor: AppColors.textFaint,
             inactiveTrackColor: AppColors.bgElevated,
           ),
@@ -215,25 +247,59 @@ class _SignOutButton extends StatelessWidget {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.error500.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(14),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.error500.withValues(alpha: 0.08),
+              AppColors.error500.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.error500.withValues(alpha: 0.25),
-            width: 1,
+            color: AppColors.error500.withValues(alpha: 0.3),
+            width: 1.5,
           ),
-        ),
-        child: Center(
-          child: Text(
-            'Sign out',
-            style: TextStyle(
-              color: AppColors.error500,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.error500.withValues(alpha: 0.1),
+              blurRadius: 12,
+              spreadRadius: 0,
             ),
-          ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.error500.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.error500.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(
+                Icons.logout_rounded,
+                size: 16,
+                color: AppColors.error500,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Sign Out',
+              style: AppTypography.custom(
+                color: AppColors.error500,
+                weight: FontWeight.w700,
+                size: 15,
+              ),
+            ),
+          ],
         ),
       ),
     );

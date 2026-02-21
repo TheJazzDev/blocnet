@@ -78,7 +78,7 @@ function formatDate(dateStr: string | null) {
 
 export default function WalletWithdrawalsPage() {
   const session = useAdminSession();
-  const canMutate = canMutateWallet(session.roles);
+  const canMutate = canMutateWallet(session.effectiveRoles);
 
   const [rows, setRows] = useState<AdminWalletWithdrawal[]>([]);
   const [total, setTotal] = useState(0);

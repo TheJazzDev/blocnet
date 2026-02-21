@@ -37,9 +37,10 @@ class _PriorityScreensState extends State<PriorityScreens> {
 
   @override
   Widget build(BuildContext context) {
+    final title = _priorityTitle(priority);
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      appBar: const CustomAppBar(title: ''),
+      appBar: CustomAppBar(title: title, backButton: true),
       body: Container(
         padding: const EdgeInsets.all(16),
         child: Consumer<UpdatesStore>(
@@ -51,15 +52,6 @@ class _PriorityScreensState extends State<PriorityScreens> {
               children: [
                 Wrap(
                   children: [
-                    Text(
-                      '${priority.toString()} Urgency',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 15,
-                        fontFamily: 'Geist',
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                     FilterLabel(
                       selectedTags: viewModel.selectedFilters,
                       unselectedTags: viewModel.allSecondaryTags,
@@ -89,5 +81,11 @@ class _PriorityScreensState extends State<PriorityScreens> {
         ),
       ),
     );
+  }
+
+  String _priorityTitle(Priority selectedPriority) {
+    if (selectedPriority == Priority.high) return 'High Urgency';
+    if (selectedPriority == Priority.mid) return 'Medium Urgency';
+    return 'Low Urgency';
   }
 }

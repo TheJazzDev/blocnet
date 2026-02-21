@@ -25,10 +25,10 @@ class TagCard extends StatelessWidget {
 
   // Map icon names to accent colors for identity
   static const Map<String, int> _accentMap = {
-    'timeline': 0xFF00E5B8,   // teal — Trending
-    'emergency': 0xFF00E5B8,  // teal — High
-    'brightness': 0xFF339DFF, // blue — Mid
-    'calm': 0xFF737373,       // muted — Low
+    'timeline': 0xFF00E5B8, // teal — Trending
+    'emergency': 0xFF00E5B8, // teal — High
+    'brightness': 0xFF339DFF, // blue — Medium
+    'calm': 0xFF737373, // muted — Low
   };
 
   @override

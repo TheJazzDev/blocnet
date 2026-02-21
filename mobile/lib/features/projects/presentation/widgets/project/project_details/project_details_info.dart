@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/project/follow_preference_bottom_sheet.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/shared/update_project_logo.dart';
 import 'package:blocnet/services/projects_store.dart';
@@ -176,6 +177,30 @@ class ProjectDetailsInfo extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      Consumer<ProjectsStore>(
+                        builder: (context, store, _) {
+                          final isFollowed =
+                              store.isProjectFollowed(project.id);
+                          if (!isFollowed) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _ActionIcon(
+                                icon: Icons.notifications_active_outlined,
+                                onTap: () => showFollowPreferenceBottomSheet(
+                                  context,
+                                  projectId: project.id,
+                                  projectName: project.name,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                          );
+                        },
+                      ),
                       _ActionIcon(icon: Icons.share_outlined),
                       const SizedBox(width: 8),
                       _ActionIcon(icon: Icons.bookmark_border),
@@ -328,21 +353,28 @@ class _DetailChip extends StatelessWidget {
 }
 
 class _ActionIcon extends StatelessWidget {
-  const _ActionIcon({required this.icon});
+  const _ActionIcon({
+    required this.icon,
+    this.onTap,
+  });
 
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        color: AppColors.bgBase.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderSubtle, width: 1),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: AppColors.bgBase.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.borderSubtle, width: 1),
+        ),
+        child: Icon(icon, size: 20, color: AppColors.textSecondary),
       ),
-      child: Icon(icon, size: 20, color: AppColors.textSecondary),
     );
   }
 }

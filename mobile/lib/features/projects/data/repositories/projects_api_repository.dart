@@ -43,4 +43,42 @@ class ProjectsApiRepository {
   Future<void> unfollowProject(String projectId) async {
     await _apiClient.delete('/projects/$projectId/follow');
   }
+
+  Future<Map<String, dynamic>?> updateFollowPreferences(
+    String projectId, {
+    String? alertMinUrgency,
+    DateTime? mutedUntil,
+    bool clearMute = false,
+  }) async {
+    final body = <String, dynamic>{};
+    if (alertMinUrgency != null) {
+      body['alertMinUrgency'] = alertMinUrgency;
+    }
+
+    if (clearMute) {
+      body['mutedUntil'] = null;
+    } else if (mutedUntil != null) {
+      body['mutedUntil'] = mutedUntil.toUtc().toIso8601String();
+    }
+
+    final response = await _apiClient.patch(
+      '/projects/$projectId/follow/preferences',
+      body: body,
+    );
+
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return response;
+  }
+
+  Future<Map<String, dynamic>?> fetchFollowPreferences(String projectId) async {
+    final response =
+        await _apiClient.get('/projects/$projectId/follow/preferences');
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+    return response;
+  }
 }

@@ -8,6 +8,12 @@ import { AppRole } from '../common/enums/role.enum';
 import { appRoleToRoleName } from '../common/types/role-map';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import {
+  CAPABILITY_SECTIONS,
+  GOVERNANCE_ROLES,
+  ROLE_CAPABILITIES,
+  SPACE_ROLE_NOTES,
+} from './role-capabilities';
 
 @Injectable()
 export class RolesService {
@@ -15,6 +21,19 @@ export class RolesService {
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
   ) {}
+
+  getRolesMatrix() {
+    return {
+      governanceRoles: GOVERNANCE_ROLES,
+      sections: CAPABILITY_SECTIONS.map((section) => ({
+        ...section,
+        capabilities: ROLE_CAPABILITIES.filter(
+          (capability) => capability.section === section.id,
+        ),
+      })),
+      spaceRoles: SPACE_ROLE_NOTES,
+    };
+  }
 
   async promoteToAdmin(actorId: string, userId: string, note?: string) {
     return this.promoteRole(

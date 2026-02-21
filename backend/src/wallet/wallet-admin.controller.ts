@@ -20,6 +20,7 @@ import { ListWalletUsersQuery } from './dto/list-wallet-users.query';
 import { ReviewWithdrawalDto } from './dto/review-withdrawal.dto';
 import { ReviewKycDto } from './dto/review-kyc.dto';
 import { UpdateRiskLimitDto } from './dto/update-risk-limit.dto';
+import { UpdateWalletAssetPriceDto } from './dto/update-wallet-asset-price.dto';
 import { UpdateWalletFeeDto } from './dto/update-wallet-fee.dto';
 import { WalletAdminService } from './wallet-admin.service';
 
@@ -28,6 +29,11 @@ import { WalletAdminService } from './wallet-admin.service';
 @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
 export class WalletAdminController {
   constructor(private readonly walletAdminService: WalletAdminService) {}
+
+  @Get('health')
+  async getWalletHealth() {
+    return this.walletAdminService.getWalletHealth();
+  }
 
   @Get('users')
   async listWalletUsers(@Query() query: ListWalletUsersQuery) {
@@ -104,5 +110,23 @@ export class WalletAdminController {
       throw new UnauthorizedException('User context missing');
     }
     return this.walletAdminService.updateFeeConfig(user.id, key, dto);
+  }
+
+  @Get('settings/prices')
+  async listAssetPriceConfigs() {
+    return this.walletAdminService.listAssetPriceConfigs();
+  }
+
+  @Patch('settings/prices/:asset')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async updateAssetPriceConfig(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('asset') asset: string,
+    @Body() dto: UpdateWalletAssetPriceDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.walletAdminService.updateAssetPriceConfig(user.id, asset, dto);
   }
 }

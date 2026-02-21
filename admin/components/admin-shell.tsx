@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -21,9 +21,22 @@ import {
   Bell,
   Wallet,
   Shield,
+  Zap,
+  CheckCircle2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { canManageTags, canMutateSettings, canSendNotifications } from "@/lib/rbac";
+import {
+  canManageTags,
+  canMutateSettings,
+  canSendNotifications,
+  formatRoleLabel,
+  getAdminGovernanceRole,
+  getRoleViewOptions,
+  normalizeAdminPanelRole,
+  resolveEffectiveRoles,
+  ROLE_VIEW_COOKIE,
+  type AdminPanelRole,
+} from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,11 +47,22 @@ export interface AdminShellUser {
   email: string;
   displayName: string | null;
   roles: string[];
+  actingAsRole?: AdminPanelRole | null;
 }
 
-const AdminSessionContext = createContext<AdminShellUser | null>(null);
+export interface AdminSessionUser {
+  id: string;
+  email: string;
+  displayName: string | null;
+  realRoles: string[];
+  effectiveRoles: string[];
+  actingAsRole: AdminPanelRole | null;
+  roles: string[];
+}
 
-export function useAdminSession(): AdminShellUser {
+const AdminSessionContext = createContext<AdminSessionUser | null>(null);
+
+export function useAdminSession(): AdminSessionUser {
   const value = useContext(AdminSessionContext);
   if (!value) {
     throw new Error("useAdminSession must be used inside AdminShell");
@@ -46,10 +70,17 @@ export function useAdminSession(): AdminShellUser {
   return value;
 }
 
+function setRoleViewCookie(role: AdminPanelRole | null) {
+  if (typeof document === "undefined") return;
+  if (!role) {
+    document.cookie = `${ROLE_VIEW_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+    return;
+  }
+  document.cookie = `${ROLE_VIEW_COOKIE}=${role}; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+}
+
 function buildNavItems(userRoles: string[]) {
-  const overviewItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  ];
+  const overviewItems = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }];
 
   const contentItems = [
     { href: "/projects", label: "Projects", icon: FolderKanban },
@@ -65,14 +96,20 @@ function buildNavItems(userRoles: string[]) {
     { href: "/wallet-settings", label: "Wallet Settings", icon: Settings },
   ];
 
+  const engagementItems = [{ href: "/mining", label: "Mining", icon: Zap }];
+  engagementItems.push({
+    href: "/mining/leaderboard",
+    label: "Leaderboard",
+    icon: CheckCircle2,
+  });
+
   const accessItems = [
     { href: "/users", label: "Users & Roles", icon: Users },
+    { href: "/roles", label: "Roles & Access", icon: Shield },
     { href: "/applications", label: "Applications", icon: FileCheck },
   ];
 
-  const systemItems = [
-    { href: "/audit-log", label: "Audit Log", icon: ScrollText },
-  ];
+  const systemItems = [{ href: "/audit-log", label: "Audit Log", icon: ScrollText }];
 
   if (canManageTags(userRoles)) {
     contentItems.push({ href: "/tags", label: "Tags", icon: Tags });
@@ -90,6 +127,7 @@ function buildNavItems(userRoles: string[]) {
     { label: "Overview", items: overviewItems },
     { label: "Content", items: contentItems },
     { label: "Wallet", items: walletItems },
+    { label: "Engagement", items: engagementItems },
     { label: "Access", items: accessItems },
     { label: "System", items: systemItems },
   ].filter((group) => group.items.length > 0);
@@ -99,12 +137,21 @@ function SidebarContent({
   pathname,
   onSignOut,
   user,
+  topRole,
+  roleOptions,
+  onChangeRoleView,
+  onResetRoleView,
 }: {
   pathname: string;
   onSignOut: () => void;
-  user: AdminShellUser;
+  user: AdminSessionUser;
+  topRole: AdminPanelRole | null;
+  roleOptions: AdminPanelRole[];
+  onChangeRoleView: (role: AdminPanelRole | null) => void;
+  onResetRoleView: () => void;
 }) {
-  const navGroups = useMemo(() => buildNavItems(user.roles), [user.roles]);
+  const navGroups = useMemo(() => buildNavItems(user.effectiveRoles), [user.effectiveRoles]);
+  const selectedRole = user.actingAsRole ?? topRole;
 
   return (
     <>
@@ -120,7 +167,7 @@ function SidebarContent({
         <nav className="space-y-4">
           {navGroups.map((group) => (
             <div key={group.label} className="space-y-1">
-              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-primary/70">
                 {group.label}
               </p>
               {group.items.map((item) => {
@@ -132,7 +179,7 @@ function SidebarContent({
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-primary/10 text-primary"
+                        ? "bg-gradient-to-r from-primary/15 to-teal-400/10 text-primary"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     )}
                   >
@@ -148,11 +195,45 @@ function SidebarContent({
       <Separator />
       <div className="space-y-3 p-4">
         <div className="rounded-lg border bg-card p-3">
-          <p className="truncate text-xs font-medium">
-            {user.displayName ?? user.email}
-          </p>
+          <p className="truncate text-xs font-medium">{user.displayName ?? user.email}</p>
           <p className="truncate text-[11px] text-muted-foreground">{user.email}</p>
+          {topRole && (
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Real Role: <span className="font-medium text-foreground">{formatRoleLabel(topRole)}</span>
+            </p>
+          )}
         </div>
+
+        {roleOptions.length > 0 && selectedRole && (
+          <div className="rounded-lg border bg-card p-3">
+            <label htmlFor="role-view" className="text-[11px] font-medium text-muted-foreground">
+              View As Role
+            </label>
+            <select
+              id="role-view"
+              value={selectedRole}
+              onChange={(event) => onChangeRoleView(normalizeAdminPanelRole(event.target.value))}
+              className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+            >
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {formatRoleLabel(role)}
+                </option>
+              ))}
+            </select>
+            {user.actingAsRole && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 h-7 w-full text-xs"
+                onClick={onResetRoleView}
+              >
+                Return to Real Role
+              </Button>
+            )}
+          </div>
+        )}
+
         <Button
           variant="ghost"
           size="sm"
@@ -167,17 +248,43 @@ function SidebarContent({
   );
 }
 
-// Refresh the httpOnly access-token cookie before it expires.
-// Supabase access tokens last 1 hour; we refresh every 50 minutes.
-const REFRESH_INTERVAL_MS = 50 * 60 * 1000;
+const REFRESH_LOCK_KEY = "admin_refresh_lock";
+const REFRESH_LOCK_DURATION_MS = 5000;
+
+let refreshPromise: Promise<boolean> | null = null;
 
 async function refreshSession(): Promise<boolean> {
-  try {
-    const res = await fetch("/api/auth/refresh-token", { method: "POST" });
-    return res.ok;
-  } catch {
-    return false;
+  if (refreshPromise) {
+    return refreshPromise;
   }
+
+  const now = Date.now();
+  const lockData = localStorage.getItem(REFRESH_LOCK_KEY);
+  if (lockData) {
+    const lockTime = parseInt(lockData, 10);
+    if (now - lockTime < REFRESH_LOCK_DURATION_MS) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return true;
+    }
+  }
+
+  localStorage.setItem(REFRESH_LOCK_KEY, now.toString());
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch("/api/auth/refresh-token", { method: "POST" });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      localStorage.removeItem(REFRESH_LOCK_KEY);
+      setTimeout(() => {
+        refreshPromise = null;
+      }, 500);
+    }
+  })();
+
+  return refreshPromise;
 }
 
 export function AdminShell({
@@ -190,44 +297,93 @@ export function AdminShell({
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [actingAsRole, setActingAsRole] = useState<AdminPanelRole | null>(
+    currentUser.actingAsRole ?? null,
+  );
 
-  // Silently refresh the access-token cookie on mount and every 50 minutes
+  const realRoles = useMemo(() => Array.from(new Set(currentUser.roles)), [currentUser.roles]);
+  const topRole = useMemo(() => getAdminGovernanceRole(realRoles), [realRoles]);
+  const roleOptions = useMemo(() => getRoleViewOptions(realRoles), [realRoles]);
+
+  useEffect(() => {
+    setActingAsRole(currentUser.actingAsRole ?? null);
+  }, [currentUser.actingAsRole]);
+
+  useEffect(() => {
+    if (actingAsRole && !roleOptions.includes(actingAsRole)) {
+      setActingAsRole(null);
+      setRoleViewCookie(null);
+    }
+  }, [actingAsRole, roleOptions]);
+
   useEffect(() => {
     refreshSession();
+  }, []);
 
-    intervalRef.current = setInterval(async () => {
-      const ok = await refreshSession();
-      if (!ok) {
-        // Refresh token expired — force sign-in
-        router.push("/signin?next=" + encodeURIComponent(pathname));
-      }
-    }, REFRESH_INTERVAL_MS);
+  const effectiveRoles = useMemo(
+    () => resolveEffectiveRoles(realRoles, actingAsRole),
+    [actingAsRole, realRoles],
+  );
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const sessionValue = useMemo<AdminSessionUser>(
+    () => ({
+      id: currentUser.id,
+      email: currentUser.email,
+      displayName: currentUser.displayName,
+      realRoles,
+      effectiveRoles,
+      roles: effectiveRoles,
+      actingAsRole,
+    }),
+    [
+      actingAsRole,
+      currentUser.displayName,
+      currentUser.email,
+      currentUser.id,
+      effectiveRoles,
+      realRoles,
+    ],
+  );
 
   async function handleSignOut() {
+    setRoleViewCookie(null);
     await supabase.auth.signOut();
     await fetch("/api/auth/sign-out", { method: "POST" });
     router.push("/signin");
     router.refresh();
   }
 
+  function handleRoleViewChange(nextRole: AdminPanelRole | null) {
+    const nextActing =
+      nextRole && topRole && nextRole !== topRole && roleOptions.includes(nextRole) ? nextRole : null;
+    setActingAsRole(nextActing);
+    setRoleViewCookie(nextActing);
+    router.refresh();
+  }
+
+  function resetRoleView() {
+    setActingAsRole(null);
+    setRoleViewCookie(null);
+    router.refresh();
+  }
+
   return (
-    <AdminSessionContext.Provider value={currentUser}>
+    <AdminSessionContext.Provider value={sessionValue}>
       <div className="flex h-screen overflow-hidden">
         <aside className="hidden w-[260px] shrink-0 flex-col border-r bg-sidebar lg:flex">
-          <SidebarContent pathname={pathname} onSignOut={handleSignOut} user={currentUser} />
+          <SidebarContent
+            pathname={pathname}
+            onSignOut={handleSignOut}
+            user={sessionValue}
+            topRole={topRole}
+            roleOptions={roleOptions}
+            onChangeRoleView={handleRoleViewChange}
+            onResetRoleView={resetRoleView}
+          />
         </aside>
 
         {mobileOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
+          <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMobileOpen(false)} />
         )}
 
         <aside
@@ -236,7 +392,15 @@ export function AdminShell({
             mobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
-          <SidebarContent pathname={pathname} onSignOut={handleSignOut} user={currentUser} />
+          <SidebarContent
+            pathname={pathname}
+            onSignOut={handleSignOut}
+            user={sessionValue}
+            topRole={topRole}
+            roleOptions={roleOptions}
+            onChangeRoleView={handleRoleViewChange}
+            onResetRoleView={resetRoleView}
+          />
         </aside>
 
         <div className="flex flex-1 flex-col overflow-hidden">
@@ -249,6 +413,20 @@ export function AdminShell({
               <span className="text-sm font-bold">Blocnet Admin</span>
             </div>
           </div>
+
+          {sessionValue.actingAsRole && (
+            <div className="border-b border-teal-400/20 bg-gradient-to-r from-primary/10 to-teal-400/10 px-4 py-2.5 md:px-6 lg:px-8">
+              <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
+                <p className="flex items-center gap-2 text-sm text-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-teal-300" />
+                  Viewing as <span className="font-semibold">{formatRoleLabel(sessionValue.actingAsRole)}</span>
+                </p>
+                <Button variant="outline" size="sm" onClick={resetRoleView}>
+                  Return to Real Role
+                </Button>
+              </div>
+            </div>
+          )}
 
           <main className="flex-1 overflow-y-auto">
             <div className="mx-auto max-w-7xl p-4 md:p-6 lg:p-8">{children}</div>

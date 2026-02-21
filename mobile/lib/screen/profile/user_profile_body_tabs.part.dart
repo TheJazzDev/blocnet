@@ -45,10 +45,10 @@ class _ProfileTabBar extends StatelessWidget {
                 height: 44,
                 child: Text(
                   label,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.custom(
                     color: isActive ? AppColors.teal400 : AppColors.textFaint,
-                    fontSize: 13,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    size: 13,
+                    weight: isActive ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ),
@@ -120,10 +120,9 @@ class _BookmarksEmptyState extends StatelessWidget {
             Text(
               'Bookmark posts from Community to save them here',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                color: AppColors.textMuted,
-                fontSize: 12,
-              ),
+              style: AppTypography.custom(color: AppColors.textMuted,
+                size: 12,
+                weight: FontWeight.w400,),
             ),
           ],
         ),
@@ -185,10 +184,10 @@ class _BookmarkItem extends StatelessWidget {
                     Expanded(
                       child: Text(
                         post.content,
-                        style: GoogleFonts.inter(
+                        style: AppTypography.custom(
                           color: AppColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                          size: 13,
+                          weight: FontWeight.w600,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -197,10 +196,9 @@ class _BookmarkItem extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       getTimeStamp(post.createdAt),
-                      style: GoogleFonts.inter(
-                        color: AppColors.textFaint,
-                        fontSize: 10,
-                      ),
+                      style: AppTypography.custom(color: AppColors.textFaint,
+                        size: 10,
+                        weight: FontWeight.w400,),
                     ),
                   ],
                 ),
@@ -209,10 +207,9 @@ class _BookmarkItem extends StatelessWidget {
                   children: [
                     Text(
                       '@${author.toLowerCase().replaceAll(' ', '_')}',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textFaint,
-                        fontSize: 10,
-                      ),
+                      style: AppTypography.custom(color: AppColors.textFaint,
+                        size: 10,
+                        weight: FontWeight.w400,),
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -225,10 +222,10 @@ class _BookmarkItem extends StatelessWidget {
                       ),
                       child: Text(
                         post.topic.label,
-                        style: GoogleFonts.inter(
+                        style: AppTypography.custom(
                           color: AppColors.textFaint,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
+                          size: 9,
+                          weight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -292,18 +289,24 @@ class _WatchlistEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Column(
-        children: [
-          Icon(Icons.visibility_outlined, size: 36, color: AppColors.textFaint),
-          const SizedBox(height: 8),
-          Text(
-            'No watchlist items yet',
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 12,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.visibility_outlined,
+                size: 36, color: AppColors.textFaint),
+            const SizedBox(height: 8),
+            Text(
+              'No watchlist items yet',
+              textAlign: TextAlign.center,
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: 12,
+                weight: FontWeight.w400,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -332,10 +335,10 @@ class _WatchlistItem extends StatelessWidget {
               Expanded(
                 child: Text(
                   project.name,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    size: 13,
+                    weight: FontWeight.w700,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -350,10 +353,10 @@ class _WatchlistItem extends StatelessWidget {
                 ),
                 child: Text(
                   project.primaryTag.name,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+                    size: 10,
+                    weight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -362,11 +365,10 @@ class _WatchlistItem extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             project.description,
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 11,
-              height: 1.4,
-            ),
+            style: AppTypography.custom(color: AppColors.textMuted,
+              size: 11,
+              weight: FontWeight.w400,
+              height: 1.4,),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -377,10 +379,9 @@ class _WatchlistItem extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 '${project.followersCount} followers',
-                style: GoogleFonts.inter(
-                  color: AppColors.textFaint,
-                  fontSize: 10,
-                ),
+                style: AppTypography.custom(color: AppColors.textFaint,
+                  size: 10,
+                  weight: FontWeight.w400,),
               ),
             ],
           ),
@@ -427,18 +428,23 @@ class _HistoryEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Column(
-        children: [
-          Icon(Icons.history_rounded, size: 36, color: AppColors.textFaint),
-          const SizedBox(height: 8),
-          Text(
-            'No activity history yet',
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 12,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.history_rounded, size: 36, color: AppColors.textFaint),
+            const SizedBox(height: 8),
+            Text(
+              'No activity history yet',
+              textAlign: TextAlign.center,
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: 12,
+                weight: FontWeight.w400,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -470,19 +476,18 @@ class _HistoryItem extends StatelessWidget {
               children: [
                 Text(
                   item.label,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    size: 12,
+                    weight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   getTimeStamp(item.createdAt),
-                  style: GoogleFonts.inter(
-                    color: AppColors.textFaint,
-                    fontSize: 10,
-                  ),
+                  style: AppTypography.custom(color: AppColors.textFaint,
+                    size: 10,
+                    weight: FontWeight.w400,),
                 ),
               ],
             ),

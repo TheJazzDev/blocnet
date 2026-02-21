@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/services/api/api_client.dart';
@@ -8,6 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthStore extends ChangeNotifier {
   AuthStore() {
+    ApiClient.setAuthTokenRefresher(_refreshAccessTokenSilently);
+
     if (AppConfig.isSupabaseConfigured) {
       _authSubscription =
           Supabase.instance.client.auth.onAuthStateChange.listen(
@@ -25,12 +28,15 @@ class AuthStore extends ChangeNotifier {
         },
       );
     }
+
+    unawaited(_restorePendingReferralCode());
   }
 
   final ApiClient _apiClient = ApiClient();
   StreamSubscription<AuthState>? _authSubscription;
   static const Duration _authTimeout = Duration(seconds: 15);
   static const String _spaceKeyPrefix = 'blocnet_active_space_';
+  static const String _pendingReferralCodeKey = 'blocnet_pending_referral_code';
 
   bool _isAuthenticated = false;
   bool _isSubmitting = false;
@@ -46,6 +52,7 @@ class AuthStore extends ChangeNotifier {
   String? _walletStatus;
   String? _walletAddress;
   String? _kycStatus;
+  String? _pendingReferralCode;
   String? _lastError;
 
   // ── Space switcher — 'user' | 'hunter' ───────────────────────────────────
@@ -64,6 +71,7 @@ class AuthStore extends ChangeNotifier {
   String? get walletStatus => _walletStatus;
   String? get walletAddress => _walletAddress;
   String? get kycStatus => _kycStatus;
+  String? get pendingReferralCode => _pendingReferralCode;
   List<String> get roles => List.unmodifiable(_roles);
   bool get isOwner => _roles.contains('owner');
   bool get isAdmin => _roles.contains('admin');
@@ -166,6 +174,7 @@ class AuthStore extends ChangeNotifier {
     required String username,
     required String email,
     required String password,
+    String? referralCode,
   }) async {
     if (_isSubmitting) return false;
     if (!isSupabaseConfigured) {
@@ -179,6 +188,11 @@ class AuthStore extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final normalizedReferral = _normalizeReferralCode(referralCode);
+      if (normalizedReferral != null) {
+        await setPendingReferralCode(normalizedReferral);
+      }
+
       final response = await Supabase.instance.client.auth.signUp(
         email: email.trim(),
         password: password,
@@ -394,6 +408,47 @@ class AuthStore extends ChangeNotifier {
     }
   }
 
+  Future<bool> uploadAvatarImage(File file) async {
+    if (!await file.exists()) {
+      _lastError = 'Selected image file no longer exists';
+      notifyListeners();
+      return false;
+    }
+
+    final fileSize = await file.length();
+    if (fileSize > 5 * 1024 * 1024) {
+      _lastError = 'Avatar must be 5MB or smaller';
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      final response = await _apiClient.postMultipartFile(
+        '/me/avatar',
+        fieldName: 'file',
+        file: file,
+      );
+      if (response is! Map<String, dynamic>) {
+        _lastError = 'Unexpected avatar upload response';
+        notifyListeners();
+        return false;
+      }
+
+      final avatarUrl = response['avatarUrl']?.toString();
+      if (avatarUrl != null && avatarUrl.isNotEmpty) {
+        _avatarUrl = avatarUrl;
+      }
+
+      _lastError = null;
+      notifyListeners();
+      return true;
+    } catch (error) {
+      _lastError = error.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> verifyAndSignIn(
     String accessToken, {
     bool setSubmitting = true,
@@ -436,6 +491,7 @@ class AuthStore extends ChangeNotifier {
       _roles = _parseRoles(user['roles']);
 
       await _hydrateProfileFromMe();
+      await _attemptPendingReferralBind();
       await _restoreActiveSpacePreference();
       if (!hasHunterSpace) {
         _activeSpace = 'user';
@@ -472,6 +528,31 @@ class AuthStore extends ChangeNotifier {
     _clearAuth(notify: true);
   }
 
+  Future<String?> _refreshAccessTokenSilently() async {
+    if (!isSupabaseConfigured) {
+      return null;
+    }
+
+    try {
+      final response = await Supabase.instance.client.auth
+          .refreshSession()
+          .timeout(_authTimeout);
+
+      final session =
+          response.session ?? Supabase.instance.client.auth.currentSession;
+      final token = session?.accessToken;
+      if (token == null || token.trim().isEmpty) {
+        return null;
+      }
+
+      _syncAccessToken(token);
+      _email = session?.user.email ?? _email;
+      return token;
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _syncAccessToken(String token) {
     _accessToken = token;
     ApiClient.setAuthToken(token);
@@ -501,6 +582,7 @@ class AuthStore extends ChangeNotifier {
 
   @override
   void dispose() {
+    ApiClient.setAuthTokenRefresher(null);
     _authSubscription?.cancel();
     super.dispose();
   }
@@ -530,6 +612,70 @@ class AuthStore extends ChangeNotifier {
     } catch (_) {
       // Keep auth successful even when profile enrichment fails.
     }
+  }
+
+  Future<void> setPendingReferralCode(String? code) async {
+    final normalized = _normalizeReferralCode(code);
+    _pendingReferralCode = normalized;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (normalized == null) {
+        await prefs.remove(_pendingReferralCodeKey);
+      } else {
+        await prefs.setString(_pendingReferralCodeKey, normalized);
+      }
+    } catch (_) {
+      // Ignore storage failures and keep in-memory state.
+    }
+  }
+
+  Future<void> _restorePendingReferralCode() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _pendingReferralCode = _normalizeReferralCode(
+        prefs.getString(_pendingReferralCodeKey),
+      );
+      notifyListeners();
+    } catch (_) {
+      _pendingReferralCode = null;
+    }
+  }
+
+  Future<void> _attemptPendingReferralBind() async {
+    final pending = _pendingReferralCode;
+    if (!_isAuthenticated || pending == null || pending.isEmpty) {
+      return;
+    }
+
+    try {
+      await _apiClient.post('/referrals/bind', body: {'code': pending});
+      await setPendingReferralCode(null);
+    } on ApiException catch (error) {
+      final body = (error.responseBody ?? '').toLowerCase();
+      // Clear locally if code is no longer bindable for this account.
+      if (error.statusCode == 400 ||
+          error.statusCode == 404 ||
+          error.statusCode == 409 ||
+          body.contains('already') ||
+          body.contains('expired') ||
+          body.contains('not found') ||
+          body.contains('invalid')) {
+        await setPendingReferralCode(null);
+      }
+    } catch (_) {
+      // Keep pending value and retry on next authenticated session.
+    }
+  }
+
+  String? _normalizeReferralCode(String? value) {
+    final trimmed = value?.trim().toUpperCase();
+    if (trimmed == null || trimmed.isEmpty) {
+      return null;
+    }
+
+    return trimmed;
   }
 
   Future<void> _restoreActiveSpacePreference() async {

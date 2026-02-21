@@ -13,7 +13,7 @@ import { canMutateSettings } from "@/lib/rbac";
 
 export default function SettingsPage() {
   const session = useAdminSession();
-  const canMutate = canMutateSettings(session.roles);
+  const canMutate = canMutateSettings(session.effectiveRoles);
 
   return (
     <div className="space-y-6">

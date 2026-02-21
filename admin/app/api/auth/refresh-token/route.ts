@@ -9,6 +9,11 @@ const COOKIE_OPTS = {
   path: "/",
 };
 
+function isConcurrentRefreshError(message: string | undefined): boolean {
+  const normalized = message?.toLowerCase() ?? "";
+  return normalized.includes("already used") || normalized.includes("reuse interval");
+}
+
 export async function POST() {
   const store = await cookies();
   const refreshToken = store.get("admin_refresh_token")?.value;
@@ -21,9 +26,18 @@ export async function POST() {
   const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
 
   if (error || !data.session) {
-    // Refresh token invalid/expired — clear both cookies
+    const isConcurrent = isConcurrentRefreshError(error?.message);
+
+    // Do not wipe cookies on expected concurrent-rotation races.
+    // Another in-flight request may have already rotated the refresh token.
+    if (isConcurrent) {
+      return NextResponse.json({ ok: true, concurrent: true });
+    }
+
     store.delete("admin_token");
     store.delete("admin_refresh_token");
+
+    console.error("[refresh-token] Refresh failed:", error?.message || "No session");
     return NextResponse.json({ error: "Session expired" }, { status: 401 });
   }
 

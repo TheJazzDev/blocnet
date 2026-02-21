@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 type AuditInput = {
@@ -12,10 +13,15 @@ type AuditInput = {
 
 @Injectable()
 export class AuditLogService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(AuditLogService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async create(input: AuditInput) {
-    return this.prisma.auditLog.create({
+    const entry = await this.prisma.auditLog.create({
       data: {
         actorId: input.actorId,
         action: input.action,
@@ -24,6 +30,23 @@ export class AuditLogService {
         metadata: input.metadata as Prisma.InputJsonValue | undefined,
       },
     });
+
+    try {
+      await this.notificationsService.emitForAudit({
+        action: entry.action,
+        actorId: entry.actorId,
+        resourceId: entry.resourceId,
+        metadata: entry.metadata,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to emit notification events for audit entry ${entry.id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
+    return entry;
   }
 
   async list(limit = 100) {

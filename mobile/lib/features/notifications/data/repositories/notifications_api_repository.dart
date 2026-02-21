@@ -1,3 +1,4 @@
+import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
 import 'package:blocnet/services/api/api_client.dart';
 
@@ -38,5 +39,18 @@ class NotificationsApiRepository {
     }
 
     return NotificationModel.fromApi(response);
+  }
+
+  Future<DigestSummary?> fetchDigestSummary({int windowDays = 7}) async {
+    final response = await _apiClient.get(
+      '/me/digest/summary',
+      query: {'windowDays': '$windowDays'},
+    );
+
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return DigestSummary.fromApi(response);
   }
 }

@@ -23,33 +23,39 @@ class PrimaryButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: isEnabled
                 ? LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
-                      AppColors.teal500,
+                      AppColors.teal400,
                       AppColors.primary500,
                     ],
                   )
                 : null,
             color: isEnabled ? null : AppColors.bgElevated,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isEnabled
+                  ? AppColors.teal400.withValues(alpha: 0.3)
+                  : AppColors.borderSubtle,
+              width: 1.5,
+            ),
             boxShadow: isEnabled
                 ? [
                     BoxShadow(
-                      color: AppColors.teal500.withValues(alpha: 0.3),
+                      color: AppColors.teal400.withValues(alpha: 0.3),
                       blurRadius: 20,
-                      offset: const Offset(0, 4),
-                      spreadRadius: -2,
+                      offset: const Offset(0, 6),
+                      spreadRadius: 0,
                     ),
                     BoxShadow(
                       color: AppColors.primary500.withValues(alpha: 0.2),
-                      blurRadius: 30,
-                      offset: const Offset(0, 6),
-                      spreadRadius: -4,
+                      blurRadius: 32,
+                      offset: const Offset(0, 8),
+                      spreadRadius: -2,
                     ),
                   ]
                 : null,
@@ -57,11 +63,11 @@ class PrimaryButton extends StatelessWidget {
           child: isLoading
               ? const Center(
                   child: SizedBox(
-                    width: 16,
-                    height: 16,
+                    width: 20,
+                    height: 20,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+                      strokeWidth: 2.5,
+                      color: Colors.black,
                     ),
                   ),
                 )
@@ -69,11 +75,9 @@ class PrimaryButton extends StatelessWidget {
                   title,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: isEnabled
-                        ? AppColors.bgBase
-                        : AppColors.textMuted,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    color: isEnabled ? Colors.black : AppColors.textMuted,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
                     fontFamily: 'Geist',
                     letterSpacing: 0.3,
                   ),

@@ -4,7 +4,7 @@ import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.da
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/community_posts_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class CommunityCreatePostScreen extends StatefulWidget {
@@ -114,10 +114,10 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                                     displayName.isNotEmpty
                                         ? displayName[0].toUpperCase()
                                         : 'B',
-                                    style: GoogleFonts.inter(
+                                    style: AppTypography.custom(
                                       color: AppColors.primary400,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
+                                      size: 16,
+                                      weight: FontWeight.w700,
                                     ),
                                   )
                                 : null,
@@ -129,18 +129,17 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                               children: [
                                 Text(
                                   displayName,
-                                  style: GoogleFonts.inter(
+                                  style: AppTypography.custom(
                                     color: AppColors.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                                    size: 14,
+                                    weight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
                                   auth.email ?? '@blocnet.user',
-                                  style: GoogleFonts.inter(
-                                    color: AppColors.textMuted,
-                                    fontSize: 12,
-                                  ),
+                                  style: AppTypography.custom(color: AppColors.textMuted,
+                                    size: 12,
+                                    weight: FontWeight.w400,),
                                 ),
                               ],
                             ),
@@ -156,17 +155,15 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                         maxLines: 12,
                         onTapOutside: (_) =>
                             FocusManager.instance.primaryFocus?.unfocus(),
-                        style: GoogleFonts.inter(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          height: 1.45,
-                        ),
+                        style: AppTypography.custom(color: AppColors.textSecondary,
+                          size: 14,
+                          weight: FontWeight.w400,
+                          height: 1.45,),
                         decoration: InputDecoration(
                           hintText: "What's on your mind?",
-                          hintStyle: GoogleFonts.inter(
-                            color: AppColors.textFaint,
-                            fontSize: 14,
-                          ),
+                          hintStyle: AppTypography.custom(color: AppColors.textFaint,
+                            size: 14,
+                            weight: FontWeight.w400,),
                           filled: false,
                           contentPadding:
                               const EdgeInsets.symmetric(vertical: 2),
@@ -178,10 +175,10 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'TOPIC',
-                        style: GoogleFonts.inter(
+                        style: AppTypography.custom(
                           color: AppColors.textFaint,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
+                          size: 10,
+                          weight: FontWeight.w600,
                           letterSpacing: 0.8,
                         ),
                       ),
@@ -211,12 +208,12 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                               ),
                               child: Text(
                                 topic.label,
-                                style: GoogleFonts.inter(
+                                style: AppTypography.custom(
                                   color: isActive
                                       ? AppColors.primary400
                                       : AppColors.textSecondary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                                  size: 12,
+                                  weight: FontWeight.w500,
                                 ),
                               ),
                             ),
@@ -257,10 +254,9 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                             )
                           : Text(
                               'Post',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: AppTypography.custom(size: 14,
+                                color: Colors.black,
+                                weight: FontWeight.w700,),
                             ),
                     ),
                   ),

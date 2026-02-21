@@ -5,7 +5,7 @@ import 'package:blocnet/features/projects/presentation/widgets/update/update_det
 import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 
 /// A single feed card showing a hunter update in the home screen.
 class FeedCard extends StatelessWidget {
@@ -52,131 +52,199 @@ class FeedCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => _openDetails(context),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.borderSubtle, width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header: avatar + author + timestamp + more ──
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: () => _openAuthorProfile(context),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    padding: const EdgeInsets.all(1.6),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: priorityColor.withValues(alpha: 0.55),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: AppColors.bgElevated,
-                      backgroundImage: author.imageUrl.isNotEmpty
-                          ? NetworkImage(author.imageUrl)
-                          : null,
-                      child: author.imageUrl.isEmpty
-                          ? Icon(Icons.person,
-                              size: 16, color: AppColors.textMuted)
-                          : null,
-                    ),
-                  ),
+      child: Stack(
+        children: [
+          // Subtle glow effect on left side based on priority
+          Positioned(
+            left: -20,
+            top: 20,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    priorityColor.withValues(alpha: 0.08),
+                    Colors.transparent,
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      GestureDetector(
-                        onTap: () => _openAuthorProfile(context),
-                        behavior: HitTestBehavior.opaque,
-                        child: Text(
-                          author.name,
-                          style: GoogleFonts.inter(
-                            color: AppColors.textPrimary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          // Main card content
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.bgSurface,
+                  AppColors.bgSurface.withValues(alpha: 0.85),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: priorityColor.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header: avatar + author + timestamp + priority pill ──
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _openAuthorProfile(context),
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              priorityColor.withValues(alpha: 0.3),
+                              priorityColor.withValues(alpha: 0.15),
+                            ],
                           ),
                         ),
-                      ),
-                      Text(
-                        getTimeStamp(post.createdAt),
-                        style: GoogleFonts.inter(
-                          color: AppColors.textFaint,
-                          fontSize: 11,
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppColors.bgElevated,
+                          backgroundImage: author.imageUrl.isNotEmpty
+                              ? NetworkImage(author.imageUrl)
+                              : null,
+                          child: author.imageUrl.isEmpty
+                              ? Icon(Icons.person,
+                                  size: 18, color: AppColors.textMuted)
+                              : null,
                         ),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () => _openAuthorProfile(context),
+                            behavior: HitTestBehavior.opaque,
+                            child: Text(
+                              author.name,
+                              style: AppTypography.custom(
+                                color: AppColors.textPrimary,
+                                size: 14,
+                                weight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            getTimeStamp(post.createdAt),
+                            style: AppTypography.custom(
+                              color: AppColors.textFaint,
+                              size: 11,
+                              weight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Priority pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: priorityColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: priorityColor.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: priorityColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            post.priority.label.toUpperCase(),
+                            style: AppTypography.custom(
+                              color: priorityColor,
+                              size: 9,
+                              weight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // ── Project chip with gradient ──
+                _ModernProjectChip(project: project),
+
+                const SizedBox(height: 12),
+
+                // ── Secondary tags ──
+                if (post.secondaryTags.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: post.secondaryTags.take(3).map((tag) {
+                      return _TagPill(label: tag.name);
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // ── Update text ──
+                Text(
+                  previewText,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.custom(
+                    color: AppColors.textSecondary,
+                    size: 13,
+                    weight: FontWeight.w400,
+                    height: 1.6,
                   ),
                 ),
-                Icon(
-                  Icons.more_horiz_rounded,
-                  color: AppColors.textFaint,
-                  size: 20,
-                ),
+
+                const SizedBox(height: 14),
+
+                // ── Action row: like · comment · share | bookmark ──
+                const _ActionRow(),
               ],
             ),
-
-            const SizedBox(height: 10),
-
-            // ── Project chip ──
-            _ProjectChip(project: project),
-
-            const SizedBox(height: 10),
-
-            // ── Secondary tags ──
-            if (post.secondaryTags.isNotEmpty) ...[
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: post.secondaryTags.take(3).map((tag) {
-                  return _TagPill(label: tag.name);
-                }).toList(),
-              ),
-              const SizedBox(height: 10),
-            ],
-
-            // ── Update text ──
-            Text(
-              previewText,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-                height: 1.5,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // ── Action row: like · comment · share | bookmark ──
-            const _ActionRow(),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Project chip — shows project icon, name, and primary tag
+// Modern project chip with gradient and enhanced visuals
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ProjectChip extends StatelessWidget {
-  const _ProjectChip({required this.project});
+class _ModernProjectChip extends StatelessWidget {
+  const _ModernProjectChip({required this.project});
 
   final Project project;
 
@@ -184,66 +252,104 @@ class _ProjectChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.bgElevated,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.borderSubtle, width: 1),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgElevated.withValues(alpha: 0.9),
+            AppColors.bgElevated.withValues(alpha: 0.6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primary500.withValues(alpha: 0.15),
+          width: 1.5,
+        ),
       ),
       child: Row(
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: AppColors.primary500.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary500.withValues(alpha: 0.25),
+                  AppColors.primary500.withValues(alpha: 0.12),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.primary500.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
             ),
             child: project.logo.isNotEmpty
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(8),
                     child: Image.network(
                       project.logo,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Icon(
                         Icons.layers_outlined,
-                        size: 14,
+                        size: 16,
                         color: AppColors.primary400,
                       ),
                     ),
                   )
                 : Icon(
                     Icons.layers_outlined,
-                    size: 14,
+                    size: 16,
                     color: AppColors.primary400,
                   ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   project.name,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    size: 13,
+                    weight: FontWeight.w700,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  project.primaryTag.name,
-                  style: GoogleFonts.inter(
-                    color: AppColors.textFaint,
-                    fontSize: 10,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.tag_rounded,
+                      size: 10,
+                      color: AppColors.textFaint,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        project.primaryTag.name,
+                        style: AppTypography.custom(
+                          color: AppColors.textFaint,
+                          size: 11,
+                          weight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 12,
+            color: AppColors.textFaint,
           ),
         ],
       ),
@@ -288,10 +394,10 @@ class _TagPill extends StatelessWidget {
       ),
       child: Text(
         label.toUpperCase(),
-        style: GoogleFonts.inter(
+        style: AppTypography.custom(
           color: color,
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
+          size: 9,
+          weight: FontWeight.w700,
           letterSpacing: 0.5,
         ),
       ),
@@ -300,7 +406,7 @@ class _TagPill extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Action row — like · comment · share | bookmark
+// Modern action row with subtle backgrounds
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ActionRow extends StatelessWidget {
@@ -313,24 +419,28 @@ class _ActionRow extends StatelessWidget {
         _ActionButton(
           icon: Icons.favorite_border_rounded,
           label: null,
+          color: AppColors.error500,
           onTap: () {},
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 12),
         _ActionButton(
           icon: Icons.chat_bubble_outline_rounded,
           label: null,
+          color: AppColors.primary400,
           onTap: () {},
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 12),
         _ActionButton(
           icon: Icons.share_outlined,
           label: null,
+          color: AppColors.teal400,
           onTap: () {},
         ),
         const Spacer(),
         _ActionButton(
           icon: Icons.bookmark_border_rounded,
           label: null,
+          color: AppColors.textMuted,
           onTap: () {},
         ),
       ],
@@ -342,33 +452,45 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.onTap,
+    required this.color,
     this.label,
   });
 
   final IconData icon;
   final String? label;
+  final Color color;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: AppColors.textFaint),
-          if (label != null) ...[
-            const SizedBox(width: 4),
-            Text(
-              label!,
-              style: GoogleFonts.inter(
-                color: AppColors.textFaint,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: color.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            if (label != null) ...[
+              const SizedBox(width: 4),
+              Text(
+                label!,
+                style: AppTypography.custom(
+                  color: color,
+                  size: 12,
+                  weight: FontWeight.w600,
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

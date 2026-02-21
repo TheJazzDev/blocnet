@@ -9,10 +9,10 @@ class _HunterSectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: GoogleFonts.inter(
+      style: AppTypography.custom(
         color: AppColors.textFaint,
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
+        size: 10,
+        weight: FontWeight.w600,
         letterSpacing: 1.0,
       ),
     );
@@ -58,7 +58,8 @@ class _HunterTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
-              child: Icon(icon, size: 17, color: iconColor ?? AppColors.textMuted),
+              child:
+                  Icon(icon, size: 17, color: iconColor ?? AppColors.textMuted),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -67,19 +68,18 @@ class _HunterTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.inter(
+                    style: AppTypography.custom(
                       color: titleColor ?? AppColors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                      size: 13,
+                      weight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: GoogleFonts.inter(
-                      color: AppColors.textMuted,
-                      fontSize: 11,
-                    ),
+                    style: AppTypography.custom(color: AppColors.textMuted,
+                      size: 11,
+                      weight: FontWeight.w400,),
                   ),
                 ],
               ),
@@ -87,6 +87,79 @@ class _HunterTile extends StatelessWidget {
             const SizedBox(width: 8),
             Icon(Icons.chevron_right, size: 18, color: AppColors.textFaint),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HunterTrustChips extends StatelessWidget {
+  const _HunterTrustChips({
+    required this.updatesLast7d,
+    required this.updatesLast30d,
+    required this.highUrgencyShare30d,
+    required this.medianHoursBetweenUpdates,
+    required this.lastActiveAt,
+  });
+
+  final int updatesLast7d;
+  final int updatesLast30d;
+  final double highUrgencyShare30d;
+  final double? medianHoursBetweenUpdates;
+  final DateTime? lastActiveAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final lastActiveLabel = lastActiveAt == null
+        ? 'N/A'
+        : '${DateTime.now().difference(lastActiveAt!).inHours}h ago';
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _TrustChip(label: '7D', value: '$updatesLast7d'),
+        _TrustChip(label: '30D', value: '$updatesLast30d'),
+        _TrustChip(
+          label: 'High%',
+          value: '${highUrgencyShare30d.toStringAsFixed(0)}%',
+        ),
+        _TrustChip(
+          label: 'Median',
+          value: medianHoursBetweenUpdates == null
+              ? 'N/A'
+              : '${medianHoursBetweenUpdates!.toStringAsFixed(1)}h',
+        ),
+        _TrustChip(label: 'Last', value: lastActiveLabel),
+      ],
+    );
+  }
+}
+
+class _TrustChip extends StatelessWidget {
+  const _TrustChip({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Text(
+        '$label: $value',
+        style: AppTypography.custom(
+          color: AppColors.textMuted,
+          size: 10,
+          weight: FontWeight.w600,
         ),
       ),
     );

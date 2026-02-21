@@ -30,6 +30,14 @@ export class WalletController {
     return this.walletService.getWalletSummary(user.id);
   }
 
+  @Get('health')
+  async getWalletHealth(@CurrentUser() user: AuthUser | undefined) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.walletService.getWalletHealth(user.id);
+  }
+
   @Get('transactions')
   async listTransactions(
     @CurrentUser() user: AuthUser | undefined,

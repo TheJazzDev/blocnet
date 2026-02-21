@@ -1,4 +1,5 @@
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
+import 'package:blocnet/features/projects/data/models/follow_preference_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/repositories/updates_api_repository.dart';
@@ -21,14 +22,20 @@ class ProjectsStore extends ChangeNotifier {
 
   final List<Project> _projects = [];
   final Set<String> _followedProjectIds = <String>{};
+  final Map<String, FollowPreference> _followPreferences =
+      <String, FollowPreference>{};
   bool _isFetching = false;
   bool _isTogglingFollow = false;
+  bool _isUpdatingFollowPreferences = false;
   String? _lastError;
 
   List<Project> get projects => List.unmodifiable(_projects);
   Set<String> get followedProjectIds => Set.unmodifiable(_followedProjectIds);
+  Map<String, FollowPreference> get followPreferences =>
+      Map.unmodifiable(_followPreferences);
   bool get isFetching => _isFetching;
   bool get isTogglingFollow => _isTogglingFollow;
+  bool get isUpdatingFollowPreferences => _isUpdatingFollowPreferences;
   String? get lastError => _lastError;
 
   Future<void> fetchProjectsOnce() async {
@@ -66,10 +73,30 @@ class ProjectsStore extends ChangeNotifier {
         );
 
       try {
-        final followedIds = await _usersRepository.fetchFollowedProjectIds();
+        final me = await _usersRepository.fetchMe();
+        final followedIds =
+            (me?['followedProjectIds'] as List<dynamic>? ?? const [])
+                .map((value) => value.toString())
+                .toSet();
+        final parsedPreferences = _usersRepository.parseFollowPreferencesFromMe(
+          me,
+        );
+
         _followedProjectIds
           ..clear()
           ..addAll(followedIds);
+        _followPreferences
+          ..clear()
+          ..addAll(parsedPreferences);
+        for (final projectId in _followedProjectIds) {
+          _followPreferences.putIfAbsent(
+            projectId,
+            () => const FollowPreference(
+              alertLevel: FollowAlertLevel.all,
+              mutedUntil: null,
+            ),
+          );
+        }
       } catch (_) {
         // Ignore profile sync failures and keep local follow cache.
       }
@@ -126,9 +153,17 @@ class ProjectsStore extends ChangeNotifier {
 
     if (shouldFollow) {
       _followedProjectIds.add(projectId);
+      _followPreferences.putIfAbsent(
+        projectId,
+        () => const FollowPreference(
+          alertLevel: FollowAlertLevel.all,
+          mutedUntil: null,
+        ),
+      );
       _updateProjectFollowerCount(projectId, 1);
     } else {
       _followedProjectIds.remove(projectId);
+      _followPreferences.remove(projectId);
       _updateProjectFollowerCount(projectId, -1);
     }
     notifyListeners();
@@ -142,14 +177,75 @@ class ProjectsStore extends ChangeNotifier {
     } catch (error) {
       if (shouldFollow) {
         _followedProjectIds.remove(projectId);
+        _followPreferences.remove(projectId);
         _updateProjectFollowerCount(projectId, -1);
       } else {
         _followedProjectIds.add(projectId);
+        _followPreferences.putIfAbsent(
+          projectId,
+          () => const FollowPreference(
+            alertLevel: FollowAlertLevel.all,
+            mutedUntil: null,
+          ),
+        );
         _updateProjectFollowerCount(projectId, 1);
       }
       _lastError = error.toString();
     } finally {
       _isTogglingFollow = false;
+      notifyListeners();
+    }
+  }
+
+  FollowPreference preferenceForProject(String projectId) {
+    return _followPreferences[projectId] ??
+        const FollowPreference(
+          alertLevel: FollowAlertLevel.all,
+          mutedUntil: null,
+        );
+  }
+
+  Future<void> updateFollowPreferences(
+    String projectId, {
+    FollowAlertLevel? alertLevel,
+    DateTime? mutedUntil,
+    bool clearMute = false,
+  }) async {
+    if (_isUpdatingFollowPreferences) return;
+
+    final previous = _followPreferences[projectId] ??
+        const FollowPreference(
+          alertLevel: FollowAlertLevel.all,
+          mutedUntil: null,
+        );
+
+    final optimistic = previous.copyWith(
+      alertLevel: alertLevel,
+      mutedUntil: mutedUntil,
+      clearMute: clearMute,
+    );
+
+    _isUpdatingFollowPreferences = true;
+    _lastError = null;
+    _followPreferences[projectId] = optimistic;
+    notifyListeners();
+
+    try {
+      final response = await _projectsRepository.updateFollowPreferences(
+        projectId,
+        alertMinUrgency: alertLevel?.wireValue,
+        mutedUntil: mutedUntil,
+        clearMute: clearMute,
+      );
+
+      if (response != null) {
+        _followPreferences[projectId] = FollowPreference.fromApi(response);
+      }
+    } catch (error) {
+      _lastError = error.toString();
+      _followPreferences[projectId] = previous;
+    } finally {
+      _isUpdatingFollowPreferences = false;
       notifyListeners();
     }
   }

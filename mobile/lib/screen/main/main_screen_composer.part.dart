@@ -31,10 +31,10 @@ extension _MainScreenComposerSheet on _MainScreenState {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'CREATE',
-                    style: GoogleFonts.inter(
+                    style: AppTypography.custom(
+                      size: 10,
+                      weight: FontWeight.w600,
                       color: AppColors.textFaint,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -114,18 +114,19 @@ class _ComposerTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: AppTypography.custom(
+                      size: 14,
+                      weight: FontWeight.w700,
                       color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: GoogleFonts.inter(
+                    style: AppTypography.custom(
+                      size: 12,
+                      weight: FontWeight.w400,
                       color: AppColors.textMuted,
-                      fontSize: 12,
                     ),
                   ),
                 ],

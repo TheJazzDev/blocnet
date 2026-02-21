@@ -5,11 +5,13 @@ import 'package:blocnet/features/projects/presentation/pages/create_update_scree
 import 'package:blocnet/features/projects/presentation/pages/manage_updates_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/manage_projects_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/submit_project_screen.dart';
+import 'package:blocnet/features/projects/presentation/pages/top_hunters_screen.dart';
 import 'package:blocnet/screen/main_screen.dart';
 import 'package:blocnet/screen/community_create_post_screen.dart';
 import 'package:blocnet/screen/community_post_discussion_screen.dart';
 import 'package:blocnet/screen/edit_profile_screen.dart';
 import 'package:blocnet/screen/notifications.dart';
+import 'package:blocnet/screen/profile_screen.dart';
 import 'package:blocnet/screen/settings_screen.dart';
 import 'package:blocnet/screen/wallet_screen.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +24,9 @@ class ProtectedRoutes {
   static const String profile = AppRoutes.profile;
   static const String settings = AppRoutes.settings;
   static const String wallet = AppRoutes.wallet;
+  static const String walletTransactions = AppRoutes.walletTransactions;
+  static const String walletAssetDetail = AppRoutes.walletAssetDetail;
+  static const String mining = AppRoutes.mining;
   static const String notifications = AppRoutes.notifications;
   static const String createUpdate = AppRoutes.createUpdate;
   static const String submitProject = AppRoutes.submitProject;
@@ -42,6 +47,7 @@ class ProtectedRoutes {
   static const String midPriority = AppRoutes.midPriority;
   static const String lowPriority = AppRoutes.lowPriority;
   static const String highPriority = AppRoutes.highPriority;
+  static const String topHunters = AppRoutes.topHunters;
 
   static bool isProtectedRoute(String? route) {
     if (route == null) return false;
@@ -59,9 +65,17 @@ class ProtectedRoutes {
     return {
       // Global
       main: (context) => const MainScreen(initialIndex: 0),
-      profile: (context) => const MainScreen(initialIndex: 4),
+      profile: (context) => const ProfileScreen(),
       settings: (context) => const SettingsScreen(),
       wallet: (context) => const WalletScreen(),
+      walletTransactions: (context) =>
+          const WalletScreen(showTransactionsOnly: true),
+      walletAssetDetail: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        final assetCode = args is Map ? args['assetCode']?.toString() : null;
+        return WalletAssetDetailScreen(assetCode: assetCode ?? 'BNT');
+      },
+      mining: (context) => const MainScreen(initialIndex: 4),
       // Notifications is now a push route (not a main tab)
       notifications: (context) => const NotificationsScreen(),
       createUpdate: (context) => const CreateUpdateScreen(),
@@ -83,6 +97,7 @@ class ProtectedRoutes {
       midPriority: (context) => const PriorityScreens(),
       lowPriority: (context) => const PriorityScreens(),
       highPriority: (context) => const PriorityScreens(),
+      topHunters: (context) => const TopHuntersScreen(),
     };
   }
 
@@ -91,6 +106,9 @@ class ProtectedRoutes {
     profile,
     settings,
     wallet,
+    walletTransactions,
+    walletAssetDetail,
+    mining,
     notifications,
     createUpdate,
     submitProject,
@@ -107,6 +125,7 @@ class ProtectedRoutes {
     midPriority,
     lowPriority,
     highPriority,
+    topHunters,
   };
 
   static const Set<String> _contributorRoles = {

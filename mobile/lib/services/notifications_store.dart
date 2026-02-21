@@ -1,3 +1,4 @@
+import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
 import 'package:blocnet/features/notifications/data/repositories/notifications_api_repository.dart';
 import 'package:flutter/material.dart';
@@ -9,12 +10,16 @@ class NotificationsStore extends ChangeNotifier {
   final NotificationsApiRepository _repository;
 
   final List<NotificationModel> _notifications = [];
+  DigestSummary? _digestSummary;
   bool _isFetching = false;
+  bool _isFetchingDigest = false;
   String? _lastError;
 
   List<NotificationModel> get notifications =>
       List.unmodifiable(_notifications);
+  DigestSummary? get digestSummary => _digestSummary;
   bool get isFetching => _isFetching;
+  bool get isFetchingDigest => _isFetchingDigest;
   String? get lastError => _lastError;
   int get unreadCount => _notifications.where((item) => !item.isRead).length;
 
@@ -31,13 +36,32 @@ class NotificationsStore extends ChangeNotifier {
 
     try {
       final response = await _repository.fetchNotifications();
+      final digest = await _repository.fetchDigestSummary(windowDays: 7);
       _notifications
         ..clear()
         ..addAll(response);
+      _digestSummary = digest;
     } catch (error) {
       _lastError = error.toString();
     } finally {
       _isFetching = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refreshDigestSummary({int windowDays = 7}) async {
+    if (_isFetchingDigest) return;
+
+    _isFetchingDigest = true;
+    notifyListeners();
+    try {
+      _digestSummary =
+          await _repository.fetchDigestSummary(windowDays: windowDays);
+      _lastError = null;
+    } catch (error) {
+      _lastError = error.toString();
+    } finally {
+      _isFetchingDigest = false;
       notifyListeners();
     }
   }

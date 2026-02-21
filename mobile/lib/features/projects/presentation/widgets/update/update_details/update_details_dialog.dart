@@ -201,25 +201,33 @@ class _CommentsSection extends StatelessWidget {
                     color: AppColors.textPrimary,
                     fontSize: 15,
                     fontFamily: 'Geist',
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.bgElevated,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.borderSubtle),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary500.withValues(alpha: 0.15),
+                        AppColors.primary500.withValues(alpha: 0.08),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.primary500.withValues(alpha: 0.25),
+                      width: 1.5,
+                    ),
                   ),
                   child: Text(
                     '${comments.length}',
                     style: TextStyle(
-                      color: AppColors.textFaint,
+                      color: AppColors.primary400,
                       fontSize: 11,
                       fontFamily: 'Geist',
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -229,10 +237,21 @@ class _CommentsSection extends StatelessWidget {
             // Comment input
             Container(
               decoration: BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.bgElevated,
+                    AppColors.bgElevated.withValues(alpha: 0.85),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.borderSubtle.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
                 children: [
                   Expanded(
@@ -244,6 +263,7 @@ class _CommentsSection extends StatelessWidget {
                         color: AppColors.textSecondary,
                         fontSize: 13,
                         fontFamily: 'Geist',
+                        fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
                         border: InputBorder.none,
@@ -252,33 +272,47 @@ class _CommentsSection extends StatelessWidget {
                           color: AppColors.textFaint,
                           fontSize: 13,
                           fontFamily: 'Geist',
+                          fontWeight: FontWeight.w400,
                         ),
                         isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   GestureDetector(
                     onTap: isSubmitting ? null : onSubmit,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
+                        horizontal: 14,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [AppColors.teal500, AppColors.primary500],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [AppColors.teal400, AppColors.primary500],
                         ),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.teal400.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.teal400.withValues(alpha: 0.2),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Text(
                         isSubmitting ? '…' : 'Send',
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
+                          color: Colors.black,
+                          fontSize: 13,
                           fontFamily: 'Geist',
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -355,12 +389,22 @@ class _CommentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.bgElevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgElevated,
+            AppColors.bgElevated.withValues(alpha: 0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.borderSubtle.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,35 +414,55 @@ class _CommentTile extends StatelessWidget {
               Text(
                 comment.admin?.name ?? 'User',
                 style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
                   fontFamily: 'Geist',
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                _relativeTime(comment.createdAt),
-                style: TextStyle(
-                  color: AppColors.textFaint,
-                  fontSize: 11,
-                  fontFamily: 'Geist',
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.primary500.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  _relativeTime(comment.createdAt),
+                  style: TextStyle(
+                    color: AppColors.textFaint,
+                    fontSize: 10,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               const Spacer(),
               if (canEdit) ...[
                 InkWell(
                   onTap: () => _showEditDialog(context),
-                  child: Text(
-                    'Edit',
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 11,
-                      fontFamily: 'Geist',
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: AppColors.primary400,
+                        fontSize: 11,
+                        fontFamily: 'Geist',
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 6),
                 InkWell(
                   onTap: () async {
                     await context.read<CommentsStore>().deleteComment(
@@ -406,26 +470,35 @@ class _CommentTile extends StatelessWidget {
                           commentId: comment.id,
                         );
                   },
-                  child: Text(
-                    'Delete',
-                    style: TextStyle(
-                      color: AppColors.error500,
-                      fontSize: 11,
-                      fontFamily: 'Geist',
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.error500.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'Delete',
+                      style: TextStyle(
+                        color: AppColors.error500,
+                        fontSize: 11,
+                        fontFamily: 'Geist',
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             comment.content,
             style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
+              color: AppColors.textSecondary,
+              fontSize: 13,
               fontFamily: 'Geist',
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
+              height: 1.6,
             ),
           ),
         ],
@@ -442,46 +515,80 @@ class _CommentTile extends StatelessWidget {
         return AlertDialog(
           backgroundColor: AppColors.bgSurface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.borderSubtle),
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: AppColors.borderSubtle.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
           ),
           title: Text(
             'Edit comment',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontFamily: 'Geist',
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
           content: TextField(
             controller: ctrl,
             minLines: 1,
             maxLines: 6,
-            style:
-                TextStyle(color: AppColors.textSecondary, fontFamily: 'Geist'),
+            autofocus: true,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontFamily: 'Geist',
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
             decoration: InputDecoration(
               hintText: 'Edit your comment…',
-              hintStyle:
-                  TextStyle(color: AppColors.textFaint, fontFamily: 'Geist'),
+              hintStyle: TextStyle(
+                color: AppColors.textFaint,
+                fontFamily: 'Geist',
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.borderSubtle),
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: AppColors.borderSubtle.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: AppColors.borderSubtle.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.teal500),
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: AppColors.teal400,
+                  width: 2,
+                ),
               ),
               fillColor: AppColors.bgElevated,
               filled: true,
+              contentPadding: const EdgeInsets.all(14),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
               child: Text(
                 'Cancel',
-                style:
-                    TextStyle(color: AppColors.textMuted, fontFamily: 'Geist'),
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontFamily: 'Geist',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             TextButton(
@@ -496,12 +603,21 @@ class _CommentTile extends StatelessWidget {
                 if (!context.mounted) return;
                 Navigator.of(context).pop();
               },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                backgroundColor: AppColors.teal400.withValues(alpha: 0.12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               child: Text(
                 'Save',
                 style: TextStyle(
-                    color: AppColors.teal400,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w600),
+                  color: AppColors.teal400,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
             ),
           ],

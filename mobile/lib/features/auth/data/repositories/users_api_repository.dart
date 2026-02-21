@@ -1,5 +1,8 @@
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
+import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
 import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
+import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
+import 'package:blocnet/features/projects/data/models/follow_preference_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/services/api/api_client.dart';
 
@@ -29,6 +32,25 @@ class UsersApiRepository {
     }
 
     return values.map((value) => value.toString()).toSet();
+  }
+
+  Map<String, FollowPreference> parseFollowPreferencesFromMe(
+    Map<String, dynamic>? mePayload,
+  ) {
+    final entries = mePayload?['followedProjects'];
+    if (entries is! List) {
+      return const <String, FollowPreference>{};
+    }
+
+    final preferences = <String, FollowPreference>{};
+    for (final raw in entries) {
+      if (raw is! Map<String, dynamic>) continue;
+      final projectId = raw['projectId']?.toString() ?? '';
+      if (projectId.isEmpty) continue;
+      preferences[projectId] = FollowPreference.fromApi(raw);
+    }
+
+    return preferences;
   }
 
   Future<Set<String>> fetchFollowedProfileIds() async {
@@ -115,5 +137,32 @@ class UsersApiRepository {
 
   Future<void> unfollowProfile(String profileId) async {
     await _apiClient.delete('/profiles/$profileId/follow');
+  }
+
+  Future<RadarSummary?> fetchRadar() async {
+    final response = await _apiClient.get('/me/radar');
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return RadarSummary.fromApi(response);
+  }
+
+  Future<void> ackRadar({DateTime? seenAt}) async {
+    await _apiClient.post(
+      '/me/radar/ack',
+      body: {
+        if (seenAt != null) 'seenAt': seenAt.toUtc().toIso8601String(),
+      },
+    );
+  }
+
+  Future<PublicProfileModel?> fetchPublicProfile(String profileId) async {
+    final response = await _apiClient.get('/profiles/$profileId/public');
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return PublicProfileModel.fromApi(response);
   }
 }

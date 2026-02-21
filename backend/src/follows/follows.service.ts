@@ -1,33 +1,44 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { UpdateUrgency } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateFollowPreferencesDto } from './dto/update-follow-preferences.dto';
 
 @Injectable()
 export class FollowsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
   ) {}
 
   async followProject(userId: string, projectId: string) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { id: true },
+      select: { id: true, ownerAdminId: true },
     });
 
     if (!project) {
       throw new NotFoundException('Project not found');
     }
 
-    const follow = await this.prisma.projectFollow.upsert({
+    const existing = await this.prisma.projectFollow.findUnique({
       where: {
         projectId_userId: {
           projectId,
           userId,
         },
       },
-      update: {},
-      create: {
+      select: { id: true, projectId: true, userId: true, createdAt: true },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    const follow = await this.prisma.projectFollow.create({
+      data: {
         projectId,
         userId,
       },
@@ -38,7 +49,7 @@ export class FollowsService {
       action: 'project.follow',
       resourceType: 'project_follow',
       resourceId: follow.id,
-      metadata: { projectId },
+      metadata: { projectId, ownerAdminId: project.ownerAdminId },
     });
 
     return follow;
@@ -70,5 +81,116 @@ export class FollowsService {
     });
 
     return { deleted: true };
+  }
+
+  async getFollowPreferences(userId: string, projectId: string) {
+    const enabled = this.configService.get<boolean>(
+      'ENABLE_FOLLOW_PREFS',
+      true,
+    );
+    if (!enabled) {
+      return {
+        projectId,
+        userId,
+        alertMinUrgency: UpdateUrgency.low,
+        mutedUntil: null,
+      };
+    }
+
+    const follow = await this.prisma.projectFollow.findUnique({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId,
+        },
+      },
+      select: {
+        projectId: true,
+        userId: true,
+        alertMinUrgency: true,
+        mutedUntil: true,
+      },
+    });
+
+    if (!follow) {
+      return {
+        projectId,
+        userId,
+        alertMinUrgency: UpdateUrgency.low,
+        mutedUntil: null,
+      };
+    }
+
+    return follow;
+  }
+
+  async updateFollowPreferences(
+    userId: string,
+    projectId: string,
+    dto: UpdateFollowPreferencesDto,
+  ) {
+    const enabled = this.configService.get<boolean>(
+      'ENABLE_FOLLOW_PREFS',
+      true,
+    );
+    if (!enabled) {
+      return this.getFollowPreferences(userId, projectId);
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const mutedUntil =
+      dto.mutedUntil === null
+        ? null
+        : dto.mutedUntil
+          ? new Date(dto.mutedUntil)
+          : undefined;
+
+    const follow = await this.prisma.projectFollow.upsert({
+      where: {
+        projectId_userId: {
+          projectId,
+          userId,
+        },
+      },
+      update: {
+        alertMinUrgency: dto.alertMinUrgency,
+        mutedUntil,
+      },
+      create: {
+        projectId,
+        userId,
+        alertMinUrgency: dto.alertMinUrgency ?? UpdateUrgency.low,
+        mutedUntil: mutedUntil ?? null,
+      },
+      select: {
+        id: true,
+        projectId: true,
+        userId: true,
+        alertMinUrgency: true,
+        mutedUntil: true,
+      },
+    });
+
+    await this.auditLogService.create({
+      actorId: userId,
+      action: 'follow.preferences.update',
+      resourceType: 'project_follow',
+      resourceId: follow.id,
+      metadata: {
+        projectId,
+        alertMinUrgency: follow.alertMinUrgency,
+        mutedUntil: follow.mutedUntil?.toISOString() ?? null,
+      },
+    });
+
+    return follow;
   }
 }

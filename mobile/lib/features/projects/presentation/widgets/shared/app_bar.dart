@@ -3,11 +3,12 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/space_switcher.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/blocnet_search_delegate.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -19,6 +20,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showSearch = true,
     this.showSpaceSwitcher = false,
     this.showNotificationBell = false,
+    this.showProfileShortcut = false,
+    this.showProfileAvatarLeading = false,
     this.actions = const [],
   });
 
@@ -32,6 +35,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   /// Show notification bell with badge in the app bar.
   final bool showNotificationBell;
+  final bool showProfileShortcut;
+  final bool showProfileAvatarLeading;
   final List<Widget> actions;
 
   @override
@@ -39,6 +44,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final navigator = Navigator.of(context);
     final showBack = backButton && navigator.canPop();
     final showSpaceSwitcherInProfile = showSpaceSwitcher && title == 'Profile';
+    final showLeadingProfile = showProfileAvatarLeading && !showBack;
 
     return Container(
       decoration: BoxDecoration(
@@ -74,16 +80,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                               }
                             },
                           )
-                        : const SizedBox.shrink(),
+                        : showLeadingProfile
+                            ? const _ProfileAvatarButton()
+                            : const SizedBox.shrink(),
                   ),
                 ),
                 Center(
                   child: Text(
                     title,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
+                      size: 17,
+                      weight: FontWeight.w700,
                       letterSpacing: -0.3,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -111,6 +119,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       if (showNotificationBell) ...[
                         const SizedBox(width: 6),
                         _NotificationBellButton(),
+                      ],
+                      if (showProfileShortcut) ...[
+                        const SizedBox(width: 6),
+                        _AppBarIconButton(
+                          icon: Icons.person_outline_rounded,
+                          onTap: () {
+                            Navigator.of(context).pushNamed(AppRoutes.profile);
+                          },
+                        ),
                       ],
                       if (showFilter) ...[
                         const SizedBox(width: 6),
@@ -191,6 +208,75 @@ class _AppBarIconButton extends StatelessWidget {
   }
 }
 
+class _ProfileAvatarButton extends StatelessWidget {
+  const _ProfileAvatarButton();
+
+  String _initials(AuthStore authStore) {
+    final displayName = authStore.displayName?.trim() ?? '';
+    if (displayName.isEmpty) return '';
+
+    final parts = displayName
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return '';
+
+    final first = parts.first.substring(0, 1).toUpperCase();
+    final second =
+        parts.length > 1 ? parts.last.substring(0, 1).toUpperCase() : '';
+    return '$first$second';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authStore = context.watch<AuthStore>();
+    final avatarUrl = authStore.avatarUrl?.trim() ?? '';
+    final hasAvatar = avatarUrl.isNotEmpty;
+    final initials = _initials(authStore);
+
+    Widget fallbackAvatar() {
+      if (initials.isNotEmpty) {
+        return Text(
+          initials,
+          style: AppTypography.custom(
+            color: AppColors.textPrimary,
+            size: 12,
+            weight: FontWeight.w700,
+          ),
+        );
+      }
+      return Icon(
+        Icons.person_rounded,
+        color: AppColors.textSecondary,
+        size: 18,
+      );
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pushNamed(AppRoutes.profile);
+      },
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppColors.bgElevated,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.borderSubtle, width: 1),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: hasAvatar
+            ? Image.network(
+                avatarUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Center(child: fallbackAvatar()),
+              )
+            : Center(child: fallbackAvatar()),
+      ),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Notification bell button with unread badge
 // ─────────────────────────────────────────────────────────────────────────────
@@ -240,10 +326,10 @@ class _NotificationBellButton extends StatelessWidget {
                 ),
                 child: Text(
                   unreadCount > 99 ? '99+' : unreadCount.toString(),
-                  style: GoogleFonts.inter(
+                  style: AppTypography.custom(
                     color: Colors.white,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w700,
+                    size: 8,
+                    weight: FontWeight.w700,
                   ),
                   textAlign: TextAlign.center,
                 ),

@@ -1,18 +1,20 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
+import 'package:blocnet/features/mining/presentation/pages/mining_screen.dart';
 import 'package:blocnet/features/projects/presentation/sections/home.dart';
 import 'package:blocnet/features/projects/presentation/sections/projects/discover.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/screen/community_screen.dart';
-import 'package:blocnet/screen/profile_screen.dart';
 import 'package:blocnet/screen/wallet_screen.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/mining_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'main/main_screen_shells.part.dart';
 part 'main/main_screen_nav.part.dart';
@@ -31,6 +33,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   bool? _lastIsHunterSpace;
   bool _isSwitchingSpace = false;
   int _spaceSwitchToken = 0;
+  bool _hasCheckedReferralPrompt = false;
 
   int _userIndex = 0;
   int _hunterIndex = 0;
@@ -44,6 +47,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<NotificationsStore>().fetchNotificationsOnce();
+      _maybePromptReferralBind();
     });
   }
 
@@ -73,7 +77,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     final token = ++_spaceSwitchToken;
 
-    // When switching spaces, keep the user on Profile in the target space.
+    // Keep users on the equivalent 5th tab across spaces.
     setState(() {
       _isSwitchingSpace = true;
       if (isHunterSpace) {
@@ -155,6 +159,74 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       ],
     );
   }
+
+  Future<void> _maybePromptReferralBind() async {
+    if (_hasCheckedReferralPrompt || !mounted) return;
+    _hasCheckedReferralPrompt = true;
+
+    final auth = context.read<AuthStore>();
+    final miningStore = context.read<MiningStore>();
+    final userId = auth.userId;
+    if (!auth.isAuthenticated || userId == null || userId.isEmpty) {
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final promptSeenKey = 'blocnet_referral_prompt_seen_$userId';
+    if (prefs.getBool(promptSeenKey) == true) {
+      return;
+    }
+
+    await miningStore.loadSnapshot(force: true);
+    if (!mounted) return;
+
+    final snapshot = miningStore.snapshot;
+    final referral = snapshot?.referral;
+    if (snapshot == null ||
+        referral == null ||
+        referral.isBound ||
+        !referral.bindWindowOpen) {
+      await prefs.setBool(promptSeenKey, true);
+      return;
+    }
+
+    final pendingCode = auth.pendingReferralCode?.trim().toUpperCase();
+    if (pendingCode != null && pendingCode.isNotEmpty) {
+      try {
+        await miningStore.bindReferralCode(pendingCode);
+        await auth.setPendingReferralCode(null);
+      } catch (_) {
+        // Keep pending code for manual bind attempt in Mining screen.
+      }
+      await prefs.setBool(promptSeenKey, true);
+      return;
+    }
+
+    if (!mounted) return;
+
+    final enteredCode = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.bgSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => _ReferralPromptSheet(),
+    );
+
+    if (!mounted) return;
+
+    if (enteredCode != null && enteredCode.isNotEmpty) {
+      try {
+        await miningStore.bindReferralCode(enteredCode);
+        await auth.setPendingReferralCode(null);
+      } catch (_) {
+        // Error is shown by MiningStore snackbar handler.
+      }
+    }
+
+    await prefs.setBool(promptSeenKey, true);
+  }
 }
 
 class _SpaceSwitchOverlay extends StatelessWidget {
@@ -197,4 +269,147 @@ class _TabMeta {
   final bool showSearch;
   final bool showFilter;
   final bool showNotificationBell;
+}
+
+class _ReferralPromptSheet extends StatefulWidget {
+  const _ReferralPromptSheet();
+
+  @override
+  State<_ReferralPromptSheet> createState() => _ReferralPromptSheetState();
+}
+
+class _ReferralPromptSheetState extends State<_ReferralPromptSheet> {
+  final TextEditingController _controller = TextEditingController();
+  final RegExp _codeRegex = RegExp(r'^[A-Z0-9]{8}$');
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 14,
+          bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.borderMuted,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Got a referral code?',
+              style: AppTypography.custom(
+                size: 18,
+                weight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Bind once to activate referral boost tracking.',
+              style: AppTypography.custom(
+                size: 12,
+                weight: FontWeight.w400,
+                color: AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              maxLength: 8,
+              textCapitalization: TextCapitalization.characters,
+              style: AppTypography.custom(
+                size: 14,
+                weight: FontWeight.w400,
+                color: AppColors.textPrimary,
+              ),
+              decoration: const InputDecoration(
+                hintText: 'Enter 8-character code',
+                counterText: '',
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                _error!,
+                style: AppTypography.custom(
+                  size: 12,
+                  weight: FontWeight.w400,
+                  color: Colors.redAccent,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(''),
+                    child: Text(
+                      'Skip',
+                      style: AppTypography.custom(
+                        size: 12,
+                        weight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final code = _controller.text.trim().toUpperCase();
+                      if (code.isEmpty) {
+                        Navigator.of(context).pop('');
+                        return;
+                      }
+                      if (!_codeRegex.hasMatch(code)) {
+                        setState(() {
+                          _error = 'Code must be 8 letters/numbers.';
+                        });
+                        return;
+                      }
+                      Navigator.of(context).pop(code);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary500,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: Text(
+                      'Bind',
+                      style: AppTypography.custom(
+                        size: 12,
+                        weight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

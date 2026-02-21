@@ -6,7 +6,7 @@ import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class CommunityPostDiscussionScreen extends StatefulWidget {
@@ -186,7 +186,11 @@ class _CommunityPostDiscussionScreenState
         body: Center(
           child: Text(
             'No post selected.',
-            style: GoogleFonts.inter(color: AppColors.textMuted),
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
+              size: 14,
+              weight: FontWeight.w400,
+            ),
           ),
         ),
       );
@@ -236,10 +240,10 @@ class _CommunityPostDiscussionScreenState
                                   children: [
                                     Text(
                                       'DISCUSSION (${comments.length})',
-                                      style: GoogleFonts.inter(
+                                      style: AppTypography.custom(
                                         color: AppColors.textFaint,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                                        size: 11,
+                                        weight: FontWeight.w600,
                                         letterSpacing: 0.8,
                                       ),
                                     ),
@@ -275,10 +279,10 @@ class _CommunityPostDiscussionScreenState
                                       ),
                                       child: Text(
                                         '${_pendingNewCommentIds.length} new comments',
-                                        style: GoogleFonts.inter(
+                                        style: AppTypography.custom(
                                           color: Colors.black,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
+                                          size: 12,
+                                          weight: FontWeight.w700,
                                         ),
                                       ),
                                     ),
@@ -305,15 +309,17 @@ class _CommunityPostDiscussionScreenState
                             controller: _commentCtrl,
                             onTapOutside: (_) =>
                                 FocusManager.instance.primaryFocus?.unfocus(),
-                            style: GoogleFonts.inter(
+                            style: AppTypography.custom(
                               color: AppColors.textSecondary,
-                              fontSize: 13,
+                              size: 13,
+                              weight: FontWeight.w400,
                             ),
                             decoration: InputDecoration(
                               hintText: 'Write a comment...',
-                              hintStyle: GoogleFonts.inter(
+                              hintStyle: AppTypography.custom(
                                 color: AppColors.textFaint,
-                                fontSize: 13,
+                                size: 13,
+                                weight: FontWeight.w400,
                               ),
                               filled: false,
                               contentPadding:
@@ -412,19 +418,18 @@ class _PostDetailsCard extends StatelessWidget {
                       behavior: HitTestBehavior.opaque,
                       child: Text(
                         adminName,
-                        style: GoogleFonts.inter(
+                        style: AppTypography.custom(
                           color: AppColors.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                          size: 14,
+                          weight: FontWeight.w700,
                         ),
                       ),
                     ),
                     Text(
                       getTimeStamp(post.createdAt),
-                      style: GoogleFonts.inter(
-                        color: AppColors.textFaint,
-                        fontSize: 11,
-                      ),
+                      style: AppTypography.custom(color: AppColors.textFaint,
+                        size: 11,
+                        weight: FontWeight.w400,),
                     ),
                   ],
                 ),
@@ -434,11 +439,10 @@ class _PostDetailsCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             post.content,
-            style: GoogleFonts.inter(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              height: 1.55,
-            ),
+            style: AppTypography.custom(color: AppColors.textSecondary,
+              size: 14,
+              weight: FontWeight.w400,
+              height: 1.55,),
           ),
           const SizedBox(height: 12),
           Row(
@@ -460,12 +464,12 @@ class _PostDetailsCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       '${post.likesCount}',
-                      style: GoogleFonts.inter(
+                      style: AppTypography.custom(
                         color: post.isLiked
                             ? AppColors.warning500
                             : AppColors.textMuted,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        size: 13,
+                        weight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -477,10 +481,9 @@ class _PostDetailsCard extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 '${post.commentsCount}',
-                style: GoogleFonts.inter(
-                  color: AppColors.textMuted,
-                  fontSize: 13,
-                ),
+                style: AppTypography.custom(color: AppColors.textMuted,
+                  size: 13,
+                  weight: FontWeight.w400,),
               ),
               const Spacer(),
               GestureDetector(
@@ -516,10 +519,9 @@ class _EmptyDiscussion extends StatelessWidget {
       ),
       child: Text(
         'No comments yet. Start the discussion.',
-        style: GoogleFonts.inter(
-          color: AppColors.textMuted,
-          fontSize: 13,
-        ),
+        style: AppTypography.custom(color: AppColors.textMuted,
+          size: 13,
+          weight: FontWeight.w400,),
       ),
     );
   }
@@ -541,67 +543,114 @@ class _CommentCard extends StatelessWidget {
     final name = comment.admin?.name ?? 'User';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgSurface,
+            AppColors.bgSurface.withValues(alpha: 0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.borderSubtle.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => _openAuthorProfile(context),
-                behavior: HitTestBehavior.opaque,
-                child: CircleAvatar(
-                  radius: 14,
-                  backgroundColor: AppColors.bgElevated,
-                  backgroundImage: (comment.admin?.imageUrl.isNotEmpty ?? false)
-                      ? NetworkImage(comment.admin!.imageUrl)
-                      : null,
-                  child: (comment.admin?.imageUrl.isNotEmpty ?? false)
-                      ? null
-                      : Icon(Icons.person,
-                          size: 12, color: AppColors.textMuted),
+          GestureDetector(
+            onTap: () => _openAuthorProfile(context),
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary500.withValues(alpha: 0.15),
+                    AppColors.primary500.withValues(alpha: 0.08),
+                  ],
+                ),
+                border: Border.all(
+                  color: AppColors.primary500.withValues(alpha: 0.25),
+                  width: 1.5,
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _openAuthorProfile(context),
-                  behavior: HitTestBehavior.opaque,
-                  child: Text(
-                    name,
-                    style: GoogleFonts.inter(
-                      color: AppColors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+              clipBehavior: Clip.antiAlias,
+              child: (comment.admin?.imageUrl.isNotEmpty ?? false)
+                  ? Image.network(
+                      comment.admin!.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _avatarFallback(name),
+                    )
+                  : _avatarFallback(name),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _openAuthorProfile(context),
+                        behavior: HitTestBehavior.opaque,
+                        child: Text(
+                          name,
+                          style: AppTypography.custom(
+                            color: AppColors.textPrimary,
+                            size: 14,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ),
+                    Text(
+                      getTimeStamp(comment.createdAt),
+                      style: AppTypography.custom(
+                        color: AppColors.textFaint,
+                        size: 11,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  comment.content,
+                  style: AppTypography.custom(
+                    color: AppColors.textSecondary,
+                    size: 13,
+                    weight: FontWeight.w500,
+                    height: 1.6,
                   ),
                 ),
-              ),
-              Text(
-                getTimeStamp(comment.createdAt),
-                style: GoogleFonts.inter(
-                  color: AppColors.textFaint,
-                  fontSize: 10,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            comment.content,
-            style: GoogleFonts.inter(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-              height: 1.45,
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _avatarFallback(String name) {
+    final firstChar = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+    return Center(
+      child: Text(
+        firstChar,
+        style: AppTypography.custom(
+          color: AppColors.primary400,
+          size: 16,
+          weight: FontWeight.w800,
+        ),
       ),
     );
   }

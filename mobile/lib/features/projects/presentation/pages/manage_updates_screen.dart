@@ -5,7 +5,7 @@ import 'package:blocnet/features/projects/presentation/widgets/update/update_det
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class ManageUpdatesScreen extends StatefulWidget {
@@ -36,10 +36,9 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Your current role does not allow managing updates.',
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 14,
-            ),
+            style: AppTypography.custom(color: AppColors.textMuted,
+              size: 14,
+              weight: FontWeight.w400,),
           ),
         ),
       );
@@ -71,10 +70,9 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                           store.lastError!.isNotEmpty) ...[
                         Text(
                           store.lastError!,
-                          style: GoogleFonts.inter(
-                            color: AppColors.error500,
-                            fontSize: 12,
-                          ),
+                          style: AppTypography.custom(color: AppColors.error500,
+                            size: 12,
+                            weight: FontWeight.w400,),
                         ),
                         const SizedBox(height: 10),
                       ],
@@ -83,10 +81,9 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
                             'You have not created any updates yet.',
-                            style: GoogleFonts.inter(
-                              color: AppColors.textFaint,
-                              fontSize: 13,
-                            ),
+                            style: AppTypography.custom(color: AppColors.textFaint,
+                              size: 13,
+                              weight: FontWeight.w400,),
                           ),
                         )
                       else
@@ -104,10 +101,10 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
       backgroundColor: AppColors.bgBase,
       title: Text(
         'Manage Updates',
-        style: GoogleFonts.spaceGrotesk(
+        style: AppTypography.custom(
           color: AppColors.textPrimary,
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
+          weight: FontWeight.w600,
+          size: 16,
         ),
       ),
       centerTitle: false,
@@ -168,53 +165,153 @@ class _UpdateTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final priorityColor = update.priority.color;
+
     return GestureDetector(
       onTap: () => _openDetails(context),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.borderSubtle, width: 1),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.bgSurface,
+              AppColors.bgSurface.withValues(alpha: 0.85),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: priorityColor.withValues(alpha: 0.25),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: priorityColor.withValues(alpha: 0.08),
+              blurRadius: 12,
+              spreadRadius: 0,
+            ),
+          ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    priorityColor.withValues(alpha: 0.2),
+                    priorityColor.withValues(alpha: 0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: priorityColor.withValues(alpha: 0.35),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(
+                Icons.campaign_rounded,
+                size: 20,
+                color: priorityColor,
+              ),
+            ),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    update.title,
-                    style: GoogleFonts.spaceGrotesk(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          update.title,
+                          style: AppTypography.custom(
+                            color: AppColors.textPrimary,
+                            size: 15,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: priorityColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: priorityColor.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 5,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                color: priorityColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              update.priority.label.toUpperCase(),
+                              style: AppTypography.custom(
+                                color: priorityColor,
+                                size: 9,
+                                weight: FontWeight.w800,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    update.project?.name ?? 'Project',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textMuted,
-                      fontSize: 12,
-                    ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.layers_outlined,
+                        size: 12,
+                        color: AppColors.textFaint,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        update.project?.name ?? 'Project',
+                        style: AppTypography.custom(
+                          color: AppColors.textMuted,
+                          size: 12,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 6),
                   Text(
                     update.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
+                    style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      fontSize: 11,
+                      size: 12,
+                      weight: FontWeight.w400,
+                      height: 1.5,
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.chevron_right, size: 18, color: AppColors.textFaint),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: AppColors.textFaint,
+            ),
           ],
         ),
       ),

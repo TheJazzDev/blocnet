@@ -5,7 +5,7 @@ import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class ManageProjectsScreen extends StatefulWidget {
@@ -86,10 +86,9 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                           projectsStore.lastError!.isNotEmpty) ...[
                         Text(
                           projectsStore.lastError!,
-                          style: GoogleFonts.inter(
-                            color: AppColors.error500,
-                            fontSize: 12,
-                          ),
+                          style: AppTypography.custom(color: AppColors.error500,
+                            size: 12,
+                            weight: FontWeight.w400,),
                         ),
                         const SizedBox(height: 10),
                       ],
@@ -123,10 +122,10 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
       backgroundColor: AppColors.bgBase,
       title: Text(
         'Manage My Gems',
-        style: GoogleFonts.spaceGrotesk(
+        style: AppTypography.custom(
           color: AppColors.textPrimary,
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
+          weight: FontWeight.w600,
+          size: 16,
         ),
       ),
       centerTitle: false,
@@ -155,39 +154,138 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
 
   Widget _buildProjectTile(Project project) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderSubtle, width: 1),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgSurface,
+            AppColors.bgSurface.withValues(alpha: 0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary500.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary500.withValues(alpha: 0.05),
+            blurRadius: 12,
+            spreadRadius: 0,
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            project.name,
-            style: GoogleFonts.spaceGrotesk(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary500.withValues(alpha: 0.2),
+                  AppColors.primary500.withValues(alpha: 0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.primary500.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: project.logo.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      project.logo,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.layers_outlined,
+                        size: 24,
+                        color: AppColors.primary400,
+                      ),
+                    ),
+                  )
+                : Icon(
+                    Icons.layers_outlined,
+                    size: 24,
+                    color: AppColors.primary400,
+                  ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  project.name,
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 15,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.tag_rounded,
+                      size: 12,
+                      color: AppColors.textFaint,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      project.primaryTag.name,
+                      style: AppTypography.custom(
+                        color: AppColors.textMuted,
+                        size: 12,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary500.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: AppColors.primary500.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.people_outline,
+                        size: 12,
+                        color: AppColors.primary400,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${project.followersCount} followers',
+                        style: AppTypography.custom(
+                          color: AppColors.primary400,
+                          size: 11,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            project.primaryTag.toString(),
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${project.followersCount} followers',
-            style: GoogleFonts.inter(
-              color: AppColors.textFaint,
-              fontSize: 11,
-            ),
+          const SizedBox(width: 8),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: AppColors.textFaint,
           ),
         ],
       ),
@@ -205,10 +303,10 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: GoogleFonts.inter(
+      style: AppTypography.custom(
         color: AppColors.textFaint,
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
+        size: 10,
+        weight: FontWeight.w600,
         letterSpacing: 0.8,
       ),
     );
@@ -225,10 +323,9 @@ class _EmptyHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
         message,
-        style: GoogleFonts.inter(
-          color: AppColors.textFaint,
-          fontSize: 13,
-        ),
+        style: AppTypography.custom(color: AppColors.textFaint,
+          size: 13,
+          weight: FontWeight.w400,),
       ),
     );
   }
@@ -242,10 +339,9 @@ class _AccessDenied extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       message,
-      style: GoogleFonts.inter(
-        color: AppColors.textMuted,
-        fontSize: 14,
-      ),
+      style: AppTypography.custom(color: AppColors.textMuted,
+        size: 14,
+        weight: FontWeight.w400,),
     );
   }
 }

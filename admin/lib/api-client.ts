@@ -12,6 +12,9 @@ function toQuery(params: Record<string, string | number | undefined | null>): st
   return encoded ? `?${encoded}` : "";
 }
 
+// Track if we're already attempting a refresh to avoid infinite loops
+let isRefreshing = false;
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${PROXY_BASE}${path}`, {
     ...options,
@@ -22,7 +25,23 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   });
 
   if (res.status === 401) {
-    // Access token expired and no valid refresh token — redirect to sign-in
+    // Try to refresh the token once, then retry the request
+    if (!isRefreshing && typeof window !== "undefined") {
+      isRefreshing = true;
+      try {
+        const refreshRes = await fetch("/api/auth/refresh-token", { method: "POST" });
+        if (refreshRes.ok) {
+          isRefreshing = false;
+          // Retry the original request with the new token
+          return apiFetch<T>(path, options);
+        }
+      } catch {
+        // Refresh failed
+      }
+      isRefreshing = false;
+    }
+
+    // If refresh failed or we're already refreshing, redirect to sign-in
     if (typeof window !== "undefined") {
       window.location.href = `/signin?next=${encodeURIComponent(window.location.pathname)}`;
     }
@@ -38,9 +57,15 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 }
 
 export type {
+  RolesMatrixResponse,
   AdminMe,
   AdminStats,
   AdminUser,
+  AdminUserDetail,
+  AdminDeleteUserResponse,
+  AdminReactivateUserResponse,
+  AdminHardDeleteUserResponse,
+  AdminUserStatus,
   AdminUsersResponse,
   ProjectStatus,
   UpdateStatus,
@@ -66,11 +91,26 @@ export type {
   AdminWalletKycResponse,
   WalletRiskLimit,
   WalletFeeConfig,
+  WalletAssetCode,
+  WalletAssetPriceConfig,
+  AdminWalletHealth,
+  AdminMiningConfig,
+  AdminMiningMetrics,
+  AdminMiningLeaderboardEntry,
+  AdminMiningLeaderboardResponse,
+  AdminBindReferralRequest,
+  AdminBindReferralResponse,
 } from "./api";
 
 import type {
+  RolesMatrixResponse,
   AdminMe,
   AdminStats,
+  AdminUserDetail,
+  AdminDeleteUserResponse,
+  AdminReactivateUserResponse,
+  AdminHardDeleteUserResponse,
+  AdminUserStatus,
   AdminUsersResponse,
   ProjectStatus,
   UpdateStatus,
@@ -95,22 +135,73 @@ import type {
   AdminWalletKycResponse,
   WalletRiskLimit,
   WalletFeeConfig,
+  WalletAssetCode,
+  WalletAssetPriceConfig,
+  AdminWalletHealth,
+  AdminMiningConfig,
+  AdminMiningMetrics,
+  AdminMiningLeaderboardResponse,
+  AdminBindReferralRequest,
+  AdminBindReferralResponse,
 } from "./api";
 
 export const clientApi = {
   getMe: () => apiFetch<AdminMe>("/me"),
 
+  getRolesMatrix: () => apiFetch<RolesMatrixResponse>("/roles/matrix"),
+
   getStats: () => apiFetch<AdminStats>("/admin/users/stats"),
 
-  listUsers: (params?: { limit?: number; offset?: number; role?: string; q?: string }) =>
+  listUsers: (params?: {
+    limit?: number;
+    offset?: number;
+    role?: string;
+    q?: string;
+    status?: AdminUserStatus | "all";
+  }) =>
     apiFetch<AdminUsersResponse>(
       `/admin/users${toQuery({
         limit: params?.limit,
         offset: params?.offset,
         role: params?.role,
         q: params?.q,
+        status: params?.status,
       })}`,
     ),
+
+  getUser: (id: string) => apiFetch<AdminUserDetail>(`/admin/users/${id}`),
+
+  updateUser: (
+    id: string,
+    body: Partial<{
+      displayName: string | null;
+      username: string | null;
+      avatarUrl: string | null;
+      bio: string | null;
+    }>,
+  ) =>
+    apiFetch<AdminUserDetail>(`/admin/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteUser: (id: string, body?: { reason?: string }) =>
+    apiFetch<AdminDeleteUserResponse>(`/admin/users/${id}`, {
+      method: "DELETE",
+      body: JSON.stringify(body ?? {}),
+    }),
+
+  reactivateUser: (id: string, body?: { reason?: string }) =>
+    apiFetch<AdminReactivateUserResponse>(`/admin/users/${id}/reactivate`, {
+      method: "PATCH",
+      body: JSON.stringify(body ?? {}),
+    }),
+
+  hardDeleteUser: (id: string, body?: { reason?: string }) =>
+    apiFetch<AdminHardDeleteUserResponse>(`/admin/users/${id}/hard`, {
+      method: "DELETE",
+      body: JSON.stringify(body ?? {}),
+    }),
 
   listAdminProjects: (params?: {
     q?: string;
@@ -340,6 +431,8 @@ export const clientApi = {
       })}`,
     ),
 
+  getWalletHealth: () => apiFetch<AdminWalletHealth>("/admin/wallet/health"),
+
   listWalletWithdrawals: (params?: {
     q?: string;
     status?: WalletWithdrawalStatus;
@@ -419,6 +512,47 @@ export const clientApi = {
   ) =>
     apiFetch<WalletFeeConfig>(`/admin/wallet/settings/fees/${key}`, {
       method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listWalletAssetPriceConfigs: () =>
+    apiFetch<WalletAssetPriceConfig[]>("/admin/wallet/settings/prices"),
+
+  updateWalletAssetPriceConfig: (
+    asset: WalletAssetCode,
+    body: Partial<{
+      providerId: string | null;
+      fallbackUsdPrice: string;
+      isActive: boolean;
+    }>,
+  ) =>
+    apiFetch<WalletAssetPriceConfig>(`/admin/wallet/settings/prices/${asset}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  getMiningConfig: () => apiFetch<AdminMiningConfig>("/admin/mining/config"),
+
+  updateMiningConfig: (body: Partial<AdminMiningConfig>) =>
+    apiFetch<AdminMiningConfig>("/admin/mining/config", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  getMiningMetrics: () => apiFetch<AdminMiningMetrics>("/admin/mining/metrics"),
+
+  getMiningLeaderboard: (params?: { q?: string; limit?: number; offset?: number }) =>
+    apiFetch<AdminMiningLeaderboardResponse>(
+      `/admin/mining/leaderboard${toQuery({
+        q: params?.q,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  adminBindReferral: (body: AdminBindReferralRequest) =>
+    apiFetch<AdminBindReferralResponse>("/admin/referrals/bind", {
+      method: "POST",
       body: JSON.stringify(body),
     }),
 

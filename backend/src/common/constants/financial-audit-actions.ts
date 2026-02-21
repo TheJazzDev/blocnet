@@ -24,6 +24,7 @@ export const FinancialAuditActions = {
 
   RiskLimitUpdated: 'wallet.risk_limit.updated',
   FeeConfigUpdated: 'wallet.fee_config.updated',
+  AssetPriceConfigUpdated: 'wallet.asset_price_config.updated',
 } as const;
 
 export type FinancialAuditAction =

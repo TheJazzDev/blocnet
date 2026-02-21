@@ -49,6 +49,10 @@
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Allow Blocnet to access your photo library for profile avatar uploads.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Allow Blocnet to access your camera for profile avatar uploads.</string>
 		<key>NSAppTransportSecurity</key>
 		<dict>
 			<key>NSAllowsArbitraryLoads</key>

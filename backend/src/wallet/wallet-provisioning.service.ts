@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   KycStatus,
   LedgerAccountType,
+  WalletAsset,
   WalletStatus,
   type LedgerAccount,
   type UserWallet,
@@ -41,11 +42,12 @@ export class WalletProvisioningService {
     });
 
     if (!wallet) {
+      const chainEnvironment = this.walletConfigService.walletChainEnvironment;
       wallet = await this.prisma.userWallet.create({
         data: {
           userId,
-          chainEnvironment: 'testnet',
-          chainId: this.walletConfigService.bscTestnetChainId,
+          chainEnvironment,
+          chainId: this.walletConfigService.walletProvisionChainId,
           status: this.walletConfigService.walletEnabled
             ? WalletStatus.provisioning
             : WalletStatus.disabled,
@@ -161,13 +163,14 @@ export class WalletProvisioningService {
     userId: string,
     walletId: string,
     accountType: LedgerAccountType = LedgerAccountType.user,
+    currency: WalletAsset = WalletAsset.BNT,
   ): Promise<LedgerAccount> {
     return this.prisma.ledgerAccount.upsert({
       where: {
         userId_accountType_currency: {
           userId,
           accountType,
-          currency: 'BNT',
+          currency,
         },
       },
       update: {
@@ -177,19 +180,20 @@ export class WalletProvisioningService {
         userId,
         walletId,
         accountType,
-        currency: 'BNT',
+        currency,
       },
     });
   }
 
   async ensurePlatformAccount(
     accountType: 'treasury' | 'fee',
+    currency: WalletAsset = WalletAsset.BNT,
   ): Promise<LedgerAccount> {
     const existing = await this.prisma.ledgerAccount.findFirst({
       where: {
         userId: null,
         accountType,
-        currency: 'BNT',
+        currency,
       },
     });
 
@@ -201,7 +205,7 @@ export class WalletProvisioningService {
       data: {
         userId: null,
         accountType,
-        currency: 'BNT',
+        currency,
       },
     });
   }

@@ -1,9 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/project/follow_preference_bottom_sheet.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_card/gem_card.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class DiscoverProjectsSection extends StatefulWidget {
@@ -29,6 +30,14 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
       context,
       listen: false,
     ).toggleFollowProject(project.id);
+  }
+
+  Future<void> _openPreferences(Project project) async {
+    await showFollowPreferenceBottomSheet(
+      context,
+      projectId: project.id,
+      projectName: project.name,
+    );
   }
 
   @override
@@ -57,21 +66,20 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                 const SizedBox(height: 12),
                 Text(
                   'No gems found',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: AppTypography.custom(
                     color: AppColors.textSecondary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    size: 15,
+                    weight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Gems will appear here when projects are listed.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    color: AppColors.textFaint,
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
+                  style: AppTypography.custom(color: AppColors.textFaint,
+                    size: 12,
+                    weight: FontWeight.w400,
+                    height: 1.5,),
                 ),
               ],
             ),
@@ -89,15 +97,16 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                 children: [
                   Text(
                     'CURATED FEED',
-                    style: GoogleFonts.inter(
+                    style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                      size: 10,
+                      weight: FontWeight.w600,
                       letterSpacing: 0.9,
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.bgSurface,
                       borderRadius: BorderRadius.circular(6),
@@ -105,10 +114,9 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                     ),
                     child: Text(
                       'Sort: Hype Score',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textFaint,
-                        fontSize: 10,
-                      ),
+                      style: AppTypography.custom(color: AppColors.textFaint,
+                        size: 10,
+                        weight: FontWeight.w400,),
                     ),
                   ),
                 ],
@@ -116,16 +124,18 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
             ),
             // Gem cards
             Column(
-                children: store.projects.map((project) {
-                  final isFollowed = store.isProjectFollowed(project.id);
-                  return GemCard(
-                    project: project,
-                    isFollowed: isFollowed,
-                    isLoading: store.isTogglingFollow,
-                    onFollowToggle: () => _toggleFollow(project),
-                  );
-                }).toList(),
-              ),
+              children: store.projects.map((project) {
+                final isFollowed = store.isProjectFollowed(project.id);
+                return GemCard(
+                  project: project,
+                  isFollowed: isFollowed,
+                  isLoading: store.isTogglingFollow,
+                  onFollowToggle: () => _toggleFollow(project),
+                  onPreferencesTap:
+                      isFollowed ? () => _openPreferences(project) : null,
+                );
+              }).toList(),
+            ),
           ],
         );
       },

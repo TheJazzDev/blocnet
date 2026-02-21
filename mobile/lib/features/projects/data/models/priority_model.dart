@@ -9,7 +9,7 @@ class Priority {
 
   // Define the different urgency levels
   static final high = Priority._('High', AppColors.priorityHigh);
-  static final mid = Priority._('Mid', AppColors.priorityMid);
+  static final mid = Priority._('Medium', AppColors.priorityMid);
   static final low = Priority._('Low', AppColors.priorityLow);
 
   /// Get all priority levels

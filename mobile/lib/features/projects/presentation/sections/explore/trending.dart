@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -36,7 +38,8 @@ class _TrendingScreenState extends State<TrendingScreen> {
 
             final trendingPosts = _getTrendingPosts(store.posts);
             if (trendingPosts.isEmpty) {
-              return const Center(child: Text('No trending updates available.'));
+              return const Center(
+                  child: Text('No trending updates available.'));
             }
 
             return SingleChildScrollView(
@@ -54,20 +57,39 @@ class _TrendingScreenState extends State<TrendingScreen> {
   }
 
   List<Update> _getTrendingPosts(List<Update> posts) {
-    final ranking = <Priority, int>{
-      Priority.high: 0,
-      Priority.mid: 1,
-      Priority.low: 2,
-    };
+    final now = DateTime.now();
+    final ranked = posts
+        .map((post) => (post: post, score: _trendScore(post, now)))
+        .toList();
 
-    final sorted = [...posts];
-    sorted.sort((a, b) {
-      final byPriority =
-          (ranking[a.priority] ?? 99).compareTo(ranking[b.priority] ?? 99);
-      if (byPriority != 0) return byPriority;
-      return b.createdAt.compareTo(a.createdAt);
+    ranked.sort((a, b) {
+      final byScore = b.score.compareTo(a.score);
+      if (byScore != 0) return byScore;
+      return b.post.createdAt.compareTo(a.post.createdAt);
     });
 
-    return sorted.take(20).toList();
+    return ranked.take(20).map((entry) => entry.post).toList();
+  }
+
+  double _trendScore(Update post, DateTime now) {
+    var priorityWeight = 18.0;
+    if (post.priority == Priority.high) {
+      priorityWeight = 46.0;
+    } else if (post.priority == Priority.mid) {
+      priorityWeight = 30.0;
+    }
+
+    final hoursSincePost = now.difference(post.createdAt).inHours.toDouble();
+    final recencyBoost = (48 - hoursSincePost).clamp(0, 48) * 0.6;
+    final projectFollowers =
+        math.min(post.project?.followersCount ?? 0, 800) * 0.03;
+    final adminFollowers = math.min(post.admin?.followers ?? 0, 2000) * 0.01;
+    final tagBoost = math.min(post.secondaryTags.length, 4) * 1.5;
+
+    return priorityWeight +
+        recencyBoost +
+        projectFollowers +
+        adminFollowers +
+        tagBoost;
   }
 }

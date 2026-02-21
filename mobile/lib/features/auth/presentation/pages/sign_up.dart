@@ -8,6 +8,7 @@ import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 enum _UsernameStatus { idle, checking, available, taken, invalid }
@@ -25,26 +26,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _referralController = TextEditingController();
 
   final _nameFocus = FocusNode();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _confirmFocus = FocusNode();
+  final _referralFocus = FocusNode();
 
   bool _isSubmitting = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  // Username availability
   _UsernameStatus _usernameStatus = _UsernameStatus.idle;
   Timer? _usernameDebounce;
   final _apiClient = ApiClient();
   final _usernameRegExp = RegExp(r'^[a-z0-9_]{3,24}$');
+  final _referralRegExp = RegExp(r'^[A-Z0-9]{8}$');
 
   @override
   void initState() {
     super.initState();
     _nameController.addListener(_onUsernameChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final pending = context.read<AuthStore>().pendingReferralCode;
+      if (pending != null &&
+          pending.isNotEmpty &&
+          _referralController.text.trim().isEmpty) {
+        _referralController.text = pending;
+      }
+    });
   }
 
   @override
@@ -55,10 +68,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _referralController.dispose();
     _nameFocus.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
     _confirmFocus.dispose();
+    _referralFocus.dispose();
     super.dispose();
   }
 
@@ -108,7 +123,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
-    // Block submit if username is not confirmed available
     if (_usernameStatus != _UsernameStatus.available) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -125,12 +139,50 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     setState(() => _isSubmitting = true);
+
     final authStore = context.read<AuthStore>();
+    final referralCode = _referralController.text.trim().toUpperCase();
+
+    if (referralCode.isNotEmpty) {
+      try {
+        final result = await _apiClient.get(
+          '/referrals/validate',
+          query: {'code': referralCode},
+        );
+        final valid = result is Map<String, dynamic> && result['valid'] == true;
+        if (!valid) {
+          if (!mounted) return;
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Referral code is invalid'),
+              backgroundColor: AppColors.darkGrey200,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Unable to validate referral code right now'),
+            backgroundColor: AppColors.darkGrey200,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
+
     final success = await authStore.signUpWithEmailPassword(
       username: _nameController.text.trim().toLowerCase(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
+      referralCode: referralCode.isEmpty ? null : referralCode,
     );
+
     if (!mounted) return;
     setState(() => _isSubmitting = false);
 
@@ -163,9 +215,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _continueWithGoogle() async {
     if (_isSubmitting) return;
     FocusScope.of(context).unfocus();
+    final authStore = context.read<AuthStore>();
+
+    final referralCode = _referralController.text.trim().toUpperCase();
+    if (referralCode.isNotEmpty) {
+      await authStore.setPendingReferralCode(referralCode);
+    }
+    if (!mounted) return;
 
     setState(() => _isSubmitting = true);
-    final authStore = context.read<AuthStore>();
     final started = await authStore.signInWithGoogle();
     if (!mounted) return;
     setState(() => _isSubmitting = false);
@@ -233,7 +291,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       case _UsernameStatus.taken:
         return Row(
           children: [
-            Icon(Icons.cancel_outlined, size: 12, color: Colors.redAccent),
+            const Icon(Icons.cancel_outlined,
+                size: 12, color: Colors.redAccent),
             const SizedBox(width: 4),
             Text(
               'Username is already taken',
@@ -270,6 +329,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return null;
   }
 
+  String? _validateReferral(String? value) {
+    final code = (value ?? '').trim().toUpperCase();
+    if (code.isEmpty) return null;
+    if (!_referralRegExp.hasMatch(code)) {
+      return 'Referral code must be 8 letters/numbers';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final authStore = context.watch<AuthStore>();
@@ -287,6 +355,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _GoogleAuthButton(
+              label: 'Sign up with Google',
+              isEnabled: !isBusy && authStore.isSupabaseConfigured,
+              isLoading: false,
+              onPressed: _continueWithGoogle,
+            ),
+            const SizedBox(height: 14),
+            const _OrDivider(label: 'or sign up with email'),
+            const SizedBox(height: 18),
             AuthInputField(
               controller: _nameController,
               label: 'Username',
@@ -344,9 +421,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
               label: 'Confirm password',
               obscureText: _obscureConfirmPassword,
               focusNode: _confirmFocus,
-              textInputAction: TextInputAction.done,
+              textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.newPassword],
-              onFieldSubmitted: (_) => _submit(),
+              onFieldSubmitted: (_) =>
+                  FocusScope.of(context).requestFocus(_referralFocus),
               suffixIcon: PasswordVisibilityToggle(
                 isObscured: _obscureConfirmPassword,
                 onTap: () => setState(
@@ -360,6 +438,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 return null;
               },
             ),
+            const SizedBox(height: 12),
+            AuthInputField(
+              controller: _referralController,
+              label: 'Referral code (optional)',
+              focusNode: _referralFocus,
+              textInputAction: TextInputAction.done,
+              textCapitalization: TextCapitalization.characters,
+              onFieldSubmitted: (_) => _submit(),
+              validator: _validateReferral,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'If you were invited, enter your code now. OAuth signups can bind after login too.',
+              style: TextStyle(
+                color: AppColors.textFaint,
+                fontSize: 11,
+                fontFamily: 'Geist',
+              ),
+            ),
             const SizedBox(height: 24),
             Row(
               children: [
@@ -370,13 +467,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   onPressed: _submit,
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            _GoogleAuthButton(
-              label: 'Sign up with Google',
-              isEnabled: !isBusy && authStore.isSupabaseConfigured,
-              isLoading: false,
-              onPressed: _continueWithGoogle,
             ),
             const SizedBox(height: 20),
             Center(
@@ -431,12 +521,14 @@ class _GoogleAuthButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 44,
-      child: OutlinedButton(
+      height: 50,
+      child: ElevatedButton(
         onPressed: isEnabled ? onPressed : null,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: AppColors.borderSubtle),
-          backgroundColor: AppColors.bgSurface,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 3,
+          shadowColor: Colors.black.withValues(alpha: 0.35),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -453,36 +545,61 @@ class _GoogleAuthButton extends StatelessWidget {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'G',
-                      style: TextStyle(
-                        color: Colors.red.shade600,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                  SvgPicture.asset(
+                    'assets/icons/google_g.svg',
+                    width: 22,
+                    height: 22,
                   ),
                   const SizedBox(width: 10),
                   Text(
                     label,
                     style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
+                      color: Colors.black,
+                      fontSize: 14,
                       fontFamily: 'Geist',
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
       ),
+    );
+  }
+}
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider({this.label = 'or'});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 1,
+            color: AppColors.borderSubtle,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: AppColors.textFaint,
+              fontSize: 12,
+              fontFamily: 'Geist',
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: AppColors.bgElevated,
+          ),
+        ),
+      ],
     );
   }
 }

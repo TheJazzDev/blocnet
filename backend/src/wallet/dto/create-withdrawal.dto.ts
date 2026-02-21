@@ -1,4 +1,6 @@
 import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { WalletAsset } from '@prisma/client';
 
 const evmAddressPattern = /^0x[a-fA-F0-9]{40}$/;
 
@@ -10,6 +12,10 @@ export class CreateWithdrawalDto {
   @IsString()
   @MinLength(1)
   amount!: string;
+
+  @IsOptional()
+  @IsEnum(WalletAsset)
+  asset?: WalletAsset;
 
   @IsString()
   @MinLength(3)

@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'discover_projects.dart';
 import 'your_projects.dart';
 
@@ -21,25 +24,60 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   final ScrollController _scrollController = ScrollController();
   final Set<String> _pendingNewProjectIds = <String>{};
   Timer? _newProjectsPollTimer;
+  RealtimeChannel? _newProjectsRealtimeChannel;
   bool _isCheckingForNewProjects = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
-    _newProjectsPollTimer = Timer.periodic(
-      const Duration(seconds: 14),
-      (_) => _checkForNewProjects(),
-    );
+    _startNewProjectsSync();
   }
 
   @override
   void dispose() {
     _newProjectsPollTimer?.cancel();
+    _stopNewProjectsRealtimeSubscription();
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();
     super.dispose();
+  }
+
+  void _startNewProjectsSync() {
+    if (!AppConfig.isSupabaseConfigured) {
+      _newProjectsPollTimer = Timer.periodic(
+        const Duration(seconds: 14),
+        (_) => _checkForNewProjects(),
+      );
+      return;
+    }
+
+    _startNewProjectsRealtimeSubscription();
+  }
+
+  void _startNewProjectsRealtimeSubscription() {
+    _stopNewProjectsRealtimeSubscription();
+    _newProjectsRealtimeChannel = Supabase.instance.client
+        .channel('discover-new-projects')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'Project',
+          callback: (_) => unawaited(_checkForNewProjects()),
+        )
+        .subscribe((status, [error]) {
+      debugPrint(
+        '[RT][Discover] projects status=$status error=$error',
+      );
+    });
+  }
+
+  void _stopNewProjectsRealtimeSubscription() {
+    final channel = _newProjectsRealtimeChannel;
+    if (channel == null) return;
+    _newProjectsRealtimeChannel = null;
+    Supabase.instance.client.removeChannel(channel);
   }
 
   void _onTabChanged(Section section) {
@@ -102,33 +140,51 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     setState(() => _pendingNewProjectIds.clear());
   }
 
+  Future<void> _handleRefresh() async {
+    final projectsStore = context.read<ProjectsStore>();
+    final updatesStore = context.read<UpdatesStore>();
+    await Future.wait([
+      projectsStore.refreshProjects(),
+      updatesStore.refreshUpdates(),
+    ]);
+
+    if (!mounted) return;
+    setState(() => _pendingNewProjectIds.clear());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       body: Stack(
         children: [
-          CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // Sticky underline tab bar
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _DiscoverTabDelegate(
-                  activeSection: _activeSection,
-                  onTabChanged: _onTabChanged,
+          RefreshIndicator(
+            color: AppColors.primary500,
+            backgroundColor: AppColors.bgSurface,
+            onRefresh: _handleRefresh,
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // Sticky underline tab bar
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _DiscoverTabDelegate(
+                    activeSection: _activeSection,
+                    onTabChanged: _onTabChanged,
+                  ),
                 ),
-              ),
-              // Content
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverToBoxAdapter(
-                  child: _activeSection == Sections.yourProjects
-                      ? const _YourGemsWrapper()
-                      : const DiscoverProjectsSection(),
+                // Content
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverToBoxAdapter(
+                    child: _activeSection == Sections.yourProjects
+                        ? const _YourGemsWrapper()
+                        : const DiscoverProjectsSection(),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           if (_activeSection == Sections.discoverProjects &&
               _pendingNewProjectIds.isNotEmpty)
@@ -149,10 +205,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     ),
                     child: Text(
                       '${_pendingNewProjectIds.length} new projects',
-                      style: GoogleFonts.inter(
+                      style: AppTypography.custom(
                         color: Colors.black,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                        size: 12,
+                        weight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -269,10 +325,10 @@ class _Tab extends StatelessWidget {
         height: 40,
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: AppTypography.custom(
             color: isActive ? AppColors.teal400 : AppColors.textFaint,
-            fontSize: 13,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            size: 13,
+            weight: isActive ? FontWeight.w600 : FontWeight.w500,
           ),
         ),
       ),

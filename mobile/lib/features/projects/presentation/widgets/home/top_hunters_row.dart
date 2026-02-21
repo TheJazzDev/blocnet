@@ -1,9 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
+import 'package:blocnet/routes/protected_routes.dart';
 import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 /// Horizontal scrollable row of top hunters (admin avatars) at the top of the feed.
@@ -40,19 +41,24 @@ class TopHuntersRow extends StatelessWidget {
             children: [
               Text(
                 'TOP HUNTERS',
-                style: GoogleFonts.inter(
+                style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                  size: 10,
+                  weight: FontWeight.w600,
                   letterSpacing: 0.9,
                 ),
               ),
-              Text(
-                'View All',
-                style: GoogleFonts.inter(
-                  color: AppColors.teal400,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+              GestureDetector(
+                onTap: () =>
+                    Navigator.of(context).pushNamed(ProtectedRoutes.topHunters),
+                behavior: HitTestBehavior.opaque,
+                child: Text(
+                  'View All',
+                  style: AppTypography.custom(
+                    color: AppColors.teal400,
+                    size: 11,
+                    weight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -172,10 +178,10 @@ class _HunterAvatar extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               isCreate ? 'My Updates' : name,
-              style: GoogleFonts.inter(
+              style: AppTypography.custom(
                 color: isCreate ? AppColors.teal400 : AppColors.textMuted,
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
+                size: 10,
+                weight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
@@ -8,8 +9,9 @@ import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -28,6 +30,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   };
   final Set<String> _pendingNewPostIds = <String>{};
   Timer? _newPostsPollTimer;
+  RealtimeChannel? _newPostsRealtimeChannel;
   bool _isCheckingForNewPosts = false;
 
   @override
@@ -49,15 +52,13 @@ class _CommunityScreenState extends State<CommunityScreen>
       if (!mounted) return;
       context.read<CommunityPostsStore>().fetchPostsOnce();
     });
-    _newPostsPollTimer = Timer.periodic(
-      const Duration(seconds: 12),
-      (_) => _checkForNewPosts(),
-    );
+    _startNewPostsSync();
   }
 
   @override
   void dispose() {
     _newPostsPollTimer?.cancel();
+    _stopNewPostsRealtimeSubscription();
     for (final controller in _scrollControllers.values) {
       controller
         ..removeListener(_handleScroll)
@@ -65,6 +66,42 @@ class _CommunityScreenState extends State<CommunityScreen>
     }
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _startNewPostsSync() {
+    if (!AppConfig.isSupabaseConfigured) {
+      _newPostsPollTimer = Timer.periodic(
+        const Duration(seconds: 12),
+        (_) => _checkForNewPosts(),
+      );
+      return;
+    }
+
+    _startNewPostsRealtimeSubscription();
+  }
+
+  void _startNewPostsRealtimeSubscription() {
+    _stopNewPostsRealtimeSubscription();
+    _newPostsRealtimeChannel = Supabase.instance.client
+        .channel('community-new-posts')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'CommunityPost',
+          callback: (_) => unawaited(_checkForNewPosts()),
+        )
+        .subscribe((status, [error]) {
+      debugPrint(
+        '[RT][Community] posts status=$status error=$error',
+      );
+    });
+  }
+
+  void _stopNewPostsRealtimeSubscription() {
+    final channel = _newPostsRealtimeChannel;
+    if (channel == null) return;
+    _newPostsRealtimeChannel = null;
+    Supabase.instance.client.removeChannel(channel);
   }
 
   void _handleScroll() {
@@ -133,6 +170,12 @@ class _CommunityScreenState extends State<CommunityScreen>
     setState(() => _pendingNewPostIds.clear());
   }
 
+  Future<void> _handleRefresh() async {
+    await context.read<CommunityPostsStore>().refreshPosts();
+    if (!mounted) return;
+    setState(() => _pendingNewPostIds.clear());
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
@@ -159,12 +202,6 @@ class _CommunityScreenState extends State<CommunityScreen>
             );
           }
 
-          if (posts.isEmpty) {
-            return const Center(
-              child: Text('No community updates yet.'),
-            );
-          }
-
           final pendingCount = _pendingCountForActiveTopic(posts);
 
           return Stack(
@@ -181,6 +218,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                           bottomPad: bottomPad,
                           controller:
                               _scrollControllers[CommunityTopic.general]!,
+                          onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
                         ),
@@ -189,6 +227,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                           bottomPad: bottomPad,
                           controller:
                               _scrollControllers[CommunityTopic.marketTalk]!,
+                          onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
                         ),
@@ -198,6 +237,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                           bottomPad: bottomPad,
                           controller:
                               _scrollControllers[CommunityTopic.introductions]!,
+                          onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
                         ),
@@ -224,10 +264,10 @@ class _CommunityScreenState extends State<CommunityScreen>
                         ),
                         child: Text(
                           '$pendingCount new posts',
-                          style: GoogleFonts.inter(
+                          style: AppTypography.custom(
                             color: Colors.black,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            size: 12,
+                            weight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -273,13 +313,15 @@ class _CommunityTabs extends StatelessWidget {
         indicatorColor: AppColors.primary400,
         indicatorWeight: 3,
         dividerColor: Colors.transparent,
-        labelStyle: GoogleFonts.inter(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
+        labelStyle: AppTypography.custom(
+          size: 13,
+          color: Colors.black,
+          weight: FontWeight.w600,
         ),
-        unselectedLabelStyle: GoogleFonts.inter(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
+        unselectedLabelStyle: AppTypography.custom(
+          size: 13,
+          color: Colors.black,
+          weight: FontWeight.w500,
         ),
         tabs: const [
           Tab(text: 'General'),
@@ -296,6 +338,7 @@ class _CommunityFeedList extends StatelessWidget {
     required this.posts,
     required this.bottomPad,
     required this.controller,
+    required this.onRefresh,
     required this.onLike,
     required this.onBookmark,
   });
@@ -303,37 +346,59 @@ class _CommunityFeedList extends StatelessWidget {
   final List<CommunityPost> posts;
   final double bottomPad;
   final ScrollController controller;
+  final Future<void> Function() onRefresh;
   final Future<void> Function(String postId) onLike;
   final Future<void> Function(String postId) onBookmark;
 
   @override
   Widget build(BuildContext context) {
     if (posts.isEmpty) {
-      return Center(
-        child: Text(
-          'No posts in this section yet.',
-          style: GoogleFonts.inter(
-            color: AppColors.textMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
+      return RefreshIndicator(
+        color: AppColors.primary500,
+        backgroundColor: AppColors.bgSurface,
+        onRefresh: onRefresh,
+        child: ListView(
+          controller: controller,
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16, 32, 16, bottomPad),
+          children: [
+            SizedBox(
+              height: 140,
+              child: Center(
+                child: Text(
+                  'No posts in this section yet.',
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 13,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.separated(
-      controller: controller,
-      padding: EdgeInsets.fromLTRB(16, 14, 16, bottomPad),
-      itemCount: posts.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 14),
-      itemBuilder: (context, index) => _CommunityCard(
-        post: posts[index],
-        onTap: () => Navigator.of(context).pushNamed(
-          AppRoutes.communityDiscussion,
-          arguments: posts[index].id,
+    return RefreshIndicator(
+      color: AppColors.primary500,
+      backgroundColor: AppColors.bgSurface,
+      onRefresh: onRefresh,
+      child: ListView.separated(
+        controller: controller,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(16, 14, 16, bottomPad),
+        itemCount: posts.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 14),
+        itemBuilder: (context, index) => _CommunityCard(
+          post: posts[index],
+          onTap: () => Navigator.of(context).pushNamed(
+            AppRoutes.communityDiscussion,
+            arguments: posts[index].id,
+          ),
+          onLike: () => onLike(posts[index].id),
+          onBookmark: () => onBookmark(posts[index].id),
         ),
-        onLike: () => onLike(posts[index].id),
-        onBookmark: () => onBookmark(posts[index].id),
       ),
     );
   }
@@ -371,14 +436,28 @@ class _CommunityCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.borderSubtle,
-            width: 1,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.bgSurface,
+              AppColors.bgSurface.withValues(alpha: 0.85),
+            ],
           ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.borderSubtle.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary500.withValues(alpha: 0.03),
+              blurRadius: 12,
+              spreadRadius: 0,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,10 +468,35 @@ class _CommunityCard extends StatelessWidget {
                 GestureDetector(
                   onTap: () => _openAuthorProfile(context),
                   behavior: HitTestBehavior.opaque,
-                  child: _Avatar(
-                      adminName: displayName, imageUrl: admin?.imageUrl),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [
+                          roleColor.withValues(alpha: 0.15),
+                          roleColor.withValues(alpha: 0.08),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: roleColor.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: (admin?.imageUrl != null &&
+                            admin!.imageUrl.trim().isNotEmpty)
+                        ? Image.network(
+                            admin.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                _avatarFallback(displayName, roleColor),
+                          )
+                        : _avatarFallback(displayName, roleColor),
+                  ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,10 +514,10 @@ class _CommunityCard extends StatelessWidget {
                                       displayName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.inter(
+                                      style: AppTypography.custom(
                                         color: AppColors.textPrimary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
+                                        size: 14,
+                                        weight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
@@ -426,22 +530,22 @@ class _CommunityCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             getTimeStamp(post.createdAt),
-                            style: GoogleFonts.inter(
+                            style: AppTypography.custom(
                               color: AppColors.textMuted,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
+                              size: 11,
+                              weight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Text(
                         content,
-                        style: GoogleFonts.inter(
+                        style: AppTypography.custom(
                           color: AppColors.textSecondary,
-                          fontSize: 12,
-                          height: 1.5,
-                          fontWeight: FontWeight.w500,
+                          size: 13,
+                          height: 1.6,
+                          weight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -449,63 +553,118 @@ class _CommunityCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 14),
+            Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.borderSubtle.withValues(alpha: 0.3),
+                    AppColors.borderSubtle,
+                    AppColors.borderSubtle.withValues(alpha: 0.3),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
-            Container(height: 1, color: AppColors.borderSubtle),
-            const SizedBox(height: 11),
             Row(
               children: [
                 GestureDetector(
                   onTap: onLike,
                   behavior: HitTestBehavior.opaque,
-                  child: Row(
-                    children: [
-                      Icon(
-                        post.isLiked
-                            ? Icons.thumb_up_alt_rounded
-                            : Icons.thumb_up_alt_outlined,
-                        size: 20,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: post.isLiked
+                          ? AppColors.primary500.withValues(alpha: 0.12)
+                          : AppColors.bgElevated.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
                         color: post.isLiked
-                            ? AppColors.primary400
-                            : AppColors.textMuted,
+                            ? AppColors.primary500.withValues(alpha: 0.3)
+                            : AppColors.borderSubtle.withValues(alpha: 0.3),
                       ),
-                      const SizedBox(width: 7),
-                      Text(
-                        '${post.likesCount}',
-                        style: GoogleFonts.inter(
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          post.isLiked
+                              ? Icons.thumb_up_alt_rounded
+                              : Icons.thumb_up_alt_outlined,
+                          size: 16,
                           color: post.isLiked
                               ? AppColors.primary400
                               : AppColors.textMuted,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          '${post.likesCount}',
+                          style: AppTypography.custom(
+                            color: post.isLiked
+                                ? AppColors.primary400
+                                : AppColors.textMuted,
+                            size: 12,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgElevated.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.borderSubtle.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.mode_comment_outlined,
+                          size: 16, color: AppColors.textMuted),
+                      const SizedBox(width: 5),
+                      Text(
+                        '${post.commentsCount}',
+                        style: AppTypography.custom(
+                          color: AppColors.textMuted,
+                          size: 12,
+                          weight: FontWeight.w700,
                         ),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(width: 18),
-                Icon(Icons.mode_comment_outlined,
-                    size: 20, color: AppColors.textMuted),
-                const SizedBox(width: 7),
-                Text(
-                  '${post.commentsCount}',
-                  style: GoogleFonts.inter(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const Spacer(),
                 GestureDetector(
                   onTap: onBookmark,
                   behavior: HitTestBehavior.opaque,
-                  child: Icon(
-                    post.isBookmarked
-                        ? Icons.bookmark_rounded
-                        : Icons.bookmark_outline_rounded,
-                    size: 20,
-                    color: post.isBookmarked
-                        ? AppColors.primary400
-                        : AppColors.textMuted,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: post.isBookmarked
+                          ? AppColors.primary500.withValues(alpha: 0.12)
+                          : AppColors.bgElevated.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: post.isBookmarked
+                            ? AppColors.primary500.withValues(alpha: 0.3)
+                            : AppColors.borderSubtle.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Icon(
+                      post.isBookmarked
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_outline_rounded,
+                      size: 16,
+                      color: post.isBookmarked
+                          ? AppColors.primary400
+                          : AppColors.textMuted,
+                    ),
                   ),
                 ),
               ],
@@ -516,53 +675,24 @@ class _CommunityCard extends StatelessWidget {
     );
   }
 
+  Widget _avatarFallback(String name, Color color) {
+    final firstChar = name.isNotEmpty ? name[0].toUpperCase() : 'B';
+    return Center(
+      child: Text(
+        firstChar,
+        style: AppTypography.custom(
+          color: color,
+          size: 20,
+          weight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
   String _resolveRole(CommunityPost post) {
     final raw = (post.admin?.username ?? post.admin?.name ?? '').toLowerCase();
     if (raw.contains('hunter')) return 'HUNTER';
     return 'USER';
-  }
-}
-
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.adminName, required this.imageUrl});
-
-  final String adminName;
-  final String? imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasNetworkImage = imageUrl != null && imageUrl!.trim().isNotEmpty;
-
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: AppColors.bgElevated,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: hasNetworkImage
-          ? Image.network(
-              imageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _fallback(),
-            )
-          : _fallback(),
-    );
-  }
-
-  Widget _fallback() {
-    final firstChar = adminName.isNotEmpty ? adminName[0].toUpperCase() : 'B';
-    return Center(
-      child: Text(
-        firstChar,
-        style: GoogleFonts.inter(
-          color: AppColors.primary400,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
   }
 }
 
@@ -582,10 +712,10 @@ class _RoleChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: GoogleFonts.inter(
+        style: AppTypography.custom(
           color: color,
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
+          size: 9,
+          weight: FontWeight.w600,
           letterSpacing: 0.1,
         ),
       ),

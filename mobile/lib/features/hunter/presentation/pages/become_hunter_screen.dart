@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 
 /// Screen showing the requirements to become a Hunter,
 /// with progress bars for each eligibility criteria.
@@ -21,10 +21,10 @@ class BecomeHunterScreen extends StatelessWidget {
             const SizedBox(height: 28),
             Text(
               'ELIGIBILITY REQUIREMENTS',
-              style: GoogleFonts.inter(
+              style: AppTypography.custom(
                 color: AppColors.textFaint,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
+                size: 10,
+                weight: FontWeight.w600,
                 letterSpacing: 1.2,
               ),
             ),
@@ -124,10 +124,10 @@ class _BecomeHunterAppBar extends StatelessWidget implements PreferredSizeWidget
                 const SizedBox(width: 12),
                 Text(
                   'Become a Hunter',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                    size: 17,
+                    weight: FontWeight.w700,
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -182,21 +182,20 @@ class _HeroSection extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             'Join the Hunter Network',
-            style: GoogleFonts.spaceGrotesk(
+            style: AppTypography.custom(
               color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
+              size: 18,
+              weight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Hunters are vetted community members who submit and track gem projects. '
             'Earn \$BNT tips from the community for your alpha intel.',
-            style: GoogleFonts.inter(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-              height: 1.5,
-            ),
+            style: AppTypography.custom(color: AppColors.textSecondary,
+              size: 13,
+              weight: FontWeight.w400,
+              height: 1.5,),
           ),
           const SizedBox(height: 14),
           Row(
@@ -228,10 +227,10 @@ class _Perk extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: AppTypography.custom(
             color: AppColors.primary400,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
+            size: 11,
+            weight: FontWeight.w600,
           ),
         ),
       ],
@@ -299,10 +298,10 @@ class _RequirementCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: GoogleFonts.spaceGrotesk(
+                  style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    size: 14,
+                    weight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -323,10 +322,10 @@ class _RequirementCard extends StatelessWidget {
                       const SizedBox(width: 3),
                       Text(
                         'Met',
-                        style: GoogleFonts.inter(
+                        style: AppTypography.custom(
                           color: AppColors.successColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
+                          size: 10,
+                          weight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -337,11 +336,10 @@ class _RequirementCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             description,
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: 12,
-              height: 1.5,
-            ),
+            style: AppTypography.custom(color: AppColors.textMuted,
+              size: 12,
+              weight: FontWeight.w400,
+              height: 1.5,),
           ),
           const SizedBox(height: 12),
           ClipRRect(
@@ -358,10 +356,9 @@ class _RequirementCard extends StatelessWidget {
             children: [
               Text(
                 progressLabel,
-                style: GoogleFonts.inter(
-                  color: AppColors.textFaint,
-                  fontSize: 10,
-                ),
+                style: AppTypography.custom(color: AppColors.textFaint,
+                  size: 10,
+                  weight: FontWeight.w400,),
               ),
               const Spacer(),
               if (actionLabel != null && onAction != null)
@@ -369,10 +366,10 @@ class _RequirementCard extends StatelessWidget {
                   onTap: onAction,
                   child: Text(
                     actionLabel!,
-                    style: GoogleFonts.inter(
+                    style: AppTypography.custom(
                       color: AppColors.primary400,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      size: 11,
+                      weight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -411,11 +408,10 @@ class _InfoBox extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: GoogleFonts.inter(
-                color: AppColors.textMuted,
-                fontSize: 12,
-                height: 1.5,
-              ),
+              style: AppTypography.custom(color: AppColors.textMuted,
+                size: 12,
+                weight: FontWeight.w400,
+                height: 1.5,),
             ),
           ),
         ],
@@ -448,10 +444,9 @@ class _ApplyButton extends StatelessWidget {
         ),
         child: Text(
           'Apply to Become a Hunter',
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTypography.custom(size: 14,
+            color: Colors.black,
+            weight: FontWeight.w700,),
         ),
       ),
     );

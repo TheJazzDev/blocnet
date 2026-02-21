@@ -12,6 +12,7 @@ import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/services/tags_store.dart';
 import 'package:blocnet/services/comments_store.dart';
 import 'package:blocnet/services/community_posts_store.dart';
+import 'package:blocnet/services/mining_store.dart';
 import 'package:blocnet/services/user_profile_store.dart';
 import 'package:blocnet/services/wallet_store.dart';
 import 'package:flutter/material.dart';
@@ -57,6 +58,7 @@ void main() async {
 
   final authStore = AuthStore();
   await authStore.bootstrapFromSession();
+  final notificationsStore = NotificationsStore();
   final initialRoute =
       authStore.isAuthenticated ? AppRoutes.main : AppRoutes.signIn;
 
@@ -74,7 +76,11 @@ void main() async {
   // Initialise push notifications tied to auth state.
   // - If already authenticated on cold start: init immediately.
   // - If the user signs in later (or signs out): react via listener.
-  final pushNotificationService = PushNotificationService();
+  final pushNotificationService = PushNotificationService(
+    onForegroundMessage: () {
+      notificationsStore.refreshNotifications();
+    },
+  );
   bool pushInitialised = false;
 
   void onAuthChanged() {
@@ -102,8 +108,11 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AppStore()),
         ChangeNotifierProvider(create: (_) => UpdatesStore()),
         ChangeNotifierProvider(create: (_) => CommunityPostsStore()),
-        ChangeNotifierProvider(create: (_) => NotificationsStore()),
+        ChangeNotifierProvider<NotificationsStore>.value(
+          value: notificationsStore,
+        ),
         ChangeNotifierProvider(create: (_) => CommentsStore()),
+        ChangeNotifierProvider(create: (_) => MiningStore()),
         ChangeNotifierProvider(create: (_) => UserProfileStore()),
         ChangeNotifierProvider(create: (_) => WalletStore()),
         ChangeNotifierProvider(create: (_) => TagsStore()),

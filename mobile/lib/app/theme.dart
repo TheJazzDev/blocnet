@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:blocnet/app/typography.dart';
 
 class AppColors {
   // ── Brand primary — bright cyan (#0deef2) ────────────────────────────────
@@ -112,40 +112,6 @@ class AppColors {
   static Color darkGrey950 = const Color(0xFFFAFAFA);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Font helpers — body = Inter, display/headings = Space Grotesk
-// ─────────────────────────────────────────────────────────────────────────────
-
-TextStyle _inter(
-  double size,
-  FontWeight weight,
-  Color color, {
-  double? height,
-  double? letterSpacing,
-}) =>
-    GoogleFonts.inter(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-      height: height,
-      letterSpacing: letterSpacing,
-    );
-
-TextStyle _spaceGrotesk(
-  double size,
-  FontWeight weight,
-  Color color, {
-  double? height,
-  double? letterSpacing,
-}) =>
-    GoogleFonts.spaceGrotesk(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-      height: height,
-      letterSpacing: letterSpacing,
-    );
-
 ThemeData primaryTheme = ThemeData(
   colorScheme: ColorScheme.fromSeed(
     seedColor: AppColors.primary500,
@@ -183,12 +149,7 @@ ThemeData primaryTheme = ThemeData(
     surfaceTintColor: Colors.transparent,
     elevation: 0,
     centerTitle: true,
-    titleTextStyle: _spaceGrotesk(
-      17,
-      FontWeight.w700,
-      AppColors.textPrimary,
-      letterSpacing: -0.3,
-    ),
+    titleTextStyle: AppTypography.headlineSmall(AppColors.textPrimary),
     iconTheme: IconThemeData(color: AppColors.textSecondary, size: 20),
   ),
 
@@ -212,9 +173,9 @@ ThemeData primaryTheme = ThemeData(
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
     fillColor: AppColors.bgElevated,
-    labelStyle: _inter(14, FontWeight.w400, AppColors.textMuted),
-    floatingLabelStyle: _inter(12, FontWeight.w500, AppColors.teal400),
-    hintStyle: _inter(14, FontWeight.w400, AppColors.textFaint),
+    labelStyle: AppTypography.bodyMedium(AppColors.textMuted),
+    floatingLabelStyle: AppTypography.labelLarge(AppColors.teal400),
+    hintStyle: AppTypography.bodyMedium(AppColors.textFaint),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
       borderSide: BorderSide(color: AppColors.borderSubtle),
@@ -238,36 +199,31 @@ ThemeData primaryTheme = ThemeData(
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
   ),
 
-  // Text theme — Inter body, Space Grotesk display
+  // Text theme — using centralized AppTypography
   textTheme: TextTheme(
-    // Display — Space Grotesk bold
-    displayLarge: _spaceGrotesk(56, FontWeight.w800, AppColors.primary500),
-    displayMedium: _spaceGrotesk(40, FontWeight.w800, AppColors.primary400),
-    displaySmall: _spaceGrotesk(32, FontWeight.w700, AppColors.primary300),
+    // Display styles
+    displayLarge: AppTypography.displayLarge(AppColors.primary500),
+    displayMedium: AppTypography.displayMedium(AppColors.primary400),
+    displaySmall: AppTypography.displaySmall(AppColors.primary300),
 
-    // Headlines — Space Grotesk
-    headlineLarge: _spaceGrotesk(24, FontWeight.w700, AppColors.textPrimary),
-    headlineMedium: _spaceGrotesk(20, FontWeight.w700, AppColors.textPrimary),
-    headlineSmall: _spaceGrotesk(17, FontWeight.w700, AppColors.textPrimary),
+    // Headlines
+    headlineLarge: AppTypography.headlineLarge(AppColors.textPrimary),
+    headlineMedium: AppTypography.headlineMedium(AppColors.textPrimary),
+    headlineSmall: AppTypography.headlineSmall(AppColors.textPrimary),
 
-    // Titles — Inter semi-bold
-    titleLarge: _inter(16, FontWeight.w600, AppColors.textPrimary),
-    titleMedium: _inter(14, FontWeight.w600, AppColors.textPrimary),
-    titleSmall: _inter(12, FontWeight.w600, AppColors.textPrimary),
+    // Titles
+    titleLarge: AppTypography.titleLarge(AppColors.textPrimary),
+    titleMedium: AppTypography.titleMedium(AppColors.textPrimary),
+    titleSmall: AppTypography.titleSmall(AppColors.textPrimary),
 
-    // Body — Inter regular
-    bodyLarge:
-        _inter(15, FontWeight.w400, AppColors.textSecondary, height: 1.6),
-    bodyMedium:
-        _inter(13, FontWeight.w400, AppColors.textSecondary, height: 1.5),
-    bodySmall: _inter(12, FontWeight.w400, AppColors.textMuted, height: 1.5),
+    // Body
+    bodyLarge: AppTypography.bodyLarge(AppColors.textSecondary),
+    bodyMedium: AppTypography.bodyMedium(AppColors.textSecondary),
+    bodySmall: AppTypography.bodySmall(AppColors.textMuted),
 
-    // Labels — Inter medium
-    labelLarge:
-        _inter(12, FontWeight.w500, AppColors.teal400, letterSpacing: 0.3),
-    labelMedium:
-        _inter(11, FontWeight.w500, AppColors.textMuted, letterSpacing: 0.2),
-    labelSmall:
-        _inter(10, FontWeight.w600, AppColors.textFaint, letterSpacing: 0.8),
+    // Labels
+    labelLarge: AppTypography.labelLarge(AppColors.teal400),
+    labelMedium: AppTypography.labelMedium(AppColors.textMuted),
+    labelSmall: AppTypography.labelSmall(AppColors.textFaint),
   ),
 );

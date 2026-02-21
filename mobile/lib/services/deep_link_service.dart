@@ -39,6 +39,12 @@ class DeepLinkService {
     // Only handle our scheme
     if (uri.scheme != 'io.blocnet.app') return;
 
+    // Capture referral links like io.blocnet.app://signup?ref=AB12CD34
+    final rawReferralCode = uri.queryParameters['ref'];
+    if (rawReferralCode != null && rawReferralCode.trim().isNotEmpty) {
+      await authStore.setPendingReferralCode(rawReferralCode);
+    }
+
     // Supabase sends auth callbacks in two formats:
     // 1. Hash fragment: io.blocnet.app://#access_token=xxx&refresh_token=yyy&type=signup
     // 2. Query params: io.blocnet.app://?code=xxx (email confirmation)

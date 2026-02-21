@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { CheckCircle2, XCircle, Clock, FileText, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAdminSession } from "@/components/admin-shell";
 import { clientApi, type AdminApplication, type ProjectProposal } from "@/lib/api-client";
-import { canReviewAdminApplications, canReviewProjectProposals } from "@/lib/rbac";
+import {
+  canReviewAdminApplications,
+  canReviewProjectProposals,
+  getRoleCapabilities,
+} from "@/lib/rbac";
 
 function statusBadge(status: "pending" | "approved" | "rejected") {
   switch (status) {
@@ -104,10 +109,14 @@ function ReviewButtons({
   );
 }
 
+const ADMIN_ROLE_PREVIEW = getRoleCapabilities("admin")
+  .map((entry) => entry.label)
+  .slice(0, 4);
+
 export default function ApplicationsPage() {
   const session = useAdminSession();
-  const canReviewAdmin = canReviewAdminApplications(session.roles);
-  const canReviewProposals = canReviewProjectProposals(session.roles);
+  const canReviewAdmin = canReviewAdminApplications(session.effectiveRoles);
+  const canReviewProposals = canReviewProjectProposals(session.effectiveRoles);
 
   const [adminApps, setAdminApps] = useState<AdminApplication[]>([]);
   const [proposals, setProposals] = useState<ProjectProposal[]>([]);
@@ -136,6 +145,9 @@ export default function ApplicationsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Applications" description="Review role applications and project proposals.">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/roles">View Full Role Access</Link>
+        </Button>
         {!loading && (
           <Badge variant="outline" className="border-yellow-500/20 bg-yellow-500/10 text-yellow-500">
             {pendingAdminApps.length + pendingProposals.length} pending
@@ -184,6 +196,23 @@ export default function ApplicationsPage() {
                             </div>
                             <p className="mt-0.5 text-sm text-muted-foreground">{app.user.email}</p>
                             <p className="mt-3 text-sm leading-relaxed">{app.reason}</p>
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              {app.targetRole === "admin" ? (
+                                ADMIN_ROLE_PREVIEW.map((label) => (
+                                  <Badge
+                                    key={`${app.id}-${label}`}
+                                    variant="outline"
+                                    className="border-primary/30 bg-primary/10 text-primary"
+                                  >
+                                    {label}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <Badge variant="outline" className="border-teal-500/30 bg-teal-500/10 text-teal-300">
+                                  Hunter space access only
+                                </Badge>
+                              )}
+                            </div>
                             <p className="mt-2 text-xs text-muted-foreground">
                               Applied {formatDate(app.createdAt)}
                               {app.reviewedAt && ` · Reviewed ${formatDate(app.reviewedAt)}`}

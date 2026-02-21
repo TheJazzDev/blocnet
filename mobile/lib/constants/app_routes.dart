@@ -4,6 +4,9 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String settings = '/settings';
   static const String wallet = '/wallet';
+  static const String walletTransactions = '/wallet/transactions';
+  static const String walletAssetDetail = '/wallet/asset';
+  static const String mining = '/mining';
   static const String notifications = '/notifications';
   static const String createUpdate = '/create-update';
   static const String submitProject = '/submit-project';
@@ -28,6 +31,7 @@ class AppRoutes {
   static const String midPriority = '/mid-priority';
   static const String lowPriority = '/low-priority';
   static const String highPriority = '/high-priority';
+  static const String topHunters = '/top-hunters';
   static const String communityCreatePost = '/community-create-post';
   static const String communityDiscussion = '/community-discussion';
   static const String editProfile = '/edit-profile';

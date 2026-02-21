@@ -6,5 +6,6 @@ export async function POST(request: Request) {
   response.cookies.delete("admin_token");
   response.cookies.delete("admin_session");
   response.cookies.delete("admin_role");
+  response.cookies.delete("admin_view_as_role");
   return response;
 }

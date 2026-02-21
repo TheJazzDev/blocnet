@@ -60,7 +60,7 @@ export default function NotificationsPage() {
   const [result, setResult] = useState<BroadcastResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canSend = session.roles.some((r) => r === "admin" || r === "owner");
+  const canSend = session.effectiveRoles.some((r) => r === "admin" || r === "owner");
 
   const [searched, setSearched] = useState(false);
 

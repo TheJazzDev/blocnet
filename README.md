@@ -3,7 +3,8 @@
 This repository now contains:
 - `mobile/` Flutter client
 - `backend/` NestJS API (Prisma + Supabase Postgres)
-- `admin/` reserved for future Next.js admin panel
+- `admin/` Next.js admin panel
+- `contracts/` Hardhat smart contracts
 
 Master plan and execution reference:
 - `BLOCKNET_PLAN.md`
@@ -32,6 +33,18 @@ flutter run
 # flutter run --dart-define=API_BASE_URL=http://<your-ip>:3080/api
 ```
 
+## Testing
+
+Run the full pre-deploy quality gate:
+
+```bash
+./scripts/ci/predeploy-check.sh
+```
+
+Reference:
+- `TESTING_STRATEGY.md`
+- `.github/BRANCH_PROTECTION.md`
+
 ## Notes
 - Use `bun`/`bunx` for backend workflows.
 - Prisma 7 CLI uses `backend/prisma.config.ts`.
@@ -40,4 +53,3 @@ flutter run
 - Health endpoint: `/api/health`.
 - Swagger UI: `http://localhost:3080/api/docs`.
 - For seed bootstrap, set `OWNER_USER_ID` and `OWNER_EMAIL` in `backend/.env.local`.
-

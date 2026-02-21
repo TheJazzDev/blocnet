@@ -76,16 +76,80 @@ const riskLimits: Array<{
   },
 ];
 
-const defaultWalletFeeConfig = {
-  key: 'withdrawal_bnt_v1',
-  flatFee: '1',
-  percentFee: '0',
-  minFee: '1',
-  maxFee: null as string | null,
-  isActive: true,
-};
+const defaultWalletFeeConfigs = [
+  {
+    key: 'withdrawal_bnt_v1',
+    flatFee: '1',
+    percentFee: '0',
+    minFee: '1',
+    maxFee: null as string | null,
+    isActive: true,
+  },
+  {
+    key: 'withdrawal_bnb_v1',
+    flatFee: '0.0008',
+    percentFee: '0',
+    minFee: '0.0008',
+    maxFee: null as string | null,
+    isActive: true,
+  },
+  {
+    key: 'withdrawal_usdt_v1',
+    flatFee: '0.5',
+    percentFee: '0',
+    minFee: '0.5',
+    maxFee: null as string | null,
+    isActive: true,
+  },
+] as const;
+
+const defaultAssetPriceConfigs = [
+  {
+    asset: 'BNT' as const,
+    providerId: 'blocnet',
+    fallbackUsdPrice: '0.5',
+    isActive: true,
+  },
+  {
+    asset: 'BNB' as const,
+    providerId: 'binancecoin',
+    fallbackUsdPrice: '0',
+    isActive: true,
+  },
+  {
+    asset: 'USDT' as const,
+    providerId: 'tether',
+    fallbackUsdPrice: '1',
+    isActive: true,
+  },
+] as const;
 
 async function main() {
+  await prisma.miningConfig.upsert({
+    where: { id: 'default' },
+    update: {
+      enabled: true,
+      referralsEnabled: true,
+      cycleHours: 24,
+      basePointsPerCycle: 120,
+      perActiveReferralBoostBps: 500,
+      maxBoostBps: 10000,
+      activeReferralWindowHours: 168,
+      referralBindWindowHours: 24,
+    },
+    create: {
+      id: 'default',
+      enabled: true,
+      referralsEnabled: true,
+      cycleHours: 24,
+      basePointsPerCycle: 120,
+      perActiveReferralBoostBps: 500,
+      maxBoostBps: 10000,
+      activeReferralWindowHours: 168,
+      referralBindWindowHours: 24,
+    },
+  });
+
   for (const tag of primaryTags) {
     await prisma.primaryTag.upsert({
       where: { slug: tag.slug },
@@ -123,33 +187,54 @@ async function main() {
     });
   }
 
-  await prisma.walletFeeConfig.upsert({
-    where: { key: defaultWalletFeeConfig.key },
-    update: {
-      flatFee: defaultWalletFeeConfig.flatFee,
-      percentFee: defaultWalletFeeConfig.percentFee,
-      minFee: defaultWalletFeeConfig.minFee,
-      maxFee: defaultWalletFeeConfig.maxFee,
-      isActive: defaultWalletFeeConfig.isActive,
-    },
-    create: {
-      key: defaultWalletFeeConfig.key,
-      flatFee: defaultWalletFeeConfig.flatFee,
-      percentFee: defaultWalletFeeConfig.percentFee,
-      minFee: defaultWalletFeeConfig.minFee,
-      maxFee: defaultWalletFeeConfig.maxFee,
-      isActive: defaultWalletFeeConfig.isActive,
-    },
-  });
+  for (const feeConfig of defaultWalletFeeConfigs) {
+    await prisma.walletFeeConfig.upsert({
+      where: { key: feeConfig.key },
+      update: {
+        flatFee: feeConfig.flatFee,
+        percentFee: feeConfig.percentFee,
+        minFee: feeConfig.minFee,
+        maxFee: feeConfig.maxFee,
+        isActive: feeConfig.isActive,
+      },
+      create: {
+        key: feeConfig.key,
+        flatFee: feeConfig.flatFee,
+        percentFee: feeConfig.percentFee,
+        minFee: feeConfig.minFee,
+        maxFee: feeConfig.maxFee,
+        isActive: feeConfig.isActive,
+      },
+    });
+  }
 
-  const [primaryCount, secondaryCount, riskCount] = await Promise.all([
-    prisma.primaryTag.count(),
-    prisma.secondaryTag.count(),
-    prisma.riskLimit.count(),
-  ]);
+  for (const priceConfig of defaultAssetPriceConfigs) {
+    await prisma.walletAssetPriceConfig.upsert({
+      where: { asset: priceConfig.asset },
+      update: {
+        providerId: priceConfig.providerId,
+        fallbackUsdPrice: priceConfig.fallbackUsdPrice,
+        isActive: priceConfig.isActive,
+      },
+      create: {
+        asset: priceConfig.asset,
+        providerId: priceConfig.providerId,
+        fallbackUsdPrice: priceConfig.fallbackUsdPrice,
+        isActive: priceConfig.isActive,
+      },
+    });
+  }
+
+  const [primaryCount, secondaryCount, riskCount, miningConfigCount] =
+    await Promise.all([
+      prisma.primaryTag.count(),
+      prisma.secondaryTag.count(),
+      prisma.riskLimit.count(),
+      prisma.miningConfig.count(),
+    ]);
 
   console.log(
-    `[seed] completed | primaryTags=${primaryCount} secondaryTags=${secondaryCount} riskLimits=${riskCount}`,
+    `[seed] completed | primaryTags=${primaryCount} secondaryTags=${secondaryCount} riskLimits=${riskCount} miningConfigs=${miningConfigCount}`,
   );
 }
 

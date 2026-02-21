@@ -4,15 +4,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ChainEnvironment,
   KycStatus,
   LedgerReason,
   Prisma,
+  WalletAsset,
   WithdrawalStatus,
 } from '@prisma/client';
+import { createPublicClient, http } from 'viem';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
 import { normalizeIdempotencyKey } from '../common/utils/idempotency.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { TurnkeyCustodyAdapter } from './custody/turnkey-custody.adapter';
 import { ListWalletAdminWithdrawalsQuery } from './dto/list-wallet-admin-withdrawals.query';
 import { ListWalletKycQuery } from './dto/list-wallet-kyc.query';
 import { ListWalletUsersQuery } from './dto/list-wallet-users.query';
@@ -22,8 +26,12 @@ import {
 } from './dto/review-withdrawal.dto';
 import { ReviewKycDto } from './dto/review-kyc.dto';
 import { UpdateRiskLimitDto } from './dto/update-risk-limit.dto';
+import { UpdateWalletAssetPriceDto } from './dto/update-wallet-asset-price.dto';
 import { UpdateWalletFeeDto } from './dto/update-wallet-fee.dto';
 import { DECIMAL_ZERO, toDecimalString } from './types/decimal';
+import { normalizeWalletAsset } from './wallet-asset.util';
+import { WalletAssetPricingService } from './wallet-asset-pricing.service';
+import { WalletConfigService } from './wallet-config.service';
 
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;
@@ -33,10 +41,112 @@ export class WalletAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
+    private readonly walletConfigService: WalletConfigService,
+    private readonly turnkeyCustodyAdapter: TurnkeyCustodyAdapter,
+    private readonly walletAssetPricingService: WalletAssetPricingService,
   ) {}
 
+  async getWalletHealth() {
+    const [
+      turnkey,
+      networks,
+      walletCounts,
+      depositCounts,
+      sweepCounts,
+      withdrawalCounts,
+    ] = await Promise.all([
+      this.turnkeyCustodyAdapter.getHealth(),
+      Promise.all([
+        this.checkNetworkHealth(this.walletConfigService.walletChainEnvironment),
+      ]),
+      this.prisma.userWallet.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+      }),
+      this.prisma.onchainDeposit.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+      }),
+      this.prisma.sweepJob.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+      }),
+      this.prisma.withdrawalRequest.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+      }),
+    ]);
+
+    const walletsByStatus = {
+      provisioning: 0,
+      ready: 0,
+      error: 0,
+      disabled: 0,
+    };
+    for (const row of walletCounts) {
+      walletsByStatus[row.status] = row._count._all;
+    }
+
+    const depositsByStatus = {
+      detected: 0,
+      credited: 0,
+      swept: 0,
+      ignored: 0,
+      failed: 0,
+    };
+    for (const row of depositCounts) {
+      depositsByStatus[row.status] = row._count._all;
+    }
+
+    const sweepJobsByStatus = {
+      queued: 0,
+      processing: 0,
+      completed: 0,
+      failed: 0,
+    };
+    for (const row of sweepCounts) {
+      sweepJobsByStatus[row.status] = row._count._all;
+    }
+
+    const withdrawalsByStatus = {
+      requested: 0,
+      pending_review: 0,
+      approved: 0,
+      rejected: 0,
+      broadcasting: 0,
+      confirmed: 0,
+      failed: 0,
+      reverted: 0,
+    };
+    for (const row of withdrawalCounts) {
+      withdrawalsByStatus[row.status] = row._count._all;
+    }
+
+    return {
+      timestamp: new Date().toISOString(),
+      flags: {
+        walletEnabled: this.walletConfigService.walletEnabled,
+        depositsEnabled: this.walletConfigService.depositsEnabled,
+        withdrawalsEnabled: this.walletConfigService.withdrawalsEnabled,
+        turnkeyMode: this.walletConfigService.turnkeyMode,
+        turnkeyExecutionMode: this.walletConfigService.turnkeyExecutionMode,
+      },
+      turnkey,
+      networks,
+      counts: {
+        walletsByStatus,
+        depositsByStatus,
+        sweepJobsByStatus,
+        withdrawalsByStatus,
+      },
+    };
+  }
+
   async listWalletUsers(query: ListWalletUsersQuery) {
-    const { limit, offset } = this.normalizePagination(query.limit, query.offset);
+    const { limit, offset } = this.normalizePagination(
+      query.limit,
+      query.offset,
+    );
     const q = query.q?.trim();
 
     const uuidRegex =
@@ -124,7 +234,10 @@ export class WalletAdminService {
   }
 
   async listWithdrawals(query: ListWalletAdminWithdrawalsQuery) {
-    const { limit, offset } = this.normalizePagination(query.limit, query.offset);
+    const { limit, offset } = this.normalizePagination(
+      query.limit,
+      query.offset,
+    );
     const q = query.q?.trim();
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -136,8 +249,12 @@ export class WalletAdminService {
         ? {
             OR: [
               { toAddress: { contains: q, mode: 'insensitive' as const } },
-              { broadcastTxHash: { contains: q, mode: 'insensitive' as const } },
-              ...(isUuid ? [{ id: { equals: q } }, { userId: { equals: q } }] : []),
+              {
+                broadcastTxHash: { contains: q, mode: 'insensitive' as const },
+              },
+              ...(isUuid
+                ? [{ id: { equals: q } }, { userId: { equals: q } }]
+                : []),
               {
                 requester: {
                   email: { contains: q, mode: 'insensitive' as const },
@@ -348,7 +465,10 @@ export class WalletAdminService {
   }
 
   async listKyc(query: ListWalletKycQuery) {
-    const { limit, offset } = this.normalizePagination(query.limit, query.offset);
+    const { limit, offset } = this.normalizePagination(
+      query.limit,
+      query.offset,
+    );
     const q = query.q?.trim();
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -427,8 +547,13 @@ export class WalletAdminService {
   }
 
   async reviewKyc(actorId: string, userId: string, dto: ReviewKycDto) {
-    if (dto.status !== KycStatus.approved && dto.status !== KycStatus.rejected) {
-      throw new BadRequestException('KYC review status must be approved or rejected');
+    if (
+      dto.status !== KycStatus.approved &&
+      dto.status !== KycStatus.rejected
+    ) {
+      throw new BadRequestException(
+        'KYC review status must be approved or rejected',
+      );
     }
 
     const existing = await this.prisma.kycProfile.findUnique({
@@ -501,7 +626,9 @@ export class WalletAdminService {
         ...(dto.description !== undefined
           ? { description: dto.description.trim() || null }
           : {}),
-        ...(dto.requiresKyc !== undefined ? { requiresKyc: dto.requiresKyc } : {}),
+        ...(dto.requiresKyc !== undefined
+          ? { requiresKyc: dto.requiresKyc }
+          : {}),
         ...(dto.maxWithdrawalPerTx !== undefined
           ? {
               maxWithdrawalPerTx: this.parseNonNegativeDecimal(
@@ -548,11 +675,7 @@ export class WalletAdminService {
     });
   }
 
-  async updateFeeConfig(
-    actorId: string,
-    key: string,
-    dto: UpdateWalletFeeDto,
-  ) {
+  async updateFeeConfig(actorId: string, key: string, dto: UpdateWalletFeeDto) {
     const existing = await this.prisma.walletFeeConfig.findUnique({
       where: { key },
     });
@@ -602,6 +725,128 @@ export class WalletAdminService {
     return updated;
   }
 
+  async listAssetPriceConfigs() {
+    return this.walletAssetPricingService.listPriceConfigs();
+  }
+
+  async updateAssetPriceConfig(
+    actorId: string,
+    assetRaw: string,
+    dto: UpdateWalletAssetPriceDto,
+  ) {
+    const asset = normalizeWalletAsset(assetRaw);
+    if (!asset) {
+      throw new BadRequestException('Invalid wallet asset');
+    }
+
+    let updated;
+    try {
+      updated = await this.walletAssetPricingService.updatePriceConfig(asset, {
+        providerId: dto.providerId,
+        fallbackUsdPrice: dto.fallbackUsdPrice,
+        isActive: dto.isActive,
+      });
+    } catch (error) {
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'Invalid price config payload',
+      );
+    }
+
+    await this.auditLogService.create({
+      actorId,
+      action: FinancialAuditActions.AssetPriceConfigUpdated,
+      resourceType: 'wallet_asset_price_config',
+      resourceId: updated.id,
+      metadata: {
+        asset,
+      },
+    });
+
+    return updated;
+  }
+
+  private async checkNetworkHealth(chainEnvironment: ChainEnvironment) {
+    const isTestnet = chainEnvironment === ChainEnvironment.testnet;
+    const chainId = isTestnet
+      ? this.walletConfigService.bscTestnetChainId
+      : this.walletConfigService.bscMainnetChainId;
+    const rpcUrl = isTestnet
+      ? this.walletConfigService.bscRpcTestnet
+      : this.walletConfigService.bscRpcMainnet;
+    const tokenAddress = isTestnet
+      ? this.walletConfigService.bntTokenAddressTestnet
+      : this.walletConfigService.bntTokenAddressMainnet;
+    const treasuryWalletId = isTestnet
+      ? this.walletConfigService.treasuryWalletIdTestnet
+      : this.walletConfigService.treasuryWalletIdMainnet;
+    const treasurySweepAddress = isTestnet
+      ? this.walletConfigService.treasurySweepAddressTestnet
+      : this.walletConfigService.treasurySweepAddressMainnet;
+    const depositStartBlock = isTestnet
+      ? this.walletConfigService.depositStartBlockTestnet
+      : this.walletConfigService.depositStartBlockMainnet;
+
+    if (!rpcUrl) {
+      return {
+        chainEnvironment,
+        chainId,
+        rpcConfigured: false,
+        rpcReachable: false,
+        latestBlock: null,
+        rpcError: 'RPC URL is not configured',
+        tokenAddressConfigured: Boolean(tokenAddress),
+        tokenAddress: tokenAddress ?? null,
+        treasuryWalletIdConfigured: Boolean(treasuryWalletId),
+        treasurySweepAddressConfigured: Boolean(treasurySweepAddress),
+        confirmationsRequired:
+          this.walletConfigService.getWithdrawalConfirmationsForEnvironment(
+            chainEnvironment,
+          ),
+        depositStartBlock: depositStartBlock?.toString() ?? null,
+      };
+    }
+
+    try {
+      const client = createPublicClient({ transport: http(rpcUrl) });
+      const latestBlock = await client.getBlockNumber();
+      return {
+        chainEnvironment,
+        chainId,
+        rpcConfigured: true,
+        rpcReachable: true,
+        latestBlock: latestBlock.toString(),
+        rpcError: null,
+        tokenAddressConfigured: Boolean(tokenAddress),
+        tokenAddress: tokenAddress ?? null,
+        treasuryWalletIdConfigured: Boolean(treasuryWalletId),
+        treasurySweepAddressConfigured: Boolean(treasurySweepAddress),
+        confirmationsRequired:
+          this.walletConfigService.getWithdrawalConfirmationsForEnvironment(
+            chainEnvironment,
+          ),
+        depositStartBlock: depositStartBlock?.toString() ?? null,
+      };
+    } catch (error) {
+      return {
+        chainEnvironment,
+        chainId,
+        rpcConfigured: true,
+        rpcReachable: false,
+        latestBlock: null,
+        rpcError: error instanceof Error ? error.message : 'RPC call failed',
+        tokenAddressConfigured: Boolean(tokenAddress),
+        tokenAddress: tokenAddress ?? null,
+        treasuryWalletIdConfigured: Boolean(treasuryWalletId),
+        treasurySweepAddressConfigured: Boolean(treasurySweepAddress),
+        confirmationsRequired:
+          this.walletConfigService.getWithdrawalConfirmationsForEnvironment(
+            chainEnvironment,
+          ),
+        depositStartBlock: depositStartBlock?.toString() ?? null,
+      };
+    }
+  }
+
   private normalizePagination(limit?: number, offset?: number) {
     const safeLimit =
       Number.isFinite(limit) && typeof limit === 'number'
@@ -623,7 +868,9 @@ export class WalletAdminService {
     try {
       decimal = new Prisma.Decimal(value);
     } catch {
-      throw new BadRequestException(`${fieldName} must be a valid decimal value`);
+      throw new BadRequestException(
+        `${fieldName} must be a valid decimal value`,
+      );
     }
 
     if (decimal.lt(DECIMAL_ZERO)) {
