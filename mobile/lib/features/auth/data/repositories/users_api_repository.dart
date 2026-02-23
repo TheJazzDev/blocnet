@@ -1,6 +1,7 @@
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
 import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
+import 'package:blocnet/features/profile/data/models/profile_search_result_model.dart';
 import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
 import 'package:blocnet/features/projects/data/models/follow_preference_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
@@ -137,6 +138,36 @@ class UsersApiRepository {
 
   Future<void> unfollowProfile(String profileId) async {
     await _apiClient.delete('/profiles/$profileId/follow');
+  }
+
+  Future<List<ProfileSearchResult>> searchProfiles({
+    required String query,
+    String role = 'all',
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return const [];
+
+    final response = await _apiClient.get(
+      '/profiles/search',
+      query: {
+        'q': trimmed,
+        'role': role,
+        'limit': '$limit',
+        'offset': '$offset',
+      },
+    );
+
+    if (response is! Map<String, dynamic>) {
+      return const [];
+    }
+
+    final rows = (response['data'] as List?)?.cast<dynamic>() ?? const [];
+    return rows
+        .whereType<Map>()
+        .map((row) => ProfileSearchResult.fromApi(row.cast<String, dynamic>()))
+        .toList(growable: false);
   }
 
   Future<RadarSummary?> fetchRadar() async {

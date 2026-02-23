@@ -2,6 +2,10 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
+import 'package:blocnet/features/tips/data/models/tip_models.dart';
+import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
+import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/user_profile_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
@@ -49,10 +53,18 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Future<void> _loadPublicProfile() async {
     try {
-      final profile =
-          await _usersRepository.fetchPublicProfile(widget.admin.id);
+      final results = await Future.wait([
+        _usersRepository.fetchPublicProfile(widget.admin.id),
+        _usersRepository.fetchFollowedProfileIds(),
+      ]);
+
+      final profile = results[0] as PublicProfileModel?;
+      final followedProfileIds = results[1] as Set<String>;
       if (!mounted) return;
-      setState(() => _publicProfile = profile);
+      setState(() {
+        _publicProfile = profile;
+        _isFollowing = followedProfileIds.contains(widget.admin.id);
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() => _publicProfile = null);
@@ -65,18 +77,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Future<void> _toggleFollow() async {
     if (_isSubmittingFollow) return;
+    final userProfileStore = context.read<UserProfileStore>();
+    final wasFollowing = _isFollowing;
     setState(() => _isSubmittingFollow = true);
+    userProfileStore.applyFollowingProfilesDelta(wasFollowing ? -1 : 1);
+    setState(() => _isFollowing = !wasFollowing);
 
     try {
-      if (_isFollowing) {
+      if (wasFollowing) {
         await _usersRepository.unfollowProfile(widget.admin.id);
       } else {
         await _usersRepository.followProfile(widget.admin.id);
       }
-      if (!mounted) return;
-      setState(() => _isFollowing = !_isFollowing);
+      await userProfileStore.refreshFollowingProfiles();
     } catch (_) {
+      userProfileStore.applyFollowingProfilesDelta(wasFollowing ? 1 : -1);
       if (!mounted) return;
+      setState(() => _isFollowing = wasFollowing);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to update follow status')),
       );
@@ -88,13 +105,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final admin = widget.admin;
+    final authStore = context.watch<AuthStore>();
     final publicProfile = _publicProfile;
     final username = admin.username.trim().isNotEmpty
         ? admin.username
         : '@${admin.name.toLowerCase().replaceAll(' ', '_')}';
-    final role = publicProfile != null
-        ? _resolveRoleFromRoles(publicProfile.roles)
-        : _resolveRole(admin);
+    final displayRoleKeys = publicProfile != null
+        ? _resolveRoleKeysFromRoles(publicProfile.roles)
+        : _resolveRoleKeysFallback(admin);
+    final isHunterTarget = publicProfile != null
+        ? publicProfile.roles
+            .map((role) => role.trim().toLowerCase())
+            .contains('hunter')
+        : displayRoleKeys.contains('hunter');
+    final canTipHunter = isHunterTarget &&
+        authStore.userId != null &&
+        authStore.userId != admin.id &&
+        admin.id.trim().isNotEmpty;
 
     final content = Container(
       decoration: BoxDecoration(
@@ -191,38 +218,28 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         const SizedBox(height: 4),
                         Text(
                           username,
-                          style: AppTypography.custom(color: AppColors.textMuted,
+                          style: AppTypography.custom(
+                            color: AppColors.textMuted,
                             size: 13,
-                            weight: FontWeight.w400,),
+                            weight: FontWeight.w400,
+                          ),
                         ),
                         const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: role == 'HUNTER'
-                                ? const Color(0xFFC084FC)
-                                    .withValues(alpha: 0.15)
-                                : AppColors.primary500.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: role == 'HUNTER'
-                                  ? const Color(0xFFC084FC)
-                                      .withValues(alpha: 0.55)
-                                  : AppColors.primary400
-                                      .withValues(alpha: 0.55),
-                            ),
-                          ),
-                          child: Text(
-                            role,
-                            style: AppTypography.custom(
-                                  color: role == 'HUNTER'
-                                      ? const Color(0xFFC084FC)
-                                      : AppColors.primary400,
-                                  size: 10,
-                                  weight: FontWeight.w700,
-                            ),
-                          ),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: displayRoleKeys
+                              .map(
+                                (roleKey) => _ProfileRoleChip(
+                                  label: _roleLabel(roleKey),
+                                  textColor: _roleTextColor(roleKey),
+                                  borderColor: _roleBorderColor(roleKey),
+                                  backgroundColor:
+                                      _roleBackgroundColor(roleKey),
+                                ),
+                              )
+                              .toList(),
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -252,45 +269,149 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           _TrustChips(trust: trust),
                         ],
                         const SizedBox(height: 14),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 42,
-                          child: ElevatedButton(
-                            onPressed:
-                                _isSubmittingFollow ? null : _toggleFollow,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isFollowing
-                                  ? AppColors.bgElevated
-                                  : AppColors.primary500,
-                              foregroundColor: _isFollowing
-                                  ? AppColors.textPrimary
-                                  : Colors.black,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: _isSubmittingFollow
-                                ? SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      color: _isFollowing
+                        if (canTipHunter)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 42,
+                                  child: ElevatedButton(
+                                    onPressed: _isSubmittingFollow
+                                        ? null
+                                        : _toggleFollow,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _isFollowing
+                                          ? AppColors.bgElevated
+                                          : AppColors.primary500,
+                                      foregroundColor: _isFollowing
                                           ? AppColors.textPrimary
                                           : Colors.black,
-                                      strokeWidth: 2,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                     ),
-                                  )
-                                : Text(
-                                    _isFollowing ? 'Following' : 'Follow',
-                                    style: AppTypography.custom(
-                                      color: _isFollowing ? AppColors.textPrimary : Colors.black,
-                                      size: 13,
-                                      weight: FontWeight.w700,
+                                    child: _isSubmittingFollow
+                                        ? SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              color: _isFollowing
+                                                  ? AppColors.textPrimary
+                                                  : Colors.black,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : Text(
+                                            _isFollowing
+                                                ? 'Following'
+                                                : 'Follow',
+                                            style: AppTypography.custom(
+                                              color: _isFollowing
+                                                  ? AppColors.textPrimary
+                                                  : Colors.black,
+                                              size: 13,
+                                              weight: FontWeight.w700,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 42,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      TipHunterSheet.show(
+                                        context,
+                                        recipient: TipRecipient(
+                                          userId: admin.id,
+                                          username: admin.username,
+                                          displayName:
+                                              publicProfile?.displayName ??
+                                                  admin.name,
+                                          avatarUrl: publicProfile?.avatarUrl ??
+                                              admin.imageUrl,
+                                          isHunterHint: true,
+                                        ),
+                                        contextType: 'public_profile',
+                                        contextId: admin.id,
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary500
+                                          .withValues(alpha: 0.14),
+                                      foregroundColor: AppColors.primary400,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        side: BorderSide(
+                                          color: AppColors.primary500
+                                              .withValues(alpha: 0.45),
+                                        ),
+                                      ),
+                                    ),
+                                    icon: Icon(
+                                      Icons.volunteer_activism_rounded,
+                                      color: AppColors.primary400,
+                                      size: 17,
+                                    ),
+                                    label: Text(
+                                      'Tip Hunter',
+                                      style: AppTypography.custom(
+                                        color: AppColors.primary400,
+                                        size: 12.5,
+                                        weight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          SizedBox(
+                            width: double.infinity,
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed:
+                                  _isSubmittingFollow ? null : _toggleFollow,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _isFollowing
+                                    ? AppColors.bgElevated
+                                    : AppColors.primary500,
+                                foregroundColor: _isFollowing
+                                    ? AppColors.textPrimary
+                                    : Colors.black,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: _isSubmittingFollow
+                                  ? SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        color: _isFollowing
+                                            ? AppColors.textPrimary
+                                            : Colors.black,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      _isFollowing ? 'Following' : 'Follow',
+                                      style: AppTypography.custom(
+                                        color: _isFollowing
+                                            ? AppColors.textPrimary
+                                            : Colors.black,
+                                        size: 13,
+                                        weight: FontWeight.w700,
+                                      ),
+                                    ),
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 16),
                         const _SectionLabel('Recent Activity'),
                         const SizedBox(height: 8),
@@ -319,19 +440,99 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     return Scaffold(backgroundColor: AppColors.bgBase, body: content);
   }
 
-  String _resolveRole(Admin admin) {
+  List<String> _resolveRoleKeysFallback(Admin admin) {
     final raw = '${admin.username} ${admin.name}'.toLowerCase();
-    if (raw.contains('hunter')) return 'HUNTER';
-    if (raw.contains('admin')) return 'ADMIN';
-    return 'USER';
+    if (raw.contains('hunter')) return ['hunter'];
+    if (raw.contains('admin')) return ['admin'];
+    return ['user'];
   }
 
-  String _resolveRoleFromRoles(List<String> roles) {
-    final normalized = roles.map((role) => role.toLowerCase()).toSet();
-    if (normalized.contains('owner')) return 'OWNER';
-    if (normalized.contains('admin')) return 'ADMIN';
-    if (normalized.contains('hunter')) return 'HUNTER';
-    return 'USER';
+  List<String> _resolveRoleKeysFromRoles(List<String> roles) {
+    final normalized = roles.map((role) => role.trim().toLowerCase()).toSet();
+    final resolved = <String>[];
+
+    if (normalized.contains('core_team')) resolved.add('core_team');
+    if (normalized.contains('admin')) resolved.add('admin');
+    if (normalized.contains('moderator')) resolved.add('moderator');
+    if (normalized.contains('hunter')) resolved.add('hunter');
+
+    if (resolved.isEmpty) {
+      resolved.add('user');
+    }
+
+    return resolved;
+  }
+
+  String _roleLabel(String roleKey) {
+    switch (roleKey) {
+      case 'admin':
+        return 'ADMIN';
+      case 'moderator':
+        return 'MODERATOR';
+      case 'core_team':
+        return 'CORE TEAM';
+      case 'hunter':
+        return 'HUNTER';
+      default:
+        return 'USER';
+    }
+  }
+
+  Color _roleTextColor(String roleKey) {
+    switch (roleKey) {
+      case 'hunter':
+        return const Color(0xFFC084FC);
+      case 'core_team':
+        return const Color(0xFF7DD3FC);
+      case 'moderator':
+        return const Color(0xFFF59E0B);
+      case 'admin':
+        return AppColors.primary400;
+      default:
+        return AppColors.textMuted;
+    }
+  }
+
+  Color _roleBorderColor(String roleKey) {
+    return _roleTextColor(roleKey).withValues(alpha: 0.55);
+  }
+
+  Color _roleBackgroundColor(String roleKey) {
+    return _roleTextColor(roleKey).withValues(alpha: 0.15);
+  }
+}
+
+class _ProfileRoleChip extends StatelessWidget {
+  const _ProfileRoleChip({
+    required this.label,
+    required this.textColor,
+    required this.borderColor,
+    required this.backgroundColor,
+  });
+
+  final String label;
+  final Color textColor;
+  final Color borderColor;
+  final Color backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.custom(
+          color: textColor,
+          size: 10,
+          weight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 }
 
@@ -342,29 +543,32 @@ class _TrustChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _TrustChip(
-          label: '7D Updates',
-          value: '${trust.updatesLast7d}',
-        ),
-        _TrustChip(
-          label: '30D Updates',
-          value: '${trust.updatesLast30d}',
-        ),
-        _TrustChip(
-          label: 'High Signal',
-          value: '${trust.highUrgencyShare30d.toStringAsFixed(0)}%',
-        ),
-        _TrustChip(
-          label: 'Median Cadence',
-          value: trust.medianHoursBetweenUpdates == null
-              ? 'N/A'
-              : '${trust.medianHoursBetweenUpdates!.toStringAsFixed(1)}h',
-        ),
-      ],
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _TrustChip(
+            label: 'Updates (7d)',
+            value: '${trust.updatesLast7d}',
+          ),
+          _TrustChip(
+            label: 'Updates (30d)',
+            value: '${trust.updatesLast30d}',
+          ),
+          _TrustChip(
+            label: 'High-Urgency Share',
+            value: '${trust.highUrgencyShare30d.toStringAsFixed(0)}%',
+          ),
+          _TrustChip(
+            label: 'Median Posting Interval',
+            value: trust.medianHoursBetweenUpdates == null
+                ? 'N/A'
+                : '${trust.medianHoursBetweenUpdates!.toStringAsFixed(1)}h',
+          ),
+        ],
+      ),
     );
   }
 }
@@ -461,9 +665,11 @@ class _StatCard extends StatelessWidget {
             ),
             Text(
               label,
-              style: AppTypography.custom(color: AppColors.textMuted,
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
                 size: 11,
-                weight: FontWeight.w400,),
+                weight: FontWeight.w400,
+              ),
             ),
           ],
         ),
@@ -513,9 +719,11 @@ class _ActivityCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: AppTypography.custom(color: AppColors.textMuted,
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
                     size: 11,
-                    weight: FontWeight.w400,),
+                    weight: FontWeight.w400,
+                  ),
                 ),
               ],
             ),
@@ -523,9 +731,11 @@ class _ActivityCard extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             time,
-            style: AppTypography.custom(color: AppColors.textFaint,
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
               size: 10,
-              weight: FontWeight.w400,),
+              weight: FontWeight.w400,
+            ),
           ),
         ],
       ),
@@ -546,9 +756,11 @@ class _EmptyActivityCard extends StatelessWidget {
       ),
       child: Text(
         'No public posts available yet.',
-        style: AppTypography.custom(color: AppColors.textMuted,
+        style: AppTypography.custom(
+          color: AppColors.textMuted,
           size: 12,
-          weight: FontWeight.w400,),
+          weight: FontWeight.w400,
+        ),
       ),
     );
   }

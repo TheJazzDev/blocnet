@@ -7,7 +7,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 /// Season leaderboard mini widget for Hunter Hub.
-/// Shows rank #1, current user's rank, and the rank just below.
+/// Ranking is based on real published updates count.
 class SeasonLeaderboard extends StatelessWidget {
   const SeasonLeaderboard({super.key});
 
@@ -30,25 +30,34 @@ class SeasonLeaderboard extends StatelessWidget {
           adminId: adminId,
           username: _resolveUsername(
             update,
-            fallback: adminId == currentUserId ? currentUsername : null,
+            fallback: adminId == currentUserId
+                ? currentUsername
+                : _fallbackUsernameFromAdminId(adminId),
           ),
-          tips: _scoreUpdate(update),
+          updatesCount: 1,
+          lastUpdateAt: update.createdAt,
         );
       } else {
+        final nextLastUpdate = update.createdAt.isAfter(existing.lastUpdateAt)
+            ? update.createdAt
+            : existing.lastUpdateAt;
         scores[adminId] = existing.copyWith(
           username: _resolveUsername(
             update,
             fallback: existing.username,
           ),
-          tips: existing.tips + _scoreUpdate(update),
+          updatesCount: existing.updatesCount + 1,
+          lastUpdateAt: nextLastUpdate,
         );
       }
     }
 
     final ranked = scores.values.toList()
       ..sort((a, b) {
-        final byTips = b.tips.compareTo(a.tips);
-        if (byTips != 0) return byTips;
+        final byUpdates = b.updatesCount.compareTo(a.updatesCount);
+        if (byUpdates != 0) return byUpdates;
+        final byLastUpdate = b.lastUpdateAt.compareTo(a.lastUpdateAt);
+        if (byLastUpdate != 0) return byLastUpdate;
         return a.username.compareTo(b.username);
       });
 
@@ -59,7 +68,7 @@ class SeasonLeaderboard extends StatelessWidget {
           (entry) => _LeaderboardEntry(
             rank: entry.key + 1,
             username: entry.value.username,
-            tips: entry.value.tips,
+            updatesCount: entry.value.updatesCount,
             isCurrentUser: _isCurrentUser(
               adminId: entry.value.adminId,
               username: entry.value.username,
@@ -75,7 +84,7 @@ class SeasonLeaderboard extends StatelessWidget {
     final fallbackCurrent = _LeaderboardEntry(
       rank: entries.length + 1,
       username: _formatUsername(currentUsername),
-      tips: 0,
+      updatesCount: 0,
       isCurrentUser: true,
     );
 
@@ -116,7 +125,6 @@ class SeasonLeaderboard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
             child: Row(
@@ -132,7 +140,7 @@ class SeasonLeaderboard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  'TIPS',
+                  'UPDATES',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
                     size: 9,
@@ -163,21 +171,25 @@ class _LeaderboardScore {
   const _LeaderboardScore({
     required this.adminId,
     required this.username,
-    required this.tips,
+    required this.updatesCount,
+    required this.lastUpdateAt,
   });
 
   final String adminId;
   final String username;
-  final int tips;
+  final int updatesCount;
+  final DateTime lastUpdateAt;
 
   _LeaderboardScore copyWith({
     String? username,
-    int? tips,
+    int? updatesCount,
+    DateTime? lastUpdateAt,
   }) {
     return _LeaderboardScore(
       adminId: adminId,
       username: username ?? this.username,
-      tips: tips ?? this.tips,
+      updatesCount: updatesCount ?? this.updatesCount,
+      lastUpdateAt: lastUpdateAt ?? this.lastUpdateAt,
     );
   }
 }
@@ -186,13 +198,13 @@ class _LeaderboardEntry {
   const _LeaderboardEntry({
     required this.rank,
     required this.username,
-    required this.tips,
+    required this.updatesCount,
     required this.isCurrentUser,
   });
 
   final int rank;
   final String username;
-  final int tips;
+  final int updatesCount;
   final bool isCurrentUser;
 }
 
@@ -216,7 +228,6 @@ class _LeaderboardRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
-          // Rank badge
           SizedBox(
             width: 28,
             child: Text(
@@ -229,7 +240,6 @@ class _LeaderboardRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          // Avatar placeholder
           Container(
             width: 28,
             height: 28,
@@ -260,31 +270,22 @@ class _LeaderboardRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          // Username
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.isCurrentUser
-                      ? 'You (${entry.username})'
-                      : entry.username,
-                  style: AppTypography.custom(
-                    color: entry.isCurrentUser
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
-                    size: 12,
-                    weight: entry.isCurrentUser ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+            child: Text(
+              entry.isCurrentUser ? 'You (${entry.username})' : entry.username,
+              style: AppTypography.custom(
+                color: entry.isCurrentUser
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary,
+                size: 12,
+                weight: entry.isCurrentUser ? FontWeight.w600 : FontWeight.w400,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          // Tips
           Text(
-            '${_formatTips(entry.tips)} \$BNT',
+            '${entry.updatesCount} updates',
             style: AppTypography.custom(
               color: entry.isCurrentUser
                   ? AppColors.primary400
@@ -296,13 +297,6 @@ class _LeaderboardRow extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatTips(int tips) {
-    if (tips >= 1000) {
-      return '${(tips / 1000).toStringAsFixed(1)}k';
-    }
-    return tips.toString();
   }
 }
 
@@ -324,13 +318,20 @@ String _resolveUsername(
     return _formatUsername(fallback);
   }
 
-  return '@hunter';
+  return '@member';
 }
 
 String _formatUsername(String raw) {
   final trimmed = raw.trim();
-  if (trimmed.isEmpty) return '@hunter';
+  if (trimmed.isEmpty) return '@member';
   return trimmed.startsWith('@') ? trimmed : '@$trimmed';
+}
+
+String _fallbackUsernameFromAdminId(String adminId) {
+  final compact = adminId.replaceAll('-', '').trim();
+  if (compact.isEmpty) return '@member';
+  final suffix = compact.length <= 6 ? compact : compact.substring(0, 6);
+  return '@$suffix';
 }
 
 bool _isCurrentUser({
@@ -346,15 +347,4 @@ bool _isCurrentUser({
   final normalizedEntry = username.replaceAll('@', '').toLowerCase();
   final normalizedCurrent = currentUsername.replaceAll('@', '').toLowerCase();
   return normalizedCurrent.isNotEmpty && normalizedEntry == normalizedCurrent;
-}
-
-int _scoreUpdate(Update update) {
-  final label = update.priority.label.toLowerCase();
-  final base = label == 'high'
-      ? 120
-      : (label == 'mid' || label == 'medium')
-          ? 70
-          : 35;
-  final reachBoost = ((update.project?.followersCount ?? 0) / 25).floor();
-  return base + reachBoost;
 }

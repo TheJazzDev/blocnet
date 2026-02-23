@@ -44,7 +44,7 @@ class _UserHero extends StatelessWidget {
                   // Outer glow ring
                   Container(
                     width: 100,
-                    height: 100,
+                    height: 50,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
@@ -147,7 +147,6 @@ class _UserHero extends StatelessWidget {
                   weight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 20),
             ],
           ),
         ),

@@ -21,6 +21,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { RolesModule } from './roles/roles.module';
 import { TagsModule } from './tags/tags.module';
+import { TipsModule } from './tips/tips.module';
 import { UsersModule } from './users/users.module';
 import { WalletModule } from './wallet/wallet.module';
 import { AuthGuard } from './common/guards/auth.guard';
@@ -57,6 +58,7 @@ import { envValidationSchema } from './config/env.validation';
     MeRadarModule,
     MiningModule,
     ReferralsModule,
+    TipsModule,
     DeviceTokensModule,
     WalletModule,
     HealthModule,

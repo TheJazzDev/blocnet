@@ -6,7 +6,11 @@ class AppRoutes {
   static const String wallet = '/wallet';
   static const String walletTransactions = '/wallet/transactions';
   static const String walletAssetDetail = '/wallet/asset';
+  static const String tipsHistory = '/tips/history';
   static const String mining = '/mining';
+  static const String miningLeaderboard = '/mining/leaderboard';
+  static const String miningHourlyHistory = '/mining/hourly-history';
+  static const String miningDownline = '/mining/downline';
   static const String notifications = '/notifications';
   static const String createUpdate = '/create-update';
   static const String submitProject = '/submit-project';

@@ -10,6 +10,7 @@ enum RoleName {
   owner
   admin
   moderator
+  core_team
   hunter
   user
 }
@@ -191,6 +192,22 @@ enum MiningPointSource {
   admin_adjustment
 }
 
+enum TipCurrencyKind {
+  points
+  token
+}
+
+enum TipAccountType {
+  user
+  fee_vault
+}
+
+enum TipTransactionType {
+  tip
+  conversion
+  adjustment
+}
+
 model Profile {
   id                             String                  @id @db.Uuid
   email                          String                  @unique
@@ -245,6 +262,10 @@ model Profile {
   withdrawalRequests             WithdrawalRequest[]     @relation("WithdrawalRequester")
   reviewedWithdrawals            WithdrawalRequest[]     @relation("WithdrawalReviewer")
   reviewedKycProfiles            KycProfile[]            @relation("KycReviewer")
+  tipAccounts                    TipAccount[]
+  tipTransactionsSent            TipTransaction[]        @relation("TipTxnSenderUser")
+  tipTransactionsReceived        TipTransaction[]        @relation("TipTxnRecipientUser")
+  tipConversions                 TipConversion[]
   audits                         AuditLog[]              @relation("ActorAuditLogs")
   referrer                       Profile?                @relation("ProfileReferrer", fields: [referredById], references: [id], onDelete: SetNull)
   referrals                      Profile[]               @relation("ProfileReferrer")
@@ -865,6 +886,115 @@ model WalletAssetPriceConfig {
   isActive         Boolean     @default(true)
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+}
+
+model TipCurrency {
+  code                    String          @id
+  name                    String
+  symbol                  String
+  decimals                Int
+  kind                    TipCurrencyKind @default(points)
+  isEnabled               Boolean         @default(true)
+  isActiveTippingCurrency Boolean         @default(false)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  feeConfig       TipFeeConfig?
+  accounts        TipAccount[]
+  transactions    TipTransaction[]
+  conversionsFrom TipConversion[] @relation("TipConversionFromCurrency")
+  conversionsTo   TipConversion[] @relation("TipConversionToCurrency")
+
+  @@index([isActiveTippingCurrency, isEnabled])
+}
+
+model TipFeeConfig {
+  id           String  @id @default(uuid()) @db.Uuid
+  currencyCode String  @unique
+  feeBps       Int     @default(0)
+  minTipAtomic BigInt  @default(1)
+  maxTipAtomic BigInt?
+  minFeeAtomic BigInt  @default(0)
+  maxFeeAtomic BigInt?
+  senderPaysFee Boolean @default(true)
+  isActive      Boolean @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  currency TipCurrency @relation(fields: [currencyCode], references: [code], onDelete: Cascade)
+}
+
+model TipAccount {
+  id           String         @id @default(uuid()) @db.Uuid
+  accountType  TipAccountType
+  ownerRef     String
+  userId       String?        @db.Uuid
+  currencyCode String
+  balanceAtomic BigInt        @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user      Profile?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency  TipCurrency  @relation(fields: [currencyCode], references: [code], onDelete: Cascade)
+  sentTransactions     TipTransaction[] @relation("TipTxnSenderAccount")
+  receivedTransactions TipTransaction[] @relation("TipTxnRecipientAccount")
+  feeTransactions      TipTransaction[] @relation("TipTxnFeeAccount")
+
+  @@unique([accountType, ownerRef, currencyCode])
+  @@index([userId, currencyCode])
+  @@index([currencyCode, accountType])
+}
+
+model TipTransaction {
+  id                String             @id @default(uuid()) @db.Uuid
+  type              TipTransactionType @default(tip)
+  senderAccountId   String             @db.Uuid
+  recipientAccountId String            @db.Uuid
+  feeAccountId      String?            @db.Uuid
+  senderUserId      String             @db.Uuid
+  recipientUserId   String             @db.Uuid
+  currencyCode      String
+  amountAtomic      BigInt
+  feeAtomic         BigInt             @default(0)
+  totalDebitAtomic  BigInt
+  note              String?
+  contextType       String?
+  contextId         String?
+  idempotencyKey    String             @unique
+  metadata          Json?
+  createdAt         DateTime           @default(now())
+
+  senderAccount    TipAccount  @relation("TipTxnSenderAccount", fields: [senderAccountId], references: [id], onDelete: Restrict)
+  recipientAccount TipAccount  @relation("TipTxnRecipientAccount", fields: [recipientAccountId], references: [id], onDelete: Restrict)
+  feeAccount       TipAccount? @relation("TipTxnFeeAccount", fields: [feeAccountId], references: [id], onDelete: SetNull)
+  sender           Profile     @relation("TipTxnSenderUser", fields: [senderUserId], references: [id], onDelete: Restrict)
+  recipient        Profile     @relation("TipTxnRecipientUser", fields: [recipientUserId], references: [id], onDelete: Restrict)
+  currency         TipCurrency @relation(fields: [currencyCode], references: [code], onDelete: Restrict)
+
+  @@index([senderUserId, createdAt])
+  @@index([recipientUserId, createdAt])
+  @@index([currencyCode, createdAt])
+}
+
+model TipConversion {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  fromCurrencyCode String
+  toCurrencyCode   String
+  amountInAtomic   BigInt
+  amountOutAtomic  BigInt
+  rateNumerator    BigInt
+  rateDenominator  BigInt
+  idempotencyKey   String   @unique
+  metadata         Json?
+  createdAt        DateTime @default(now())
+
+  user         Profile     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fromCurrency TipCurrency @relation("TipConversionFromCurrency", fields: [fromCurrencyCode], references: [code], onDelete: Restrict)
+  toCurrency   TipCurrency @relation("TipConversionToCurrency", fields: [toCurrencyCode], references: [code], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@index([fromCurrencyCode, toCurrencyCode, createdAt])
 }
 
 model MiningSession {

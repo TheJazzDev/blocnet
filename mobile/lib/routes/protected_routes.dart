@@ -1,11 +1,15 @@
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
+import 'package:blocnet/features/mining/presentation/pages/mining_downline_screen.dart';
+import 'package:blocnet/features/mining/presentation/pages/mining_hourly_history_screen.dart';
+import 'package:blocnet/features/mining/presentation/pages/mining_leaderboard_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/create_update_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/manage_updates_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/manage_projects_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/submit_project_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/top_hunters_screen.dart';
+import 'package:blocnet/features/tips/presentation/pages/tip_history_screen.dart';
 import 'package:blocnet/screen/main_screen.dart';
 import 'package:blocnet/screen/community_create_post_screen.dart';
 import 'package:blocnet/screen/community_post_discussion_screen.dart';
@@ -26,7 +30,11 @@ class ProtectedRoutes {
   static const String wallet = AppRoutes.wallet;
   static const String walletTransactions = AppRoutes.walletTransactions;
   static const String walletAssetDetail = AppRoutes.walletAssetDetail;
+  static const String tipsHistory = AppRoutes.tipsHistory;
   static const String mining = AppRoutes.mining;
+  static const String miningLeaderboard = AppRoutes.miningLeaderboard;
+  static const String miningHourlyHistory = AppRoutes.miningHourlyHistory;
+  static const String miningDownline = AppRoutes.miningDownline;
   static const String notifications = AppRoutes.notifications;
   static const String createUpdate = AppRoutes.createUpdate;
   static const String submitProject = AppRoutes.submitProject;
@@ -75,7 +83,11 @@ class ProtectedRoutes {
         final assetCode = args is Map ? args['assetCode']?.toString() : null;
         return WalletAssetDetailScreen(assetCode: assetCode ?? 'BNT');
       },
+      tipsHistory: (context) => const TipHistoryScreen(),
       mining: (context) => const MainScreen(initialIndex: 4),
+      miningLeaderboard: (context) => const MiningLeaderboardScreen(),
+      miningHourlyHistory: (context) => const MiningHourlyHistoryScreen(),
+      miningDownline: (context) => const MiningDownlineScreen(),
       // Notifications is now a push route (not a main tab)
       notifications: (context) => const NotificationsScreen(),
       createUpdate: (context) => const CreateUpdateScreen(),
@@ -108,7 +120,11 @@ class ProtectedRoutes {
     wallet,
     walletTransactions,
     walletAssetDetail,
+    tipsHistory,
     mining,
+    miningLeaderboard,
+    miningHourlyHistory,
+    miningDownline,
     notifications,
     createUpdate,
     submitProject,

@@ -38,6 +38,7 @@ describe('RolesService roles matrix', () => {
     expect(matrix.spaceRoles).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ role: AppRole.USER }),
+        expect.objectContaining({ role: AppRole.CORE_TEAM }),
         expect.objectContaining({ role: AppRole.HUNTER }),
       ]),
     );

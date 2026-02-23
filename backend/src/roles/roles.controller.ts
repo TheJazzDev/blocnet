@@ -42,6 +42,33 @@ export class RolesController {
     return this.rolesService.promoteToAdmin(user.id, userId, dto.note);
   }
 
+  @Post('owners/:userId/promote')
+  @Roles(AppRole.OWNER)
+  async promoteOwner(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+    @Body() dto: PromoteUserDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.rolesService.promoteToOwner(user.id, userId, dto.note);
+  }
+
+  @Delete('owners/:userId')
+  @Roles(AppRole.OWNER)
+  async demoteOwner(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.rolesService.demoteOwner(user.id, userId);
+  }
+
   @Delete('admins/:userId')
   @Roles(AppRole.OWNER)
   async demoteAdmin(
@@ -67,6 +94,33 @@ export class RolesController {
     }
 
     return this.rolesService.promoteToModerator(user.id, userId, dto.note);
+  }
+
+  @Post('core-teams/:userId/promote')
+  @Roles(AppRole.OWNER)
+  async promoteCoreTeam(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+    @Body() dto: PromoteUserDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.rolesService.promoteToCoreTeam(user.id, userId, dto.note);
+  }
+
+  @Delete('core-teams/:userId')
+  @Roles(AppRole.OWNER)
+  async demoteCoreTeam(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.rolesService.demoteCoreTeam(user.id, userId);
   }
 
   @Delete('moderators/:userId')

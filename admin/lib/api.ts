@@ -512,6 +512,80 @@ export interface AdminWalletHealth {
   };
 }
 
+export type TipCurrencyKind = "points" | "token";
+export type TipDirection = "all" | "sent" | "received";
+
+export interface TipFeePolicy {
+  feeBps: number;
+  minTipAtomic: string;
+  minTip: string;
+  maxTipAtomic: string | null;
+  maxTip: string | null;
+  minFeeAtomic: string;
+  minFee: string;
+  maxFeeAtomic: string | null;
+  maxFee: string | null;
+  senderPaysFee: boolean;
+  isActive: boolean;
+}
+
+export interface AdminTipCurrencySettings {
+  code: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  kind: TipCurrencyKind;
+  isEnabled: boolean;
+  isActiveTippingCurrency: boolean;
+  feePolicy: TipFeePolicy | null;
+  feeVaultBalanceAtomic: string;
+  feeVaultBalance: string;
+}
+
+export interface AdminTipSettings {
+  activeCurrencyCode: string | null;
+  currencies: AdminTipCurrencySettings[];
+}
+
+export interface TipUserPreview {
+  id: string;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+}
+
+export interface AdminTipTransaction {
+  id: string;
+  type: "tip" | "conversion" | "adjustment";
+  direction: "sent" | "received" | "neutral";
+  currency: {
+    code: string;
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  amountAtomic: string;
+  amount: string;
+  feeAtomic: string;
+  fee: string;
+  totalDebitAtomic: string;
+  totalDebit: string;
+  sender: TipUserPreview;
+  recipient: TipUserPreview;
+  note: string | null;
+  contextType: string | null;
+  contextId: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface AdminTipTransactionsResponse {
+  data: AdminTipTransaction[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface AdminMiningConfig {
   enabled: boolean;
   referralsEnabled: boolean;
@@ -610,7 +684,7 @@ export interface RoleMatrixSection extends RoleCapabilitySection {
 }
 
 export interface SpaceRoleDefinition {
-  role: "user" | "hunter";
+  role: "user" | "core_team" | "hunter";
   label: string;
   description: string;
 }
@@ -841,6 +915,17 @@ export const api = {
       method: "DELETE",
     }),
 
+  promoteToOwner: (userId: string, note?: string) =>
+    apiFetch(`/roles/owners/${userId}/promote`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    }),
+
+  demoteOwner: (userId: string) =>
+    apiFetch(`/roles/owners/${userId}`, {
+      method: "DELETE",
+    }),
+
   promoteToModerator: (userId: string, note?: string) =>
     apiFetch(`/roles/moderators/${userId}/promote`, {
       method: "POST",
@@ -849,6 +934,17 @@ export const api = {
 
   demoteModerator: (userId: string) =>
     apiFetch(`/roles/moderators/${userId}`, {
+      method: "DELETE",
+    }),
+
+  promoteToCoreTeam: (userId: string, note?: string) =>
+    apiFetch(`/roles/core-teams/${userId}/promote`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    }),
+
+  demoteCoreTeam: (userId: string) =>
+    apiFetch(`/roles/core-teams/${userId}`, {
       method: "DELETE",
     }),
 
@@ -1006,6 +1102,53 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+
+  getTipSettings: () => apiFetch<AdminTipSettings>("/admin/tips/settings"),
+
+  updateTipCurrencySettings: (
+    currencyCode: string,
+    body: Partial<{
+      name: string;
+      symbol: string;
+      isEnabled: boolean;
+      feeBps: number;
+      minTip: string;
+      maxTip: string | null;
+      minFee: string;
+      maxFee: string | null;
+      senderPaysFee: boolean;
+      policyActive: boolean;
+    }>,
+  ) =>
+    apiFetch<AdminTipSettings>(`/admin/tips/settings/currencies/${currencyCode}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  setActiveTipCurrency: (body: { currencyCode: string }) =>
+    apiFetch<AdminTipSettings>("/admin/tips/settings/active-currency", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listTipTransactions: (params?: {
+    q?: string;
+    currencyCode?: string;
+    userId?: string;
+    direction?: TipDirection;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminTipTransactionsResponse>(
+      `/admin/tips/transactions${toQuery({
+        q: params?.q,
+        currencyCode: params?.currencyCode,
+        userId: params?.userId,
+        direction: params?.direction,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
 
   getMiningConfig: () => apiFetch<AdminMiningConfig>("/admin/mining/config"),
 

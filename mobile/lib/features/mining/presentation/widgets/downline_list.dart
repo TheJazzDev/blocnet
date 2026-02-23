@@ -8,13 +8,19 @@ class DownlineList extends StatelessWidget {
     super.key,
     required this.items,
     required this.isLoading,
+    this.maxItems = 20,
   });
 
   final List<DownlineMember> items;
   final bool isLoading;
+  final int? maxItems;
 
   @override
   Widget build(BuildContext context) {
+    final visibleItems = maxItems == null
+        ? items
+        : items.take(maxItems!).toList(growable: false);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -73,12 +79,12 @@ class DownlineList extends StatelessWidget {
             ),
           )
         else
-          ...items.take(20).map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _DownlineTile(item: item),
-                ),
-              ),
+          ...visibleItems.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _DownlineTile(item: item),
+            ),
+          ),
       ],
     );
   }

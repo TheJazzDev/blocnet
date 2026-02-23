@@ -65,6 +65,26 @@ export class RolesService {
     );
   }
 
+  async promoteToOwner(actorId: string, userId: string, note?: string) {
+    return this.promoteRole(
+      actorId,
+      userId,
+      RoleName.owner,
+      'role.promote.owner',
+      note,
+    );
+  }
+
+  async promoteToCoreTeam(actorId: string, userId: string, note?: string) {
+    return this.promoteRole(
+      actorId,
+      userId,
+      RoleName.core_team,
+      'role.promote.core_team',
+      note,
+    );
+  }
+
   async demoteAdmin(actorId: string, userId: string) {
     return this.demoteRole(
       actorId,
@@ -92,6 +112,24 @@ export class RolesService {
     );
   }
 
+  async demoteOwner(actorId: string, userId: string) {
+    return this.demoteRole(
+      actorId,
+      userId,
+      RoleName.owner,
+      'role.demote.owner',
+    );
+  }
+
+  async demoteCoreTeam(actorId: string, userId: string) {
+    return this.demoteRole(
+      actorId,
+      userId,
+      RoleName.core_team,
+      'role.demote.core_team',
+    );
+  }
+
   async hasAnyRole(userId: string, roles: AppRole[]): Promise<boolean> {
     const roleNames = roles.map((role) => appRoleToRoleName(role));
     const role = await this.prisma.userRole.findFirst({
@@ -114,7 +152,7 @@ export class RolesService {
     auditAction: string,
     note?: string,
   ) {
-    this.assertNoSelfEscalation(actorId, userId);
+    this.assertNoSelfEscalation(actorId, userId, role);
     await this.assertProfileExists(userId);
 
     const result = await this.prisma.userRole.upsert({
@@ -183,8 +221,17 @@ export class RolesService {
     return { deleted: true };
   }
 
-  private assertNoSelfEscalation(actorId: string, userId: string) {
-    if (actorId === userId) {
+  private assertNoSelfEscalation(
+    actorId: string,
+    userId: string,
+    role: RoleName,
+  ) {
+    const isGovernanceRole =
+      role === RoleName.owner ||
+      role === RoleName.admin ||
+      role === RoleName.moderator;
+
+    if (actorId === userId && isGovernanceRole) {
       throw new ForbiddenException('Self-escalation is not allowed');
     }
   }

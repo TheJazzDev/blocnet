@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSupabaseClient } from "@/lib/supabase";
 
+// Deprecated from normal app flow:
+// refresh now happens in middleware (/proxy.ts) and /api/proxy route handlers.
+// This endpoint is kept for backwards compatibility with stale clients.
 const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",

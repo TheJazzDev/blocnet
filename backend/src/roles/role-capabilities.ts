@@ -62,6 +62,12 @@ export const SPACE_ROLE_NOTES = [
     description: 'Base platform identity role. Every account has user access.',
   },
   {
+    role: AppRole.CORE_TEAM,
+    label: 'Core Team',
+    description:
+      'Board/team visibility role for ecosystem members; does not grant hunter capability.',
+  },
+  {
     role: AppRole.HUNTER,
     label: 'Hunter',
     description:
@@ -252,11 +258,25 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     roles: [AppRole.OWNER],
   },
   {
+    key: 'access.roles.owner.manage',
+    label: 'Manage Owner Role',
+    description: 'Grant or revoke owner role assignments.',
+    section: 'access',
+    roles: [AppRole.OWNER],
+  },
+  {
     key: 'access.roles.moderator.manage',
     label: 'Manage Moderator Role',
     description: 'Grant or revoke moderator role assignments.',
     section: 'access',
     roles: [AppRole.OWNER, AppRole.ADMIN],
+  },
+  {
+    key: 'access.roles.core_team.manage',
+    label: 'Manage Core Team Role',
+    description: 'Grant or revoke core team role assignments.',
+    section: 'access',
+    roles: [AppRole.OWNER],
   },
   {
     key: 'access.roles.hunter.manage',

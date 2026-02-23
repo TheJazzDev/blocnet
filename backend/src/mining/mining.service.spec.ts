@@ -27,6 +27,12 @@ describe('MiningService', () => {
     miningPointLedger: {
       create: jest.fn(),
     },
+    tipCurrency: {
+      upsert: jest.fn(),
+    },
+    tipAccount: {
+      upsert: jest.fn(),
+    },
     miningHourlyCheckpoint: {
       findMany: jest.fn(),
       create: jest.fn(),
@@ -68,6 +74,16 @@ describe('MiningService', () => {
     });
 
     prisma.profile.count.mockResolvedValue(0);
+    prisma.miningSession.create.mockResolvedValue({
+      id: 'session-next',
+      startsAt: new Date('2026-02-22T00:00:00.000Z'),
+      endsAt: new Date('2026-02-23T00:00:00.000Z'),
+      claimedAt: null,
+      basePointsPerCycle: 120,
+      effectivePointsPerCycle: 120,
+      boostBpsSnapshot: 0,
+      activeReferralsSnapshot: 0,
+    });
     prisma.miningHourlyCheckpoint.findMany.mockResolvedValue(checkpointIndexes(24));
     prisma.miningHourlyCheckpoint.create.mockResolvedValue({});
     prisma.miningHourlyCheckpoint.aggregate.mockResolvedValue({
@@ -76,6 +92,8 @@ describe('MiningService', () => {
     });
     prisma.miningHourlyCheckpoint.count.mockResolvedValue(0);
     prisma.miningHourlyCheckpoint.updateMany.mockResolvedValue({ count: 0 });
+    prisma.tipCurrency.upsert.mockResolvedValue({});
+    prisma.tipAccount.upsert.mockResolvedValue({});
 
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
@@ -90,6 +108,12 @@ describe('MiningService', () => {
         },
         profile: {
           update: prisma.profile.update,
+        },
+        tipCurrency: {
+          upsert: prisma.tipCurrency.upsert,
+        },
+        tipAccount: {
+          upsert: prisma.tipAccount.upsert,
         },
       }),
     );
@@ -147,18 +171,20 @@ describe('MiningService', () => {
 
   it('claims completed cycle using hourly checkpoint sum and updates balances', async () => {
     const now = new Date();
-    prisma.miningSession.findMany.mockResolvedValue([
-      {
-        id: 'session-1',
-        startsAt: new Date(now.getTime() - 26 * 60 * 60 * 1000),
-        endsAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
-        claimedAt: null,
-        basePointsPerCycle: 120,
-        effectivePointsPerCycle: 120,
-        boostBpsSnapshot: 5000,
-        activeReferralsSnapshot: 10,
-      },
-    ]);
+    const claimableSession = {
+      id: 'session-1',
+      startsAt: new Date(now.getTime() - 26 * 60 * 60 * 1000),
+      endsAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+      claimedAt: null,
+      basePointsPerCycle: 120,
+      effectivePointsPerCycle: 120,
+      boostBpsSnapshot: 5000,
+      activeReferralsSnapshot: 10,
+    };
+    prisma.miningSession.findMany
+      .mockResolvedValueOnce([claimableSession])
+      .mockResolvedValueOnce([claimableSession])
+      .mockResolvedValueOnce([]);
 
     prisma.miningSession.updateMany.mockResolvedValue({ count: 1 });
     prisma.miningHourlyCheckpoint.count.mockResolvedValue(24);
@@ -213,5 +239,6 @@ describe('MiningService', () => {
         claimedPoints: 180,
       }),
     );
+    expect(prisma.miningSession.create).toHaveBeenCalled();
   });
 });

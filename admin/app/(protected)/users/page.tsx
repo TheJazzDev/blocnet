@@ -69,7 +69,7 @@ import {
   type AdminPanelRole,
 } from "@/lib/rbac";
 
-type RoleFilter = "all" | "user" | "hunter" | "moderator" | "admin" | "owner";
+type RoleFilter = "all" | "user" | "hunter" | "core_team" | "moderator" | "admin" | "owner";
 type StatusFilter = "all" | "active" | "deactivated";
 
 type EditFormState = {
@@ -79,7 +79,7 @@ type EditFormState = {
   bio: string;
 };
 
-type ManagedRole = "admin" | "moderator" | "hunter";
+type ManagedRole = "owner" | "admin" | "moderator" | "core_team" | "hunter";
 type RoleActionMode = "grant" | "revoke";
 
 type PendingRoleAction = {
@@ -90,6 +90,23 @@ type PendingRoleAction = {
   destructive?: boolean;
   submit: (note?: string) => Promise<unknown>;
 };
+
+const ROLE_PRIORITY: Record<string, number> = {
+  owner: 6,
+  core_team: 5,
+  admin: 4,
+  moderator: 3,
+  hunter: 2,
+  user: 1,
+};
+
+function sortRolesTopToLowest(roles: string[]): string[] {
+  return [...roles].sort((a, b) => {
+    const priorityDiff = (ROLE_PRIORITY[b] ?? 0) - (ROLE_PRIORITY[a] ?? 0);
+    if (priorityDiff !== 0) return priorityDiff;
+    return a.localeCompare(b);
+  });
+}
 
 function roleBadge(role: string) {
   switch (role) {
@@ -105,6 +122,13 @@ function roleBadge(role: string) {
         <Badge className="border-teal-500/35 bg-teal-500/10 text-teal-300" variant="outline">
           <Shield className="mr-1 h-3 w-3" />
           Admin
+        </Badge>
+      );
+    case "core_team":
+      return (
+        <Badge className="border-sky-500/25 bg-sky-500/10 text-sky-300" variant="outline">
+          <Shield className="mr-1 h-3 w-3" />
+          Core Team
         </Badge>
       );
     case "moderator":
@@ -204,10 +228,58 @@ function UserActionsMenu({
     destructive?: boolean;
   }> = [];
 
-  if (!targetIsSelf && !targetIsOwner && !targetIsDeactivated) {
+  const canManageRoleTarget =
+    !targetIsDeactivated &&
+    (actorIsOwner || (actorIsAdmin && !targetIsOwner && !targetIsAdmin));
+
+  if (canManageRoleTarget) {
+    const hasOwner = user.roles.includes("owner");
     const hasAdmin = user.roles.includes("admin");
     const hasModerator = user.roles.includes("moderator");
+    const hasCoreTeam = user.roles.includes("core_team");
     const hasHunter = user.roles.includes("hunter");
+
+    if (actorIsOwner && !targetIsSelf) {
+      if (hasOwner) {
+        actions.push({
+          key: "demote-owner",
+          label: "Revoke Owner",
+          mode: "revoke",
+          role: "owner",
+          submit: () => clientApi.demoteOwner(user.id),
+          destructive: true,
+        });
+      } else {
+        actions.push({
+          key: "promote-owner",
+          label: "Grant Owner",
+          mode: "grant",
+          role: "owner",
+          submit: (note?: string) => clientApi.promoteToOwner(user.id, note),
+        });
+      }
+    }
+
+    if (actorIsOwner) {
+      if (hasCoreTeam) {
+        actions.push({
+          key: "demote-core-team",
+          label: "Revoke Core Team",
+          mode: "revoke",
+          role: "core_team",
+          submit: () => clientApi.demoteCoreTeam(user.id),
+          destructive: true,
+        });
+      } else {
+        actions.push({
+          key: "promote-core-team",
+          label: "Grant Core Team",
+          mode: "grant",
+          role: "core_team",
+          submit: (note?: string) => clientApi.promoteToCoreTeam(user.id, note),
+        });
+      }
+    }
 
     if (canAdmins) {
       if (hasAdmin) {
@@ -219,7 +291,7 @@ function UserActionsMenu({
           submit: () => clientApi.demoteAdmin(user.id),
           destructive: true,
         });
-      } else {
+      } else if (!targetIsSelf) {
         actions.push({
           key: "promote-admin",
           label: "Grant Admin",
@@ -240,7 +312,7 @@ function UserActionsMenu({
           submit: () => clientApi.demoteModerator(user.id),
           destructive: true,
         });
-      } else {
+      } else if (!targetIsSelf) {
         actions.push({
           key: "promote-moderator",
           label: "Grant Moderator",
@@ -419,8 +491,9 @@ export default function UsersPage() {
     const deactivated = users.length - active;
     const admins = users.filter((entry) => entry.roles.includes("admin")).length;
     const moderators = users.filter((entry) => entry.roles.includes("moderator")).length;
+    const coreTeam = users.filter((entry) => entry.roles.includes("core_team")).length;
     const hunters = users.filter((entry) => entry.roles.includes("hunter")).length;
-    return { active, deactivated, admins, moderators, hunters };
+    return { active, deactivated, admins, moderators, coreTeam, hunters };
   }, [users]);
 
   const pageStart = total === 0 ? 0 : offset + 1;
@@ -638,8 +711,8 @@ export default function UsersPage() {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Moderators/Hunters (page)</p>
-            <p className="text-2xl font-bold">{stats.moderators + stats.hunters}</p>
+            <p className="text-sm text-muted-foreground">Mods/Core/Hunters (page)</p>
+            <p className="text-2xl font-bold">{stats.moderators + stats.coreTeam + stats.hunters}</p>
           </CardContent>
         </Card>
       </div>
@@ -669,11 +742,12 @@ export default function UsersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="hunter">Hunter</SelectItem>
-                <SelectItem value="moderator">Moderator</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="owner">Owner</SelectItem>
+                <SelectItem value="core_team">Core Team</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="moderator">Moderator</SelectItem>
+                <SelectItem value="hunter">Hunter</SelectItem>
+                <SelectItem value="user">User</SelectItem>
               </SelectContent>
             </Select>
             <Select
@@ -759,7 +833,9 @@ export default function UsersPage() {
                             User
                           </Badge>
                         ) : (
-                          user.roles.map((entry) => <span key={entry}>{roleBadge(entry)}</span>)
+                          sortRolesTopToLowest(user.roles).map((entry) => (
+                            <span key={entry}>{roleBadge(entry)}</span>
+                          ))
                         )}
                       </div>
                     </TableCell>
@@ -1004,9 +1080,10 @@ export default function UsersPage() {
                 </div>
               )}
 
-              {pendingRoleAction.role === "hunter" && (
+              {(pendingRoleAction.role === "hunter" ||
+                pendingRoleAction.role === "core_team") && (
                 <div className="rounded-md border border-teal-500/25 bg-teal-500/5 p-3 text-xs text-teal-200">
-                  Hunter is treated as a space/capability role, not an admin governance role.
+                  Hunter and Core Team are space/capability roles, not admin governance roles.
                 </div>
               )}
             </div>

@@ -11,6 +11,32 @@ const COOKIE_OPTS = {
   path: "/",
 };
 
+const inFlightRefreshByToken = new Map<string, Promise<string | undefined>>();
+
+export function runRefreshWithTokenLock(
+  refreshToken: string,
+  refresher: () => Promise<string | undefined>,
+): Promise<string | undefined> {
+  const inFlight = inFlightRefreshByToken.get(refreshToken);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const refreshPromise = refresher().finally(() => {
+    const current = inFlightRefreshByToken.get(refreshToken);
+    if (current === refreshPromise) {
+      inFlightRefreshByToken.delete(refreshToken);
+    }
+  });
+
+  inFlightRefreshByToken.set(refreshToken, refreshPromise);
+  return refreshPromise;
+}
+
+export function resetRefreshTokenLockForTests(): void {
+  inFlightRefreshByToken.clear();
+}
+
 function isConcurrentRefreshError(message: string | undefined): boolean {
   const normalized = message?.toLowerCase() ?? "";
   return normalized.includes("already used") || normalized.includes("reuse interval");
@@ -21,33 +47,35 @@ async function refreshAccessToken(): Promise<string | undefined> {
   const refreshToken = store.get("admin_refresh_token")?.value;
   if (!refreshToken) return undefined;
 
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase.auth.refreshSession({
-    refresh_token: refreshToken,
-  });
+  return runRefreshWithTokenLock(refreshToken, async () => {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
 
-  if (error || !data.session) {
-    // Avoid deleting cookies when refresh rotation races across parallel requests.
-    if (!isConcurrentRefreshError(error?.message)) {
-      store.delete("admin_token");
-      store.delete("admin_refresh_token");
+    if (error || !data.session) {
+      // Avoid deleting cookies when refresh rotation races across parallel requests.
+      if (!isConcurrentRefreshError(error?.message)) {
+        store.delete("admin_token");
+        store.delete("admin_refresh_token");
+      }
+      return undefined;
     }
-    return undefined;
-  }
 
-  const { access_token, refresh_token } = data.session;
+    const { access_token, refresh_token } = data.session;
 
-  store.set("admin_token", access_token, {
-    ...COOKIE_OPTS,
-    maxAge: 60 * 60,
+    store.set("admin_token", access_token, {
+      ...COOKIE_OPTS,
+      maxAge: 60 * 60,
+    });
+
+    store.set("admin_refresh_token", refresh_token, {
+      ...COOKIE_OPTS,
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return access_token;
   });
-
-  store.set("admin_refresh_token", refresh_token, {
-    ...COOKIE_OPTS,
-    maxAge: 60 * 60 * 24 * 7,
-  });
-
-  return access_token;
 }
 
 async function handler(

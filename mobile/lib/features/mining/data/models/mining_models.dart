@@ -189,6 +189,51 @@ class ReferralSummaryModel {
   }
 }
 
+class MiningHourlyCheckpointModel {
+  const MiningHourlyCheckpointModel({
+    required this.id,
+    required this.sessionId,
+    required this.hourIndex,
+    required this.hourStartAt,
+    required this.hourEndAt,
+    required this.points,
+    required this.activeReferralsSnapshot,
+    required this.boostBpsSnapshot,
+    required this.claimedAt,
+    required this.status,
+  });
+
+  final String id;
+  final String sessionId;
+  final int hourIndex;
+  final DateTime? hourStartAt;
+  final DateTime? hourEndAt;
+  final int points;
+  final int activeReferralsSnapshot;
+  final int boostBpsSnapshot;
+  final DateTime? claimedAt;
+  final String status;
+
+  bool get isClaimed => status == 'claimed';
+
+  factory MiningHourlyCheckpointModel.fromApi(Map<String, dynamic> json) {
+    return MiningHourlyCheckpointModel(
+      id: json['id']?.toString() ?? '',
+      sessionId: json['sessionId']?.toString() ?? '',
+      hourIndex: int.tryParse(json['hourIndex']?.toString() ?? '') ?? 0,
+      hourStartAt: DateTime.tryParse(json['hourStartAt']?.toString() ?? ''),
+      hourEndAt: DateTime.tryParse(json['hourEndAt']?.toString() ?? ''),
+      points: int.tryParse(json['points']?.toString() ?? '') ?? 0,
+      activeReferralsSnapshot:
+          int.tryParse(json['activeReferralsSnapshot']?.toString() ?? '') ?? 0,
+      boostBpsSnapshot:
+          int.tryParse(json['boostBpsSnapshot']?.toString() ?? '') ?? 0,
+      claimedAt: DateTime.tryParse(json['claimedAt']?.toString() ?? ''),
+      status: json['status']?.toString() ?? 'unclaimed',
+    );
+  }
+}
+
 class MiningSnapshot {
   const MiningSnapshot({
     required this.asOf,
@@ -196,6 +241,7 @@ class MiningSnapshot {
     required this.balance,
     required this.session,
     required this.referral,
+    required this.hourlyHistory,
   });
 
   final DateTime asOf;
@@ -203,6 +249,7 @@ class MiningSnapshot {
   final MiningBalanceModel balance;
   final MiningSessionModel session;
   final ReferralSummaryModel referral;
+  final List<MiningHourlyCheckpointModel> hourlyHistory;
 
   factory MiningSnapshot.fromApi(Map<String, dynamic> json) {
     final configRaw = (json['config'] as Map?)?.cast<String, dynamic>() ?? {};
@@ -210,6 +257,8 @@ class MiningSnapshot {
     final sessionRaw = (json['session'] as Map?)?.cast<String, dynamic>() ?? {};
     final referralRaw =
         (json['referral'] as Map?)?.cast<String, dynamic>() ?? {};
+    final hourlyHistoryRaw =
+        (json['hourlyHistory'] as List?)?.cast<dynamic>() ?? const [];
 
     return MiningSnapshot(
       asOf: DateTime.tryParse(json['asOf']?.toString() ?? '') ?? DateTime.now(),
@@ -217,6 +266,14 @@ class MiningSnapshot {
       balance: MiningBalanceModel.fromApi(balanceRaw),
       session: MiningSessionModel.fromApi(sessionRaw),
       referral: ReferralSummaryModel.fromApi(referralRaw),
+      hourlyHistory: hourlyHistoryRaw
+          .whereType<Map>()
+          .map(
+            (row) => MiningHourlyCheckpointModel.fromApi(
+              row.cast<String, dynamic>(),
+            ),
+          )
+          .toList(growable: false),
     );
   }
 }

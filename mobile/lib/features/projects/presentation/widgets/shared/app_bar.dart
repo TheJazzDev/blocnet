@@ -1,8 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/space_switcher.dart';
+import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/blocnet_search_delegate.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
+import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/services/updates_store.dart';
@@ -170,14 +172,20 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-void _openSearch(BuildContext context) {
-  showSearch<void>(
+Future<void> _openSearch(BuildContext context) async {
+  final selected = await showSearch<Admin?>(
     context: context,
     delegate: BlocnetSearchDelegate(
       projects: context.read<ProjectsStore>().projects,
       posts: context.read<UpdatesStore>().posts,
     ),
   );
+
+  if (selected == null || !context.mounted) {
+    return;
+  }
+
+  await PublicProfileScreen.showSheet(context, selected);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

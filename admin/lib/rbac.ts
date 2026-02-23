@@ -1,5 +1,5 @@
 export type AdminPanelRole = "owner" | "admin" | "moderator";
-export type SpaceRole = "user" | "hunter";
+export type SpaceRole = "user" | "core_team" | "hunter";
 export type RoleCapabilitySectionId =
   | "overview"
   | "content"
@@ -79,6 +79,12 @@ export const SPACE_ROLES: SpaceRoleDefinition[] = [
     role: "user",
     label: "User",
     description: "Base platform identity role. Every account has user access.",
+  },
+  {
+    role: "core_team",
+    label: "Core Team",
+    description:
+      "Board/team visibility role for ecosystem members; does not grant hunter capability.",
   },
   {
     role: "hunter",
@@ -185,6 +191,20 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     roles: ["owner", "admin", "moderator"],
   },
   {
+    key: "wallet.tips.transactions.view",
+    label: "View Tip Transactions",
+    description: "Read tipping history across mined points and token phases.",
+    section: "wallet",
+    roles: ["owner", "admin", "moderator"],
+  },
+  {
+    key: "wallet.tips.settings.mutate",
+    label: "Mutate Tip Settings",
+    description: "Update tipping fee policy and active tipping currency.",
+    section: "wallet",
+    roles: ["owner", "admin"],
+  },
+  {
     key: "wallet.withdrawals.review",
     label: "Review Withdrawals",
     description: "Approve or reject withdrawal requests.",
@@ -269,11 +289,25 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     roles: ["owner"],
   },
   {
+    key: "access.roles.owner.manage",
+    label: "Manage Owner Role",
+    description: "Grant or revoke owner role assignments.",
+    section: "access",
+    roles: ["owner"],
+  },
+  {
     key: "access.roles.moderator.manage",
     label: "Manage Moderator Role",
     description: "Grant or revoke moderator role assignments.",
     section: "access",
     roles: ["owner", "admin"],
+  },
+  {
+    key: "access.roles.core_team.manage",
+    label: "Manage Core Team Role",
+    description: "Grant or revoke core team role assignments.",
+    section: "access",
+    roles: ["owner"],
   },
   {
     key: "access.roles.hunter.manage",

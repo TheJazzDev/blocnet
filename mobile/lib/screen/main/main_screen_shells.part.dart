@@ -3,7 +3,7 @@ part of '../main_screen.dart';
 const _userTabs = [
   _TabMeta(
     title: 'Blocnet',
-    showSearch: false,
+    showSearch: true,
     showFilter: false,
     showNotificationBell: true,
   ),
@@ -15,19 +15,19 @@ const _userTabs = [
   ),
   _TabMeta(
     title: 'Mining',
-    showSearch: false,
+    showSearch: true,
     showFilter: false,
     showNotificationBell: false,
   ),
   _TabMeta(
     title: 'Community',
-    showSearch: false,
+    showSearch: true,
     showFilter: false,
     showNotificationBell: false,
   ),
   _TabMeta(
     title: 'Wallet',
-    showSearch: false,
+    showSearch: true,
     showFilter: false,
     showNotificationBell: false,
   ),
@@ -36,7 +36,7 @@ const _userTabs = [
 const _hunterTabs = [
   _TabMeta(
     title: 'Blocnet',
-    showSearch: false,
+    showSearch: true,
     showFilter: false,
     showNotificationBell: true,
   ),
@@ -48,19 +48,19 @@ const _hunterTabs = [
   ),
   _TabMeta(
     title: 'Mining',
-    showSearch: false,
+    showSearch: true,
     showFilter: false,
     showNotificationBell: false,
   ),
   _TabMeta(
     title: 'Hunter Hub',
-    showSearch: false,
+    showSearch: true,
     showFilter: false,
     showNotificationBell: false,
   ),
   _TabMeta(
     title: 'Wallet',
-    showSearch: false,
+    showSearch: true,
     showFilter: false,
     showNotificationBell: false,
   ),

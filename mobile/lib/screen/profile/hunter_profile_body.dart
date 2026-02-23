@@ -40,7 +40,9 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
 
       context.read<ProjectsStore>().fetchProjectsOnce();
       context.read<UpdatesStore>().fetchUpdatesOnce();
-      context.read<UserProfileStore>().fetchInitialOnce();
+      final profileStore = context.read<UserProfileStore>();
+      profileStore.fetchInitialOnce(userId: widget.auth.userId ?? '');
+      profileStore.refreshFollowingProfiles();
     });
   }
 
@@ -55,7 +57,8 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
 
     final projects = context.watch<ProjectsStore>().projects;
     final updates = context.watch<UpdatesStore>().updates;
-    final followingCount = context.watch<UserProfileStore>().watchlist.length;
+    final followingCount =
+        context.watch<UserProfileStore>().followingProfilesCount;
 
     final managedProjects = projects
         .where(

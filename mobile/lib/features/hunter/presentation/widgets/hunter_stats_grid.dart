@@ -1,15 +1,17 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/tips_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 /// 3-cell stats grid shown at the top of the Hunter Hub.
-/// Displays: Total Tips · Success Rate · Follower Growth
+/// Displays live wallet tipping + update performance + followers.
 class HunterStatsGrid extends StatelessWidget {
   const HunterStatsGrid({super.key});
 
@@ -18,6 +20,7 @@ class HunterStatsGrid extends StatelessWidget {
     final auth = context.watch<AuthStore>();
     final updates = context.watch<UpdatesStore>().updates;
     final projects = context.watch<ProjectsStore>().projects;
+    final tipsStore = context.watch<TipsStore>();
 
     final userId = auth.userId ?? '';
     final username = auth.username ?? auth.displayName ?? '';
@@ -40,10 +43,10 @@ class HunterStatsGrid extends StatelessWidget {
         )
         .toList();
 
-    final totalTips = hunterUpdates.fold<int>(
-      0,
-      (sum, update) => sum + _scoreUpdate(update),
-    );
+    final now = DateTime.now();
+    final updatesThisWeek = hunterUpdates
+        .where((update) => now.difference(update.createdAt).inDays < 7)
+        .length;
 
     final qualitySignals = hunterUpdates.where((update) {
       final label = update.priority.label.toLowerCase();
@@ -54,31 +57,29 @@ class HunterStatsGrid extends StatelessWidget {
         ? 0
         : ((qualitySignals / hunterUpdates.length) * 100).round();
 
-    final now = DateTime.now();
-    final signalsThisWeek = hunterUpdates
-        .where((update) => now.difference(update.createdAt).inDays < 7)
-        .length;
-    final signalsLastWeek = hunterUpdates.where((update) {
-      final ageInDays = now.difference(update.createdAt).inDays;
-      return ageInDays >= 7 && ageInDays < 14;
-    }).length;
-    final momentum = signalsThisWeek - signalsLastWeek;
-
     final followers = _resolveFollowerCount(
       projects: managedProjects,
       updates: hunterUpdates,
     );
-    final seasonGoal = _seasonGoal(totalTips);
-    final progress =
-        seasonGoal == 0 ? 0.0 : (totalTips / seasonGoal).clamp(0.0, 1.0);
+
+    final receivedHistory = tipsStore.receivedHistory;
+    final totalTipsReceived = _sumTipAmount(receivedHistory);
+    final tipsCurrencySymbol =
+        _resolveCurrencySymbol(tipsStore, receivedHistory);
+    final tipBalance = _resolveTipBalance(tipsStore, receivedHistory);
+    final latestTipAt = _latestTipAt(receivedHistory);
 
     return Column(
       children: [
-        // Main earnings card
         _TipsCard(
-          totalTips: totalTips,
-          progress: progress,
-          seasonGoal: seasonGoal,
+          isLoading:
+              tipsStore.isLoadingReceivedHistory && receivedHistory.isEmpty,
+          tipBalance: tipBalance,
+          totalTipsReceived: totalTipsReceived,
+          totalTipsCount: tipsStore.receivedHistoryTotal,
+          currencySymbol: tipsCurrencySymbol,
+          latestTipAt: latestTipAt,
+          lastError: tipsStore.lastError,
         ),
         const SizedBox(height: 10),
         Row(
@@ -101,8 +102,8 @@ class HunterStatsGrid extends StatelessWidget {
                 value: _formatCompact(followers),
                 icon: Icons.people_outline_rounded,
                 iconColor: AppColors.primary400,
-                trend: _formatMomentum(momentum),
-                trendPositive: momentum >= 0,
+                trend: '$updatesThisWeek updates this week',
+                trendPositive: true,
               ),
             ),
           ],
@@ -112,22 +113,29 @@ class HunterStatsGrid extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _TipsCard extends StatelessWidget {
   const _TipsCard({
-    required this.totalTips,
-    required this.progress,
-    required this.seasonGoal,
+    required this.isLoading,
+    required this.tipBalance,
+    required this.totalTipsReceived,
+    required this.totalTipsCount,
+    required this.currencySymbol,
+    required this.latestTipAt,
+    required this.lastError,
   });
 
-  final int totalTips;
-  final double progress;
-  final int seasonGoal;
+  final bool isLoading;
+  final double tipBalance;
+  final double totalTipsReceived;
+  final int totalTipsCount;
+  final String currencySymbol;
+  final DateTime? latestTipAt;
+  final String? lastError;
 
   @override
   Widget build(BuildContext context) {
-    final progressLabel = '${(progress * 100).round()}%';
+    final symbol = currencySymbol.trim().isEmpty ? 'MCR' : currencySymbol;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -148,14 +156,14 @@ class _TipsCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  Icons.diamond_outlined,
+                  Icons.volunteer_activism_rounded,
                   size: 16,
                   color: AppColors.primary400,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
-                'Total Tips Earned',
+                'Tip Balance',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
                   size: 12,
@@ -170,7 +178,7 @@ class _TipsCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Live',
+                  '$totalTipsCount tx',
                   style: AppTypography.custom(
                     color: AppColors.successColor,
                     size: 10,
@@ -181,50 +189,75 @@ class _TipsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                _formatWithCommas(totalTips),
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: 28,
-                  weight: FontWeight.w800,
-                  height: 1,
-                ),
+          if (isLoading)
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                color: AppColors.primary500,
+                strokeWidth: 2,
               ),
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 3),
-                child: Text(
-                  '\$BNT',
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  _formatAmount(tipBalance),
                   style: AppTypography.custom(
-                    color: AppColors.primary400,
-                    size: 13,
-                    weight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    size: 28,
+                    weight: FontWeight.w800,
+                    height: 1,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // Progress bar towards goal
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: AppColors.bgElevated,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary500),
-              minHeight: 5,
+                const SizedBox(width: 6),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Text(
+                    symbol,
+                    style: AppTypography.custom(
+                      color: AppColors.primary400,
+                      size: 13,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(height: 2),
+          Text(
+            'Total received ${_formatAmount(totalTipsReceived)} $symbol from $totalTipsCount tips',
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
+              size: 10,
+              weight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 2),
           Text(
-            '$progressLabel of season goal · ${_formatWithCommas(seasonGoal)} \$BNT target',
-            style: AppTypography.custom(color: AppColors.textFaint,
+            latestTipAt == null
+                ? 'No tips received yet'
+                : 'Last tip ${_formatTipRecency(latestTipAt!)}',
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
               size: 10,
-              weight: FontWeight.w400,),
+              weight: FontWeight.w400,
+            ),
           ),
+          if (!isLoading &&
+              totalTipsCount == 0 &&
+              (lastError?.trim().isNotEmpty ?? false)) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Tip sync warning: $lastError',
+              style: AppTypography.custom(
+                color: AppColors.warning500,
+                size: 10,
+                weight: FontWeight.w500,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -265,17 +298,6 @@ String _normalizeIdentity(String value) {
   return value.replaceAll('@', '').trim().toLowerCase();
 }
 
-int _scoreUpdate(Update update) {
-  final label = update.priority.label.toLowerCase();
-  final base = label == 'high'
-      ? 120
-      : (label == 'mid' || label == 'medium')
-          ? 70
-          : 35;
-  final followerBoost = ((update.project?.followersCount ?? 0) / 25).floor();
-  return base + followerBoost;
-}
-
 int _resolveFollowerCount({
   required List<Project> projects,
   required List<Update> updates,
@@ -296,21 +318,78 @@ int _resolveFollowerCount({
       : projectFollowers;
 }
 
-int _seasonGoal(int totalTips) {
-  const minimumGoal = 2500;
-  if (totalTips <= 0) return minimumGoal;
-  final rounded = ((totalTips * 1.35) / 500).ceil() * 500;
-  return rounded < minimumGoal ? minimumGoal : rounded;
+double _sumTipAmount(List<TipTransaction> rows) {
+  return rows.fold<double>(0, (sum, row) {
+    final value = double.tryParse(row.amount) ?? 0;
+    return sum + value;
+  });
 }
 
-String _formatMomentum(int momentum) {
-  if (momentum > 0) {
-    return '+$momentum this week';
+String _resolveCurrencySymbol(TipsStore tipsStore, List<TipTransaction> rows) {
+  final overviewSymbol = tipsStore.overview?.activeCurrency.symbol.trim();
+  if (overviewSymbol != null && overviewSymbol.isNotEmpty) {
+    return overviewSymbol;
   }
-  if (momentum < 0) {
-    return '$momentum this week';
+  if (rows.isEmpty) return 'MCR';
+
+  final symbol = rows.first.currency.symbol.trim();
+  if (symbol.isNotEmpty) return symbol;
+  return rows.first.currency.code.trim().isNotEmpty
+      ? rows.first.currency.code
+      : 'MCR';
+}
+
+double _resolveTipBalance(TipsStore tipsStore, List<TipTransaction> rows) {
+  final active = tipsStore.overview?.activeCurrency;
+  if (active != null) {
+    final balance = tipsStore.overview?.findBalance(active.code)?.balance;
+    final parsed = _parseAmount(balance);
+    if (parsed != null) {
+      return parsed;
+    }
   }
-  return 'No change this week';
+
+  return _sumTipAmount(rows);
+}
+
+DateTime? _latestTipAt(List<TipTransaction> rows) {
+  if (rows.isEmpty) return null;
+  var latest = rows.first.createdAt;
+  for (final row in rows.skip(1)) {
+    if (row.createdAt.isAfter(latest)) {
+      latest = row.createdAt;
+    }
+  }
+  return latest;
+}
+
+double? _parseAmount(String? raw) {
+  if (raw == null) return null;
+  final normalized = raw.trim().replaceAll(',', '');
+  if (normalized.isEmpty) return null;
+  return double.tryParse(normalized);
+}
+
+String _formatTipRecency(DateTime date) {
+  final now = DateTime.now();
+  final diff = now.difference(date);
+  if (diff.inMinutes < 1) {
+    return 'just now';
+  }
+  if (diff.inHours < 1) {
+    return '${diff.inMinutes}m ago';
+  }
+  if (diff.inDays < 1) {
+    return '${diff.inHours}h ago';
+  }
+  if (diff.inDays < 7) {
+    return '${diff.inDays}d ago';
+  }
+
+  final year = date.year.toString().padLeft(4, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '$year-$month-$day';
 }
 
 String _formatCompact(int value) {
@@ -323,19 +402,10 @@ String _formatCompact(int value) {
   return value.toString();
 }
 
-String _formatWithCommas(int value) {
-  final source = value.toString();
-  final buffer = StringBuffer();
-
-  for (var i = 0; i < source.length; i++) {
-    final fromEnd = source.length - i;
-    buffer.write(source[i]);
-    if (fromEnd > 1 && fromEnd % 3 == 1) {
-      buffer.write(',');
-    }
-  }
-
-  return buffer.toString();
+String _formatAmount(double value) {
+  var text = value.toStringAsFixed(3);
+  text = text.replaceFirst(RegExp(r'\.?0+$'), '');
+  return text;
 }
 
 class _StatCard extends StatelessWidget {
@@ -404,9 +474,11 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             label,
-            style: AppTypography.custom(color: AppColors.textMuted,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
               size: 10,
-              weight: FontWeight.w400,),
+              weight: FontWeight.w400,
+            ),
           ),
         ],
       ),

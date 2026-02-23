@@ -25,6 +25,10 @@ export const FinancialAuditActions = {
   RiskLimitUpdated: 'wallet.risk_limit.updated',
   FeeConfigUpdated: 'wallet.fee_config.updated',
   AssetPriceConfigUpdated: 'wallet.asset_price_config.updated',
+
+  TipSent: 'tip.sent',
+  TipCurrencySettingsUpdated: 'tip.currency.settings.updated',
+  TipActiveCurrencyUpdated: 'tip.currency.active.updated',
 } as const;
 
 export type FinancialAuditAction =

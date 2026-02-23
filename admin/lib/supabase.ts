@@ -15,7 +15,14 @@ export function getSupabaseClient(): SupabaseClient {
     );
   }
 
-  _client = createClient(supabaseUrl, supabaseAnonKey);
+  _client = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      // Admin auth is managed via httpOnly cookies on server routes.
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
   return _client;
 }
 

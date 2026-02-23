@@ -9,24 +9,31 @@ class DeepLinkService {
   final AppLinks _appLinks = AppLinks();
   final GlobalKey<NavigatorState> navigatorKey;
   final AuthStore authStore;
+  final Future<AuthResponse> Function(String refreshToken)
+      _setSessionWithRefreshToken;
 
   StreamSubscription<Uri>? _sub;
 
   DeepLinkService({
     required this.navigatorKey,
     required this.authStore,
-  });
+    Future<AuthResponse> Function(String refreshToken)?
+        setSessionWithRefreshToken,
+  }) : _setSessionWithRefreshToken = setSessionWithRefreshToken ??
+            Supabase.instance.client.auth.setSession;
 
   /// Call once from main.dart after runApp
   void init() {
     // Handle link that launched the app from a cold start
     _appLinks.getInitialLink().then((uri) {
-      if (uri != null) _handleUri(uri);
+      if (uri != null) {
+        unawaited(_handleUri(uri));
+      }
     });
 
     // Handle links while app is already running
     _sub = _appLinks.uriLinkStream.listen(
-      _handleUri,
+      (uri) => unawaited(_handleUri(uri)),
       onError: (_) {}, // silently ignore malformed URIs
     );
   }
@@ -35,7 +42,7 @@ class DeepLinkService {
     _sub?.cancel();
   }
 
-  void _handleUri(Uri uri) async {
+  Future<void> _handleUri(Uri uri) async {
     // Only handle our scheme
     if (uri.scheme != 'io.blocnet.app') return;
 
@@ -121,8 +128,10 @@ class DeepLinkService {
     if (accessToken == null || refreshToken == null) return;
 
     try {
-      // Let Supabase consume the tokens from the URL
-      await Supabase.instance.client.auth.setSession(accessToken);
+      // Let Supabase consume and persist the rotated session from refresh token.
+      final authResponse = await _setSessionWithRefreshToken(refreshToken);
+      final sessionAccessToken =
+          authResponse.session?.accessToken ?? accessToken;
 
       if (type == 'recovery') {
         // Password reset — navigate to reset password screen
@@ -135,7 +144,7 @@ class DeepLinkService {
       }
 
       // Email confirmation or magic link — sign in
-      final success = await authStore.verifyAndSignIn(accessToken);
+      final success = await authStore.verifyAndSignIn(sessionAccessToken);
       if (success) {
         navigatorKey.currentState?.pushNamedAndRemoveUntil(
           AppRoutes.main,
@@ -154,4 +163,6 @@ class DeepLinkService {
       );
     }
   }
+
+  Future<void> handleUriForTesting(Uri uri) => _handleUri(uri);
 }

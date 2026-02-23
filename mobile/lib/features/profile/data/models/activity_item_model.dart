@@ -56,8 +56,23 @@ class ActivityItem {
         return 'Followed a hunter profile';
       case 'profile.unfollow':
         return 'Unfollowed a hunter profile';
+      case 'tip.sent':
+        return 'Sent a tip to a hunter';
       default:
-        return action.replaceAll('.', ' ').trim();
+        return _toTitleCase(action.replaceAll('.', ' ').trim());
     }
   }
+}
+
+String _toTitleCase(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return '';
+  return trimmed
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .map((part) {
+        final lower = part.toLowerCase();
+        return '${lower[0].toUpperCase()}${lower.substring(1)}';
+      })
+      .join(' ');
 }

@@ -120,9 +120,11 @@ class _BookmarksEmptyState extends StatelessWidget {
             Text(
               'Bookmark posts from Community to save them here',
               textAlign: TextAlign.center,
-              style: AppTypography.custom(color: AppColors.textMuted,
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
                 size: 12,
-                weight: FontWeight.w400,),
+                weight: FontWeight.w400,
+              ),
             ),
           ],
         ),
@@ -196,9 +198,11 @@ class _BookmarkItem extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       getTimeStamp(post.createdAt),
-                      style: AppTypography.custom(color: AppColors.textFaint,
+                      style: AppTypography.custom(
+                        color: AppColors.textFaint,
                         size: 10,
-                        weight: FontWeight.w400,),
+                        weight: FontWeight.w400,
+                      ),
                     ),
                   ],
                 ),
@@ -207,9 +211,11 @@ class _BookmarkItem extends StatelessWidget {
                   children: [
                     Text(
                       '@${author.toLowerCase().replaceAll(' ', '_')}',
-                      style: AppTypography.custom(color: AppColors.textFaint,
+                      style: AppTypography.custom(
+                        color: AppColors.textFaint,
                         size: 10,
-                        weight: FontWeight.w400,),
+                        weight: FontWeight.w400,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -365,10 +371,12 @@ class _WatchlistItem extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             project.description,
-            style: AppTypography.custom(color: AppColors.textMuted,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
               size: 11,
               weight: FontWeight.w400,
-              height: 1.4,),
+              height: 1.4,
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -379,9 +387,11 @@ class _WatchlistItem extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 '${project.followersCount} followers',
-                style: AppTypography.custom(color: AppColors.textFaint,
+                style: AppTypography.custom(
+                  color: AppColors.textFaint,
                   size: 10,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
               ),
             ],
           ),
@@ -397,9 +407,9 @@ class _HistoryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profileStore = context.watch<UserProfileStore>();
-    final items = profileStore.activity;
+    final activityItems = profileStore.activity;
 
-    if (profileStore.isLoadingActivity && items.isEmpty) {
+    if (profileStore.isLoadingActivity && activityItems.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
           color: AppColors.primary400,
@@ -408,14 +418,27 @@ class _HistoryTab extends StatelessWidget {
       );
     }
 
-    if (items.isEmpty) {
+    if (activityItems.isEmpty) {
       return const _HistoryEmptyState();
     }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
-        children: items.map((item) => _HistoryItem(item: item)).toList(),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Activity',
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
+              size: 11,
+              weight: FontWeight.w600,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...activityItems.map((item) => _HistoryItem(item: item)),
+        ],
       ),
     );
   }
@@ -485,9 +508,11 @@ class _HistoryItem extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   getTimeStamp(item.createdAt),
-                  style: AppTypography.custom(color: AppColors.textFaint,
+                  style: AppTypography.custom(
+                    color: AppColors.textFaint,
                     size: 10,
-                    weight: FontWeight.w400,),
+                    weight: FontWeight.w400,
+                  ),
                 ),
               ],
             ),

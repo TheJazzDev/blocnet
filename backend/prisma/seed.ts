@@ -124,6 +124,35 @@ const defaultAssetPriceConfigs = [
   },
 ] as const;
 
+const defaultTipCurrencies = [
+  {
+    code: 'MCR',
+    name: 'Mine Credits',
+    symbol: 'MCR',
+    decimals: 3,
+    kind: 'points' as const,
+    isEnabled: true,
+    isActiveTippingCurrency: true,
+    feeBps: 500,
+    minTipAtomic: 1n,
+    minFeeAtomic: 0n,
+    senderPaysFee: true,
+  },
+  {
+    code: 'BNT',
+    name: 'BlocNet Token',
+    symbol: 'BNT',
+    decimals: 18,
+    kind: 'token' as const,
+    isEnabled: true,
+    isActiveTippingCurrency: false,
+    feeBps: 500,
+    minTipAtomic: 1000000000000000n,
+    minFeeAtomic: 0n,
+    senderPaysFee: true,
+  },
+] as const;
+
 async function main() {
   await prisma.miningConfig.upsert({
     where: { id: 'default' },
@@ -225,16 +254,88 @@ async function main() {
     });
   }
 
-  const [primaryCount, secondaryCount, riskCount, miningConfigCount] =
+  for (const currency of defaultTipCurrencies) {
+    await prisma.tipCurrency.upsert({
+      where: { code: currency.code },
+      update: {
+        name: currency.name,
+        symbol: currency.symbol,
+        decimals: currency.decimals,
+        kind: currency.kind,
+        isEnabled: currency.isEnabled,
+        isActiveTippingCurrency: currency.isActiveTippingCurrency,
+      },
+      create: {
+        code: currency.code,
+        name: currency.name,
+        symbol: currency.symbol,
+        decimals: currency.decimals,
+        kind: currency.kind,
+        isEnabled: currency.isEnabled,
+        isActiveTippingCurrency: currency.isActiveTippingCurrency,
+      },
+    });
+
+    await prisma.tipFeeConfig.upsert({
+      where: { currencyCode: currency.code },
+      update: {
+        feeBps: currency.feeBps,
+        minTipAtomic: currency.minTipAtomic,
+        minFeeAtomic: currency.minFeeAtomic,
+        senderPaysFee: currency.senderPaysFee,
+        isActive: true,
+      },
+      create: {
+        currencyCode: currency.code,
+        feeBps: currency.feeBps,
+        minTipAtomic: currency.minTipAtomic,
+        minFeeAtomic: currency.minFeeAtomic,
+        senderPaysFee: currency.senderPaysFee,
+        isActive: true,
+      },
+    });
+
+    await prisma.tipAccount.upsert({
+      where: {
+        accountType_ownerRef_currencyCode: {
+          accountType: 'fee_vault',
+          ownerRef: 'FEE_VAULT',
+          currencyCode: currency.code,
+        },
+      },
+      update: {},
+      create: {
+        accountType: 'fee_vault',
+        ownerRef: 'FEE_VAULT',
+        currencyCode: currency.code,
+        balanceAtomic: 0n,
+      },
+    });
+  }
+
+  await prisma.tipCurrency.updateMany({
+    where: {},
+    data: {
+      isActiveTippingCurrency: false,
+    },
+  });
+
+  await prisma.tipCurrency.update({
+    where: { code: 'MCR' },
+    data: { isActiveTippingCurrency: true },
+  });
+
+  const [primaryCount, secondaryCount, riskCount, miningConfigCount, tipCurrencyCount] =
     await Promise.all([
       prisma.primaryTag.count(),
       prisma.secondaryTag.count(),
       prisma.riskLimit.count(),
       prisma.miningConfig.count(),
+      prisma.tipCurrency.count(),
     ]);
 
   console.log(
-    `[seed] completed | primaryTags=${primaryCount} secondaryTags=${secondaryCount} riskLimits=${riskCount} miningConfigs=${miningConfigCount}`,
+    `[seed] completed | primaryTags=${primaryCount} secondaryTags=${secondaryCount} riskLimits=${riskCount} miningConfigs=${miningConfigCount} tipCurrencies=${tipCurrencyCount}`,
   );
 }
 

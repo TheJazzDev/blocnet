@@ -9,6 +9,8 @@ export function roleNameToAppRole(role: RoleName): AppRole {
       return AppRole.ADMIN;
     case RoleName.moderator:
       return AppRole.MODERATOR;
+    case RoleName.core_team:
+      return AppRole.CORE_TEAM;
     case RoleName.hunter:
       return AppRole.HUNTER;
     case RoleName.user:
@@ -26,6 +28,8 @@ export function appRoleToRoleName(role: AppRole): RoleName {
       return RoleName.admin;
     case AppRole.MODERATOR:
       return RoleName.moderator;
+    case AppRole.CORE_TEAM:
+      return RoleName.core_team;
     case AppRole.HUNTER:
       return RoleName.hunter;
     case AppRole.USER:

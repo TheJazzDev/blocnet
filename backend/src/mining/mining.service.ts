@@ -5,9 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MiningConfig, Prisma } from '@prisma/client';
+import { MiningConfig, Prisma, TipAccountType } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { MCR_CURRENCY_CODE } from '../tips/tip.constants';
+
+const MCR_ATOMIC_MULTIPLIER = 1000n;
 
 type MiningSessionStatus = 'idle' | 'running' | 'claimable';
 
@@ -29,6 +32,17 @@ type GetLeaderboardOptions = {
   limit?: number;
   offset?: number;
   includePrivateFields?: boolean;
+};
+
+type MiningSessionRow = {
+  id: string;
+  startsAt: Date;
+  endsAt: Date;
+  claimedAt: Date | null;
+  basePointsPerCycle: number;
+  effectivePointsPerCycle: number;
+  boostBpsSnapshot: number;
+  activeReferralsSnapshot: number;
 };
 
 const DEFAULT_MINING_CONFIG: EffectiveMiningConfig = {
@@ -62,6 +76,7 @@ export class MiningService {
       maturedUnclaimedAggregate,
       totalDirectReferrals,
       activeDirectReferrals,
+      hourlyHistoryRows,
     ] = await Promise.all([
       this.prisma.profile.findUnique({
         where: { id: userId },
@@ -100,6 +115,24 @@ export class MiningService {
         },
       }),
       this.countActiveDirectReferrals(userId, config, asOf),
+      this.prisma.miningHourlyCheckpoint.findMany({
+        where: {
+          userId,
+        },
+        orderBy: [{ hourEndAt: 'desc' }, { createdAt: 'desc' }],
+        take: 48,
+        select: {
+          id: true,
+          sessionId: true,
+          hourIndex: true,
+          hourStartAt: true,
+          hourEndAt: true,
+          points: true,
+          activeReferralsSnapshot: true,
+          boostBpsSnapshot: true,
+          claimedAt: true,
+        },
+      }),
     ]);
 
     if (!profile) {
@@ -180,6 +213,18 @@ export class MiningService {
         activeDirectReferrals,
         totalDirectReferrals,
       },
+      hourlyHistory: hourlyHistoryRows.map((row) => ({
+        id: row.id,
+        sessionId: row.sessionId,
+        hourIndex: row.hourIndex,
+        hourStartAt: row.hourStartAt,
+        hourEndAt: row.hourEndAt,
+        points: row.points,
+        activeReferralsSnapshot: row.activeReferralsSnapshot,
+        boostBpsSnapshot: row.boostBpsSnapshot,
+        claimedAt: row.claimedAt,
+        status: row.claimedAt ? 'claimed' : 'unclaimed',
+      })),
     };
   }
 
@@ -236,38 +281,7 @@ export class MiningService {
       });
     }
 
-    const activeReferralsSnapshot = await this.countActiveDirectReferrals(
-      userId,
-      config,
-      asOf,
-    );
-
-    const boostBpsSnapshot = this.computeBoostBps(
-      activeReferralsSnapshot,
-      config,
-    );
-
-    const effectivePointsPerCycle = this.computeProjectedCyclePoints(
-      config.basePointsPerCycle,
-      boostBpsSnapshot,
-    );
-
-    const startsAt = asOf;
-    const endsAt = new Date(
-      startsAt.getTime() + config.cycleHours * 60 * 60 * 1000,
-    );
-
-    const session = await this.prisma.miningSession.create({
-      data: {
-        userId,
-        startsAt,
-        endsAt,
-        basePointsPerCycle: config.basePointsPerCycle,
-        activeReferralsSnapshot,
-        boostBpsSnapshot,
-        effectivePointsPerCycle,
-      },
-    });
+    const session = await this.createMiningSession(userId, asOf, config);
 
     await this.auditLogService.create({
       actorId: userId,
@@ -291,7 +305,7 @@ export class MiningService {
         session,
         asOf,
         config,
-        activeReferralsSnapshot,
+        session.activeReferralsSnapshot,
       ),
     };
   }
@@ -398,6 +412,46 @@ export class MiningService {
           },
         },
       });
+
+      const tipCreditAtomic = BigInt(claimPoints) * MCR_ATOMIC_MULTIPLIER;
+      if (tipCreditAtomic > 0n) {
+        await tx.tipCurrency.upsert({
+          where: { code: MCR_CURRENCY_CODE },
+          update: {},
+          create: {
+            code: MCR_CURRENCY_CODE,
+            name: 'Mine Credits',
+            symbol: 'MCR',
+            decimals: 3,
+            kind: 'points',
+            isEnabled: true,
+            isActiveTippingCurrency: true,
+          },
+        });
+
+        await tx.tipAccount.upsert({
+          where: {
+            accountType_ownerRef_currencyCode: {
+              accountType: TipAccountType.user,
+              ownerRef: userId,
+              currencyCode: MCR_CURRENCY_CODE,
+            },
+          },
+          update: {
+            userId,
+            balanceAtomic: {
+              increment: tipCreditAtomic,
+            },
+          },
+          create: {
+            accountType: TipAccountType.user,
+            ownerRef: userId,
+            userId,
+            currencyCode: MCR_CURRENCY_CODE,
+            balanceAtomic: tipCreditAtomic,
+          },
+        });
+      }
     });
 
     await this.auditLogService.create({
@@ -411,6 +465,68 @@ export class MiningService {
         hourlyCheckpointCount: checkpointCount,
       },
     });
+
+    let nextSessionState: Awaited<ReturnType<typeof this.toSessionState>> | null =
+      null;
+
+    if (config.enabled) {
+      const nextSessionAsOf = new Date();
+      const unclaimedAfterClaim = await this.prisma.miningSession.findMany({
+        where: {
+          userId,
+          claimedAt: null,
+        },
+        orderBy: {
+          startsAt: 'desc',
+        },
+        take: 10,
+      });
+
+      const runningAfterClaim = unclaimedAfterClaim.find(
+        (session) => session.endsAt.getTime() > nextSessionAsOf.getTime(),
+      );
+      const claimableAfterClaim = unclaimedAfterClaim.find(
+        (session) => session.endsAt.getTime() <= nextSessionAsOf.getTime(),
+      );
+
+      if (runningAfterClaim) {
+        nextSessionState = await this.toSessionState(
+          userId,
+          runningAfterClaim,
+          nextSessionAsOf,
+          config,
+        );
+      } else if (!claimableAfterClaim) {
+        const nextSession = await this.createMiningSession(
+          userId,
+          nextSessionAsOf,
+          config,
+        );
+
+        await this.auditLogService.create({
+          actorId: userId,
+          action: 'mining.start',
+          resourceType: 'mining_session',
+          resourceId: nextSession.id,
+          metadata: {
+            startsAt: nextSession.startsAt.toISOString(),
+            endsAt: nextSession.endsAt.toISOString(),
+            effectivePointsPerCycle: nextSession.effectivePointsPerCycle,
+            boostBpsSnapshot: nextSession.boostBpsSnapshot,
+            activeReferralsSnapshot: nextSession.activeReferralsSnapshot,
+            trigger: 'auto_after_claim',
+          },
+        });
+
+        nextSessionState = await this.toSessionState(
+          userId,
+          nextSession,
+          nextSessionAsOf,
+          config,
+          nextSession.activeReferralsSnapshot,
+        );
+      }
+    }
 
     const [profile, maturedUnclaimedAggregate] = await Promise.all([
       this.prisma.profile.findUnique({
@@ -446,6 +562,7 @@ export class MiningService {
         maturedUnclaimedPoints,
         lifetimeEarnedPoints: claimedTotalPoints + maturedUnclaimedPoints,
       },
+      nextSession: nextSessionState,
     };
   }
 
@@ -899,16 +1016,7 @@ export class MiningService {
 
   private async toSessionState(
     userId: string,
-    session: {
-      id: string;
-      startsAt: Date;
-      endsAt: Date;
-      claimedAt: Date | null;
-      basePointsPerCycle: number;
-      effectivePointsPerCycle: number;
-      boostBpsSnapshot: number;
-      activeReferralsSnapshot: number;
-    },
+    session: MiningSessionRow,
     asOf: Date,
     config: EffectiveMiningConfig,
     activeDirectReferralsNow?: number,
@@ -1058,6 +1166,53 @@ export class MiningService {
     }
 
     return Math.floor(projectedCyclePoints / Math.max(cycleHours, 1));
+  }
+
+  private async createMiningSession(
+    userId: string,
+    startsAt: Date,
+    config: EffectiveMiningConfig,
+    prisma: PrismaLike = this.prisma,
+  ): Promise<MiningSessionRow> {
+    const activeReferralsSnapshot = await this.countActiveDirectReferralsAt(
+      userId,
+      config,
+      startsAt,
+      prisma,
+    );
+    const boostBpsSnapshot = this.computeBoostBps(
+      activeReferralsSnapshot,
+      config,
+    );
+    const effectivePointsPerCycle = this.computeProjectedCyclePoints(
+      config.basePointsPerCycle,
+      boostBpsSnapshot,
+    );
+    const endsAt = new Date(
+      startsAt.getTime() + config.cycleHours * 60 * 60 * 1000,
+    );
+
+    return prisma.miningSession.create({
+      data: {
+        userId,
+        startsAt,
+        endsAt,
+        basePointsPerCycle: config.basePointsPerCycle,
+        activeReferralsSnapshot,
+        boostBpsSnapshot,
+        effectivePointsPerCycle,
+      },
+      select: {
+        id: true,
+        startsAt: true,
+        endsAt: true,
+        claimedAt: true,
+        basePointsPerCycle: true,
+        effectivePointsPerCycle: true,
+        boostBpsSnapshot: true,
+        activeReferralsSnapshot: true,
+      },
+    });
   }
 
   private async countActiveDirectReferrals(

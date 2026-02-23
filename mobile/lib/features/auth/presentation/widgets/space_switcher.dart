@@ -22,6 +22,7 @@ class SpaceSwitcher extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
+        if (auth.isSwitchingSpace) return;
         HapticFeedback.selectionClick();
         auth.toggleSpace();
       },
@@ -70,10 +71,13 @@ class _SpacePill extends StatelessWidget {
       curve: Curves.easeOutCubic,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: isActive ? AppColors.primary500.withValues(alpha: 0.15) : Colors.transparent,
+        color: isActive
+            ? AppColors.primary500.withValues(alpha: 0.15)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         border: isActive
-            ? Border.all(color: AppColors.primary500.withValues(alpha: 0.4), width: 1)
+            ? Border.all(
+                color: AppColors.primary500.withValues(alpha: 0.4), width: 1)
             : null,
       ),
       child: Row(

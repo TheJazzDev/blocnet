@@ -93,10 +93,10 @@ export default function RolesPage() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Users2 className="h-4 w-4 text-teal-300" />
-            User/Hunter Space Roles
+            Space Roles
           </CardTitle>
           <CardDescription>
-            User and Hunter are space/capability roles, not admin governance roles.
+            User, Core Team, and Hunter are space/capability roles, not admin governance roles.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2 text-sm text-muted-foreground">

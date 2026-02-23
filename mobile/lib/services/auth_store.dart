@@ -8,10 +8,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthStore extends ChangeNotifier {
-  AuthStore() {
-    ApiClient.setAuthTokenRefresher(_refreshAccessTokenSilently);
+  AuthStore({
+    ApiClient? apiClient,
+    bool enableSupabaseAuthListener = true,
+    bool? supabaseConfiguredOverride,
+  })  : _apiClient = apiClient ?? ApiClient(),
+        _enableSupabaseAuthListener = enableSupabaseAuthListener,
+        _supabaseConfiguredOverride = supabaseConfiguredOverride {
+    ApiClient.setAuthTokenRefresher(refreshAccessTokenSilently);
 
-    if (AppConfig.isSupabaseConfigured) {
+    if (_enableSupabaseAuthListener && isSupabaseConfigured) {
       _authSubscription =
           Supabase.instance.client.auth.onAuthStateChange.listen(
         (event) {
@@ -32,9 +38,13 @@ class AuthStore extends ChangeNotifier {
     unawaited(_restorePendingReferralCode());
   }
 
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
+  final bool _enableSupabaseAuthListener;
+  final bool? _supabaseConfiguredOverride;
   StreamSubscription<AuthState>? _authSubscription;
+  Future<String?>? _inFlightSilentRefresh;
   static const Duration _authTimeout = Duration(seconds: 15);
+  static const Duration _spaceSwitchDelay = Duration(seconds: 2);
   static const String _spaceKeyPrefix = 'blocnet_active_space_';
   static const String _pendingReferralCodeKey = 'blocnet_pending_referral_code';
 
@@ -57,6 +67,7 @@ class AuthStore extends ChangeNotifier {
 
   // ── Space switcher — 'user' | 'hunter' ───────────────────────────────────
   String _activeSpace = 'user';
+  bool _isSwitchingSpace = false;
 
   bool get isAuthenticated => _isAuthenticated;
   bool get isSubmitting => _isSubmitting;
@@ -81,7 +92,8 @@ class AuthStore extends ChangeNotifier {
   bool get canCreateUpdate => isOwner || isAdmin || isHunter;
   bool get canSubmitProject => isOwner || isAdmin || isHunter;
   String? get lastError => _lastError;
-  bool get isSupabaseConfigured => AppConfig.isSupabaseConfigured;
+  bool get isSupabaseConfigured =>
+      _supabaseConfiguredOverride ?? AppConfig.isSupabaseConfigured;
 
   // ── Space switcher getters ────────────────────────────────────────────────
   /// Whether the user has any elevated role that grants hunter space access.
@@ -92,6 +104,7 @@ class AuthStore extends ChangeNotifier {
 
   /// True when the user is viewing/interacting from the hunter perspective.
   bool get isInHunterSpace => _activeSpace == 'hunter' && hasHunterSpace;
+  bool get isSwitchingSpace => _isSwitchingSpace;
 
   /// Toggle or set the active space. Silently ignores if the user has no
   /// hunter role — they stay in user space.
@@ -104,19 +117,60 @@ class AuthStore extends ChangeNotifier {
   }
 
   void toggleSpace() {
-    setActiveSpace(_activeSpace == 'user' ? 'hunter' : 'user');
+    unawaited(
+      switchSpaceWithTransition(
+        _activeSpace == 'user' ? 'hunter' : 'user',
+      ),
+    );
+  }
+
+  Future<void> switchSpaceWithTransition(String space) async {
+    final target = (space == 'hunter' && hasHunterSpace) ? 'hunter' : 'user';
+    if (_activeSpace == target || _isSwitchingSpace) return;
+
+    _isSwitchingSpace = true;
+    notifyListeners();
+
+    await Future<void>.delayed(_spaceSwitchDelay);
+
+    _activeSpace = target;
+    _isSwitchingSpace = false;
+    unawaited(_persistActiveSpacePreference());
+    notifyListeners();
   }
 
   Future<void> bootstrapFromSession() async {
     if (!isSupabaseConfigured) return;
 
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) {
+    final bootstrapToken = await getCurrentAccessTokenForBootstrap();
+    if (bootstrapToken == null || bootstrapToken.trim().isEmpty) {
       _clearAuth(notify: true);
       return;
     }
 
-    await verifyAndSignIn(session.accessToken, setSubmitting: false);
+    final bootstrapSignedIn = await verifyAndSignIn(
+      bootstrapToken,
+      setSubmitting: false,
+    );
+    if (bootstrapSignedIn) {
+      return;
+    }
+
+    // If startup verification fails due to an expired access token, refresh once
+    // and retry before treating the local session as invalid.
+    final refreshedToken = await refreshAccessTokenSilently();
+    if (refreshedToken == null || refreshedToken.trim().isEmpty) {
+      _clearAuth(notify: true);
+      return;
+    }
+
+    final refreshedSignedIn = await verifyAndSignIn(
+      refreshedToken,
+      setSubmitting: false,
+    );
+    if (!refreshedSignedIn) {
+      _clearAuth(notify: true);
+    }
   }
 
   Future<bool> signInWithEmailPassword({
@@ -528,7 +582,36 @@ class AuthStore extends ChangeNotifier {
     _clearAuth(notify: true);
   }
 
-  Future<String?> _refreshAccessTokenSilently() async {
+  Future<String?> getCurrentAccessTokenForBootstrap() async {
+    if (!isSupabaseConfigured) {
+      return null;
+    }
+    return Supabase.instance.client.auth.currentSession?.accessToken;
+  }
+
+  Future<String?> refreshAccessTokenSilently() async {
+    if (!isSupabaseConfigured) {
+      return null;
+    }
+
+    final pending = _inFlightSilentRefresh;
+    if (pending != null) {
+      return pending;
+    }
+
+    final refreshFuture = _refreshAccessTokenSilentlyInternal();
+    _inFlightSilentRefresh = refreshFuture;
+
+    try {
+      return await refreshFuture;
+    } finally {
+      if (identical(_inFlightSilentRefresh, refreshFuture)) {
+        _inFlightSilentRefresh = null;
+      }
+    }
+  }
+
+  Future<String?> _refreshAccessTokenSilentlyInternal() async {
     if (!isSupabaseConfigured) {
       return null;
     }

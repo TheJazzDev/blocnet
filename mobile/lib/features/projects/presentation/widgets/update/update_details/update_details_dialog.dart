@@ -1,7 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/comments/data/models/comment_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
+import 'package:blocnet/features/tips/data/models/tip_models.dart';
+import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/comments_store.dart';
 import 'package:blocnet/services/updates_store.dart';
@@ -25,23 +28,24 @@ class UpdateDetailsDialog extends StatefulWidget {
 
 class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
   final TextEditingController _commentController = TextEditingController();
+  late final CommentsStore _commentsStore;
   bool _isSubmittingComment = false;
   String? _commentError;
 
   @override
   void initState() {
     super.initState();
+    _commentsStore = context.read<CommentsStore>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final commentsStore = context.read<CommentsStore>();
-      commentsStore.fetchComments(widget.id);
-      commentsStore.watchCommentsRealtime(widget.id);
+      _commentsStore.fetchComments(widget.id);
+      _commentsStore.watchCommentsRealtime(widget.id);
     });
   }
 
   @override
   void dispose() {
-    context.read<CommentsStore>().unwatchCommentsRealtime(widget.id);
+    _commentsStore.unwatchCommentsRealtime(widget.id);
     _commentController.dispose();
     super.dispose();
   }
@@ -85,6 +89,8 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                     children: [
                       const SizedBox(height: 4),
                       UpdateDetailsInfo(post: post),
+                      const SizedBox(height: 12),
+                      _buildTipHunterAction(post),
                       const SizedBox(height: 16),
                       _Divider(),
                       const SizedBox(height: 12),
@@ -152,6 +158,50 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
     } finally {
       if (mounted) setState(() => _isSubmittingComment = false);
     }
+  }
+
+  Widget _buildTipHunterAction(Update post) {
+    final auth = context.watch<AuthStore>();
+    final recipientUserId = post.adminId.toString().trim();
+    if (recipientUserId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final isSelf = auth.userId != null && auth.userId == recipientUserId;
+    if (isSelf) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          TipHunterSheet.show(
+            context,
+            recipient: TipRecipient(
+              userId: recipientUserId,
+              username: post.admin?.username,
+              displayName: post.admin?.name,
+              avatarUrl: post.admin?.imageUrl,
+              isHunterHint: true,
+            ),
+            contextType: 'update',
+            contextId: post.id.toString(),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary500,
+          foregroundColor: Colors.black,
+          minimumSize: const Size.fromHeight(44),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        icon: const Icon(Icons.volunteer_activism_rounded, size: 18),
+        label: const Text('Tip Hunter'),
+      ),
+    );
   }
 }
 

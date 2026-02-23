@@ -7,6 +7,7 @@ import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/deep_link_service.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/services/push_notification_service.dart';
+import 'package:blocnet/services/tips_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/services/tags_store.dart';
@@ -51,7 +52,7 @@ void main() async {
       anonKey: AppConfig.supabaseAnonKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
-        autoRefreshToken: true,
+        autoRefreshToken: false,
       ),
     );
   }
@@ -114,6 +115,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CommentsStore()),
         ChangeNotifierProvider(create: (_) => MiningStore()),
         ChangeNotifierProvider(create: (_) => UserProfileStore()),
+        ChangeNotifierProvider(create: (_) => TipsStore()),
         ChangeNotifierProvider(create: (_) => WalletStore()),
         ChangeNotifierProvider(create: (_) => TagsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),

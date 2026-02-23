@@ -14,24 +14,29 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
 
-    return Scaffold(
-      backgroundColor: AppColors.bgBase,
-      appBar: const CustomAppBar(
-        title: 'Profile',
-        backButton: true,
-        showSearch: false,
-        showFilter: false,
-        showSpaceSwitcher: true,
-      ),
-      body: auth.isInHunterSpace
-          ? HunterProfileBody(
-              auth: auth,
-              onSignOut: () => _confirmSignOut(context, auth),
-            )
-          : UserProfileBody(
-              auth: auth,
-              onSignOut: () => _confirmSignOut(context, auth),
-            ),
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: AppColors.bgBase,
+          appBar: const CustomAppBar(
+            title: 'Profile',
+            backButton: true,
+            showSearch: false,
+            showFilter: false,
+            showSpaceSwitcher: true,
+          ),
+          body: auth.isInHunterSpace
+              ? HunterProfileBody(
+                  auth: auth,
+                  onSignOut: () => _confirmSignOut(context, auth),
+                )
+              : UserProfileBody(
+                  auth: auth,
+                  onSignOut: () => _confirmSignOut(context, auth),
+                ),
+        ),
+        if (auth.isSwitchingSpace) const _ProfileSpaceSwitchOverlay(),
+      ],
     );
   }
 
@@ -103,5 +108,33 @@ class ProfileScreen extends StatelessWidget {
     if (confirmed == true) {
       await auth.signOut();
     }
+  }
+}
+
+class _ProfileSpaceSwitchOverlay extends StatelessWidget {
+  const _ProfileSpaceSwitchOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: AbsorbPointer(
+        child: Container(
+          color: Colors.black,
+          child: Center(
+            child: SizedBox(
+              width: 160,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  minHeight: 4,
+                  color: AppColors.primary400,
+                  backgroundColor: Colors.white.withValues(alpha: 0.18),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

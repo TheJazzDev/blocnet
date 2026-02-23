@@ -51,6 +51,24 @@ const ALLOWED_AVATAR_MIME_TYPES = new Set([
   'image/webp',
 ]);
 
+const PROFILE_ACTIVITY_EXCLUDED_ACTION_PREFIXES = [
+  'admin.',
+  'role.',
+  'digest.',
+  'tip.currency.',
+  'project.moderate.',
+  'update.moderate.',
+  'comment.moderate.',
+  'community_post.moderate.',
+  'community_comment.moderate.',
+  'project.hunter.',
+  'admin_application.',
+  'project_proposal.review',
+  'wallet.risk_limit.',
+  'wallet.fee_config.',
+  'wallet.asset_price_config.',
+] as const;
+
 @Injectable()
 export class UsersService {
   private readonly supabaseUrl: string;
@@ -916,6 +934,90 @@ export class UsersService {
     };
   }
 
+  async searchPublicProfiles(opts: {
+    q?: string;
+    role?: 'all' | 'hunter' | 'user';
+    limit?: number;
+    offset?: number;
+  }) {
+    const { limit, offset } = this.normalizePagination(opts);
+    const q = opts.q?.trim();
+    const usernameQuery =
+      q && q.startsWith('@') ? q.replace(/^@+/, '').trim() : q;
+    const role = opts.role ?? 'all';
+
+    const where: Prisma.ProfileWhereInput = {
+      isDeactivated: false,
+      ...(role === 'hunter'
+        ? { roles: { some: { role: RoleName.hunter } } }
+        : role === 'user'
+          ? { roles: { none: { role: RoleName.hunter } } }
+          : {}),
+      ...(q
+        ? {
+            OR: [
+              { displayName: { contains: q, mode: 'insensitive' } },
+              { username: { contains: q, mode: 'insensitive' } },
+              ...(usernameQuery && usernameQuery != q
+                ? [
+                    {
+                      username: {
+                        contains: usernameQuery,
+                        mode: 'insensitive' as const,
+                      },
+                    },
+                  ]
+                : []),
+              { email: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.prisma.profile.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: offset,
+        take: limit,
+        select: {
+          id: true,
+          displayName: true,
+          username: true,
+          avatarUrl: true,
+          email: true,
+          roles: {
+            select: {
+              role: true,
+            },
+          },
+          _count: {
+            select: {
+              followerLinks: true,
+            },
+          },
+        },
+      }),
+      this.prisma.profile.count({ where }),
+    ]);
+
+    return {
+      data: rows.map((row) => ({
+        id: row.id,
+        displayName: row.displayName,
+        username: row.username,
+        avatarUrl: row.avatarUrl,
+        followersCount: row._count.followerLinks,
+        roles: row.roles.map((entry) => entry.role),
+        // Keep this field for compatibility with Admin.fromApi fallback handling.
+        email: row.email,
+      })),
+      total,
+      limit,
+      offset,
+    };
+  }
+
   async followProfile(followerId: string, followeeId: string) {
     if (followerId === followeeId) {
       throw new BadRequestException('You cannot follow your own profile');
@@ -1052,6 +1154,11 @@ export class UsersService {
     const rows = await this.prisma.auditLog.findMany({
       where: {
         actorId: userId,
+        NOT: {
+          OR: PROFILE_ACTIVITY_EXCLUDED_ACTION_PREFIXES.map((prefix) => ({
+            action: { startsWith: prefix },
+          })),
+        },
       },
       orderBy: { createdAt: 'desc' },
       skip: offset,

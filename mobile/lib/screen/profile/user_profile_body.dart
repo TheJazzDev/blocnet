@@ -5,6 +5,7 @@ import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/community_posts_store.dart';
+import 'package:blocnet/services/tips_store.dart';
 import 'package:blocnet/services/user_profile_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
@@ -39,15 +40,24 @@ class _UserProfileBodyState extends State<UserProfileBody> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<UserProfileStore>().fetchInitialOnce();
+      final userId = widget.auth.userId ?? '';
+      final profileStore = context.read<UserProfileStore>();
+      final tipsStore = context.read<TipsStore>();
+      profileStore.fetchInitialOnce(userId: userId);
+      profileStore.refreshFollowingProfiles();
+      tipsStore.ensureUserScope(userId);
+      tipsStore.loadSentHistory(force: true, limit: 200);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final profileStore = context.watch<UserProfileStore>();
-    final followingCount = profileStore.watchlist.length;
-    final tipsSent = _tipsSentCount(profileStore.activity);
+    final tipsStore = context.watch<TipsStore>();
+    final followingCount = profileStore.followingProfilesCount;
+    final tipsSent = tipsStore.sentHistoryTotal > 0
+        ? tipsStore.sentHistoryTotal
+        : tipsStore.sentHistory.length;
     final auth = widget.auth;
 
     final displayName = auth.displayName?.trim().isNotEmpty == true
@@ -57,7 +67,12 @@ class _UserProfileBodyState extends State<UserProfileBody> {
     return RefreshIndicator(
       color: AppColors.primary500,
       backgroundColor: AppColors.bgSurface,
-      onRefresh: () => context.read<UserProfileStore>().refreshAll(),
+      onRefresh: () async {
+        await Future.wait([
+          context.read<UserProfileStore>().refreshAll(),
+          context.read<TipsStore>().loadSentHistory(force: true, limit: 200),
+        ]);
+      },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
@@ -96,6 +111,13 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                 children: [
                   const _SectionLabel('More'),
                   const SizedBox(height: 8),
+                  _ProfileTile(
+                    icon: Icons.volunteer_activism_outlined,
+                    title: 'Tip History',
+                    subtitle: 'See all tips you sent to hunters',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.tipsHistory),
+                  ),
                   _ProfileTile(
                     icon: Icons.edit_outlined,
                     title: 'Edit Profile',
@@ -136,15 +158,5 @@ class _UserProfileBodyState extends State<UserProfileBody> {
         ),
       ),
     );
-  }
-
-  int _tipsSentCount(List<ActivityItem> activity) {
-    return activity.where((item) {
-      final action = item.action.toLowerCase();
-      return action.contains('tip') &&
-          (action.contains('send') ||
-              action.contains('transfer') ||
-              action.contains('reward'));
-    }).length;
   }
 }

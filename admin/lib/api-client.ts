@@ -12,9 +12,6 @@ function toQuery(params: Record<string, string | number | undefined | null>): st
   return encoded ? `?${encoded}` : "";
 }
 
-// Track if we're already attempting a refresh to avoid infinite loops
-let isRefreshing = false;
-
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${PROXY_BASE}${path}`, {
     ...options,
@@ -25,23 +22,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   });
 
   if (res.status === 401) {
-    // Try to refresh the token once, then retry the request
-    if (!isRefreshing && typeof window !== "undefined") {
-      isRefreshing = true;
-      try {
-        const refreshRes = await fetch("/api/auth/refresh-token", { method: "POST" });
-        if (refreshRes.ok) {
-          isRefreshing = false;
-          // Retry the original request with the new token
-          return apiFetch<T>(path, options);
-        }
-      } catch {
-        // Refresh failed
-      }
-      isRefreshing = false;
-    }
-
-    // If refresh failed or we're already refreshing, redirect to sign-in
+    // Refreshing is owned by server middleware/proxy so we redirect immediately.
     if (typeof window !== "undefined") {
       window.location.href = `/signin?next=${encodeURIComponent(window.location.pathname)}`;
     }
@@ -94,6 +75,14 @@ export type {
   WalletAssetCode,
   WalletAssetPriceConfig,
   AdminWalletHealth,
+  TipCurrencyKind,
+  TipDirection,
+  TipFeePolicy,
+  AdminTipCurrencySettings,
+  AdminTipSettings,
+  TipUserPreview,
+  AdminTipTransaction,
+  AdminTipTransactionsResponse,
   AdminMiningConfig,
   AdminMiningMetrics,
   AdminMiningLeaderboardEntry,
@@ -138,6 +127,9 @@ import type {
   WalletAssetCode,
   WalletAssetPriceConfig,
   AdminWalletHealth,
+  TipDirection,
+  AdminTipSettings,
+  AdminTipTransactionsResponse,
   AdminMiningConfig,
   AdminMiningMetrics,
   AdminMiningLeaderboardResponse,
@@ -365,6 +357,17 @@ export const clientApi = {
       method: "DELETE",
     }),
 
+  promoteToOwner: (userId: string, note?: string) =>
+    apiFetch(`/roles/owners/${userId}/promote`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    }),
+
+  demoteOwner: (userId: string) =>
+    apiFetch(`/roles/owners/${userId}`, {
+      method: "DELETE",
+    }),
+
   promoteToModerator: (userId: string, note?: string) =>
     apiFetch(`/roles/moderators/${userId}/promote`, {
       method: "POST",
@@ -373,6 +376,17 @@ export const clientApi = {
 
   demoteModerator: (userId: string) =>
     apiFetch(`/roles/moderators/${userId}`, {
+      method: "DELETE",
+    }),
+
+  promoteToCoreTeam: (userId: string, note?: string) =>
+    apiFetch(`/roles/core-teams/${userId}/promote`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    }),
+
+  demoteCoreTeam: (userId: string) =>
+    apiFetch(`/roles/core-teams/${userId}`, {
       method: "DELETE",
     }),
 
@@ -530,6 +544,53 @@ export const clientApi = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+
+  getTipSettings: () => apiFetch<AdminTipSettings>("/admin/tips/settings"),
+
+  updateTipCurrencySettings: (
+    currencyCode: string,
+    body: Partial<{
+      name: string;
+      symbol: string;
+      isEnabled: boolean;
+      feeBps: number;
+      minTip: string;
+      maxTip: string | null;
+      minFee: string;
+      maxFee: string | null;
+      senderPaysFee: boolean;
+      policyActive: boolean;
+    }>,
+  ) =>
+    apiFetch<AdminTipSettings>(`/admin/tips/settings/currencies/${currencyCode}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  setActiveTipCurrency: (body: { currencyCode: string }) =>
+    apiFetch<AdminTipSettings>("/admin/tips/settings/active-currency", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  listTipTransactions: (params?: {
+    q?: string;
+    currencyCode?: string;
+    userId?: string;
+    direction?: TipDirection;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<AdminTipTransactionsResponse>(
+      `/admin/tips/transactions${toQuery({
+        q: params?.q,
+        currencyCode: params?.currencyCode,
+        userId: params?.userId,
+        direction: params?.direction,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
 
   getMiningConfig: () => apiFetch<AdminMiningConfig>("/admin/mining/config"),
 

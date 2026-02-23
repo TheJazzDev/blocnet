@@ -1,6 +1,5 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/mining/presentation/widgets/downline_list.dart';
-import 'package:blocnet/features/mining/presentation/widgets/mining_leaderboard_list.dart';
+import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_hero_card.dart';
 import 'package:blocnet/features/mining/presentation/widgets/referral_code_card.dart';
 import 'package:blocnet/services/mining_store.dart';
@@ -65,14 +64,35 @@ class _MiningScreenState extends State<MiningScreen> {
                 isBinding: store.isBindingReferral,
               ),
               const SizedBox(height: 20),
-              MiningLeaderboardList(
-                items: store.leaderboard,
-                isLoading: store.isLoadingLeaderboard,
+              _MiningSectionEntryCard(
+                icon: Icons.leaderboard_rounded,
+                title: 'Mining Leaderboard',
+                subtitle: store.isLoadingLeaderboard
+                    ? 'Loading rankings...'
+                    : '${store.leaderboard.length} ranked miners',
+                onTap: () => Navigator.of(context)
+                    .pushNamed(AppRoutes.miningLeaderboard),
               ),
               const SizedBox(height: 20),
-              DownlineList(
-                items: store.downline,
-                isLoading: store.isLoadingDownline,
+              _MiningSectionEntryCard(
+                icon: Icons.schedule_rounded,
+                title: 'Hourly Mining History',
+                subtitle: store.isLoadingSnapshot
+                    ? 'Loading checkpoints...'
+                    : '${store.snapshot?.hourlyHistory.length ?? 0} checkpoints recorded',
+                onTap: () => Navigator.of(context)
+                    .pushNamed(AppRoutes.miningHourlyHistory),
+              ),
+              const SizedBox(height: 20),
+              _MiningSectionEntryCard(
+                icon: Icons.group_rounded,
+                title: 'Referral Downline',
+                subtitle: store.isLoadingDownline
+                    ? 'Loading referrals...'
+                    : '${store.downline.length} members in your network',
+                onTap: () => Navigator.of(context).pushNamed(
+                  AppRoutes.miningDownline,
+                ),
               ),
               const SizedBox(height: 12),
               if (store.isLoadingSnapshot && store.snapshot == null)
@@ -107,7 +127,7 @@ class _MiningScreenState extends State<MiningScreen> {
     try {
       await store.claimMining();
       if (!mounted) return;
-      _showFeedback('Rewards claimed successfully.');
+      _showFeedback('Rewards claimed. New mining session started.');
     } catch (_) {
       // surfaced via store.lastError
     }
@@ -307,6 +327,85 @@ class _MiningScreenState extends State<MiningScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+}
+
+class _MiningSectionEntryCard extends StatelessWidget {
+  const _MiningSectionEntryCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface.withValues(alpha: 0.82),
+          borderRadius: BorderRadius.circular(14),
+          border:
+              Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary500.withValues(alpha: 0.12),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                icon,
+                color: AppColors.primary400,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTypography.custom(
+                      color: AppColors.textPrimary,
+                      size: 13,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: AppTypography.custom(
+                      color: AppColors.textMuted,
+                      size: 11,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textFaint,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

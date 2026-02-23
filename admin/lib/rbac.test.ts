@@ -68,7 +68,11 @@ describe("rbac", () => {
       "admin",
       "moderator",
     ]);
-    expect(matrix.spaceRoles.map((entry) => entry.role)).toEqual(["user", "hunter"]);
+    expect(matrix.spaceRoles.map((entry) => entry.role)).toEqual([
+      "user",
+      "core_team",
+      "hunter",
+    ]);
     expect(matrix.sections.some((entry) => entry.id === "access")).toBe(true);
   });
 });

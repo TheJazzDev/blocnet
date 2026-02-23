@@ -14,6 +14,7 @@ class Project {
   final List<Update>? posts;
   final int followersCount;
   final String description;
+  final String status;
   final DateTime createdAt;
   final Set<String> updateIds;
   final String primaryTagId;
@@ -38,6 +39,7 @@ class Project {
     required this.primaryTag,
     required this.description,
     required this.followersCount,
+    this.status = 'active',
     this.secondaryTagIds = const [],
     this.secondaryTags = const [],
     this.apps = const {},
@@ -50,6 +52,7 @@ class Project {
     Admin? admin,
     String? website,
     int? followersCount,
+    String? status,
   }) {
     return Project(
       id: id,
@@ -62,6 +65,7 @@ class Project {
       details: details,
       createdAt: createdAt,
       description: description,
+      status: status ?? this.status,
       posts: posts ?? this.posts,
       admin: admin ?? this.admin,
       website: website ?? this.website,
@@ -85,6 +89,7 @@ class Project {
       'socials': socials,
       'adminId': adminId,
       'description': description,
+      'status': status,
       'updateIds': updateIds.toList(),
       'followersCount': followersCount,
       'primaryTagId': primaryTagId,
@@ -108,6 +113,7 @@ class Project {
       adminId: adminId,
       website: json['website']?.toString(),
       description: (json['description'] ?? '').toString(),
+      status: (json['status'] ?? 'active').toString(),
       followersCount: _toInt(json['followersCount']),
       primaryTagId: (json['primaryTagId'] ?? '').toString(),
       createdAt: createdAt,

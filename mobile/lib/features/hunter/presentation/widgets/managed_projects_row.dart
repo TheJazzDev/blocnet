@@ -1,5 +1,7 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -11,22 +13,35 @@ class ManagedProjectsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthStore>();
     final projects = context.watch<ProjectsStore>().projects;
+    final userId = auth.userId ?? '';
+    final username = auth.username ?? auth.displayName ?? '';
+    final managed = projects
+        .where(
+          (project) => _isCurrentHunterProject(
+            project: project,
+            userId: userId,
+            username: username,
+          ),
+        )
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    if (projects.isEmpty) {
+    if (managed.isEmpty) {
       return _EmptyManagedProjects();
     }
 
-    // Show up to 5 managed projects
-    final managed = projects.take(5).toList();
+    final visibleProjects = managed.take(5).toList(growable: false);
 
     return SizedBox(
       height: 160,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: managed.length,
+        itemCount: visibleProjects.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, i) => _ManagedProjectCard(project: managed[i]),
+        itemBuilder: (context, i) =>
+            _ManagedProjectCard(project: visibleProjects[i]),
       ),
     );
   }
@@ -109,11 +124,19 @@ class _ManagedProjectCard extends StatelessWidget {
   }
 
   String _resolveStatus(Project project) {
-    // Derive status from available model fields only.
-    final hasUpdates = (project.posts?.isNotEmpty ?? false);
-    if (hasUpdates) return 'Live';
-    if (project.followersCount > 0) return 'Pending';
-    return 'Processing';
+    final normalized = project.status.trim().toLowerCase();
+    switch (normalized) {
+      case 'active':
+        return 'Active';
+      case 'paused':
+        return 'Paused';
+      case 'hidden':
+        return 'Hidden';
+      case 'archived':
+        return 'Archived';
+      default:
+        return 'Active';
+    }
   }
 }
 
@@ -156,15 +179,13 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color;
-    switch (status) {
-      case 'Live':
-        color = AppColors.successColor;
-      case 'Pending':
-        color = AppColors.warning500;
-      default:
-        color = AppColors.textMuted;
-    }
+    final color = switch (status) {
+      'Active' => AppColors.successColor,
+      'Paused' => AppColors.warning500,
+      'Hidden' => AppColors.textMuted,
+      'Archived' => AppColors.textMuted,
+      _ => AppColors.textMuted,
+    };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -191,11 +212,17 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = status == 'Live' ? 'Post Update' : 'View';
+    final label = switch (status) {
+      'Active' => 'Manage',
+      'Paused' => 'Review',
+      'Hidden' => 'View',
+      'Archived' => 'View',
+      _ => 'Manage',
+    };
     return SizedBox(
       width: double.infinity,
       child: GestureDetector(
-        onTap: () {},
+        onTap: () => Navigator.of(context).pushNamed(AppRoutes.manageProjects),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 7),
           decoration: BoxDecoration(
@@ -247,13 +274,34 @@ class _EmptyManagedProjects extends StatelessWidget {
           Text(
             'Submit a gem to start managing projects',
             textAlign: TextAlign.center,
-            style: AppTypography.custom(color: AppColors.textFaint,
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
               size: 11,
               weight: FontWeight.w400,
-              height: 1.4,),
+              height: 1.4,
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+bool _isCurrentHunterProject({
+  required Project project,
+  required String userId,
+  required String username,
+}) {
+  if (userId.isNotEmpty &&
+      (project.adminId == userId || project.admin?.id == userId)) {
+    return true;
+  }
+
+  final projectUsername = project.admin?.username ?? project.admin?.name ?? '';
+  return _normalizeIdentity(projectUsername) == _normalizeIdentity(username) &&
+      _normalizeIdentity(username).isNotEmpty;
+}
+
+String _normalizeIdentity(String value) {
+  return value.replaceAll('@', '').trim().toLowerCase();
 }

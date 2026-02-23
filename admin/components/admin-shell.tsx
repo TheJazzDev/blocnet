@@ -23,6 +23,8 @@ import {
   Shield,
   Zap,
   CheckCircle2,
+  HandCoins,
+  ReceiptText,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -94,6 +96,8 @@ function buildNavItems(userRoles: string[]) {
     { href: "/wallet-withdrawals", label: "Withdrawals", icon: ScrollText },
     { href: "/wallet-kyc", label: "KYC Reviews", icon: Shield },
     { href: "/wallet-settings", label: "Wallet Settings", icon: Settings },
+    { href: "/tips-transactions", label: "Tip Transactions", icon: ReceiptText },
+    { href: "/tip-settings", label: "Tip Settings", icon: HandCoins },
   ];
 
   const engagementItems = [{ href: "/mining", label: "Mining", icon: Zap }];
@@ -248,45 +252,6 @@ function SidebarContent({
   );
 }
 
-const REFRESH_LOCK_KEY = "admin_refresh_lock";
-const REFRESH_LOCK_DURATION_MS = 5000;
-
-let refreshPromise: Promise<boolean> | null = null;
-
-async function refreshSession(): Promise<boolean> {
-  if (refreshPromise) {
-    return refreshPromise;
-  }
-
-  const now = Date.now();
-  const lockData = localStorage.getItem(REFRESH_LOCK_KEY);
-  if (lockData) {
-    const lockTime = parseInt(lockData, 10);
-    if (now - lockTime < REFRESH_LOCK_DURATION_MS) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return true;
-    }
-  }
-
-  localStorage.setItem(REFRESH_LOCK_KEY, now.toString());
-
-  refreshPromise = (async () => {
-    try {
-      const res = await fetch("/api/auth/refresh-token", { method: "POST" });
-      return res.ok;
-    } catch {
-      return false;
-    } finally {
-      localStorage.removeItem(REFRESH_LOCK_KEY);
-      setTimeout(() => {
-        refreshPromise = null;
-      }, 500);
-    }
-  })();
-
-  return refreshPromise;
-}
-
 export function AdminShell({
   children,
   currentUser,
@@ -315,10 +280,6 @@ export function AdminShell({
       setRoleViewCookie(null);
     }
   }, [actingAsRole, roleOptions]);
-
-  useEffect(() => {
-    refreshSession();
-  }, []);
 
   const effectiveRoles = useMemo(
     () => resolveEffectiveRoles(realRoles, actingAsRole),

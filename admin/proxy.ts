@@ -13,6 +13,8 @@ const PROTECTED_PREFIXES = [
   "/wallet-withdrawals",
   "/wallet-kyc",
   "/wallet-settings",
+  "/tips-transactions",
+  "/tip-settings",
   "/users",
   "/roles",
   "/applications",
@@ -55,6 +57,13 @@ function shouldRefreshAccessToken(token: string): boolean {
   if (!exp) return true;
   const now = Math.floor(Date.now() / 1000);
   return exp - now <= REFRESH_LEEWAY_SECONDS;
+}
+
+function isExpiredAccessToken(token: string): boolean {
+  const exp = parseJwtExp(token);
+  if (!exp) return true;
+  const now = Math.floor(Date.now() / 1000);
+  return exp <= now;
 }
 
 function isConcurrentRefreshError(message: string | undefined): boolean {
@@ -130,7 +139,11 @@ export async function proxy(request: NextRequest) {
   }
 
   const needsRefresh = !accessToken || shouldRefreshAccessToken(accessToken);
-  if (needsRefresh && refreshToken) {
+  if (needsRefresh) {
+    if (!refreshToken) {
+      return redirectToSignIn(request);
+    }
+
     const refreshed = await refreshWithSupabase(refreshToken);
     if (refreshed.ok) {
       const response = NextResponse.next();
@@ -145,7 +158,8 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
-    if (!accessToken && !refreshed.concurrent) {
+    // Do not continue if access token is missing or already expired.
+    if (!accessToken || isExpiredAccessToken(accessToken)) {
       return redirectToSignIn(request);
     }
   }
@@ -166,6 +180,8 @@ export const config = {
     "/wallet-withdrawals/:path*",
     "/wallet-kyc/:path*",
     "/wallet-settings/:path*",
+    "/tips-transactions/:path*",
+    "/tip-settings/:path*",
     "/users/:path*",
     "/roles/:path*",
     "/applications/:path*",
