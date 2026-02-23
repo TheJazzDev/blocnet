@@ -5,6 +5,7 @@ import 'package:blocnet/services/admins_store.dart';
 import 'package:blocnet/services/app_store.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/deep_link_service.dart';
+import 'package:blocnet/services/edge_engine_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/services/push_notification_service.dart';
 import 'package:blocnet/services/tips_store.dart';
@@ -109,6 +110,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AppStore()),
         ChangeNotifierProvider(create: (_) => UpdatesStore()),
         ChangeNotifierProvider(create: (_) => CommunityPostsStore()),
+        ChangeNotifierProvider(create: (_) => EdgeEngineStore()),
         ChangeNotifierProvider<NotificationsStore>.value(
           value: notificationsStore,
         ),

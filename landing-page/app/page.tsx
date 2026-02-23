@@ -1,5 +1,6 @@
 import { Navbar } from '@/components/ui/Navbar';
 import { Hero } from '@/components/sections/Hero';
+import { AppDownload } from '@/components/sections/AppDownload';
 import { Features } from '@/components/sections/Features';
 import { Mining } from '@/components/sections/Mining';
 import { Wallet } from '@/components/sections/Wallet';
@@ -13,6 +14,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#09090b] text-foreground">
       <Navbar />
       <Hero />
+      <AppDownload />
       <Features />
       <Mining />
       <Wallet />

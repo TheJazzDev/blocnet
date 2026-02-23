@@ -46,7 +46,8 @@ class _UserProfileBodyState extends State<UserProfileBody> {
       profileStore.fetchInitialOnce(userId: userId);
       profileStore.refreshFollowingProfiles();
       tipsStore.ensureUserScope(userId);
-      tipsStore.loadSentHistory(force: true, limit: 200);
+      tipsStore.loadOverview(force: true);
+      tipsStore.loadSentHistory(force: true, limit: 100);
     });
   }
 
@@ -55,9 +56,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
     final profileStore = context.watch<UserProfileStore>();
     final tipsStore = context.watch<TipsStore>();
     final followingCount = profileStore.followingProfilesCount;
-    final tipsSent = tipsStore.sentHistoryTotal > 0
-        ? tipsStore.sentHistoryTotal
-        : tipsStore.sentHistory.length;
+    final tipsSent = tipsStore.profileTipsSentValue;
     final auth = widget.auth;
 
     final displayName = auth.displayName?.trim().isNotEmpty == true
@@ -70,7 +69,8 @@ class _UserProfileBodyState extends State<UserProfileBody> {
       onRefresh: () async {
         await Future.wait([
           context.read<UserProfileStore>().refreshAll(),
-          context.read<TipsStore>().loadSentHistory(force: true, limit: 200),
+          context.read<TipsStore>().loadOverview(force: true),
+          context.read<TipsStore>().loadSentHistory(force: true, limit: 100),
         ]);
       },
       child: SingleChildScrollView(
@@ -81,6 +81,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
             _UserHero(
               displayName: displayName,
               avatarUrl: auth.avatarUrl,
+              email: auth.email,
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
@@ -89,7 +90,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                   _StatCard(
                       value: followingCount.toString(), label: 'Following'),
                   const SizedBox(width: 10),
-                  _StatCard(value: tipsSent.toString(), label: 'Tips Sent'),
+                  _StatCard(value: tipsSent, label: 'Tips Sent'),
                 ],
               ),
             ),

@@ -137,6 +137,202 @@ import type {
   AdminBindReferralResponse,
 } from "./api";
 
+export interface EdgeBriefDecision {
+  decisionId: string;
+  edgeScore: number;
+  recommendedAction: "act" | "watch" | "ignore" | string;
+  title: string;
+  projectName: string;
+  urgency: "high" | "medium" | "low" | string;
+  createdAt: string;
+}
+
+export interface EdgeBriefProject {
+  projectId: string;
+  projectName: string;
+  count: number;
+  highUrgencyCount: number;
+  avgEdgeScore: number;
+  lastUpdateAt: string | null;
+}
+
+export interface EdgeBriefResponse {
+  asOf: string;
+  enabled: boolean;
+  windowDays: number;
+  totalSignals: number;
+  highUrgencyCount: number;
+  recommendedNowCount: number;
+  watchCount: number;
+  topProjects: EdgeBriefProject[];
+  topDecisions: EdgeBriefDecision[];
+  headline: string;
+}
+
+export interface EdgeFeedDecision {
+  decisionId: string;
+  edgeScore: number;
+  recommendedAction: "act" | "watch" | "ignore" | string;
+  reasonCodes: string[];
+  explanationPreview: string;
+  components: {
+    urgency: number;
+    recency: number;
+    relevance: number;
+    novelty: number;
+    penalties: number;
+  };
+  update: {
+    id: string;
+    title: string;
+    urgency: "high" | "medium" | "low" | string;
+    createdAt: string;
+    projectId: string;
+    projectName: string;
+    projectSlug: string;
+    secondaryTagIds: string[];
+  };
+}
+
+export interface EdgeFeedResponse {
+  asOf: string;
+  enabled: boolean;
+  limit: number;
+  nextCursor: string | null;
+  items: EdgeFeedDecision[];
+}
+
+export interface EdgeExplainResponse {
+  asOf: string;
+  enabled: boolean;
+  decisionId: string;
+  update?: {
+    id: string;
+    title: string;
+    urgency: "high" | "medium" | "low" | string;
+    createdAt: string;
+    projectId: string;
+    projectName: string;
+    projectSlug: string;
+    secondaryTagIds: string[];
+  };
+  explanation?: {
+    edgeScore: number;
+    recommendedAction: "act" | "watch" | "ignore" | string;
+    reasonCodes: string[];
+    explanationPreview: string;
+    weights: {
+      urgency: number;
+      recency: number;
+      relevance: number;
+      novelty: number;
+    };
+    components: {
+      urgency: number;
+      recency: number;
+      relevance: number;
+      novelty: number;
+      penalties: number;
+    };
+    narrative: string;
+  };
+  message?: string;
+}
+
+export interface EdgeFeedbackResponse {
+  ok: boolean;
+  decisionId: string;
+  action: "act" | "watch" | "ignore" | string;
+  persisted: boolean;
+  feedbackId: string | null;
+  recordedAt: string;
+}
+
+export interface AdminEdgeOverviewResponse {
+  asOf: string;
+  enabled: boolean;
+  windowDays: number;
+  totals: {
+    decisions: number;
+    uniqueUsers: number;
+    uniqueProjects: number;
+    avgEdgeScore: number;
+    recommendedActionCounts: {
+      act: number;
+      watch: number;
+      ignore: number;
+    };
+    highUrgencyDecisions: number;
+  };
+  feedback: {
+    total: number;
+    act: number;
+    watch: number;
+    ignore: number;
+    feedbackRate: number;
+    lastFeedbackAt: string | null;
+  };
+  telemetry: {
+    feedViews: number;
+    briefViews: number;
+    explainViews: number;
+    feedbackEvents: number;
+  };
+  topProjects: Array<{
+    projectId: string;
+    projectName: string;
+    projectSlug: string;
+    decisionCount: number;
+    highUrgencyCount: number;
+    avgEdgeScore: number;
+    lastDecisionAt: string | null;
+  }>;
+  topReasons: {
+    sampledDecisions: number;
+    items: Array<{
+      reasonCode: string;
+      count: number;
+    }>;
+  };
+  topDecisions: Array<{
+    decisionId: string;
+    edgeScore: number;
+    recommendedAction: "act" | "watch" | "ignore" | string;
+    reasonCodes: string[];
+    explanationPreview: string;
+    generatedAt: string;
+    user: {
+      id: string;
+      email: string;
+      displayName: string | null;
+    };
+    project: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+    update: {
+      id: string;
+      title: string;
+      urgency: "high" | "medium" | "low" | string;
+      createdAt: string;
+    };
+    components: {
+      urgency: number;
+      recency: number;
+      relevance: number;
+      novelty: number;
+      penalties: number;
+    };
+  }>;
+}
+
+export interface AdminEdgeConfig {
+  id: string;
+  enabled: boolean;
+  updatedAt: string;
+}
+
 export const clientApi = {
   getMe: () => apiFetch<AdminMe>("/me"),
 
@@ -344,7 +540,48 @@ export const clientApi = {
       body: JSON.stringify(body),
     }),
 
-  listAuditLog: (limit = 100) => apiFetch<AuditLog[]>(`/audit-log${toQuery({ limit })}`),
+  listAuditLog: (limit = 100, offset = 0) =>
+    apiFetch<AuditLog[]>(`/audit-log${toQuery({ limit, offset })}`),
+
+  getMyEdgeFeed: (limit = 30, cursor?: string) =>
+    apiFetch<EdgeFeedResponse>(`/me/edge/feed${toQuery({ limit, cursor })}`),
+
+  getMyEdgeBrief: (windowDays = 7) =>
+    apiFetch<EdgeBriefResponse>(`/me/edge/brief${toQuery({ windowDays })}`),
+
+  getMyEdgeExplain: (decisionId: string) =>
+    apiFetch<EdgeExplainResponse>(`/me/edge/explain/${encodeURIComponent(decisionId)}`),
+
+  getAdminEdgeOverview: (
+    windowDays = 7,
+    decisionsLimit = 20,
+    projectsLimit = 8,
+    reasonLimit = 10,
+  ) =>
+    apiFetch<AdminEdgeOverviewResponse>(
+      `/admin/edge/overview${toQuery({ windowDays, decisionsLimit, projectsLimit, reasonLimit })}`,
+    ),
+
+  getAdminEdgeConfig: () =>
+    apiFetch<AdminEdgeConfig>("/admin/edge/config"),
+
+  updateAdminEdgeConfig: (body: Partial<Pick<AdminEdgeConfig, "enabled">>) =>
+    apiFetch<AdminEdgeConfig>("/admin/edge/config", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  sendMyEdgeFeedback: (
+    body: {
+      decisionId: string;
+      action: "act" | "watch" | "ignore";
+      context?: Record<string, unknown>;
+    },
+  ) =>
+    apiFetch<EdgeFeedbackResponse>("/me/edge/feedback", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
   promoteToAdmin: (userId: string, note?: string) =>
     apiFetch(`/roles/admins/${userId}/promote`, {

@@ -49,10 +49,14 @@ export class AuditLogService {
     return entry;
   }
 
-  async list(limit = 100) {
+  async list(limit = 100, offset = 0) {
+    const safeLimit = Math.min(Math.max(limit, 1), 500);
+    const safeOffset = Math.max(offset, 0);
+
     return this.prisma.auditLog.findMany({
       orderBy: { createdAt: 'desc' },
-      take: Math.min(Math.max(limit, 1), 500),
+      skip: safeOffset,
+      take: safeLimit,
       include: {
         actor: {
           select: { id: true, email: true, displayName: true },

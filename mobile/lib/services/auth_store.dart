@@ -32,6 +32,12 @@ class AuthStore extends ChangeNotifier {
             _clearAuth(notify: true);
           }
         },
+        onError: (Object error, StackTrace stackTrace) {
+          // Supabase can emit transient retryable auth stream errors
+          // (for example flaky TLS/network). Keep app startup/session state
+          // resilient instead of bubbling async stream errors to the app.
+          debugPrint('Auth state stream warning: $error');
+        },
       );
     }
 
@@ -141,34 +147,38 @@ class AuthStore extends ChangeNotifier {
 
   Future<void> bootstrapFromSession() async {
     if (!isSupabaseConfigured) return;
+    try {
+      final bootstrapToken = await getCurrentAccessTokenForBootstrap();
+      if (bootstrapToken == null || bootstrapToken.trim().isEmpty) {
+        _clearAuth(notify: true);
+        return;
+      }
 
-    final bootstrapToken = await getCurrentAccessTokenForBootstrap();
-    if (bootstrapToken == null || bootstrapToken.trim().isEmpty) {
-      _clearAuth(notify: true);
-      return;
-    }
+      final bootstrapSignedIn = await verifyAndSignIn(
+        bootstrapToken,
+        setSubmitting: false,
+      );
+      if (bootstrapSignedIn) {
+        return;
+      }
 
-    final bootstrapSignedIn = await verifyAndSignIn(
-      bootstrapToken,
-      setSubmitting: false,
-    );
-    if (bootstrapSignedIn) {
-      return;
-    }
+      // If startup verification fails due to an expired access token, refresh
+      // once and retry before treating the local session as invalid.
+      final refreshedToken = await refreshAccessTokenSilently();
+      if (refreshedToken == null || refreshedToken.trim().isEmpty) {
+        _clearAuth(notify: true);
+        return;
+      }
 
-    // If startup verification fails due to an expired access token, refresh once
-    // and retry before treating the local session as invalid.
-    final refreshedToken = await refreshAccessTokenSilently();
-    if (refreshedToken == null || refreshedToken.trim().isEmpty) {
-      _clearAuth(notify: true);
-      return;
-    }
-
-    final refreshedSignedIn = await verifyAndSignIn(
-      refreshedToken,
-      setSubmitting: false,
-    );
-    if (!refreshedSignedIn) {
+      final refreshedSignedIn = await verifyAndSignIn(
+        refreshedToken,
+        setSubmitting: false,
+      );
+      if (!refreshedSignedIn) {
+        _clearAuth(notify: true);
+      }
+    } catch (error) {
+      debugPrint('bootstrapFromSession warning: $error');
       _clearAuth(notify: true);
     }
   }

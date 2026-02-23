@@ -1,0 +1,1712 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import {
+  EdgeAction,
+  Prisma,
+  ProjectStatus,
+  UpdateStatus,
+  UpdateUrgency,
+} from '@prisma/client';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { EdgeFeedbackAction, EdgeFeedbackDto } from './dto/edge-feedback.dto';
+import { GetAdminEdgeOverviewQuery } from './dto/get-admin-edge-overview.query';
+import { GetEdgeBriefQuery } from './dto/get-edge-brief.query';
+import { ListEdgeFeedQuery } from './dto/list-edge-feed.query';
+import { UpdateEdgeConfigDto } from './dto/update-edge-config.dto';
+
+const EDGE_DECISION_PREFIX = 'edge:update:';
+const EDGE_CONFIG_ID = 'default';
+
+const EDGE_WEIGHTS = {
+  urgency: 0.35,
+  recency: 0.3,
+  relevance: 0.2,
+  novelty: 0.15,
+} as const;
+
+type FollowPreference = {
+  projectId: string;
+  alertMinUrgency: UpdateUrgency;
+};
+
+type UpdateCandidateRow = {
+  id: string;
+  projectId: string;
+  title: string;
+  urgency: UpdateUrgency;
+  createdAt: Date;
+  project: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  secondaryTags: Array<{
+    secondaryTagId: string;
+  }>;
+};
+
+type EdgeDecision = {
+  decisionId: string;
+  edgeScore: number;
+  recommendedAction: EdgeFeedbackAction;
+  reasonCodes: string[];
+  explanationPreview: string;
+  components: {
+    urgency: number;
+    recency: number;
+    relevance: number;
+    novelty: number;
+    penalties: number;
+  };
+  update: {
+    id: string;
+    title: string;
+    urgency: UpdateUrgency;
+    createdAt: Date;
+    projectId: string;
+    projectName: string;
+    projectSlug: string;
+    secondaryTagIds: string[];
+  };
+};
+
+type PersistedDecisionRow = {
+  id: string;
+  decisionId: string;
+  edgeScore: number;
+  recommendedAction: EdgeAction;
+  reasonCodes: Prisma.JsonValue | null;
+  explanationPreview: string | null;
+  urgencyScore: number;
+  recencyScore: number;
+  relevanceScore: number;
+  noveltyScore: number;
+  penaltyScore: number;
+  update: {
+    id: string;
+    title: string;
+    urgency: UpdateUrgency;
+    createdAt: Date;
+    secondaryTags: Array<{
+      secondaryTagId: string;
+    }>;
+  };
+  project: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+};
+
+type AdminTopDecisionRow = {
+  decisionId: string;
+  edgeScore: number;
+  recommendedAction: EdgeAction;
+  reasonCodes: Prisma.JsonValue | null;
+  explanationPreview: string | null;
+  urgencyScore: number;
+  recencyScore: number;
+  relevanceScore: number;
+  noveltyScore: number;
+  penaltyScore: number;
+  generatedAt: Date;
+  user: {
+    id: string;
+    email: string;
+    displayName: string | null;
+  };
+  project: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  update: {
+    id: string;
+    title: string;
+    urgency: UpdateUrgency;
+    createdAt: Date;
+  };
+};
+
+type EdgeFeedCursor = {
+  createdAt: Date;
+  id: string | null;
+};
+
+type EdgeConfigRow = {
+  id: string;
+  enabled: boolean;
+  updatedAt: Date;
+};
+
+@Injectable()
+export class EdgeEngineService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
+
+  async getFeed(userId: string, query: ListEdgeFeedQuery) {
+    const asOf = new Date();
+    const enabled = await this.getBeeEnabled();
+    const limit = Math.min(Math.max(query.limit ?? 20, 1), 40);
+
+    if (!enabled) {
+      return {
+        asOf,
+        enabled,
+        limit,
+        nextCursor: null as string | null,
+        items: [] as EdgeDecision[],
+      };
+    }
+
+    const context = await this.getUserContext(userId);
+    if (context.follows.length === 0) {
+      return {
+        asOf,
+        enabled,
+        limit,
+        nextCursor: null as string | null,
+        items: [] as EdgeDecision[],
+      };
+    }
+
+    const followMap = new Map<string, FollowPreference>(
+      context.follows.map((follow) => [follow.projectId, follow]),
+    );
+
+    const cursor = query.cursor ? parseEdgeFeedCursor(query.cursor) : null;
+    if (query.cursor && !cursor) {
+      throw new BadRequestException('Invalid edge feed cursor');
+    }
+    const take = limit;
+
+    const updates = await this.prisma.update.findMany({
+      where: {
+        projectId: {
+          in: context.follows.map((follow) => follow.projectId),
+        },
+        status: {
+          not: UpdateStatus.hidden,
+        },
+        project: {
+          status: {
+            not: ProjectStatus.hidden,
+          },
+        },
+        ...(cursor
+          ? cursor.id
+            ? {
+                OR: [
+                  {
+                    createdAt: {
+                      lt: cursor.createdAt,
+                    },
+                  },
+                  {
+                    createdAt: cursor.createdAt,
+                    id: {
+                      lt: cursor.id,
+                    },
+                  },
+                ],
+              }
+            : {
+                createdAt: {
+                  lt: cursor.createdAt,
+                },
+              }
+          : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take,
+      select: {
+        id: true,
+        projectId: true,
+        title: true,
+        urgency: true,
+        createdAt: true,
+        secondaryTags: {
+          select: {
+            secondaryTagId: true,
+          },
+        },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    });
+
+    const decisions = updates
+      .map((update) =>
+        this.buildDecision(update, followMap.get(update.projectId), asOf),
+      )
+      .sort((a, b) => {
+        const byScore = b.edgeScore - a.edgeScore;
+        if (byScore !== 0) return byScore;
+        return b.update.createdAt.getTime() - a.update.createdAt.getTime();
+      });
+
+    const items = decisions.slice(0, limit);
+    const nextCursor =
+      updates.length === limit
+        ? toEdgeFeedCursor(
+            updates[updates.length - 1].createdAt,
+            updates[updates.length - 1].id,
+          )
+        : null;
+
+    await this.persistDecisions(userId, items);
+
+    await this.auditLogService.create({
+      actorId: userId,
+      action: 'edge.feed.view',
+      resourceType: 'edge_feed',
+      metadata: {
+        limit,
+        cursor: query.cursor ?? null,
+        returned: items.length,
+      },
+    });
+
+    return {
+      asOf,
+      enabled,
+      limit,
+      nextCursor,
+      items,
+    };
+  }
+
+  async getBrief(userId: string, query: GetEdgeBriefQuery) {
+    const asOf = new Date();
+    const enabled = await this.getBeeEnabled();
+    const windowDays = Math.min(Math.max(query.windowDays ?? 7, 1), 30);
+
+    if (!enabled) {
+      return {
+        asOf,
+        enabled,
+        windowDays,
+        totalSignals: 0,
+        highUrgencyCount: 0,
+        recommendedNowCount: 0,
+        watchCount: 0,
+        topProjects: [] as Array<{
+          projectId: string;
+          projectName: string;
+          count: number;
+          highUrgencyCount: number;
+          avgEdgeScore: number;
+          lastUpdateAt: Date | null;
+        }>,
+        topDecisions: [] as Array<{
+          decisionId: string;
+          edgeScore: number;
+          recommendedAction: EdgeFeedbackAction;
+          title: string;
+          projectName: string;
+          urgency: UpdateUrgency;
+          createdAt: Date;
+        }>,
+        headline: 'BEE is currently disabled.',
+      };
+    }
+
+    const context = await this.getUserContext(userId);
+    if (context.follows.length === 0) {
+      return {
+        asOf,
+        enabled,
+        windowDays,
+        totalSignals: 0,
+        highUrgencyCount: 0,
+        recommendedNowCount: 0,
+        watchCount: 0,
+        topProjects: [],
+        topDecisions: [],
+        headline: 'Follow projects to receive an Edge brief.',
+      };
+    }
+
+    const followMap = new Map<string, FollowPreference>(
+      context.follows.map((follow) => [follow.projectId, follow]),
+    );
+    const since = new Date(
+      asOf.getTime() - windowDays * 24 * 60 * 60 * 1000,
+    );
+
+    const updates = await this.prisma.update.findMany({
+      where: {
+        projectId: {
+          in: context.follows.map((follow) => follow.projectId),
+        },
+        status: {
+          not: UpdateStatus.hidden,
+        },
+        project: {
+          status: {
+            not: ProjectStatus.hidden,
+          },
+        },
+        createdAt: {
+          gte: since,
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 250,
+      select: {
+        id: true,
+        projectId: true,
+        title: true,
+        urgency: true,
+        createdAt: true,
+        secondaryTags: {
+          select: {
+            secondaryTagId: true,
+          },
+        },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    });
+
+    const decisions = updates
+      .map((update) =>
+        this.buildDecision(update, followMap.get(update.projectId), asOf),
+      )
+      .sort((a, b) => b.edgeScore - a.edgeScore);
+
+    await this.persistDecisions(userId, decisions);
+
+    const highUrgencyCount = updates.filter(
+      (update) => update.urgency === UpdateUrgency.high,
+    ).length;
+    const recommendedNowCount = decisions.filter(
+      (decision) => decision.recommendedAction === EdgeFeedbackAction.act,
+    ).length;
+    const watchCount = decisions.filter(
+      (decision) => decision.recommendedAction === EdgeFeedbackAction.watch,
+    ).length;
+
+    const projectMap = new Map<
+      string,
+      {
+        projectId: string;
+        projectName: string;
+        count: number;
+        highUrgencyCount: number;
+        scoreTotal: number;
+        lastUpdateAt: Date | null;
+      }
+    >();
+    for (const decision of decisions) {
+      const existing = projectMap.get(decision.update.projectId);
+      if (!existing) {
+        projectMap.set(decision.update.projectId, {
+          projectId: decision.update.projectId,
+          projectName: decision.update.projectName,
+          count: 1,
+          highUrgencyCount:
+            decision.update.urgency === UpdateUrgency.high ? 1 : 0,
+          scoreTotal: decision.edgeScore,
+          lastUpdateAt: decision.update.createdAt,
+        });
+        continue;
+      }
+
+      existing.count += 1;
+      existing.scoreTotal += decision.edgeScore;
+      if (decision.update.urgency === UpdateUrgency.high) {
+        existing.highUrgencyCount += 1;
+      }
+      if (
+        !existing.lastUpdateAt ||
+        decision.update.createdAt.getTime() > existing.lastUpdateAt.getTime()
+      ) {
+        existing.lastUpdateAt = decision.update.createdAt;
+      }
+    }
+
+    const topProjects = Array.from(projectMap.values())
+      .map((row) => ({
+        projectId: row.projectId,
+        projectName: row.projectName,
+        count: row.count,
+        highUrgencyCount: row.highUrgencyCount,
+        avgEdgeScore: roundScore(row.scoreTotal / row.count),
+        lastUpdateAt: row.lastUpdateAt,
+      }))
+      .sort((a, b) => {
+        const byCount = b.count - a.count;
+        if (byCount !== 0) return byCount;
+        const byHigh = b.highUrgencyCount - a.highUrgencyCount;
+        if (byHigh !== 0) return byHigh;
+        return (
+          (b.lastUpdateAt?.getTime() ?? 0) - (a.lastUpdateAt?.getTime() ?? 0)
+        );
+      })
+      .slice(0, 6);
+
+    const topDecisions = decisions.slice(0, 5).map((decision) => ({
+      decisionId: decision.decisionId,
+      edgeScore: decision.edgeScore,
+      recommendedAction: decision.recommendedAction,
+      title: decision.update.title,
+      projectName: decision.update.projectName,
+      urgency: decision.update.urgency,
+      createdAt: decision.update.createdAt,
+    }));
+
+    await this.auditLogService.create({
+      actorId: userId,
+      action: 'edge.brief.view',
+      resourceType: 'edge_brief',
+      metadata: {
+        windowDays,
+        totalSignals: decisions.length,
+      },
+    });
+
+    return {
+      asOf,
+      enabled,
+      windowDays,
+      totalSignals: decisions.length,
+      highUrgencyCount,
+      recommendedNowCount,
+      watchCount,
+      topProjects,
+      topDecisions,
+      headline: this.buildBriefHeadline(
+        windowDays,
+        recommendedNowCount,
+        watchCount,
+      ),
+    };
+  }
+
+  async explain(userId: string, decisionId: string) {
+    const asOf = new Date();
+    const enabled = await this.getBeeEnabled();
+    if (!enabled) {
+      return {
+        asOf,
+        enabled,
+        decisionId,
+        message: 'BEE is currently disabled.',
+      };
+    }
+
+    const persistedDecision = await this.findPersistedDecision(userId, decisionId);
+    const decision = persistedDecision
+      ? this.toDecisionFromPersisted(persistedDecision)
+      : await this.resolveAndPersistDecision(userId, decisionId, asOf);
+
+    await this.auditLogService.create({
+      actorId: userId,
+      action: 'edge.explain.view',
+      resourceType: 'edge_decision',
+      resourceId: decision.decisionId,
+      metadata: {
+        score: decision.edgeScore,
+      },
+    });
+
+    return {
+      asOf,
+      enabled,
+      decisionId: decision.decisionId,
+      update: decision.update,
+      explanation: {
+        edgeScore: decision.edgeScore,
+        recommendedAction: decision.recommendedAction,
+        reasonCodes: decision.reasonCodes,
+        explanationPreview: decision.explanationPreview,
+        weights: EDGE_WEIGHTS,
+        components: decision.components,
+        narrative: this.buildNarrative(decision),
+      },
+    };
+  }
+
+  async feedback(userId: string, dto: EdgeFeedbackDto) {
+    const decisionId = dto.decisionId.trim();
+    const enabled = await this.getBeeEnabled();
+    if (!enabled) {
+      return {
+        ok: false,
+        decisionId,
+        action: dto.action,
+        persisted: false,
+        feedbackId: null as string | null,
+        recordedAt: new Date(),
+      };
+    }
+
+    const persisted = await this.ensureDecisionRecordForFeedback(
+      userId,
+      decisionId,
+    );
+    const feedback = await this.persistFeedback(userId, persisted?.id ?? null, dto);
+
+    await this.auditLogService.create({
+      actorId: userId,
+      action: `edge.feedback.${dto.action}`,
+      resourceType: 'edge_decision',
+      resourceId: decisionId,
+      metadata: {
+        context: dto.context ?? {},
+      },
+    });
+
+    return {
+      ok: true,
+      decisionId,
+      action: dto.action,
+      persisted: Boolean(persisted),
+      feedbackId: feedback?.id ?? null,
+      recordedAt: new Date(),
+    };
+  }
+
+  async getAdminConfig(actorId: string) {
+    const config = await this.getOrCreateConfig();
+
+    await this.auditLogService.create({
+      actorId,
+      action: 'edge.admin.config.view',
+      resourceType: 'edge_config',
+      resourceId: config.id,
+      metadata: {
+        enabled: config.enabled,
+      },
+    });
+
+    return config;
+  }
+
+  async updateAdminConfig(actorId: string, patch: UpdateEdgeConfigDto) {
+    const edgeConfigModel = this.getEdgeConfigModel();
+    if (!edgeConfigModel?.upsert) {
+      throw new BadRequestException('Edge config persistence is unavailable');
+    }
+
+    const defaultEnabled = this.configService.get<boolean>('ENABLE_BEE', true);
+    const row = (await edgeConfigModel.upsert({
+      where: { id: EDGE_CONFIG_ID },
+      update: {
+        ...(patch.enabled === undefined ? {} : { enabled: patch.enabled }),
+      },
+      create: {
+        id: EDGE_CONFIG_ID,
+        enabled: patch.enabled ?? defaultEnabled,
+      },
+      select: {
+        id: true,
+        enabled: true,
+        updatedAt: true,
+      },
+    })) as EdgeConfigRow;
+
+    await this.auditLogService.create({
+      actorId,
+      action: 'edge.admin.config.update',
+      resourceType: 'edge_config',
+      resourceId: row.id,
+      metadata: {
+        enabled: row.enabled,
+      },
+    });
+
+    return row;
+  }
+
+  async getAdminOverview(actorId: string, query: GetAdminEdgeOverviewQuery) {
+    const asOf = new Date();
+    const enabled = await this.getBeeEnabled();
+    const windowDays = Math.min(Math.max(query.windowDays ?? 7, 1), 30);
+    const decisionsLimit = Math.min(Math.max(query.decisionsLimit ?? 20, 5), 100);
+    const projectsLimit = Math.min(Math.max(query.projectsLimit ?? 8, 3), 20);
+    const reasonLimit = Math.min(Math.max(query.reasonLimit ?? 10, 3), 30);
+    const since = new Date(
+      asOf.getTime() - windowDays * 24 * 60 * 60 * 1000,
+    );
+
+    if (!enabled) {
+      return {
+        asOf,
+        enabled,
+        windowDays,
+        totals: {
+          decisions: 0,
+          uniqueUsers: 0,
+          uniqueProjects: 0,
+          avgEdgeScore: 0,
+          recommendedActionCounts: {
+            act: 0,
+            watch: 0,
+            ignore: 0,
+          },
+          highUrgencyDecisions: 0,
+        },
+        feedback: {
+          total: 0,
+          act: 0,
+          watch: 0,
+          ignore: 0,
+          feedbackRate: 0,
+          lastFeedbackAt: null as Date | null,
+        },
+        telemetry: {
+          feedViews: 0,
+          briefViews: 0,
+          explainViews: 0,
+          feedbackEvents: 0,
+        },
+        topProjects: [] as Array<{
+          projectId: string;
+          projectName: string;
+          projectSlug: string;
+          decisionCount: number;
+          highUrgencyCount: number;
+          avgEdgeScore: number;
+          lastDecisionAt: Date | null;
+        }>,
+        topReasons: {
+          sampledDecisions: 0,
+          items: [] as Array<{
+            reasonCode: string;
+            count: number;
+          }>,
+        },
+        topDecisions: [] as Array<{
+          decisionId: string;
+          edgeScore: number;
+          recommendedAction: EdgeFeedbackAction;
+          reasonCodes: string[];
+          explanationPreview: string;
+          generatedAt: Date;
+          user: {
+            id: string;
+            email: string;
+            displayName: string | null;
+          };
+          project: {
+            id: string;
+            name: string;
+            slug: string;
+          };
+          update: {
+            id: string;
+            title: string;
+            urgency: UpdateUrgency;
+            createdAt: Date;
+          };
+          components: {
+            urgency: number;
+            recency: number;
+            relevance: number;
+            novelty: number;
+            penalties: number;
+          };
+        }>,
+      };
+    }
+
+    const [
+      decisionsCount,
+      decisionsAvg,
+      uniqueUsersRows,
+      uniqueProjectsRows,
+      recommendedActCount,
+      recommendedWatchCount,
+      recommendedIgnoreCount,
+      highUrgencyDecisions,
+      topProjectGroups,
+      topDecisionRows,
+      reasonSampleRows,
+      feedbackCount,
+      feedbackActCount,
+      feedbackWatchCount,
+      feedbackIgnoreCount,
+      lastFeedback,
+      feedViews,
+      briefViews,
+      explainViews,
+      feedbackEvents,
+    ] = await Promise.all([
+      this.prisma.edgeDecision.count({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+        },
+      }),
+      this.prisma.edgeDecision.aggregate({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+        },
+        _avg: {
+          edgeScore: true,
+        },
+      }),
+      this.prisma.edgeDecision.findMany({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+        },
+        distinct: ['userId'],
+        select: {
+          userId: true,
+        },
+      }),
+      this.prisma.edgeDecision.findMany({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+        },
+        distinct: ['projectId'],
+        select: {
+          projectId: true,
+        },
+      }),
+      this.prisma.edgeDecision.count({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+          recommendedAction: EdgeAction.act,
+        },
+      }),
+      this.prisma.edgeDecision.count({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+          recommendedAction: EdgeAction.watch,
+        },
+      }),
+      this.prisma.edgeDecision.count({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+          recommendedAction: EdgeAction.ignore,
+        },
+      }),
+      this.prisma.edgeDecision.count({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+          update: {
+            urgency: UpdateUrgency.high,
+          },
+        },
+      }),
+      this.prisma.edgeDecision.groupBy({
+        by: ['projectId'],
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+        },
+        _count: {
+          projectId: true,
+        },
+        _avg: {
+          edgeScore: true,
+        },
+        _max: {
+          generatedAt: true,
+        },
+        orderBy: {
+          _count: {
+            projectId: 'desc',
+          },
+        },
+        take: projectsLimit,
+      }),
+      this.prisma.edgeDecision.findMany({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+        },
+        orderBy: [{ edgeScore: 'desc' }, { generatedAt: 'desc' }],
+        take: decisionsLimit,
+        select: {
+          decisionId: true,
+          edgeScore: true,
+          recommendedAction: true,
+          reasonCodes: true,
+          explanationPreview: true,
+          urgencyScore: true,
+          recencyScore: true,
+          relevanceScore: true,
+          noveltyScore: true,
+          penaltyScore: true,
+          generatedAt: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+              displayName: true,
+            },
+          },
+          project: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          update: {
+            select: {
+              id: true,
+              title: true,
+              urgency: true,
+              createdAt: true,
+            },
+          },
+        },
+      }),
+      this.prisma.edgeDecision.findMany({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+        },
+        orderBy: [{ generatedAt: 'desc' }],
+        take: 5000,
+        select: {
+          reasonCodes: true,
+        },
+      }),
+      this.prisma.edgeFeedback.count({
+        where: {
+          createdAt: {
+            gte: since,
+          },
+        },
+      }),
+      this.prisma.edgeFeedback.count({
+        where: {
+          createdAt: {
+            gte: since,
+          },
+          action: EdgeAction.act,
+        },
+      }),
+      this.prisma.edgeFeedback.count({
+        where: {
+          createdAt: {
+            gte: since,
+          },
+          action: EdgeAction.watch,
+        },
+      }),
+      this.prisma.edgeFeedback.count({
+        where: {
+          createdAt: {
+            gte: since,
+          },
+          action: EdgeAction.ignore,
+        },
+      }),
+      this.prisma.edgeFeedback.findFirst({
+        where: {
+          createdAt: {
+            gte: since,
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: {
+          createdAt: true,
+        },
+      }),
+      this.prisma.auditLog.count({
+        where: {
+          action: 'edge.feed.view',
+          createdAt: {
+            gte: since,
+          },
+        },
+      }),
+      this.prisma.auditLog.count({
+        where: {
+          action: 'edge.brief.view',
+          createdAt: {
+            gte: since,
+          },
+        },
+      }),
+      this.prisma.auditLog.count({
+        where: {
+          action: 'edge.explain.view',
+          createdAt: {
+            gte: since,
+          },
+        },
+      }),
+      this.prisma.auditLog.count({
+        where: {
+          action: {
+            startsWith: 'edge.feedback.',
+          },
+          createdAt: {
+            gte: since,
+          },
+        },
+      }),
+    ]);
+
+    const projectIds = topProjectGroups.map((row) => row.projectId);
+    const [projects, topProjectUrgencyRows] = projectIds.length
+      ? await Promise.all([
+          this.prisma.project.findMany({
+            where: {
+              id: {
+                in: projectIds,
+              },
+            },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          }),
+          this.prisma.edgeDecision.findMany({
+            where: {
+              generatedAt: {
+                gte: since,
+              },
+              projectId: {
+                in: projectIds,
+              },
+            },
+            select: {
+              projectId: true,
+              update: {
+                select: {
+                  urgency: true,
+                },
+              },
+            },
+          }),
+        ])
+      : [[], []];
+
+    const projectMap = new Map(
+      projects.map((project) => [project.id, project]),
+    );
+    const highUrgencyByProject = new Map<string, number>();
+    for (const row of topProjectUrgencyRows) {
+      if (row.update.urgency !== UpdateUrgency.high) continue;
+      highUrgencyByProject.set(
+        row.projectId,
+        (highUrgencyByProject.get(row.projectId) ?? 0) + 1,
+      );
+    }
+
+    const reasonCounts = new Map<string, number>();
+    for (const row of reasonSampleRows) {
+      for (const reason of normalizeReasonCodes(row.reasonCodes)) {
+        reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1);
+      }
+    }
+
+    const topReasons = Array.from(reasonCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, reasonLimit)
+      .map(([reasonCode, count]) => ({
+        reasonCode,
+        count,
+      }));
+
+    await this.auditLogService.create({
+      actorId,
+      action: 'edge.admin.overview.view',
+      resourceType: 'edge_admin_overview',
+      metadata: {
+        windowDays,
+        decisionsCount,
+      },
+    });
+
+    return {
+      asOf,
+      enabled,
+      windowDays,
+      totals: {
+        decisions: decisionsCount,
+        uniqueUsers: uniqueUsersRows.length,
+        uniqueProjects: uniqueProjectsRows.length,
+        avgEdgeScore: roundScore(decisionsAvg._avg.edgeScore ?? 0),
+        recommendedActionCounts: {
+          act: recommendedActCount,
+          watch: recommendedWatchCount,
+          ignore: recommendedIgnoreCount,
+        },
+        highUrgencyDecisions,
+      },
+      feedback: {
+        total: feedbackCount,
+        act: feedbackActCount,
+        watch: feedbackWatchCount,
+        ignore: feedbackIgnoreCount,
+        feedbackRate:
+          decisionsCount > 0 ? roundScore(feedbackCount / decisionsCount) : 0,
+        lastFeedbackAt: lastFeedback?.createdAt ?? null,
+      },
+      telemetry: {
+        feedViews,
+        briefViews,
+        explainViews,
+        feedbackEvents,
+      },
+      topProjects: topProjectGroups.map((row) => {
+        const project = projectMap.get(row.projectId);
+        return {
+          projectId: row.projectId,
+          projectName: project?.name ?? 'Unknown Project',
+          projectSlug: project?.slug ?? '',
+          decisionCount: row._count?.projectId ?? 0,
+          highUrgencyCount: highUrgencyByProject.get(row.projectId) ?? 0,
+          avgEdgeScore: roundScore(row._avg?.edgeScore ?? 0),
+          lastDecisionAt: row._max?.generatedAt ?? null,
+        };
+      }),
+      topReasons: {
+        sampledDecisions: reasonSampleRows.length,
+        items: topReasons,
+      },
+      topDecisions: (topDecisionRows as AdminTopDecisionRow[]).map((row) => ({
+        decisionId: row.decisionId,
+        edgeScore: roundScore(row.edgeScore),
+        recommendedAction: toFeedbackAction(row.recommendedAction),
+        reasonCodes: normalizeReasonCodes(row.reasonCodes),
+        explanationPreview: row.explanationPreview ?? '',
+        generatedAt: row.generatedAt,
+        user: row.user,
+        project: row.project,
+        update: row.update,
+        components: {
+          urgency: roundScore(row.urgencyScore),
+          recency: roundScore(row.recencyScore),
+          relevance: roundScore(row.relevanceScore),
+          novelty: roundScore(row.noveltyScore),
+          penalties: roundScore(row.penaltyScore),
+        },
+      })),
+    };
+  }
+
+  private getEdgeConfigModel() {
+    return (this.prisma as unknown as {
+      edgeConfig?: {
+        upsert?: (input: unknown) => Promise<unknown>;
+      };
+    }).edgeConfig;
+  }
+
+  private async getOrCreateConfig(): Promise<EdgeConfigRow> {
+    const defaultEnabled = this.configService.get<boolean>('ENABLE_BEE', true);
+    const edgeConfigModel = this.getEdgeConfigModel();
+
+    if (!edgeConfigModel?.upsert) {
+      return {
+        id: EDGE_CONFIG_ID,
+        enabled: defaultEnabled,
+        updatedAt: new Date(),
+      };
+    }
+
+    const row = (await edgeConfigModel.upsert({
+      where: { id: EDGE_CONFIG_ID },
+      update: {},
+      create: {
+        id: EDGE_CONFIG_ID,
+        enabled: defaultEnabled,
+      },
+      select: {
+        id: true,
+        enabled: true,
+        updatedAt: true,
+      },
+    })) as EdgeConfigRow;
+
+    return row;
+  }
+
+  private async getBeeEnabled() {
+    const config = await this.getOrCreateConfig();
+    return config.enabled;
+  }
+
+  private async getUserContext(userId: string) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        follows: {
+          select: {
+            projectId: true,
+            alertMinUrgency: true,
+          },
+        },
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    return profile;
+  }
+
+  private buildDecision(
+    update: UpdateCandidateRow,
+    followPreference: FollowPreference | undefined,
+    asOf: Date,
+  ): EdgeDecision {
+    const urgency = urgencyScore(update.urgency);
+    const recency = recencyScore(update.createdAt, asOf);
+    const relevance = relevanceScore(update.urgency, followPreference);
+    const novelty = noveltyScore(update.createdAt, asOf);
+    const penalties = penaltyScore(update.urgency, followPreference);
+
+    const edgeScore = roundScore(
+      clamp01(
+        EDGE_WEIGHTS.urgency * urgency +
+          EDGE_WEIGHTS.recency * recency +
+          EDGE_WEIGHTS.relevance * relevance +
+          EDGE_WEIGHTS.novelty * novelty -
+          penalties,
+      ),
+    );
+    const recommendedAction = toRecommendedAction(
+      edgeScore,
+      update.urgency,
+      recency,
+    );
+    const reasonCodes = toReasonCodes(
+      update.urgency,
+      recency,
+      followPreference,
+      edgeScore,
+      update.secondaryTags.length > 0,
+    );
+
+    return {
+      decisionId: `${EDGE_DECISION_PREFIX}${update.id}`,
+      edgeScore,
+      recommendedAction,
+      reasonCodes,
+      explanationPreview: toExplanationPreview(recommendedAction),
+      components: {
+        urgency,
+        recency,
+        relevance,
+        novelty,
+        penalties: roundScore(penalties),
+      },
+      update: {
+        id: update.id,
+        title: update.title,
+        urgency: update.urgency,
+        createdAt: update.createdAt,
+        projectId: update.projectId,
+        projectName: update.project.name,
+        projectSlug: update.project.slug,
+        secondaryTagIds: update.secondaryTags.map((tag) => tag.secondaryTagId),
+      },
+    };
+  }
+
+  private buildBriefHeadline(
+    windowDays: number,
+    recommendedNowCount: number,
+    watchCount: number,
+  ) {
+    if (recommendedNowCount > 0) {
+      return `${recommendedNowCount} signal(s) need action in the next ${windowDays} day(s).`;
+    }
+    if (watchCount > 0) {
+      return `${watchCount} signal(s) are worth watching in the next ${windowDays} day(s).`;
+    }
+
+    return 'No critical signals detected for this period.';
+  }
+
+  private buildNarrative(decision: EdgeDecision) {
+    return `This decision is ranked at ${decision.edgeScore} because urgency is ${decision.update.urgency}, recency is ${decision.components.recency}, and relevance to your followed project is ${decision.components.relevance}.`;
+  }
+
+  private async persistDecisions(userId: string, decisions: EdgeDecision[]) {
+    if (decisions.length === 0) return;
+
+    const edgeDecisionModel = (this.prisma as unknown as {
+      edgeDecision?: {
+        upsert?: (input: unknown) => Promise<unknown>;
+      };
+    }).edgeDecision;
+    if (!edgeDecisionModel?.upsert) {
+      return;
+    }
+
+    const generatedAt = new Date();
+    await Promise.all(
+      decisions.map((decision) =>
+        edgeDecisionModel.upsert?.({
+          where: {
+            userId_decisionId: {
+              userId,
+              decisionId: decision.decisionId,
+            },
+          },
+          update: {
+            updateId: decision.update.id,
+            projectId: decision.update.projectId,
+            edgeScore: decision.edgeScore,
+            recommendedAction: toPrismaEdgeAction(decision.recommendedAction),
+            reasonCodes: decision.reasonCodes as Prisma.InputJsonValue,
+            explanationPreview: decision.explanationPreview,
+            urgencyScore: decision.components.urgency,
+            recencyScore: decision.components.recency,
+            relevanceScore: decision.components.relevance,
+            noveltyScore: decision.components.novelty,
+            penaltyScore: decision.components.penalties,
+            generatedAt,
+          },
+          create: {
+            userId,
+            decisionId: decision.decisionId,
+            updateId: decision.update.id,
+            projectId: decision.update.projectId,
+            edgeScore: decision.edgeScore,
+            recommendedAction: toPrismaEdgeAction(decision.recommendedAction),
+            reasonCodes: decision.reasonCodes as Prisma.InputJsonValue,
+            explanationPreview: decision.explanationPreview,
+            urgencyScore: decision.components.urgency,
+            recencyScore: decision.components.recency,
+            relevanceScore: decision.components.relevance,
+            noveltyScore: decision.components.novelty,
+            penaltyScore: decision.components.penalties,
+            generatedAt,
+          },
+        }),
+      ),
+    );
+  }
+
+  private async findPersistedDecision(userId: string, decisionId: string) {
+    const edgeDecisionModel = (this.prisma as unknown as {
+      edgeDecision?: {
+        findUnique?: (input: unknown) => Promise<unknown>;
+      };
+    }).edgeDecision;
+    if (!edgeDecisionModel?.findUnique) {
+      return null;
+    }
+
+    const row = (await edgeDecisionModel.findUnique?.({
+      where: {
+        userId_decisionId: {
+          userId,
+          decisionId,
+        },
+      },
+      include: {
+        update: {
+          select: {
+            id: true,
+            title: true,
+            urgency: true,
+            createdAt: true,
+            secondaryTags: {
+              select: {
+                secondaryTagId: true,
+              },
+            },
+          },
+        },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    })) as PersistedDecisionRow | null;
+
+    return row;
+  }
+
+  private toDecisionFromPersisted(row: PersistedDecisionRow): EdgeDecision {
+    return {
+      decisionId: row.decisionId,
+      edgeScore: roundScore(row.edgeScore),
+      recommendedAction: toFeedbackAction(row.recommendedAction),
+      reasonCodes: normalizeReasonCodes(row.reasonCodes),
+      explanationPreview: row.explanationPreview ?? '',
+      components: {
+        urgency: roundScore(row.urgencyScore),
+        recency: roundScore(row.recencyScore),
+        relevance: roundScore(row.relevanceScore),
+        novelty: roundScore(row.noveltyScore),
+        penalties: roundScore(row.penaltyScore),
+      },
+      update: {
+        id: row.update.id,
+        title: row.update.title,
+        urgency: row.update.urgency,
+        createdAt: row.update.createdAt,
+        projectId: row.project.id,
+        projectName: row.project.name,
+        projectSlug: row.project.slug,
+        secondaryTagIds: row.update.secondaryTags.map(
+          (tag) => tag.secondaryTagId,
+        ),
+      },
+    };
+  }
+
+  private async resolveAndPersistDecision(
+    userId: string,
+    decisionId: string,
+    asOf: Date,
+  ) {
+    const updateId = parseDecisionId(decisionId);
+    if (!updateId) {
+      throw new NotFoundException('Edge decision not found');
+    }
+
+    const update = await this.prisma.update.findFirst({
+      where: {
+        id: updateId,
+        status: {
+          not: UpdateStatus.hidden,
+        },
+        project: {
+          status: {
+            not: ProjectStatus.hidden,
+          },
+        },
+      },
+      select: {
+        id: true,
+        projectId: true,
+        title: true,
+        urgency: true,
+        createdAt: true,
+        secondaryTags: {
+          select: {
+            secondaryTagId: true,
+          },
+        },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    });
+
+    if (!update) {
+      throw new NotFoundException('Edge decision not found');
+    }
+
+    const projectFollowModel = (this.prisma as unknown as {
+      projectFollow?: {
+        findUnique?: (input: unknown) => Promise<unknown>;
+      };
+    }).projectFollow;
+    const followPreference = projectFollowModel?.findUnique
+      ? ((await projectFollowModel.findUnique({
+          where: {
+            projectId_userId: {
+              projectId: update.projectId,
+              userId,
+            },
+          },
+          select: {
+            projectId: true,
+            alertMinUrgency: true,
+          },
+        })) as FollowPreference | null)
+      : null;
+
+    const decision = this.buildDecision(update, followPreference ?? undefined, asOf);
+    await this.persistDecisions(userId, [decision]);
+    return decision;
+  }
+
+  private async ensureDecisionRecordForFeedback(
+    userId: string,
+    decisionId: string,
+  ) {
+    const edgeDecisionModel = (this.prisma as unknown as {
+      edgeDecision?: {
+        findUnique?: (input: unknown) => Promise<unknown>;
+        upsert?: (input: unknown) => Promise<unknown>;
+      };
+    }).edgeDecision;
+    if (!edgeDecisionModel?.findUnique || !edgeDecisionModel?.upsert) {
+      return null;
+    }
+
+    const existing = await this.findPersistedDecision(userId, decisionId);
+    if (existing) {
+      return existing;
+    }
+
+    await this.resolveAndPersistDecision(userId, decisionId, new Date());
+    return this.findPersistedDecision(userId, decisionId);
+  }
+
+  private async persistFeedback(
+    userId: string,
+    decisionRecordId: string | null,
+    dto: EdgeFeedbackDto,
+  ) {
+    if (!decisionRecordId) return null;
+
+    const edgeFeedbackModel = (this.prisma as unknown as {
+      edgeFeedback?: {
+        create?: (input: unknown) => Promise<unknown>;
+      };
+    }).edgeFeedback;
+    if (!edgeFeedbackModel?.create) {
+      return null;
+    }
+
+    const created = (await edgeFeedbackModel.create?.({
+      data: {
+        userId,
+        decisionRecordId,
+        decisionId: dto.decisionId.trim(),
+        action: toPrismaEdgeAction(dto.action),
+        context: (dto.context ?? {}) as Prisma.InputJsonValue,
+      },
+      select: {
+        id: true,
+      },
+    })) as { id: string } | null;
+
+    return created;
+  }
+}
+
+const parseEdgeFeedCursor = (cursorRaw: string): EdgeFeedCursor | null => {
+  const normalized = cursorRaw.trim();
+  if (!normalized) return null;
+
+  const [createdAtRaw, idRaw] = normalized.split('|', 2);
+  const createdAt = new Date(createdAtRaw);
+  if (Number.isNaN(createdAt.getTime())) {
+    return null;
+  }
+
+  const id = idRaw?.trim();
+  return {
+    createdAt,
+    id: id && id.length > 0 ? id : null,
+  };
+};
+
+const toEdgeFeedCursor = (createdAt: Date, updateId: string): string => {
+  return `${createdAt.toISOString()}|${updateId}`;
+};
+
+const parseDecisionId = (decisionId: string): string | null => {
+  const normalized = decisionId.trim();
+  if (!normalized.startsWith(EDGE_DECISION_PREFIX)) {
+    return null;
+  }
+
+  const updateId = normalized.slice(EDGE_DECISION_PREFIX.length).trim();
+  if (!updateId) return null;
+  return updateId;
+};
+
+const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+
+const roundScore = (value: number) => Number(value.toFixed(4));
+
+const urgencyScore = (urgency: UpdateUrgency) => {
+  switch (urgency) {
+    case UpdateUrgency.high:
+      return 1;
+    case UpdateUrgency.medium:
+      return 0.65;
+    case UpdateUrgency.low:
+    default:
+      return 0.35;
+  }
+};
+
+const urgencyRank = (urgency: UpdateUrgency) => {
+  switch (urgency) {
+    case UpdateUrgency.high:
+      return 3;
+    case UpdateUrgency.medium:
+      return 2;
+    case UpdateUrgency.low:
+    default:
+      return 1;
+  }
+};
+
+const recencyScore = (createdAt: Date, asOf: Date) => {
+  const hours = Math.max(0, (asOf.getTime() - createdAt.getTime()) / 3_600_000);
+  return roundScore(clamp01(Math.exp(-hours / 72)));
+};
+
+const noveltyScore = (createdAt: Date, asOf: Date) => {
+  const hours = Math.max(0, (asOf.getTime() - createdAt.getTime()) / 3_600_000);
+  if (hours <= 24) return 1;
+  if (hours <= 72) return 0.75;
+  if (hours <= 168) return 0.55;
+  return 0.35;
+};
+
+const relevanceScore = (
+  urgency: UpdateUrgency,
+  followPreference: FollowPreference | undefined,
+) => {
+  if (!followPreference) {
+    return 0.7;
+  }
+
+  const meetsMinUrgency =
+    urgencyRank(urgency) >= urgencyRank(followPreference.alertMinUrgency);
+  return meetsMinUrgency ? 1 : 0.65;
+};
+
+const penaltyScore = (
+  urgency: UpdateUrgency,
+  followPreference: FollowPreference | undefined,
+) => {
+  if (!followPreference) return 0;
+  const meetsMinUrgency =
+    urgencyRank(urgency) >= urgencyRank(followPreference.alertMinUrgency);
+  return meetsMinUrgency ? 0 : 0.12;
+};
+
+const toRecommendedAction = (
+  edgeScore: number,
+  urgency: UpdateUrgency,
+  recency: number,
+): EdgeFeedbackAction => {
+  if (edgeScore >= 0.72 || (urgency === UpdateUrgency.high && recency >= 0.55)) {
+    return EdgeFeedbackAction.act;
+  }
+  if (edgeScore >= 0.46) {
+    return EdgeFeedbackAction.watch;
+  }
+  return EdgeFeedbackAction.ignore;
+};
+
+const toReasonCodes = (
+  urgency: UpdateUrgency,
+  recency: number,
+  followPreference: FollowPreference | undefined,
+  edgeScore: number,
+  hasTags: boolean,
+) => {
+  const reasons: string[] = [`urgency.${urgency}`];
+
+  if (recency >= 0.75) {
+    reasons.push('recency.fresh');
+  } else if (recency <= 0.3) {
+    reasons.push('recency.stale');
+  }
+
+  if (followPreference) {
+    const meetsMinUrgency =
+      urgencyRank(urgency) >= urgencyRank(followPreference.alertMinUrgency);
+    reasons.push(
+      meetsMinUrgency ? 'prefs.meets_min_urgency' : 'prefs.below_min_urgency',
+    );
+  }
+
+  if (edgeScore >= 0.72) {
+    reasons.push('edge.top_signal');
+  } else if (edgeScore >= 0.46) {
+    reasons.push('edge.watchlist');
+  } else {
+    reasons.push('edge.low_priority');
+  }
+
+  if (hasTags) {
+    reasons.push('tags.present');
+  }
+
+  return reasons;
+};
+
+const toExplanationPreview = (action: EdgeFeedbackAction) => {
+  switch (action) {
+    case EdgeFeedbackAction.act:
+      return 'High-value signal with strong urgency and freshness.';
+    case EdgeFeedbackAction.watch:
+      return 'Relevant signal worth monitoring.';
+    case EdgeFeedbackAction.ignore:
+    default:
+      return 'Lower-priority signal for now.';
+  }
+};
+
+const toPrismaEdgeAction = (action: EdgeFeedbackAction): EdgeAction => {
+  switch (action) {
+    case EdgeFeedbackAction.act:
+      return EdgeAction.act;
+    case EdgeFeedbackAction.watch:
+      return EdgeAction.watch;
+    case EdgeFeedbackAction.ignore:
+    default:
+      return EdgeAction.ignore;
+  }
+};
+
+const toFeedbackAction = (action: EdgeAction): EdgeFeedbackAction => {
+  switch (action) {
+    case EdgeAction.act:
+      return EdgeFeedbackAction.act;
+    case EdgeAction.watch:
+      return EdgeFeedbackAction.watch;
+    case EdgeAction.ignore:
+    default:
+      return EdgeFeedbackAction.ignore;
+  }
+};
+
+const normalizeReasonCodes = (value: Prisma.JsonValue | null) => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => String(entry))
+    .filter((entry) => entry.trim().length > 0);
+};

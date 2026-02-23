@@ -9,6 +9,7 @@ describe('ReferralsService', () => {
     },
     profile: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
       findMany: jest.fn(),
@@ -178,7 +179,7 @@ describe('ReferralsService', () => {
 
     const result = await service.bindByAdmin(
       'admin-1',
-      'user-2',
+      '4e8aa7b2-0f97-4cd7-94dd-3cbf3d7df455',
       'zx12cv34',
     );
 
@@ -209,7 +210,51 @@ describe('ReferralsService', () => {
       referredById: 'existing-referrer',
     });
 
-    await expect(service.bindByAdmin('admin-1', 'user-3', 'AB12CD34')).rejects
-      .toThrow('already has a bound referrer');
+    await expect(
+      service.bindByAdmin(
+        'admin-1',
+        'e2ea2dc6-bf55-42f0-8d5a-77f61b0c56a7',
+        'AB12CD34',
+      ),
+    ).rejects.toThrow('already has a bound referrer');
+  });
+
+  it('allows admin to resolve target user by email', async () => {
+    prisma.profile.findFirst.mockResolvedValueOnce({
+      id: 'user-9',
+      email: 'babsman4all@gmail.com',
+      displayName: 'Babs',
+      referredById: null,
+    });
+    prisma.profile.findUnique.mockResolvedValueOnce({
+      id: 'referrer-9',
+      email: 'ref9@example.com',
+      displayName: 'Ref Nine',
+      referralCode: 'AB12CD34',
+      referredById: null,
+    });
+
+    const result = await service.bindByAdmin(
+      'admin-1',
+      'babsman4all@gmail.com',
+      'AB12CD34',
+    );
+
+    expect(prisma.profile.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          email: {
+            equals: 'babsman4all@gmail.com',
+            mode: 'insensitive',
+          },
+        },
+      }),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        ok: true,
+        targetUser: expect.objectContaining({ id: 'user-9' }),
+      }),
+    );
   });
 });

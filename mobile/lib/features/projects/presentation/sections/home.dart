@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
+import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
+import 'package:blocnet/features/engagement/data/models/edge_explain_model.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/presentation/sections/explore/explore.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/top_hunters_row.dart';
+import 'package:blocnet/services/edge_engine_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
@@ -44,8 +47,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       final projectsStore = context.read<ProjectsStore>();
       final updatesStore = context.read<UpdatesStore>();
+      final edgeStore = context.read<EdgeEngineStore>();
       await projectsStore.fetchProjectsOnce();
       await updatesStore.fetchUpdatesOnce();
+      await edgeStore.fetchOnce();
       await _loadRadar();
       if (!mounted) return;
       setState(() => _isInitialLoading = false);
@@ -231,9 +236,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _handleRefresh() async {
     final projectsStore = context.read<ProjectsStore>();
     final updatesStore = context.read<UpdatesStore>();
+    final edgeStore = context.read<EdgeEngineStore>();
     await Future.wait([
       projectsStore.refreshProjects(),
       updatesStore.refreshUpdates(),
+      edgeStore.refresh(),
     ]);
     await _loadRadar();
 
@@ -244,9 +251,58 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _sendEdgeFeedback(
+    EdgeBriefDecision decision,
+    String action,
+  ) async {
+    final edgeStore = context.read<EdgeEngineStore>();
+    final ok = await edgeStore.sendFeedback(
+      decisionId: decision.decisionId,
+      action: action,
+      context: const {
+        'surface': 'home_edge_brief',
+      },
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'BEE feedback saved: ${action.toUpperCase()}'
+              : 'Failed to submit BEE feedback',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openEdgeExplain(EdgeBriefDecision decision) async {
+    final edgeStore = context.read<EdgeEngineStore>();
+    final explain = await edgeStore.fetchExplain(decision.decisionId);
+    if (!mounted) return;
+
+    if (explain == null || !explain.hasExplanation) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to load BEE explanation')),
+      );
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.bgSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (_) => _EdgeExplainSheet(explain: explain),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
+    final edgeStore = context.watch<EdgeEngineStore>();
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -280,14 +336,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 12)),
                 if (_activeSection == Sections.forYou) ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverToBoxAdapter(
+                      child: _EdgeBriefCard(
+                        brief: edgeStore.brief,
+                        isLoading:
+                            edgeStore.isFetching && edgeStore.brief == null,
+                        onAction: _sendEdgeFeedback,
+                        onExplain: _openEdgeExplain,
+                      ),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                ],
+                if (_activeSection == Sections.forYou) ...[
                   const SliverPadding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverToBoxAdapter(child: TopHuntersRow()),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
                 ],
-                Consumer<UpdatesStore>(
-                  builder: (context, store, _) {
+                Consumer2<UpdatesStore, EdgeEngineStore>(
+                  builder: (context, store, edgeStore, _) {
                     final enrichedPosts = store.posts
                         .where(
                           (post) => post.project != null && post.admin != null,
@@ -304,6 +375,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             return isUnseen || isHighPriority;
                           }).toList()
                         : enrichedPosts;
+                    final rankedFeedPosts = [...feedPosts]
+                      ..sort((a, b) {
+                        final scoreA = edgeStore.edgeScoreForUpdate(a.id);
+                        final scoreB = edgeStore.edgeScoreForUpdate(b.id);
+
+                        if (scoreA != null || scoreB != null) {
+                          if (scoreA == null) return 1;
+                          if (scoreB == null) return -1;
+                          final byScore = scoreB.compareTo(scoreA);
+                          if (byScore != 0) return byScore;
+                        }
+
+                        return b.createdAt.compareTo(a.createdAt);
+                      });
 
                     if (_activeSection == Sections.forYou) {
                       if (_isInitialLoading && enrichedPosts.isEmpty) {
@@ -326,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       }
-                      if (feedPosts.isEmpty) {
+                      if (rankedFeedPosts.isEmpty) {
                         return const SliverPadding(
                           padding: EdgeInsets.symmetric(horizontal: 16),
                           sliver: SliverToBoxAdapter(child: _EmptyFeed()),
@@ -341,7 +426,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onClear: () =>
                                     setState(() => _showCatchupFilter = false),
                               ),
-                            ...feedPosts.map((post) => FeedCard(post: post)),
+                            ...rankedFeedPosts
+                                .map((post) => FeedCard(post: post)),
                           ]),
                         ),
                       );
@@ -631,6 +717,465 @@ class _AlphaRadarCard extends StatelessWidget {
               }).toList(),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EdgeBriefCard extends StatelessWidget {
+  const _EdgeBriefCard({
+    required this.brief,
+    required this.isLoading,
+    required this.onAction,
+    required this.onExplain,
+  });
+
+  final EdgeBriefResponse? brief;
+  final bool isLoading;
+  final Future<void> Function(EdgeBriefDecision decision, String action)
+      onAction;
+  final Future<void> Function(EdgeBriefDecision decision) onExplain;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary400,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Loading edge brief...',
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: 12,
+                weight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final summary = brief;
+    if (summary == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 16, color: AppColors.primary400),
+              const SizedBox(width: 8),
+              Text(
+                'BLOCNET EDGE ENGINE',
+                style: AppTypography.custom(
+                  color: AppColors.textFaint,
+                  size: 10,
+                  weight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            summary.headline.trim().isEmpty
+                ? 'Edge intelligence is ready.'
+                : summary.headline,
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 13,
+              weight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _BriefMetricChip(
+                label: '${summary.totalSignals} signals',
+              ),
+              _BriefMetricChip(
+                label: '${summary.recommendedNowCount} act now',
+              ),
+              _BriefMetricChip(
+                label: '${summary.watchCount} watch',
+              ),
+            ],
+          ),
+          if (summary.topDecisions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...summary.topDecisions.take(3).map((decision) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _EdgeDecisionRow(
+                  decision: decision,
+                  onAction: onAction,
+                  onExplain: onExplain,
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BriefMetricChip extends StatelessWidget {
+  const _BriefMetricChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.bgElevated,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.custom(
+          color: AppColors.textMuted,
+          size: 10,
+          weight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _EdgeDecisionRow extends StatelessWidget {
+  const _EdgeDecisionRow({
+    required this.decision,
+    required this.onAction,
+    required this.onExplain,
+  });
+
+  final EdgeBriefDecision decision;
+  final Future<void> Function(EdgeBriefDecision decision, String action)
+      onAction;
+  final Future<void> Function(EdgeBriefDecision decision) onExplain;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.bgElevated,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            decision.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 12,
+              weight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${decision.projectName} · ${decision.urgency.toUpperCase()} · score ${decision.edgeScore.toStringAsFixed(2)}',
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
+              size: 10,
+              weight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _ActionChip(
+                label: 'Act',
+                action: 'act',
+                recommendedAction: decision.recommendedAction,
+                onTap: () => onAction(decision, 'act'),
+              ),
+              const SizedBox(width: 6),
+              _ActionChip(
+                label: 'Watch',
+                action: 'watch',
+                recommendedAction: decision.recommendedAction,
+                onTap: () => onAction(decision, 'watch'),
+              ),
+              const SizedBox(width: 6),
+              _ActionChip(
+                label: 'Ignore',
+                action: 'ignore',
+                recommendedAction: decision.recommendedAction,
+                onTap: () => onAction(decision, 'ignore'),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => onExplain(decision),
+                child: Text(
+                  'Why ranked?',
+                  style: AppTypography.custom(
+                    color: AppColors.primary400,
+                    size: 10,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionChip extends StatelessWidget {
+  const _ActionChip({
+    required this.label,
+    required this.action,
+    required this.recommendedAction,
+    required this.onTap,
+  });
+
+  final String label;
+  final String action;
+  final String recommendedAction;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isRecommended = action == recommendedAction;
+    final color = _actionColor(action);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: isRecommended ? color.withValues(alpha: 0.18) : color,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isRecommended ? color.withValues(alpha: 0.45) : color,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.custom(
+            color: isRecommended
+                ? AppColors.textPrimary
+                : action == 'ignore'
+                    ? AppColors.textPrimary
+                    : Colors.black,
+            size: 10,
+            weight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _actionColor(String value) {
+    switch (value) {
+      case 'act':
+        return AppColors.successColor;
+      case 'watch':
+        return AppColors.warning500;
+      case 'ignore':
+      default:
+        return AppColors.textFaint;
+    }
+  }
+}
+
+class _EdgeExplainSheet extends StatelessWidget {
+  const _EdgeExplainSheet({required this.explain});
+
+  final EdgeExplainResponse explain;
+
+  @override
+  Widget build(BuildContext context) {
+    final update = explain.update!;
+    final details = explain.explanation!;
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderMuted,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Why BEE ranked this',
+                style: AppTypography.custom(
+                  color: AppColors.textPrimary,
+                  size: 16,
+                  weight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                update.title,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
+                  size: 13,
+                  weight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${update.projectName} · ${update.urgency.toUpperCase()}',
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 11,
+                  weight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.bgElevated,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.borderSubtle),
+                ),
+                child: Text(
+                  details.narrative.trim().isEmpty
+                      ? details.explanationPreview
+                      : details.narrative,
+                  style: AppTypography.custom(
+                    color: AppColors.textSecondary,
+                    size: 12,
+                    weight: FontWeight.w500,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: details.reasonCodes.map((reason) {
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgElevated,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: AppColors.borderSubtle),
+                    ),
+                    child: Text(
+                      reason,
+                      style: AppTypography.custom(
+                        color: AppColors.textMuted,
+                        size: 10,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 14),
+              _ExplainMetricRow(label: 'Edge score', value: details.edgeScore),
+              _ExplainMetricRow(
+                  label: 'Urgency component', value: details.components.urgency),
+              _ExplainMetricRow(
+                  label: 'Recency component', value: details.components.recency),
+              _ExplainMetricRow(
+                  label: 'Relevance component',
+                  value: details.components.relevance),
+              _ExplainMetricRow(
+                  label: 'Novelty component', value: details.components.novelty),
+              _ExplainMetricRow(
+                  label: 'Penalty component',
+                  value: details.components.penalties),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ExplainMetricRow extends StatelessWidget {
+  const _ExplainMetricRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: 11,
+                weight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Text(
+            value.toStringAsFixed(3),
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 11,
+              weight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );

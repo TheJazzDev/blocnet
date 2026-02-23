@@ -147,6 +147,7 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
             _HunterHero(
               displayName: displayName,
               avatarUrl: auth.avatarUrl,
+              email: auth.email,
               bio: auth.bio,
               followersCount: followerCount,
               followingCount: followingCount,

@@ -25,6 +25,7 @@ import {
   CheckCircle2,
   HandCoins,
   ReceiptText,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -100,7 +101,10 @@ function buildNavItems(userRoles: string[]) {
     { href: "/tip-settings", label: "Tip Settings", icon: HandCoins },
   ];
 
-  const engagementItems = [{ href: "/mining", label: "Mining", icon: Zap }];
+  const engagementItems = [
+    { href: "/edge-engine", label: "Edge Engine", icon: Sparkles },
+    { href: "/mining", label: "Mining", icon: Zap },
+  ];
   engagementItems.push({
     href: "/mining/leaderboard",
     label: "Leaderboard",

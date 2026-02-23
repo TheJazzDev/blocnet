@@ -64,7 +64,7 @@ export class TipsService {
 
   async getMyOverview(userId: string) {
     await this.ensureBootstrap();
-    const [activeCurrency, accounts] = await Promise.all([
+    const [activeCurrency, accounts, sentAggregateRows] = await Promise.all([
       this.requireActiveCurrency(),
       this.prisma.tipAccount.findMany({
         where: {
@@ -80,6 +80,20 @@ export class TipsService {
         },
         orderBy: {
           currencyCode: 'asc',
+        },
+      }),
+      this.prisma.tipTransaction.groupBy({
+        by: ['currencyCode'],
+        where: {
+          senderUserId: userId,
+        },
+        _count: {
+          _all: true,
+        },
+        _sum: {
+          amountAtomic: true,
+          feeAtomic: true,
+          totalDebitAtomic: true,
         },
       }),
     ]);
@@ -107,12 +121,42 @@ export class TipsService {
       balance: formatAtomicAmount(row.balanceAtomic, row.currency.decimals),
     }));
 
+    const sentSummaryByCurrency = sentAggregateRows
+      .map((row) => {
+        const account = accountByCurrency.get(row.currencyCode);
+        if (!account) return null;
+        return this.toSentSummaryResponse({
+          currency: account.currency,
+          feeConfig: account.currency.feeConfig,
+          transactionCount: row._count._all,
+          amountAtomic: row._sum.amountAtomic ?? 0n,
+          feeAtomic: row._sum.feeAtomic ?? 0n,
+          totalDebitAtomic: row._sum.totalDebitAtomic ?? 0n,
+        });
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null);
+
+    const sentSummary =
+      sentSummaryByCurrency.find(
+        (row) => row.currency.code === activeCurrency.code,
+      ) ??
+      this.toSentSummaryResponse({
+        currency: activeCurrency,
+        feeConfig: activeCurrency.feeConfig,
+        transactionCount: 0,
+        amountAtomic: 0n,
+        feeAtomic: 0n,
+        totalDebitAtomic: 0n,
+      });
+
     return {
       activeCurrency: this.toCurrencyResponse(
         activeCurrency,
         activeCurrency.feeConfig,
       ),
       balances,
+      sentSummary,
+      sentSummaryByCurrency,
     };
   }
 
@@ -684,6 +728,33 @@ export class TipsService {
             isActive: feeConfig.isActive,
           }
         : null,
+    };
+  }
+
+  private toSentSummaryResponse({
+    currency,
+    feeConfig,
+    transactionCount,
+    amountAtomic,
+    feeAtomic,
+    totalDebitAtomic,
+  }: {
+    currency: TipCurrency;
+    feeConfig: TipFeeConfig | null;
+    transactionCount: number;
+    amountAtomic: bigint;
+    feeAtomic: bigint;
+    totalDebitAtomic: bigint;
+  }) {
+    return {
+      currency: this.toCurrencyResponse(currency, feeConfig),
+      transactionCount,
+      amountAtomic: amountAtomic.toString(),
+      amount: formatAtomicAmount(amountAtomic, currency.decimals),
+      feeAtomic: feeAtomic.toString(),
+      fee: formatAtomicAmount(feeAtomic, currency.decimals),
+      totalDebitAtomic: totalDebitAtomic.toString(),
+      totalDebit: formatAtomicAmount(totalDebitAtomic, currency.decimals),
     };
   }
 

@@ -19,6 +19,8 @@ const DEFAULT_REFERRAL_CONFIG = {
   activeReferralWindowHours: 168,
   referralBindWindowHours: 24,
 };
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class ReferralsService {
@@ -384,27 +386,31 @@ export class ReferralsService {
       throw new BadRequestException('target user id or email is required');
     }
 
-    const byId = await this.prisma.profile.findUnique({
-      where: { id: userIdOrEmail },
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-        referredById: true,
-      },
-    });
-    if (byId) {
-      return byId;
+    const select = {
+      id: true,
+      email: true,
+      displayName: true,
+      referredById: true,
+    } as const;
+
+    if (UUID_REGEX.test(userIdOrEmail)) {
+      const byId = await this.prisma.profile.findUnique({
+        where: { id: userIdOrEmail },
+        select,
+      });
+      if (byId) {
+        return byId;
+      }
     }
 
-    const byEmail = await this.prisma.profile.findUnique({
-      where: { email: userIdOrEmail.toLowerCase() },
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-        referredById: true,
+    const byEmail = await this.prisma.profile.findFirst({
+      where: {
+        email: {
+          equals: userIdOrEmail,
+          mode: 'insensitive',
+        },
       },
+      select,
     });
 
     if (byEmail) {

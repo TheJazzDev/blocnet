@@ -24,7 +24,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
       final auth = context.read<AuthStore>();
       final store = context.read<TipsStore>();
       store.ensureUserScope(auth.userId);
-      store.loadSentHistory(force: true, limit: 200);
+      store.loadSentHistory(force: true, limit: 100);
     });
   }
 
@@ -46,7 +46,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
           return RefreshIndicator(
             color: AppColors.primary500,
             backgroundColor: AppColors.bgSurface,
-            onRefresh: () => store.loadSentHistory(force: true, limit: 200),
+            onRefresh: () => store.loadSentHistory(force: true, limit: 100),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),

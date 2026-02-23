@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 export function CTA() {
   return (
     <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-surface relative overflow-hidden">
@@ -23,13 +21,13 @@ export function CTA() {
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-8 sm:mb-10">
           <a
-            href="#"
+            href="#download"
             className="w-full sm:w-auto px-6 py-3 sm:px-7 sm:py-3.5 bg-teal-500 text-white rounded-lg font-medium text-sm sm:text-base"
           >
-            Download for iOS
+            Open Download Section
           </a>
           <a
-            href="#"
+            href="#download"
             className="w-full sm:w-auto px-6 py-3 sm:px-7 sm:py-3.5 bg-surface-2 text-foreground border border-border rounded-lg font-medium text-sm sm:text-base"
           >
             Download for Android

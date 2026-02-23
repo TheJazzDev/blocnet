@@ -49,7 +49,7 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
     tipsStore.ensureUserScope(context.read<AuthStore>().userId);
     await Future.wait([
       tipsStore.loadOverview(force: force),
-      tipsStore.loadReceivedHistory(force: force, limit: 200),
+      tipsStore.loadReceivedHistory(force: force, limit: 100),
     ]);
     _lastTipsSyncAt = DateTime.now();
   }

@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
 import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { DeviceTokensModule } from './device-tokens/device-tokens.module';
+import { EdgeEngineModule } from './edge-engine/edge-engine.module';
 import { FollowsModule } from './follows/follows.module';
 import { HealthModule } from './health/health.module';
 import { MeRadarModule } from './me-radar/me-radar.module';
@@ -44,6 +45,7 @@ import { envValidationSchema } from './config/env.validation';
     AuthModule,
     UsersModule,
     RolesModule,
+    EdgeEngineModule,
     AdminApplicationsModule,
     AdminContentModule,
     ProjectsModule,

@@ -208,6 +208,12 @@ enum TipTransactionType {
   adjustment
 }
 
+enum EdgeAction {
+  act
+  watch
+  ignore
+}
+
 model Profile {
   id                             String                  @id @db.Uuid
   email                          String                  @unique
@@ -266,6 +272,8 @@ model Profile {
   tipTransactionsSent            TipTransaction[]        @relation("TipTxnSenderUser")
   tipTransactionsReceived        TipTransaction[]        @relation("TipTxnRecipientUser")
   tipConversions                 TipConversion[]
+  edgeDecisions                  EdgeDecision[]
+  edgeFeedback                   EdgeFeedback[]
   audits                         AuditLog[]              @relation("ActorAuditLogs")
   referrer                       Profile?                @relation("ProfileReferrer", fields: [referredById], references: [id], onDelete: SetNull)
   referrals                      Profile[]               @relation("ProfileReferrer")
@@ -316,6 +324,7 @@ model Project {
   proposals     ProjectProposal[]
   updates       Update[]
   follows       ProjectFollow[]
+  edgeDecisions EdgeDecision[]
   notifications Notification[]
 
   @@index([ownerAdminId])
@@ -407,6 +416,7 @@ model Update {
   notifications Notification[]
   comments      Comment[]
   secondaryTags UpdateSecondaryTag[]
+  edgeDecisions EdgeDecision[]
 
   @@index([projectId, urgency])
   @@index([authorId])
@@ -611,6 +621,60 @@ model Notification {
   @@index([type, createdAt])
   @@index([projectId])
   @@unique([userId, dedupeKey])
+}
+
+model EdgeDecision {
+  id                 String     @id @default(uuid()) @db.Uuid
+  userId             String     @db.Uuid
+  decisionId         String
+  updateId           String     @db.Uuid
+  projectId          String     @db.Uuid
+  edgeScore          Float
+  recommendedAction  EdgeAction
+  reasonCodes        Json?
+  explanationPreview String?
+  urgencyScore       Float
+  recencyScore       Float
+  relevanceScore     Float
+  noveltyScore       Float
+  penaltyScore       Float
+  generatedAt        DateTime   @default(now())
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  user      Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  update    Update         @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  feedbacks EdgeFeedback[]
+
+  @@unique([userId, decisionId])
+  @@index([userId, generatedAt])
+  @@index([projectId, generatedAt])
+  @@index([updateId, generatedAt])
+  @@index([recommendedAction, generatedAt])
+}
+
+model EdgeFeedback {
+  id               String     @id @default(uuid()) @db.Uuid
+  userId           String     @db.Uuid
+  decisionRecordId String     @db.Uuid
+  decisionId       String
+  action           EdgeAction
+  context          Json?
+  createdAt        DateTime   @default(now())
+
+  user     Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decision EdgeDecision @relation(fields: [decisionRecordId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([decisionRecordId, createdAt])
+  @@index([decisionId, createdAt])
+}
+
+model EdgeConfig {
+  id        String   @id
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
 }
 
 model DeviceToken {

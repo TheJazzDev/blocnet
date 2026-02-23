@@ -77,6 +77,8 @@ const PROFILE_ACTIVITY_ALLOWED_ACTIONS = [
   'update.update',
 ] as const;
 
+const DIGEST_VIEW_AUDIT_COOLDOWN_MS = 60 * 60 * 1000;
+
 @Injectable()
 export class UsersService {
   private readonly supabaseUrl: string;
@@ -1218,11 +1220,9 @@ export class UsersService {
       (follow) => follow.projectId,
     );
     if (followedProjectIds.length === 0) {
-      await this.auditLogService.create({
-        actorId: userId,
-        action: 'digest.view',
-        resourceType: 'digest',
-        metadata: { windowDays: boundedWindow, emptyFollowSet: true },
+      await this.logDigestViewAuditIfDue(userId, {
+        windowDays: boundedWindow,
+        emptyFollowSet: true,
       });
 
       return {
@@ -1360,11 +1360,8 @@ export class UsersService {
       })
       .slice(0, 5);
 
-    await this.auditLogService.create({
-      actorId: userId,
-      action: 'digest.view',
-      resourceType: 'digest',
-      metadata: { windowDays: boundedWindow },
+    await this.logDigestViewAuditIfDue(userId, {
+      windowDays: boundedWindow,
     });
 
     return {
@@ -1380,6 +1377,39 @@ export class UsersService {
       activeProjects,
       topCommunityPosts,
     };
+  }
+
+  private async logDigestViewAuditIfDue(
+    userId: string,
+    metadata: Record<string, unknown>,
+  ) {
+    const lastDigestView = await this.prisma.auditLog.findFirst({
+      where: {
+        actorId: userId,
+        action: 'digest.view',
+        resourceType: 'digest',
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        createdAt: true,
+      },
+    });
+
+    if (lastDigestView) {
+      const elapsedMs = Date.now() - lastDigestView.createdAt.getTime();
+      if (elapsedMs < DIGEST_VIEW_AUDIT_COOLDOWN_MS) {
+        return;
+      }
+    }
+
+    await this.auditLogService.create({
+      actorId: userId,
+      action: 'digest.view',
+      resourceType: 'digest',
+      metadata,
+    });
   }
 
   private assertAdminCanManageTarget(

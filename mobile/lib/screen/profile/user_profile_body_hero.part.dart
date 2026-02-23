@@ -4,10 +4,12 @@ class _UserHero extends StatelessWidget {
   const _UserHero({
     required this.displayName,
     required this.avatarUrl,
+    required this.email,
   });
 
   final String displayName;
   final String? avatarUrl;
+  final String? email;
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +149,17 @@ class _UserHero extends StatelessWidget {
                   weight: FontWeight.w800,
                 ),
               ),
+              if (email?.trim().isNotEmpty ?? false) ...[
+                const SizedBox(height: 6),
+                Text(
+                  email!.trim(),
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 12,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -4,6 +4,7 @@ class _HunterHero extends StatelessWidget {
   const _HunterHero({
     required this.displayName,
     required this.avatarUrl,
+    required this.email,
     required this.bio,
     required this.followersCount,
     required this.followingCount,
@@ -11,6 +12,7 @@ class _HunterHero extends StatelessWidget {
 
   final String displayName;
   final String? avatarUrl;
+  final String? email;
   final String? bio;
   final int followersCount;
   final int followingCount;
@@ -165,6 +167,17 @@ class _HunterHero extends StatelessWidget {
                   weight: FontWeight.w800,
                 ),
               ),
+              if (email?.trim().isNotEmpty ?? false) ...[
+                const SizedBox(height: 6),
+                Text(
+                  email!.trim(),
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 12,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+              ],
               const SizedBox(height: 6),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),

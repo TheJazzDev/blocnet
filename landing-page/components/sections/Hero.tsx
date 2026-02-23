@@ -31,7 +31,7 @@ export function Hero() {
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
           <Link
-            href="#"
+            href="#download"
             className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-teal-500 text-white rounded-lg font-medium text-sm sm:text-base"
           >
             Download App

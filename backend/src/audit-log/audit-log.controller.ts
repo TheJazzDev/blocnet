@@ -12,8 +12,9 @@ export class AuditLogController {
 
   @Get()
   @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
-  async list(@Query('limit') limit?: string) {
+  async list(@Query('limit') limit?: string, @Query('offset') offset?: string) {
     const parsedLimit = limit ? Number(limit) : 100;
-    return this.auditLogService.list(parsedLimit);
+    const parsedOffset = offset ? Number(offset) : 0;
+    return this.auditLogService.list(parsedLimit, parsedOffset);
   }
 }

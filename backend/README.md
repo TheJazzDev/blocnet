@@ -43,6 +43,26 @@ bun run test:e2e
 ## API Prefix
 All routes are served under `/api`.
 
+## Blocnet Edge Engine (BEE) V1 Endpoints
+- `GET /api/me/edge/feed`
+- `GET /api/me/edge/brief`
+- `GET /api/me/edge/explain/:decisionId`
+- `POST /api/me/edge/feedback`
+
+## Blocnet Edge Engine (BEE) V2 (Admin Analytics - Sprint 1)
+- `GET /api/admin/edge/overview`
+- `GET /api/admin/edge/config`
+- `PATCH /api/admin/edge/config` (owner/admin)
+
+Feature flag:
+- `ENABLE_BEE=true|false` (default: `true`)
+- `ENABLE_BEE` is used as the bootstrap default; runtime enable/disable is stored in DB (`EdgeConfig`) and managed from admin.
+
+Persistence:
+- `EdgeDecision` table stores generated decision records and score components.
+- `EdgeFeedback` table stores user feedback actions (`act|watch|ignore`).
+- `EdgeConfig` table stores runtime BEE toggle state.
+
 ## Access Model (Current)
 - Public read endpoints:
   - `GET /api/projects`

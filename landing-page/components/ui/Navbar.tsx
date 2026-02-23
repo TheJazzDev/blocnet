@@ -39,7 +39,7 @@ export function Navbar() {
 
           {/* Nav Links - Hidden on Mobile */}
           <div className="hidden md:flex items-center gap-6 lg:gap-8">
-            {['Features', 'Mining', 'Wallet', 'Community'].map((item) => (
+            {['Download', 'Features', 'Mining', 'Wallet', 'Community'].map((item) => (
               <a
                 key={item}
                 href={`#${item.toLowerCase()}`}
@@ -62,7 +62,7 @@ export function Navbar() {
               <span className="font-bold">𝕏</span>
             </a>
             <a
-              href="#"
+              href="#download"
               className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 bg-teal-500 text-white rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm md:text-base"
             >
               Download App

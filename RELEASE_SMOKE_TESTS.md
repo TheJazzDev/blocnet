@@ -26,5 +26,13 @@
 - [ ] Authenticated session can open dashboard, users, projects, applications, audit-log, settings
 - [ ] Sign out clears session and protects routes again
 
+## BEE (Edge Engine)
+- [ ] `GET /api/me/edge/feed` returns ranked items and no 5xx
+- [ ] `GET /api/me/edge/brief` returns headline + top decisions
+- [ ] `GET /api/me/edge/explain/:decisionId` returns reason codes + components
+- [ ] `POST /api/me/edge/feedback` persists feedback (`feedbackId` present when persistence is available)
+- [ ] Admin can open `/edge-engine` and inspect a decision drilldown
+- [ ] Mobile home can open “Why ranked?” drawer from BEE card
+
 ## Pass Criteria
 - All checks above pass without runtime exceptions, blank screens, or 5xx API errors.

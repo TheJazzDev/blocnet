@@ -6,6 +6,7 @@ class TipApiRepository {
       : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
+  static const int _maxHistoryLimit = 100;
 
   Future<TipOverview?> fetchOverview() async {
     final response = await _apiClient.get('/tips/me');
@@ -21,11 +22,15 @@ class TipApiRepository {
     String direction = 'all',
     String? currencyCode,
   }) async {
+    final boundedLimit = limit <= 0
+        ? 30
+        : (limit > _maxHistoryLimit ? _maxHistoryLimit : limit);
+    final boundedOffset = offset < 0 ? 0 : offset;
     final response = await _apiClient.get(
       '/tips/history',
       query: {
-        'limit': '$limit',
-        'offset': '$offset',
+        'limit': '$boundedLimit',
+        'offset': '$boundedOffset',
         if (direction.trim().isNotEmpty) 'direction': direction.trim(),
         if (currencyCode != null && currencyCode.trim().isNotEmpty)
           'currencyCode': currencyCode.trim().toUpperCase(),

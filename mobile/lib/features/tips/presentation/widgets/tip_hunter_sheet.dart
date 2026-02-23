@@ -59,7 +59,7 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
       final store = context.read<TipsStore>();
       store.ensureUserScope(auth.userId);
       store.loadOverview(force: true);
-      store.loadSentHistory(force: true, limit: 200);
+      store.loadSentHistory(force: true, limit: 100);
     });
   }
 

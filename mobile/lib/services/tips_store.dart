@@ -40,6 +40,13 @@ class TipsStore extends ChangeNotifier {
   bool get isLoadingReceivedHistory => _isLoadingReceivedHistory;
   bool get isSending => _isSending;
   String? get lastError => _lastError;
+  String get profileTipsSentValue {
+    final summary = _overview?.sentSummary;
+    if (summary == null) {
+      return _sentHistoryTotal > 0 ? _sentHistoryTotal.toString() : '0';
+    }
+    return summary.amount;
+  }
 
   void ensureUserScope(String? userId) {
     final normalized = userId?.trim();

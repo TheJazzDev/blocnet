@@ -102,14 +102,56 @@ class TipBalance {
   }
 }
 
+class TipSentSummary {
+  const TipSentSummary({
+    required this.currency,
+    required this.transactionCount,
+    required this.amountAtomic,
+    required this.amount,
+    required this.feeAtomic,
+    required this.fee,
+    required this.totalDebitAtomic,
+    required this.totalDebit,
+  });
+
+  final TipCurrency currency;
+  final int transactionCount;
+  final String amountAtomic;
+  final String amount;
+  final String feeAtomic;
+  final String fee;
+  final String totalDebitAtomic;
+  final String totalDebit;
+
+  factory TipSentSummary.fromApi(Map<String, dynamic> json) {
+    final rawCurrency =
+        (json['currency'] as Map?)?.cast<String, dynamic>() ?? {};
+    return TipSentSummary(
+      currency: TipCurrency.fromApi(rawCurrency),
+      transactionCount:
+          int.tryParse(json['transactionCount']?.toString() ?? '') ?? 0,
+      amountAtomic: json['amountAtomic']?.toString() ?? '0',
+      amount: json['amount']?.toString() ?? '0',
+      feeAtomic: json['feeAtomic']?.toString() ?? '0',
+      fee: json['fee']?.toString() ?? '0',
+      totalDebitAtomic: json['totalDebitAtomic']?.toString() ?? '0',
+      totalDebit: json['totalDebit']?.toString() ?? '0',
+    );
+  }
+}
+
 class TipOverview {
   const TipOverview({
     required this.activeCurrency,
     required this.balances,
+    required this.sentSummary,
+    required this.sentSummaryByCurrency,
   });
 
   final TipCurrency activeCurrency;
   final List<TipBalance> balances;
+  final TipSentSummary? sentSummary;
+  final List<TipSentSummary> sentSummaryByCurrency;
 
   TipBalance? findBalance(String code) {
     final normalized = code.trim().toUpperCase();
@@ -124,12 +166,23 @@ class TipOverview {
         (json['activeCurrency'] as Map?)?.cast<String, dynamic>() ?? {};
     final balancesRaw =
         (json['balances'] as List?)?.cast<dynamic>() ?? const [];
+    final sentSummaryRaw =
+        (json['sentSummary'] as Map?)?.cast<String, dynamic>();
+    final sentSummaryByCurrencyRaw =
+        (json['sentSummaryByCurrency'] as List?)?.cast<dynamic>() ?? const [];
 
     return TipOverview(
       activeCurrency: TipCurrency.fromApi(activeRaw),
       balances: balancesRaw
           .whereType<Map>()
           .map((row) => TipBalance.fromApi(row.cast<String, dynamic>()))
+          .toList(growable: false),
+      sentSummary: sentSummaryRaw == null
+          ? null
+          : TipSentSummary.fromApi(sentSummaryRaw),
+      sentSummaryByCurrency: sentSummaryByCurrencyRaw
+          .whereType<Map>()
+          .map((row) => TipSentSummary.fromApi(row.cast<String, dynamic>()))
           .toList(growable: false),
     );
   }
