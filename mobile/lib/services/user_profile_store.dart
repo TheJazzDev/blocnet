@@ -41,9 +41,13 @@ class UserProfileStore extends ChangeNotifier {
 
   Future<void> fetchInitialOnce({String? userId}) async {
     final normalizedUserId = userId?.trim();
-    if (normalizedUserId != null &&
-        normalizedUserId.isNotEmpty &&
-        _boundUserId != normalizedUserId) {
+    if (normalizedUserId == null || normalizedUserId.isEmpty) {
+      if (_boundUserId != null) {
+        _boundUserId = null;
+        _resetState(notify: false);
+        _initialized = false;
+      }
+    } else if (_boundUserId != normalizedUserId) {
       _boundUserId = normalizedUserId;
       _resetState(notify: false);
       _initialized = false;

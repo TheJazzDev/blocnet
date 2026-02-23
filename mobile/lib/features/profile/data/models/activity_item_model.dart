@@ -59,7 +59,9 @@ class ActivityItem {
       case 'tip.sent':
         return 'Sent a tip to a hunter';
       default:
-        return _toTitleCase(action.replaceAll('.', ' ').trim());
+        return _toTitleCase(
+          action.replaceAll(RegExp(r'[._]+'), ' ').trim(),
+        );
     }
   }
 }

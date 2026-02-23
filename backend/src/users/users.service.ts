@@ -51,22 +51,30 @@ const ALLOWED_AVATAR_MIME_TYPES = new Set([
   'image/webp',
 ]);
 
-const PROFILE_ACTIVITY_EXCLUDED_ACTION_PREFIXES = [
-  'admin.',
-  'role.',
-  'digest.',
-  'tip.currency.',
-  'project.moderate.',
-  'update.moderate.',
-  'comment.moderate.',
-  'community_post.moderate.',
-  'community_comment.moderate.',
-  'project.hunter.',
-  'admin_application.',
-  'project_proposal.review',
-  'wallet.risk_limit.',
-  'wallet.fee_config.',
-  'wallet.asset_price_config.',
+const PROFILE_ACTIVITY_ALLOWED_ACTIONS = [
+  'comment.create',
+  'comment.update',
+  'comment.delete',
+  'community_post.create',
+  'community_post.comment.create',
+  'community_post.reaction.add',
+  'community_post.reaction.remove',
+  'community_post.bookmark.add',
+  'community_post.bookmark.remove',
+  'follow.preferences.update',
+  'mining.start',
+  'mining.claim',
+  'profile.follow',
+  'profile.unfollow',
+  'project.create',
+  'project.update',
+  'project.follow',
+  'project.unfollow',
+  'project_proposal.create',
+  'radar.ack',
+  'referral.bind',
+  'update.create',
+  'update.update',
 ] as const;
 
 @Injectable()
@@ -1154,10 +1162,8 @@ export class UsersService {
     const rows = await this.prisma.auditLog.findMany({
       where: {
         actorId: userId,
-        NOT: {
-          OR: PROFILE_ACTIVITY_EXCLUDED_ACTION_PREFIXES.map((prefix) => ({
-            action: { startsWith: prefix },
-          })),
+        action: {
+          in: [...PROFILE_ACTIVITY_ALLOWED_ACTIONS],
         },
       },
       orderBy: { createdAt: 'desc' },

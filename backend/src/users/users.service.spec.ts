@@ -14,6 +14,9 @@ describe('UsersService', () => {
       findUnique: jest.fn(),
       delete: jest.fn(),
     },
+    auditLog: {
+      findMany: jest.fn(),
+    },
     update: {
       findMany: jest.fn(),
     },
@@ -231,5 +234,46 @@ describe('UsersService', () => {
         {},
       ),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('returns only user-facing actions for profile activity feed', async () => {
+    prisma.auditLog.findMany.mockResolvedValue([
+      {
+        id: 'log-1',
+        action: 'project.follow',
+        resourceType: 'project',
+        resourceId: 'project-1',
+        metadata: {},
+        createdAt: new Date('2026-02-23T10:00:00.000Z'),
+      },
+    ]);
+
+    const result = await service.listMyActivity('user-1', {
+      limit: 20,
+      offset: 0,
+    });
+
+    expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          actorId: 'user-1',
+          action: {
+            in: expect.arrayContaining([
+              'project.follow',
+              'project.unfollow',
+              'profile.follow',
+              'profile.unfollow',
+            ]),
+          },
+        },
+      }),
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: 'log-1',
+        action: 'project.follow',
+      }),
+    ]);
   });
 });
