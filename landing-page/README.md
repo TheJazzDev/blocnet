@@ -24,28 +24,6 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 Landing page has a dedicated download section at `#download`.
 
-Set these env vars in your deployment platform:
-
-```bash
-NEXT_PUBLIC_APP_RELEASE_CHANNEL=prod
-NEXT_PUBLIC_ANDROID_VERSION=1.0.0
-```
-
-How it works:
-- Upload APK files into:
-  - `public/apks/dev/latest.apk`
-  - `public/apks/prod/latest.apk`
-- Download button calls API endpoint:
-  - `GET /api/download/apk`
-- API resolves channel from `NEXT_PUBLIC_APP_RELEASE_CHANNEL` (or `APP_RELEASE_CHANNEL`):
-  - `dev` / `development` -> `public/apks/dev/latest.apk`
-  - `prod` / `production` / `main` -> `public/apks/prod/latest.apk`
-
-Recommended flow:
-- Keep filename fixed as `latest.apk` in each channel folder.
-- Replace only that file on each release.
-- No landing-page code change needed after every APK build.
-
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
