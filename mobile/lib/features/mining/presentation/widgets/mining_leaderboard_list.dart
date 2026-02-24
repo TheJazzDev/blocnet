@@ -1,4 +1,6 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/badges/data/models/badge_models.dart';
+import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -196,19 +198,32 @@ class _LeaderboardTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.displayName?.trim().isNotEmpty == true
-                      ? item.displayName!
-                      : (item.username?.trim().isNotEmpty == true
-                          ? '@${item.username!}'
-                          : item.userId),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: 13,
-                    weight: FontWeight.w700,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        item.displayName?.trim().isNotEmpty == true
+                            ? item.displayName!
+                            : (item.username?.trim().isNotEmpty == true
+                                ? '@${item.username!}'
+                                : item.userId),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.custom(
+                          color: AppColors.textPrimary,
+                          size: 13,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    if (item.primaryBadge != null) ...[
+                      const SizedBox(width: 4),
+                      BadgeIcon(
+                        badge: BadgeModel.fromApi(item.primaryBadge),
+                        size: BadgeSize.tiny,
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 3),
                 Text(

@@ -4,10 +4,12 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/services/admins_store.dart';
 import 'package:blocnet/services/app_store.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/badges_store.dart';
 import 'package:blocnet/services/deep_link_service.dart';
 import 'package:blocnet/services/edge_engine_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/services/push_notification_service.dart';
+import 'package:blocnet/services/quests_store.dart';
 import 'package:blocnet/services/tips_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
@@ -53,7 +55,7 @@ void main() async {
       anonKey: AppConfig.supabaseAnonKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
-        autoRefreshToken: true,
+        autoRefreshToken: false,
       ),
     );
   }
@@ -121,6 +123,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => WalletStore()),
         ChangeNotifierProvider(create: (_) => TagsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),
+        ChangeNotifierProvider(create: (_) => BadgesStore()),
+        ChangeNotifierProvider(create: (_) => QuestsStore()),
         // ChangeNotifierProvider(create: (_) => PriorityStore()),
         ChangeNotifierProvider(create: (_) => ProjectsStore()),
       ],

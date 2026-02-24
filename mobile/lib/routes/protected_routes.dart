@@ -1,4 +1,5 @@
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/badges/presentation/pages/badge_gallery_page.dart';
 import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_downline_screen.dart';
@@ -9,6 +10,7 @@ import 'package:blocnet/features/projects/presentation/pages/manage_updates_scre
 import 'package:blocnet/features/projects/presentation/pages/manage_projects_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/submit_project_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/top_hunters_screen.dart';
+import 'package:blocnet/features/quests/presentation/pages/quests_page.dart';
 import 'package:blocnet/features/tips/presentation/pages/tip_history_screen.dart';
 import 'package:blocnet/screen/main_screen.dart';
 import 'package:blocnet/screen/community_create_post_screen.dart';
@@ -36,6 +38,8 @@ class ProtectedRoutes {
   static const String miningHourlyHistory = AppRoutes.miningHourlyHistory;
   static const String miningDownline = AppRoutes.miningDownline;
   static const String notifications = AppRoutes.notifications;
+  static const String badges = AppRoutes.badges;
+  static const String quests = AppRoutes.quests;
   static const String createUpdate = AppRoutes.createUpdate;
   static const String submitProject = AppRoutes.submitProject;
   static const String manageProjects = AppRoutes.manageProjects;
@@ -90,6 +94,8 @@ class ProtectedRoutes {
       miningDownline: (context) => const MiningDownlineScreen(),
       // Notifications is now a push route (not a main tab)
       notifications: (context) => const NotificationsScreen(),
+      badges: (context) => const BadgeGalleryPage(),
+      quests: (context) => const QuestsPage(),
       createUpdate: (context) => const CreateUpdateScreen(),
       submitProject: (context) => const SubmitProjectScreen(),
       manageProjects: (context) => const ManageProjectsScreen(),
@@ -126,6 +132,8 @@ class ProtectedRoutes {
     miningHourlyHistory,
     miningDownline,
     notifications,
+    badges,
+    quests,
     createUpdate,
     submitProject,
     manageProjects,

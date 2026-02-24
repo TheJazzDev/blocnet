@@ -13,6 +13,7 @@ import { UpdateUpdateDto } from './dto/update-update.dto';
 import { ListUpdatesQuery } from './dto/list-updates.query';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { BadgesService } from '../badges/badges.service';
 import { FcmService } from '../notifications/fcm.service';
 import { toUpdateResponse, updateInclude } from './updates.mapper';
 
@@ -22,6 +23,7 @@ export class UpdatesService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly auditLogService: AuditLogService,
+    private readonly badgesService: BadgesService,
     private readonly fcmService: FcmService,
   ) {}
 
@@ -87,6 +89,9 @@ export class UpdatesService {
       resourceId: update.id,
       metadata: { projectId },
     });
+
+    // Check and award engagement badges
+    await this.badgesService.checkEngagementMilestones(actor.id);
 
     return toUpdateResponse(update);
   }

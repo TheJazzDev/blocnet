@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { MiningConfig, Prisma, TipAccountType } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { BadgesService } from '../badges/badges.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MCR_CURRENCY_CODE } from '../tips/tip.constants';
 
@@ -62,6 +63,7 @@ export class MiningService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
+    private readonly badgesService: BadgesService,
   ) {}
 
   async getMe(userId: string) {
@@ -552,6 +554,9 @@ export class MiningService {
     );
     const maturedUnclaimedPoints = maturedUnclaimedAggregate._sum.points ?? 0;
 
+    // Check and award mining milestone badges
+    await this.badgesService.checkMiningMilestones(userId, claimedTotalPoints);
+
     return {
       ok: true,
       sessionId: claimable.id,
@@ -769,6 +774,17 @@ export class MiningService {
           displayName: true,
           avatarUrl: true,
           miningClaimedPoints: true,
+          primaryBadge: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              description: true,
+              imageUrl: true,
+              category: true,
+              rarity: true,
+            },
+          },
           miningSessions: {
             where: {
               claimedAt: null,
@@ -848,6 +864,7 @@ export class MiningService {
           username: profile.username,
           displayName: profile.displayName,
           avatarUrl: profile.avatarUrl,
+          primaryBadge: profile.primaryBadge ?? null,
           claimedTotalPoints,
           maturedUnclaimedPoints,
           lifetimeEarnedPoints,

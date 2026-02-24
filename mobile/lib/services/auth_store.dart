@@ -59,7 +59,7 @@ class AuthStore extends ChangeNotifier {
   StreamSubscription<AuthState>? _authSubscription;
   Future<String?>? _inFlightSilentRefresh;
   static const Duration _authTimeout = Duration(seconds: 15);
-  static const Duration _spaceSwitchDelay = Duration(seconds: 2);
+  static const Duration _spaceSwitchDelay = Duration(milliseconds: 250);
   static const String _spaceKeyPrefix = 'blocnet_active_space_';
   static const String _pendingReferralCodeKey = 'blocnet_pending_referral_code';
 

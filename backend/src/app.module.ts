@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { BadgesModule } from './badges/badges.module';
 import { CommentsModule } from './comments/comments.module';
 import { CommunityPostsModule } from './community-posts/community-posts.module';
+import { QuestsModule } from './quests/quests.module';
 import { DeviceTokensModule } from './device-tokens/device-tokens.module';
 import { EdgeEngineModule } from './edge-engine/edge-engine.module';
 import { FollowsModule } from './follows/follows.module';
@@ -50,6 +51,7 @@ import { envValidationSchema } from './config/env.validation';
     AdminApplicationsModule,
     AdminContentModule,
     BadgesModule,
+    QuestsModule,
     ProjectsModule,
     ProjectAssignmentsModule,
     ProjectProposalsModule,

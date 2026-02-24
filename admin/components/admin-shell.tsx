@@ -26,6 +26,8 @@ import {
   HandCoins,
   ReceiptText,
   Sparkles,
+  Award,
+  Target,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -111,6 +113,12 @@ function buildNavItems(userRoles: string[]) {
     icon: CheckCircle2,
   });
 
+  const gamificationItems = [
+    { href: "/badges", label: "Badges", icon: Award },
+    { href: "/quests", label: "Quests", icon: Target },
+    { href: "/quest-submissions", label: "Quest Reviews", icon: FileCheck },
+  ];
+
   const accessItems = [
     { href: "/users", label: "Users & Roles", icon: Users },
     { href: "/roles", label: "Roles & Access", icon: Shield },
@@ -136,6 +144,7 @@ function buildNavItems(userRoles: string[]) {
     { label: "Content", items: contentItems },
     { label: "Wallet", items: walletItems },
     { label: "Engagement", items: engagementItems },
+    { label: "Gamification", items: gamificationItems },
     { label: "Access", items: accessItems },
     { label: "System", items: systemItems },
   ].filter((group) => group.items.length > 0);

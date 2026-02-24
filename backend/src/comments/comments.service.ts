@@ -9,6 +9,7 @@ import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { AppRole } from '../common/enums/role.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { BadgesService } from '../badges/badges.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ListCommentsQuery } from './dto/list-comments.query';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -20,6 +21,17 @@ const commentInclude = {
       email: true,
       displayName: true,
       avatarUrl: true,
+      primaryBadge: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          description: true,
+          imageUrl: true,
+          category: true,
+          rarity: true,
+        },
+      },
     },
   },
 } satisfies Prisma.CommentInclude;
@@ -29,6 +41,7 @@ export class CommentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
+    private readonly badgesService: BadgesService,
   ) {}
 
   async createComment(
@@ -65,6 +78,9 @@ export class CommentsService {
       resourceId: comment.id,
       metadata: { updateId, projectId: update.projectId },
     });
+
+    // Check and award engagement badges
+    await this.badgesService.checkEngagementMilestones(actor.id);
 
     return this.toCommentResponse(comment);
   }

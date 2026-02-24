@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { BadgesService } from '../badges/badges.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 type ReferralConfig = {
@@ -28,6 +29,7 @@ export class ReferralsService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
+    private readonly badgesService: BadgesService,
   ) {}
 
   async getMe(userId: string) {
@@ -190,6 +192,9 @@ export class ReferralsService {
         referredAt: referredAt.toISOString(),
       },
     });
+
+    // Check and award referral badges to the referrer
+    await this.badgesService.checkReferralMilestones(referrer.id);
 
     return {
       ok: true,

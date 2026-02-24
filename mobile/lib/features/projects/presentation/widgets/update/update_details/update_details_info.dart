@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
@@ -57,6 +58,7 @@ class UpdateDetailsInfo extends StatelessWidget {
             _MetaChip(
               icon: Symbols.person,
               label: post.admin?.name ?? 'Unknown',
+              badge: post.admin?.primaryBadge,
             ),
             _dot(),
             _MetaChip(
@@ -104,10 +106,15 @@ class UpdateDetailsInfo extends StatelessWidget {
 }
 
 class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.icon, required this.label});
+  const _MetaChip({
+    required this.icon,
+    required this.label,
+    this.badge,
+  });
 
   final IconData icon;
   final String label;
+  final dynamic badge;
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +132,13 @@ class _MetaChip extends StatelessWidget {
             fontWeight: FontWeight.w400,
           ),
         ),
+        if (badge != null) ...[
+          const SizedBox(width: 4),
+          BadgeIcon(
+            badge: badge,
+            size: BadgeSize.tiny,
+          ),
+        ],
       ],
     );
   }

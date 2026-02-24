@@ -1,9 +1,12 @@
+import 'package:blocnet/features/badges/data/models/badge_models.dart';
+
 class Admin {
   final String id;
   final String name;
   final String username;
   final String imageUrl;
   final int followers;
+  final BadgeModel? primaryBadge;
 
   Admin({
     required this.id,
@@ -11,6 +14,7 @@ class Admin {
     required this.username,
     required this.imageUrl,
     required this.followers,
+    this.primaryBadge,
   });
 
   Map<String, dynamic> toJson() {
@@ -40,12 +44,23 @@ class Admin {
         ? followersRaw
         : int.tryParse(followersRaw?.toString() ?? '') ?? 0;
 
+    BadgeModel? primaryBadge;
+    final badgeData = json['primaryBadge'];
+    if (badgeData != null && badgeData is Map<String, dynamic>) {
+      try {
+        primaryBadge = BadgeModel.fromApi(badgeData);
+      } catch (_) {
+        primaryBadge = null;
+      }
+    }
+
     return Admin(
       id: id,
       name: name,
       username: username,
       imageUrl: imageUrl,
       followers: followers,
+      primaryBadge: primaryBadge,
     );
   }
 }

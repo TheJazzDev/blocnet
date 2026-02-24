@@ -9,6 +9,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBadgeDto } from './dto/create-badge.dto';
 import { GrantBadgeDto } from './dto/grant-badge.dto';
+import { UpdateBadgeDto } from './dto/update-badge.dto';
 
 type PrismaLike = PrismaService | Prisma.TransactionClient;
 
@@ -43,6 +44,21 @@ export class BadgesService {
 
     if (!badge) {
       throw new NotFoundException(`Badge with slug "${slug}" not found`);
+    }
+
+    return badge;
+  }
+
+  /**
+   * Get badge by ID
+   */
+  async getBadgeById(badgeId: string): Promise<Badge> {
+    const badge = await this.prisma.badge.findUnique({
+      where: { id: badgeId },
+    });
+
+    if (!badge) {
+      throw new NotFoundException(`Badge with ID "${badgeId}" not found`);
     }
 
     return badge;
@@ -154,6 +170,45 @@ export class BadgesService {
   }
 
   /**
+   * Admin: Update an existing badge
+   */
+  async updateBadge(badgeId: string, dto: UpdateBadgeDto, adminId: string) {
+    const badge = await this.prisma.badge.findUnique({
+      where: { id: badgeId },
+    });
+
+    if (!badge) {
+      throw new NotFoundException(`Badge with ID "${badgeId}" not found`);
+    }
+
+    // If updating slug, check for conflicts
+    if (dto.slug && dto.slug !== badge.slug) {
+      const existing = await this.prisma.badge.findUnique({
+        where: { slug: dto.slug },
+      });
+
+      if (existing) {
+        throw new ConflictException(`Badge with slug "${dto.slug}" already exists`);
+      }
+    }
+
+    return this.prisma.badge.update({
+      where: { id: badgeId },
+      data: {
+        ...(dto.slug && { slug: dto.slug }),
+        ...(dto.name && { name: dto.name }),
+        ...(dto.description && { description: dto.description }),
+        ...(dto.imageUrl && { imageUrl: dto.imageUrl }),
+        ...(dto.category && { category: dto.category }),
+        ...(dto.rarity && { rarity: dto.rarity }),
+        ...(dto.pointsRequirement !== undefined && { pointsRequirement: dto.pointsRequirement }),
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      },
+    });
+  }
+
+  /**
    * Admin: Grant a badge to a user
    */
   async grantBadge(dto: GrantBadgeDto, grantedBy: string) {
@@ -187,19 +242,29 @@ export class BadgesService {
     });
 
     // Send notification
-    await this.notificationsService.create({
-      userId: dto.userId,
-      type: 'badge_earned',
-      title: 'New Badge Earned!',
-      body: `You've earned the "${badge.name}" badge!`,
-      payload: {
-        badgeId: badge.id,
-        badgeSlug: badge.slug,
-        badgeName: badge.name,
-        badgeRarity: badge.rarity,
+    await this.notificationsService.notifyMany([
+      {
+        userId: dto.userId,
+        type: 'badge_earned',
+        actorUserId: grantedBy,
+        projectId: null,
+        updateId: null,
+        urgency: null,
+        title: 'New Badge Earned!',
+        body: `You've earned the "${badge.name}" badge!`,
+        payload: {
+          badgeId: badge.id,
+          badgeSlug: badge.slug,
+          badgeName: badge.name,
+          badgeRarity: badge.rarity,
+        },
+        deeplink: `blocnet://profile/badges`,
+        pushData: {
+          type: 'badge_earned',
+          badgeId: badge.id,
+        },
       },
-      deeplink: `blocnet://profile/badges`,
-    });
+    ]);
 
     return userBadge;
   }
@@ -297,19 +362,29 @@ export class BadgesService {
 
     // Send notification (only if not in a transaction)
     if (!prismaClient) {
-      await this.notificationsService.create({
-        userId,
-        type: 'badge_earned',
-        title: 'New Badge Earned!',
-        body: `You've earned the "${badge.name}" badge!`,
-        payload: {
-          badgeId: badge.id,
-          badgeSlug: badge.slug,
-          badgeName: badge.name,
-          badgeRarity: badge.rarity,
+      await this.notificationsService.notifyMany([
+        {
+          userId,
+          type: 'badge_earned',
+          actorUserId: null,
+          projectId: null,
+          updateId: null,
+          urgency: null,
+          title: 'New Badge Earned!',
+          body: `You've earned the "${badge.name}" badge!`,
+          payload: {
+            badgeId: badge.id,
+            badgeSlug: badge.slug,
+            badgeName: badge.name,
+            badgeRarity: badge.rarity,
+          },
+          deeplink: `blocnet://profile/badges`,
+          pushData: {
+            type: 'badge_earned',
+            badgeId: badge.id,
+          },
         },
-        deeplink: `blocnet://profile/badges`,
-      });
+      ]);
     }
 
     return userBadge;

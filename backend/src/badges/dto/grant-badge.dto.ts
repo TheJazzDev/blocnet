@@ -12,7 +12,7 @@ export class GrantBadgeDto {
   @IsNotEmpty()
   badgeSlug: string;
 
-  @ApiProperty({ required: false, type: 'object' })
+  @ApiProperty({ required: false })
   @IsObject()
   @IsOptional()
   metadata?: Record<string, any>;

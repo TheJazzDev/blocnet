@@ -6,6 +6,7 @@ import 'package:blocnet/features/projects/presentation/sections/home.dart';
 import 'package:blocnet/features/projects/presentation/sections/projects/discover.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/screen/community_screen.dart';
+import 'package:blocnet/screen/profile_screen.dart';
 import 'package:blocnet/screen/wallet_screen.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/mining_store.dart';
@@ -42,8 +43,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _userIndex = widget.initialIndex.clamp(0, 4);
-    _hunterIndex = widget.initialIndex.clamp(0, 4);
+    _userIndex = widget.initialIndex.clamp(0, 5);
+    _hunterIndex = widget.initialIndex.clamp(0, 5);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<NotificationsStore>().fetchNotificationsOnce();
@@ -77,22 +78,36 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     final token = ++_spaceSwitchToken;
 
-    // Keep users on the equivalent 5th tab across spaces.
-    setState(() {
-      _isSwitchingSpace = true;
-      if (isHunterSpace) {
-        _hunterIndex = 4;
-      } else {
-        _userIndex = 4;
-      }
-    });
-
-    _lastIsHunterSpace = isHunterSpace;
-
-    Future<void>.delayed(const Duration(seconds: 2), () {
+    // Check if there's a pending navigation request
+    _checkPendingNavigation().then((targetTab) {
       if (!mounted || token != _spaceSwitchToken) return;
-      setState(() => _isSwitchingSpace = false);
+
+      setState(() {
+        _isSwitchingSpace = true;
+        if (isHunterSpace) {
+          _hunterIndex = targetTab ?? 4;
+        } else {
+          _userIndex = targetTab ?? 4;
+        }
+      });
+
+      _lastIsHunterSpace = isHunterSpace;
+
+      Future<void>.delayed(const Duration(milliseconds: 300), () {
+        if (!mounted || token != _spaceSwitchToken) return;
+        setState(() => _isSwitchingSpace = false);
+      });
     });
+  }
+
+  Future<int?> _checkPendingNavigation() async {
+    final prefs = await SharedPreferences.getInstance();
+    final targetTab = prefs.getInt('navigate_to_tab_after_switch');
+    if (targetTab != null) {
+      await prefs.remove('navigate_to_tab_after_switch');
+      return targetTab;
+    }
+    return null;
   }
 
   void _onUserNavTap(int pageIndex) {

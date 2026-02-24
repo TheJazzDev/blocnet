@@ -14,13 +14,13 @@ const _userTabs = [
     showNotificationBell: false,
   ),
   _TabMeta(
-    title: 'Mining',
+    title: 'Community',
     showSearch: true,
     showFilter: false,
     showNotificationBell: false,
   ),
   _TabMeta(
-    title: 'Community',
+    title: 'Mining',
     showSearch: true,
     showFilter: false,
     showNotificationBell: false,
@@ -28,6 +28,12 @@ const _userTabs = [
   _TabMeta(
     title: 'Wallet',
     showSearch: true,
+    showFilter: false,
+    showNotificationBell: false,
+  ),
+  _TabMeta(
+    title: 'Profile',
+    showSearch: false,
     showFilter: false,
     showNotificationBell: false,
   ),
@@ -47,13 +53,13 @@ const _hunterTabs = [
     showNotificationBell: false,
   ),
   _TabMeta(
-    title: 'Mining',
+    title: 'Hunter Hub',
     showSearch: true,
     showFilter: false,
     showNotificationBell: false,
   ),
   _TabMeta(
-    title: 'Hunter Hub',
+    title: 'Mining',
     showSearch: true,
     showFilter: false,
     showNotificationBell: false,
@@ -61,6 +67,12 @@ const _hunterTabs = [
   _TabMeta(
     title: 'Wallet',
     showSearch: true,
+    showFilter: false,
+    showNotificationBell: false,
+  ),
+  _TabMeta(
+    title: 'Profile',
+    showSearch: false,
     showFilter: false,
     showNotificationBell: false,
   ),
@@ -95,9 +107,10 @@ class _UserSpaceShell extends StatelessWidget {
         children: const [
           HomeScreen(),
           DiscoverScreen(),
-          MiningScreen(),
           CommunityScreen(),
+          MiningScreen(),
           WalletScreen(),
+          ProfileScreen(),
         ],
       ),
       bottomNavigationBar: _UserNav(
@@ -124,7 +137,7 @@ class _HunterSpaceShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final tab = _hunterTabs[currentIndex];
     final showComposerFab =
-        currentIndex == 0 || currentIndex == 1 || currentIndex == 3;
+        currentIndex == 0 || currentIndex == 1 || currentIndex == 2;
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -142,9 +155,10 @@ class _HunterSpaceShell extends StatelessWidget {
         children: const [
           HomeScreen(),
           DiscoverScreen(),
-          MiningScreen(),
           HunterHubScreen(),
+          MiningScreen(),
           WalletScreen(),
+          ProfileScreen(),
         ],
       ),
       bottomNavigationBar: _HunterNav(

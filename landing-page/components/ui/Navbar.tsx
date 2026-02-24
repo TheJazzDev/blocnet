@@ -22,6 +22,7 @@ export function Navbar() {
   const isHomePage = pathname === '/';
 
   const navLinks = [
+    { label: 'Home', href: '/', type: 'page' },
     { label: 'About', href: '/about', type: 'page' },
     { label: 'Mining', href: '/mining', type: 'page' },
     { label: 'Community', href: '/community', type: 'page' },

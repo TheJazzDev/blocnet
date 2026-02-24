@@ -12,12 +12,6 @@ export function EdgeEngine() {
       <div className="relative z-10 max-w-6xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-10 sm:mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-teal-500/10 to-primary/10 border border-teal-500/20 rounded-full mb-4 sm:mb-6">
-            <span className="text-xl sm:text-2xl">🤖</span>
-            <span className="text-xs sm:text-sm text-teal-300 font-semibold">
-              AI-POWERED INTELLIGENCE
-            </span>
-          </div>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 sm:mb-4 md:mb-6">
             Introducing{' '}

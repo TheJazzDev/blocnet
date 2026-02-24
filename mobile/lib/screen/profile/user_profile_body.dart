@@ -1,9 +1,11 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/badges_store.dart';
 import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/services/tips_store.dart';
 import 'package:blocnet/services/user_profile_store.dart';
@@ -43,11 +45,13 @@ class _UserProfileBodyState extends State<UserProfileBody> {
       final userId = widget.auth.userId ?? '';
       final profileStore = context.read<UserProfileStore>();
       final tipsStore = context.read<TipsStore>();
+      final badgesStore = context.read<BadgesStore>();
       profileStore.fetchInitialOnce(userId: userId);
       profileStore.refreshFollowingProfiles();
       tipsStore.ensureUserScope(userId);
       tipsStore.loadOverview(force: true);
       tipsStore.loadSentHistory(force: true, limit: 100);
+      badgesStore.loadMyBadges();
     });
   }
 
@@ -55,6 +59,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
   Widget build(BuildContext context) {
     final profileStore = context.watch<UserProfileStore>();
     final tipsStore = context.watch<TipsStore>();
+    final badgesStore = context.watch<BadgesStore>();
     final followingCount = profileStore.followingProfilesCount;
     final tipsSent = tipsStore.profileTipsSentValue;
     final auth = widget.auth;
@@ -71,6 +76,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
           context.read<UserProfileStore>().refreshAll(),
           context.read<TipsStore>().loadOverview(force: true),
           context.read<TipsStore>().loadSentHistory(force: true, limit: 100),
+          context.read<BadgesStore>().loadMyBadges(force: true),
         ]);
       },
       child: SingleChildScrollView(
@@ -82,6 +88,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
               displayName: displayName,
               avatarUrl: auth.avatarUrl,
               email: auth.email,
+              primaryBadge: badgesStore.primaryBadge,
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
@@ -112,6 +119,20 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                 children: [
                   const _SectionLabel('More'),
                   const SizedBox(height: 8),
+                  _ProfileTile(
+                    icon: Icons.emoji_events_outlined,
+                    title: 'Badges',
+                    subtitle: 'View and manage your earned badges',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.badges),
+                  ),
+                  _ProfileTile(
+                    icon: Icons.task_alt_outlined,
+                    title: 'Quests',
+                    subtitle: 'Complete quests to earn rewards',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.quests),
+                  ),
                   _ProfileTile(
                     icon: Icons.volunteer_activism_outlined,
                     title: 'Tip History',

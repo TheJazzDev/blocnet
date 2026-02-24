@@ -11,6 +11,9 @@ class _UserNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authStore = context.watch<AuthStore>();
+    final isInHunterSpace = authStore.isInHunterSpace;
+
     return _NavContainer(
       child: Row(
         children: [
@@ -32,6 +35,13 @@ class _UserNav extends StatelessWidget {
             icon: Icons.groups_outlined,
             activeIcon: Icons.groups_rounded,
             label: 'Community',
+            isActive: currentIndex == 2,
+            onTap: () => onTap(2),
+          ),
+          _NavItem(
+            icon: Icons.bolt_outlined,
+            activeIcon: Icons.bolt_rounded,
+            label: 'Mining',
             isActive: currentIndex == 3,
             onTap: () => onTap(3),
           ),
@@ -43,11 +53,12 @@ class _UserNav extends StatelessWidget {
             onTap: () => onTap(4),
           ),
           _NavItem(
-            icon: Icons.bolt_outlined,
-            activeIcon: Icons.bolt_rounded,
-            label: 'Mining',
-            isActive: currentIndex == 2,
-            onTap: () => onTap(2),
+            icon: Icons.person_outlined,
+            activeIcon: Icons.person_rounded,
+            label: 'Profile',
+            isActive: currentIndex == 5,
+            onTap: () => onTap(5),
+            showBadge: isInHunterSpace,
           ),
         ],
       ),
@@ -87,6 +98,13 @@ class _HunterNav extends StatelessWidget {
             icon: Icons.radar_outlined,
             activeIcon: Icons.radar_rounded,
             label: 'Hub',
+            isActive: currentIndex == 2,
+            onTap: () => onTap(2),
+          ),
+          _NavItem(
+            icon: Icons.bolt_outlined,
+            activeIcon: Icons.bolt_rounded,
+            label: 'Mining',
             isActive: currentIndex == 3,
             onTap: () => onTap(3),
           ),
@@ -98,11 +116,12 @@ class _HunterNav extends StatelessWidget {
             onTap: () => onTap(4),
           ),
           _NavItem(
-            icon: Icons.bolt_outlined,
-            activeIcon: Icons.bolt_rounded,
-            label: 'Mining',
-            isActive: currentIndex == 2,
-            onTap: () => onTap(2),
+            icon: Icons.person_outlined,
+            activeIcon: Icons.person_rounded,
+            label: 'Profile',
+            isActive: currentIndex == 5,
+            onTap: () => onTap(5),
+            showBadge: true,
           ),
         ],
       ),
@@ -186,6 +205,7 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.showBadge = false,
   });
 
   final IconData icon;
@@ -193,6 +213,7 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +237,29 @@ class _NavItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
-            Icon(icon, size: 21, color: color),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(isActive ? activeIcon : icon, size: 21, color: color),
+                if (showBadge)
+                  Positioned(
+                    right: -4,
+                    top: -2,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary400,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.bgSurface,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 4),
             Text(
               label,

@@ -5,11 +5,13 @@ class _UserHero extends StatelessWidget {
     required this.displayName,
     required this.avatarUrl,
     required this.email,
+    this.primaryBadge,
   });
 
   final String displayName;
   final String? avatarUrl;
   final String? email;
+  final dynamic primaryBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -141,13 +143,25 @@ class _UserHero extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              Text(
-                displayName,
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: 22,
-                  weight: FontWeight.w800,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    displayName,
+                    style: AppTypography.custom(
+                      color: AppColors.textPrimary,
+                      size: 22,
+                      weight: FontWeight.w800,
+                    ),
+                  ),
+                  if (primaryBadge != null) ...[
+                    const SizedBox(width: 8),
+                    BadgeIcon(
+                      badge: primaryBadge,
+                      size: BadgeSize.medium,
+                    ),
+                  ],
+                ],
               ),
               if (email?.trim().isNotEmpty ?? false) ...[
                 const SizedBox(height: 6),

@@ -4,11 +4,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MiningPointSource, Prisma, QuestStatus } from '@prisma/client';
+import {
+  MiningPointSource,
+  Prisma,
+  QuestStatus,
+  QuestVerificationStatus,
+} from '@prisma/client';
 import { BadgesService } from '../badges/badges.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestDto } from './dto/create-quest.dto';
+import { UpdateQuestDto } from './dto/update-quest.dto';
 import { SubmitQuestProofDto, VerifyQuestDto } from './dto/quest-action.dto';
 
 type PrismaLike = PrismaService | Prisma.TransactionClient;
@@ -333,44 +339,157 @@ export class QuestsService {
   }
 
   /**
+   * Admin: Update an existing quest
+   */
+  async updateQuest(questId: string, dto: UpdateQuestDto, adminId: string) {
+    const quest = await this.prisma.quest.findUnique({
+      where: { id: questId },
+    });
+
+    if (!quest) {
+      throw new NotFoundException(`Quest with ID "${questId}" not found`);
+    }
+
+    // If updating slug, check for conflicts
+    if (dto.slug && dto.slug !== quest.slug) {
+      const existing = await this.prisma.quest.findUnique({
+        where: { slug: dto.slug },
+      });
+
+      if (existing) {
+        throw new ConflictException(`Quest with slug "${dto.slug}" already exists`);
+      }
+    }
+
+    return this.prisma.quest.update({
+      where: { id: questId },
+      data: {
+        ...(dto.slug && { slug: dto.slug }),
+        ...(dto.title && { title: dto.title }),
+        ...(dto.description && { description: dto.description }),
+        ...(dto.type && { type: dto.type }),
+        ...(dto.category && { category: dto.category }),
+        ...(dto.rewardPoints !== undefined && { rewardPoints: dto.rewardPoints }),
+        ...(dto.rewardBadgeId !== undefined && { rewardBadgeId: dto.rewardBadgeId }),
+        ...(dto.targetUrl !== undefined && { targetUrl: dto.targetUrl }),
+        ...(dto.targetAction !== undefined && { targetAction: dto.targetAction }),
+        ...(dto.verificationMethod && { verificationMethod: dto.verificationMethod }),
+        ...(dto.requiredProof !== undefined && { requiredProof: dto.requiredProof }),
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.expiresAt !== undefined && { expiresAt: dto.expiresAt }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      },
+    });
+  }
+
+  /**
    * Admin: Get all quest submissions pending verification
    */
   async getPendingSubmissions(limit = 50, offset = 0) {
-    const [submissions, total] = await Promise.all([
-      this.prisma.questSubmission.findMany({
-        where: {
-          verificationStatus: 'pending',
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              username: true,
-              displayName: true,
-            },
-          },
-          userQuest: {
-            include: {
-              quest: true,
-            },
-          },
-        },
-        orderBy: { submittedAt: 'asc' },
-        take: limit,
-        skip: offset,
-      }),
-      this.prisma.questSubmission.count({
-        where: { verificationStatus: 'pending' },
-      }),
-    ]);
+    return this.getSubmissionsByStatus('pending', limit, offset);
+  }
 
-    return {
-      submissions,
-      total,
-      limit,
-      offset,
-    };
+  /**
+   * Admin: Get quest submissions by status
+   */
+  async getSubmissionsByStatus(status: string, limit = 50, offset = 0) {
+    const normalizedStatus = status.toLowerCase();
+    const where: Prisma.QuestSubmissionWhereInput = {};
+    if (normalizedStatus !== 'all') {
+      if (
+        normalizedStatus !== QuestVerificationStatus.pending &&
+        normalizedStatus !== QuestVerificationStatus.approved &&
+        normalizedStatus !== QuestVerificationStatus.rejected
+      ) {
+        throw new BadRequestException(
+          `Invalid submission status "${status}". Expected one of: all, pending, approved, rejected`,
+        );
+      }
+      where.verificationStatus = normalizedStatus;
+    }
+
+    const submissions = await this.prisma.questSubmission.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        },
+        userQuest: {
+          include: {
+            quest: true,
+          },
+        },
+      },
+      orderBy: { submittedAt: 'desc' },
+      take: limit,
+      skip: offset,
+    });
+
+    const rewardBadgeIds = Array.from(
+      new Set(
+        submissions
+          .map((submission) => submission.userQuest.quest.rewardBadgeId)
+          .filter((badgeId): badgeId is string => Boolean(badgeId)),
+      ),
+    );
+
+    const badgesById = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        imageUrl: string;
+      }
+    >();
+
+    if (rewardBadgeIds.length > 0) {
+      const badges = await this.prisma.badge.findMany({
+        where: { id: { in: rewardBadgeIds } },
+        select: {
+          id: true,
+          name: true,
+          imageUrl: true,
+        },
+      });
+
+      for (const badge of badges) {
+        badgesById.set(badge.id, badge);
+      }
+    }
+
+    // Transform the response to match frontend expectations
+    return submissions.map((submission) => ({
+      id: submission.id,
+      userId: submission.userId,
+      questId: submission.userQuest.questId,
+      status: submission.verificationStatus,
+      proofUrl: submission.proofUrl,
+      proofText: submission.proofText,
+      screenshotUrl: submission.screenshot,
+      reviewedBy: submission.verifiedBy,
+      reviewNotes: submission.rejectionReason,
+      submittedAt: submission.submittedAt.toISOString(),
+      reviewedAt: submission.verifiedAt?.toISOString() ?? null,
+      user: submission.user,
+      quest: {
+        id: submission.userQuest.quest.id,
+        slug: submission.userQuest.quest.slug,
+        title: submission.userQuest.quest.title,
+        description: submission.userQuest.quest.description,
+        type: submission.userQuest.quest.type,
+        category: submission.userQuest.quest.category,
+        rewardPoints: submission.userQuest.quest.rewardPoints,
+        rewardBadge: submission.userQuest.quest.rewardBadgeId
+          ? (badgesById.get(submission.userQuest.quest.rewardBadgeId) ?? null)
+          : null,
+        requiredProof: submission.userQuest.quest.requiredProof,
+      },
+    }));
   }
 
   /**
@@ -466,18 +585,28 @@ export class QuestsService {
         }
 
         // Send notification
-        await this.notificationsService.create({
-          userId,
-          type: 'quest_verified',
-          title: 'Quest Completed!',
-          body: `Your quest "${quest.title}" has been verified. You earned ${quest.rewardPoints} points!`,
-          payload: {
-            questId: quest.id,
-            questSlug: quest.slug,
-            rewardPoints: quest.rewardPoints,
+        await this.notificationsService.notifyMany([
+          {
+            userId,
+            type: 'quest_verified',
+            actorUserId: verifiedBy,
+            projectId: null,
+            updateId: null,
+            urgency: null,
+            title: 'Quest Completed!',
+            body: `Your quest "${quest.title}" has been verified. You earned ${quest.rewardPoints} points!`,
+            payload: {
+              questId: quest.id,
+              questSlug: quest.slug,
+              rewardPoints: quest.rewardPoints,
+            },
+            deeplink: `blocnet://quests/${quest.slug}`,
+            pushData: {
+              type: 'quest_verified',
+              questId: quest.id,
+            },
           },
-          deeplink: `blocnet://quests/${quest.slug}`,
-        });
+        ]);
 
         return { message: 'Quest verified and rewards awarded' };
       });
@@ -502,18 +631,28 @@ export class QuestsService {
       });
 
       // Send notification
-      await this.notificationsService.create({
-        userId: submission.userId,
-        type: 'quest_rejected',
-        title: 'Quest Submission Rejected',
-        body: dto.rejectionReason || 'Your quest submission was rejected. Please try again.',
-        payload: {
-          questId: submission.userQuest.quest.id,
-          questSlug: submission.userQuest.quest.slug,
-          rejectionReason: dto.rejectionReason,
+      await this.notificationsService.notifyMany([
+        {
+          userId: submission.userId,
+          type: 'quest_rejected',
+          actorUserId: verifiedBy,
+          projectId: null,
+          updateId: null,
+          urgency: null,
+          title: 'Quest Submission Rejected',
+          body: dto.rejectionReason || 'Your quest submission was rejected. Please try again.',
+          payload: {
+            questId: submission.userQuest.quest.id,
+            questSlug: submission.userQuest.quest.slug,
+            rejectionReason: dto.rejectionReason,
+          },
+          deeplink: `blocnet://quests/${submission.userQuest.quest.slug}`,
+          pushData: {
+            type: 'quest_rejected',
+            questId: submission.userQuest.quest.id,
+          },
         },
-        deeplink: `blocnet://quests/${submission.userQuest.quest.slug}`,
-      });
+      ]);
 
       return { message: 'Quest submission rejected' };
     }

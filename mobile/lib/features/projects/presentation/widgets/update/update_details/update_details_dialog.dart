@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/comments/data/models/comment_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
@@ -473,6 +474,13 @@ class _CommentTile extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
+              if (comment.admin?.primaryBadge != null) ...[
+                const SizedBox(width: 4),
+                BadgeIcon(
+                  badge: comment.admin!.primaryBadge!,
+                  size: BadgeSize.small,
+                ),
+              ],
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

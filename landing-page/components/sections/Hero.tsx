@@ -36,21 +36,15 @@ export function Hero() {
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
           <Link
             href="#download"
-            className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-teal-500 text-white rounded-lg font-medium text-sm sm:text-base hover:bg-teal-600 transition-colors"
+            className="w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition-all duration-300 hover:scale-105"
           >
             Download App
           </Link>
           <Link
-            href="/roadmap"
-            className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-teal-500/10 to-primary/10 border border-teal-500/20 text-foreground rounded-lg font-medium text-sm sm:text-base hover:border-teal-500/40 transition-colors"
+            href="/about"
+            className="w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-surface-2 to-surface-2/80 border border-border text-foreground rounded-xl font-semibold text-sm sm:text-base hover:border-teal-500/30 transition-all duration-300"
           >
-            View Roadmap
-          </Link>
-          <Link
-            href="#features"
-            className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-surface-2 text-foreground rounded-lg font-medium text-sm sm:text-base hover:bg-surface-2/80 transition-colors"
-          >
-            Explore Features
+            Learn More
           </Link>
         </div>
 

@@ -355,6 +355,7 @@ class MiningLeaderboardEntry {
     required this.username,
     required this.displayName,
     required this.avatarUrl,
+    this.primaryBadge,
     required this.claimedTotalPoints,
     required this.maturedUnclaimedPoints,
     required this.lifetimeEarnedPoints,
@@ -370,6 +371,7 @@ class MiningLeaderboardEntry {
   final String? username;
   final String? displayName;
   final String? avatarUrl;
+  final dynamic primaryBadge;
   final int claimedTotalPoints;
   final int maturedUnclaimedPoints;
   final int lifetimeEarnedPoints;
@@ -380,12 +382,24 @@ class MiningLeaderboardEntry {
   final int activeReferralsSnapshot;
 
   factory MiningLeaderboardEntry.fromApi(Map<String, dynamic> json) {
+    dynamic primaryBadge;
+    final badgeData = json['primaryBadge'];
+    if (badgeData != null && badgeData is Map<String, dynamic>) {
+      try {
+        // Import BadgeModel if needed
+        primaryBadge = badgeData;
+      } catch (_) {
+        primaryBadge = null;
+      }
+    }
+
     return MiningLeaderboardEntry(
       rank: int.tryParse(json['rank']?.toString() ?? '') ?? 0,
       userId: json['userId']?.toString() ?? '',
       username: json['username']?.toString(),
       displayName: json['displayName']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
+      primaryBadge: primaryBadge,
       claimedTotalPoints:
           int.tryParse(json['claimedTotalPoints']?.toString() ?? '') ?? 0,
       maturedUnclaimedPoints:

@@ -11,6 +11,7 @@ import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HunterHubScreen extends StatefulWidget {
   const HunterHubScreen({super.key});
@@ -139,6 +140,8 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
                   const SeasonLeaderboard(),
                   const SizedBox(height: 24),
                   _EliteHunterBanner(successRate: successRate),
+                  const SizedBox(height: 24),
+                  const _CommunityBridgeLink(),
                   const SizedBox(height: 120),
                 ]),
               ),
@@ -498,4 +501,60 @@ String _formatTipTimestamp(DateTime date) {
   final month = date.month.toString().padLeft(2, '0');
   final day = date.day.toString().padLeft(2, '0');
   return '$month/$day';
+}
+
+class _CommunityBridgeLink extends StatelessWidget {
+  const _CommunityBridgeLink();
+
+  void _navigateToCommunity(BuildContext context) async {
+    final authStore = context.read<AuthStore>();
+
+    // Switch to User space (Community tab is at index 2 in User space)
+    authStore.setActiveSpace('user');
+
+    // Store preference to navigate to Community tab after space switch
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('navigate_to_tab_after_switch', 2);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _navigateToCommunity(context),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.forum_outlined,
+              size: 18,
+              color: AppColors.primary400,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Discuss with the community',
+              style: AppTypography.custom(
+                size: 14,
+                weight: FontWeight.w600,
+                color: AppColors.primary400,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_forward_rounded,
+              size: 16,
+              color: AppColors.primary400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
