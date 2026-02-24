@@ -2,6 +2,7 @@ import { Navbar } from '@/components/ui/Navbar';
 import { Hero } from '@/components/sections/Hero';
 import { AppDownload } from '@/components/sections/AppDownload';
 import { Features } from '@/components/sections/Features';
+import { EdgeEngine } from '@/components/sections/EdgeEngine';
 import { Mining } from '@/components/sections/Mining';
 import { Wallet } from '@/components/sections/Wallet';
 import { Hunter } from '@/components/sections/Hunter';
@@ -16,6 +17,7 @@ export default function Home() {
       <Hero />
       <AppDownload />
       <Features />
+      <EdgeEngine />
       <Mining />
       <Wallet />
       <Hunter />

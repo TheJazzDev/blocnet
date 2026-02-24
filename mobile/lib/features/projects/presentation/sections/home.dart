@@ -742,29 +742,39 @@ class _EdgeBriefCard extends StatelessWidget {
     if (isLoading) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderSubtle),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.bgSurface,
+              AppColors.bgSurface.withValues(alpha: 0.9),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.borderSubtle.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
         ),
         child: Row(
           children: [
             SizedBox(
-              width: 16,
-              height: 16,
+              width: 18,
+              height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
                 color: AppColors.primary400,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Text(
               'Loading edge brief...',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 12,
-                weight: FontWeight.w400,
+                size: 13,
+                weight: FontWeight.w500,
               ),
             ),
           ],
@@ -779,42 +789,75 @@ class _EdgeBriefCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgSurface,
+            AppColors.bgSurface.withValues(alpha: 0.9),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary500.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary500.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome, size: 16, color: AppColors.primary400),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary500.withValues(alpha: 0.2),
+                      AppColors.primary500.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 16,
+                  color: AppColors.primary400,
+                ),
+              ),
+              const SizedBox(width: 10),
               Text(
                 'BLOCNET EDGE ENGINE',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
                   size: 10,
-                  weight: FontWeight.w700,
-                  letterSpacing: 1.0,
+                  weight: FontWeight.w800,
+                  letterSpacing: 1.2,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             summary.headline.trim().isEmpty
                 ? 'Edge intelligence is ready.'
                 : summary.headline,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 13,
-              weight: FontWeight.w600,
+              size: 14,
+              weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -831,10 +874,10 @@ class _EdgeBriefCard extends StatelessWidget {
             ],
           ),
           if (summary.topDecisions.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             ...summary.topDecisions.take(3).map((decision) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: _EdgeDecisionRow(
                   decision: decision,
                   onAction: onAction,
@@ -857,18 +900,26 @@ class _BriefMetricChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.bgElevated,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.borderSubtle),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary500.withValues(alpha: 0.15),
+            AppColors.primary500.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.primary500.withValues(alpha: 0.25),
+          width: 1,
+        ),
       ),
       child: Text(
         label,
         style: AppTypography.custom(
-          color: AppColors.textMuted,
-          size: 10,
-          weight: FontWeight.w600,
+          color: AppColors.primary400,
+          size: 11,
+          weight: FontWeight.w700,
         ),
       ),
     );
@@ -889,13 +940,25 @@ class _EdgeDecisionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final urgencyColor = _urgencyColor(decision.urgency);
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.bgElevated,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderSubtle),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgElevated,
+            AppColors.bgElevated.withValues(alpha: 0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: urgencyColor.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -906,20 +969,50 @@ class _EdgeDecisionRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 12,
-              weight: FontWeight.w600,
+              size: 13,
+              weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '${decision.projectName} · ${decision.urgency.toUpperCase()} · score ${decision.edgeScore.toStringAsFixed(2)}',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: 10,
-              weight: FontWeight.w500,
-            ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      urgencyColor.withValues(alpha: 0.2),
+                      urgencyColor.withValues(alpha: 0.12),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: urgencyColor.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  decision.urgency.toUpperCase(),
+                  style: AppTypography.custom(
+                    color: urgencyColor,
+                    size: 9,
+                    weight: FontWeight.w800,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${decision.projectName} · ${decision.edgeScore.toStringAsFixed(2)}',
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 11,
+                  weight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               _ActionChip(
@@ -945,12 +1038,19 @@ class _EdgeDecisionRow extends StatelessWidget {
               const Spacer(),
               GestureDetector(
                 onTap: () => onExplain(decision),
-                child: Text(
-                  'Why ranked?',
-                  style: AppTypography.custom(
-                    color: AppColors.primary400,
-                    size: 10,
-                    weight: FontWeight.w700,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary500.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'Why?',
+                    style: AppTypography.custom(
+                      color: AppColors.primary400,
+                      size: 10,
+                      weight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
@@ -959,6 +1059,17 @@ class _EdgeDecisionRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _urgencyColor(String urgency) {
+    switch (urgency.toLowerCase()) {
+      case 'high':
+        return AppColors.error500;
+      case 'medium':
+        return AppColors.warning500;
+      default:
+        return AppColors.primary400;
+    }
   }
 }
 
@@ -983,24 +1094,29 @@ class _ActionChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isRecommended ? color.withValues(alpha: 0.18) : color,
+          gradient: isRecommended
+              ? LinearGradient(
+                  colors: [
+                    color.withValues(alpha: 0.25),
+                    color.withValues(alpha: 0.15),
+                  ],
+                )
+              : null,
+          color: isRecommended ? null : color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isRecommended ? color.withValues(alpha: 0.45) : color,
+            color: color.withValues(alpha: isRecommended ? 0.4 : 0.3),
+            width: 1.5,
           ),
         ),
         child: Text(
           label,
           style: AppTypography.custom(
-            color: isRecommended
-                ? AppColors.textPrimary
-                : action == 'ignore'
-                    ? AppColors.textPrimary
-                    : Colors.black,
-            size: 10,
-            weight: FontWeight.w700,
+            color: color,
+            size: 11,
+            weight: FontWeight.w800,
           ),
         ),
       ),
@@ -1015,7 +1131,7 @@ class _ActionChip extends StatelessWidget {
         return AppColors.warning500;
       case 'ignore':
       default:
-        return AppColors.textFaint;
+        return AppColors.textMuted;
     }
   }
 }

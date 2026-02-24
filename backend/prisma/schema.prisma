@@ -77,6 +77,10 @@ enum NotificationType {
   mining_claimed
   referral_bound
   referral_admin_bound
+  badge_earned
+  quest_completed
+  quest_verified
+  quest_rejected
   system
 }
 
@@ -190,6 +194,41 @@ enum KycStatus {
 enum MiningPointSource {
   cycle_claim
   admin_adjustment
+  quest_reward
+}
+
+enum BadgeCategory {
+  engagement
+  mining
+  social
+  trust
+  special
+}
+
+enum BadgeRarity {
+  common
+  rare
+  epic
+  legendary
+}
+
+enum QuestType {
+  external_link
+  internal_action
+  social_media
+}
+
+enum QuestStatus {
+  not_started
+  in_progress
+  pending_verification
+  completed
+}
+
+enum QuestVerificationStatus {
+  pending
+  approved
+  rejected
 }
 
 enum TipCurrencyKind {
@@ -234,6 +273,7 @@ model Profile {
   referredById                   String?                 @db.Uuid
   referredAt                     DateTime?
   miningClaimedPoints            BigInt                  @default(0)
+  primaryBadgeId                 String?                 @db.Uuid
   createdAt                      DateTime                @default(now())
   updatedAt                      DateTime                @updatedAt
   roles                          UserRole[]
@@ -280,8 +320,14 @@ model Profile {
   miningSessions                 MiningSession[]
   miningPointLedgerEntries       MiningPointLedger[]
   miningHourlyCheckpoints        MiningHourlyCheckpoint[]
+  primaryBadge                   Badge?                  @relation("ProfilePrimaryBadge", fields: [primaryBadgeId], references: [id], onDelete: SetNull)
+  earnedBadges                   UserBadge[]             @relation("UserEarnedBadges")
+  grantedBadges                  UserBadge[]             @relation("BadgeGrantor")
+  userQuests                     UserQuest[]
+  questSubmissions               QuestSubmission[]
 
   @@index([referredById])
+  @@index([primaryBadgeId])
 }
 
 model UserRole {
@@ -1131,4 +1177,112 @@ model MiningConfig {
   activeReferralWindowHours Int      @default(168)
   referralBindWindowHours   Int      @default(24)
   updatedAt                 DateTime @updatedAt
+}
+
+model Badge {
+  id                String        @id @default(uuid()) @db.Uuid
+  slug              String        @unique
+  name              String
+  description       String
+  imageUrl          String
+  category          BadgeCategory
+  rarity            BadgeRarity
+  pointsRequirement Int           @default(0)
+  isActive          Boolean       @default(true)
+  sortOrder         Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  userBadges     UserBadge[]          @relation("BadgeEarnedBy")
+  primaryForUsers Profile[]           @relation("ProfilePrimaryBadge")
+
+  @@index([category, sortOrder])
+  @@index([rarity, isActive])
+}
+
+model UserBadge {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  badgeId   String   @db.Uuid
+  earnedAt  DateTime @default(now())
+  grantedBy String?  @db.Uuid
+  metadata  Json?
+
+  user    Profile  @relation("UserEarnedBadges", fields: [userId], references: [id], onDelete: Cascade)
+  badge   Badge    @relation("BadgeEarnedBy", fields: [badgeId], references: [id], onDelete: Restrict)
+  grantor Profile? @relation("BadgeGrantor", fields: [grantedBy], references: [id], onDelete: SetNull)
+
+  @@unique([userId, badgeId])
+  @@index([userId, earnedAt])
+  @@index([badgeId, earnedAt])
+}
+
+model Quest {
+  id                  String     @id @default(uuid()) @db.Uuid
+  slug                String     @unique
+  title               String
+  description         String
+  type                QuestType
+  category            BadgeCategory
+  rewardPoints        Int        @default(0)
+  rewardBadgeId       String?    @db.Uuid
+  targetUrl           String?
+  targetAction        String?
+  verificationMethod  String     @default("manual")
+  requiredProof       String?
+  isActive            Boolean    @default(true)
+  sortOrder           Int        @default(0)
+  expiresAt           DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  userQuests UserQuest[]
+
+  @@index([isActive, sortOrder])
+  @@index([category, isActive])
+  @@index([expiresAt])
+}
+
+model UserQuest {
+  id          String      @id @default(uuid()) @db.Uuid
+  userId      String      @db.Uuid
+  questId     String      @db.Uuid
+  status      QuestStatus @default(not_started)
+  progress    Int         @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user        Profile           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quest       Quest             @relation(fields: [questId], references: [id], onDelete: Cascade)
+  submissions QuestSubmission[]
+
+  @@unique([userId, questId])
+  @@index([userId, status])
+  @@index([questId, status])
+  @@index([status, completedAt])
+}
+
+model QuestSubmission {
+  id                 String                  @id @default(uuid()) @db.Uuid
+  userQuestId        String                  @db.Uuid
+  userId             String                  @db.Uuid
+  proofUrl           String?
+  proofText          String?
+  screenshot         String?
+  verificationStatus QuestVerificationStatus @default(pending)
+  verifiedBy         String?                 @db.Uuid
+  verifiedAt         DateTime?
+  rejectionReason    String?
+  submittedAt        DateTime                @default(now())
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  userQuest UserQuest @relation(fields: [userQuestId], references: [id], onDelete: Cascade)
+  user      Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, verificationStatus])
+  @@index([userQuestId, submittedAt])
+  @@index([verificationStatus, submittedAt])
 }

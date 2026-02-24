@@ -92,29 +92,89 @@ class _LeaderboardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(item.sessionStatus);
+    final isTop3 = item.rank <= 3;
 
-    return DecoratedBox(
+    return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgSurface.withValues(alpha: 0.78),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgSurface,
+            AppColors.bgSurface.withValues(alpha: 0.85),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isTop3
+              ? AppColors.warning500.withValues(alpha: 0.3)
+              : AppColors.borderSubtle.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
+        boxShadow: isTop3
+            ? [
+                BoxShadow(
+                  color: AppColors.warning500.withValues(alpha: 0.1),
+                  blurRadius: 12,
+                ),
+              ]
+            : null,
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 36,
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: isTop3
+                  ? LinearGradient(
+                      colors: [
+                        AppColors.warning500.withValues(alpha: 0.2),
+                        AppColors.warning500.withValues(alpha: 0.1),
+                      ],
+                    )
+                  : null,
+              color: isTop3 ? null : AppColors.bgElevated.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isTop3
+                    ? AppColors.warning500.withValues(alpha: 0.4)
+                    : AppColors.borderSubtle.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Center(
               child: Text(
                 '#${item.rank}',
                 style: AppTypography.custom(
-                  color: item.rank == 1 ? AppColors.warning500 : AppColors.textPrimary,
-                  size: 13,
-                  weight: FontWeight.w700,
+                  color: item.rank == 1
+                      ? AppColors.warning500
+                      : AppColors.textPrimary,
+                  size: 14,
+                  weight: FontWeight.w800,
                 ),
               ),
             ),
-            CircleAvatar(
-              radius: 16,
+          ),
+          const SizedBox(width: 12),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  statusColor.withValues(alpha: 0.15),
+                  statusColor.withValues(alpha: 0.08),
+                ],
+              ),
+              border: Border.all(
+                color: statusColor.withValues(alpha: 0.25),
+                width: 1.5,
+              ),
+            ),
+            padding: const EdgeInsets.all(2),
+            child: CircleAvatar(
+              radius: 18,
               backgroundColor: AppColors.bgElevated,
               backgroundImage: (item.avatarUrl?.isNotEmpty ?? false)
                   ? NetworkImage(item.avatarUrl!)
@@ -125,79 +185,87 @@ class _LeaderboardTile extends StatelessWidget {
                       _initials(item),
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 10,
+                        size: 11,
                         weight: FontWeight.w700,
                       ),
                     ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.displayName?.trim().isNotEmpty == true
-                        ? item.displayName!
-                        : (item.username?.trim().isNotEmpty == true
-                            ? '@${item.username!}'
-                            : item.userId),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: 13,
-                      weight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${item.lifetimeEarnedPoints} lifetime pts',
-                    style: AppTypography.custom(
-                      color: AppColors.textMuted,
-                      size: 11,
-                      weight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    item.sessionStatus.toUpperCase(),
-                    style: AppTypography.custom(
-                      color: statusColor,
-                      size: 10,
-                      weight: FontWeight.w800,
-                    ),
+                Text(
+                  item.displayName?.trim().isNotEmpty == true
+                      ? item.displayName!
+                      : (item.username?.trim().isNotEmpty == true
+                          ? '@${item.username!}'
+                          : item.userId),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 13,
+                    weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: 62,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      minHeight: 5,
-                      value: item.sessionProgressPct.clamp(0, 1),
-                      backgroundColor: AppColors.bgElevated,
-                      color: statusColor,
-                    ),
+                const SizedBox(height: 3),
+                Text(
+                  '${item.lifetimeEarnedPoints} lifetime pts',
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 11,
+                    weight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      statusColor.withValues(alpha: 0.2),
+                      statusColor.withValues(alpha: 0.12),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  item.sessionStatus.toUpperCase(),
+                  style: AppTypography.custom(
+                    color: statusColor,
+                    size: 10,
+                    weight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 62,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    minHeight: 6,
+                    value: item.sessionProgressPct.clamp(0, 1),
+                    backgroundColor: AppColors.bgElevated,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

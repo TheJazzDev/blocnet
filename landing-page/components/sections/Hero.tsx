@@ -19,12 +19,16 @@ export function Hero() {
         </h1>
 
         <p className="text-sm sm:text-base md:text-lg text-muted max-w-2xl mx-auto mb-4 sm:mb-6 px-4">
-          Track projects, earn through mining, manage your wallet, and join a
-          thriving community. Everything you need to stay ahead in crypto.
+          AI-powered crypto intelligence meets community-driven updates. Track
+          projects, earn through mining, manage your wallet, and get smart
+          recommendations from Blocnet Edge Engine (BEE).
         </p>
 
-        <div className="inline-block mb-6 sm:mb-8">
+        <div className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-6 sm:mb-8">
           <span className="text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-teal-500/10 border border-teal-500/20 rounded-full text-teal-400">
+            AI-Powered Intelligence
+          </span>
+          <span className="text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-primary/10 border border-primary/20 rounded-full text-primary">
             Crypto Update Network
           </span>
         </div>
@@ -32,13 +36,19 @@ export function Hero() {
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
           <Link
             href="#download"
-            className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-teal-500 text-white rounded-lg font-medium text-sm sm:text-base"
+            className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-teal-500 text-white rounded-lg font-medium text-sm sm:text-base hover:bg-teal-600 transition-colors"
           >
             Download App
           </Link>
           <Link
+            href="/roadmap"
+            className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-teal-500/10 to-primary/10 border border-teal-500/20 text-foreground rounded-lg font-medium text-sm sm:text-base hover:border-teal-500/40 transition-colors"
+          >
+            View Roadmap
+          </Link>
+          <Link
             href="#features"
-            className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-surface-2 text-foreground rounded-lg font-medium text-sm sm:text-base"
+            className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-surface-2 text-foreground rounded-lg font-medium text-sm sm:text-base hover:bg-surface-2/80 transition-colors"
           >
             Explore Features
           </Link>

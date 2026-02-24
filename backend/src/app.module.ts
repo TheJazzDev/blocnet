@@ -5,6 +5,7 @@ import { AdminApplicationsModule } from './admin-applications/admin-applications
 import { AdminContentModule } from './admin-content/admin-content.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AuthModule } from './auth/auth.module';
+import { BadgesModule } from './badges/badges.module';
 import { CommentsModule } from './comments/comments.module';
 import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { DeviceTokensModule } from './device-tokens/device-tokens.module';
@@ -48,6 +49,7 @@ import { envValidationSchema } from './config/env.validation';
     EdgeEngineModule,
     AdminApplicationsModule,
     AdminContentModule,
+    BadgesModule,
     ProjectsModule,
     ProjectAssignmentsModule,
     ProjectProposalsModule,

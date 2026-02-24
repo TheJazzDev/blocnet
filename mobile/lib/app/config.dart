@@ -27,6 +27,11 @@ class AppConfig {
     defaultValue: '',
   );
 
+  static const String supabaseGoogleClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '',
+  );
+
   static bool get isSupabaseConfigured =>
       supabaseUrl.trim().isNotEmpty && supabaseAnonKey.trim().isNotEmpty;
 }

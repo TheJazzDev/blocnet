@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -26,6 +27,14 @@ class AuthStore extends ChangeNotifier {
             _syncAccessToken(session!.accessToken);
             _email = session.user.email;
             notifyListeners();
+          }
+
+          if (event.event == AuthChangeEvent.tokenRefreshed) {
+            debugPrint('Token auto-refreshed by Supabase');
+            if (session?.accessToken != null) {
+              _syncAccessToken(session!.accessToken);
+              notifyListeners();
+            }
           }
 
           if (event.event == AuthChangeEvent.signedOut) {
@@ -301,19 +310,43 @@ class AuthStore extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final launched = await Supabase.instance.client.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: 'io.blocnet.app://login-callback',
-        queryParams: const {'prompt': 'select_account'},
-      ).timeout(_authTimeout);
+      // Initialize Google Sign-In with web client ID from Supabase
+      final googleSignIn = GoogleSignIn(
+        serverClientId: AppConfig.supabaseGoogleClientId,
+      );
 
-      if (!launched) {
-        _lastError = 'Failed to launch Google sign-in';
+      // Trigger native Google Sign-In flow
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        _lastError = 'Google sign-in was cancelled';
         return false;
       }
 
-      // OAuth completion continues asynchronously via deep link callback.
-      return true;
+      // Get authentication details
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      final accessToken = googleAuth.accessToken;
+
+      if (idToken == null) {
+        _lastError = 'Failed to get Google ID token';
+        return false;
+      }
+
+      // Sign in to Supabase with Google credentials
+      final response = await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
+      ).timeout(_authTimeout);
+
+      final session = response.session;
+      if (session == null) {
+        _lastError = 'No session returned from Supabase';
+        return false;
+      }
+
+      // Verify and sign in with the session token
+      return verifyAndSignIn(session.accessToken, setSubmitting: false);
     } on AuthException catch (error) {
       _lastError = error.message;
       return false;
@@ -323,6 +356,7 @@ class AuthStore extends ChangeNotifier {
       return false;
     } catch (error) {
       _lastError = error.toString();
+      debugPrint('Google Sign-In error: $error');
       return false;
     } finally {
       _isSubmitting = false;

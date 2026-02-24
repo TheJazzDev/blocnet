@@ -53,7 +53,7 @@ void main() async {
       anonKey: AppConfig.supabaseAnonKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
-        autoRefreshToken: false,
+        autoRefreshToken: true,
       ),
     );
   }

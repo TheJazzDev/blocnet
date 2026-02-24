@@ -3,9 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -15,6 +18,15 @@ export function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const isHomePage = pathname === '/';
+
+  const navLinks = [
+    { label: 'About', href: '/about', type: 'page' },
+    { label: 'Mining', href: '/mining', type: 'page' },
+    { label: 'Community', href: '/community', type: 'page' },
+    { label: 'Roadmap', href: '/roadmap', type: 'page' },
+  ];
 
   return (
     <nav
@@ -39,36 +51,113 @@ export function Navbar() {
 
           {/* Nav Links - Hidden on Mobile */}
           <div className="hidden md:flex items-center gap-6 lg:gap-8">
-            {['Download', 'Features', 'Mining', 'Wallet', 'Community'].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-sm lg:text-base text-muted"
-              >
-                {item}
-              </a>
-            ))}
+            {navLinks.map((link) =>
+              link.type === 'page' ? (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={`text-sm lg:text-base transition-colors ${
+                    pathname === link.href
+                      ? 'text-teal-400 font-semibold'
+                      : 'text-muted hover:text-foreground'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className="text-sm lg:text-base text-muted hover:text-foreground transition-colors"
+                >
+                  {link.label}
+                </a>
+              )
+            )}
           </div>
 
-          {/* CTA Button */}
+          {/* CTA Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
             <a
-              href="https://x.com/blocnet"
+              href="https://x.com/blocnet_app"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-surface-2 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground"
+              className="hidden sm:inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-surface-2 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground hover:bg-surface-2/80 transition-colors"
             >
               <span>Follow on</span>
               <span className="font-bold">𝕏</span>
             </a>
             <a
-              href="#download"
-              className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 bg-teal-500 text-white rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm md:text-base"
+              href={isHomePage ? '#download' : '/#download'}
+              className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 bg-teal-500 text-white rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm md:text-base hover:bg-teal-600 transition-colors"
             >
               Download App
             </a>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-muted hover:text-foreground"
+              aria-label="Toggle menu"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {mobileMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border py-4">
+            <div className="flex flex-col gap-3">
+              {navLinks.map((link) =>
+                link.type === 'page' ? (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2 text-sm transition-colors ${
+                      pathname === link.href
+                        ? 'text-teal-400 font-semibold bg-teal-500/10 rounded-lg'
+                        : 'text-muted hover:text-foreground'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-2 text-sm text-muted hover:text-foreground transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                )
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );

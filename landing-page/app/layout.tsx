@@ -18,23 +18,33 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Blocnet — The Future of Crypto Connections',
+  title: 'Blocnet — AI-Powered Crypto Intelligence Hub',
   description:
-    'Your one-stop hub for blockchain intelligence. Real-time airdrop alerts, mining updates, staking opportunities, Web3 jobs, and a decentralised wallet — all in one place.',
+    'AI-powered crypto intelligence with Blocnet Edge Engine (BEE) decision system. Get smart recommendations, earn through mining, track projects, manage your multi-asset wallet, and join a thriving community.',
   keywords: [
     'blockchain',
     'crypto',
+    'AI crypto',
+    'Blocnet Edge Engine',
+    'BEE',
+    'crypto intelligence',
     'airdrop',
     'mining',
+    'referral network',
     'staking',
     'web3',
+    'multi-asset wallet',
     'BNT',
+    'USDT',
+    'SOL',
     'blocnet',
+    'crypto updates',
+    'decision engine',
   ],
   openGraph: {
-    title: 'Blocnet — The Future of Crypto Connections',
+    title: 'Blocnet — AI-Powered Crypto Intelligence Hub',
     description:
-      'Stay informed on projects you care about. Never miss an airdrop or mining update again.',
+      'Experience Blocnet Edge Engine (BEE): intelligent action recommendations, urgency scoring, and personalized insights for crypto updates. Never miss what matters.',
     type: 'website',
   },
 };

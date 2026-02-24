@@ -105,17 +105,42 @@ class _DownlineTile extends StatelessWidget {
             ? AppColors.primary400
             : AppColors.textFaint;
 
-    return DecoratedBox(
+    return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgSurface.withValues(alpha: 0.78),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgSurface,
+            AppColors.bgSurface.withValues(alpha: 0.85),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.borderSubtle.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  statusColor.withValues(alpha: 0.15),
+                  statusColor.withValues(alpha: 0.08),
+                ],
+              ),
+              border: Border.all(
+                color: statusColor.withValues(alpha: 0.25),
+                width: 1.5,
+              ),
+            ),
+            padding: const EdgeInsets.all(2),
+            child: CircleAvatar(
+              radius: 20,
               backgroundColor: AppColors.bgElevated,
               backgroundImage: (item.avatarUrl?.isNotEmpty ?? false)
                   ? NetworkImage(item.avatarUrl!)
@@ -126,77 +151,85 @@ class _DownlineTile extends StatelessWidget {
                       _initials(item),
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 11,
+                        size: 12,
                         weight: FontWeight.w700,
                       ),
                     ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.displayName?.trim().isNotEmpty == true
-                        ? item.displayName!
-                        : (item.email ?? 'User'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: 13,
-                      weight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${item.claimedTotalPoints} claimed pts',
-                    style: AppTypography.custom(
-                      color: AppColors.textMuted,
-                      size: 11,
-                      weight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    item.status.toUpperCase(),
-                    style: AppTypography.custom(
-                      color: statusColor,
-                      size: 10,
-                      weight: FontWeight.w800,
-                    ),
+                Text(
+                  item.displayName?.trim().isNotEmpty == true
+                      ? item.displayName!
+                      : (item.email ?? 'User'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 13,
+                    weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: 62,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      minHeight: 5,
-                      value: item.progressPct.clamp(0, 1),
-                      backgroundColor: AppColors.bgElevated,
-                      color: statusColor,
-                    ),
+                const SizedBox(height: 3),
+                Text(
+                  '${item.claimedTotalPoints} claimed pts',
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 11,
+                    weight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      statusColor.withValues(alpha: 0.2),
+                      statusColor.withValues(alpha: 0.12),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  item.status.toUpperCase(),
+                  style: AppTypography.custom(
+                    color: statusColor,
+                    size: 10,
+                    weight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 62,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    minHeight: 6,
+                    value: item.progressPct.clamp(0, 1),
+                    backgroundColor: AppColors.bgElevated,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
