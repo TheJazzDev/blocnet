@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:blocnet/app/config.dart';
+import 'package:blocnet/services/api/api_error.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -59,9 +60,10 @@ class AuthStore extends ChangeNotifier {
   StreamSubscription<AuthState>? _authSubscription;
   Future<String?>? _inFlightSilentRefresh;
   static const Duration _authTimeout = Duration(seconds: 15);
-  static const Duration _spaceSwitchDelay = Duration(milliseconds: 250);
+  static const Duration _spaceSwitchDelay = Duration(milliseconds: 300);
   static const String _spaceKeyPrefix = 'blocnet_active_space_';
   static const String _pendingReferralCodeKey = 'blocnet_pending_referral_code';
+  static const String hunterOnboardedKeyPrefix = 'hunter_onboarded_v1_';
 
   bool _isAuthenticated = false;
   bool _isSubmitting = false;
@@ -120,6 +122,10 @@ class AuthStore extends ChangeNotifier {
   /// True when the user is viewing/interacting from the hunter perspective.
   bool get isInHunterSpace => _activeSpace == 'hunter' && hasHunterSpace;
   bool get isSwitchingSpace => _isSwitchingSpace;
+
+  String hunterOnboardedKeyFor(String userId) {
+    return '$hunterOnboardedKeyPrefix$userId';
+  }
 
   /// Toggle or set the active space. Silently ignores if the user has no
   /// hunter role — they stay in user space.
@@ -333,11 +339,13 @@ class AuthStore extends ChangeNotifier {
       }
 
       // Sign in to Supabase with Google credentials
-      final response = await Supabase.instance.client.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-        accessToken: accessToken,
-      ).timeout(_authTimeout);
+      final response = await Supabase.instance.client.auth
+          .signInWithIdToken(
+            provider: OAuthProvider.google,
+            idToken: idToken,
+            accessToken: accessToken,
+          )
+          .timeout(_authTimeout);
 
       final session = response.session;
       if (session == null) {
@@ -482,6 +490,10 @@ class AuthStore extends ChangeNotifier {
     final nextAvatarUrl = avatarUrl?.trim();
     final nextBio = bio?.trim();
 
+    final prevDisplayName = _displayName;
+    final prevAvatarUrl = _avatarUrl;
+    final prevBio = _bio;
+
     _displayName =
         nextDisplayName?.isNotEmpty == true ? nextDisplayName : _displayName;
     _avatarUrl = nextAvatarUrl?.isNotEmpty == true ? nextAvatarUrl : _avatarUrl;
@@ -500,7 +512,11 @@ class AuthStore extends ChangeNotifier {
       _lastError = null;
       return true;
     } catch (error) {
-      _lastError = error.toString();
+      _displayName = prevDisplayName;
+      _avatarUrl = prevAvatarUrl;
+      _bio = prevBio;
+      _lastError =
+          describeApiError(error, fallback: 'Failed to update profile');
       notifyListeners();
       return false;
     }
@@ -541,7 +557,7 @@ class AuthStore extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (error) {
-      _lastError = error.toString();
+      _lastError = describeApiError(error, fallback: 'Failed to upload avatar');
       notifyListeners();
       return false;
     }
@@ -598,12 +614,10 @@ class AuthStore extends ChangeNotifier {
       _lastError = null;
       return true;
     } on ApiException catch (error) {
-      _lastError = error.responseBody?.isNotEmpty == true
-          ? error.responseBody
-          : error.message;
+      _lastError = describeApiError(error, fallback: 'Unable to sign in');
       return false;
     } catch (error) {
-      _lastError = error.toString();
+      _lastError = describeApiError(error, fallback: 'Unable to sign in');
       return false;
     } finally {
       if (setSubmitting) {

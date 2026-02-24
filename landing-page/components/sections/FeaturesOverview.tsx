@@ -69,7 +69,7 @@ export function FeaturesOverview() {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className={`group p-5 sm:p-6 bg-gradient-to-br ${feature.color} backdrop-blur-sm border ${feature.borderColor} rounded-2xl hover:scale-[1.02] transition-all duration-300`}
+              className={`group p-5 sm:p-6 bg-gradient-to-br ${feature.color} backdrop-blur-sm border ${feature.borderColor} rounded-2xl `}
             >
               <div className="flex items-start gap-4 mb-4">
                 <div className="shrink-0 text-3xl sm:text-4xl">{feature.icon}</div>
@@ -82,11 +82,11 @@ export function FeaturesOverview() {
                   </p>
                   <Link
                     href={feature.link}
-                    className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                    className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-teal-400 "
                   >
                     {feature.linkText}
                     <svg
-                      className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                      className="w-4 h-4 "
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

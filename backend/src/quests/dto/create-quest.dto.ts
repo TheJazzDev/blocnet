@@ -12,10 +12,10 @@ import {
 } from 'class-validator';
 
 export class CreateQuestDto {
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsString()
-  @IsNotEmpty()
-  slug: string;
+  @IsOptional()
+  slug?: string;
 
   @ApiProperty()
   @IsString()

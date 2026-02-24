@@ -4,7 +4,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Badge, BadgeCategory, Prisma } from '@prisma/client';
+import { Badge, BadgeCategory, BadgeRarity, Prisma } from '@prisma/client';
+import { generateUniqueSlug } from '../common/utils/slug.util';
+import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBadgeDto } from './dto/create-badge.dto';
@@ -12,6 +14,8 @@ import { GrantBadgeDto } from './dto/grant-badge.dto';
 import { UpdateBadgeDto } from './dto/update-badge.dto';
 
 type PrismaLike = PrismaService | Prisma.TransactionClient;
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class BadgesService {
@@ -145,18 +149,22 @@ export class BadgesService {
    * Admin: Create a new badge
    */
   async createBadge(dto: CreateBadgeDto, adminId: string) {
-    // Check for duplicate slug
-    const existing = await this.prisma.badge.findUnique({
-      where: { slug: dto.slug },
+    const slug = await generateUniqueSlug({
+      source: dto.name,
+      desiredSlug: dto.slug,
+      fallback: 'badge',
+      exists: async (candidate) => {
+        const existing = await this.prisma.badge.findUnique({
+          where: { slug: candidate },
+          select: { id: true },
+        });
+        return Boolean(existing);
+      },
     });
-
-    if (existing) {
-      throw new ConflictException(`Badge with slug "${dto.slug}" already exists`);
-    }
 
     return this.prisma.badge.create({
       data: {
-        slug: dto.slug,
+        slug,
         name: dto.name,
         description: dto.description,
         imageUrl: dto.imageUrl,
@@ -181,21 +189,28 @@ export class BadgesService {
       throw new NotFoundException(`Badge with ID "${badgeId}" not found`);
     }
 
-    // If updating slug, check for conflicts
-    if (dto.slug && dto.slug !== badge.slug) {
-      const existing = await this.prisma.badge.findUnique({
-        where: { slug: dto.slug },
+    let nextSlug: string | undefined;
+    if (dto.name !== undefined && dto.name !== badge.name) {
+      nextSlug = await generateUniqueSlug({
+        source: dto.name,
+        fallback: 'badge',
+        exists: async (candidate) => {
+          const existing = await this.prisma.badge.findFirst({
+            where: {
+              slug: candidate,
+              NOT: { id: badgeId },
+            },
+            select: { id: true },
+          });
+          return Boolean(existing);
+        },
       });
-
-      if (existing) {
-        throw new ConflictException(`Badge with slug "${dto.slug}" already exists`);
-      }
     }
 
     return this.prisma.badge.update({
       where: { id: badgeId },
       data: {
-        ...(dto.slug && { slug: dto.slug }),
+        ...(nextSlug && { slug: nextSlug }),
         ...(dto.name && { name: dto.name }),
         ...(dto.description && { description: dto.description }),
         ...(dto.imageUrl && { imageUrl: dto.imageUrl }),
@@ -211,14 +226,18 @@ export class BadgesService {
   /**
    * Admin: Grant a badge to a user
    */
-  async grantBadge(dto: GrantBadgeDto, grantedBy: string) {
+  async grantBadge(dto: GrantBadgeDto, grantedBy: string | AuthUser) {
     const badge = await this.getBadgeBySlug(dto.badgeSlug);
+    const grantedById = this.resolveActorId(grantedBy);
+    const resolvedUserId = await this.resolveProfileIdByIdOrEmail(
+      dto.userId ?? dto.userIdentifier,
+    );
 
     // Check if user already has this badge
     const existing = await this.prisma.userBadge.findUnique({
       where: {
         userId_badgeId: {
-          userId: dto.userId,
+          userId: resolvedUserId,
           badgeId: badge.id,
         },
       },
@@ -231,22 +250,23 @@ export class BadgesService {
     // Grant the badge
     const userBadge = await this.prisma.userBadge.create({
       data: {
-        userId: dto.userId,
+        userId: resolvedUserId,
         badgeId: badge.id,
-        grantedBy,
+        grantedBy: grantedById,
         metadata: dto.metadata,
       },
       include: {
         badge: true,
       },
     });
+    await this.ensurePrimaryBadgePriority(resolvedUserId, badge, this.prisma);
 
     // Send notification
     await this.notificationsService.notifyMany([
       {
-        userId: dto.userId,
+        userId: resolvedUserId,
         type: 'badge_earned',
-        actorUserId: grantedBy,
+        actorUserId: grantedById,
         projectId: null,
         updateId: null,
         urgency: null,
@@ -267,6 +287,53 @@ export class BadgesService {
     ]);
 
     return userBadge;
+  }
+
+  private resolveActorId(actor: string | AuthUser): string {
+    if (typeof actor === 'string') {
+      return actor;
+    }
+    return actor.id;
+  }
+
+  private async resolveProfileIdByIdOrEmail(
+    userIdOrEmail: string | undefined,
+  ): Promise<string> {
+    const candidate = userIdOrEmail?.trim();
+    if (!candidate) {
+      throw new BadRequestException('userId or userIdentifier is required');
+    }
+
+    if (UUID_REGEX.test(candidate)) {
+      const profile = await this.prisma.profile.findUnique({
+        where: { id: candidate },
+        select: { id: true, isDeactivated: true },
+      });
+      if (profile) {
+        if (profile.isDeactivated) {
+          throw new BadRequestException('Cannot grant badge to deactivated user');
+        }
+        return profile.id;
+      }
+    }
+
+    const profile = await this.prisma.profile.findFirst({
+      where: {
+        email: {
+          equals: candidate,
+          mode: 'insensitive',
+        },
+      },
+      select: { id: true, isDeactivated: true },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('User not found');
+    }
+    if (profile.isDeactivated) {
+      throw new BadRequestException('Cannot grant badge to deactivated user');
+    }
+    return profile.id;
   }
 
   /**
@@ -359,6 +426,7 @@ export class BadgesService {
         badge: true,
       },
     });
+    await this.ensurePrimaryBadgePriority(userId, badge, prisma);
 
     // Send notification (only if not in a transaction)
     if (!prismaClient) {
@@ -468,5 +536,69 @@ export class BadgesService {
       await this.checkAndAwardBadge(userId, 'network-builder', {
         referralCount,
       });
+  }
+
+  private async ensurePrimaryBadgePriority(
+    userId: string,
+    candidate: Badge,
+    prisma: PrismaLike,
+  ) {
+    const profile = await prisma.profile.findUnique({
+      where: { id: userId },
+      select: {
+        primaryBadge: {
+          select: {
+            id: true,
+            rarity: true,
+            pointsRequirement: true,
+            sortOrder: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    const current = profile?.primaryBadge;
+    if (!current || this.isBadgeHigherPriority(candidate, current)) {
+      await prisma.profile.update({
+        where: { id: userId },
+        data: { primaryBadgeId: candidate.id },
+      });
+    }
+  }
+
+  private isBadgeHigherPriority(
+    left: Pick<Badge, 'rarity' | 'pointsRequirement' | 'sortOrder' | 'createdAt'>,
+    right: Pick<
+      Badge,
+      'rarity' | 'pointsRequirement' | 'sortOrder' | 'createdAt'
+    >,
+  ) {
+    const rarityDelta =
+      this.badgeRarityRank(left.rarity) - this.badgeRarityRank(right.rarity);
+    if (rarityDelta !== 0) return rarityDelta > 0;
+
+    if (left.pointsRequirement !== right.pointsRequirement) {
+      return left.pointsRequirement > right.pointsRequirement;
+    }
+
+    if (left.sortOrder !== right.sortOrder) {
+      return left.sortOrder < right.sortOrder;
+    }
+
+    return left.createdAt.getTime() > right.createdAt.getTime();
+  }
+
+  private badgeRarityRank(rarity: BadgeRarity) {
+    switch (rarity) {
+      case BadgeRarity.legendary:
+        return 4;
+      case BadgeRarity.epic:
+        return 3;
+      case BadgeRarity.rare:
+        return 2;
+      case BadgeRarity.common:
+        return 1;
+    }
   }
 }

@@ -28,4 +28,9 @@ export class VerifyQuestDto {
   @IsString()
   @IsOptional()
   rejectionReason?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  reviewNotes?: string;
 }

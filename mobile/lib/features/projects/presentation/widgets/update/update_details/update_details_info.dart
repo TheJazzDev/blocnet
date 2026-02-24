@@ -59,6 +59,7 @@ class UpdateDetailsInfo extends StatelessWidget {
               icon: Symbols.person,
               label: post.admin?.name ?? 'Unknown',
               badge: post.admin?.primaryBadge,
+              roleLabel: post.admin?.displayRoleLabel,
             ),
             _dot(),
             _MetaChip(
@@ -95,11 +96,8 @@ class UpdateDetailsInfo extends StatelessWidget {
   }
 
   int _estimateReadMinutes(String content) {
-    final words = content
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((v) => v.isNotEmpty)
-        .length;
+    final words =
+        content.trim().split(RegExp(r'\s+')).where((v) => v.isNotEmpty).length;
     if (words == 0) return 1;
     return max(1, (words / 220).ceil());
   }
@@ -110,11 +108,13 @@ class _MetaChip extends StatelessWidget {
     required this.icon,
     required this.label,
     this.badge,
+    this.roleLabel,
   });
 
   final IconData icon;
   final String label;
   final dynamic badge;
+  final String? roleLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +137,33 @@ class _MetaChip extends StatelessWidget {
           BadgeIcon(
             badge: badge,
             size: BadgeSize.tiny,
+          ),
+        ],
+        if (roleLabel != null) ...[
+          const SizedBox(width: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: (roleLabel == 'HUNTER'
+                        ? const Color(0xFFC084FC)
+                        : AppColors.primary400)
+                    .withValues(alpha: 0.7),
+                width: 0.8,
+              ),
+            ),
+            child: Text(
+              roleLabel!,
+              style: TextStyle(
+                color: roleLabel == 'HUNTER'
+                    ? const Color(0xFFC084FC)
+                    : AppColors.primary400,
+                fontSize: 9,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ],

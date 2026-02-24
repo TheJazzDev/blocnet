@@ -2,7 +2,7 @@ part of '../main_screen.dart';
 
 const _userTabs = [
   _TabMeta(
-    title: 'Blocnet',
+    title: 'Home',
     showSearch: true,
     showFilter: false,
     showNotificationBell: true,
@@ -41,7 +41,7 @@ const _userTabs = [
 
 const _hunterTabs = [
   _TabMeta(
-    title: 'Blocnet',
+    title: 'Home',
     showSearch: true,
     showFilter: false,
     showNotificationBell: true,
@@ -98,9 +98,10 @@ class _UserSpaceShell extends StatelessWidget {
         backButton: false,
         showSearch: tab.showSearch,
         showFilter: tab.showFilter,
+        showSpaceSwitcher: true,
         showNotificationBell: tab.showNotificationBell,
         showProfileShortcut: false,
-        showProfileAvatarLeading: currentIndex == 0,
+        showProfileAvatarLeading: false,
       ),
       body: IndexedStack(
         index: currentIndex,
@@ -110,7 +111,7 @@ class _UserSpaceShell extends StatelessWidget {
           CommunityScreen(),
           MiningScreen(),
           WalletScreen(),
-          ProfileScreen(),
+          ProfileScreen(embeddedInMainShell: true),
         ],
       ),
       bottomNavigationBar: _UserNav(
@@ -146,9 +147,10 @@ class _HunterSpaceShell extends StatelessWidget {
         backButton: false,
         showSearch: tab.showSearch,
         showFilter: tab.showFilter,
+        showSpaceSwitcher: true,
         showNotificationBell: tab.showNotificationBell,
         showProfileShortcut: false,
-        showProfileAvatarLeading: currentIndex == 0,
+        showProfileAvatarLeading: false,
       ),
       body: IndexedStack(
         index: currentIndex,
@@ -158,7 +160,7 @@ class _HunterSpaceShell extends StatelessWidget {
           HunterHubScreen(),
           MiningScreen(),
           WalletScreen(),
-          ProfileScreen(),
+          ProfileScreen(embeddedInMainShell: true),
         ],
       ),
       bottomNavigationBar: _HunterNav(

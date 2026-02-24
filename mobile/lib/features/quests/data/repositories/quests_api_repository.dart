@@ -1,6 +1,11 @@
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
 import 'package:blocnet/services/api/api_client.dart';
 
+Map<String, dynamic> _asStringKeyMap(Object? raw) {
+  if (raw is! Map) return const <String, dynamic>{};
+  return raw.map((key, value) => MapEntry(key.toString(), value));
+}
+
 class QuestsApiRepository {
   QuestsApiRepository({ApiClient? apiClient})
       : _apiClient = apiClient ?? ApiClient();
@@ -15,7 +20,8 @@ class QuestsApiRepository {
     }
 
     return response
-        .map((e) => QuestModel.fromApi(e as Map<String, dynamic>))
+        .whereType<Map>()
+        .map((entry) => QuestModel.fromApi(_asStringKeyMap(entry)))
         .toList();
   }
 

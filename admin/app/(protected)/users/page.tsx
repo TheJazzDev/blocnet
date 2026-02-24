@@ -108,6 +108,11 @@ function sortRolesTopToLowest(roles: string[]): string[] {
   });
 }
 
+function getHighestRole(roles: string[]): string {
+  const sorted = sortRolesTopToLowest(roles);
+  return sorted[0] ?? "user";
+}
+
 function roleBadge(role: string) {
   switch (role) {
     case "owner":
@@ -797,11 +802,11 @@ export default function UsersPage() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Roles</TableHead>
+                  <TableHead>Badges</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Projects</TableHead>
                   <TableHead className="text-right">Updates</TableHead>
-                  <TableHead className="text-right">Joined</TableHead>
-                  <TableHead className="w-[40px]" />
+                  <TableHead className="w-[100px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -826,36 +831,27 @@ export default function UsersPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {user.roles.length === 0 ? (
-                          <Badge variant="secondary">
-                            <User className="mr-1 h-3 w-3" />
-                            User
-                          </Badge>
-                        ) : (
-                          sortRolesTopToLowest(user.roles).map((entry) => (
-                            <span key={entry}>{roleBadge(entry)}</span>
-                          ))
-                        )}
+                      <span>{roleBadge(getHighestRole(user.roles))}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {user.primaryBadge ? user.primaryBadge.name : "No primary badge"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {user.badgesCount} total badge{user.badgesCount === 1 ? "" : "s"}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>{accountStatusBadge(user.isDeactivated)}</TableCell>
                     <TableCell className="text-right">{user.projectsAssigned}</TableCell>
                     <TableCell className="text-right">{user.updatesPosted}</TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">
-                      {formatDate(user.createdAt)}
-                    </TableCell>
                     <TableCell>
-                      <UserActionsMenu
-                        user={user}
-                        currentUserId={session.id}
-                        currentRoles={session.effectiveRoles}
-                        onRoleActionRequested={openRoleActionDialog}
-                        onEditProfile={openEdit}
-                        onDeactivate={openDeactivate}
-                        onReactivate={reactivateUser}
-                        onHardDelete={hardDeleteUser}
-                      />
+                      <div className="flex items-center justify-end">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/users/${user.id}`}>Manage</Link>
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

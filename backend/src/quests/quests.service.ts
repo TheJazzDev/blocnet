@@ -2,15 +2,18 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
   MiningPointSource,
   Prisma,
+  Quest,
   QuestStatus,
   QuestVerificationStatus,
 } from '@prisma/client';
 import { BadgesService } from '../badges/badges.service';
+import { generateUniqueSlug } from '../common/utils/slug.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestDto } from './dto/create-quest.dto';
@@ -21,6 +24,8 @@ type PrismaLike = PrismaService | Prisma.TransactionClient;
 
 @Injectable()
 export class QuestsService {
+  private readonly logger = new Logger(QuestsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly badgesService: BadgesService,
@@ -246,60 +251,29 @@ export class QuestsService {
 
     // Award rewards in a transaction
     return this.prisma.$transaction(async (tx) => {
+      const completedAt = new Date();
+
       // Mark quest as completed
-      const completedQuest = await tx.userQuest.update({
-        where: { id: userQuest.id },
+      const completedRows = await tx.userQuest.updateMany({
+        where: {
+          id: userQuest.id,
+          status: { not: 'completed' },
+        },
         data: {
           status: 'completed',
-          completedAt: new Date(),
+          completedAt,
         },
+      });
+      if (completedRows.count === 0) {
+        throw new ConflictException('Quest already completed');
+      }
+
+      const completedQuest = await tx.userQuest.findUniqueOrThrow({
+        where: { id: userQuest.id },
         include: { quest: true },
       });
 
-      // Award points if any
-      if (quest.rewardPoints > 0) {
-        await tx.miningPointLedger.create({
-          data: {
-            userId,
-            source: MiningPointSource.quest_reward,
-            points: quest.rewardPoints,
-            metadata: {
-              questId: quest.id,
-              questSlug: quest.slug,
-              questTitle: quest.title,
-            },
-          },
-        });
-
-        // Update profile mining points
-        await tx.profile.update({
-          where: { id: userId },
-          data: {
-            miningClaimedPoints: {
-              increment: BigInt(quest.rewardPoints),
-            },
-          },
-        });
-      }
-
-      // Award badge if any
-      if (quest.rewardBadgeId) {
-        const badge = await tx.badge.findUnique({
-          where: { id: quest.rewardBadgeId },
-        });
-
-        if (badge) {
-          await this.badgesService.checkAndAwardBadge(
-            userId,
-            badge.slug,
-            {
-              questId: quest.id,
-              questSlug: quest.slug,
-            },
-            tx,
-          );
-        }
-      }
+      await this.awardQuestRewards(tx, userId, quest);
 
       return completedQuest;
     });
@@ -309,18 +283,22 @@ export class QuestsService {
    * Admin: Create a new quest
    */
   async createQuest(dto: CreateQuestDto, adminId: string) {
-    // Check for duplicate slug
-    const existing = await this.prisma.quest.findUnique({
-      where: { slug: dto.slug },
+    const slug = await generateUniqueSlug({
+      source: dto.title,
+      desiredSlug: dto.slug,
+      fallback: 'quest',
+      exists: async (candidate) => {
+        const existing = await this.prisma.quest.findUnique({
+          where: { slug: candidate },
+          select: { id: true },
+        });
+        return Boolean(existing);
+      },
     });
-
-    if (existing) {
-      throw new ConflictException(`Quest with slug "${dto.slug}" already exists`);
-    }
 
     return this.prisma.quest.create({
       data: {
-        slug: dto.slug,
+        slug,
         title: dto.title,
         description: dto.description,
         type: dto.type,
@@ -350,21 +328,28 @@ export class QuestsService {
       throw new NotFoundException(`Quest with ID "${questId}" not found`);
     }
 
-    // If updating slug, check for conflicts
-    if (dto.slug && dto.slug !== quest.slug) {
-      const existing = await this.prisma.quest.findUnique({
-        where: { slug: dto.slug },
+    let nextSlug: string | undefined;
+    if (dto.title !== undefined && dto.title !== quest.title) {
+      nextSlug = await generateUniqueSlug({
+        source: dto.title,
+        fallback: 'quest',
+        exists: async (candidate) => {
+          const existing = await this.prisma.quest.findFirst({
+            where: {
+              slug: candidate,
+              NOT: { id: questId },
+            },
+            select: { id: true },
+          });
+          return Boolean(existing);
+        },
       });
-
-      if (existing) {
-        throw new ConflictException(`Quest with slug "${dto.slug}" already exists`);
-      }
     }
 
     return this.prisma.quest.update({
       where: { id: questId },
       data: {
-        ...(dto.slug && { slug: dto.slug }),
+        ...(nextSlug && { slug: nextSlug }),
         ...(dto.title && { title: dto.title }),
         ...(dto.description && { description: dto.description }),
         ...(dto.type && { type: dto.type }),
@@ -472,7 +457,7 @@ export class QuestsService {
       proofText: submission.proofText,
       screenshotUrl: submission.screenshot,
       reviewedBy: submission.verifiedBy,
-      reviewNotes: submission.rejectionReason,
+      reviewNotes: submission.reviewNotes ?? submission.rejectionReason,
       submittedAt: submission.submittedAt.toISOString(),
       reviewedAt: submission.verifiedAt?.toISOString() ?? null,
       user: submission.user,
@@ -525,6 +510,7 @@ export class QuestsService {
             verificationStatus: 'approved',
             verifiedBy,
             verifiedAt: new Date(),
+            reviewNotes: dto.reviewNotes,
           },
         });
 
@@ -539,50 +525,7 @@ export class QuestsService {
 
         const quest = submission.userQuest.quest;
         const userId = submission.userId;
-
-        // Award points if any
-        if (quest.rewardPoints > 0) {
-          await tx.miningPointLedger.create({
-            data: {
-              userId,
-              source: MiningPointSource.quest_reward,
-              points: quest.rewardPoints,
-              metadata: {
-                questId: quest.id,
-                questSlug: quest.slug,
-                questTitle: quest.title,
-              },
-            },
-          });
-
-          await tx.profile.update({
-            where: { id: userId },
-            data: {
-              miningClaimedPoints: {
-                increment: BigInt(quest.rewardPoints),
-              },
-            },
-          });
-        }
-
-        // Award badge if any
-        if (quest.rewardBadgeId) {
-          const badge = await tx.badge.findUnique({
-            where: { id: quest.rewardBadgeId },
-          });
-
-          if (badge) {
-            await this.badgesService.checkAndAwardBadge(
-              userId,
-              badge.slug,
-              {
-                questId: quest.id,
-                questSlug: quest.slug,
-              },
-              tx,
-            );
-          }
-        }
+        await this.awardQuestRewards(tx, userId, quest);
 
         // Send notification
         await this.notificationsService.notifyMany([
@@ -611,6 +554,9 @@ export class QuestsService {
         return { message: 'Quest verified and rewards awarded' };
       });
     } else {
+      const rejectionReason =
+        dto.rejectionReason?.trim() || dto.reviewNotes?.trim() || null;
+
       // Reject submission
       await this.prisma.questSubmission.update({
         where: { id: submission.id },
@@ -618,7 +564,8 @@ export class QuestsService {
           verificationStatus: 'rejected',
           verifiedBy,
           verifiedAt: new Date(),
-          rejectionReason: dto.rejectionReason,
+          reviewNotes: dto.reviewNotes,
+          rejectionReason,
         },
       });
 
@@ -640,11 +587,13 @@ export class QuestsService {
           updateId: null,
           urgency: null,
           title: 'Quest Submission Rejected',
-          body: dto.rejectionReason || 'Your quest submission was rejected. Please try again.',
+          body:
+            rejectionReason ||
+            'Your quest submission was rejected. Please try again.',
           payload: {
             questId: submission.userQuest.quest.id,
             questSlug: submission.userQuest.quest.slug,
-            rejectionReason: dto.rejectionReason,
+            rejectionReason,
           },
           deeplink: `blocnet://quests/${submission.userQuest.quest.slug}`,
           pushData: {
@@ -658,46 +607,174 @@ export class QuestsService {
     }
   }
 
+  private async awardQuestRewards(
+    tx: PrismaLike,
+    userId: string,
+    quest: Pick<Quest, 'id' | 'slug' | 'title' | 'rewardPoints' | 'rewardBadgeId'>,
+  ) {
+    if (quest.rewardPoints > 0) {
+      await tx.miningPointLedger.create({
+        data: {
+          userId,
+          source: MiningPointSource.quest_reward,
+          points: quest.rewardPoints,
+          metadata: {
+            questId: quest.id,
+            questSlug: quest.slug,
+            questTitle: quest.title,
+          },
+        },
+      });
+
+      await tx.profile.update({
+        where: { id: userId },
+        data: {
+          miningClaimedPoints: {
+            increment: BigInt(quest.rewardPoints),
+          },
+        },
+      });
+    }
+
+    if (quest.rewardBadgeId) {
+      const badge = await tx.badge.findUnique({
+        where: { id: quest.rewardBadgeId },
+      });
+
+      if (badge) {
+        await this.badgesService.checkAndAwardBadge(
+          userId,
+          badge.slug,
+          {
+            questId: quest.id,
+            questSlug: quest.slug,
+          },
+          tx,
+        );
+      }
+    }
+  }
+
+  private async completeAutoQuest(userId: string, quest: Quest): Promise<boolean> {
+    const completedAt = new Date();
+
+    const completed = await this.prisma.$transaction(async (tx) => {
+      await tx.userQuest.upsert({
+        where: {
+          userId_questId: {
+            userId,
+            questId: quest.id,
+          },
+        },
+        update: {},
+        create: {
+          userId,
+          questId: quest.id,
+          status: 'in_progress',
+          startedAt: completedAt,
+          progress: 100,
+        },
+      });
+
+      const marked = await tx.userQuest.updateMany({
+        where: {
+          userId,
+          questId: quest.id,
+          status: { not: 'completed' },
+        },
+        data: {
+          status: 'completed',
+          completedAt,
+          progress: 100,
+        },
+      });
+
+      if (marked.count === 0) {
+        return false;
+      }
+
+      await this.awardQuestRewards(tx, userId, quest);
+      return true;
+    });
+
+    if (!completed) {
+      return false;
+    }
+
+    await this.notificationsService.notifyMany([
+      {
+        userId,
+        type: 'quest_verified',
+        actorUserId: null,
+        projectId: null,
+        updateId: null,
+        urgency: null,
+        title: 'Quest Completed!',
+        body: `You completed "${quest.title}" and earned ${quest.rewardPoints} points.`,
+        payload: {
+          questId: quest.id,
+          questSlug: quest.slug,
+          rewardPoints: quest.rewardPoints,
+          autoCompleted: true,
+        },
+        deeplink: `blocnet://quests/${quest.slug}`,
+        pushData: {
+          type: 'quest_verified',
+          questId: quest.id,
+        },
+      },
+    ]);
+
+    return true;
+  }
+
+  async checkAndCompleteByAction(userId: string, action: string) {
+    const now = new Date();
+    const quests = await this.prisma.quest.findMany({
+      where: {
+        isActive: true,
+        verificationMethod: 'auto',
+        targetAction: action,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    let completed = 0;
+    for (const quest of quests) {
+      try {
+        if (await this.completeAutoQuest(userId, quest)) {
+          completed += 1;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Auto quest completion failed`,
+          JSON.stringify({
+            action,
+            userId,
+            questId: quest.id,
+            questSlug: quest.slug,
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
+      }
+    }
+
+    return { checked: quests.length, completed };
+  }
+
   /**
-   * Internal: Auto-complete quest based on action
+   * Internal helper kept for backward compatibility with slug-based triggers.
    */
   async checkAndCompleteQuest(userId: string, questSlug: string) {
     const quest = await this.prisma.quest.findUnique({
       where: { slug: questSlug },
     });
-
     if (!quest || !quest.isActive || quest.verificationMethod !== 'auto') {
       return null;
     }
 
-    // Check if user has this quest
-    let userQuest = await this.prisma.userQuest.findUnique({
-      where: {
-        userId_questId: {
-          userId,
-          questId: quest.id,
-        },
-      },
-    });
-
-    // If not started, start it
-    if (!userQuest) {
-      userQuest = await this.prisma.userQuest.create({
-        data: {
-          userId,
-          questId: quest.id,
-          status: 'in_progress',
-          startedAt: new Date(),
-        },
-      });
-    }
-
-    // If already completed, return
-    if (userQuest.status === 'completed') {
-      return null;
-    }
-
-    // Complete the quest
-    return this.claimQuestReward(userId, questSlug);
+    const completed = await this.completeAutoQuest(userId, quest);
+    return completed ? { questId: quest.id, questSlug: quest.slug } : null;
   }
 }

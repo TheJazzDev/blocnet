@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
+import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
@@ -204,16 +205,35 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               : null,
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          (_publicProfile?.displayName?.trim().isNotEmpty ??
-                                  false)
-                              ? _publicProfile!.displayName!.trim()
-                              : admin.name,
-                          style: AppTypography.custom(
-                            color: AppColors.textPrimary,
-                            size: 22,
-                            weight: FontWeight.w700,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                (_publicProfile?.displayName
+                                            ?.trim()
+                                            .isNotEmpty ??
+                                        false)
+                                    ? _publicProfile!.displayName!.trim()
+                                    : admin.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.custom(
+                                  color: AppColors.textPrimary,
+                                  size: 22,
+                                  weight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            if (admin.primaryBadge != null) ...[
+                              const SizedBox(width: 8),
+                              BadgeIcon(
+                                badge: admin.primaryBadge!,
+                                size: BadgeSize.medium,
+                                showTooltip: false,
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -225,22 +245,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: displayRoleKeys
-                              .map(
-                                (roleKey) => _ProfileRoleChip(
-                                  label: _roleLabel(roleKey),
-                                  textColor: _roleTextColor(roleKey),
-                                  borderColor: _roleBorderColor(roleKey),
-                                  backgroundColor:
-                                      _roleBackgroundColor(roleKey),
-                                ),
-                              )
-                              .toList(),
-                        ),
+                        if (displayRoleKeys.isNotEmpty)
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: displayRoleKeys
+                                .map(
+                                  (roleKey) => _ProfileRoleChip(
+                                    label: _roleLabel(roleKey),
+                                    textColor: _roleTextColor(roleKey),
+                                    borderColor: _roleBorderColor(roleKey),
+                                    backgroundColor:
+                                        _roleBackgroundColor(roleKey),
+                                  ),
+                                )
+                                .toList(),
+                          ),
                         const SizedBox(height: 16),
                         Row(
                           children: [
@@ -441,25 +462,21 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   List<String> _resolveRoleKeysFallback(Admin admin) {
-    final raw = '${admin.username} ${admin.name}'.toLowerCase();
-    if (raw.contains('hunter')) return ['hunter'];
-    if (raw.contains('admin')) return ['admin'];
-    return ['user'];
+    if (admin.isAdminRole) return ['admin'];
+    if (admin.isHunterRole) return ['hunter'];
+    return const [];
   }
 
   List<String> _resolveRoleKeysFromRoles(List<String> roles) {
     final normalized = roles.map((role) => role.trim().toLowerCase()).toSet();
     final resolved = <String>[];
 
-    if (normalized.contains('core_team')) resolved.add('core_team');
-    if (normalized.contains('admin')) resolved.add('admin');
-    if (normalized.contains('moderator')) resolved.add('moderator');
-    if (normalized.contains('hunter')) resolved.add('hunter');
-
-    if (resolved.isEmpty) {
-      resolved.add('user');
+    if (normalized.contains('owner') || normalized.contains('admin')) {
+      resolved.add('admin');
     }
-
+    if (normalized.contains('hunter')) {
+      resolved.add('hunter');
+    }
     return resolved;
   }
 
@@ -467,14 +484,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     switch (roleKey) {
       case 'admin':
         return 'ADMIN';
-      case 'moderator':
-        return 'MODERATOR';
-      case 'core_team':
-        return 'CORE TEAM';
       case 'hunter':
         return 'HUNTER';
       default:
-        return 'USER';
+        return roleKey.toUpperCase();
     }
   }
 
@@ -482,10 +495,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     switch (roleKey) {
       case 'hunter':
         return const Color(0xFFC084FC);
-      case 'core_team':
-        return const Color(0xFF7DD3FC);
-      case 'moderator':
-        return const Color(0xFFF59E0B);
       case 'admin':
         return AppColors.primary400;
       default:

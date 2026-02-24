@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Put,
   UseGuards,
 } from '@nestjs/common';
@@ -60,6 +61,22 @@ export class BadgesController {
     type: BadgeResponseDto,
   })
   async setMyPrimaryBadge(
+    @CurrentUser('id') userId: string,
+    @Body() dto: SetPrimaryBadgeDto,
+  ) {
+    return this.badgesService.setUserPrimaryBadge(userId, dto.badgeId);
+  }
+
+  @Patch('me/primary')
+  @ApiOperation({
+    summary: 'Set my primary badge (PATCH compatibility alias)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Primary badge set successfully',
+    type: BadgeResponseDto,
+  })
+  async patchMyPrimaryBadge(
     @CurrentUser('id') userId: string,
     @Body() dto: SetPrimaryBadgeDto,
   ) {

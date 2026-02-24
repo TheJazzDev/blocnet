@@ -1,6 +1,11 @@
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/services/api/api_client.dart';
 
+Map<String, dynamic> _asStringKeyMap(Object? raw) {
+  if (raw is! Map) return const <String, dynamic>{};
+  return raw.map((key, value) => MapEntry(key.toString(), value));
+}
+
 class BadgesApiRepository {
   BadgesApiRepository({ApiClient? apiClient})
       : _apiClient = apiClient ?? ApiClient();
@@ -15,7 +20,8 @@ class BadgesApiRepository {
     }
 
     return response
-        .map((e) => BadgeModel.fromApi(e as Map<String, dynamic>))
+        .whereType<Map>()
+        .map((entry) => BadgeModel.fromApi(_asStringKeyMap(entry)))
         .toList();
   }
 
@@ -41,7 +47,7 @@ class BadgesApiRepository {
 
   /// Set user's primary badge (displayed next to username)
   Future<void> setPrimaryBadge(String badgeId) async {
-    await _apiClient.patch(
+    await _apiClient.put(
       '/badges/me/primary',
       body: {'badgeId': badgeId},
     );

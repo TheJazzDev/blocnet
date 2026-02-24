@@ -1315,6 +1315,12 @@ export class NotificationsService {
   }
 
   private stringValue(value: unknown) {
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value.toString() : null;
+    }
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
     if (typeof value !== 'string') return null;
     const trimmed = value.trim();
     return trimmed.length === 0 ? null : trimmed;

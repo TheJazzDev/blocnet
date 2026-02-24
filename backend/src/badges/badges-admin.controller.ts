@@ -77,12 +77,22 @@ export class BadgesAdminController {
   })
   async grantBadgeById(
     @Param('badgeId') badgeId: string,
-    @Body() dto: { userId: string; metadata?: Record<string, any> },
+    @Body()
+    dto: {
+      userId?: string;
+      userIdentifier?: string;
+      metadata?: Record<string, any>;
+    },
     @CurrentUser('id') adminId: string,
   ) {
     const badge = await this.badgesService.getBadgeById(badgeId);
     return this.badgesService.grantBadge(
-      { userId: dto.userId, badgeSlug: badge.slug, metadata: dto.metadata },
+      {
+        userId: dto.userId,
+        userIdentifier: dto.userIdentifier,
+        badgeSlug: badge.slug,
+        metadata: dto.metadata,
+      },
       adminId,
     );
   }

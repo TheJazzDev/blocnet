@@ -2,77 +2,80 @@ part of '../wallet_screen.dart';
 
 enum _SendFlowAction { internalTransfer, externalWithdrawal }
 
+bool _isWalletReadyForAction(WalletStore store) {
+  final status = store.snapshot?.walletStatus ?? 'provisioning';
+  return status == 'ready';
+}
+
+String _walletNotReadyMessage(WalletStore store) {
+  final status = store.snapshot?.walletStatus ?? 'provisioning';
+  if (store.isLoadingSummary && store.snapshot == null) {
+    return 'Wallet is syncing. Try again in a moment.';
+  }
+
+  if (status == 'disabled') {
+    return 'Wallet is currently disabled.';
+  }
+
+  if (status == 'error') {
+    return 'Wallet setup has an issue. Pull to refresh and try again.';
+  }
+
+  return 'Wallet is not ready yet.';
+}
+
+Future<void> _openSendFlow(
+  BuildContext context, {
+  required String assetCode,
+}) async {
+  final walletStore = context.read<WalletStore>();
+  final selectedAsset = assetCode.trim().toUpperCase();
+  final canTransfer = walletStore.canTransferAsset(selectedAsset);
+  final canWithdraw = walletStore.canWithdrawAsset(selectedAsset);
+
+  if (!_isWalletReadyForAction(walletStore)) {
+    _showWalletToast(
+      context,
+      message: _walletNotReadyMessage(walletStore),
+      type: _WalletToastType.error,
+    );
+    return;
+  }
+
+  if (!canTransfer && !canWithdraw) {
+    _showWalletToast(
+      context,
+      message: '$selectedAsset send and withdrawal are currently disabled.',
+      type: _WalletToastType.info,
+    );
+    return;
+  }
+
+  final resultMessage = await Navigator.of(context).push<String>(
+    MaterialPageRoute(
+      builder: (_) => _SendTokenPage(
+        assetCode: selectedAsset,
+        canTransfer: canTransfer,
+        canWithdraw: canWithdraw,
+      ),
+    ),
+  );
+
+  if (!context.mounted || resultMessage == null || resultMessage.isEmpty) {
+    return;
+  }
+
+  _showWalletToast(
+    context,
+    message: resultMessage,
+    type: _WalletToastType.success,
+  );
+}
+
 class _ActionRow extends StatelessWidget {
   const _ActionRow({this.assetCode = 'BNT'});
 
   final String assetCode;
-
-  bool _isWalletReady(WalletStore store) {
-    final status = store.snapshot?.walletStatus ?? 'provisioning';
-    return status == 'ready';
-  }
-
-  String _notReadyMessage(WalletStore store) {
-    final status = store.snapshot?.walletStatus ?? 'provisioning';
-    if (store.isLoadingSummary && store.snapshot == null) {
-      return 'Wallet is syncing. Try again in a moment.';
-    }
-
-    if (status == 'disabled') {
-      return 'Wallet is currently disabled.';
-    }
-
-    if (status == 'error') {
-      return 'Wallet setup has an issue. Pull to refresh and try again.';
-    }
-
-    return 'Wallet is not ready yet.';
-  }
-
-  Future<void> _openSendMenu(BuildContext context) async {
-    final walletStore = context.read<WalletStore>();
-    final selectedAsset = assetCode.trim().toUpperCase();
-    final canTransfer = walletStore.canTransferAsset(selectedAsset);
-    final canWithdraw = walletStore.canWithdrawAsset(selectedAsset);
-
-    if (!_isWalletReady(walletStore)) {
-      _showWalletToast(
-        context,
-        message: _notReadyMessage(walletStore),
-        type: _WalletToastType.error,
-      );
-      return;
-    }
-
-    if (!canTransfer && !canWithdraw) {
-      _showWalletToast(
-        context,
-        message: '$selectedAsset send and withdrawal are currently disabled.',
-        type: _WalletToastType.info,
-      );
-      return;
-    }
-
-    final resultMessage = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (_) => _SendTokenPage(
-          assetCode: selectedAsset,
-          canTransfer: canTransfer,
-          canWithdraw: canWithdraw,
-        ),
-      ),
-    );
-
-    if (!context.mounted || resultMessage == null || resultMessage.isEmpty) {
-      return;
-    }
-
-    _showWalletToast(
-      context,
-      message: resultMessage,
-      type: _WalletToastType.success,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +88,7 @@ class _ActionRow extends StatelessWidget {
         _ActionButton(
           icon: Icons.arrow_upward_rounded,
           label: 'Send',
-          onTap: () => _openSendMenu(context),
+          onTap: () => _openSendFlow(context, assetCode: assetCode),
         ),
         const SizedBox(width: 10),
         _ActionButton(
@@ -95,7 +98,7 @@ class _ActionRow extends StatelessWidget {
             if (!hasAddress) {
               _showWalletToast(
                 context,
-                message: _notReadyMessage(walletStore),
+                message: _walletNotReadyMessage(walletStore),
                 type: _WalletToastType.error,
               );
               return;
@@ -428,9 +431,11 @@ class _SendTokenPageState extends State<_SendTokenPage> {
                             _isInternal
                                 ? 'Instant wallet-to-wallet transfer'
                                 : 'Queued and reviewed before payout',
-                            style: AppTypography.custom(color: AppColors.textMuted,
+                            style: AppTypography.custom(
+                              color: AppColors.textMuted,
                               size: 12,
-                              weight: FontWeight.w400,),
+                              weight: FontWeight.w400,
+                            ),
                           ),
                         ],
                       ),
@@ -494,9 +499,11 @@ class _SendTokenPageState extends State<_SendTokenPage> {
                       controller: _addressController,
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.next,
-                      style: AppTypography.custom(color: AppColors.textSecondary,
+                      style: AppTypography.custom(
+                        color: AppColors.textSecondary,
                         size: 13,
-                        weight: FontWeight.w400,),
+                        weight: FontWeight.w400,
+                      ),
                       decoration: _fieldDecoration(
                         _isInternal ? '@username or 0x...' : '0x...',
                       ),
@@ -516,9 +523,11 @@ class _SendTokenPageState extends State<_SendTokenPage> {
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       textInputAction: TextInputAction.next,
-                      style: AppTypography.custom(color: AppColors.textSecondary,
+                      style: AppTypography.custom(
+                        color: AppColors.textSecondary,
                         size: 13,
-                        weight: FontWeight.w400,),
+                        weight: FontWeight.w400,
+                      ),
                       decoration: _fieldDecoration('0.0'),
                     ),
                     const SizedBox(height: 12),
@@ -536,9 +545,11 @@ class _SendTokenPageState extends State<_SendTokenPage> {
                           _isInternal ? _noteController : _reasonController,
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.done,
-                      style: AppTypography.custom(color: AppColors.textSecondary,
+                      style: AppTypography.custom(
+                        color: AppColors.textSecondary,
                         size: 13,
-                        weight: FontWeight.w400,),
+                        weight: FontWeight.w400,
+                      ),
                       decoration: _fieldDecoration(
                         _isInternal
                             ? 'Optional transfer note'
@@ -552,9 +563,11 @@ class _SendTokenPageState extends State<_SendTokenPage> {
                 const SizedBox(height: 10),
                 Text(
                   _error!,
-                  style: AppTypography.custom(color: AppColors.error500,
+                  style: AppTypography.custom(
+                    color: AppColors.error500,
                     size: 12,
-                    weight: FontWeight.w400,),
+                    weight: FontWeight.w400,
+                  ),
                 ),
               ],
               const SizedBox(height: 16),

@@ -16,8 +16,10 @@ import 'package:blocnet/screen/main_screen.dart';
 import 'package:blocnet/screen/community_create_post_screen.dart';
 import 'package:blocnet/screen/community_post_discussion_screen.dart';
 import 'package:blocnet/screen/edit_profile_screen.dart';
+import 'package:blocnet/screen/help_support_screen.dart';
 import 'package:blocnet/screen/notifications.dart';
 import 'package:blocnet/screen/profile_screen.dart';
+import 'package:blocnet/screen/referral_code_screen.dart';
 import 'package:blocnet/screen/settings_screen.dart';
 import 'package:blocnet/screen/wallet_screen.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +42,8 @@ class ProtectedRoutes {
   static const String notifications = AppRoutes.notifications;
   static const String badges = AppRoutes.badges;
   static const String quests = AppRoutes.quests;
+  static const String referralCode = AppRoutes.referralCode;
+  static const String helpSupport = AppRoutes.helpSupport;
   static const String createUpdate = AppRoutes.createUpdate;
   static const String submitProject = AppRoutes.submitProject;
   static const String manageProjects = AppRoutes.manageProjects;
@@ -87,8 +91,15 @@ class ProtectedRoutes {
         final assetCode = args is Map ? args['assetCode']?.toString() : null;
         return WalletAssetDetailScreen(assetCode: assetCode ?? 'BNT');
       },
-      tipsHistory: (context) => const TipHistoryScreen(),
-      mining: (context) => const MainScreen(initialIndex: 4),
+      tipsHistory: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        final direction = args is Map ? args['direction']?.toString() : null;
+        final mode = direction == 'received'
+            ? TipHistoryMode.received
+            : TipHistoryMode.sent;
+        return TipHistoryScreen(mode: mode);
+      },
+      mining: (context) => const MainScreen(initialIndex: 3),
       miningLeaderboard: (context) => const MiningLeaderboardScreen(),
       miningHourlyHistory: (context) => const MiningHourlyHistoryScreen(),
       miningDownline: (context) => const MiningDownlineScreen(),
@@ -96,6 +107,8 @@ class ProtectedRoutes {
       notifications: (context) => const NotificationsScreen(),
       badges: (context) => const BadgeGalleryPage(),
       quests: (context) => const QuestsPage(),
+      referralCode: (context) => const ReferralCodeScreen(),
+      helpSupport: (context) => const HelpSupportScreen(),
       createUpdate: (context) => const CreateUpdateScreen(),
       submitProject: (context) => const SubmitProjectScreen(),
       manageProjects: (context) => const ManageProjectsScreen(),

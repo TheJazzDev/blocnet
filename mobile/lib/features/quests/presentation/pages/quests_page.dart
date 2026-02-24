@@ -1,5 +1,7 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
 import 'package:blocnet/features/quests/presentation/pages/quest_detail_page.dart';
 import 'package:blocnet/services/quests_store.dart';
@@ -23,7 +25,9 @@ class _QuestsPageState extends State<QuestsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadQuests();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadQuests();
+    });
   }
 
   @override
@@ -43,70 +47,83 @@ class _QuestsPageState extends State<QuestsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quests'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Available'),
-            Tab(text: 'In Progress'),
-            Tab(text: 'Completed'),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterSheet,
+      backgroundColor: AppColors.bgBase,
+      body: Column(
+        children: [
+          const CustomAppBar(
+            title: 'Quests',
+            backButton: true,
+            showSearch: false,
+            showFilter: false,
           ),
-        ],
-      ),
-      body: Consumer<QuestsStore>(
-        builder: (context, store, child) {
-          if (store.isLoadingAll || store.isLoadingMy) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (store.lastError != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
-                  const SizedBox(height: 16),
-                  Text(
-                    store.lastError!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.red.shade300),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadQuests,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => store.refresh(),
-            child: Column(
-              children: [
-                _buildStatsBar(store),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildAvailableTab(store),
-                      _buildInProgressTab(store),
-                      _buildCompletedTab(store),
-                    ],
-                  ),
-                ),
+          Container(
+            color: AppColors.bgBase,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary400,
+              unselectedLabelColor: AppColors.textMuted,
+              indicatorColor: AppColors.primary400,
+              indicatorWeight: 2.5,
+              dividerColor: Colors.transparent,
+              tabs: const [
+                Tab(text: 'Available'),
+                Tab(text: 'In Progress'),
+                Tab(text: 'Completed'),
               ],
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: Consumer<QuestsStore>(
+              builder: (context, store, child) {
+                if (store.isLoadingAll || store.isLoadingMy) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (store.lastError != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 48, color: Colors.red.shade300),
+                        const SizedBox(height: 16),
+                        Text(
+                          store.lastError!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.red.shade300),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadQuests,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () => store.refresh(),
+                  child: Column(
+                    children: [
+                      _buildStatsBar(store),
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildAvailableTab(store),
+                            _buildInProgressTab(store),
+                            _buildCompletedTab(store),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -146,7 +163,8 @@ class _QuestsPageState extends State<QuestsPage>
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+      String label, String value, IconData icon, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -271,7 +289,8 @@ class _QuestsPageState extends State<QuestsPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle_outline, size: 64, color: Colors.grey.shade600),
+            Icon(Icons.check_circle_outline,
+                size: 64, color: Colors.grey.shade600),
             const SizedBox(height: 16),
             Text(
               'No completed quests yet',
@@ -300,75 +319,6 @@ class _QuestsPageState extends State<QuestsPage>
           onTap: () => _navigateToQuestDetail(userQuest.quest, userQuest),
         );
       },
-    );
-  }
-
-  void _showFilterSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Filter Quests',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              const Text('Category', style: TextStyle(fontSize: 14)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('All'),
-                    selected: _selectedCategory == null,
-                    onSelected: (_) {
-                      setState(() => _selectedCategory = null);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ...BadgeCategory.values.map((cat) => FilterChip(
-                        label: Text(cat.displayName),
-                        selected: _selectedCategory == cat,
-                        onSelected: (_) {
-                          setState(() => _selectedCategory = cat);
-                          Navigator.pop(context);
-                        },
-                      )),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text('Type', style: TextStyle(fontSize: 14)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('All'),
-                    selected: _selectedType == null,
-                    onSelected: (_) {
-                      setState(() => _selectedType = null);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ...QuestType.values.map((type) => FilterChip(
-                        label: Text(type.displayName),
-                        selected: _selectedType == type,
-                        onSelected: (_) {
-                          setState(() => _selectedType = type);
-                          Navigator.pop(context);
-                        },
-                      )),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -403,49 +353,56 @@ class _QuestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: Color(status.color).withValues(alpha:0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Color(status.color).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(
-                      IconData(quest.type.icon, fontFamily: 'MaterialIcons'),
-                      color: Color(status.color),
-                      size: 24,
+                    child: Center(
+                      child: Icon(
+                        IconData(quest.type.icon, fontFamily: 'MaterialIcons'),
+                        color: Color(status.color),
+                        size: 21,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           quest.title,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Row(
                           children: [
                             BadgeCategoryChip(
                               category: quest.category,
                               compact: true,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             _QuestStatusChip(status: status, compact: true),
                           ],
                         ),
@@ -454,17 +411,18 @@ class _QuestCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 quest.description,
                 style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade300,
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -479,9 +437,9 @@ class _QuestCard extends StatelessWidget {
                       Text(
                         '${quest.rewardPoints} points',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           color: Colors.amber.shade400,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -490,7 +448,7 @@ class _QuestCard extends StatelessWidget {
                     Text(
                       'Completed ${_formatDate(completedAt!)}',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         color: Colors.grey.shade500,
                       ),
                     )
@@ -537,10 +495,10 @@ class _QuestStatusChip extends StatelessWidget {
           ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
           : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Color(status.color).withValues(alpha:0.15),
+        color: Color(status.color).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Color(status.color).withValues(alpha:0.5),
+          color: Color(status.color).withValues(alpha: 0.5),
           width: 1,
         ),
       ),

@@ -1274,6 +1274,7 @@ model QuestSubmission {
   verificationStatus QuestVerificationStatus @default(pending)
   verifiedBy         String?                 @db.Uuid
   verifiedAt         DateTime?
+  reviewNotes        String?
   rejectionReason    String?
   submittedAt        DateTime                @default(now())
   createdAt          DateTime                @default(now())

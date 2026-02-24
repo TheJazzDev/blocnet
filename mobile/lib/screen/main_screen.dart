@@ -35,6 +35,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   bool _isSwitchingSpace = false;
   int _spaceSwitchToken = 0;
   bool _hasCheckedReferralPrompt = false;
+  bool _isShowingHunterOnboarding = false;
+  String? _checkedHunterOnboardingUserId;
 
   int _userIndex = 0;
   int _hunterIndex = 0;
@@ -49,6 +51,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       if (!mounted) return;
       context.read<NotificationsStore>().fetchNotificationsOnce();
       _maybePromptReferralBind();
+      _maybePromptHunterOnboarding();
     });
   }
 
@@ -68,6 +71,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    _maybePromptHunterOnboarding();
 
     if (_lastIsHunterSpace == null) {
       _lastIsHunterSpace = isHunterSpace;
@@ -85,9 +89,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       setState(() {
         _isSwitchingSpace = true;
         if (isHunterSpace) {
-          _hunterIndex = targetTab ?? 4;
+          if (targetTab != null) {
+            _hunterIndex = targetTab;
+          }
         } else {
-          _userIndex = targetTab ?? 4;
+          if (targetTab != null) {
+            _userIndex = targetTab;
+          }
         }
       });
 
@@ -241,6 +249,119 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
 
     await prefs.setBool(promptSeenKey, true);
+  }
+
+  Future<void> _maybePromptHunterOnboarding() async {
+    if (!mounted || _isShowingHunterOnboarding) return;
+
+    final auth = context.read<AuthStore>();
+    final userId = auth.userId?.trim();
+    if (!auth.isAuthenticated ||
+        !auth.hasHunterSpace ||
+        userId == null ||
+        userId.isEmpty) {
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final key = auth.hunterOnboardedKeyFor(userId);
+    final alreadySeen = prefs.getBool(key) == true;
+    if (alreadySeen) {
+      _checkedHunterOnboardingUserId = userId;
+      return;
+    }
+    if (_checkedHunterOnboardingUserId == userId) {
+      return;
+    }
+
+    _isShowingHunterOnboarding = true;
+    _checkedHunterOnboardingUserId = userId;
+
+    if (!mounted) {
+      _isShowingHunterOnboarding = false;
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.bgSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderMuted,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Hunter space unlocked',
+                style: AppTypography.custom(
+                  color: AppColors.textPrimary,
+                  size: 18,
+                  weight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'You now have access to Hunter Hub, management tools, and hunter-specific rankings.',
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 12,
+                  weight: FontWeight.w500,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.borderSubtle),
+                        foregroundColor: AppColors.textSecondary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Dismiss'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary500,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Got it'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    _isShowingHunterOnboarding = false;
+    await prefs.setBool(key, true);
   }
 }
 

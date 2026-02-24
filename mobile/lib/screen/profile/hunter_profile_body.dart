@@ -227,6 +227,22 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
                   const _HunterSectionLabel('More'),
                   const SizedBox(height: 8),
                   _HunterTile(
+                    icon: Icons.history_edu_outlined,
+                    title: 'Tip History (Received)',
+                    subtitle: 'Review tips you received from supporters',
+                    onTap: () => Navigator.of(context).pushNamed(
+                      AppRoutes.tipsHistory,
+                      arguments: const {'direction': 'received'},
+                    ),
+                  ),
+                  _HunterTile(
+                    icon: Icons.redeem_outlined,
+                    title: 'Referral Code',
+                    subtitle: 'View and manage your referral code',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.referralCode),
+                  ),
+                  _HunterTile(
                     icon: Icons.edit_outlined,
                     title: 'Edit Profile',
                     subtitle: 'Update your avatar and public details',
@@ -246,6 +262,13 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
                     subtitle: 'Account preferences',
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.settings),
+                  ),
+                  _HunterTile(
+                    icon: Icons.support_agent_outlined,
+                    title: 'Help & Support',
+                    subtitle: 'Get help with account and app issues',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.helpSupport),
                   ),
                   const SizedBox(height: 12),
                   const _HunterSectionLabel('Account'),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
@@ -9,7 +10,12 @@ import 'package:provider/provider.dart';
 /// Season leaderboard mini widget for Hunter Hub.
 /// Ranking is based on real published updates count.
 class SeasonLeaderboard extends StatelessWidget {
-  const SeasonLeaderboard({super.key});
+  const SeasonLeaderboard({
+    super.key,
+    this.onViewFullLeaderboard,
+  });
+
+  final VoidCallback? onViewFullLeaderboard;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +41,7 @@ class SeasonLeaderboard extends StatelessWidget {
                 : _fallbackUsernameFromAdminId(adminId),
           ),
           updatesCount: 1,
+          totalTipsReceived: update.admin?.totalTipsReceived ?? 0,
           lastUpdateAt: update.createdAt,
         );
       } else {
@@ -47,6 +54,10 @@ class SeasonLeaderboard extends StatelessWidget {
             fallback: existing.username,
           ),
           updatesCount: existing.updatesCount + 1,
+          totalTipsReceived: existing.totalTipsReceived >
+                  (update.admin?.totalTipsReceived ?? 0)
+              ? existing.totalTipsReceived
+              : (update.admin?.totalTipsReceived ?? 0),
           lastUpdateAt: nextLastUpdate,
         );
       }
@@ -69,6 +80,7 @@ class SeasonLeaderboard extends StatelessWidget {
             rank: entry.key + 1,
             username: entry.value.username,
             updatesCount: entry.value.updatesCount,
+            totalTipsReceived: entry.value.totalTipsReceived,
             isCurrentUser: _isCurrentUser(
               adminId: entry.value.adminId,
               username: entry.value.username,
@@ -85,6 +97,7 @@ class SeasonLeaderboard extends StatelessWidget {
       rank: entries.length + 1,
       username: _formatUsername(currentUsername),
       updatesCount: 0,
+      totalTipsReceived: 0,
       isCurrentUser: true,
     );
 
@@ -138,9 +151,33 @@ class SeasonLeaderboard extends StatelessWidget {
                     letterSpacing: 1.0,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    'USERNAME',
+                    style: AppTypography.custom(
+                      color: AppColors.textFaint,
+                      size: 9,
+                      weight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Text(
                   'UPDATES',
+                  style: AppTypography.custom(
+                    color: AppColors.textFaint,
+                    size: 9,
+                    weight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'TIPS',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
                     size: 9,
@@ -161,6 +198,33 @@ class SeasonLeaderboard extends StatelessWidget {
               ],
             );
           }),
+          const Divider(height: 1),
+          InkWell(
+            onTap: onViewFullLeaderboard ??
+                () => Navigator.of(context).pushNamed(AppRoutes.topHunters),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 11, 14, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'View Full Leaderboard',
+                    style: AppTypography.custom(
+                      color: AppColors.primary400,
+                      size: 12,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 15,
+                    color: AppColors.primary400,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -172,23 +236,27 @@ class _LeaderboardScore {
     required this.adminId,
     required this.username,
     required this.updatesCount,
+    required this.totalTipsReceived,
     required this.lastUpdateAt,
   });
 
   final String adminId;
   final String username;
   final int updatesCount;
+  final double totalTipsReceived;
   final DateTime lastUpdateAt;
 
   _LeaderboardScore copyWith({
     String? username,
     int? updatesCount,
+    double? totalTipsReceived,
     DateTime? lastUpdateAt,
   }) {
     return _LeaderboardScore(
       adminId: adminId,
       username: username ?? this.username,
       updatesCount: updatesCount ?? this.updatesCount,
+      totalTipsReceived: totalTipsReceived ?? this.totalTipsReceived,
       lastUpdateAt: lastUpdateAt ?? this.lastUpdateAt,
     );
   }
@@ -199,12 +267,14 @@ class _LeaderboardEntry {
     required this.rank,
     required this.username,
     required this.updatesCount,
+    required this.totalTipsReceived,
     required this.isCurrentUser,
   });
 
   final int rank;
   final String username;
   final int updatesCount;
+  final double totalTipsReceived;
   final bool isCurrentUser;
 }
 
@@ -229,7 +299,7 @@ class _LeaderboardRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 28,
+            width: 34,
             child: Text(
               '#${entry.rank}',
               style: AppTypography.custom(
@@ -239,37 +309,7 @@ class _LeaderboardRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: entry.isCurrentUser
-                  ? AppColors.primary500.withValues(alpha: 0.15)
-                  : AppColors.bgElevated,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: entry.isCurrentUser
-                    ? AppColors.primary500.withValues(alpha: 0.4)
-                    : AppColors.borderSubtle,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                entry.username.isNotEmpty
-                    ? entry.username[0].toUpperCase()
-                    : '?',
-                style: AppTypography.custom(
-                  color: entry.isCurrentUser
-                      ? AppColors.primary400
-                      : AppColors.textMuted,
-                  size: 11,
-                  weight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               entry.isCurrentUser ? 'You (${entry.username})' : entry.username,
@@ -284,8 +324,20 @@ class _LeaderboardRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          const SizedBox(width: 8),
           Text(
-            '${entry.updatesCount} updates',
+            entry.updatesCount.toString(),
+            style: AppTypography.custom(
+              color: entry.isCurrentUser
+                  ? AppColors.primary400
+                  : AppColors.textSecondary,
+              size: 12,
+              weight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 18),
+          Text(
+            _formatTipsReceived(entry.totalTipsReceived),
             style: AppTypography.custom(
               color: entry.isCurrentUser
                   ? AppColors.primary400
@@ -347,4 +399,11 @@ bool _isCurrentUser({
   final normalizedEntry = username.replaceAll('@', '').toLowerCase();
   final normalizedCurrent = currentUsername.replaceAll('@', '').toLowerCase();
   return normalizedCurrent.isNotEmpty && normalizedEntry == normalizedCurrent;
+}
+
+String _formatTipsReceived(double value) {
+  if (value == value.roundToDouble()) {
+    return value.toInt().toString();
+  }
+  return value.toStringAsFixed(2);
 }

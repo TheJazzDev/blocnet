@@ -21,6 +21,7 @@ class BadgesStore extends ChangeNotifier {
   List<BadgeModel> get allBadges => List.unmodifiable(_allBadges);
   List<UserBadgeModel> get myBadges => List.unmodifiable(_myBadges);
   BadgeModel? get primaryBadge => _primaryBadge;
+  BadgeModel? get displayBadge => _primaryBadge ?? _highestEarnedBadge();
   int get totalBadgeCount => _totalBadgeCount;
   bool get isLoadingAll => _isLoadingAll;
   bool get isLoadingMy => _isLoadingMy;
@@ -33,8 +34,7 @@ class BadgesStore extends ChangeNotifier {
   int get unearnedBadgeCount => _allBadges.length - earnedBadgeCount;
 
   /// Get earned badge IDs for quick lookup
-  Set<String> get earnedBadgeIds =>
-      _myBadges.map((ub) => ub.badgeId).toSet();
+  Set<String> get earnedBadgeIds => _myBadges.map((ub) => ub.badgeId).toSet();
 
   /// Check if user has earned a specific badge
   bool hasBadge(String badgeId) => earnedBadgeIds.contains(badgeId);
@@ -122,8 +122,23 @@ class BadgesStore extends ChangeNotifier {
     try {
       await _repository.setPrimaryBadge(badgeId);
 
-      // Update local state
-      _primaryBadge = _allBadges.firstWhere((b) => b.id == badgeId);
+      // Update local state safely even if all badges cache is stale/empty.
+      BadgeModel? resolvedPrimary;
+      for (final badge in _allBadges) {
+        if (badge.id == badgeId) {
+          resolvedPrimary = badge;
+          break;
+        }
+      }
+      if (resolvedPrimary == null) {
+        for (final userBadge in _myBadges) {
+          if (userBadge.badge.id == badgeId) {
+            resolvedPrimary = userBadge.badge;
+            break;
+          }
+        }
+      }
+      _primaryBadge = resolvedPrimary;
       _lastError = null;
       notifyListeners();
       return true;
@@ -147,6 +162,47 @@ class BadgesStore extends ChangeNotifier {
   void clearError() {
     _lastError = null;
     notifyListeners();
+  }
+
+  BadgeModel? _highestEarnedBadge() {
+    if (_myBadges.isEmpty) return null;
+
+    final sorted = _myBadges
+        .map((entry) => entry.badge)
+        .where((badge) => badge.id.isNotEmpty)
+        .toList()
+      ..sort(_compareBadgePriority);
+
+    if (sorted.isEmpty) return null;
+    return sorted.first;
+  }
+
+  int _compareBadgePriority(BadgeModel left, BadgeModel right) {
+    final rarityDelta =
+        _rarityRank(right.rarity).compareTo(_rarityRank(left.rarity));
+    if (rarityDelta != 0) return rarityDelta;
+
+    final pointsDelta =
+        right.pointsRequirement.compareTo(left.pointsRequirement);
+    if (pointsDelta != 0) return pointsDelta;
+
+    final sortOrderDelta = left.sortOrder.compareTo(right.sortOrder);
+    if (sortOrderDelta != 0) return sortOrderDelta;
+
+    return right.createdAt.compareTo(left.createdAt);
+  }
+
+  int _rarityRank(BadgeRarity rarity) {
+    switch (rarity) {
+      case BadgeRarity.legendary:
+        return 4;
+      case BadgeRarity.epic:
+        return 3;
+      case BadgeRarity.rare:
+        return 2;
+      case BadgeRarity.common:
+        return 1;
+    }
   }
 
   static String describeError(dynamic error) {

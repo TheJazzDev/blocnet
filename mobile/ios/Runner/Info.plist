@@ -58,6 +58,8 @@
 			<key>NSAllowsArbitraryLoads</key>
 			<true/>
 		</dict>
+	<key>GIDClientID</key>
+	<string>169920189639-tjilh6jkn99tes52o7e5jfkfdambhrc8.apps.googleusercontent.com</string>
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
@@ -68,6 +70,14 @@
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>io.blocnet.app</string>
+				</array>
+			</dict>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.169920189639-tjilh6jkn99tes52o7e5jfkfdambhrc8</string>
 				</array>
 			</dict>
 		</array>

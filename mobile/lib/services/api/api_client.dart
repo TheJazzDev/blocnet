@@ -56,6 +56,18 @@ class ApiClient {
     return _parseResponse(response);
   }
 
+  Future<dynamic> put(String path, {Map<String, dynamic>? body}) async {
+    final uri = _buildUri(path);
+    final response = await _request(
+      () => _httpClient.put(
+        uri,
+        headers: _headers(),
+        body: body == null ? null : jsonEncode(body),
+      ),
+    );
+    return _parseResponse(response);
+  }
+
   Future<dynamic> patch(String path, {Map<String, dynamic>? body}) async {
     final uri = _buildUri(path);
     final response = await _request(

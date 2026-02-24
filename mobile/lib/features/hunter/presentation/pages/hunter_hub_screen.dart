@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hunter_stats_grid.dart';
@@ -137,7 +138,10 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
                   const SizedBox(height: 24),
                   _SectionHeader(title: 'Season Ranking'),
                   const SizedBox(height: 12),
-                  const SeasonLeaderboard(),
+                  SeasonLeaderboard(
+                    onViewFullLeaderboard: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.topHunters),
+                  ),
                   const SizedBox(height: 24),
                   _EliteHunterBanner(successRate: successRate),
                   const SizedBox(height: 24),
@@ -508,13 +512,9 @@ class _CommunityBridgeLink extends StatelessWidget {
 
   void _navigateToCommunity(BuildContext context) async {
     final authStore = context.read<AuthStore>();
-
-    // Switch to User space (Community tab is at index 2 in User space)
-    authStore.setActiveSpace('user');
-
-    // Store preference to navigate to Community tab after space switch
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('navigate_to_tab_after_switch', 2);
+    await authStore.switchSpaceWithTransition('user');
   }
 
   @override

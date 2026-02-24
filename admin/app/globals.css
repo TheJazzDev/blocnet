@@ -86,6 +86,20 @@
   * {
     @apply border-border;
   }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  label[for],
+  [data-radix-collection-item]:not([data-disabled]) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  [disabled],
+  [data-disabled] {
+    cursor: not-allowed;
+  }
   body {
     background:
       radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 28%),

@@ -123,10 +123,10 @@ export function Features() {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className={`p-4 sm:p-5 backdrop-blur-sm border rounded-lg transition-all duration-300 hover:scale-[1.02] ${
+              className={`p-4 sm:p-5 backdrop-blur-sm border rounded-lg ${
                 feature.featured
                   ? 'bg-gradient-to-br from-teal-500/10 to-primary/10 border-teal-500/30 shadow-lg shadow-teal-500/10'
-                  : 'bg-surface-2/50 border-border hover:border-teal-500/20'
+                  : 'bg-surface-2/50 border-border'
               }`}
             >
               {/* Category Badge */}

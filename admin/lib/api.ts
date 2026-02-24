@@ -1,3 +1,4 @@
+import "server-only";
 import { cookies } from "next/headers";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3080/api";
@@ -61,6 +62,15 @@ export interface AdminStats {
 
 export type AdminUserStatus = "active" | "deactivated";
 
+export interface AdminBadgeSummary {
+  id: string;
+  slug: string;
+  name: string;
+  imageUrl: string;
+  category: string;
+  rarity: string;
+}
+
 export interface AdminUser {
   id: string;
   email: string;
@@ -72,6 +82,8 @@ export interface AdminUser {
   roles: string[];
   projectsAssigned: number;
   updatesPosted: number;
+  badgesCount: number;
+  primaryBadge: AdminBadgeSummary | null;
   createdAt: string;
 }
 
@@ -96,6 +108,11 @@ export interface AdminUserDetail {
   createdAt: string;
   updatedAt: string;
   roles: string[];
+  primaryBadge: AdminBadgeSummary | null;
+  badges: Array<{
+    earnedAt: string;
+    badge: AdminBadgeSummary;
+  }>;
   wallet: {
     id: string;
     status: WalletStatus;
@@ -124,6 +141,7 @@ export interface AdminUserDetail {
     communityComments: number;
     withdrawals: number;
     deviceTokens: number;
+    badges: number;
   };
 }
 

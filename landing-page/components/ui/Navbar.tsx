@@ -57,10 +57,10 @@ export function Navbar() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`text-sm lg:text-base transition-colors ${
+                  className={`text-sm lg:text-base ${
                     pathname === link.href
                       ? 'text-teal-400 font-semibold'
-                      : 'text-muted hover:text-foreground'
+                      : 'text-muted'
                   }`}
                 >
                   {link.label}
@@ -69,7 +69,7 @@ export function Navbar() {
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-sm lg:text-base text-muted hover:text-foreground transition-colors"
+                  className="text-sm lg:text-base text-muted"
                 >
                   {link.label}
                 </a>
@@ -83,14 +83,14 @@ export function Navbar() {
               href="https://x.com/blocnet_app"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-surface-2 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground hover:bg-surface-2/80 transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-surface-2 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground"
             >
               <span>Follow on</span>
               <span className="font-bold">𝕏</span>
             </a>
             <a
               href={isHomePage ? '#download' : '/#download'}
-              className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 bg-teal-500 text-white rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm md:text-base hover:bg-teal-600 transition-colors"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 bg-teal-500 text-white rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm md:text-base"
             >
               Download App
             </a>
@@ -98,7 +98,7 @@ export function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-muted hover:text-foreground"
+              className="md:hidden p-2 text-muted"
               aria-label="Toggle menu"
             >
               <svg
@@ -137,10 +137,10 @@ export function Navbar() {
                     key={link.label}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2 text-sm transition-colors ${
+                    className={`px-4 py-2 text-sm ${
                       pathname === link.href
                         ? 'text-teal-400 font-semibold bg-teal-500/10 rounded-lg'
-                        : 'text-muted hover:text-foreground'
+                        : 'text-muted'
                     }`}
                   >
                     {link.label}
@@ -150,7 +150,7 @@ export function Navbar() {
                     key={link.label}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="px-4 py-2 text-sm text-muted hover:text-foreground transition-colors"
+                    className="px-4 py-2 text-sm text-muted"
                   >
                     {link.label}
                   </a>

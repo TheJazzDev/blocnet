@@ -80,7 +80,7 @@ export function RoadmapPreview() {
             </div>
             <div className="h-2 sm:h-3 bg-surface-2 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-teal-400 to-primary transition-all duration-500"
+                className="h-full bg-gradient-to-r from-teal-400 to-primary"
                 style={{ width: `${currentPhase.progress}%` }}
               />
             </div>
@@ -138,7 +138,7 @@ export function RoadmapPreview() {
         <div className="text-center">
           <Link
             href="/roadmap"
-            className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-teal-500/10 to-primary/10 border border-teal-500/20 text-foreground rounded-xl font-semibold text-sm sm:text-base hover:border-teal-500/40 transition-all duration-300 hover:scale-105"
+            className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-teal-500/10 to-primary/10 border border-teal-500/20 text-foreground rounded-xl font-semibold text-sm sm:text-base"
           >
             View Full Roadmap
             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

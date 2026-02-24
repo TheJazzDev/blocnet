@@ -23,6 +23,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _passwordFocus = FocusNode();
 
   bool _isSubmitting = false;
+  bool _isGoogleSigningIn = false;
   bool _obscurePassword = true;
 
   @override
@@ -69,16 +70,16 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _continueWithGoogle() async {
-    if (_isSubmitting) return;
+    if (_isGoogleSigningIn) return;
     FocusScope.of(context).unfocus();
 
-    setState(() => _isSubmitting = true);
+    setState(() => _isGoogleSigningIn = true);
     final authStore = context.read<AuthStore>();
-    final started = await authStore.signInWithGoogle();
+    final success = await authStore.signInWithGoogle();
     if (!mounted) return;
-    setState(() => _isSubmitting = false);
+    setState(() => _isGoogleSigningIn = false);
 
-    if (!started) {
+    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -92,12 +93,9 @@ class _SignInScreenState extends State<SignInScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Continue with Google in your browser'),
-        backgroundColor: AppColors.bgSurface,
-        behavior: SnackBarBehavior.floating,
-      ),
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRoutes.main,
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -105,6 +103,7 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     final authStore = context.watch<AuthStore>();
     final isBusy = _isSubmitting || authStore.isSubmitting;
+    final isAnyBusy = isBusy || _isGoogleSigningIn;
 
     return AuthScreenShell(
       appBarTitle: '',
@@ -120,8 +119,8 @@ class _SignInScreenState extends State<SignInScreen> {
           children: [
             _GoogleAuthButton(
               label: 'Continue with Google',
-              isEnabled: !isBusy && authStore.isSupabaseConfigured,
-              isLoading: false,
+              isEnabled: !isAnyBusy && authStore.isSupabaseConfigured,
+              isLoading: _isGoogleSigningIn,
               onPressed: _continueWithGoogle,
             ),
             const SizedBox(height: 14),
@@ -171,7 +170,7 @@ class _SignInScreenState extends State<SignInScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: isBusy
+                onPressed: isAnyBusy
                     ? null
                     : () => Navigator.pushNamed(
                           context,
@@ -204,7 +203,7 @@ class _SignInScreenState extends State<SignInScreen> {
               children: [
                 PrimaryButton(
                   title: 'Sign in',
-                  isEnabled: !isBusy && authStore.isSupabaseConfigured,
+                  isEnabled: !isAnyBusy && authStore.isSupabaseConfigured,
                   isLoading: isBusy,
                   onPressed: _submit,
                 ),
@@ -227,7 +226,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                   const SizedBox(width: 4),
                   GestureDetector(
-                    onTap: isBusy
+                    onTap: isAnyBusy
                         ? null
                         : () => Navigator.pushNamed(context, AppRoutes.signUp),
                     child: Text(

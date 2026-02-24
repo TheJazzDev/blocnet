@@ -21,6 +21,19 @@ class BadgeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dimensions = size.dimensions;
+    final hasValidImage = _isUsableImageUrl(badge.imageUrl);
+    final rarityColor = Color(badge.rarity.color);
+
+    Widget fallbackIcon() {
+      return Container(
+        color: Colors.grey.shade800,
+        child: Icon(
+          Icons.emoji_events,
+          size: dimensions * 0.6,
+          color: rarityColor,
+        ),
+      );
+    }
 
     Widget badgeWidget = GestureDetector(
       onTap: onTap,
@@ -30,45 +43,40 @@ class BadgeIcon extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: Color(badge.rarity.color).withValues(alpha: 0.3),
+            color: rarityColor.withValues(alpha: 0.3),
             width: size == BadgeSize.large ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Color(badge.rarity.color).withValues(alpha: 0.2),
+              color: rarityColor.withValues(alpha: 0.2),
               blurRadius: size == BadgeSize.large ? 8 : 4,
               spreadRadius: size == BadgeSize.large ? 2 : 1,
             ),
           ],
         ),
         child: ClipOval(
-          child: CachedNetworkImage(
-            imageUrl: badge.imageUrl,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Container(
-              color: Colors.grey.shade800,
-              child: Center(
-                child: SizedBox(
-                  width: dimensions * 0.5,
-                  height: dimensions * 0.5,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Color(badge.rarity.color),
+          child: hasValidImage
+              ? CachedNetworkImage(
+                  imageUrl: badge.imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey.shade800,
+                    child: Center(
+                      child: SizedBox(
+                        width: dimensions * 0.5,
+                        height: dimensions * 0.5,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            rarityColor,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-            errorWidget: (context, url, error) => Container(
-              color: Colors.grey.shade800,
-              child: Icon(
-                Icons.emoji_events,
-                size: dimensions * 0.6,
-                color: Color(badge.rarity.color),
-              ),
-            ),
-          ),
+                  errorWidget: (context, url, error) => fallbackIcon(),
+                )
+              : fallbackIcon(),
         ),
       ),
     );
@@ -85,7 +93,7 @@ class BadgeIcon extends StatelessWidget {
           color: Colors.black87,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: Color(badge.rarity.color).withValues(alpha:0.5),
+            color: rarityColor.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -94,6 +102,16 @@ class BadgeIcon extends StatelessWidget {
     }
 
     return badgeWidget;
+  }
+
+  bool _isUsableImageUrl(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) return false;
+    final uri = Uri.tryParse(value);
+    if (uri == null) return false;
+    if (!uri.hasScheme || !uri.hasAuthority) return false;
+    final scheme = uri.scheme.toLowerCase();
+    return scheme == 'http' || scheme == 'https';
   }
 }
 
@@ -223,10 +241,10 @@ class BadgeRarityChip extends StatelessWidget {
           ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
           : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Color(rarity.color).withValues(alpha:0.15),
+        color: Color(rarity.color).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Color(rarity.color).withValues(alpha:0.5),
+          color: Color(rarity.color).withValues(alpha: 0.5),
           width: 1,
         ),
       ),

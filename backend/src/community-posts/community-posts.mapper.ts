@@ -5,6 +5,26 @@ const authorSelect = {
   email: true,
   displayName: true,
   avatarUrl: true,
+  roles: {
+    select: {
+      role: true,
+    },
+  },
+  primaryBadge: {
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      description: true,
+      imageUrl: true,
+      category: true,
+      rarity: true,
+      pointsRequirement: true,
+      isActive: true,
+      sortOrder: true,
+      createdAt: true,
+    },
+  },
 } satisfies Prisma.ProfileSelect;
 
 export const communityPostCommentInclude = {
@@ -60,6 +80,20 @@ function toActorPreview(actor: {
   email: string;
   displayName: string | null;
   avatarUrl: string | null;
+  roles: Array<{ role: string }>;
+  primaryBadge: {
+    id: string;
+    slug: string;
+    name: string;
+    description: string;
+    imageUrl: string;
+    category: string;
+    rarity: string;
+    pointsRequirement: number;
+    isActive: boolean;
+    sortOrder: number;
+    createdAt: Date;
+  } | null;
 }) {
   const rawUsername = actor.email?.split('@')[0] ?? actor.id;
   const normalized = rawUsername
@@ -73,6 +107,8 @@ function toActorPreview(actor: {
     username: `@${normalized || actor.id.slice(0, 6)}`,
     imageUrl: actor.avatarUrl ?? '',
     followers: 0,
+    roles: actor.roles.map((entry) => entry.role),
+    primaryBadge: actor.primaryBadge,
   };
 }
 

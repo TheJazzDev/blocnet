@@ -245,7 +245,7 @@ export function AboutContent() {
             Interested in joining? Reach out at{' '}
             <a
               href="mailto:blocnetapp@gmail.com"
-              className="text-teal-400 hover:underline"
+              className="text-teal-400"
             >
               blocnetapp@gmail.com
             </a>
@@ -263,7 +263,7 @@ export function AboutContent() {
           </p>
           <a
             href="/#download"
-            className="inline-block px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition-all duration-300 hover:scale-105"
+            className="inline-block px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25 "
           >
             Download Blocnet
           </a>

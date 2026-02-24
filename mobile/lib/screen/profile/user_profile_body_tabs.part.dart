@@ -36,7 +36,8 @@ class _ProfileTabBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: isActive ? AppColors.teal400 : Colors.transparent,
+                      color:
+                          isActive ? AppColors.userAccent : Colors.transparent,
                       width: 2,
                     ),
                   ),
@@ -46,7 +47,8 @@ class _ProfileTabBar extends StatelessWidget {
                 child: Text(
                   label,
                   style: AppTypography.custom(
-                    color: isActive ? AppColors.teal400 : AppColors.textFaint,
+                    color:
+                        isActive ? AppColors.userAccent : AppColors.textFaint,
                     size: 13,
                     weight: isActive ? FontWeight.w600 : FontWeight.w500,
                   ),
@@ -71,7 +73,7 @@ class _BookmarksTab extends StatelessWidget {
     if (profileStore.isLoadingBookmarks && bookmarks.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
-          color: AppColors.primary400,
+          color: AppColors.userAccent,
           strokeWidth: 2,
         ),
       );
@@ -167,8 +169,8 @@ class _BookmarkItem extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.primary500.withValues(alpha: 0.2),
-                  AppColors.teal500.withValues(alpha: 0.1),
+                  AppColors.userAccent.withValues(alpha: 0.2),
+                  AppColors.userAccent.withValues(alpha: 0.08),
                 ],
               ),
             ),
@@ -267,7 +269,7 @@ class _WatchlistTab extends StatelessWidget {
     if (profileStore.isLoadingWatchlist && watchlist.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
-          color: AppColors.primary400,
+          color: AppColors.userAccent,
           strokeWidth: 2,
         ),
       );
@@ -412,7 +414,7 @@ class _HistoryTab extends StatelessWidget {
     if (profileStore.isLoadingActivity && activityItems.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
-          color: AppColors.primary400,
+          color: AppColors.userAccent,
           strokeWidth: 2,
         ),
       );
@@ -491,7 +493,7 @@ class _HistoryItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.bolt_rounded, size: 16, color: AppColors.primary400),
+          Icon(Icons.bolt_rounded, size: 16, color: AppColors.userAccent),
           const SizedBox(width: 8),
           Expanded(
             child: Column(

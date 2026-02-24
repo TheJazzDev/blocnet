@@ -20,7 +20,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.backButton = true,
     this.showFilter = true,
     this.showSearch = true,
-    this.showSpaceSwitcher = false,
+    this.showSpaceSwitcher = true,
     this.showNotificationBell = false,
     this.showProfileShortcut = false,
     this.showProfileAvatarLeading = false,
@@ -32,7 +32,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showFilter;
   final bool showSearch;
 
-  /// Show the User/Hunter space toggle pill (only renders for eligible roles).
+  /// Show the User/Hunter space toggle button (only renders for eligible roles).
   final bool showSpaceSwitcher;
 
   /// Show notification bell with badge in the app bar.
@@ -45,8 +45,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final navigator = Navigator.of(context);
     final showBack = backButton && navigator.canPop();
-    final showSpaceSwitcherInProfile = showSpaceSwitcher && title == 'Profile';
     final showLeadingProfile = showProfileAvatarLeading && !showBack;
+    final hasLeading = showBack || showLeadingProfile;
 
     return Container(
       decoration: BoxDecoration(
@@ -58,15 +58,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.only(right: 8),
           child: SizedBox(
             height: kToolbarHeight,
-            child: Stack(
-              alignment: Alignment.center,
+            child: Row(
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(
+                if (hasLeading) ...[
+                  SizedBox(
                     width: 44,
                     child: showBack
                         ? _AppBarIconButton(
@@ -82,72 +80,72 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                               }
                             },
                           )
-                        : showLeadingProfile
-                            ? const _ProfileAvatarButton()
-                            : const SizedBox.shrink(),
+                        : const _ProfileAvatarButton(),
                   ),
-                ),
-                Center(
-                  child: Text(
-                    title,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: 17,
-                      weight: FontWeight.w700,
-                      letterSpacing: -0.3,
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      style: AppTypography.custom(
+                        color: AppColors.textPrimary,
+                        size: 17,
+                        weight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ...actions,
-                      if (showSpaceSwitcherInProfile) ...[
-                        const SizedBox(width: 6),
-                        const SpaceSwitcher(),
-                      ],
-                      if (showSearch) ...[
-                        const SizedBox(width: 6),
-                        _AppBarIconButton(
-                          icon: Icons.search_rounded,
-                          onTap: () {
-                            showSearchDialog(context);
-                          },
-                        ),
-                      ],
-                      if (showNotificationBell) ...[
-                        const SizedBox(width: 6),
-                        _NotificationBellButton(),
-                      ],
-                      if (showProfileShortcut) ...[
-                        const SizedBox(width: 6),
-                        _AppBarIconButton(
-                          icon: Icons.person_outline_rounded,
-                          onTap: () {
-                            Navigator.of(context).pushNamed(AppRoutes.profile);
-                          },
-                        ),
-                      ],
-                      if (showFilter) ...[
-                        const SizedBox(width: 6),
-                        _AppBarIconButton(
-                          icon: Icons.tune_rounded,
-                          onTap: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              isDismissible: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) => FilterBottomSheet(),
-                            );
-                          },
-                        ),
-                      ],
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...actions,
+                    if (showSearch) ...[
+                      const SizedBox(width: 6),
+                      _AppBarIconButton(
+                        icon: Icons.search_rounded,
+                        onTap: () {
+                          showSearchDialog(context);
+                        },
+                      ),
                     ],
-                  ),
+                    if (showNotificationBell) ...[
+                      const SizedBox(width: 6),
+                      _NotificationBellButton(),
+                    ],
+                    if (showProfileShortcut) ...[
+                      const SizedBox(width: 6),
+                      _AppBarIconButton(
+                        icon: Icons.person_outline_rounded,
+                        onTap: () {
+                          Navigator.of(context).pushNamed(AppRoutes.profile);
+                        },
+                      ),
+                    ],
+                    if (showFilter) ...[
+                      const SizedBox(width: 6),
+                      _AppBarIconButton(
+                        icon: Icons.tune_rounded,
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            isDismissible: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => FilterBottomSheet(),
+                          );
+                        },
+                      ),
+                    ],
+                    if (showSpaceSwitcher) ...[
+                      const SizedBox(width: 6),
+                      const SpaceSwitcher(),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -293,6 +291,8 @@ class _NotificationBellButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unreadCount = context.watch<NotificationsStore>().unreadCount;
+    final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final accent = AppColors.accentForSpace(isHunterSpace);
 
     return GestureDetector(
       onTap: () {
@@ -314,9 +314,7 @@ class _NotificationBellButton extends StatelessWidget {
               unreadCount > 0
                   ? Icons.notifications_rounded
                   : Icons.notifications_outlined,
-              color: unreadCount > 0
-                  ? AppColors.primary400
-                  : AppColors.textSecondary,
+              color: unreadCount > 0 ? accent : AppColors.textSecondary,
               size: 18,
             ),
           ),

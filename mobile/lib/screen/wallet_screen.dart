@@ -1,11 +1,13 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'wallet/wallet_screen_sections.part.dart';
 part 'wallet/wallet_screen_actions.part.dart';
@@ -86,6 +88,8 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
+  bool _showWalletOnboardingBanner = false;
+
   @override
   void initState() {
     super.initState();
@@ -95,7 +99,36 @@ class _WalletScreenState extends State<WalletScreen> {
       walletStore.loadWalletSummary(force: true);
       walletStore.loadTransactions(force: true);
       walletStore.loadWithdrawals(force: true);
+      _resolveWalletOnboardingBanner();
     });
+  }
+
+  Future<void> _resolveWalletOnboardingBanner() async {
+    final auth = context.read<AuthStore>();
+    final walletStore = context.read<WalletStore>();
+    final userId = auth.userId?.trim();
+    if (userId == null || userId.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final key = walletStore.walletOnboardingSeenKeyForUser(userId);
+    final seen = prefs.getBool(key) == true;
+    if (!mounted) return;
+
+    setState(() => _showWalletOnboardingBanner = !seen);
+  }
+
+  Future<void> _dismissWalletOnboardingBanner() async {
+    final auth = context.read<AuthStore>();
+    final walletStore = context.read<WalletStore>();
+    final userId = auth.userId?.trim();
+    if (userId == null || userId.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(
+        walletStore.walletOnboardingSeenKeyForUser(userId), true);
+
+    if (!mounted) return;
+    setState(() => _showWalletOnboardingBanner = false);
   }
 
   @override
@@ -141,28 +174,36 @@ class _WalletScreenState extends State<WalletScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 20),
-                _BalanceCard(),
-                SizedBox(height: 20),
-                _QuickActions(),
-                SizedBox(height: 24),
-                _SectionHeader(label: 'Assets'),
-                SizedBox(height: 10),
-                _AssetsSection(),
-                SizedBox(height: 24),
-                _SectionHeader(
+                const SizedBox(height: 20),
+                const _BalanceCard(),
+                if (_showWalletOnboardingBanner) ...[
+                  const SizedBox(height: 14),
+                  _WalletOnboardingBanner(
+                    onDismiss: () {
+                      _dismissWalletOnboardingBanner();
+                    },
+                  ),
+                ],
+                const SizedBox(height: 20),
+                const _QuickActions(),
+                const SizedBox(height: 24),
+                const _SectionHeader(label: 'Assets'),
+                const SizedBox(height: 10),
+                const _AssetsSection(),
+                const SizedBox(height: 24),
+                const _SectionHeader(
                   label: 'Recent Activity',
                   actionLabel: 'View all',
                   actionRoute: AppRoutes.walletTransactions,
                 ),
-                SizedBox(height: 8),
-                _TransactionsList(limit: 6),
-                SizedBox(height: 16),
-                _DisclaimerText(),
-                SizedBox(height: 32),
+                const SizedBox(height: 8),
+                const _TransactionsList(limit: 6),
+                const SizedBox(height: 16),
+                const _DisclaimerText(),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -183,6 +224,83 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
               ),
             ),
+    );
+  }
+}
+
+class _WalletOnboardingBanner extends StatelessWidget {
+  const _WalletOnboardingBanner({
+    required this.onDismiss,
+  });
+
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primary500.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primary500.withValues(alpha: 0.32),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.lightbulb_outline_rounded,
+            color: AppColors.primary400,
+            size: 18,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Wallet quick start',
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 12,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Use Receive for your address, Send for transfers, and Swap to prepare conversion flow.',
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 11,
+                    weight: FontWeight.w500,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onDismiss,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                size: 15,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

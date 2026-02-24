@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Fragment, useEffect, useMemo, useState } from "react";
 import { Award, Edit2, Loader2, Plus, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,8 +49,42 @@ interface BadgeModel {
   createdAt: string;
 }
 
+interface UserSearchResult {
+  id: string;
+  email: string;
+  displayName: string | null;
+}
+
+interface AdminUsersSearchResponse {
+  data: UserSearchResult[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 const CATEGORIES = ["engagement", "mining", "social", "trust", "special"];
 const RARITIES = ["common", "rare", "epic", "legendary"];
+const CATEGORY_ORDER = [...CATEGORIES];
+const RARITY_POWER: Record<string, number> = {
+  legendary: 4,
+  epic: 3,
+  rare: 2,
+  common: 1,
+};
+
+function toCategoryLabel(category: string) {
+  return category
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function toLabel(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -102,8 +136,56 @@ export default function BadgesPage() {
   const [editSaving, setEditSaving] = useState(false);
 
   // Grant form
-  const [grantUserId, setGrantUserId] = useState("");
+  const [grantUserIdentifier, setGrantUserIdentifier] = useState("");
+  const [grantMatches, setGrantMatches] = useState<UserSearchResult[]>([]);
+  const [grantSearchLoading, setGrantSearchLoading] = useState(false);
+  const [grantSelected, setGrantSelected] = useState<UserSearchResult | null>(null);
   const [granting, setGranting] = useState(false);
+
+  const groupedBadges = useMemo(() => {
+    const grouped = new Map<string, BadgeModel[]>();
+    for (const badge of badges) {
+      const key = badge.category?.trim().toLowerCase() || "uncategorized";
+      const list = grouped.get(key);
+      if (list) {
+        list.push(badge);
+      } else {
+        grouped.set(key, [badge]);
+      }
+    }
+
+    return [...grouped.entries()]
+      .sort(([a], [b]) => {
+        const aIndex = CATEGORY_ORDER.indexOf(a);
+        const bIndex = CATEGORY_ORDER.indexOf(b);
+        const resolvedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+        const resolvedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+        if (resolvedA !== resolvedB) return resolvedA - resolvedB;
+        return a.localeCompare(b);
+      })
+      .map(([category, items]) => ({
+        category,
+        badges: [...items].sort((left, right) => {
+          const leftPower = RARITY_POWER[left.rarity] ?? 0;
+          const rightPower = RARITY_POWER[right.rarity] ?? 0;
+          if (leftPower !== rightPower) {
+            return rightPower - leftPower;
+          }
+          if (left.pointsRequirement !== right.pointsRequirement) {
+            return right.pointsRequirement - left.pointsRequirement;
+          }
+          if (left.sortOrder !== right.sortOrder) {
+            return left.sortOrder - right.sortOrder;
+          }
+          const createdAtDiff =
+            new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+          if (createdAtDiff !== 0) {
+            return createdAtDiff;
+          }
+          return left.name.localeCompare(right.name);
+        }),
+      }));
+  }, [badges]);
 
   function load() {
     setLoading(true);
@@ -120,6 +202,36 @@ export default function BadgesPage() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    if (!grantOpen) {
+      setGrantMatches([]);
+      setGrantSearchLoading(false);
+      return;
+    }
+    const query = grantUserIdentifier.trim();
+    if (query.length < 2) {
+      setGrantMatches([]);
+      setGrantSearchLoading(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setGrantSearchLoading(true);
+      try {
+        const response = await apiFetch<AdminUsersSearchResponse>(
+          `/admin/users?limit=8&offset=0&status=active&q=${encodeURIComponent(query)}`,
+        );
+        setGrantMatches(response.data ?? []);
+      } catch {
+        setGrantMatches([]);
+      } finally {
+        setGrantSearchLoading(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [grantOpen, grantUserIdentifier]);
 
   async function createBadge(e: FormEvent) {
     e.preventDefault();
@@ -193,24 +305,26 @@ export default function BadgesPage() {
 
   function beginGrant(badge: BadgeModel) {
     setSelectedBadge(badge);
-    setGrantUserId("");
+    setGrantUserIdentifier("");
+    setGrantMatches([]);
+    setGrantSelected(null);
     setGrantOpen(true);
   }
 
   async function grantBadge(e: FormEvent) {
     e.preventDefault();
     if (!canMutate || !selectedBadge) return;
-    const userId = grantUserId.trim();
-    if (!userId) return;
+    const userIdentifier = grantSelected?.email ?? grantUserIdentifier.trim();
+    if (!userIdentifier) return;
 
     setGranting(true);
     try {
       await apiFetch(`/admin/badges/${selectedBadge.id}/grant`, {
         method: "POST",
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userIdentifier }),
       });
       setGrantOpen(false);
-      alert(`Badge granted to user ${userId}`);
+      alert(`Badge granted to ${userIdentifier}`);
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Failed to grant badge");
     } finally {
@@ -223,15 +337,14 @@ export default function BadgesPage() {
       <PageHeader
         title="Badges"
         description="Manage achievement badges that users earn through activity and milestones."
-        action={
-          canMutate ? (
-            <Button onClick={() => setCreateOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Create Badge
-            </Button>
-          ) : undefined
-        }
-      />
+      >
+        {canMutate ? (
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Create Badge
+          </Button>
+        ) : null}
+      </PageHeader>
 
       {!canMutate && (
         <Card className="border-amber-500/30 bg-amber-500/5">
@@ -270,54 +383,70 @@ export default function BadgesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {badges.map((badge) => (
-                  <TableRow key={badge.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Award className={`h-4 w-4 ${getRarityColor(badge.rarity)}`} />
-                        <span className="font-medium">{badge.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{badge.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`text-sm font-medium ${getRarityColor(badge.rarity)}`}>
-                        {badge.rarity}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm">{badge.pointsRequirement}</TableCell>
-                    <TableCell>
-                      <Badge variant={badge.isActive ? "default" : "secondary"}>
-                        {badge.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">
-                      {formatDate(badge.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          disabled={!canMutate}
-                          onClick={() => beginEdit(badge)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          disabled={!canMutate}
-                          onClick={() => beginGrant(badge)}
-                        >
-                          <UserPlus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                {groupedBadges.map((group) => (
+                  <Fragment key={group.category}>
+                    <TableRow className="bg-muted/20">
+                      <TableCell colSpan={7} className="py-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            {toCategoryLabel(group.category)}
+                          </span>
+                          <Badge variant="outline" className="text-[11px]">
+                            {group.badges.length}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {group.badges.map((badge) => (
+                      <TableRow key={badge.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Award className={`h-4 w-4 ${getRarityColor(badge.rarity)}`} />
+                            <span className="font-medium">{badge.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{toCategoryLabel(badge.category)}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`text-sm font-medium ${getRarityColor(badge.rarity)}`}>
+                            {toLabel(badge.rarity)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm">{badge.pointsRequirement}</TableCell>
+                        <TableCell>
+                          <Badge variant={badge.isActive ? "default" : "secondary"}>
+                            {badge.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-sm text-muted-foreground">
+                          {formatDate(badge.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              disabled={!canMutate}
+                              onClick={() => beginEdit(badge)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              disabled={!canMutate}
+                              onClick={() => beginGrant(badge)}
+                            >
+                              <UserPlus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>
@@ -371,7 +500,7 @@ export default function BadgesPage() {
                   <SelectContent>
                     {CATEGORIES.map((cat) => (
                       <SelectItem key={cat} value={cat}>
-                        {cat}
+                        {toCategoryLabel(cat)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -386,7 +515,7 @@ export default function BadgesPage() {
                   <SelectContent>
                     {RARITIES.map((r) => (
                       <SelectItem key={r} value={r}>
-                        {r}
+                        {toLabel(r)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -459,7 +588,7 @@ export default function BadgesPage() {
                   <SelectContent>
                     {CATEGORIES.map((cat) => (
                       <SelectItem key={cat} value={cat}>
-                        {cat}
+                        {toCategoryLabel(cat)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -474,7 +603,7 @@ export default function BadgesPage() {
                   <SelectContent>
                     {RARITIES.map((r) => (
                       <SelectItem key={r} value={r}>
-                        {r}
+                        {toLabel(r)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -524,13 +653,43 @@ export default function BadgesPage() {
           </DialogHeader>
           <form onSubmit={grantBadge} className="space-y-4">
             <div>
-              <label className="text-sm font-medium">User ID</label>
+              <label className="text-sm font-medium">User Email or UUID</label>
               <Input
-                value={grantUserId}
-                onChange={(e) => setGrantUserId(e.target.value)}
-                placeholder="user-uuid"
+                value={grantUserIdentifier}
+                onChange={(e) => {
+                  setGrantUserIdentifier(e.target.value);
+                  setGrantSelected(null);
+                }}
+                placeholder="Search by email or paste user UUID"
                 disabled={!canMutate || granting}
               />
+              {grantSearchLoading && (
+                <p className="mt-2 text-xs text-muted-foreground">Searching users...</p>
+              )}
+              {!grantSearchLoading && grantMatches.length > 0 && !grantSelected && (
+                <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded-md border p-2">
+                  {grantMatches.map((entry) => (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      className="w-full rounded-sm px-2 py-1 text-left text-sm hover:bg-accent"
+                      onClick={() => {
+                        setGrantSelected(entry);
+                        setGrantUserIdentifier(entry.email);
+                        setGrantMatches([]);
+                      }}
+                    >
+                      <span className="font-medium">{entry.displayName ?? entry.email}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">{entry.email}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {grantSelected && (
+                <p className="mt-2 text-xs text-emerald-300">
+                  Selected: {grantSelected.displayName ?? grantSelected.email} ({grantSelected.id})
+                </p>
+              )}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setGrantOpen(false)} disabled={granting}>

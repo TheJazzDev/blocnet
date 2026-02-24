@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -379,7 +380,11 @@ class _PostDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final adminName = post.admin?.name ?? 'Blocnet User';
+    final admin = post.admin;
+    final adminName = admin?.name ?? 'Blocnet User';
+    final roleLabel = admin?.displayRoleLabel;
+    final roleColor =
+        roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -416,20 +421,45 @@ class _PostDetailsCard extends StatelessWidget {
                     GestureDetector(
                       onTap: () => _openAuthorProfile(context),
                       behavior: HitTestBehavior.opaque,
-                      child: Text(
-                        adminName,
-                        style: AppTypography.custom(
-                          color: AppColors.textPrimary,
-                          size: 14,
-                          weight: FontWeight.w700,
-                        ),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              adminName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.custom(
+                                color: AppColors.textPrimary,
+                                size: 14,
+                                weight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (admin?.primaryBadge != null) ...[
+                            const SizedBox(width: 6),
+                            BadgeIcon(
+                              badge: admin!.primaryBadge!,
+                              size: BadgeSize.small,
+                              showTooltip: false,
+                            ),
+                          ],
+                          if (roleLabel != null) ...[
+                            const SizedBox(width: 6),
+                            _RolePill(
+                              label: roleLabel,
+                              color: roleColor,
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                     Text(
                       getTimeStamp(post.createdAt),
-                      style: AppTypography.custom(color: AppColors.textFaint,
+                      style: AppTypography.custom(
+                        color: AppColors.textFaint,
                         size: 11,
-                        weight: FontWeight.w400,),
+                        weight: FontWeight.w400,
+                      ),
                     ),
                   ],
                 ),
@@ -439,10 +469,12 @@ class _PostDetailsCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             post.content,
-            style: AppTypography.custom(color: AppColors.textSecondary,
+            style: AppTypography.custom(
+              color: AppColors.textSecondary,
               size: 14,
               weight: FontWeight.w400,
-              height: 1.55,),
+              height: 1.55,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -481,9 +513,11 @@ class _PostDetailsCard extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 '${post.commentsCount}',
-                style: AppTypography.custom(color: AppColors.textMuted,
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
                   size: 13,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
               ),
               const Spacer(),
               GestureDetector(
@@ -519,9 +553,11 @@ class _EmptyDiscussion extends StatelessWidget {
       ),
       child: Text(
         'No comments yet. Start the discussion.',
-        style: AppTypography.custom(color: AppColors.textMuted,
+        style: AppTypography.custom(
+          color: AppColors.textMuted,
           size: 13,
-          weight: FontWeight.w400,),
+          weight: FontWeight.w400,
+        ),
       ),
     );
   }
@@ -540,7 +576,11 @@ class _CommentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = comment.admin?.name ?? 'User';
+    final admin = comment.admin;
+    final name = admin?.name ?? 'User';
+    final roleLabel = admin?.displayRoleLabel;
+    final roleColor =
+        roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -603,13 +643,36 @@ class _CommentCard extends StatelessWidget {
                       child: GestureDetector(
                         onTap: () => _openAuthorProfile(context),
                         behavior: HitTestBehavior.opaque,
-                        child: Text(
-                          name,
-                          style: AppTypography.custom(
-                            color: AppColors.textPrimary,
-                            size: 14,
-                            weight: FontWeight.w700,
-                          ),
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.custom(
+                                  color: AppColors.textPrimary,
+                                  size: 14,
+                                  weight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            if (admin?.primaryBadge != null) ...[
+                              const SizedBox(width: 6),
+                              BadgeIcon(
+                                badge: admin!.primaryBadge!,
+                                size: BadgeSize.small,
+                                showTooltip: false,
+                              ),
+                            ],
+                            if (roleLabel != null) ...[
+                              const SizedBox(width: 6),
+                              _RolePill(
+                                label: roleLabel,
+                                color: roleColor,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ),
@@ -650,6 +713,37 @@ class _CommentCard extends StatelessWidget {
           color: AppColors.primary400,
           size: 16,
           weight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _RolePill extends StatelessWidget {
+  const _RolePill({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.8), width: 0.8),
+        color: color.withValues(alpha: 0.12),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.custom(
+          color: color,
+          size: 9,
+          weight: FontWeight.w700,
+          letterSpacing: 0.2,
         ),
       ),
     );

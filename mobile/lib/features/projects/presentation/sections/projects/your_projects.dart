@@ -3,6 +3,7 @@ import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/cards/stat_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_label/filter_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_card/your_project_card.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +32,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
   Widget build(BuildContext context) {
     return Consumer2<ProjectsStore, UpdatesStore>(
       builder: (context, projectsStore, postsStore, _) {
+        final authStore = context.watch<AuthStore>();
         if (projectsStore.isFetching && projectsStore.projects.isEmpty) {
           return Center(
             child: CircularProgressIndicator(
@@ -54,24 +56,37 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
           );
         }
 
-        final allProjects = projectsStore.projects;
+        final allProjects = projectsStore.followedAndManagedProjects(
+          userId: authStore.userId ?? '',
+          updates: postsStore.updates,
+        );
+        if (allProjects.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: Text(
+              'No followed or managed gems yet.',
+              style: TextStyle(
+                color: AppColors.textFaint,
+                fontSize: 13,
+                fontFamily: 'Geist',
+              ),
+            ),
+          );
+        }
+
         final allPrimaryTags =
             allProjects.map((project) => project.primaryTag.toString()).toSet();
         final filteredProjects = _selectedFilters.isEmpty
             ? allProjects
             : allProjects.where((project) {
-                return _selectedFilters
-                    .contains(project.primaryTag.toString());
+                return _selectedFilters.contains(project.primaryTag.toString());
               }).toList();
 
-        final followedIds = projectsStore.followedProjectIds;
-        final projectsForStats = followedIds.isEmpty
-            ? allProjects
-            : allProjects
-                .where((project) => followedIds.contains(project.id));
+        final projectsForStats = allProjects;
+        final statsProjectIds =
+            projectsForStats.map((project) => project.id).toSet();
         final postsForStats = postsStore.posts.where((post) {
-          if (followedIds.isEmpty) return true;
-          return followedIds.contains(post.projectId);
+          return statsProjectIds.contains(post.projectId);
         });
 
         final followedCount = projectsForStats.length;
@@ -90,7 +105,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
                 Expanded(
                   flex: 1,
                   child: StatCard(
-                    label: 'Followed Projects',
+                    label: 'My Gems',
                     value: followedCount,
                     iconName: 'style',
                   ),
@@ -136,8 +151,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
             Wrap(
               children: List.generate(
                 filteredProjects.length,
-                (index) =>
-                    YourProjectCard(project: filteredProjects[index]),
+                (index) => YourProjectCard(project: filteredProjects[index]),
               ),
             ),
           ],

@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/data/models/community_topic.dart';
+import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/screen/public_profile_screen.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
@@ -179,15 +182,18 @@ class _CommunityScreenState extends State<CommunityScreen>
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
+    final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final accent = AppColors.accentForSpace(isHunterSpace);
+    final onAccent = AppColors.onAccentForSpace(isHunterSpace);
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       floatingActionButton: FloatingActionButton(
         onPressed: () =>
             Navigator.of(context).pushNamed(AppRoutes.communityCreatePost),
-        backgroundColor: AppColors.primary500,
+        backgroundColor: accent,
         elevation: 0,
-        child: const Icon(Icons.add_rounded, color: Colors.black),
+        child: Icon(Icons.add_rounded, color: onAccent),
       ),
       body: Consumer<CommunityPostsStore>(
         builder: (context, store, _) {
@@ -196,7 +202,7 @@ class _CommunityScreenState extends State<CommunityScreen>
           if (store.isFetchingPosts && posts.isEmpty) {
             return Center(
               child: CircularProgressIndicator(
-                color: AppColors.primary400,
+                color: accent,
                 strokeWidth: 2,
               ),
             );
@@ -208,7 +214,10 @@ class _CommunityScreenState extends State<CommunityScreen>
             children: [
               Column(
                 children: [
-                  _CommunityTabs(controller: _tabController),
+                  _CommunityTabs(
+                    controller: _tabController,
+                    accentColor: accent,
+                  ),
                   Expanded(
                     child: TabBarView(
                       controller: _tabController,
@@ -218,6 +227,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                           bottomPad: bottomPad,
                           controller:
                               _scrollControllers[CommunityTopic.general]!,
+                          accentColor: accent,
                           onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
@@ -227,6 +237,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                           bottomPad: bottomPad,
                           controller:
                               _scrollControllers[CommunityTopic.marketTalk]!,
+                          accentColor: accent,
                           onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
@@ -237,6 +248,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                           bottomPad: bottomPad,
                           controller:
                               _scrollControllers[CommunityTopic.introductions]!,
+                          accentColor: accent,
                           onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
@@ -259,13 +271,13 @@ class _CommunityScreenState extends State<CommunityScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary500,
+                          color: accent,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
                           '$pendingCount new posts',
                           style: AppTypography.custom(
-                            color: Colors.black,
+                            color: onAccent,
                             size: 12,
                             weight: FontWeight.w700,
                           ),
@@ -292,9 +304,13 @@ class _CommunityScreenState extends State<CommunityScreen>
 }
 
 class _CommunityTabs extends StatelessWidget {
-  const _CommunityTabs({required this.controller});
+  const _CommunityTabs({
+    required this.controller,
+    required this.accentColor,
+  });
 
   final TabController controller;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
@@ -308,9 +324,9 @@ class _CommunityTabs extends StatelessWidget {
       ),
       child: TabBar(
         controller: controller,
-        labelColor: AppColors.primary400,
+        labelColor: accentColor,
         unselectedLabelColor: AppColors.textMuted,
-        indicatorColor: AppColors.primary400,
+        indicatorColor: accentColor,
         indicatorWeight: 3,
         dividerColor: Colors.transparent,
         labelStyle: AppTypography.custom(
@@ -338,6 +354,7 @@ class _CommunityFeedList extends StatelessWidget {
     required this.posts,
     required this.bottomPad,
     required this.controller,
+    required this.accentColor,
     required this.onRefresh,
     required this.onLike,
     required this.onBookmark,
@@ -346,6 +363,7 @@ class _CommunityFeedList extends StatelessWidget {
   final List<CommunityPost> posts;
   final double bottomPad;
   final ScrollController controller;
+  final Color accentColor;
   final Future<void> Function() onRefresh;
   final Future<void> Function(String postId) onLike;
   final Future<void> Function(String postId) onBookmark;
@@ -354,7 +372,7 @@ class _CommunityFeedList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (posts.isEmpty) {
       return RefreshIndicator(
-        color: AppColors.primary500,
+        color: accentColor,
         backgroundColor: AppColors.bgSurface,
         onRefresh: onRefresh,
         child: ListView(
@@ -381,7 +399,7 @@ class _CommunityFeedList extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      color: AppColors.primary500,
+      color: accentColor,
       backgroundColor: AppColors.bgSurface,
       onRefresh: onRefresh,
       child: ListView.separated(
@@ -428,9 +446,9 @@ class _CommunityCard extends StatelessWidget {
     final admin = post.admin;
     final displayName =
         admin?.name.trim().isNotEmpty == true ? admin!.name : 'Blocnet User';
-    final role = _resolveRole(post);
-    final roleColor =
-        role == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
+    final role = _resolveRoleLabel(admin);
+    final roleColor = _resolveRoleColor(role);
+    final badge = admin?.primaryBadge;
     final content = post.content.trim();
 
     return GestureDetector(
@@ -522,8 +540,18 @@ class _CommunityCard extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                _RoleChip(label: role, color: roleColor),
+                                if (badge != null) ...[
+                                  const SizedBox(width: 6),
+                                  BadgeIcon(
+                                    badge: badge,
+                                    size: BadgeSize.small,
+                                    showTooltip: false,
+                                  ),
+                                ],
+                                if (role != null) ...[
+                                  const SizedBox(width: 6),
+                                  _RoleChip(label: role, color: roleColor),
+                                ],
                               ],
                             ),
                           ),
@@ -689,10 +717,23 @@ class _CommunityCard extends StatelessWidget {
     );
   }
 
-  String _resolveRole(CommunityPost post) {
-    final raw = (post.admin?.username ?? post.admin?.name ?? '').toLowerCase();
-    if (raw.contains('hunter')) return 'HUNTER';
-    return 'USER';
+  String? _resolveRoleLabel(Admin? admin) {
+    final roles = (admin?.roles ?? const <String>[])
+        .map((role) => role.toLowerCase())
+        .toSet();
+    if (roles.contains('owner') || roles.contains('admin')) return 'ADMIN';
+    if (roles.contains('hunter')) return 'HUNTER';
+    return null;
+  }
+
+  Color _resolveRoleColor(String? role) {
+    if (role == 'HUNTER') {
+      return const Color(0xFFC084FC);
+    }
+    if (role == 'ADMIN') {
+      return AppColors.primary400;
+    }
+    return AppColors.primary400;
   }
 }
 

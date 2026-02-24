@@ -11,8 +11,19 @@ class CustomAppRouter {
     return {...AuthRoutes.getAll(), ...ProtectedRoutes.getAll()};
   }
 
+  static List<Route<dynamic>> generateInitialRoutes(String initialRouteName) {
+    final targetName = initialRouteName.trim();
+    return [
+      generateRoute(
+        RouteSettings(
+          name: targetName.isEmpty ? AppRoutes.signIn : targetName,
+        ),
+      ),
+    ];
+  }
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    final routeName = settings.name;
+    final routeName = settings.name == '/' ? AppRoutes.main : settings.name;
     final routes = getRoutes();
 
     final builder = routes[routeName];

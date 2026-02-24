@@ -21,11 +21,38 @@ class AppColors {
 
   // ── Secondary accent ─────────────────────────────────────────────────────
   static const Color secondary500 = Color(0xFF2563EB);
+  static const Color userAccent = secondary500;
+  static Color hunterAccent = const Color(0xFF0deef2);
 
   // ── Teal aliases (mapped to cyan primary) ─────────────────────────────────
   static Color teal300 = const Color(0xFF67E8F9);
   static Color teal400 = const Color(0xFF0deef2);
   static Color teal500 = const Color(0xFF0deef2);
+
+  static Color accentForSpace(bool isHunterSpace) =>
+      isHunterSpace ? hunterAccent : userAccent;
+
+  static Color onAccentForSpace(bool isHunterSpace) =>
+      isHunterSpace ? Colors.black : Colors.white;
+
+  static Color _shiftLightness(Color base, double delta) {
+    final hsl = HSLColor.fromColor(base);
+    final next = (hsl.lightness + delta).clamp(0.0, 1.0);
+    return hsl.withLightness(next).toColor();
+  }
+
+  static void applySpaceAccent(Color accent) {
+    primary300 = _shiftLightness(accent, 0.1);
+    primary400 = _shiftLightness(accent, 0.03);
+    primary500 = accent;
+    primary600 = _shiftLightness(accent, -0.1);
+    primary700 = _shiftLightness(accent, -0.18);
+    teal300 = primary300;
+    teal400 = primary400;
+    teal500 = primary500;
+    cyanGlow = accent.withValues(alpha: 0.25);
+    hypeMid = primary400;
+  }
 
   // ── Surfaces — zinc/near-black design system ──────────────────────────────
   /// Page / scaffold background — near black (#09090b)
@@ -112,118 +139,138 @@ class AppColors {
   static Color darkGrey950 = const Color(0xFFFAFAFA);
 }
 
-ThemeData primaryTheme = ThemeData(
-  colorScheme: ColorScheme.fromSeed(
-    seedColor: AppColors.primary500,
-    brightness: Brightness.dark,
-  ),
-
-  scaffoldBackgroundColor: AppColors.bgBase,
-
-  // Cards — rounded-2xl (24px) matching design
-  cardTheme: CardThemeData(
-    color: AppColors.bgSurface,
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-      side: BorderSide(color: AppColors.borderSubtle, width: 1),
+ThemeData buildPrimaryTheme({required Color accent}) {
+  AppColors.applySpaceAccent(accent);
+  return ThemeData(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: accent,
+      brightness: Brightness.dark,
     ),
-  ),
 
-  // Bottom sheet
-  bottomSheetTheme: const BottomSheetThemeData(
-    backgroundColor: AppColors.bgSurface,
-    surfaceTintColor: Colors.transparent,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(24),
-        topRight: Radius.circular(24),
+    scaffoldBackgroundColor: AppColors.bgBase,
+
+    // Cards — rounded-2xl (24px) matching design
+    cardTheme: CardThemeData(
+      color: AppColors.bgSurface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: AppColors.borderSubtle, width: 1),
       ),
     ),
-  ),
 
-  // AppBar — bgBase with blur effect handled in custom widgets
-  appBarTheme: AppBarTheme(
-    backgroundColor: AppColors.bgBase,
-    foregroundColor: AppColors.textSecondary,
-    surfaceTintColor: Colors.transparent,
-    elevation: 0,
-    centerTitle: true,
-    titleTextStyle: AppTypography.headlineSmall(AppColors.textPrimary),
-    iconTheme: IconThemeData(color: AppColors.textSecondary, size: 20),
-  ),
-
-  // Bottom nav bar (custom nav used — this is fallback)
-  bottomNavigationBarTheme: BottomNavigationBarThemeData(
-    backgroundColor: AppColors.bgSurface,
-    selectedItemColor: AppColors.teal400,
-    unselectedItemColor: AppColors.textMuted,
-    elevation: 0,
-    type: BottomNavigationBarType.fixed,
-  ),
-
-  // Divider
-  dividerTheme: DividerThemeData(
-    color: AppColors.borderSubtle,
-    thickness: 1,
-    space: 1,
-  ),
-
-  // Input fields
-  inputDecorationTheme: InputDecorationTheme(
-    filled: true,
-    fillColor: AppColors.bgElevated,
-    labelStyle: AppTypography.bodyMedium(AppColors.textMuted),
-    floatingLabelStyle: AppTypography.labelLarge(AppColors.teal400),
-    hintStyle: AppTypography.bodyMedium(AppColors.textFaint),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: AppColors.borderSubtle),
+    // Bottom sheet
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: AppColors.bgSurface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
     ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: AppColors.borderSubtle),
+
+    // AppBar — bgBase with blur effect handled in custom widgets
+    appBarTheme: AppBarTheme(
+      backgroundColor: AppColors.bgBase,
+      foregroundColor: AppColors.textSecondary,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: false,
+      titleSpacing: 0,
+      titleTextStyle: AppTypography.headlineSmall(AppColors.textPrimary),
+      iconTheme: IconThemeData(color: AppColors.textSecondary, size: 20),
     ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: AppColors.teal500, width: 1.5),
+
+    // Bottom nav bar (custom nav used — this is fallback)
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: AppColors.bgSurface,
+      selectedItemColor: accent,
+      unselectedItemColor: AppColors.textMuted,
+      elevation: 0,
+      type: BottomNavigationBarType.fixed,
     ),
-    errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: AppColors.error500),
+
+    // Divider
+    dividerTheme: DividerThemeData(
+      color: AppColors.borderSubtle,
+      thickness: 1,
+      space: 1,
     ),
-    focusedErrorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: AppColors.error500, width: 1.5),
+
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.bgSurface,
+      contentTextStyle: AppTypography.custom(
+        color: AppColors.textPrimary,
+        size: 12,
+        weight: FontWeight.w500,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppColors.borderSubtle),
+      ),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-  ),
 
-  // Text theme — using centralized AppTypography
-  textTheme: TextTheme(
-    // Display styles
-    displayLarge: AppTypography.displayLarge(AppColors.primary500),
-    displayMedium: AppTypography.displayMedium(AppColors.primary400),
-    displaySmall: AppTypography.displaySmall(AppColors.primary300),
+    // Input fields
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: AppColors.bgElevated,
+      labelStyle: AppTypography.bodyMedium(AppColors.textMuted),
+      floatingLabelStyle: AppTypography.labelLarge(accent),
+      hintStyle: AppTypography.bodyMedium(AppColors.textFaint),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppColors.borderSubtle),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppColors.borderSubtle),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: accent, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppColors.error500),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppColors.error500, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    ),
 
-    // Headlines
-    headlineLarge: AppTypography.headlineLarge(AppColors.textPrimary),
-    headlineMedium: AppTypography.headlineMedium(AppColors.textPrimary),
-    headlineSmall: AppTypography.headlineSmall(AppColors.textPrimary),
+    // Text theme — using centralized AppTypography
+    textTheme: TextTheme(
+      // Display styles
+      displayLarge: AppTypography.displayLarge(AppColors.primary500),
+      displayMedium: AppTypography.displayMedium(AppColors.primary400),
+      displaySmall: AppTypography.displaySmall(AppColors.primary300),
 
-    // Titles
-    titleLarge: AppTypography.titleLarge(AppColors.textPrimary),
-    titleMedium: AppTypography.titleMedium(AppColors.textPrimary),
-    titleSmall: AppTypography.titleSmall(AppColors.textPrimary),
+      // Headlines
+      headlineLarge: AppTypography.headlineLarge(AppColors.textPrimary),
+      headlineMedium: AppTypography.headlineMedium(AppColors.textPrimary),
+      headlineSmall: AppTypography.headlineSmall(AppColors.textPrimary),
 
-    // Body
-    bodyLarge: AppTypography.bodyLarge(AppColors.textSecondary),
-    bodyMedium: AppTypography.bodyMedium(AppColors.textSecondary),
-    bodySmall: AppTypography.bodySmall(AppColors.textMuted),
+      // Titles
+      titleLarge: AppTypography.titleLarge(AppColors.textPrimary),
+      titleMedium: AppTypography.titleMedium(AppColors.textPrimary),
+      titleSmall: AppTypography.titleSmall(AppColors.textPrimary),
 
-    // Labels
-    labelLarge: AppTypography.labelLarge(AppColors.teal400),
-    labelMedium: AppTypography.labelMedium(AppColors.textMuted),
-    labelSmall: AppTypography.labelSmall(AppColors.textFaint),
-  ),
-);
+      // Body
+      bodyLarge: AppTypography.bodyLarge(AppColors.textSecondary),
+      bodyMedium: AppTypography.bodyMedium(AppColors.textSecondary),
+      bodySmall: AppTypography.bodySmall(AppColors.textMuted),
+
+      // Labels
+      labelLarge: AppTypography.labelLarge(accent),
+      labelMedium: AppTypography.labelMedium(AppColors.textMuted),
+      labelSmall: AppTypography.labelSmall(AppColors.textFaint),
+    ),
+  );
+}
+
+ThemeData primaryTheme = buildPrimaryTheme(accent: AppColors.hunterAccent);

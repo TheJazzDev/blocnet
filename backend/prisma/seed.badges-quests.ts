@@ -8,18 +8,7 @@ import {
 import { Pool } from 'pg';
 import { config as loadEnv } from 'dotenv';
 
-loadEnv({ path: '.env.local', override: true, quiet: true });
-
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error('DATABASE_URL is required for prisma seed.');
-}
-
-const pool = new Pool({ connectionString });
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
-
-async function main() {
+export async function seedBadgesAndQuests(prisma: PrismaClient) {
   console.log('🎖️  Seeding badges and quests...\n');
 
   // ========== BADGES ==========
@@ -257,7 +246,7 @@ async function main() {
       description: 'Add a profile picture, username, and bio to your profile',
       type: QuestType.internal_action,
       category: BadgeCategory.engagement,
-      rewardPoints: 25,
+      rewardPoints: 18,
       rewardBadgeId: null,
       targetUrl: null,
       targetAction: 'profile_complete',
@@ -271,7 +260,7 @@ async function main() {
       description: 'Discover and follow 5 projects that interest you',
       type: QuestType.internal_action,
       category: BadgeCategory.engagement,
-      rewardPoints: 25,
+      rewardPoints: 18,
       rewardBadgeId: null,
       targetUrl: null,
       targetAction: 'follow_5_projects',
@@ -285,7 +274,7 @@ async function main() {
       description: 'Make your first comment on an update',
       type: QuestType.internal_action,
       category: BadgeCategory.engagement,
-      rewardPoints: 50,
+      rewardPoints: 35,
       rewardBadgeId: null,
       targetUrl: null,
       targetAction: 'first_comment',
@@ -299,7 +288,7 @@ async function main() {
       description: 'Create your first project update',
       type: QuestType.internal_action,
       category: BadgeCategory.engagement,
-      rewardPoints: 100,
+      rewardPoints: 70,
       rewardBadgeId: null,
       targetUrl: null,
       targetAction: 'first_update',
@@ -315,7 +304,7 @@ async function main() {
       description: 'Follow @Blocnet on X (formerly Twitter) and submit your X username',
       type: QuestType.social_media,
       category: BadgeCategory.social,
-      rewardPoints: 50,
+      rewardPoints: 35,
       rewardBadgeId: null,
       targetUrl: 'https://x.com/blocnet',
       targetAction: null,
@@ -329,7 +318,7 @@ async function main() {
       description: 'Join our Discord community and submit your Discord username',
       type: QuestType.social_media,
       category: BadgeCategory.social,
-      rewardPoints: 50,
+      rewardPoints: 35,
       rewardBadgeId: null,
       targetUrl: 'https://discord.gg/blocnet',
       targetAction: null,
@@ -343,7 +332,7 @@ async function main() {
       description: 'Share a post about Blocnet on X and submit the link',
       type: QuestType.social_media,
       category: BadgeCategory.social,
-      rewardPoints: 100,
+      rewardPoints: 70,
       rewardBadgeId: null,
       targetUrl: null,
       targetAction: null,
@@ -359,7 +348,7 @@ async function main() {
       description: 'Claim mining rewards for 7 consecutive days',
       type: QuestType.internal_action,
       category: BadgeCategory.mining,
-      rewardPoints: 200,
+      rewardPoints: 140,
       rewardBadgeId: null,
       targetUrl: null,
       targetAction: '7_day_streak',
@@ -373,7 +362,7 @@ async function main() {
       description: 'Refer 3 friends who start mining on Blocnet',
       type: QuestType.internal_action,
       category: BadgeCategory.mining,
-      rewardPoints: 500,
+      rewardPoints: 350,
       rewardBadgeId: null,
       targetUrl: null,
       targetAction: 'refer_3_miners',
@@ -397,12 +386,33 @@ async function main() {
   console.log('🎉 Badges and quests seeded successfully!');
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Error seeding badges and quests:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
+async function runStandalone() {
+  loadEnv({ path: '.env.local', override: true, quiet: true });
+
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is required for prisma seed.');
+  }
+
+  const pool = new Pool({ connectionString });
+  const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+
+  try {
+    await seedBadgesAndQuests(prisma);
+  } finally {
     await prisma.$disconnect();
     await pool.end();
+  }
+}
+
+const scriptPath = process.argv[1] ?? '';
+const isDirectRun =
+  scriptPath.endsWith('/prisma/seed.badges-quests.ts') ||
+  scriptPath.endsWith('\\prisma\\seed.badges-quests.ts');
+
+if (isDirectRun) {
+  runStandalone().catch((e) => {
+    console.error('❌ Error seeding badges and quests:', e);
+    process.exit(1);
   });
+}

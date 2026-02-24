@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { QuestsModule } from '../quests/quests.module';
 import { ProfilesController } from './profiles.controller';
 import {
   AdminUsersController,
@@ -10,7 +11,7 @@ import {
 import { UsersService } from './users.service';
 
 @Module({
-  imports: [AuditLogModule, NotificationsModule],
+  imports: [AuditLogModule, NotificationsModule, QuestsModule],
   controllers: [
     PublicUsersController,
     UsersController,

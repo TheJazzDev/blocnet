@@ -2,13 +2,20 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MiningConfig, Prisma, TipAccountType } from '@prisma/client';
+import {
+  MiningConfig,
+  MiningPointSource,
+  Prisma,
+  TipAccountType,
+} from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestsService } from '../quests/quests.service';
 import { MCR_CURRENCY_CODE } from '../tips/tip.constants';
 
 const MCR_ATOMIC_MULTIPLIER = 1000n;
@@ -59,11 +66,14 @@ const DEFAULT_MINING_CONFIG: EffectiveMiningConfig = {
 
 @Injectable()
 export class MiningService {
+  private readonly logger = new Logger(MiningService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
+    private readonly questsService: QuestsService,
   ) {}
 
   async getMe(userId: string) {
@@ -358,8 +368,11 @@ export class MiningService {
       }),
     ]);
 
+    const checkpointPoints = checkpointAggregate._sum.points;
     const claimPoints =
-      checkpointAggregate._sum.points ?? claimable.effectivePointsPerCycle;
+      checkpointPoints != null && checkpointPoints > 0
+        ? checkpointPoints
+        : Math.max(claimable.effectivePointsPerCycle, 0);
 
     await this.prisma.$transaction(async (tx) => {
       const updated = await tx.miningSession.updateMany({
@@ -556,6 +569,7 @@ export class MiningService {
 
     // Check and award mining milestone badges
     await this.badgesService.checkMiningMilestones(userId, claimedTotalPoints);
+    await this.triggerSevenDayStreakQuestIfEligible(userId);
 
     return {
       ok: true,
@@ -1296,6 +1310,75 @@ export class MiningService {
         },
       },
     });
+  }
+
+  private async triggerSevenDayStreakQuestIfEligible(userId: string) {
+    const streakDays = await this.getClaimStreakUtcDays(userId);
+    if (streakDays < 7) {
+      return;
+    }
+
+    try {
+      await this.questsService.checkAndCompleteByAction(userId, '7_day_streak');
+    } catch (error) {
+      this.logger.warn(
+        `Failed to process auto quest trigger`,
+        JSON.stringify({
+          action: '7_day_streak',
+          userId,
+          streakDays,
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
+  }
+
+  private async getClaimStreakUtcDays(userId: string): Promise<number> {
+    const rows = await this.prisma.miningPointLedger.findMany({
+      where: {
+        userId,
+        source: MiningPointSource.cycle_claim,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      select: { createdAt: true },
+    });
+
+    if (rows.length === 0) {
+      return 0;
+    }
+
+    const uniqueDays: number[] = [];
+    for (const row of rows) {
+      const day = this.toUtcDayNumber(row.createdAt);
+      if (uniqueDays.length === 0 || uniqueDays[uniqueDays.length - 1] !== day) {
+        uniqueDays.push(day);
+      }
+    }
+
+    if (uniqueDays.length === 0) {
+      return 0;
+    }
+
+    let streak = 1;
+    for (let i = 1; i < uniqueDays.length; i += 1) {
+      if (uniqueDays[i - 1] - 1 === uniqueDays[i]) {
+        streak += 1;
+        continue;
+      }
+      break;
+    }
+
+    return streak;
+  }
+
+  private toUtcDayNumber(date: Date): number {
+    const dayStartUtcMs = Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+    );
+    return Math.floor(dayStartUtcMs / 86_400_000);
   }
 
   private bigIntToNumber(value: bigint | number): number {

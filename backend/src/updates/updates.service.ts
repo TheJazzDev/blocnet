@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { UpdateStatus } from '@prisma/client';
@@ -15,16 +16,20 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { FcmService } from '../notifications/fcm.service';
+import { QuestsService } from '../quests/quests.service';
 import { toUpdateResponse, updateInclude } from './updates.mapper';
 
 @Injectable()
 export class UpdatesService {
+  private readonly logger = new Logger(UpdatesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
     private readonly fcmService: FcmService,
+    private readonly questsService: QuestsService,
   ) {}
 
   async createUpdate(actor: AuthUser, projectId: string, dto: CreateUpdateDto) {
@@ -92,6 +97,7 @@ export class UpdatesService {
 
     // Check and award engagement badges
     await this.badgesService.checkEngagementMilestones(actor.id);
+    await this.triggerQuestAction(actor.id, 'first_update');
 
     return toUpdateResponse(update);
   }
@@ -234,6 +240,21 @@ export class UpdatesService {
 
     if (count !== ids.length) {
       throw new BadRequestException('One or more secondaryTagIds are invalid');
+    }
+  }
+
+  private async triggerQuestAction(userId: string, action: string) {
+    try {
+      await this.questsService.checkAndCompleteByAction(userId, action);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to process auto quest trigger`,
+        JSON.stringify({
+          action,
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
     }
   }
 }

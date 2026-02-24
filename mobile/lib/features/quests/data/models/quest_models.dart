@@ -1,5 +1,10 @@
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 
+Map<String, dynamic> _asStringKeyMap(Object? raw) {
+  if (raw is! Map) return const <String, dynamic>{};
+  return raw.map((key, value) => MapEntry(key.toString(), value));
+}
+
 class QuestModel {
   const QuestModel({
     required this.id,
@@ -38,35 +43,35 @@ class QuestModel {
   final DateTime createdAt;
 
   factory QuestModel.fromApi(Map<String, dynamic> json) {
+    final categoryRaw = json['category']?.toString().trim().toLowerCase() ?? '';
     return QuestModel(
-      id: json['id'] as String,
-      slug: json['slug'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      type: QuestType.values.firstWhere(
-        (e) => e.name == json['type'],
-        orElse: () => QuestType.internalAction,
-      ),
+      id: json['id']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      type: _questTypeFromApi(json['type']),
       category: BadgeCategory.values.firstWhere(
-        (e) => e.name == json['category'],
+        (e) => e.name.toLowerCase() == categoryRaw,
         orElse: () => BadgeCategory.engagement,
       ),
       rewardPoints: int.tryParse(json['rewardPoints']?.toString() ?? '') ?? 0,
-      rewardBadgeId: json['rewardBadgeId'] as String?,
-      targetUrl: json['targetUrl'] as String?,
-      targetAction: json['targetAction'] as String?,
-      verificationMethod: json['verificationMethod'] as String? ?? 'manual',
-      requiredProof: json['requiredProof'] as String?,
+      rewardBadgeId: json['rewardBadgeId']?.toString(),
+      targetUrl: json['targetUrl']?.toString(),
+      targetAction: json['targetAction']?.toString(),
+      verificationMethod: json['verificationMethod']?.toString() ?? 'manual',
+      requiredProof: json['requiredProof']?.toString(),
       isActive: json['isActive'] == true,
       sortOrder: int.tryParse(json['sortOrder']?.toString() ?? '') ?? 0,
       expiresAt: json['expiresAt'] != null
-          ? DateTime.tryParse(json['expiresAt'] as String)
+          ? DateTime.tryParse(json['expiresAt'].toString())
           : null,
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
-  bool get isExpired => expiresAt != null && expiresAt!.isBefore(DateTime.now());
+  bool get isExpired =>
+      expiresAt != null && expiresAt!.isBefore(DateTime.now());
   bool get requiresManualVerification => verificationMethod == 'manual';
   bool get isAutoVerified => verificationMethod == 'auto';
 }
@@ -160,23 +165,22 @@ class UserQuestModel {
   final QuestModel quest;
 
   factory UserQuestModel.fromApi(Map<String, dynamic> json) {
+    final questMap = _asStringKeyMap(json['quest']);
     return UserQuestModel(
-      id: json['id'] as String,
-      userId: json['userId'] as String,
-      questId: json['questId'] as String,
-      status: QuestStatus.values.firstWhere(
-        (e) => _snakeToCamel(e.name) == json['status'],
-        orElse: () => QuestStatus.notStarted,
-      ),
+      id: json['id']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      questId: json['questId']?.toString() ?? '',
+      status: _questStatusFromApi(json['status']),
       progress: int.tryParse(json['progress']?.toString() ?? '') ?? 0,
       startedAt: json['startedAt'] != null
-          ? DateTime.tryParse(json['startedAt'] as String)
+          ? DateTime.tryParse(json['startedAt'].toString())
           : null,
       completedAt: json['completedAt'] != null
-          ? DateTime.tryParse(json['completedAt'] as String)
+          ? DateTime.tryParse(json['completedAt'].toString())
           : null,
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
-      quest: QuestModel.fromApi(json['quest'] as Map<String, dynamic>),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      quest: QuestModel.fromApi(questMap),
     );
   }
 }
@@ -195,13 +199,18 @@ class UserQuestsResponse {
   final int inProgressCount;
 
   factory UserQuestsResponse.fromApi(Map<String, dynamic> json) {
+    final rawQuests = json['quests'];
+    final questsList = rawQuests is List ? rawQuests : const [];
     return UserQuestsResponse(
-      quests: (json['quests'] as List<dynamic>? ?? [])
-          .map((e) => UserQuestModel.fromApi(e as Map<String, dynamic>))
+      quests: questsList
+          .whereType<Map>()
+          .map((entry) => UserQuestModel.fromApi(_asStringKeyMap(entry)))
           .toList(),
       totalCount: int.tryParse(json['totalCount']?.toString() ?? '') ?? 0,
-      completedCount: int.tryParse(json['completedCount']?.toString() ?? '') ?? 0,
-      inProgressCount: int.tryParse(json['inProgressCount']?.toString() ?? '') ?? 0,
+      completedCount:
+          int.tryParse(json['completedCount']?.toString() ?? '') ?? 0,
+      inProgressCount:
+          int.tryParse(json['inProgressCount']?.toString() ?? '') ?? 0,
     );
   }
 }
@@ -235,34 +244,46 @@ class QuestSubmissionModel {
 
   factory QuestSubmissionModel.fromApi(Map<String, dynamic> json) {
     return QuestSubmissionModel(
-      id: json['id'] as String,
-      userQuestId: json['userQuestId'] as String,
-      userId: json['userId'] as String,
-      proofUrl: json['proofUrl'] as String?,
-      proofText: json['proofText'] as String?,
-      screenshot: json['screenshot'] as String?,
-      verificationStatus: json['verificationStatus'] as String? ?? 'pending',
-      verifiedBy: json['verifiedBy'] as String?,
+      id: json['id']?.toString() ?? '',
+      userQuestId: json['userQuestId']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      proofUrl: json['proofUrl']?.toString(),
+      proofText: json['proofText']?.toString(),
+      screenshot: json['screenshot']?.toString(),
+      verificationStatus: json['verificationStatus']?.toString() ?? 'pending',
+      verifiedBy: json['verifiedBy']?.toString(),
       verifiedAt: json['verifiedAt'] != null
-          ? DateTime.tryParse(json['verifiedAt'] as String)
+          ? DateTime.tryParse(json['verifiedAt'].toString())
           : null,
-      rejectionReason: json['rejectionReason'] as String?,
-      submittedAt: DateTime.tryParse(json['submittedAt'] ?? '') ?? DateTime.now(),
+      rejectionReason: json['rejectionReason']?.toString(),
+      submittedAt: DateTime.tryParse(json['submittedAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }
 
-// Helper function to convert snake_case to camelCase
-String _snakeToCamel(String snake) {
-  if (snake.isEmpty) return snake;
-  final parts = snake.split('_');
-  if (parts.length == 1) return snake;
+QuestType _questTypeFromApi(Object? raw) {
+  switch ((raw ?? '').toString()) {
+    case 'external_link':
+      return QuestType.externalLink;
+    case 'social_media':
+      return QuestType.socialMedia;
+    case 'internal_action':
+    default:
+      return QuestType.internalAction;
+  }
+}
 
-  final firstPart = parts.first;
-  final rest = parts.skip(1).map((part) {
-    if (part.isEmpty) return part;
-    return part[0].toUpperCase() + part.substring(1).toLowerCase();
-  }).join('');
-
-  return firstPart + rest;
+QuestStatus _questStatusFromApi(Object? raw) {
+  switch ((raw ?? '').toString()) {
+    case 'in_progress':
+      return QuestStatus.inProgress;
+    case 'pending_verification':
+      return QuestStatus.pendingVerification;
+    case 'completed':
+      return QuestStatus.completed;
+    case 'not_started':
+    default:
+      return QuestStatus.notStarted;
+  }
 }

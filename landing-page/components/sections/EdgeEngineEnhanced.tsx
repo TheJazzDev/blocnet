@@ -158,8 +158,8 @@ export function EdgeEngineEnhanced() {
     >
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" style={{ animationDelay: '1s' }} />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto">
@@ -298,10 +298,10 @@ export function EdgeEngineEnhanced() {
             {decisions.map((item) => (
               <div
                 key={item.action}
-                className="decision-card group p-5 sm:p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl hover:border-teal-500/30 transition-all duration-300 hover:scale-105"
+                className="decision-card group p-5 sm:p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl"
               >
                 <div className="flex items-center gap-3 mb-3 sm:mb-4">
-                  <div className={`w-12 h-12 sm:w-14 sm:h-14 bg-linear-to-br ${item.color} rounded-xl flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-110 transition-transform`}>
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 bg-linear-to-br ${item.color} rounded-xl flex items-center justify-center text-2xl sm:text-3xl`}>
                     {item.icon}
                   </div>
                   <span className={`text-lg sm:text-xl font-bold ${item.textColor}`}>
@@ -321,7 +321,7 @@ export function EdgeEngineEnhanced() {
           {scoringFactors.map((factor, index) => (
             <div
               key={index}
-              className="scoring-card p-4 sm:p-5 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-teal-500/20 rounded-xl hover:border-teal-500/40 transition-all duration-300"
+              className="scoring-card p-4 sm:p-5 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-teal-500/20 rounded-xl"
               style={{ perspective: '1000px' }}
             >
               <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{factor.icon}</div>
@@ -348,7 +348,7 @@ export function EdgeEngineEnhanced() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="benefit-stat p-4 sm:p-5 bg-linear-to-br from-teal-500/10 to-primary/10 border border-teal-500/20 rounded-xl text-center hover:scale-110 transition-transform duration-300"
+              className="benefit-stat p-4 sm:p-5 bg-linear-to-br from-teal-500/10 to-primary/10 border border-teal-500/20 rounded-xl text-center"
             >
               <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-teal-300 to-primary mb-1 sm:mb-2">
                 {stat.metric}

@@ -6,7 +6,9 @@ class Admin {
   final String username;
   final String imageUrl;
   final int followers;
+  final double totalTipsReceived;
   final BadgeModel? primaryBadge;
+  final List<String> roles;
 
   Admin({
     required this.id,
@@ -14,8 +16,49 @@ class Admin {
     required this.username,
     required this.imageUrl,
     required this.followers,
+    this.totalTipsReceived = 0,
     this.primaryBadge,
-  });
+    List<String>? roles,
+  }) : roles = List.unmodifiable(
+          (roles ?? const [])
+              .map((role) => role.trim().toLowerCase())
+              .where((role) => role.isNotEmpty)
+              .toSet()
+              .toList(),
+        );
+
+  bool hasRole(String role) {
+    return roles.contains(role.trim().toLowerCase());
+  }
+
+  String? get displayRoleLabel {
+    if (hasRole('owner') || hasRole('admin')) return 'ADMIN';
+    if (hasRole('hunter')) return 'HUNTER';
+    return null;
+  }
+
+  bool get isHunterRole => hasRole('hunter');
+  bool get isAdminRole => hasRole('owner') || hasRole('admin');
+
+  static List<String> _parseRoles(dynamic rawRoles) {
+    if (rawRoles is! List) return const [];
+    final roles = <String>{};
+    for (final raw in rawRoles) {
+      if (raw is String) {
+        final value = raw.trim().toLowerCase();
+        if (value.isNotEmpty) roles.add(value);
+        continue;
+      }
+
+      if (raw is Map) {
+        final roleValue = raw['role']?.toString().trim().toLowerCase();
+        if (roleValue != null && roleValue.isNotEmpty) {
+          roles.add(roleValue);
+        }
+      }
+    }
+    return roles.toList();
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -24,6 +67,23 @@ class Admin {
       'username': username,
       'imageUrl': imageUrl,
       'followers': followers,
+      'totalTipsReceived': totalTipsReceived,
+      'roles': roles,
+      'primaryBadge': primaryBadge == null
+          ? null
+          : {
+              'id': primaryBadge!.id,
+              'slug': primaryBadge!.slug,
+              'name': primaryBadge!.name,
+              'description': primaryBadge!.description,
+              'imageUrl': primaryBadge!.imageUrl,
+              'category': primaryBadge!.category.name,
+              'rarity': primaryBadge!.rarity.name,
+              'pointsRequirement': primaryBadge!.pointsRequirement,
+              'isActive': primaryBadge!.isActive,
+              'sortOrder': primaryBadge!.sortOrder,
+              'createdAt': primaryBadge!.createdAt.toIso8601String(),
+            },
     };
   }
 
@@ -43,6 +103,11 @@ class Admin {
     final followers = followersRaw is int
         ? followersRaw
         : int.tryParse(followersRaw?.toString() ?? '') ?? 0;
+    final tipsRaw = json['totalTipsReceived'] ?? json['tipsReceived'];
+    final totalTipsReceived = tipsRaw is num
+        ? tipsRaw.toDouble()
+        : double.tryParse(tipsRaw?.toString() ?? '') ?? 0;
+    final roles = _parseRoles(json['roles']);
 
     BadgeModel? primaryBadge;
     final badgeData = json['primaryBadge'];
@@ -60,7 +125,9 @@ class Admin {
       username: username,
       imageUrl: imageUrl,
       followers: followers,
+      totalTipsReceived: totalTipsReceived,
       primaryBadge: primaryBadge,
+      roles: roles,
     );
   }
 }

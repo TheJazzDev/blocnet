@@ -12,6 +12,7 @@ class GemCard extends StatelessWidget {
     required this.onFollowToggle,
     required this.isLoading,
     this.onPreferencesTap,
+    this.onManageTap,
   });
 
   final Project project;
@@ -19,6 +20,7 @@ class GemCard extends StatelessWidget {
   final VoidCallback onFollowToggle;
   final bool isLoading;
   final VoidCallback? onPreferencesTap;
+  final VoidCallback? onManageTap;
 
   void _openDetails(BuildContext context) {
     showGeneralDialog(
@@ -191,13 +193,16 @@ class GemCard extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        AppColors.teal400.withValues(alpha: 0.2),
-                                        AppColors.teal500.withValues(alpha: 0.15),
+                                        AppColors.teal400
+                                            .withValues(alpha: 0.2),
+                                        AppColors.teal500
+                                            .withValues(alpha: 0.15),
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
-                                      color: AppColors.teal400.withValues(alpha: 0.4),
+                                      color: AppColors.teal400
+                                          .withValues(alpha: 0.4),
                                     ),
                                   ),
                                   child: Text(
@@ -266,7 +271,10 @@ class GemCard extends StatelessWidget {
                                     child: Container(
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
-                                          colors: [scoreColor, scoreColor.withValues(alpha: 0.7)],
+                                          colors: [
+                                            scoreColor,
+                                            scoreColor.withValues(alpha: 0.7)
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -314,16 +322,18 @@ class GemCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.primary500.withValues(alpha: 0.3),
+                              color:
+                                  AppColors.primary500.withValues(alpha: 0.3),
                               width: 2,
                             ),
                           ),
                           child: CircleAvatar(
                             radius: 13,
                             backgroundColor: AppColors.bgSurface,
-                            backgroundImage: (admin?.imageUrl.isNotEmpty ?? false)
-                                ? NetworkImage(admin!.imageUrl)
-                                : null,
+                            backgroundImage:
+                                (admin?.imageUrl.isNotEmpty ?? false)
+                                    ? NetworkImage(admin!.imageUrl)
+                                    : null,
                             child: (admin == null || admin.imageUrl.isEmpty)
                                 ? Icon(
                                     Icons.person,
@@ -373,16 +383,56 @@ class GemCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      if (onManageTap != null) ...[
+                        GestureDetector(
+                          onTap: onManageTap,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.bgElevated,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.borderSubtle,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.tune_rounded,
+                                  size: 15,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Manage',
+                                  style: AppTypography.custom(
+                                    color: AppColors.textSecondary,
+                                    size: 12,
+                                    weight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
                       if (isFollowed && onPreferencesTap != null) ...[
                         GestureDetector(
                           onTap: onPreferencesTap,
                           child: Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.primary500.withValues(alpha: 0.1),
+                              color:
+                                  AppColors.primary500.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: AppColors.primary500.withValues(alpha: 0.25),
+                                color: AppColors.primary500
+                                    .withValues(alpha: 0.25),
                               ),
                             ),
                             child: Icon(
@@ -408,8 +458,10 @@ class GemCard extends StatelessWidget {
                               gradient: isFollowed
                                   ? LinearGradient(
                                       colors: [
-                                        AppColors.primary500.withValues(alpha: 0.2),
-                                        AppColors.primary500.withValues(alpha: 0.15),
+                                        AppColors.primary500
+                                            .withValues(alpha: 0.2),
+                                        AppColors.primary500
+                                            .withValues(alpha: 0.15),
                                       ],
                                     )
                                   : null,
@@ -417,7 +469,8 @@ class GemCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isFollowed
-                                    ? AppColors.primary500.withValues(alpha: 0.5)
+                                    ? AppColors.primary500
+                                        .withValues(alpha: 0.5)
                                     : AppColors.borderSubtle,
                                 width: 1.5,
                               ),

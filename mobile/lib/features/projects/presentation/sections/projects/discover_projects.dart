@@ -1,8 +1,11 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/follow_preference_bottom_sheet.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_card/gem_card.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +25,7 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Provider.of<ProjectsStore>(context, listen: false).fetchProjectsOnce();
+      Provider.of<UpdatesStore>(context, listen: false).fetchUpdatesOnce();
     });
   }
 
@@ -42,8 +46,15 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ProjectsStore>(
-      builder: (context, store, _) {
+    return Consumer3<ProjectsStore, UpdatesStore, AuthStore>(
+      builder: (context, store, updatesStore, authStore, _) {
+        final manageableIds = authStore.canSubmitProject
+            ? store.manageableProjectIds(
+                userId: authStore.userId ?? '',
+                updates: updatesStore.updates,
+              )
+            : const <String>{};
+
         if (store.isFetching && store.projects.isEmpty) {
           return const Padding(
             padding: EdgeInsets.only(top: 40),
@@ -76,10 +87,12 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                 Text(
                   'Gems will appear here when projects are listed.',
                   textAlign: TextAlign.center,
-                  style: AppTypography.custom(color: AppColors.textFaint,
+                  style: AppTypography.custom(
+                    color: AppColors.textFaint,
                     size: 12,
                     weight: FontWeight.w400,
-                    height: 1.5,),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -114,9 +127,11 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                     ),
                     child: Text(
                       'Sort: Hype Score',
-                      style: AppTypography.custom(color: AppColors.textFaint,
+                      style: AppTypography.custom(
+                        color: AppColors.textFaint,
                         size: 10,
-                        weight: FontWeight.w400,),
+                        weight: FontWeight.w400,
+                      ),
                     ),
                   ),
                 ],
@@ -133,6 +148,10 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                   onFollowToggle: () => _toggleFollow(project),
                   onPreferencesTap:
                       isFollowed ? () => _openPreferences(project) : null,
+                  onManageTap: manageableIds.contains(project.id)
+                      ? () => Navigator.of(context)
+                          .pushNamed(AppRoutes.manageProjects)
+                      : null,
                 );
               }).toList(),
             ),

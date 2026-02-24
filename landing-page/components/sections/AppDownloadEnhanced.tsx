@@ -241,8 +241,8 @@ export function AppDownloadEnhanced() {
               </div>
 
               {/* Floating Elements */}
-              <div className="absolute -top-8 -right-8 w-20 h-20 bg-teal-500/20 rounded-full blur-xl animate-pulse" />
-              <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-primary/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
+              <div className="absolute -top-8 -right-8 w-20 h-20 bg-teal-500/20 rounded-full blur-xl" />
+              <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-primary/20 rounded-full blur-xl" style={{ animationDelay: '1s' }} />
             </div>
           </div>
 
@@ -253,7 +253,7 @@ export function AppDownloadEnhanced() {
               {features.map((feature, index) => (
                 <div
                   key={index}
-                  className="feature-card p-5 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl hover:border-teal-500/30 transition-all duration-300"
+                  className="feature-card p-5 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl"
                 >
                   <div className="text-3xl mb-3">{feature.icon}</div>
                   <h3 className="text-base sm:text-lg font-bold text-foreground mb-1">
@@ -284,12 +284,12 @@ export function AppDownloadEnhanced() {
                 type="button"
                 onClick={() => void handleDownload()}
                 disabled={isDownloading}
-                className="group w-full px-8 py-5 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-bold text-base sm:text-lg shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition-all duration-300 hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden"
+                className="group w-full px-8 py-5 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-bold text-base sm:text-lg shadow-lg shadow-teal-500/25 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden"
               >
                 <span className="relative z-10 flex items-center justify-center gap-3">
                   {isDownloading ? (
                     <>
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <svg className=" h-5 w-5" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
@@ -304,7 +304,7 @@ export function AppDownloadEnhanced() {
                     </>
                   )}
                 </span>
-                <div className="absolute inset-0 bg-linear-to-r from-teal-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-linear-to-r from-teal-400 to-purple-500 opacity-0" />
               </button>
 
               {error && (

@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
@@ -88,7 +89,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
               displayName: displayName,
               avatarUrl: auth.avatarUrl,
               email: auth.email,
-              primaryBadge: badgesStore.primaryBadge,
+              primaryBadge: badgesStore.displayBadge,
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
@@ -141,6 +142,13 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                         Navigator.of(context).pushNamed(AppRoutes.tipsHistory),
                   ),
                   _ProfileTile(
+                    icon: Icons.redeem_outlined,
+                    title: 'Referral Code',
+                    subtitle: 'View and manage your referral code',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.referralCode),
+                  ),
+                  _ProfileTile(
                     icon: Icons.edit_outlined,
                     title: 'Edit Profile',
                     subtitle: 'Update your avatar and public details',
@@ -160,6 +168,13 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                     subtitle: 'Account preferences',
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.settings),
+                  ),
+                  _ProfileTile(
+                    icon: Icons.support_agent_outlined,
+                    title: 'Help & Support',
+                    subtitle: 'Get help with account and app issues',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.helpSupport),
                   ),
                   const SizedBox(height: 12),
                   const _SectionLabel('Account'),

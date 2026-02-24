@@ -11,7 +11,7 @@ class _UserHero extends StatelessWidget {
   final String displayName;
   final String? avatarUrl;
   final String? email;
-  final dynamic primaryBadge;
+  final BadgeModel? primaryBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -157,8 +157,11 @@ class _UserHero extends StatelessWidget {
                   if (primaryBadge != null) ...[
                     const SizedBox(width: 8),
                     BadgeIcon(
-                      badge: primaryBadge,
+                      badge: primaryBadge!,
                       size: BadgeSize.medium,
+                      showTooltip: false,
+                      onTap: () =>
+                          Navigator.of(context).pushNamed(AppRoutes.badges),
                     ),
                   ],
                 ],

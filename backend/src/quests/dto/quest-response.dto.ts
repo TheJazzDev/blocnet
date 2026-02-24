@@ -111,6 +111,9 @@ export class QuestSubmissionResponseDto {
   @ApiProperty({ nullable: true })
   rejectionReason?: string | null;
 
+  @ApiProperty({ nullable: true })
+  reviewNotes?: string | null;
+
   @ApiProperty()
   submittedAt: Date;
 }

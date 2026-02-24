@@ -189,7 +189,7 @@ export function Tokenomics() {
           {tokenStats.map((stat) => (
             <div
               key={stat.label}
-              className="stat-card p-4 sm:p-5 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-teal-500/20 rounded-xl text-center hover:border-teal-500/40 transition-all duration-300"
+              className="stat-card p-4 sm:p-5 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-teal-500/20 rounded-xl text-center"
             >
               <p className="text-xs sm:text-sm text-muted mb-1 sm:mb-2">
                 {stat.label}
@@ -279,7 +279,7 @@ export function Tokenomics() {
             {tokenAllocation.map((item, index) => (
               <div
                 key={index}
-                className="legend-item flex items-center justify-between p-3 sm:p-4 bg-surface-2/50 backdrop-blur-sm border border-border rounded-xl hover:border-teal-500/30 transition-all duration-300"
+                className="legend-item flex items-center justify-between p-3 sm:p-4 bg-surface-2/50 backdrop-blur-sm border border-border rounded-xl"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -307,10 +307,10 @@ export function Tokenomics() {
             {utilities.map((utility, index) => (
               <div
                 key={index}
-                className="utility-card group p-4 sm:p-5 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl hover:border-teal-500/30 transition-all duration-300 hover:scale-105"
+                className="utility-card group p-4 sm:p-5 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl"
               >
                 <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-teal-500/20 to-primary/20 rounded-xl flex items-center justify-center border border-teal-500/30 group-hover:scale-110 transition-transform">
+                  <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-teal-500/20 to-primary/20 rounded-xl flex items-center justify-center border border-teal-500/30">
                     <span className="text-xl sm:text-2xl">{utility.icon}</span>
                   </div>
                   <div>

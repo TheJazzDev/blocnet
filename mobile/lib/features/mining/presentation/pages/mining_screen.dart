@@ -3,6 +3,7 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_hero_card.dart';
 import 'package:blocnet/features/mining/presentation/widgets/referral_code_card.dart';
 import 'package:blocnet/services/mining_store.dart';
+import 'package:blocnet/services/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
@@ -124,10 +125,22 @@ class _MiningScreenState extends State<MiningScreen> {
   }
 
   Future<void> _onClaim(MiningStore store) async {
+    final pointsBefore = store.snapshot?.balance.claimedTotalPoints ?? 0;
+    final walletStore = context.read<WalletStore>();
     try {
       await store.claimMining();
+      final pointsAfter = store.snapshot?.balance.claimedTotalPoints ?? 0;
+      final claimedNow = (pointsAfter - pointsBefore).clamp(0, 1 << 31);
+      try {
+        await walletStore.refreshAll();
+      } catch (_) {
+        // Wallet refresh is best-effort; mining claim already succeeded.
+      }
       if (!mounted) return;
-      _showFeedback('Rewards claimed. New mining session started.');
+      final message = claimedNow > 0
+          ? 'Claimed $claimedNow points. New mining session started.'
+          : 'Rewards claimed. New mining session started.';
+      _showFeedback(message);
     } catch (_) {
       // surfaced via store.lastError
     }

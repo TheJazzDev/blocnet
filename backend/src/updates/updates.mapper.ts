@@ -7,6 +7,11 @@ export const updateInclude = {
       email: true,
       displayName: true,
       avatarUrl: true,
+      roles: {
+        select: {
+          role: true,
+        },
+      },
       primaryBadge: {
         select: {
           id: true,
@@ -71,6 +76,7 @@ export function toUpdateResponse(update: UpdateWithRelations) {
       username,
       imageUrl: update.author.avatarUrl ?? '',
       followers: 0,
+      roles: update.author.roles.map((entry) => entry.role),
       primaryBadge: update.author.primaryBadge ?? null,
     },
     project: {

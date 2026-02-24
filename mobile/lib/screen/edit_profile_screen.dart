@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,6 +17,13 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
+  static const Set<String> _allowedAvatarExtensions = {
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+  };
+
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _displayNameCtrl;
   late final TextEditingController _bioCtrl;
@@ -50,10 +58,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       if (!avatarUploaded) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(auth.lastError ?? 'Failed to upload avatar'),
-          ),
+        AppSnackbar.showError(
+          context,
+          auth.lastError ?? 'Failed to upload avatar',
         );
         return;
       }
@@ -68,12 +75,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _isSubmitting = false);
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.read<AuthStore>().lastError ?? 'Failed to update profile',
-          ),
-        ),
+      AppSnackbar.showError(
+        context,
+        context.read<AuthStore>().lastError ?? 'Failed to update profile',
       );
       return;
     }
@@ -97,13 +101,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return;
       }
 
+      final extension = _fileExtension(image.path);
+      if (!_allowedAvatarExtensions.contains(extension)) {
+        if (!mounted) return;
+        AppSnackbar.showError(
+          context,
+          'Unsupported avatar format. Use JPG, PNG, or WEBP.',
+        );
+        return;
+      }
+
       final pickedFile = File(image.path);
       final fileSize = await pickedFile.length();
       if (fileSize > 5 * 1024 * 1024) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Avatar must be 5MB or smaller')),
-        );
+        AppSnackbar.showError(context, 'Avatar must be 5MB or smaller');
         return;
       }
 
@@ -111,14 +123,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() => _selectedAvatarFile = pickedFile);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image selection failed: $error')),
-      );
+      AppSnackbar.showError(context, 'Image selection failed. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _isPickingImage = false);
       }
     }
+  }
+
+  String _fileExtension(String path) {
+    final segments = path.split('.');
+    if (segments.length < 2) {
+      return '';
+    }
+    return segments.last.toLowerCase();
   }
 
   @override
@@ -201,17 +219,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   child: Text(
                     auth.username ?? '@set-at-signup',
-                    style: AppTypography.custom(color: AppColors.textSecondary,
+                    style: AppTypography.custom(
+                      color: AppColors.textSecondary,
                       size: 13,
-                      weight: FontWeight.w400,),
+                      weight: FontWeight.w400,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Username is unique and cannot be changed after signup.',
-                  style: AppTypography.custom(color: AppColors.textFaint,
+                  style: AppTypography.custom(
+                    color: AppColors.textFaint,
                     size: 11,
-                    weight: FontWeight.w400,),
+                    weight: FontWeight.w400,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _FieldLabel('Display Name'),
@@ -248,9 +270,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           )
                         : Text(
                             'Save Profile',
-                            style: AppTypography.custom(size: 13,
+                            style: AppTypography.custom(
+                              size: 13,
                               color: Colors.black,
-                              weight: FontWeight.w700,),
+                              weight: FontWeight.w700,
+                            ),
                           ),
                   ),
                 ),
@@ -299,9 +323,11 @@ class _Input extends StatelessWidget {
       minLines: minLines,
       maxLines: maxLines,
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-      style: AppTypography.custom(color: AppColors.textSecondary,
+      style: AppTypography.custom(
+        color: AppColors.textSecondary,
         size: 13,
-        weight: FontWeight.w400,),
+        weight: FontWeight.w400,
+      ),
       decoration: InputDecoration(
         filled: true,
         fillColor: AppColors.bgSurface,

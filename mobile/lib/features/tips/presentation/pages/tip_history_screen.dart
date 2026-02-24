@@ -8,8 +8,15 @@ import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+enum TipHistoryMode { sent, received }
+
 class TipHistoryScreen extends StatefulWidget {
-  const TipHistoryScreen({super.key});
+  const TipHistoryScreen({
+    super.key,
+    this.mode = TipHistoryMode.sent,
+  });
+
+  final TipHistoryMode mode;
 
   @override
   State<TipHistoryScreen> createState() => _TipHistoryScreenState();
@@ -24,7 +31,11 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
       final auth = context.read<AuthStore>();
       final store = context.read<TipsStore>();
       store.ensureUserScope(auth.userId);
-      store.loadSentHistory(force: true, limit: 100);
+      if (widget.mode == TipHistoryMode.received) {
+        store.loadReceivedHistory(force: true, limit: 100);
+      } else {
+        store.loadSentHistory(force: true, limit: 100);
+      }
     });
   }
 
@@ -32,27 +43,39 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      appBar: const CustomAppBar(
-        title: 'Tip History',
+      appBar: CustomAppBar(
+        title: widget.mode == TipHistoryMode.received
+            ? 'Received Tip History'
+            : 'Tip History',
         backButton: true,
         showSearch: false,
         showFilter: false,
       ),
       body: Consumer<TipsStore>(
         builder: (context, store, _) {
-          final rows = store.sentHistory;
+          final isReceived = widget.mode == TipHistoryMode.received;
+          final rows = isReceived ? store.receivedHistory : store.sentHistory;
+          final total =
+              isReceived ? store.receivedHistoryTotal : store.sentHistoryTotal;
+          final isLoading = isReceived
+              ? store.isLoadingReceivedHistory
+              : store.isLoadingSentHistory;
           final hasError = (store.lastError?.trim().isNotEmpty ?? false);
 
           return RefreshIndicator(
             color: AppColors.primary500,
             backgroundColor: AppColors.bgSurface,
-            onRefresh: () => store.loadSentHistory(force: true, limit: 100),
+            onRefresh: () => isReceived
+                ? store.loadReceivedHistory(force: true, limit: 100)
+                : store.loadSentHistory(force: true, limit: 100),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
                 Text(
-                  'All tips you have sent to hunters.',
+                  isReceived
+                      ? 'All tips you have received from supporters.'
+                      : 'All tips you have sent to hunters.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: 12,
@@ -61,7 +84,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${store.sentHistoryTotal} tips sent',
+                  isReceived ? '$total tips received' : '$total tips sent',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
                     size: 11,
@@ -69,7 +92,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (store.isLoadingSentHistory && rows.isEmpty)
+                if (isLoading && rows.isEmpty)
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -98,7 +121,9 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                         Text(
                           hasError
                               ? 'Unable to load tip history right now.'
-                              : 'No tips sent yet.',
+                              : isReceived
+                                  ? 'No tips received yet.'
+                                  : 'No tips sent yet.',
                           style: AppTypography.custom(
                             color: AppColors.textMuted,
                             size: 12,
@@ -120,7 +145,12 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                     ),
                   )
                 else
-                  ...rows.map((row) => _TipHistoryListItem(row: row)),
+                  ...rows.map(
+                    (row) => _TipHistoryListItem(
+                      row: row,
+                      mode: widget.mode,
+                    ),
+                  ),
               ],
             ),
           );
@@ -131,16 +161,21 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
 }
 
 class _TipHistoryListItem extends StatelessWidget {
-  const _TipHistoryListItem({required this.row});
+  const _TipHistoryListItem({
+    required this.row,
+    required this.mode,
+  });
 
   final TipTransaction row;
+  final TipHistoryMode mode;
 
   @override
   Widget build(BuildContext context) {
+    final isReceived = mode == TipHistoryMode.received;
     final symbol = row.currency.symbol.trim().isEmpty
         ? row.currency.code
         : row.currency.symbol;
-    final recipient = _recipientLabel(row);
+    final counterparty = isReceived ? _senderLabel(row) : _recipientLabel(row);
     final note = row.note?.trim();
 
     return Container(
@@ -158,13 +193,15 @@ class _TipHistoryListItem extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: AppColors.error500.withValues(alpha: 0.12),
+              color: isReceived
+                  ? AppColors.successColor.withValues(alpha: 0.12)
+                  : AppColors.error500.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              Icons.north_east_rounded,
+              isReceived ? Icons.south_west_rounded : Icons.north_east_rounded,
               size: 16,
-              color: AppColors.error500,
+              color: isReceived ? AppColors.successColor : AppColors.error500,
             ),
           ),
           const SizedBox(width: 9),
@@ -173,7 +210,7 @@ class _TipHistoryListItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'To $recipient',
+                  isReceived ? 'From $counterparty' : 'To $counterparty',
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
                     size: 12.5,
@@ -184,7 +221,10 @@ class _TipHistoryListItem extends StatelessWidget {
                 Text(
                   note != null && note.isNotEmpty
                       ? note
-                      : _contextLabel(row.contextType),
+                      : _contextLabel(
+                          row.contextType,
+                          isReceived: isReceived,
+                        ),
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
                     size: 10.5,
@@ -210,16 +250,21 @@ class _TipHistoryListItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '-${row.totalDebit} $symbol',
+                isReceived
+                    ? '+${row.amount} $symbol'
+                    : '-${row.totalDebit} $symbol',
                 style: AppTypography.custom(
-                  color: AppColors.error500,
+                  color:
+                      isReceived ? AppColors.successColor : AppColors.error500,
                   size: 12,
                   weight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 1),
               Text(
-                'Tip ${row.amount} · Fee ${row.fee}',
+                isReceived
+                    ? 'Tip ${row.amount}'
+                    : 'Tip ${row.amount} · Fee ${row.fee}',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
                   size: 10,
@@ -248,10 +293,27 @@ String _recipientLabel(TipTransaction row) {
   return row.recipient.id.isNotEmpty ? row.recipient.id : 'Hunter';
 }
 
-String _contextLabel(String? contextType) {
+String _contextLabel(
+  String? contextType, {
+  required bool isReceived,
+}) {
   final value = contextType?.trim() ?? '';
   if (value.isEmpty) {
-    return 'Tip sent';
+    return isReceived ? 'Tip received' : 'Tip sent';
   }
   return value.replaceAll('_', ' ');
+}
+
+String _senderLabel(TipTransaction row) {
+  final displayName = row.sender.displayName?.trim();
+  if (displayName != null && displayName.isNotEmpty) {
+    return displayName;
+  }
+
+  final username = row.sender.username?.trim();
+  if (username != null && username.isNotEmpty) {
+    return username.startsWith('@') ? username : '@$username';
+  }
+
+  return row.sender.id.isNotEmpty ? row.sender.id : 'User';
 }

@@ -8,6 +8,9 @@ class WalletStore extends ChangeNotifier {
   WalletStore({WalletApiRepository? repository})
       : _repository = repository ?? WalletApiRepository();
 
+  static const String walletOnboardingSeenKeyPrefix =
+      'wallet_onboarding_seen_v1_';
+
   final WalletApiRepository _repository;
 
   WalletSnapshot? _snapshot;
@@ -310,4 +313,8 @@ class WalletStore extends ChangeNotifier {
   }
 
   String _assetKey(String value) => value.trim().toUpperCase();
+
+  String walletOnboardingSeenKeyForUser(String userId) {
+    return '$walletOnboardingSeenKeyPrefix$userId';
+  }
 }

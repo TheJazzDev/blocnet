@@ -10,6 +10,7 @@ import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/presentation/sections/explore/explore.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/top_hunters_row.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/edge_engine_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/services/updates_store.dart';
@@ -299,17 +300,36 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _openEdgeEnginePage() async {
+    final edgeStore = context.read<EdgeEngineStore>();
+    if (edgeStore.brief == null && !edgeStore.isFetching) {
+      await edgeStore.refresh();
+    }
+    if (!mounted) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _EdgeEnginePage(
+          onAction: _sendEdgeFeedback,
+          onExplain: _openEdgeExplain,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
     final edgeStore = context.watch<EdgeEngineStore>();
+    final accent =
+        AppColors.accentForSpace(context.watch<AuthStore>().isInHunterSpace);
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       body: Stack(
         children: [
           RefreshIndicator(
-            color: AppColors.primary500,
+            color: accent,
             backgroundColor: AppColors.bgSurface,
             onRefresh: _handleRefresh,
             child: CustomScrollView(
@@ -339,12 +359,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverToBoxAdapter(
-                      child: _EdgeBriefCard(
+                      child: _EdgeBriefTeaserCard(
                         brief: edgeStore.brief,
                         isLoading:
                             edgeStore.isFetching && edgeStore.brief == null,
-                        onAction: _sendEdgeFeedback,
-                        onExplain: _openEdgeExplain,
+                        onOpen: _openEdgeEnginePage,
                       ),
                     ),
                   ),
@@ -375,8 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             return isUnseen || isHighPriority;
                           }).toList()
                         : enrichedPosts;
-                    final rankedFeedPosts = [...feedPosts]
-                      ..sort((a, b) {
+                    final rankedFeedPosts = [...feedPosts]..sort((a, b) {
                         final scoreA = edgeStore.edgeScoreForUpdate(a.id);
                         final scoreB = edgeStore.edgeScoreForUpdate(b.id);
 
@@ -456,13 +474,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary500,
+                      color: accent,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '${_pendingNewPostIds.length} new updates',
                       style: AppTypography.custom(
-                        color: Colors.black,
+                        color: AppColors.onAccentForSpace(
+                          context.watch<AuthStore>().isInHunterSpace,
+                        ),
                         size: 12,
                         weight: FontWeight.w700,
                       ),
@@ -523,6 +543,8 @@ class _FeedTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent =
+        AppColors.accentForSpace(context.watch<AuthStore>().isInHunterSpace);
     return Container(
       height: 44,
       decoration: BoxDecoration(
@@ -536,11 +558,13 @@ class _FeedTabBar extends StatelessWidget {
           _Tab(
             label: 'Updates',
             isActive: activeSection == Sections.forYou,
+            accentColor: accent,
             onTap: () => onTabChanged(Sections.forYou),
           ),
           _Tab(
             label: 'General',
             isActive: activeSection == Sections.explore,
+            accentColor: accent,
             onTap: () => onTabChanged(Sections.explore),
           ),
         ],
@@ -553,11 +577,13 @@ class _Tab extends StatelessWidget {
   const _Tab({
     required this.label,
     required this.isActive,
+    required this.accentColor,
     required this.onTap,
   });
 
   final String label;
   final bool isActive;
+  final Color accentColor;
   final VoidCallback onTap;
 
   @override
@@ -569,7 +595,7 @@ class _Tab extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: isActive ? AppColors.teal400 : Colors.transparent,
+              color: isActive ? accentColor : Colors.transparent,
               width: 2,
             ),
           ),
@@ -579,7 +605,7 @@ class _Tab extends StatelessWidget {
         child: Text(
           label,
           style: AppTypography.custom(
-            color: isActive ? AppColors.teal400 : AppColors.textFaint,
+            color: isActive ? accentColor : AppColors.textFaint,
             size: 13,
             weight: isActive ? FontWeight.w600 : FontWeight.w500,
           ),
@@ -602,6 +628,8 @@ class _AlphaRadarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent =
+        AppColors.accentForSpace(context.watch<AuthStore>().isInHunterSpace);
     if (isLoading) {
       return Container(
         width: double.infinity,
@@ -618,7 +646,7 @@ class _AlphaRadarCard extends StatelessWidget {
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.primary400,
+                color: accent,
               ),
             ),
             const SizedBox(width: 10),
@@ -657,7 +685,7 @@ class _AlphaRadarCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.radar_rounded, size: 16, color: AppColors.primary400),
+              Icon(Icons.radar_rounded, size: 16, color: accent),
               const SizedBox(width: 8),
               Text(
                 'ALPHA RADAR',
@@ -675,7 +703,7 @@ class _AlphaRadarCard extends StatelessWidget {
                   child: Text(
                     'Catch up now',
                     style: AppTypography.custom(
-                      color: AppColors.primary400,
+                      color: accent,
                       size: 12,
                       weight: FontWeight.w700,
                     ),
@@ -717,6 +745,132 @@ class _AlphaRadarCard extends StatelessWidget {
               }).toList(),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EdgeBriefTeaserCard extends StatelessWidget {
+  const _EdgeBriefTeaserCard({
+    required this.brief,
+    required this.isLoading,
+    required this.onOpen,
+  });
+
+  final EdgeBriefResponse? brief;
+  final bool isLoading;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary400,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Loading edge intelligence...',
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: 12,
+                weight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final summary = brief;
+    if (summary == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.auto_awesome_rounded,
+                size: 16,
+                color: AppColors.primary400,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'BLOCNET EDGE ENGINE',
+                style: AppTypography.custom(
+                  color: AppColors.textFaint,
+                  size: 10,
+                  weight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: onOpen,
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                ),
+                child: Text(
+                  'Open',
+                  style: AppTypography.custom(
+                    color: AppColors.primary400,
+                    size: 12,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            summary.headline.trim().isEmpty
+                ? 'Edge intelligence is ready.'
+                : summary.headline,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 13,
+              weight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${summary.totalSignals} signals · ${summary.recommendedNowCount} act now · ${summary.watchCount} watch',
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
+              size: 11,
+              weight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -892,6 +1046,54 @@ class _EdgeBriefCard extends StatelessWidget {
   }
 }
 
+class _EdgeEnginePage extends StatelessWidget {
+  const _EdgeEnginePage({
+    required this.onAction,
+    required this.onExplain,
+  });
+
+  final Future<void> Function(EdgeBriefDecision decision, String action)
+      onAction;
+  final Future<void> Function(EdgeBriefDecision decision) onExplain;
+
+  @override
+  Widget build(BuildContext context) {
+    final edgeStore = context.watch<EdgeEngineStore>();
+    final summary = edgeStore.brief;
+
+    return Scaffold(
+      backgroundColor: AppColors.bgBase,
+      appBar: AppBar(
+        title: Text(
+          'Edge Engine',
+          style: AppTypography.custom(
+            color: AppColors.textPrimary,
+            size: 18,
+            weight: FontWeight.w700,
+          ),
+        ),
+      ),
+      body: RefreshIndicator(
+        color: AppColors.primary500,
+        backgroundColor: AppColors.bgSurface,
+        onRefresh: edgeStore.refresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
+            _EdgeBriefCard(
+              brief: summary,
+              isLoading: edgeStore.isFetching && summary == null,
+              onAction: onAction,
+              onExplain: onExplain,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _BriefMetricChip extends StatelessWidget {
   const _BriefMetricChip({required this.label});
 
@@ -1039,7 +1241,8 @@ class _EdgeDecisionRow extends StatelessWidget {
               GestureDetector(
                 onTap: () => onExplain(decision),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.primary500.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -1240,14 +1443,17 @@ class _EdgeExplainSheet extends StatelessWidget {
               const SizedBox(height: 14),
               _ExplainMetricRow(label: 'Edge score', value: details.edgeScore),
               _ExplainMetricRow(
-                  label: 'Urgency component', value: details.components.urgency),
+                  label: 'Urgency component',
+                  value: details.components.urgency),
               _ExplainMetricRow(
-                  label: 'Recency component', value: details.components.recency),
+                  label: 'Recency component',
+                  value: details.components.recency),
               _ExplainMetricRow(
                   label: 'Relevance component',
                   value: details.components.relevance),
               _ExplainMetricRow(
-                  label: 'Novelty component', value: details.components.novelty),
+                  label: 'Novelty component',
+                  value: details.components.novelty),
               _ExplainMetricRow(
                   label: 'Penalty component',
                   value: details.components.penalties),

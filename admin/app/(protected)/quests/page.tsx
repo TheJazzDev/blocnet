@@ -1,7 +1,7 @@
 "use client";
 
 import { useAdminSession } from "@/components/admin-shell";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -80,6 +80,8 @@ const VERIFICATION_METHODS = [
   { value: "auto", label: "Auto" },
   { value: "manual", label: "Manual" },
 ];
+
+const NONE_OPTION_VALUE = "__none__";
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "—";
@@ -172,7 +174,7 @@ export default function QuestsPage() {
     };
 
     const rewardBadgeId = formData.get("rewardBadgeId") as string;
-    if (rewardBadgeId && rewardBadgeId !== "") {
+    if (rewardBadgeId && rewardBadgeId !== NONE_OPTION_VALUE) {
       payload.rewardBadgeId = rewardBadgeId;
     }
 
@@ -209,7 +211,7 @@ export default function QuestsPage() {
     };
 
     const rewardBadgeId = formData.get("rewardBadgeId") as string;
-    if (rewardBadgeId && rewardBadgeId !== "") {
+    if (rewardBadgeId && rewardBadgeId !== NONE_OPTION_VALUE) {
       payload.rewardBadgeId = rewardBadgeId;
     } else {
       payload.rewardBadgeId = null;
@@ -443,15 +445,15 @@ export default function QuestsPage() {
 
                 <div className="grid gap-2">
                   <Label htmlFor="create-badge">Reward Badge (Optional)</Label>
-                  <Select name="rewardBadgeId">
-                    <SelectTrigger id="create-badge">
-                      <SelectValue placeholder="None" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {badges.map((badge) => (
-                        <SelectItem key={badge.id} value={badge.id}>
-                          {badge.name}
+                    <Select name="rewardBadgeId" defaultValue={NONE_OPTION_VALUE}>
+                      <SelectTrigger id="create-badge">
+                        <SelectValue placeholder="None" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>
+                        {badges.map((badge) => (
+                          <SelectItem key={badge.id} value={badge.id}>
+                            {badge.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -598,12 +600,15 @@ export default function QuestsPage() {
 
                   <div className="grid gap-2">
                     <Label htmlFor="edit-badge">Reward Badge (Optional)</Label>
-                    <Select name="rewardBadgeId" defaultValue={selectedQuest.rewardBadgeId ?? ""}>
+                    <Select
+                      name="rewardBadgeId"
+                      defaultValue={selectedQuest.rewardBadgeId ?? NONE_OPTION_VALUE}
+                    >
                       <SelectTrigger id="edit-badge">
                         <SelectValue placeholder="None" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>
                         {badges.map((badge) => (
                           <SelectItem key={badge.id} value={badge.id}>
                             {badge.name}

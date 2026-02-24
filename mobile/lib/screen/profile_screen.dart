@@ -8,33 +8,46 @@ import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({
+    super.key,
+    this.embeddedInMainShell = false,
+  });
+
+  final bool embeddedInMainShell;
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
+    final profileBody = auth.isInHunterSpace
+        ? HunterProfileBody(
+            auth: auth,
+            onSignOut: () => _confirmSignOut(context, auth),
+          )
+        : UserProfileBody(
+            auth: auth,
+            onSignOut: () => _confirmSignOut(context, auth),
+          );
+
+    final content = embeddedInMainShell
+        ? ColoredBox(
+            color: AppColors.bgBase,
+            child: profileBody,
+          )
+        : Scaffold(
+            backgroundColor: AppColors.bgBase,
+            appBar: const CustomAppBar(
+              title: 'Profile',
+              backButton: true,
+              showSearch: false,
+              showFilter: false,
+              showSpaceSwitcher: true,
+            ),
+            body: profileBody,
+          );
 
     return Stack(
       children: [
-        Scaffold(
-          backgroundColor: AppColors.bgBase,
-          appBar: const CustomAppBar(
-            title: 'Profile',
-            backButton: true,
-            showSearch: false,
-            showFilter: false,
-            showSpaceSwitcher: true,
-          ),
-          body: auth.isInHunterSpace
-              ? HunterProfileBody(
-                  auth: auth,
-                  onSignOut: () => _confirmSignOut(context, auth),
-                )
-              : UserProfileBody(
-                  auth: auth,
-                  onSignOut: () => _confirmSignOut(context, auth),
-                ),
-        ),
+        content,
         if (auth.isSwitchingSpace) const _ProfileSpaceSwitchOverlay(),
       ],
     );

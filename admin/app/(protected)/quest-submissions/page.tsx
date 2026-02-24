@@ -1,7 +1,7 @@
 "use client";
 
 import { useAdminSession } from "@/components/admin-shell";
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -133,7 +133,7 @@ export default function QuestSubmissionsPage() {
       if (statusFilter !== "all") {
         params.append("status", statusFilter);
       }
-      const url = `/admin/quest-submissions${params.toString() ? `?${params.toString()}` : ""}`;
+      const url = `/admin/quests/submissions${params.toString() ? `?${params.toString()}` : ""}`;
       const data = await apiFetch<QuestSubmission[]>(url);
       setSubmissions(data ?? []);
     } catch (err: unknown) {
@@ -156,7 +156,7 @@ export default function QuestSubmissionsPage() {
 
     setIsSubmitting(true);
     try {
-      await apiFetch(`/admin/quest-submissions/${selectedSubmission.id}/approve`, {
+      await apiFetch(`/admin/quests/submissions/${selectedSubmission.id}/approve`, {
         method: "POST",
         body: JSON.stringify({ reviewNotes }),
       });
@@ -182,7 +182,7 @@ export default function QuestSubmissionsPage() {
 
     setIsSubmitting(true);
     try {
-      await apiFetch(`/admin/quest-submissions/${selectedSubmission.id}/reject`, {
+      await apiFetch(`/admin/quests/submissions/${selectedSubmission.id}/reject`, {
         method: "POST",
         body: JSON.stringify({ reviewNotes }),
       });

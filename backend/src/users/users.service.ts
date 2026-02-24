@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -27,6 +28,7 @@ import {
 import { projectInclude, toProjectResponse } from '../projects/projects.mapper';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { QuestsService } from '../quests/quests.service';
 import { AdminDeleteUserDto } from './dto/admin-delete-user.dto';
 import { AdminHardDeleteUserDto } from './dto/admin-hard-delete-user.dto';
 import { AdminReactivateUserDto } from './dto/admin-reactivate-user.dto';
@@ -81,6 +83,7 @@ const DIGEST_VIEW_AUDIT_COOLDOWN_MS = 60 * 60 * 1000;
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   private readonly supabaseUrl: string;
   private readonly supabaseAvatarsBucket: string;
   private readonly supabaseStorageClient: SupabaseClient | null;
@@ -90,6 +93,7 @@ export class UsersService {
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
     private readonly notificationsService: NotificationsService,
+    private readonly questsService: QuestsService,
   ) {
     this.supabaseUrl = this.configService.get<string>('SUPABASE_URL') ?? '';
     this.supabaseAvatarsBucket =
@@ -207,7 +211,7 @@ export class UsersService {
       throw new BadRequestException('Bio must be 300 characters or less');
     }
 
-    return this.prisma.profile.update({
+    const profile = await this.prisma.profile.update({
       where: { id: userId },
       data: {
         displayName: dto.displayName,
@@ -215,6 +219,9 @@ export class UsersService {
         bio: dto.bio,
       },
     });
+
+    await this.triggerProfileCompleteQuestIfEligible(userId);
+    return profile;
   }
 
   async uploadMyAvatar(userId: string, file: UploadedAvatarFile) {
@@ -270,6 +277,7 @@ export class UsersService {
     });
 
     await this.deletePreviousAvatarIfManaged(profile.avatarUrl, objectPath);
+    await this.triggerProfileCompleteQuestIfEligible(userId);
 
     return { avatarUrl: publicUrl };
   }
@@ -379,10 +387,21 @@ export class UsersService {
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         include: {
           roles: { select: { role: true } },
+          primaryBadge: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              imageUrl: true,
+              category: true,
+              rarity: true,
+            },
+          },
           _count: {
             select: {
               hunterAssignments: true,
               authoredUpdates: true,
+              earnedBadges: true,
             },
           },
         },
@@ -402,6 +421,8 @@ export class UsersService {
         roles: u.roles.map((r) => r.role),
         projectsAssigned: u._count.hunterAssignments,
         updatesPosted: u._count.authoredUpdates,
+        badgesCount: u._count.earnedBadges,
+        primaryBadge: u.primaryBadge,
         createdAt: u.createdAt,
       })),
       total,
@@ -415,6 +436,33 @@ export class UsersService {
       where: { id: userId },
       include: {
         roles: { select: { role: true } },
+        primaryBadge: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            imageUrl: true,
+            category: true,
+            rarity: true,
+          },
+        },
+        earnedBadges: {
+          orderBy: { earnedAt: 'desc' },
+          take: 20,
+          select: {
+            earnedAt: true,
+            badge: {
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+                imageUrl: true,
+                category: true,
+                rarity: true,
+              },
+            },
+          },
+        },
         wallet: true,
         kycProfile: true,
         _count: {
@@ -429,6 +477,7 @@ export class UsersService {
             communityPostComments: true,
             withdrawalRequests: true,
             deviceTokens: true,
+            earnedBadges: true,
           },
         },
       },
@@ -452,6 +501,11 @@ export class UsersService {
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
       roles: profile.roles.map((row) => row.role),
+      primaryBadge: profile.primaryBadge,
+      badges: profile.earnedBadges.map((entry) => ({
+        earnedAt: entry.earnedAt,
+        badge: entry.badge,
+      })),
       wallet: profile.wallet
         ? {
             id: profile.wallet.id,
@@ -484,6 +538,7 @@ export class UsersService {
         communityComments: profile._count.communityPostComments,
         withdrawals: profile._count.withdrawalRequests,
         deviceTokens: profile._count.deviceTokens,
+        badges: profile._count.earnedBadges,
       },
     };
   }
@@ -1486,6 +1541,46 @@ export class UsersService {
 
   private createDeletedEmail(userId: string): string {
     return `deleted+${userId}@deleted.local`;
+  }
+
+  private isProfileCompleteForQuest(profile: {
+    username: string | null;
+    avatarUrl: string | null;
+    bio: string | null;
+  }): boolean {
+    return Boolean(
+      profile.username?.trim() &&
+        profile.avatarUrl?.trim() &&
+        profile.bio?.trim(),
+    );
+  }
+
+  private async triggerProfileCompleteQuestIfEligible(userId: string) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { id: userId },
+      select: {
+        username: true,
+        avatarUrl: true,
+        bio: true,
+      },
+    });
+
+    if (!profile || !this.isProfileCompleteForQuest(profile)) {
+      return;
+    }
+
+    try {
+      await this.questsService.checkAndCompleteByAction(userId, 'profile_complete');
+    } catch (error) {
+      this.logger.warn(
+        `Failed to process auto quest trigger`,
+        JSON.stringify({
+          action: 'profile_complete',
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
   }
 
   private requireSupabaseStorageClient(): SupabaseClient {

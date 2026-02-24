@@ -441,6 +441,9 @@ class _CommentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final roleLabel = comment.admin?.displayRoleLabel;
+    final roleColor =
+        roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
@@ -479,6 +482,30 @@ class _CommentTile extends StatelessWidget {
                 BadgeIcon(
                   badge: comment.admin!.primaryBadge!,
                   size: BadgeSize.small,
+                ),
+              ],
+              if (roleLabel != null) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: roleColor.withValues(alpha: 0.8),
+                      width: 0.8,
+                    ),
+                    color: roleColor.withValues(alpha: 0.12),
+                  ),
+                  child: Text(
+                    roleLabel,
+                    style: TextStyle(
+                      color: roleColor,
+                      fontSize: 9,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
               const SizedBox(width: 8),

@@ -1,5 +1,7 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/badges_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +23,9 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadBadges();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadBadges();
+    });
   }
 
   @override
@@ -41,63 +45,76 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Badges'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'All Badges'),
-            Tab(text: 'My Badges'),
-            Tab(text: 'Progress'),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterSheet,
+      backgroundColor: AppColors.bgBase,
+      body: Column(
+        children: [
+          const CustomAppBar(
+            title: 'Badges',
+            backButton: true,
+            showSearch: false,
+            showFilter: false,
           ),
-        ],
-      ),
-      body: Consumer<BadgesStore>(
-        builder: (context, store, child) {
-          if (store.isLoadingAll || store.isLoadingMy) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (store.lastError != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
-                  const SizedBox(height: 16),
-                  Text(
-                    store.lastError!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.red.shade300),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadBadges,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => store.refresh(),
-            child: TabBarView(
+          Container(
+            color: AppColors.bgBase,
+            child: TabBar(
               controller: _tabController,
-              children: [
-                _buildAllBadgesTab(store),
-                _buildMyBadgesTab(store),
-                _buildProgressTab(store),
+              labelColor: AppColors.primary400,
+              unselectedLabelColor: AppColors.textMuted,
+              indicatorColor: AppColors.primary400,
+              indicatorWeight: 2.5,
+              dividerColor: Colors.transparent,
+              tabs: const [
+                Tab(text: 'All Badges'),
+                Tab(text: 'My Badges'),
+                Tab(text: 'Progress'),
               ],
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: Consumer<BadgesStore>(
+              builder: (context, store, child) {
+                if (store.isLoadingAll || store.isLoadingMy) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (store.lastError != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 48, color: Colors.red.shade300),
+                        const SizedBox(height: 16),
+                        Text(
+                          store.lastError!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.red.shade300),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadBadges,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () => store.refresh(),
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildAllBadgesTab(store),
+                      _buildMyBadgesTab(store),
+                      _buildProgressTab(store),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -123,7 +140,7 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
       padding: const EdgeInsets.all(12),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.85,
+        childAspectRatio: 1.02,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -149,7 +166,8 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.emoji_events_outlined, size: 64, color: Colors.grey.shade600),
+            Icon(Icons.emoji_events_outlined,
+                size: 64, color: Colors.grey.shade600),
             const SizedBox(height: 16),
             Text(
               'No badges earned yet',
@@ -170,7 +188,7 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
       padding: const EdgeInsets.all(12),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.85,
+        childAspectRatio: 1.02,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -203,7 +221,8 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
 
   Widget _buildStatsCard(BadgesStore store) {
     final percentage = store.totalBadgeCount > 0
-        ? (store.earnedBadgeCount / store.totalBadgeCount * 100).toStringAsFixed(1)
+        ? (store.earnedBadgeCount / store.totalBadgeCount * 100)
+            .toStringAsFixed(1)
         : '0.0';
 
     return Card(
@@ -308,9 +327,8 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
             const SizedBox(height: 12),
             ...BadgeRarity.values.map((rarity) {
               final badgesOfRarity = store.getBadgesByRarity(rarity);
-              final earnedOfRarity = badgesOfRarity
-                  .where((b) => store.hasBadge(b.id))
-                  .length;
+              final earnedOfRarity =
+                  badgesOfRarity.where((b) => store.hasBadge(b.id)).length;
               if (badgesOfRarity.isEmpty) return const SizedBox.shrink();
 
               return Padding(
@@ -362,75 +380,6 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
     );
   }
 
-  void _showFilterSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Filter Badges',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              const Text('Category', style: TextStyle(fontSize: 14)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('All'),
-                    selected: _selectedCategory == null,
-                    onSelected: (_) {
-                      setState(() => _selectedCategory = null);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ...BadgeCategory.values.map((cat) => FilterChip(
-                        label: Text(cat.displayName),
-                        selected: _selectedCategory == cat,
-                        onSelected: (_) {
-                          setState(() => _selectedCategory = cat);
-                          Navigator.pop(context);
-                        },
-                      )),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text('Rarity', style: TextStyle(fontSize: 14)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('All'),
-                    selected: _selectedRarity == null,
-                    onSelected: (_) {
-                      setState(() => _selectedRarity = null);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ...BadgeRarity.values.map((rarity) => FilterChip(
-                        label: Text(rarity.displayName),
-                        selected: _selectedRarity == rarity,
-                        onSelected: (_) {
-                          setState(() => _selectedRarity = rarity);
-                          Navigator.pop(context);
-                        },
-                      )),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showBadgeDetails(BadgeModel badge, bool isEarned) {
     showModalBottomSheet(
       context: context,
@@ -460,74 +409,145 @@ class _BadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
+    final rarityColor = Color(badge.rarity.color);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.bgSurface,
+              AppColors.bgSurface.withValues(alpha: 0.86),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: rarityColor.withValues(alpha: isEarned ? 0.28 : 0.14),
+            width: 1.4,
+          ),
+        ),
         child: Stack(
           children: [
-            Opacity(
-              opacity: isEarned ? 1.0 : 0.3,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  BadgeIcon(
-                    badge: badge,
-                    size: BadgeSize.xlarge,
-                    showTooltip: false,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isEarned
+                              ? AppColors.primary500.withValues(alpha: 0.14)
+                              : AppColors.bgElevated,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: isEarned
+                                ? AppColors.primary500.withValues(alpha: 0.25)
+                                : AppColors.borderSubtle,
+                          ),
+                        ),
+                        child: Text(
+                          isEarned ? 'Unlocked' : 'Locked',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: isEarned
+                                ? AppColors.primary400
+                                : AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (isPrimary)
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary500.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color:
+                                  AppColors.primary500.withValues(alpha: 0.45),
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.star_rounded,
+                            size: 12,
+                            color: AppColors.primary400,
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      badge.name,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Opacity(
+                            opacity: isEarned ? 1 : 0.35,
+                            child: BadgeIcon(
+                              badge: badge,
+                              size: BadgeSize.large,
+                              showTooltip: false,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            badge.name,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              color: isEarned
+                                  ? AppColors.textPrimary
+                                  : AppColors.textFaint,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Opacity(
+                            opacity: isEarned ? 1 : 0.45,
+                            child: BadgeRarityChip(
+                                rarity: badge.rarity, compact: true),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  BadgeRarityChip(rarity: badge.rarity, compact: true),
+                  Text(
+                    isEarned
+                        ? (earnedAt != null
+                            ? 'Earned ${_formatDate(earnedAt!)}'
+                            : 'Earned')
+                        : 'Unlock at ${badge.pointsRequirement} pts',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
                 ],
               ),
             ),
-            if (isPrimary)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Icon(Icons.star, size: 16, color: Colors.white),
-                ),
-              ),
-            if (!isEarned)
-              Positioned(
-                top: 8,
-                left: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'Locked',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '$month/$day/${value.year}';
   }
 }
 
@@ -589,13 +609,15 @@ class _BadgeDetailsSheet extends StatelessWidget {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${badge.name} set as primary badge'),
+                                  content: Text(
+                                      '${badge.name} set as primary badge'),
                                 ),
                               );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(store.lastError ?? 'Failed to set primary badge'),
+                                  content: Text(store.lastError ??
+                                      'Failed to set primary badge'),
                                   backgroundColor: Colors.red,
                                 ),
                               );

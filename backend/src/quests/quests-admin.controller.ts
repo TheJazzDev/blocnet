@@ -16,7 +16,6 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { AppRole } from '../common/enums/role.enum';
 import { CreateQuestDto } from './dto/create-quest.dto';
 import { UpdateQuestDto } from './dto/update-quest.dto';
-import { VerifyQuestDto } from './dto/quest-action.dto';
 import { QuestResponseDto } from './dto/quest-response.dto';
 import { QuestsService } from './quests.service';
 
@@ -103,7 +102,7 @@ export class QuestsAdminController {
     @CurrentUser('id') adminId: string,
   ) {
     return this.questsService.verifyQuestSubmission(
-      { submissionId },
+      { submissionId, reviewNotes: dto.reviewNotes },
       adminId,
       true,
     );
@@ -117,11 +116,15 @@ export class QuestsAdminController {
   })
   async rejectSubmission(
     @Param('submissionId') submissionId: string,
-    @Body() dto: { reviewNotes?: string },
+    @Body() dto: { reviewNotes?: string; rejectionReason?: string },
     @CurrentUser('id') adminId: string,
   ) {
     return this.questsService.verifyQuestSubmission(
-      { submissionId, rejectionReason: dto.reviewNotes },
+      {
+        submissionId,
+        reviewNotes: dto.reviewNotes,
+        rejectionReason: dto.rejectionReason,
+      },
       adminId,
       false,
     );

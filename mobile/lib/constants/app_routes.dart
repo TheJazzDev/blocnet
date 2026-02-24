@@ -14,6 +14,8 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String badges = '/badges';
   static const String quests = '/quests';
+  static const String referralCode = '/referral-code';
+  static const String helpSupport = '/help-support';
   static const String createUpdate = '/create-update';
   static const String submitProject = '/submit-project';
   static const String manageProjects = '/manage-projects';

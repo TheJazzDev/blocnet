@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ContentModerationStatus, Prisma, UpdateStatus } from '@prisma/client';
@@ -10,6 +11,7 @@ import { AppRole } from '../common/enums/role.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
+import { QuestsService } from '../quests/quests.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ListCommentsQuery } from './dto/list-comments.query';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -21,6 +23,11 @@ const commentInclude = {
       email: true,
       displayName: true,
       avatarUrl: true,
+      roles: {
+        select: {
+          role: true,
+        },
+      },
       primaryBadge: {
         select: {
           id: true,
@@ -38,10 +45,13 @@ const commentInclude = {
 
 @Injectable()
 export class CommentsService {
+  private readonly logger = new Logger(CommentsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
+    private readonly questsService: QuestsService,
   ) {}
 
   async createComment(
@@ -81,6 +91,7 @@ export class CommentsService {
 
     // Check and award engagement badges
     await this.badgesService.checkEngagementMilestones(actor.id);
+    await this.triggerQuestAction(actor.id, 'first_comment');
 
     return this.toCommentResponse(comment);
   }
@@ -263,7 +274,24 @@ export class CommentsService {
         username,
         imageUrl: comment.author.avatarUrl ?? '',
         followers: 0,
+        roles: comment.author.roles.map((entry) => entry.role),
+        primaryBadge: comment.author.primaryBadge ?? null,
       },
     };
+  }
+
+  private async triggerQuestAction(userId: string, action: string) {
+    try {
+      await this.questsService.checkAndCompleteByAction(userId, action);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to process auto quest trigger`,
+        JSON.stringify({
+          action,
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
   }
 }

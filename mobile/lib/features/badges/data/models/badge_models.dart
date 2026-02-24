@@ -26,26 +26,35 @@ class BadgeModel {
   final DateTime createdAt;
 
   factory BadgeModel.fromApi(Map<String, dynamic> json) {
+    final categoryRaw = json['category']?.toString().trim().toLowerCase() ?? '';
+    final rarityRaw = json['rarity']?.toString().trim().toLowerCase() ?? '';
     return BadgeModel(
-      id: json['id'] as String,
-      slug: json['slug'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      imageUrl: json['imageUrl'] as String,
+      id: json['id']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString() ?? '',
       category: BadgeCategory.values.firstWhere(
-        (e) => e.name == json['category'],
+        (e) => e.name.toLowerCase() == categoryRaw,
         orElse: () => BadgeCategory.special,
       ),
       rarity: BadgeRarity.values.firstWhere(
-        (e) => e.name == json['rarity'],
+        (e) => e.name.toLowerCase() == rarityRaw,
         orElse: () => BadgeRarity.common,
       ),
-      pointsRequirement: int.tryParse(json['pointsRequirement']?.toString() ?? '') ?? 0,
+      pointsRequirement:
+          int.tryParse(json['pointsRequirement']?.toString() ?? '') ?? 0,
       isActive: json['isActive'] == true,
       sortOrder: int.tryParse(json['sortOrder']?.toString() ?? '') ?? 0,
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
+}
+
+Map<String, dynamic> _asStringKeyMap(Object? raw) {
+  if (raw is! Map) return const <String, dynamic>{};
+  return raw.map((key, value) => MapEntry(key.toString(), value));
 }
 
 enum BadgeCategory {
@@ -129,14 +138,21 @@ class UserBadgeModel {
   final BadgeModel badge;
 
   factory UserBadgeModel.fromApi(Map<String, dynamic> json) {
+    final rawMetadata = json['metadata'];
+    final metadata = rawMetadata is Map
+        ? rawMetadata.map((key, value) => MapEntry(key.toString(), value))
+        : null;
+    final badgeMap = _asStringKeyMap(json['badge']);
+
     return UserBadgeModel(
-      id: json['id'] as String,
-      userId: json['userId'] as String,
-      badgeId: json['badgeId'] as String,
-      earnedAt: DateTime.tryParse(json['earnedAt'] ?? '') ?? DateTime.now(),
-      grantedBy: json['grantedBy'] as String?,
-      metadata: json['metadata'] as Map<String, dynamic>?,
-      badge: BadgeModel.fromApi(json['badge'] as Map<String, dynamic>),
+      id: json['id']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      badgeId: json['badgeId']?.toString() ?? '',
+      earnedAt: DateTime.tryParse(json['earnedAt']?.toString() ?? '') ??
+          DateTime.now(),
+      grantedBy: json['grantedBy']?.toString(),
+      metadata: metadata,
+      badge: BadgeModel.fromApi(badgeMap),
     );
   }
 
@@ -155,14 +171,19 @@ class UserBadgesResponse {
   final BadgeModel? primaryBadge;
 
   factory UserBadgesResponse.fromApi(Map<String, dynamic> json) {
+    final rawBadges = json['badges'];
+    final badgesList = rawBadges is List ? rawBadges : const [];
+    final badges = badgesList
+        .whereType<Map>()
+        .map((entry) => UserBadgeModel.fromApi(_asStringKeyMap(entry)))
+        .toList();
+    final primaryMap = _asStringKeyMap(json['primaryBadge']);
+
     return UserBadgesResponse(
-      badges: (json['badges'] as List<dynamic>? ?? [])
-          .map((e) => UserBadgeModel.fromApi(e as Map<String, dynamic>))
-          .toList(),
+      badges: badges,
       totalCount: int.tryParse(json['totalCount']?.toString() ?? '') ?? 0,
-      primaryBadge: json['primaryBadge'] != null
-          ? BadgeModel.fromApi(json['primaryBadge'] as Map<String, dynamic>)
-          : null,
+      primaryBadge:
+          primaryMap.isNotEmpty ? BadgeModel.fromApi(primaryMap) : null,
     );
   }
 }

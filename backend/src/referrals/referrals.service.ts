@@ -2,12 +2,14 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestsService } from '../quests/quests.service';
 
 type ReferralConfig = {
   referralsEnabled: boolean;
@@ -25,11 +27,14 @@ const UUID_REGEX =
 
 @Injectable()
 export class ReferralsService {
+  private readonly logger = new Logger(ReferralsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
+    private readonly questsService: QuestsService,
   ) {}
 
   async getMe(userId: string) {
@@ -195,6 +200,7 @@ export class ReferralsService {
 
     // Check and award referral badges to the referrer
     await this.badgesService.checkReferralMilestones(referrer.id);
+    await this.triggerReferThreeMinersQuestIfEligible(referrer.id);
 
     return {
       ok: true,
@@ -266,6 +272,9 @@ export class ReferralsService {
         referredAt: referredAt.toISOString(),
       },
     });
+
+    await this.badgesService.checkReferralMilestones(referrer.id);
+    await this.triggerReferThreeMinersQuestIfEligible(referrer.id);
 
     return {
       ok: true,
@@ -423,6 +432,34 @@ export class ReferralsService {
     }
 
     throw new NotFoundException('Target user not found');
+  }
+
+  private async triggerReferThreeMinersQuestIfEligible(referrerId: string) {
+    const referralCount = await this.prisma.profile.count({
+      where: {
+        referredById: referrerId,
+      },
+    });
+
+    if (referralCount < 3) {
+      return;
+    }
+
+    try {
+      await this.questsService.checkAndCompleteByAction(
+        referrerId,
+        'refer_3_miners',
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to process auto quest trigger`,
+        JSON.stringify({
+          action: 'refer_3_miners',
+          userId: referrerId,
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
   }
 
   private async getReferralConfig(): Promise<ReferralConfig> {

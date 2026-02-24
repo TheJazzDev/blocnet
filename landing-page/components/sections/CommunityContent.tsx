@@ -128,7 +128,7 @@ export function CommunityContent() {
                 href={platform.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group p-5 sm:p-6 bg-gradient-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-2xl hover:border-teal-500/30 transition-all duration-300 hover:scale-[1.02]"
+                className="group p-5 sm:p-6 bg-gradient-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-2xl "
               >
                 <div className="flex items-start gap-4">
                   <div className={`shrink-0 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-gradient-to-br ${platform.color} rounded-xl text-xl sm:text-2xl`}>
@@ -146,7 +146,7 @@ export function CommunityContent() {
                     </p>
                   </div>
                   <svg
-                    className="shrink-0 w-5 h-5 text-muted group-hover:text-teal-400 transition-colors"
+                    className="shrink-0 w-5 h-5 text-muted "
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -200,7 +200,7 @@ export function CommunityContent() {
           </p>
           <a
             href="/#download"
-            className="inline-block px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition-all duration-300 hover:scale-105"
+            className="inline-block px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25 "
           >
             Download Blocnet
           </a>

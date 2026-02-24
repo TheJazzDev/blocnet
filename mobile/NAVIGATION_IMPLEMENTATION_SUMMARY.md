@@ -293,9 +293,8 @@ Future<void>.delayed(const Duration(milliseconds: 300), () {
 - [x] Add Profile as 6th tab in User space bottom nav
 - [x] Add Profile as 6th tab in Hunter space bottom nav
 - [x] Move Profile content to the Profile tab
-- [x] Keep top-left avatar as secondary shortcut to Profile
-- [x] Ensure avatar persists across ALL tabs
-- [x] Reduce _spaceSwitchDelay from 2000ms to 250ms
+- [x] Keep header avatar removed; Profile tab is the primary profile entry
+- [x] Reduce _spaceSwitchDelay from 2000ms to 300ms
 
 ### **Phase 2 — Profile Page Content**
 - [ ] Verify Profile has: avatar, username, email, Following count, Tips Sent count *(existing, not modified)*
@@ -426,7 +425,6 @@ Navigator.pushNamed(context, AppRoutes.main, arguments: {'initialIndex': 2});  /
 ```
 
 ### **Preserved Functionality**
-- Top-left avatar still navigates to Profile (secondary path)
 - Space switcher still in Profile app bar
 - Tab state preservation across space switches
 - FAB composer modal in Hunter space
@@ -441,7 +439,7 @@ Navigator.pushNamed(context, AppRoutes.main, arguments: {'initialIndex': 2});  /
 - User feedback: "Feels like loading a new app"
 
 ### **After Optimization**
-- Space switch delay: 250ms (8x faster)
+- Space switch delay: 300ms (6.6x faster)
 - Perceived lag: Minimal
 - User feedback: Expected to feel "instant and smooth"
 

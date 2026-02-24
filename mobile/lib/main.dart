@@ -128,14 +128,20 @@ void main() async {
         // ChangeNotifierProvider(create: (_) => PriorityStore()),
         ChangeNotifierProvider(create: (_) => ProjectsStore()),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: primaryTheme,
-        navigatorKey: _navigatorKey,
-        onGenerateRoute: CustomAppRouter.generateRoute,
-        initialRoute: initialRoute,
-        onUnknownRoute: (settings) =>
-            MaterialPageRoute(builder: (context) => const PageNotFoundScreen()),
+      child: Consumer<AuthStore>(
+        builder: (context, auth, _) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: buildPrimaryTheme(
+            accent: AppColors.accentForSpace(auth.isInHunterSpace),
+          ),
+          navigatorKey: _navigatorKey,
+          onGenerateRoute: CustomAppRouter.generateRoute,
+          onGenerateInitialRoutes: CustomAppRouter.generateInitialRoutes,
+          initialRoute: initialRoute,
+          onUnknownRoute: (settings) => MaterialPageRoute(
+            builder: (context) => const PageNotFoundScreen(),
+          ),
+        ),
       ),
     ),
   );

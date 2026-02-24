@@ -184,7 +184,7 @@ export function LiveActivity() {
         <div className="activity-header text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-teal-500/10 border border-teal-500/20 rounded-full mb-3 sm:mb-4">
             <span className="relative flex h-2 w-2 sm:h-3 sm:w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+              <span className=" absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 sm:h-3 sm:w-3 bg-teal-500"></span>
             </span>
             <span className="text-xs sm:text-sm font-semibold text-teal-400">
@@ -206,7 +206,7 @@ export function LiveActivity() {
             {activities.map((activity, index) => (
               <div
                 key={activity.id}
-                className={`activity-item flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-surface-2/50 backdrop-blur-sm border ${getTypeColor(activity.type)} rounded-xl transition-all duration-300 hover:scale-[1.02]`}
+                className={`activity-item flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-surface-2/50 backdrop-blur-sm border ${getTypeColor(activity.type)} rounded-xl`}
               >
                 {/* Icon */}
                 <div className="shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-linear-to-br from-teal-500/20 to-primary/20 rounded-lg flex items-center justify-center border border-teal-500/30 text-lg sm:text-xl">
@@ -277,7 +277,7 @@ export function LiveActivity() {
           </p>
           <a
             href="#download"
-            className="inline-block px-5 py-2.5 sm:px-6 sm:py-3 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition-all duration-300 hover:scale-105"
+            className="inline-block px-5 py-2.5 sm:px-6 sm:py-3 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25"
           >
             Get Started
           </a>

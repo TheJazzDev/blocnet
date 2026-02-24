@@ -209,7 +209,7 @@ export function RoadmapWeb3() {
 
               {/* Phase Card */}
               <div
-                className={`relative p-6 sm:p-7 md:p-8 bg-linear-to-br ${getStatusColor(phase.status)} backdrop-blur-sm border-2 rounded-2xl transition-all duration-300 hover:scale-105 hover:border-teal-500/60 h-full`}
+                className={`relative p-6 sm:p-7 md:p-8 bg-linear-to-br ${getStatusColor(phase.status)} backdrop-blur-sm border-2 rounded-2xl h-full`}
               >
                 {/* Phase Number Badge */}
                 <div className="absolute -top-4 -left-4 w-12 h-12 sm:w-14 sm:h-14 bg-linear-to-br from-teal-500 to-primary rounded-full flex items-center justify-center border-4 border-[#09090b] shadow-lg shadow-teal-500/50">
@@ -255,7 +255,7 @@ export function RoadmapWeb3() {
                     </div>
                     <div className="h-3 bg-surface-2 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-linear-to-r from-teal-400 to-primary transition-all duration-1000"
+                        className="h-full bg-linear-to-r from-teal-400 to-primary"
                         style={{ width: `${phase.progress}%` }}
                       />
                     </div>
@@ -301,7 +301,7 @@ export function RoadmapWeb3() {
 
                 {/* Glow effect for active */}
                 {phase.status === 'active' && (
-                  <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-teal-500/10 to-primary/10 blur-xl -z-10 animate-pulse" />
+                  <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-teal-500/10 to-primary/10 blur-xl -z-10" />
                 )}
               </div>
             </div>

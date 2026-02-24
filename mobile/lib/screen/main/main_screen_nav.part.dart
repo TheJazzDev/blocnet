@@ -11,54 +11,51 @@ class _UserNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authStore = context.watch<AuthStore>();
-    final isInHunterSpace = authStore.isInHunterSpace;
-
+    const activeColor = AppColors.userAccent;
     return _NavContainer(
       child: Row(
         children: [
           _NavItem(
             icon: Icons.home_outlined,
             activeIcon: Icons.home_rounded,
-            label: 'Home',
+            activeColor: activeColor,
             isActive: currentIndex == 0,
             onTap: () => onTap(0),
           ),
           _NavItem(
             icon: Icons.explore_outlined,
             activeIcon: Icons.explore_rounded,
-            label: 'Discover',
+            activeColor: activeColor,
             isActive: currentIndex == 1,
             onTap: () => onTap(1),
           ),
           _NavItem(
             icon: Icons.groups_outlined,
             activeIcon: Icons.groups_rounded,
-            label: 'Community',
+            activeColor: activeColor,
             isActive: currentIndex == 2,
             onTap: () => onTap(2),
           ),
           _NavItem(
             icon: Icons.bolt_outlined,
             activeIcon: Icons.bolt_rounded,
-            label: 'Mining',
+            activeColor: activeColor,
             isActive: currentIndex == 3,
             onTap: () => onTap(3),
           ),
           _NavItem(
             icon: Icons.account_balance_wallet_outlined,
             activeIcon: Icons.account_balance_wallet_rounded,
-            label: 'Wallet',
+            activeColor: activeColor,
             isActive: currentIndex == 4,
             onTap: () => onTap(4),
           ),
           _NavItem(
             icon: Icons.person_outlined,
             activeIcon: Icons.person_rounded,
-            label: 'Profile',
+            activeColor: activeColor,
             isActive: currentIndex == 5,
             onTap: () => onTap(5),
-            showBadge: isInHunterSpace,
           ),
         ],
       ),
@@ -77,51 +74,51 @@ class _HunterNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activeColor = AppColors.hunterAccent;
     return _NavContainer(
       child: Row(
         children: [
           _NavItem(
             icon: Icons.home_outlined,
             activeIcon: Icons.home_rounded,
-            label: 'Home',
+            activeColor: activeColor,
             isActive: currentIndex == 0,
             onTap: () => onTap(0),
           ),
           _NavItem(
             icon: Icons.explore_outlined,
             activeIcon: Icons.explore_rounded,
-            label: 'Discover',
+            activeColor: activeColor,
             isActive: currentIndex == 1,
             onTap: () => onTap(1),
           ),
           _NavItem(
             icon: Icons.radar_outlined,
             activeIcon: Icons.radar_rounded,
-            label: 'Hub',
+            activeColor: activeColor,
             isActive: currentIndex == 2,
             onTap: () => onTap(2),
           ),
           _NavItem(
             icon: Icons.bolt_outlined,
             activeIcon: Icons.bolt_rounded,
-            label: 'Mining',
+            activeColor: activeColor,
             isActive: currentIndex == 3,
             onTap: () => onTap(3),
           ),
           _NavItem(
             icon: Icons.account_balance_wallet_outlined,
             activeIcon: Icons.account_balance_wallet_rounded,
-            label: 'Wallet',
+            activeColor: activeColor,
             isActive: currentIndex == 4,
             onTap: () => onTap(4),
           ),
           _NavItem(
             icon: Icons.person_outlined,
             activeIcon: Icons.person_rounded,
-            label: 'Profile',
+            activeColor: activeColor,
             isActive: currentIndex == 5,
             onTap: () => onTap(5),
-            showBadge: true,
           ),
         ],
       ),
@@ -187,9 +184,9 @@ class _NavContainer extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 64,
+          height: 56,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: child,
           ),
         ),
@@ -202,73 +199,40 @@ class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.icon,
     required this.activeIcon,
-    required this.label,
+    required this.activeColor,
     required this.isActive,
     required this.onTap,
-    this.showBadge = false,
   });
 
   final IconData icon;
   final IconData activeIcon;
-  final String label;
+  final Color activeColor;
   final bool isActive;
   final VoidCallback onTap;
-  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? AppColors.primary400 : AppColors.textMuted;
+    final color = isActive ? activeColor : AppColors.textMuted;
 
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOutCubic,
-              width: 42,
-              height: 4,
-              margin: const EdgeInsets.only(top: 0, bottom: 8),
+              width: 26,
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 7),
               decoration: BoxDecoration(
-                color: isActive ? AppColors.primary400 : Colors.transparent,
+                color: isActive ? activeColor : Colors.transparent,
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(isActive ? activeIcon : icon, size: 21, color: color),
-                if (showBadge)
-                  Positioned(
-                    right: -4,
-                    top: -2,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary400,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.bgSurface,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: AppTypography.custom(
-                size: 10,
-                weight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: color,
-              ),
-            ),
+            Icon(isActive ? activeIcon : icon, size: 22, color: color),
           ],
         ),
       ),

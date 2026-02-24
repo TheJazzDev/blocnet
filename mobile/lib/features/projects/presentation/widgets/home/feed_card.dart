@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
@@ -46,6 +47,9 @@ class FeedCard extends StatelessWidget {
     final author = post.admin!;
     final project = post.project!;
     final priorityColor = post.priority.color;
+    final roleLabel = author.displayRoleLabel;
+    final roleColor =
+        roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
     final previewText = post.description.trim().isEmpty
         ? post.content.trim()
         : post.description.trim();
@@ -132,17 +136,40 @@ class FeedCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          GestureDetector(
-                            onTap: () => _openAuthorProfile(context),
-                            behavior: HitTestBehavior.opaque,
-                            child: Text(
-                              author.name,
-                              style: AppTypography.custom(
-                                color: AppColors.textPrimary,
-                                size: 14,
-                                weight: FontWeight.w700,
+                          Row(
+                            children: [
+                              Flexible(
+                                child: GestureDetector(
+                                  onTap: () => _openAuthorProfile(context),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: Text(
+                                    author.name,
+                                    style: AppTypography.custom(
+                                      color: AppColors.textPrimary,
+                                      size: 14,
+                                      weight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
                               ),
-                            ),
+                              if (author.primaryBadge != null) ...[
+                                const SizedBox(width: 6),
+                                BadgeIcon(
+                                  badge: author.primaryBadge!,
+                                  size: BadgeSize.small,
+                                  showTooltip: false,
+                                ),
+                              ],
+                              if (roleLabel != null) ...[
+                                const SizedBox(width: 6),
+                                _FeedRoleChip(
+                                  label: roleLabel,
+                                  color: roleColor,
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -234,6 +261,37 @@ class FeedCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FeedRoleChip extends StatelessWidget {
+  const _FeedRoleChip({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: color.withValues(alpha: 0.85), width: 0.8),
+        color: color.withValues(alpha: 0.12),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.custom(
+          color: color,
+          size: 9,
+          weight: FontWeight.w700,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }

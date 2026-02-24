@@ -261,6 +261,11 @@ class _QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final walletStore = context.watch<WalletStore>();
+    final defaultAsset = walletStore.supportedAssets.isEmpty
+        ? 'BNT'
+        : walletStore.supportedAssets.first;
+
     return Row(
       children: [
         Expanded(
@@ -276,10 +281,9 @@ class _QuickActions extends StatelessWidget {
               ],
             ),
             onTap: () {
-              _showWalletToast(
-                context,
-                message: 'Tap on an asset to view receive address.',
-                type: _WalletToastType.info,
+              Navigator.of(context).pushNamed(
+                AppRoutes.walletAssetDetail,
+                arguments: {'assetCode': defaultAsset},
               );
             },
           ),
@@ -298,11 +302,7 @@ class _QuickActions extends StatelessWidget {
               ],
             ),
             onTap: () {
-              _showWalletToast(
-                context,
-                message: 'Tap on an asset to send or withdraw.',
-                type: _WalletToastType.info,
-              );
+              _openSendFlow(context, assetCode: defaultAsset);
             },
           ),
         ),
@@ -320,15 +320,137 @@ class _QuickActions extends StatelessWidget {
               ],
             ),
             onTap: () {
-              _showWalletToast(
-                context,
-                message: 'Swap feature coming soon.',
-                type: _WalletToastType.info,
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => _SwapFlowScreen(
+                    initialAsset: defaultAsset,
+                  ),
+                ),
               );
             },
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SwapFlowScreen extends StatelessWidget {
+  const _SwapFlowScreen({
+    required this.initialAsset,
+  });
+
+  final String initialAsset;
+
+  @override
+  Widget build(BuildContext context) {
+    final walletStore = context.watch<WalletStore>();
+    final assets = walletStore.supportedAssets;
+
+    return Scaffold(
+      backgroundColor: AppColors.bgBase,
+      appBar: AppBar(
+        title: Text(
+          'Swap',
+          style: AppTypography.custom(
+            color: AppColors.textPrimary,
+            size: 18,
+            weight: FontWeight.w700,
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.bgSurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Text(
+                'Swap flow is in rollout. Select an asset below to review balances before swapping.',
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 12,
+                  weight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Assets',
+              style: AppTypography.custom(
+                color: AppColors.textFaint,
+                size: 10,
+                weight: FontWeight.w700,
+                letterSpacing: 0.9,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView.separated(
+                itemCount: assets.length,
+                separatorBuilder: (_, __) =>
+                    Divider(color: AppColors.borderSubtle, height: 1),
+                itemBuilder: (context, index) {
+                  final asset = assets[index];
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: _assetAccentColor(asset).withValues(
+                        alpha: 0.2,
+                      ),
+                      child: Text(
+                        asset,
+                        style: AppTypography.custom(
+                          color: AppColors.textPrimary,
+                          size: 10,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      asset,
+                      style: AppTypography.custom(
+                        color: AppColors.textPrimary,
+                        size: 13,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      asset == initialAsset
+                          ? 'Default swap asset'
+                          : 'Supported asset',
+                      style: AppTypography.custom(
+                        color: AppColors.textMuted,
+                        size: 11,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textFaint,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pushNamed(
+                        AppRoutes.walletAssetDetail,
+                        arguments: {'assetCode': asset},
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -401,9 +523,11 @@ class _AssetBalanceCard extends StatelessWidget {
         ),
         child: Text(
           'Loading $assetCode balance...',
-          style: AppTypography.custom(color: AppColors.textMuted,
+          style: AppTypography.custom(
+            color: AppColors.textMuted,
             size: 13,
-            weight: FontWeight.w400,),
+            weight: FontWeight.w400,
+          ),
         ),
       );
     }
@@ -569,9 +693,11 @@ class _AssetsSection extends StatelessWidget {
         ),
         child: Text(
           'No assets available yet.',
-          style: AppTypography.custom(color: AppColors.textMuted,
+          style: AppTypography.custom(
+            color: AppColors.textMuted,
             size: 12,
-            weight: FontWeight.w400,),
+            weight: FontWeight.w400,
+          ),
         ),
       );
     }
@@ -1304,10 +1430,12 @@ class _TransactionsList extends StatelessWidget {
             Text(
               'Your wallet activity will appear here after your first transaction.',
               textAlign: TextAlign.center,
-              style: AppTypography.custom(color: AppColors.textFaint,
+              style: AppTypography.custom(
+                color: AppColors.textFaint,
                 size: 12,
                 weight: FontWeight.w400,
-                height: 1.5,),
+                height: 1.5,
+              ),
             ),
           ],
         ),

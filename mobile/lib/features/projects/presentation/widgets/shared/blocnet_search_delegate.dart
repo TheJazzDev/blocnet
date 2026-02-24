@@ -162,8 +162,9 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                       leading: CircleAvatar(
                         radius: 14,
                         backgroundColor: AppColors.bgElevated,
-                        backgroundImage:
-                            avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                        backgroundImage: avatarUrl.isNotEmpty
+                            ? NetworkImage(avatarUrl)
+                            : null,
                         child: avatarUrl.isEmpty
                             ? Icon(
                                 Icons.person_outline_rounded,
@@ -182,7 +183,9 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                       ),
                       subtitle: Text(
                         profile.handle.isNotEmpty
-                            ? '${profile.handle} · $roles'
+                            ? (roles.isNotEmpty
+                                ? '${profile.handle} · $roles'
+                                : profile.handle)
                             : roles,
                         style: TextStyle(
                           color: AppColors.textFaint,
@@ -293,11 +296,10 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
   String _searchRoleLabels(List<String> roles) {
     final normalized = roles.map((role) => role.toLowerCase()).toSet();
     final labels = <String>[];
-    if (normalized.contains('core_team')) labels.add('Core Team');
-    if (normalized.contains('admin')) labels.add('Admin');
-    if (normalized.contains('moderator')) labels.add('Moderator');
+    if (normalized.contains('owner') || normalized.contains('admin')) {
+      labels.add('Admin');
+    }
     if (normalized.contains('hunter')) labels.add('Hunter');
-    if (labels.isEmpty) labels.add('User');
     return labels.join(' • ');
   }
 
@@ -309,9 +311,12 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
     return Admin(
       id: result.id,
       name: name,
-      username: result.handle.isNotEmpty ? result.handle : '@${name.toLowerCase().replaceAll(' ', '_')}',
+      username: result.handle.isNotEmpty
+          ? result.handle
+          : '@${name.toLowerCase().replaceAll(' ', '_')}',
       imageUrl: result.avatarUrl?.trim() ?? '',
       followers: result.followersCount,
+      roles: result.roles,
     );
   }
 }

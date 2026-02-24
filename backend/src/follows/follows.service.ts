@@ -1,16 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UpdateUrgency } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestsService } from '../quests/quests.service';
 import { UpdateFollowPreferencesDto } from './dto/update-follow-preferences.dto';
 
 @Injectable()
 export class FollowsService {
+  private readonly logger = new Logger(FollowsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
+    private readonly questsService: QuestsService,
   ) {}
 
   async followProject(userId: string, projectId: string) {
@@ -51,6 +55,13 @@ export class FollowsService {
       resourceId: follow.id,
       metadata: { projectId, ownerAdminId: project.ownerAdminId },
     });
+
+    const followCount = await this.prisma.projectFollow.count({
+      where: { userId },
+    });
+    if (followCount >= 5) {
+      await this.triggerQuestAction(userId, 'follow_5_projects');
+    }
 
     return follow;
   }
@@ -192,5 +203,20 @@ export class FollowsService {
     });
 
     return follow;
+  }
+
+  private async triggerQuestAction(userId: string, action: string) {
+    try {
+      await this.questsService.checkAndCompleteByAction(userId, action);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to process auto quest trigger`,
+        JSON.stringify({
+          action,
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
   }
 }

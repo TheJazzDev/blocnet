@@ -2,6 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { config as loadEnv } from 'dotenv';
+import { seedBadgesAndQuests } from './seed.badges-quests';
 
 loadEnv({ path: '.env.local', override: true, quiet: true });
 
@@ -324,6 +325,8 @@ async function main() {
     where: { code: 'MCR' },
     data: { isActiveTippingCurrency: true },
   });
+
+  await seedBadgesAndQuests(prisma);
 
   const [primaryCount, secondaryCount, riskCount, miningConfigCount, tipCurrencyCount] =
     await Promise.all([

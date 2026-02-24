@@ -4,12 +4,18 @@ import 'package:blocnet/features/notifications/data/models/digest_summary_model.
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:provider/provider.dart';
+
+enum _CrossSpaceSurface {
+  community,
+  hunterHub,
+}
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -23,10 +29,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<NotificationsStore>(
-        context,
-        listen: false,
-      ).fetchNotificationsOnce();
+      Provider.of<NotificationsStore>(context, listen: false)
+          .refreshNotifications();
     });
   }
 
@@ -133,6 +137,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _openNotificationTarget(NotificationModel item) async {
+    final auth = context.read<AuthStore>();
+    final crossSpaceSurface = _resolveCrossSpaceSurface(
+      item: item,
+      isHunterSpace: auth.isInHunterSpace,
+    );
+    if (crossSpaceSurface != null) {
+      await _openCrossSpacePreview(
+        item: item,
+        targetSurface: crossSpaceSurface,
+        currentSpaceLabel: auth.isInHunterSpace ? 'Hunter' : 'User',
+      );
+      return;
+    }
+
     final type = item.type ?? '';
     final updateId = item.updateId ?? item.payload?['updateId']?.toString();
 
@@ -144,6 +162,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     if (_isWalletType(type)) {
       _pushNamed(AppRoutes.walletTransactions);
+      return;
+    }
+
+    if (type == 'badge_earned') {
+      _pushNamed(AppRoutes.badges);
       return;
     }
 
@@ -173,7 +196,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return;
     }
 
-    final deeplink = item.deeplink?.trim() ?? '';
+    final deeplink = item.deeplink?.trim().toLowerCase() ?? '';
+    if (deeplink.contains('profile/badges') || deeplink.endsWith('/badges')) {
+      _pushNamed(AppRoutes.badges);
+      return;
+    }
     if (deeplink.startsWith('/wallet/transactions')) {
       _pushNamed(AppRoutes.walletTransactions);
       return;
@@ -188,6 +215,142 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
 
     _pushNamed(AppRoutes.main);
+  }
+
+  _CrossSpaceSurface? _resolveCrossSpaceSurface({
+    required NotificationModel item,
+    required bool isHunterSpace,
+  }) {
+    final type = item.type?.trim().toLowerCase() ?? '';
+    final deeplink = item.deeplink?.trim().toLowerCase() ?? '';
+    final targetsCommunity =
+        type.startsWith('community_') || deeplink.startsWith('/community');
+    final targetsHunterHub = _isHunterHubType(type) ||
+        deeplink.startsWith('/hunter-hub') ||
+        deeplink.startsWith('/manage-updates') ||
+        deeplink.startsWith('/manage-projects');
+
+    if (isHunterSpace && targetsCommunity) {
+      return _CrossSpaceSurface.community;
+    }
+    if (!isHunterSpace && targetsHunterHub) {
+      return _CrossSpaceSurface.hunterHub;
+    }
+    return null;
+  }
+
+  bool _isHunterHubType(String type) {
+    return type == 'project_update' ||
+        type == 'comment_received' ||
+        type == 'project_proposal_submitted' ||
+        type == 'project_proposal_reviewed' ||
+        type == 'project_invite_received' ||
+        type == 'project_invite_responded' ||
+        type == 'project_assignment_changed';
+  }
+
+  Future<void> _openCrossSpacePreview({
+    required NotificationModel item,
+    required _CrossSpaceSurface targetSurface,
+    required String currentSpaceLabel,
+  }) async {
+    final destination = targetSurface == _CrossSpaceSurface.community
+        ? 'User Community'
+        : 'Hunter Hub';
+    final helperText = targetSurface == _CrossSpaceSurface.community
+        ? 'This alert belongs to Community in User space.'
+        : 'This alert belongs to Hunter Hub in Hunter space.';
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.bgSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderMuted,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                destination,
+                style: AppTypography.custom(
+                  color: AppColors.textPrimary,
+                  size: 17,
+                  weight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                item.title,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
+                  size: 13,
+                  weight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                item.body,
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 12,
+                  weight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.bgElevated,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.borderSubtle),
+                ),
+                child: Text(
+                  '$helperText You are in $currentSpaceLabel space, so this opens as an inline preview only.',
+                  style: AppTypography.custom(
+                    color: AppColors.textFaint,
+                    size: 11,
+                    weight: FontWeight.w500,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary500,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Close'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   bool _isWalletType(String type) {

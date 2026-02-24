@@ -3,10 +3,10 @@ import { BadgeCategory, BadgeRarity } from '@prisma/client';
 import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUrl, Min } from 'class-validator';
 
 export class CreateBadgeDto {
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsString()
-  @IsNotEmpty()
-  slug: string;
+  @IsOptional()
+  slug?: string;
 
   @ApiProperty()
   @IsString()

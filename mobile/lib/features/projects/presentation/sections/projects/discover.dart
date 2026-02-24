@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
@@ -154,12 +155,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final accent = AppColors.accentForSpace(isHunterSpace);
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       body: Stack(
         children: [
           RefreshIndicator(
-            color: AppColors.primary500,
+            color: accent,
             backgroundColor: AppColors.bgSurface,
             onRefresh: _handleRefresh,
             child: CustomScrollView(
@@ -200,13 +203,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary500,
+                      color: accent,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '${_pendingNewProjectIds.length} new projects',
                       style: AppTypography.custom(
-                        color: Colors.black,
+                        color: AppColors.onAccentForSpace(isHunterSpace),
                         size: 12,
                         weight: FontWeight.w700,
                       ),
@@ -267,6 +270,8 @@ class _DiscoverTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent =
+        AppColors.accentForSpace(context.watch<AuthStore>().isInHunterSpace);
     return Container(
       height: 44,
       decoration: BoxDecoration(
@@ -282,11 +287,13 @@ class _DiscoverTabBar extends StatelessWidget {
             _Tab(
               label: 'Discover',
               isActive: activeSection == Sections.discoverProjects,
+              accentColor: accent,
               onTap: () => onTabChanged(Sections.discoverProjects),
             ),
             _Tab(
               label: 'My Gems',
               isActive: activeSection == Sections.yourProjects,
+              accentColor: accent,
               onTap: () => onTabChanged(Sections.yourProjects),
             ),
           ],
@@ -300,11 +307,13 @@ class _Tab extends StatelessWidget {
   const _Tab({
     required this.label,
     required this.isActive,
+    required this.accentColor,
     required this.onTap,
   });
 
   final String label;
   final bool isActive;
+  final Color accentColor;
   final VoidCallback onTap;
 
   @override
@@ -316,7 +325,7 @@ class _Tab extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: isActive ? AppColors.teal400 : Colors.transparent,
+              color: isActive ? accentColor : Colors.transparent,
               width: 2,
             ),
           ),
@@ -326,7 +335,7 @@ class _Tab extends StatelessWidget {
         child: Text(
           label,
           style: AppTypography.custom(
-            color: isActive ? AppColors.teal400 : AppColors.textFaint,
+            color: isActive ? accentColor : AppColors.textFaint,
             size: 13,
             weight: isActive ? FontWeight.w600 : FontWeight.w500,
           ),

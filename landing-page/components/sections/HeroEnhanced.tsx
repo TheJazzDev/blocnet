@@ -203,11 +203,11 @@ export function HeroEnhanced() {
             className="hero-btn group relative w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25 overflow-hidden"
           >
             <span className="relative z-10">Download App</span>
-            <div className="absolute inset-0 bg-linear-to-r from-teal-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-linear-to-r from-teal-400 to-purple-500 opacity-0" />
           </Link>
           <Link
             href="/about"
-            className="hero-btn w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 bg-surface-2/50 backdrop-blur-sm border border-border text-foreground rounded-xl font-semibold text-sm sm:text-base hover:border-teal-500/30 transition-all duration-300"
+            className="hero-btn w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 bg-surface-2/50 backdrop-blur-sm border border-border text-foreground rounded-xl font-semibold text-sm sm:text-base"
           >
             Learn More
           </Link>
@@ -223,7 +223,7 @@ export function HeroEnhanced() {
           ].map((stat) => (
             <div
               key={stat.id}
-              className="hero-stat group p-5 sm:p-6 bg-surface-2/50 backdrop-blur-sm border border-border rounded-xl hover:border-teal-500/30 transition-all duration-300 hover:scale-105"
+              className="hero-stat group p-5 sm:p-6 bg-surface-2/50 backdrop-blur-sm border border-border rounded-xl"
             >
               <div
                 id={`stat-${stat.id}`}
