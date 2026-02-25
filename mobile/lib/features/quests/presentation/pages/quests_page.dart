@@ -58,18 +58,40 @@ class _QuestsPageState extends State<QuestsPage>
           ),
           Container(
             color: AppColors.bgBase,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppColors.primary400,
-              unselectedLabelColor: AppColors.textMuted,
-              indicatorColor: AppColors.primary400,
-              indicatorWeight: 2.5,
-              dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: 'Available'),
-                Tab(text: 'In Progress'),
-                Tab(text: 'Completed'),
-              ],
+            child: Consumer<QuestsStore>(
+              builder: (context, store, _) => TabBar(
+                controller: _tabController,
+                labelColor: AppColors.primary400,
+                unselectedLabelColor: AppColors.textMuted,
+                labelStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                ),
+                indicatorColor: AppColors.primary400,
+                indicatorWeight: 2.5,
+                dividerColor: Colors.transparent,
+                tabs: [
+                  _buildCountTab(
+                    label: 'Available',
+                    count: store.notStartedCount,
+                    icon: Icons.explore,
+                  ),
+                  _buildCountTab(
+                    label: 'In Progress',
+                    count: store.inProgressCount,
+                    icon: Icons.pending_actions,
+                  ),
+                  _buildCountTab(
+                    label: 'Completed',
+                    count: store.completedCount,
+                    icon: Icons.check_circle,
+                  ),
+                ],
+              ),
             ),
           ),
           Expanded(
@@ -104,19 +126,12 @@ class _QuestsPageState extends State<QuestsPage>
 
                 return RefreshIndicator(
                   onRefresh: () => store.refresh(),
-                  child: Column(
+                  child: TabBarView(
+                    controller: _tabController,
                     children: [
-                      _buildStatsBar(store),
-                      Expanded(
-                        child: TabBarView(
-                          controller: _tabController,
-                          children: [
-                            _buildAvailableTab(store),
-                            _buildInProgressTab(store),
-                            _buildCompletedTab(store),
-                          ],
-                        ),
-                      ),
+                      _buildAvailableTab(store),
+                      _buildInProgressTab(store),
+                      _buildCompletedTab(store),
                     ],
                   ),
                 );
@@ -128,68 +143,24 @@ class _QuestsPageState extends State<QuestsPage>
     );
   }
 
-  Widget _buildStatsBar(QuestsStore store) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade900,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade800),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem(
-            'Available',
-            store.notStartedCount.toString(),
-            Icons.explore,
-            Colors.blue,
-          ),
-          _buildStatItem(
-            'In Progress',
-            store.inProgressCount.toString(),
-            Icons.pending_actions,
-            Colors.orange,
-          ),
-          _buildStatItem(
-            'Completed',
-            store.completedCount.toString(),
-            Icons.check_circle,
-            Colors.green,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(
-      String label, String value, IconData icon, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildCountTab({
+    required String label,
+    required int count,
+    required IconData icon,
+  }) {
+    return Tab(
+      height: 40,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey.shade400,
-              ),
-            ),
+            Icon(icon, size: 13),
+            const SizedBox(width: 4),
+            Text('$label ($count)'),
           ],
         ),
-      ],
+      ),
     );
   }
 
@@ -352,13 +323,17 @@ class _QuestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasFooterMeta =
+        completedAt != null || status != QuestStatus.notStarted;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.fromLTRB(14, 14, 14, hasFooterMeta ? 14 : 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -374,7 +349,7 @@ class _QuestCard extends StatelessWidget {
                     ),
                     child: Center(
                       child: Icon(
-                        IconData(quest.type.icon, fontFamily: 'MaterialIcons'),
+                        quest.type.iconData,
                         color: Color(status.color),
                         size: 21,
                       ),
@@ -388,7 +363,7 @@ class _QuestCard extends StatelessWidget {
                         Text(
                           quest.title,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
@@ -409,57 +384,44 @@ class _QuestCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 10),
+                  _QuestPointsPill(points: quest.rewardPoints),
                 ],
               ),
               const SizedBox(height: 10),
               Text(
                 quest.description,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: AppColors.textSecondary,
                   height: 1.4,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.stars,
-                        size: 16,
-                        color: Colors.amber.shade400,
-                      ),
-                      const SizedBox(width: 4),
+              if (hasFooterMeta) ...[
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox.shrink(),
+                    if (completedAt != null)
                       Text(
-                        '${quest.rewardPoints} points',
+                        'Completed ${_formatDate(completedAt!)}',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.amber.shade400,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 9,
+                          color: Colors.grey.shade500,
                         ),
+                      )
+                    else if (status != QuestStatus.notStarted)
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: Colors.grey.shade600,
                       ),
-                    ],
-                  ),
-                  if (completedAt != null)
-                    Text(
-                      'Completed ${_formatDate(completedAt!)}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey.shade500,
-                      ),
-                    )
-                  else if (status != QuestStatus.notStarted)
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: Colors.grey.shade600,
-                    ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -476,6 +438,45 @@ class _QuestCard extends StatelessWidget {
     if (diff.inDays < 7) return '${diff.inDays} days ago';
     if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} weeks ago';
     return '${(diff.inDays / 30).floor()} months ago';
+  }
+}
+
+class _QuestPointsPill extends StatelessWidget {
+  const _QuestPointsPill({required this.points});
+
+  final int points;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade400.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: Colors.amber.shade400.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.stars_rounded,
+            size: 12,
+            color: Colors.amber.shade400,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '$points pts',
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.amber.shade400,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

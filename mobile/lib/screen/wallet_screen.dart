@@ -47,6 +47,9 @@ void _showWalletToast(
   messenger.hideCurrentSnackBar();
   messenger.showSnackBar(
     SnackBar(
+      duration: const Duration(seconds: 6),
+      showCloseIcon: true,
+      closeIconColor: AppColors.textMuted,
       behavior: SnackBarBehavior.floating,
       backgroundColor: backgroundColor,
       elevation: 0,
@@ -134,8 +137,6 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
-    final error = walletStore.lastError;
-
     if (widget.showTransactionsOnly) {
       return Scaffold(
         backgroundColor: AppColors.bgBase,
@@ -209,21 +210,6 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: error == null
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Text(
-                  'Wallet sync warning: $error',
-                  style: AppTypography.custom(
-                    size: 11,
-                    weight: FontWeight.w400,
-                    color: AppColors.textFaint,
-                  ),
-                ),
-              ),
-            ),
     );
   }
 }
@@ -336,7 +322,6 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
-    final error = walletStore.lastError;
     final asset = walletStore.findAsset(_assetCode);
 
     return Scaffold(
@@ -401,21 +386,6 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: error == null
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Text(
-                  'Wallet sync warning: $error',
-                  style: AppTypography.custom(
-                    size: 11,
-                    weight: FontWeight.w400,
-                    color: AppColors.textFaint,
-                  ),
-                ),
-              ),
-            ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/data/repositories/wallet_api_repository.dart';
+import 'package:blocnet/services/api/api_error.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -91,7 +92,10 @@ class WalletStore extends ChangeNotifier {
       _snapshot = await _repository.fetchWalletSummary();
       _lastError = null;
     } catch (error) {
-      _lastError = error.toString();
+      _lastError = describeApiError(
+        error,
+        fallback: 'Unable to load wallet summary right now.',
+      );
     } finally {
       _isLoadingSummary = false;
       notifyListeners();
@@ -128,7 +132,10 @@ class WalletStore extends ChangeNotifier {
       }
       _lastError = null;
     } catch (error) {
-      _lastError = error.toString();
+      _lastError = describeApiError(
+        error,
+        fallback: 'Unable to load wallet transactions right now.',
+      );
     } finally {
       if (selectedAsset == null) {
         _isLoadingTransactions = false;
@@ -168,7 +175,10 @@ class WalletStore extends ChangeNotifier {
       }
       _lastError = null;
     } catch (error) {
-      _lastError = error.toString();
+      _lastError = describeApiError(
+        error,
+        fallback: 'Unable to load withdrawals right now.',
+      );
     } finally {
       if (selectedAsset == null) {
         _isLoadingWithdrawals = false;

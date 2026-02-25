@@ -6,7 +6,9 @@ import 'package:blocnet/features/projects/presentation/widgets/update/update_det
 import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 
 /// A single feed card showing a hunter update in the home screen.
 class FeedCard extends StatelessWidget {
@@ -40,6 +42,30 @@ class FeedCard extends StatelessWidget {
     final author = post.admin;
     if (author == null) return;
     PublicProfileScreen.showSheet(context, author);
+  }
+
+  void _handleLikeTap(BuildContext context) {
+    HapticFeedback.selectionClick();
+    _openDetails(context);
+  }
+
+  void _handleCommentTap(BuildContext context) {
+    HapticFeedback.selectionClick();
+    _openDetails(context);
+  }
+
+  Future<void> _handleShareTap(BuildContext context) async {
+    HapticFeedback.selectionClick();
+    final deepLink = 'blocnet://updates/${post.id}';
+    final text = '${post.title}\n$deepLink';
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    AppSnackbar.showSuccess(context, 'Update link copied to clipboard');
+  }
+
+  void _handleBookmarkTap(BuildContext context) {
+    HapticFeedback.selectionClick();
+    _openDetails(context);
   }
 
   @override
@@ -256,7 +282,12 @@ class FeedCard extends StatelessWidget {
                 const SizedBox(height: 14),
 
                 // ── Action row: like · comment · share | bookmark ──
-                const _ActionRow(),
+                _ActionRow(
+                  onLikeTap: () => _handleLikeTap(context),
+                  onCommentTap: () => _handleCommentTap(context),
+                  onShareTap: () => _handleShareTap(context),
+                  onBookmarkTap: () => _handleBookmarkTap(context),
+                ),
               ],
             ),
           ),
@@ -468,7 +499,17 @@ class _TagPill extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ActionRow extends StatelessWidget {
-  const _ActionRow();
+  const _ActionRow({
+    required this.onLikeTap,
+    required this.onCommentTap,
+    required this.onShareTap,
+    required this.onBookmarkTap,
+  });
+
+  final VoidCallback onLikeTap;
+  final VoidCallback onCommentTap;
+  final VoidCallback onShareTap;
+  final VoidCallback onBookmarkTap;
 
   @override
   Widget build(BuildContext context) {
@@ -478,28 +519,28 @@ class _ActionRow extends StatelessWidget {
           icon: Icons.favorite_border_rounded,
           label: null,
           color: AppColors.error500,
-          onTap: () {},
+          onTap: onLikeTap,
         ),
         const SizedBox(width: 12),
         _ActionButton(
           icon: Icons.chat_bubble_outline_rounded,
           label: null,
           color: AppColors.primary400,
-          onTap: () {},
+          onTap: onCommentTap,
         ),
         const SizedBox(width: 12),
         _ActionButton(
           icon: Icons.share_outlined,
           label: null,
           color: AppColors.teal400,
-          onTap: () {},
+          onTap: onShareTap,
         ),
         const Spacer(),
         _ActionButton(
           icon: Icons.bookmark_border_rounded,
           label: null,
           color: AppColors.textMuted,
-          onTap: () {},
+          onTap: onBookmarkTap,
         ),
       ],
     );

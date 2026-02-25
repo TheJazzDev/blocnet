@@ -7,6 +7,7 @@ import 'package:blocnet/features/projects/presentation/widgets/update/update_det
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
@@ -25,6 +26,8 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
+  String? _lastShownError;
+
   @override
   void initState() {
     super.initState();
@@ -41,9 +44,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (store.lastError != null && store.lastError!.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(store.lastError!)),
-            );
+            if (_lastShownError == store.lastError) return;
+            _lastShownError = store.lastError;
+            AppSnackbar.showError(context, store.lastError!);
           });
         }
 

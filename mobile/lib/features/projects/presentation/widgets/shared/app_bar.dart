@@ -58,7 +58,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: SizedBox(
             height: kToolbarHeight,
             child: Row(

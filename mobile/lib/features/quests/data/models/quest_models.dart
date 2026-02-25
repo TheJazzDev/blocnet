@@ -1,4 +1,5 @@
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
+import 'package:flutter/material.dart';
 
 Map<String, dynamic> _asStringKeyMap(Object? raw) {
   if (raw is! Map) return const <String, dynamic>{};
@@ -94,14 +95,14 @@ extension QuestTypeExtension on QuestType {
     }
   }
 
-  int get icon {
+  IconData get iconData {
     switch (this) {
       case QuestType.externalLink:
-        return 0xe157; // link icon
+        return Icons.link;
       case QuestType.internalAction:
-        return 0xe86c; // check_circle icon
+        return Icons.check_circle;
       case QuestType.socialMedia:
-        return 0xe80e; // share icon
+        return Icons.share;
     }
   }
 }

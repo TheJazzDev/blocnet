@@ -83,24 +83,21 @@ class _BookmarksTab extends StatelessWidget {
       return const _BookmarksEmptyState();
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: bookmarks
-            .map(
-              (post) => _BookmarkItem(
-                post: post,
-                onRemove: () async {
-                  await context
-                      .read<CommunityPostsStore>()
-                      .toggleBookmark(post.id);
-                  if (!context.mounted) return;
-                  await context.read<UserProfileStore>().refreshBookmarks();
-                },
-              ),
-            )
-            .toList(),
-      ),
+    return ListView.builder(
+      primary: false,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      itemCount: bookmarks.length,
+      itemBuilder: (context, index) {
+        final post = bookmarks[index];
+        return _BookmarkItem(
+          post: post,
+          onRemove: () async {
+            await context.read<CommunityPostsStore>().toggleBookmark(post.id);
+            if (!context.mounted) return;
+            await context.read<UserProfileStore>().refreshBookmarks();
+          },
+        );
+      },
     );
   }
 }
@@ -279,13 +276,13 @@ class _WatchlistTab extends StatelessWidget {
       return const _WatchlistEmptyState();
     }
 
-    return Padding(
+    return ListView.builder(
+      primary: false,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Column(
-        children: watchlist
-            .map((project) => _WatchlistItem(project: project))
-            .toList(),
-      ),
+      itemCount: watchlist.length,
+      itemBuilder: (context, index) {
+        return _WatchlistItem(project: watchlist[index]);
+      },
     );
   }
 }
@@ -424,24 +421,27 @@ class _HistoryTab extends StatelessWidget {
       return const _HistoryEmptyState();
     }
 
-    return Padding(
+    return ListView.builder(
+      primary: false,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Activity',
-            style: AppTypography.custom(
-              color: AppColors.textFaint,
-              size: 11,
-              weight: FontWeight.w600,
-              letterSpacing: 0.8,
+      itemCount: activityItems.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              'Activity',
+              style: AppTypography.custom(
+                color: AppColors.textFaint,
+                size: 11,
+                weight: FontWeight.w600,
+                letterSpacing: 0.8,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          ...activityItems.map((item) => _HistoryItem(item: item)),
-        ],
-      ),
+          );
+        }
+        return _HistoryItem(item: activityItems[index - 1]);
+      },
     );
   }
 }

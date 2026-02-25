@@ -14,7 +14,10 @@ class ApiException implements Exception {
 
   @override
   String toString() {
-    return 'ApiException(statusCode: $statusCode, message: $message, responseBody: $responseBody)';
+    if (statusCode != null) {
+      return '$message (code $statusCode)';
+    }
+    return message;
   }
 }
 
@@ -126,17 +129,17 @@ class ApiClient {
       return _parseResponse(response);
     } on SocketException {
       throw ApiException(
-        'Unable to reach API at ${AppConfig.apiBaseUrl}. Check API_BASE_URL and backend server.',
+        'Unable to connect right now. Please check your internet and try again.',
       );
     } on HttpException {
       throw ApiException(
-        'Network error while connecting to ${AppConfig.apiBaseUrl}.',
+        'Network error. Please try again in a moment.',
       );
     } on FormatException {
       throw ApiException('Received malformed response from API.');
     } on TimeoutException {
       throw ApiException(
-        'Request timed out after ${_requestTimeout.inSeconds}s. Check API_BASE_URL and backend availability.',
+        'Request timed out. Please try again.',
       );
     }
   }
@@ -180,17 +183,17 @@ class ApiClient {
       return response;
     } on SocketException {
       throw ApiException(
-        'Unable to reach API at ${AppConfig.apiBaseUrl}. Check API_BASE_URL and backend server.',
+        'Unable to connect right now. Please check your internet and try again.',
       );
     } on HttpException {
       throw ApiException(
-        'Network error while connecting to ${AppConfig.apiBaseUrl}.',
+        'Network error. Please try again in a moment.',
       );
     } on FormatException {
       throw ApiException('Received malformed response from API.');
     } on TimeoutException {
       throw ApiException(
-        'Request timed out after ${_requestTimeout.inSeconds}s. Check API_BASE_URL and backend availability.',
+        'Request timed out. Please try again.',
       );
     }
   }
@@ -228,8 +231,9 @@ class ApiClient {
     final body = response.body.trim();
 
     if (!isSuccess) {
+      final parsedMessage = _extractErrorMessage(body);
       throw ApiException(
-        'Request failed',
+        parsedMessage ?? _fallbackStatusMessage(response.statusCode),
         statusCode: response.statusCode,
         responseBody: body,
       );
@@ -240,5 +244,32 @@ class ApiClient {
     }
 
     return jsonDecode(body);
+  }
+
+  String? _extractErrorMessage(String body) {
+    if (body.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) {
+        final message = decoded['message']?.toString().trim();
+        if (message != null && message.isNotEmpty) return message;
+        final error = decoded['error']?.toString().trim();
+        if (error != null && error.isNotEmpty) return error;
+      }
+    } catch (_) {
+      // Ignore parse failure and use status-based fallback.
+    }
+    return null;
+  }
+
+  String _fallbackStatusMessage(int statusCode) {
+    if (statusCode == 401) return 'Session expired. Please sign in again.';
+    if (statusCode == 403) return 'You are not allowed to perform this action.';
+    if (statusCode == 404) return 'Requested data was not found.';
+    if (statusCode == 409) {
+      return 'Action could not be completed due to a conflict.';
+    }
+    if (statusCode >= 500) return 'Server error. Please try again shortly.';
+    return 'Request failed. Please try again.';
   }
 }

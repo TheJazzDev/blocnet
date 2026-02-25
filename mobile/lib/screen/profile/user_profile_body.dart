@@ -97,7 +97,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                 children: [
                   _StatCard(
                       value: followingCount.toString(), label: 'Following'),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   _StatCard(value: tipsSent, label: 'Tips Sent'),
                 ],
               ),
@@ -109,9 +109,17 @@ class _UserProfileBodyState extends State<UserProfileBody> {
               onChanged: (i) => setState(() => _tabIndex = i),
             ),
             const SizedBox(height: 12),
-            if (_tabIndex == 0) const _BookmarksTab(),
-            if (_tabIndex == 1) const _WatchlistTab(),
-            if (_tabIndex == 2) const _HistoryTab(),
+            SizedBox(
+              height: 280,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: switch (_tabIndex) {
+                  0 => const _BookmarksTab(),
+                  1 => const _WatchlistTab(),
+                  _ => const _HistoryTab(),
+                },
+              ),
+            ),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -43,7 +43,10 @@ class AppSnackbar {
     required Color iconColor,
   }) {
     return SnackBar(
+      duration: const Duration(seconds: 6),
       behavior: SnackBarBehavior.floating,
+      showCloseIcon: true,
+      closeIconColor: AppColors.textMuted,
       backgroundColor: background,
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 20),
       shape: RoundedRectangleBorder(

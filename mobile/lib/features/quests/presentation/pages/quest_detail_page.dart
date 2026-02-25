@@ -1,4 +1,7 @@
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
 import 'package:blocnet/services/quests_store.dart';
 import 'package:flutter/material.dart';
@@ -40,8 +43,12 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quest Details'),
+      backgroundColor: AppColors.bgBase,
+      appBar: const CustomAppBar(
+        title: 'Quest Details',
+        backButton: true,
+        showSearch: false,
+        showFilter: false,
       ),
       body: Consumer<QuestsStore>(
         builder: (context, store, child) {
@@ -75,409 +82,477 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   }
 
   Widget _buildQuestHeader() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Color(_status.color).withValues(alpha:0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                IconData(widget.quest.type.icon, fontFamily: 'MaterialIcons'),
-                size: 48,
-                color: Color(_status.color),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              widget.quest.title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                BadgeCategoryChip(category: widget.quest.category),
-                const SizedBox(width: 8),
-                _QuestTypeChip(type: widget.quest.type),
-              ],
-            ),
-            if (!_isNotStarted) ...[
-              const SizedBox(height: 12),
-              _QuestStatusChip(status: _status),
-            ],
-          ],
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.borderSubtle,
+          width: 1,
         ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Color(_status.color).withValues(alpha:0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              widget.quest.type.iconData,
+              size: 48,
+              color: Color(_status.color),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            widget.quest.title,
+            textAlign: TextAlign.center,
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 20,
+              weight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              BadgeCategoryChip(category: widget.quest.category),
+              const SizedBox(width: 8),
+              _QuestTypeChip(type: widget.quest.type),
+            ],
+          ),
+          if (!_isNotStarted) ...[
+            const SizedBox(height: 12),
+            _QuestStatusChip(status: _status),
+          ],
+        ],
       ),
     );
   }
 
   Widget _buildQuestInfo() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Description',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.borderSubtle,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Description',
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 15,
+              weight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.quest.description,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
+              size: 13,
+              weight: FontWeight.w400,
+            ),
+          ),
+          if (widget.quest.requiredProof != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Required Proof',
+              style: AppTypography.custom(
+                color: AppColors.textPrimary,
+                size: 15,
+                weight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              widget.quest.description,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade300,
+              widget.quest.requiredProof!,
+              style: AppTypography.custom(
+                color: AppColors.textSecondary,
+                size: 13,
+                weight: FontWeight.w400,
               ),
             ),
-            if (widget.quest.requiredProof != null) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Required Proof',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+          ],
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(
+                widget.quest.isAutoVerified
+                    ? Icons.verified
+                    : Icons.fact_check,
+                size: 16,
+                color: AppColors.textFaint,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(width: 8),
               Text(
-                widget.quest.requiredProof!,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade300,
+                widget.quest.isAutoVerified
+                    ? 'Auto-verified quest'
+                    : 'Manual verification required',
+                style: AppTypography.custom(
+                  color: AppColors.textFaint,
+                  size: 11,
+                  weight: FontWeight.w400,
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(
-                  widget.quest.isAutoVerified
-                      ? Icons.verified
-                      : Icons.fact_check,
-                  size: 16,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  widget.quest.isAutoVerified
-                      ? 'Auto-verified quest'
-                      : 'Manual verification required',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade400,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildRewardsSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Rewards',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.borderSubtle,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Rewards',
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 15,
+              weight: FontWeight.w600,
             ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                Icons.stars,
+                size: 32,
+                color: AppColors.warning500,
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${widget.quest.rewardPoints} Mining Points',
+                    style: AppTypography.custom(
+                      color: AppColors.warning500,
+                      size: 16,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    'Boost your mining earnings',
+                    style: AppTypography.custom(
+                      color: AppColors.textFaint,
+                      size: 11,
+                      weight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (widget.quest.rewardBadgeId != null) ...[
+            const SizedBox(height: 12),
+            Divider(color: AppColors.borderSubtle),
             const SizedBox(height: 12),
             Row(
               children: [
                 Icon(
-                  Icons.stars,
+                  Icons.emoji_events,
                   size: 32,
-                  color: Colors.amber.shade400,
+                  color: AppColors.secondary500,
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${widget.quest.rewardPoints} Mining Points',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.amber.shade400,
+                      'Exclusive Badge',
+                      style: AppTypography.custom(
+                        color: AppColors.secondary500,
+                        size: 16,
+                        weight: FontWeight.w700,
                       ),
                     ),
                     Text(
-                      'Boost your mining earnings',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade400,
+                      'Unlock a special achievement badge',
+                      style: AppTypography.custom(
+                        color: AppColors.textFaint,
+                        size: 11,
+                        weight: FontWeight.w400,
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            if (widget.quest.rewardBadgeId != null) ...[
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.emoji_events,
-                    size: 32,
-                    color: Colors.purple.shade300,
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Exclusive Badge',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purple.shade300,
-                        ),
-                      ),
-                      Text(
-                        'Unlock a special achievement badge',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildTargetSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'How to Complete',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade800,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.link,
-                    color: Colors.blue.shade300,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      widget.quest.targetUrl!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.blue.shade300,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _launchUrl(widget.quest.targetUrl!),
-                icon: const Icon(Icons.open_in_new),
-                label: const Text('Open Link'),
-              ),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.borderSubtle,
+          width: 1,
         ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'How to Complete',
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 15,
+              weight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.bgBase,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.borderSubtle,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.link,
+                  color: AppColors.primary500,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.quest.targetUrl!,
+                    style: AppTypography.custom(
+                      color: AppColors.primary500,
+                      size: 12,
+                      weight: FontWeight.w400,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _launchUrl(widget.quest.targetUrl!),
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Open Link'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary500,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildProofSubmissionSection(QuestsStore store) {
     if (_isPending) {
-      return Card(
-        color: Colors.orange.shade900.withValues(alpha:0.2),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Icon(
-                Icons.pending,
-                size: 48,
-                color: Colors.orange.shade400,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Proof Submitted',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange.shade400,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your submission is pending admin verification. You will be notified once reviewed.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade300,
-                ),
-              ),
-            ],
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.warning500.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.warning500.withValues(alpha: 0.3),
+            width: 1,
           ),
         ),
-      );
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Submit Proof',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            Icon(
+              Icons.pending,
+              size: 48,
+              color: AppColors.warning500,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Proof Submitted',
+              style: AppTypography.custom(
+                color: AppColors.warning500,
+                size: 16,
+                weight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Provide proof that you completed this quest. Admin will review and verify your submission.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade300,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _proofUrlController,
-              decoration: const InputDecoration(
-                labelText: 'Proof URL (optional)',
-                hintText: 'Link to screenshot or post',
-                prefixIcon: Icon(Icons.link),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _proofTextController,
-              decoration: const InputDecoration(
-                labelText: 'Additional Details (optional)',
-                hintText: 'Any additional information',
-                prefixIcon: Icon(Icons.description),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: (_proofUrlController.text.isEmpty &&
-                            _proofTextController.text.isEmpty) ||
-                        store.isSubmitting
-                    ? null
-                    : () => _submitProof(store),
-                icon: store.isSubmitting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.upload),
-                label: Text(
-                  store.isSubmitting ? 'Submitting...' : 'Submit Proof',
-                ),
+              'Your submission is pending admin verification. You will be notified once reviewed.',
+              textAlign: TextAlign.center,
+              style: AppTypography.custom(
+                color: AppColors.textSecondary,
+                size: 12,
+                weight: FontWeight.w400,
               ),
             ),
           ],
         ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.borderSubtle,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Submit Proof',
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 15,
+              weight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Provide proof that you completed this quest. Admin will review and verify your submission.',
+            style: AppTypography.custom(
+              color: AppColors.textSecondary,
+              size: 12,
+              weight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _proofUrlController,
+            decoration: const InputDecoration(
+              labelText: 'Proof URL (optional)',
+              hintText: 'Link to screenshot or post',
+              prefixIcon: Icon(Icons.link),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _proofTextController,
+            decoration: const InputDecoration(
+              labelText: 'Additional Details (optional)',
+              hintText: 'Any additional information',
+              prefixIcon: Icon(Icons.description),
+            ),
+            maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: (_proofUrlController.text.isEmpty &&
+                          _proofTextController.text.isEmpty) ||
+                      store.isSubmitting
+                  ? null
+                  : () => _submitProof(store),
+              icon: store.isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.upload),
+              label: Text(
+                store.isSubmitting ? 'Submitting...' : 'Submit Proof',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary500,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildActionSection(QuestsStore store) {
     if (_isCompleted) {
-      return Card(
-        color: Colors.green.shade900.withValues(alpha:0.2),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Icon(
-                Icons.check_circle,
-                size: 48,
-                color: Colors.green.shade400,
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.successColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.successColor.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.check_circle,
+              size: 48,
+              color: AppColors.successColor,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Quest Completed!',
+              style: AppTypography.custom(
+                color: AppColors.successColor,
+                size: 16,
+                weight: FontWeight.w700,
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Quest Completed!',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green.shade400,
-                ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You have successfully completed this quest and received your rewards.',
+              textAlign: TextAlign.center,
+              style: AppTypography.custom(
+                color: AppColors.textSecondary,
+                size: 12,
+                weight: FontWeight.w400,
               ),
+            ),
+            if (widget.userQuest?.completedAt != null) ...[
               const SizedBox(height: 8),
               Text(
-                'You have successfully completed this quest and received your rewards.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade300,
+                'Completed ${_formatDate(widget.userQuest!.completedAt!)}',
+                style: AppTypography.custom(
+                  color: AppColors.textFaint,
+                  size: 11,
+                  weight: FontWeight.w400,
                 ),
               ),
-              if (widget.userQuest?.completedAt != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Completed ${_formatDate(widget.userQuest!.completedAt!)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       );
     }
@@ -501,6 +576,8 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
           label: Text(store.isClaiming ? 'Claiming...' : 'Claim Reward'),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: AppColors.primary500,
+            foregroundColor: Colors.white,
           ),
         ),
       );
@@ -521,6 +598,8 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
           label: Text(store.isStarting ? 'Starting...' : 'Start Quest'),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: AppColors.primary500,
+            foregroundColor: Colors.white,
           ),
         ),
       );
@@ -534,7 +613,10 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Quest started!')),
+          SnackBar(
+            content: const Text('Quest started!'),
+            backgroundColor: AppColors.successColor,
+          ),
         );
         // Refresh the page by popping and pushing again
         Navigator.pop(context);
@@ -542,7 +624,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(store.lastError ?? 'Failed to start quest'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error500,
           ),
         );
       }
@@ -563,8 +645,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
     if (mounted) {
       if (submission != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Proof submitted for verification!'),
+          SnackBar(
+            content: const Text('Proof submitted for verification!'),
+            backgroundColor: AppColors.successColor,
           ),
         );
         _proofUrlController.clear();
@@ -574,7 +657,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(store.lastError ?? 'Failed to submit proof'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error500,
           ),
         );
       }
@@ -588,11 +671,19 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
+            backgroundColor: AppColors.bgSurface,
             title: Row(
               children: [
-                Icon(Icons.celebration, color: Colors.amber.shade400),
+                Icon(Icons.celebration, color: AppColors.warning500),
                 const SizedBox(width: 8),
-                const Text('Quest Completed!'),
+                Text(
+                  'Quest Completed!',
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 16,
+                    weight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
             content: Column(
@@ -601,12 +692,22 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                 Text(
                   'You earned ${widget.quest.rewardPoints} mining points!',
                   textAlign: TextAlign.center,
+                  style: AppTypography.custom(
+                    color: AppColors.textSecondary,
+                    size: 13,
+                    weight: FontWeight.w400,
+                  ),
                 ),
                 if (widget.quest.rewardBadgeId != null) ...[
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'And unlocked a special badge!',
                     textAlign: TextAlign.center,
+                    style: AppTypography.custom(
+                      color: AppColors.textSecondary,
+                      size: 13,
+                      weight: FontWeight.w400,
+                    ),
                   ),
                 ],
               ],
@@ -617,7 +718,17 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                   Navigator.pop(context); // Close dialog
                   Navigator.pop(context); // Close detail page
                 },
-                child: const Text('Awesome!'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary500,
+                ),
+                child: Text(
+                  'Awesome!',
+                  style: AppTypography.custom(
+                    color: AppColors.primary500,
+                    size: 13,
+                    weight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
@@ -626,7 +737,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(store.lastError ?? 'Failed to claim reward'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error500,
           ),
         );
       }
@@ -638,9 +749,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open link'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Could not open link'),
+            backgroundColor: AppColors.error500,
           ),
         );
       }
@@ -671,10 +782,10 @@ class _QuestTypeChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: AppColors.bgBase,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.grey.shade600,
+          color: AppColors.borderSubtle,
           width: 1,
         ),
       ),
@@ -682,17 +793,17 @@ class _QuestTypeChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            IconData(type.icon, fontFamily: 'MaterialIcons'),
+            type.iconData,
             size: 14,
-            color: Colors.white70,
+            color: AppColors.textMuted,
           ),
           const SizedBox(width: 4),
           Text(
             type.displayName,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.white70,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
+              size: 12,
+              weight: FontWeight.w500,
             ),
           ),
         ],

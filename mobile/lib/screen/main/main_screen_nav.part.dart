@@ -19,6 +19,7 @@ class _UserNav extends StatelessWidget {
             icon: Icons.home_outlined,
             activeIcon: Icons.home_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.user,
             isActive: currentIndex == 0,
             onTap: () => onTap(0),
           ),
@@ -26,6 +27,7 @@ class _UserNav extends StatelessWidget {
             icon: Icons.explore_outlined,
             activeIcon: Icons.explore_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.user,
             isActive: currentIndex == 1,
             onTap: () => onTap(1),
           ),
@@ -33,6 +35,7 @@ class _UserNav extends StatelessWidget {
             icon: Icons.groups_outlined,
             activeIcon: Icons.groups_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.user,
             isActive: currentIndex == 2,
             onTap: () => onTap(2),
           ),
@@ -40,6 +43,7 @@ class _UserNav extends StatelessWidget {
             icon: Icons.bolt_outlined,
             activeIcon: Icons.bolt_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.user,
             isActive: currentIndex == 3,
             onTap: () => onTap(3),
           ),
@@ -47,6 +51,7 @@ class _UserNav extends StatelessWidget {
             icon: Icons.account_balance_wallet_outlined,
             activeIcon: Icons.account_balance_wallet_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.user,
             isActive: currentIndex == 4,
             onTap: () => onTap(4),
           ),
@@ -54,6 +59,7 @@ class _UserNav extends StatelessWidget {
             icon: Icons.person_outlined,
             activeIcon: Icons.person_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.user,
             isActive: currentIndex == 5,
             onTap: () => onTap(5),
           ),
@@ -82,6 +88,7 @@ class _HunterNav extends StatelessWidget {
             icon: Icons.home_outlined,
             activeIcon: Icons.home_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.hunter,
             isActive: currentIndex == 0,
             onTap: () => onTap(0),
           ),
@@ -89,6 +96,7 @@ class _HunterNav extends StatelessWidget {
             icon: Icons.explore_outlined,
             activeIcon: Icons.explore_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.hunter,
             isActive: currentIndex == 1,
             onTap: () => onTap(1),
           ),
@@ -96,6 +104,7 @@ class _HunterNav extends StatelessWidget {
             icon: Icons.radar_outlined,
             activeIcon: Icons.radar_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.hunter,
             isActive: currentIndex == 2,
             onTap: () => onTap(2),
           ),
@@ -103,6 +112,7 @@ class _HunterNav extends StatelessWidget {
             icon: Icons.bolt_outlined,
             activeIcon: Icons.bolt_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.hunter,
             isActive: currentIndex == 3,
             onTap: () => onTap(3),
           ),
@@ -110,6 +120,7 @@ class _HunterNav extends StatelessWidget {
             icon: Icons.account_balance_wallet_outlined,
             activeIcon: Icons.account_balance_wallet_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.hunter,
             isActive: currentIndex == 4,
             onTap: () => onTap(4),
           ),
@@ -117,6 +128,7 @@ class _HunterNav extends StatelessWidget {
             icon: Icons.person_outlined,
             activeIcon: Icons.person_rounded,
             activeColor: activeColor,
+            navSpace: _NavSpace.hunter,
             isActive: currentIndex == 5,
             onTap: () => onTap(5),
           ),
@@ -134,7 +146,10 @@ class _FloatingComposerFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onPressed,
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onPressed();
+      },
       child: Container(
         width: 50,
         height: 50,
@@ -200,6 +215,7 @@ class _NavItem extends StatelessWidget {
     required this.icon,
     required this.activeIcon,
     required this.activeColor,
+    required this.navSpace,
     required this.isActive,
     required this.onTap,
   });
@@ -207,35 +223,40 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final IconData activeIcon;
   final Color activeColor;
+  final _NavSpace navSpace;
   final bool isActive;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final color = isActive ? activeColor : AppColors.textMuted;
+    final iconToRender = isActive ? activeIcon : icon;
 
     return Expanded(
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          onTap();
+        },
         behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOutCubic,
-              width: 26,
-              height: 3,
-              margin: const EdgeInsets.only(bottom: 7),
-              decoration: BoxDecoration(
-                color: isActive ? activeColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(999),
-              ),
+        child: Center(
+          child: AnimatedScale(
+            scale: isActive ? 1.0 : 0.95,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            child: Icon(
+              iconToRender,
+              size: isActive ? 26 : 24,
+              color: color,
             ),
-            Icon(isActive ? activeIcon : icon, size: 22, color: color),
-          ],
+          ),
         ),
       ),
     );
   }
+}
+
+enum _NavSpace {
+  user,
+  hunter,
 }

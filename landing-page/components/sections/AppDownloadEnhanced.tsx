@@ -284,7 +284,7 @@ export function AppDownloadEnhanced() {
                 type="button"
                 onClick={() => void handleDownload()}
                 disabled={isDownloading}
-                className="group w-full px-8 py-5 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-bold text-base sm:text-lg shadow-lg shadow-teal-500/25 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden"
+                className="group w-full px-8 py-5 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-bold text-base sm:text-lg shadow-lg shadow-teal-500/25 disabled:opacity-60 disabled:cursor-not-allowed  relative overflow-hidden"
               >
                 <span className="relative z-10 flex items-center justify-center gap-3">
                   {isDownloading ? (

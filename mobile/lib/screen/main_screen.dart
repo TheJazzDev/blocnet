@@ -79,6 +79,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
 
     if (_lastIsHunterSpace == isHunterSpace) return;
+    final wasHunterSpace = _lastIsHunterSpace!;
 
     final token = ++_spaceSwitchToken;
 
@@ -89,13 +90,15 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       setState(() {
         _isSwitchingSpace = true;
         if (isHunterSpace) {
-          if (targetTab != null) {
-            _hunterIndex = targetTab;
-          }
+          _hunterIndex = targetTab ??
+              (wasHunterSpace
+                  ? _hunterIndex
+                  : _mapUserToHunterIndex(_userIndex));
         } else {
-          if (targetTab != null) {
-            _userIndex = targetTab;
-          }
+          _userIndex = targetTab ??
+              (wasHunterSpace
+                  ? _mapHunterToUserIndex(_hunterIndex)
+                  : _userIndex);
         }
       });
 
@@ -118,15 +121,29 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     return null;
   }
 
+  int _mapUserToHunterIndex(int userIndex) {
+    if (userIndex == 2) {
+      // Community in User space maps to Hunter Hub in Hunter space.
+      return 2;
+    }
+    return userIndex.clamp(0, 5);
+  }
+
+  int _mapHunterToUserIndex(int hunterIndex) {
+    if (hunterIndex == 2) {
+      // Hunter Hub in Hunter space maps to Community in User space.
+      return 2;
+    }
+    return hunterIndex.clamp(0, 5);
+  }
+
   void _onUserNavTap(int pageIndex) {
     if (_userIndex == pageIndex) return;
-    HapticFeedback.selectionClick();
     setState(() => _userIndex = pageIndex);
   }
 
   void _onHunterNavTap(int pageIndex) {
     if (_hunterIndex == pageIndex) return;
-    HapticFeedback.selectionClick();
     setState(() => _hunterIndex = pageIndex);
   }
 
