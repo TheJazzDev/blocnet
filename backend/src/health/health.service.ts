@@ -20,9 +20,7 @@ export class HealthService {
   getReadiness() {
     const checks = {
       databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
-      supabaseAuthConfigured: Boolean(
-        process.env.SUPABASE_JWT_SECRET || process.env.SUPABASE_JWKS_URL,
-      ),
+      supabaseAuthConfigured: Boolean(process.env.SUPABASE_JWKS_URL),
     };
 
     return {

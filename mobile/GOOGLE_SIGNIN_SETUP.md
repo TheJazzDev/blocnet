@@ -99,7 +99,7 @@ flutter run \
 ### Sign-in works but user not created in backend
 - Check backend logs for errors
 - Verify the backend can decode the Supabase JWT token
-- Ensure `SUPABASE_JWT_SECRET` or `SUPABASE_JWKS_URL` is configured in backend
+- Ensure `SUPABASE_JWKS_URL` is configured in backend
 
 ### Error: "Google sign-in was cancelled"
 - User tapped outside the account picker

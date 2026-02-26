@@ -43,7 +43,6 @@ export const envValidationSchema = Joi.object({
   SUPABASE_QUEST_PROOFS_BUCKET: Joi.string().default('quest-proofs'),
   PUBLISHABLE_KEY: Joi.string().allow('').optional(),
   SUPABASE_JWKS_URL: Joi.string().uri().allow('').empty('').optional(),
-  SUPABASE_JWT_SECRET: Joi.string().min(1).allow('').empty('').optional(),
 
   FIREBASE_PROJECT_ID: Joi.string().allow('').optional(),
   FIREBASE_CLIENT_EMAIL: Joi.string().allow('').optional(),
@@ -200,4 +199,4 @@ export const envValidationSchema = Joi.object({
     ),
     otherwise: optionalString,
   }),
-}).or('SUPABASE_JWKS_URL', 'SUPABASE_JWT_SECRET');
+}).or('SUPABASE_JWKS_URL');

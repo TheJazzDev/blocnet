@@ -29,7 +29,7 @@ bun run start:dev
 - `bun run prisma:seed` now inserts demo projects/updates/follows/notifications for local testing.
 - Set `OWNER_USER_ID` and `OWNER_EMAIL` in `.env.local` if you want seed ownership tied to your real Supabase account.
 - If owner env values are omitted, seed falls back to `owner@blocknet.local`.
-- Use either `SUPABASE_JWKS_URL` or `SUPABASE_JWT_SECRET` for JWT verification.
+- Use `SUPABASE_JWKS_URL` for JWT verification.
 - Prisma CLI config is in `prisma.config.ts`.
 - `DATABASE_URL` is used by runtime Prisma adapter (`@prisma/adapter-pg`).
 - `DIRECT_URL` is preferred for Prisma migration commands.

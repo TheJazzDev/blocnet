@@ -111,26 +111,12 @@ export class AuthService {
   }
 
   private async verifyToken(token: string): Promise<JwtPayload> {
-    const jwtSecret = this.configService.get<string>('SUPABASE_JWT_SECRET');
-
-    try {
-      if (jwtSecret) {
-        const secret = new TextEncoder().encode(jwtSecret);
-        const { payload } = await jwtVerify(token, secret);
-        return payload as JwtPayload;
-      }
-
-      if (this.jwks) {
-        const { payload } = await jwtVerify(token, this.jwks);
-        return payload as JwtPayload;
-      }
-
-      throw new UnauthorizedException(
-        'SUPABASE_JWT_SECRET or SUPABASE_JWKS_URL must be configured',
-      );
-    } catch {
-      throw new UnauthorizedException('Failed to verify auth token');
+    if (!this.jwks) {
+      throw new UnauthorizedException('JWKS not configured');
     }
+
+    const { payload } = await jwtVerify(token, this.jwks);
+    return payload as JwtPayload;
   }
 
   toRolePriority(roles: AppRole[]): number {
