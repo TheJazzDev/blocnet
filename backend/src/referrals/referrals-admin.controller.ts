@@ -29,6 +29,10 @@ export class ReferralsAdminController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.referralsService.bindByAdmin(user.id, dto.userIdOrEmail, dto.code);
+    return this.referralsService.bindByAdmin(
+      user.id,
+      dto.userIdOrEmail,
+      dto.code,
+    );
   }
 }

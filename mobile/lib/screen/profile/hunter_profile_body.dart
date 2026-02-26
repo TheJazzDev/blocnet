@@ -151,21 +151,11 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
               bio: auth.bio,
               followersCount: followerCount,
               followingCount: followingCount,
+              onEditTap: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.editProfile),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.editProfile),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Edit Profile'),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
               child: Row(
                 children: [
                   _HunterStatCard(
@@ -177,13 +167,13 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
                         ? 'No signals yet'
                         : '${hunterUpdates.length} updates tracked',
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   _HunterStatCard(
                     icon: Icons.thumb_up_alt_outlined,
-                    iconColor: Color(0xFF4ADE80),
+                    iconColor: const Color(0xFF4ADE80),
                     label: 'Sentiment',
                     value: sentiment.label,
-                    valueSize: 16,
+                    valueSize: 14,
                     footnote: sentiment.footnote,
                   ),
                 ],

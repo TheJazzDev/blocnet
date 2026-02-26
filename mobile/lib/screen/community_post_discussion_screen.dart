@@ -10,6 +10,7 @@ import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.da
 import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -26,7 +27,7 @@ class CommunityPostDiscussionScreen extends StatefulWidget {
 
 class _CommunityPostDiscussionScreenState
     extends State<CommunityPostDiscussionScreen> {
-  final TextEditingController _commentCtrl = TextEditingController();
+  final TextEditingController _commentCtrl = MentionHighlightTextController();
   final ScrollController _threadScrollController = ScrollController();
   final Set<String> _knownCommentIds = <String>{};
   final Set<String> _pendingNewCommentIds = <String>{};
@@ -157,6 +158,14 @@ class _CommunityPostDiscussionScreenState
   Future<void> _sendComment(String postId) async {
     final text = _commentCtrl.text.trim();
     if (text.isEmpty || _isSending) return;
+    if (text.length > 300) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Community comments cannot exceed 300 characters'),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isSending = true);
     try {
@@ -259,9 +268,19 @@ class _CommunityPostDiscussionScreenState
                                 const SizedBox(height: 10),
                                 if (comments.isEmpty)
                                   _EmptyDiscussion()
-                                else
-                                  ...comments
-                                      .map((c) => _CommentCard(comment: c)),
+                                else ...[
+                                  for (var index = 0;
+                                      index < comments.length;
+                                      index++) ...[
+                                    _CommentCard(comment: comments[index]),
+                                    if (index != comments.length - 1)
+                                      Divider(
+                                        height: 1,
+                                        color: AppColors.borderSubtle
+                                            .withValues(alpha: 0.8),
+                                      ),
+                                  ],
+                                ],
                                 const SizedBox(height: 90),
                               ],
                             ),
@@ -318,6 +337,7 @@ class _CommunityPostDiscussionScreenState
                             hintText: 'Write a comment...',
                             minLines: 1,
                             maxLines: 4,
+                            maxLength: 300,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -370,39 +390,41 @@ class _PostDetailsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final admin = post.admin;
-    final adminName = admin?.name ?? 'Blocnet User';
+    final adminName =
+        admin?.name.trim().isNotEmpty == true ? admin!.name : 'Blocnet User';
+    final username = _formatUsername(
+      admin?.username,
+      fallbackName: adminName,
+    );
     final roleLabel = admin?.displayRoleLabel;
     final roleColor =
         roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
                 onTap: () => _openAuthorProfile(context),
                 behavior: HitTestBehavior.opaque,
-                child: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.bgElevated,
-                  backgroundImage: (post.admin?.imageUrl.isNotEmpty ?? false)
-                      ? NetworkImage(post.admin!.imageUrl)
-                      : null,
-                  child: (post.admin?.imageUrl.isNotEmpty ?? false)
-                      ? null
-                      : Icon(Icons.person,
-                          size: 16, color: AppColors.textMuted),
+                child: AppAvatar(
+                  radius: 20,
+                  imageUrl: post.admin?.imageUrl,
+                  fallback: Text(
+                    adminName[0].toUpperCase(),
+                    style: AppTypography.custom(
+                      color: AppColors.primary400,
+                      size: 15,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,6 +464,15 @@ class _PostDetailsCard extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      username,
+                      style: AppTypography.custom(
+                        color: AppColors.textMuted,
+                        size: 12,
+                        weight: FontWeight.w400,
+                      ),
+                    ),
                     Text(
                       getTimeStamp(post.createdAt),
                       style: AppTypography.custom(
@@ -455,7 +486,7 @@ class _PostDetailsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           MentionText(
             text: post.content,
             style: AppTypography.custom(
@@ -465,66 +496,108 @@ class _PostDetailsCard extends StatelessWidget {
               height: 1.55,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             children: [
-              GestureDetector(
-                onTap: onLike,
-                behavior: HitTestBehavior.opaque,
-                child: Row(
-                  children: [
-                    Icon(
-                      post.isLiked
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      size: 18,
-                      color: post.isLiked
-                          ? AppColors.warning500
-                          : AppColors.textMuted,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      '${post.likesCount}',
-                      style: AppTypography.custom(
-                        color: post.isLiked
-                            ? AppColors.warning500
-                            : AppColors.textMuted,
-                        size: 13,
-                        weight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              Expanded(
+                child: _DiscussionAction(
+                  icon: post.isLiked
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  value: '${post.likesCount}',
+                  color:
+                      post.isLiked ? AppColors.warning500 : AppColors.textMuted,
+                  onTap: onLike,
                 ),
               ),
-              const SizedBox(width: 16),
-              Icon(Icons.mode_comment_outlined,
-                  size: 18, color: AppColors.textMuted),
-              const SizedBox(width: 5),
-              Text(
-                '${post.commentsCount}',
-                style: AppTypography.custom(
+              Expanded(
+                child: _DiscussionAction(
+                  icon: Icons.mode_comment_outlined,
+                  value: '${post.commentsCount}',
                   color: AppColors.textMuted,
-                  size: 13,
-                  weight: FontWeight.w400,
+                  onTap: () {},
                 ),
               ),
-              const Spacer(),
-              GestureDetector(
-                onTap: onBookmark,
-                behavior: HitTestBehavior.opaque,
-                child: Icon(
-                  post.isBookmarked
+              Expanded(
+                child: _DiscussionAction(
+                  icon: post.isBookmarked
                       ? Icons.bookmark_rounded
                       : Icons.bookmark_outline_rounded,
-                  size: 18,
+                  value: '',
                   color: post.isBookmarked
                       ? AppColors.primary400
                       : AppColors.textMuted,
+                  onTap: onBookmark,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
         ],
+      ),
+    );
+  }
+
+  String _formatUsername(String? value, {required String fallbackName}) {
+    final normalized = value?.trim() ?? '';
+    if (normalized.isNotEmpty) {
+      return normalized.startsWith('@') ? normalized : '@$normalized';
+    }
+
+    final fallback = fallbackName
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    if (fallback.isEmpty) return '@member';
+    return '@$fallback';
+  }
+}
+
+class _DiscussionAction extends StatelessWidget {
+  const _DiscussionAction({
+    required this.icon,
+    required this.value,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String value;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Align(
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: color),
+              if (value.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Text(
+                  value,
+                  style: AppTypography.custom(
+                    color: color,
+                    size: 12,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -566,59 +639,27 @@ class _CommentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final admin = comment.admin;
-    final name = admin?.name ?? 'User';
+    final name = admin?.name.trim().isNotEmpty == true ? admin!.name : 'User';
+    final username = _formatUsername(
+      admin?.username,
+      fallbackName: name,
+    );
     final roleLabel = admin?.displayRoleLabel;
     final roleColor =
         roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.bgSurface,
-            AppColors.bgSurface.withValues(alpha: 0.85),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.borderSubtle.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
             onTap: () => _openAuthorProfile(context),
             behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary500.withValues(alpha: 0.15),
-                    AppColors.primary500.withValues(alpha: 0.08),
-                  ],
-                ),
-                border: Border.all(
-                  color: AppColors.primary500.withValues(alpha: 0.25),
-                  width: 1.5,
-                ),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: (comment.admin?.imageUrl.isNotEmpty ?? false)
-                  ? Image.network(
-                      comment.admin!.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _avatarFallback(name),
-                    )
-                  : _avatarFallback(name),
+            child: AppAvatar(
+              radius: 18,
+              imageUrl: comment.admin?.imageUrl,
+              fallback: _avatarFallback(name),
             ),
           ),
           const SizedBox(width: 12),
@@ -628,7 +669,7 @@ class _CommentCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Expanded(
+                    Flexible(
                       child: GestureDetector(
                         onTap: () => _openAuthorProfile(context),
                         behavior: HitTestBehavior.opaque,
@@ -665,6 +706,7 @@ class _CommentCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       getTimeStamp(comment.createdAt),
                       style: AppTypography.custom(
@@ -675,13 +717,22 @@ class _CommentCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  username,
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 12,
+                    weight: FontWeight.w400,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 MentionText(
                   text: comment.content,
                   style: AppTypography.custom(
                     color: AppColors.textSecondary,
                     size: 13,
-                    weight: FontWeight.w500,
+                    weight: FontWeight.w400,
                     height: 1.6,
                   ),
                 ),
@@ -695,16 +746,29 @@ class _CommentCard extends StatelessWidget {
 
   Widget _avatarFallback(String name) {
     final firstChar = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    return Center(
-      child: Text(
-        firstChar,
-        style: AppTypography.custom(
-          color: AppColors.primary400,
-          size: 16,
-          weight: FontWeight.w800,
-        ),
+    return Text(
+      firstChar,
+      style: AppTypography.custom(
+        color: AppColors.primary400,
+        size: 15,
+        weight: FontWeight.w700,
       ),
     );
+  }
+
+  String _formatUsername(String? value, {required String fallbackName}) {
+    final normalized = value?.trim() ?? '';
+    if (normalized.isNotEmpty) {
+      return normalized.startsWith('@') ? normalized : '@$normalized';
+    }
+
+    final fallback = fallbackName
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    if (fallback.isEmpty) return '@member';
+    return '@$fallback';
   }
 }
 

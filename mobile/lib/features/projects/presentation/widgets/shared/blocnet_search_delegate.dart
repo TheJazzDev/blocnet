@@ -4,6 +4,7 @@ import 'package:blocnet/features/profile/data/models/profile_search_result_model
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 
 class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
@@ -159,19 +160,14 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                     return ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      leading: CircleAvatar(
+                      leading: AppAvatar(
                         radius: 14,
-                        backgroundColor: AppColors.bgElevated,
-                        backgroundImage: avatarUrl.isNotEmpty
-                            ? NetworkImage(avatarUrl)
-                            : null,
-                        child: avatarUrl.isEmpty
-                            ? Icon(
-                                Icons.person_outline_rounded,
-                                color: AppColors.textMuted,
-                                size: 16,
-                              )
-                            : null,
+                        imageUrl: avatarUrl,
+                        fallback: Icon(
+                          Icons.person_outline_rounded,
+                          color: AppColors.textMuted,
+                          size: 16,
+                        ),
                       ),
                       title: Text(
                         profile.label,

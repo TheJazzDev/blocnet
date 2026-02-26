@@ -40,12 +40,7 @@ export class MentionsService {
       return;
     }
 
-    await this.processMentions(
-      usernames,
-      authorId,
-      { commentId },
-      'comment',
-    );
+    await this.processMentions(usernames, authorId, { commentId }, 'comment');
   }
 
   /**
@@ -95,39 +90,42 @@ export class MentionsService {
   /**
    * Search users by username for autocomplete
    */
-  async searchUsers(query: string, limit = 10) {
+  async searchUsers(query = '', limit = 10) {
     const normalizedQuery = query.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    const cappedLimit = Math.max(1, Math.min(limit, 50));
 
-    if (normalizedQuery.length === 0) {
-      return [];
-    }
-
-    // Search by email prefix (username) or displayName
     const users = await this.prisma.profile.findMany({
-      where: {
-        OR: [
-          {
-            email: {
-              startsWith: normalizedQuery,
-              mode: 'insensitive',
+      where:
+        normalizedQuery.length === 0
+          ? { isDeactivated: false }
+          : {
+              OR: [
+                {
+                  email: {
+                    startsWith: normalizedQuery,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  displayName: {
+                    contains: normalizedQuery,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  username: {
+                    contains: normalizedQuery,
+                    mode: 'insensitive',
+                  },
+                },
+              ],
+              isDeactivated: false,
             },
-          },
-          {
-            displayName: {
-              contains: normalizedQuery,
-              mode: 'insensitive',
-            },
-          },
-          {
-            username: {
-              contains: normalizedQuery,
-              mode: 'insensitive',
-            },
-          },
-        ],
-        isDeactivated: false,
-      },
-      take: limit,
+      orderBy:
+        normalizedQuery.length === 0
+          ? [{ displayName: 'asc' }, { username: 'asc' }, { email: 'asc' }]
+          : [{ username: 'asc' }, { displayName: 'asc' }],
+      take: cappedLimit,
       select: {
         id: true,
         email: true,

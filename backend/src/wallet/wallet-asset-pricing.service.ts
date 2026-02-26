@@ -1,10 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, WalletAsset } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  getDefaultPriceProviderId,
-  WALLET_ASSETS,
-} from './wallet-asset.util';
+import { getDefaultPriceProviderId, WALLET_ASSETS } from './wallet-asset.util';
 
 type PriceSource = 'live' | 'fallback';
 
@@ -45,15 +42,18 @@ export class WalletAssetPricingService {
           ? { providerId: input.providerId?.trim() || null }
           : {}),
         ...(input.fallbackUsdPrice !== undefined
-          ? { fallbackUsdPrice: this.parseNonNegativeDecimal(input.fallbackUsdPrice) }
+          ? {
+              fallbackUsdPrice: this.parseNonNegativeDecimal(
+                input.fallbackUsdPrice,
+              ),
+            }
           : {}),
         ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
       },
       create: {
         asset,
         providerId:
-          input.providerId?.trim() ||
-          getDefaultPriceProviderId(asset),
+          input.providerId?.trim() || getDefaultPriceProviderId(asset),
         fallbackUsdPrice:
           input.fallbackUsdPrice !== undefined
             ? this.parseNonNegativeDecimal(input.fallbackUsdPrice)
@@ -129,7 +129,9 @@ export class WalletAssetPricingService {
 
   async getUsdPrices(assets: WalletAsset[] = WALLET_ASSETS) {
     const entries = await Promise.all(
-      assets.map(async (asset) => [asset, await this.getUsdPrice(asset)] as const),
+      assets.map(
+        async (asset) => [asset, await this.getUsdPrice(asset)] as const,
+      ),
     );
     return Object.fromEntries(entries) as Record<
       WalletAsset,

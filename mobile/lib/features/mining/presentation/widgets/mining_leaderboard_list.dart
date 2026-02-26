@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
@@ -137,7 +138,8 @@ class _LeaderboardTile extends StatelessWidget {
                       ],
                     )
                   : null,
-              color: isTop3 ? null : AppColors.bgElevated.withValues(alpha: 0.5),
+              color:
+                  isTop3 ? null : AppColors.bgElevated.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isTop3
@@ -175,22 +177,17 @@ class _LeaderboardTile extends StatelessWidget {
               ),
             ),
             padding: const EdgeInsets.all(2),
-            child: CircleAvatar(
+            child: AppAvatar(
               radius: 18,
-              backgroundColor: AppColors.bgElevated,
-              backgroundImage: (item.avatarUrl?.isNotEmpty ?? false)
-                  ? NetworkImage(item.avatarUrl!)
-                  : null,
-              child: (item.avatarUrl?.isNotEmpty ?? false)
-                  ? null
-                  : Text(
-                      _initials(item),
-                      style: AppTypography.custom(
-                        color: AppColors.textPrimary,
-                        size: 11,
-                        weight: FontWeight.w700,
-                      ),
-                    ),
+              imageUrl: item.avatarUrl,
+              fallback: Text(
+                _initials(item),
+                style: AppTypography.custom(
+                  color: AppColors.textPrimary,
+                  size: 11,
+                  weight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),

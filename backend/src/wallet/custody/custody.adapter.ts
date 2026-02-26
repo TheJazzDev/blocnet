@@ -34,7 +34,9 @@ export type CustodyTransferRecord = {
 
 export interface CustodyAdapter {
   createWallet(input: CreateCustodyWalletInput): Promise<CustodyWalletRecord>;
-  transferToken(input: TransferCustodyTokenInput): Promise<CustodyTransferRecord>;
+  transferToken(
+    input: TransferCustodyTokenInput,
+  ): Promise<CustodyTransferRecord>;
   transferNative(
     input: TransferCustodyNativeInput,
   ): Promise<CustodyTransferRecord>;

@@ -95,35 +95,11 @@ class _UserProfileBodyState extends State<UserProfileBody> {
               avatarUrl: auth.avatarUrl,
               email: auth.email,
               primaryBadge: badgesStore.displayBadge,
+              onEditTap: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.editProfile),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.editProfile),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 34),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: const Icon(Icons.edit_outlined, size: 15),
-                  label: Text(
-                    'Edit Profile',
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: 12,
-                      weight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Row(
                 children: [
                   _StatCard(

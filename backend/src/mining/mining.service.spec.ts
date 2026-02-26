@@ -2,7 +2,9 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import { MiningService } from './mining.service';
 
 function checkpointIndexes(count: number) {
-  return Array.from({ length: count }, (_, index) => ({ hourIndex: index + 1 }));
+  return Array.from({ length: count }, (_, index) => ({
+    hourIndex: index + 1,
+  }));
 }
 
 describe('MiningService', () => {
@@ -92,7 +94,9 @@ describe('MiningService', () => {
       boostBpsSnapshot: 0,
       activeReferralsSnapshot: 0,
     });
-    prisma.miningHourlyCheckpoint.findMany.mockResolvedValue(checkpointIndexes(24));
+    prisma.miningHourlyCheckpoint.findMany.mockResolvedValue(
+      checkpointIndexes(24),
+    );
     prisma.miningHourlyCheckpoint.create.mockResolvedValue({});
     prisma.miningHourlyCheckpoint.aggregate.mockResolvedValue({
       _sum: { points: 0 },
@@ -151,7 +155,9 @@ describe('MiningService', () => {
         activeReferralsSnapshot: 0,
       },
     ]);
-    prisma.miningHourlyCheckpoint.findMany.mockResolvedValue(checkpointIndexes(2));
+    prisma.miningHourlyCheckpoint.findMany.mockResolvedValue(
+      checkpointIndexes(2),
+    );
     prisma.miningHourlyCheckpoint.aggregate.mockResolvedValue({
       _sum: { points: 10 },
       _max: { hourIndex: 2 },
@@ -224,7 +230,10 @@ describe('MiningService', () => {
     );
     expect(prisma.miningHourlyCheckpoint.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ sessionId: 'session-1', claimedAt: null }),
+        where: expect.objectContaining({
+          sessionId: 'session-1',
+          claimedAt: null,
+        }),
       }),
     );
     expect(prisma.miningPointLedger.create).toHaveBeenCalledWith(

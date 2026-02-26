@@ -1378,8 +1378,7 @@ export class NotificationsService {
     if ((actor.displayName?.trim().length ?? 0) > 0)
       return actor.displayName!.trim();
     if ((actor.username?.trim().length ?? 0) > 0) return actor.username!.trim();
-    if ((actor.email?.trim().length ?? 0) > 0)
-      return actor.email!.split('@')[0];
+    if ((actor.email?.trim().length ?? 0) > 0) return actor.email.split('@')[0];
     return actor.id.slice(0, 8);
   }
 

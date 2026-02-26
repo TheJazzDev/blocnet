@@ -11,7 +11,10 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { BadgesService } from './badges.service';
-import { BadgeResponseDto, UserBadgesResponseDto } from './dto/badge-response.dto';
+import {
+  BadgeResponseDto,
+  UserBadgesResponseDto,
+} from './dto/badge-response.dto';
 import { SetPrimaryBadgeDto } from './dto/grant-badge.dto';
 
 @ApiTags('badges')

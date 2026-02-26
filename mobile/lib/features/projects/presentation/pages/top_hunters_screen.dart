@@ -4,6 +4,7 @@ import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -157,19 +158,14 @@ class _HunterListTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          CircleAvatar(
+          AppAvatar(
             radius: 20,
-            backgroundColor: AppColors.bgElevated,
-            backgroundImage: entry.admin.imageUrl.isNotEmpty
-                ? NetworkImage(entry.admin.imageUrl)
-                : null,
-            child: entry.admin.imageUrl.isEmpty
-                ? Icon(
-                    Icons.person_rounded,
-                    color: AppColors.textMuted,
-                    size: 16,
-                  )
-                : null,
+            imageUrl: entry.admin.imageUrl,
+            fallback: Icon(
+              Icons.person_rounded,
+              color: AppColors.textMuted,
+              size: 16,
+            ),
           ),
         ],
       ),

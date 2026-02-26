@@ -10,10 +10,7 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import {
-  BadgeCategory,
-  QuestType,
-} from '@prisma/client';
+import { BadgeCategory, QuestType } from '@prisma/client';
 
 export class UpdateQuestDto {
   @ApiPropertyOptional({ example: 'follow-on-x' })

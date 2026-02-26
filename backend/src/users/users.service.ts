@@ -84,6 +84,7 @@ const PROFILE_ACTIVITY_ALLOWED_ACTIONS = [
 ] as const;
 
 const DIGEST_VIEW_AUDIT_COOLDOWN_MS = 60 * 60 * 1000;
+const AVATAR_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365;
 
 @Injectable()
 export class UsersService {
@@ -172,13 +173,30 @@ export class UsersService {
       return null;
     }
 
+    const avatarUrl = await this.resolveAvatarAccessUrl(profile.avatarUrl);
+    if (
+      avatarUrl &&
+      profile.avatarUrl &&
+      avatarUrl != profile.avatarUrl &&
+      this.isManagedPublicAvatarUrl(profile.avatarUrl)
+    ) {
+      try {
+        await this.prisma.profile.update({
+          where: { id: profile.id },
+          data: { avatarUrl },
+        });
+      } catch {
+        // Keep auth response resilient even if background avatar write fails.
+      }
+    }
+
     return {
       id: profile.id,
       email: profile.email,
       username: profile.username,
       referralCode: profile.referralCode,
       displayName: profile.displayName,
-      avatarUrl: profile.avatarUrl,
+      avatarUrl,
       bio: profile.bio,
       createdAt: profile.createdAt,
       homeFeedLastSeenAt: profile.homeFeedLastSeenAt,
@@ -282,16 +300,18 @@ export class UsersService {
     const {
       data: { publicUrl },
     } = bucket.getPublicUrl(objectPath);
+    const avatarUrl =
+      (await this.createSignedAvatarUrl(objectPath)) ?? publicUrl;
 
     await this.prisma.profile.update({
       where: { id: userId },
-      data: { avatarUrl: publicUrl },
+      data: { avatarUrl },
     });
 
     await this.deletePreviousAvatarIfManaged(profile.avatarUrl, objectPath);
     await this.triggerProfileCompleteQuestIfEligible(userId);
 
-    return { avatarUrl: publicUrl };
+    return { avatarUrl };
   }
 
   async getAdminStats() {
@@ -1844,14 +1864,15 @@ export class UsersService {
       return;
     }
 
-    const managedPrefix = `${this.supabaseUrl}/storage/v1/object/public/${this.supabaseAvatarsBucket}/`;
-    if (!previousAvatarUrl.startsWith(managedPrefix)) {
+    const previousPath = this.extractManagedAvatarObjectPath(
+      previousAvatarUrl,
+      {
+        includeSigned: true,
+      },
+    );
+    if (!previousPath) {
       return;
     }
-
-    const previousPath = decodeURIComponent(
-      previousAvatarUrl.slice(managedPrefix.length),
-    );
     if (!previousPath || previousPath === currentObjectPath) {
       return;
     }
@@ -1859,6 +1880,96 @@ export class UsersService {
     await this.requireSupabaseStorageClient()
       .storage.from(this.supabaseAvatarsBucket)
       .remove([previousPath]);
+  }
+
+  private async resolveAvatarAccessUrl(
+    avatarUrl: string | null,
+  ): Promise<string | null> {
+    if (!avatarUrl) {
+      return null;
+    }
+
+    const objectPath = this.extractManagedAvatarObjectPath(avatarUrl, {
+      includeSigned: false,
+    });
+    if (!objectPath) {
+      return avatarUrl;
+    }
+
+    const signedUrl = await this.createSignedAvatarUrl(objectPath);
+    return signedUrl ?? avatarUrl;
+  }
+
+  private extractManagedAvatarObjectPath(
+    avatarUrl: string,
+    opts: { includeSigned?: boolean } = {},
+  ): string | null {
+    if (!this.supabaseUrl) {
+      return null;
+    }
+
+    const publicPrefix = `${this.supabaseUrl}/storage/v1/object/public/${this.supabaseAvatarsBucket}/`;
+    if (avatarUrl.startsWith(publicPrefix)) {
+      return decodeURIComponent(
+        avatarUrl.slice(publicPrefix.length).split('?')[0] ?? '',
+      );
+    }
+
+    if (opts.includeSigned ?? true) {
+      const signedPrefix = `${this.supabaseUrl}/storage/v1/object/sign/${this.supabaseAvatarsBucket}/`;
+      if (avatarUrl.startsWith(signedPrefix)) {
+        return decodeURIComponent(
+          avatarUrl.slice(signedPrefix.length).split('?')[0] ?? '',
+        );
+      }
+    }
+
+    return null;
+  }
+
+  private async createSignedAvatarUrl(
+    objectPath: string,
+  ): Promise<string | null> {
+    if (!this.supabaseStorageClient) {
+      return null;
+    }
+
+    const { data, error } = await this.supabaseStorageClient.storage
+      .from(this.supabaseAvatarsBucket)
+      .createSignedUrl(objectPath, AVATAR_SIGNED_URL_TTL_SECONDS);
+
+    if (error || !data?.signedUrl) {
+      return null;
+    }
+
+    const signedUrl = data.signedUrl.trim();
+    if (!signedUrl) {
+      return null;
+    }
+    if (signedUrl.startsWith('http://') || signedUrl.startsWith('https://')) {
+      return signedUrl;
+    }
+    if (signedUrl.startsWith('/object/')) {
+      return `${this.supabaseUrl}/storage/v1${signedUrl}`;
+    }
+    if (signedUrl.startsWith('/')) {
+      return `${this.supabaseUrl}${signedUrl}`;
+    }
+    if (signedUrl.startsWith('storage/')) {
+      return `${this.supabaseUrl}/${signedUrl}`;
+    }
+    if (signedUrl.startsWith('object/')) {
+      return `${this.supabaseUrl}/storage/v1/${signedUrl}`;
+    }
+    return `${this.supabaseUrl}/storage/v1/object/sign/${this.supabaseAvatarsBucket}/${signedUrl}`;
+  }
+
+  private isManagedPublicAvatarUrl(avatarUrl: string): boolean {
+    if (!this.supabaseUrl) {
+      return false;
+    }
+    const publicPrefix = `${this.supabaseUrl}/storage/v1/object/public/${this.supabaseAvatarsBucket}/`;
+    return avatarUrl.startsWith(publicPrefix);
   }
 
   async deactivateAccount(userId: string, reason?: string) {

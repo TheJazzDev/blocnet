@@ -7,4 +7,3 @@ export class SetActiveTipCurrencyDto {
   @Matches(currencyCodePattern)
   currencyCode!: string;
 }
-

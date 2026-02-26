@@ -58,4 +58,3 @@ export class UpdateTipCurrencyDto {
   @IsBoolean()
   policyActive?: boolean;
 }
-

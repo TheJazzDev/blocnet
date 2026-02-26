@@ -60,4 +60,3 @@ export class TipsAdminController {
     return this.tipsService.listAdminTransactions(query);
   }
 }
-

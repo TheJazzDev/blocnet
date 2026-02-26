@@ -49,4 +49,3 @@ export class TipsController {
     return this.tipsService.sendTip(user.id, dto);
   }
 }
-

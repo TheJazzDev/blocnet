@@ -30,7 +30,7 @@ describe('NotificationPreferencesService', () => {
     prisma.userNotificationSettings.findMany.mockResolvedValue([]);
     prisma.userNotificationCategoryPreference.findMany.mockResolvedValue([]);
     prisma.userNotificationTypeOverride.findMany.mockResolvedValue([]);
-    service = new NotificationPreferencesService(prisma as any);
+    service = new NotificationPreferencesService(prisma);
   });
 
   it('returns catalog with categories and critical types', async () => {

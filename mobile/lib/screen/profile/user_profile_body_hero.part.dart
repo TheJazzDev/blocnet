@@ -5,16 +5,31 @@ class _UserHero extends StatelessWidget {
     required this.displayName,
     required this.avatarUrl,
     required this.email,
+    required this.onEditTap,
     this.primaryBadge,
   });
 
   final String displayName;
   final String? avatarUrl;
   final String? email;
+  final VoidCallback onEditTap;
   final BadgeModel? primaryBadge;
 
   @override
   Widget build(BuildContext context) {
+    final hasAvatar = avatarUrl?.trim().isNotEmpty == true;
+
+    Widget fallbackAvatar() {
+      return Text(
+        displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+        style: AppTypography.custom(
+          color: AppColors.teal400,
+          size: 22,
+          weight: FontWeight.w800,
+        ),
+      );
+    }
+
     return Stack(
       children: [
         Positioned(
@@ -38,7 +53,7 @@ class _UserHero extends StatelessWidget {
         ),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -62,48 +77,18 @@ class _UserHero extends StatelessWidget {
                         color: AppColors.bgBase,
                       ),
                       padding: const EdgeInsets.all(2),
-                      child: CircleAvatar(
-                        radius: 31,
-                        backgroundColor: AppColors.bgElevated,
-                        backgroundImage:
-                            avatarUrl != null && avatarUrl!.isNotEmpty
-                                ? NetworkImage(avatarUrl!)
-                                : null,
-                        child: avatarUrl == null || avatarUrl!.isEmpty
-                            ? Text(
-                                displayName.isNotEmpty
-                                    ? displayName[0].toUpperCase()
-                                    : '?',
-                                style: AppTypography.custom(
-                                  color: AppColors.teal400,
-                                  size: 22,
-                                  weight: FontWeight.w800,
-                                ),
-                              )
-                            : null,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primary400,
-                            AppColors.primary500,
-                          ],
+                      child: ClipOval(
+                        child: Container(
+                          color: AppColors.bgElevated,
+                          child: hasAvatar
+                              ? Image.network(
+                                  avatarUrl!.trim(),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      Center(child: fallbackAvatar()),
+                                )
+                              : Center(child: fallbackAvatar()),
                         ),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.bgBase, width: 2.5),
-                      ),
-                      child: const Icon(
-                        Icons.edit_rounded,
-                        size: 10,
-                        color: Colors.black,
                       ),
                     ),
                   ),
@@ -177,6 +162,28 @@ class _UserHero extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+        Positioned(
+          left: 16,
+          bottom: 0,
+          child: GestureDetector(
+            onTap: onEditTap,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: AppColors.bgSurface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Icon(
+                Icons.edit_outlined,
+                size: 17,
+                color: AppColors.primary400,
+              ),
+            ),
           ),
         ),
       ],

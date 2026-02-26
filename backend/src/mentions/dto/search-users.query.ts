@@ -1,12 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class SearchUsersQuery {
-  @ApiProperty({ description: 'Search query string', example: 'john' })
+  @ApiProperty({
+    description: 'Search query string',
+    example: 'john',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  q: string;
+  q?: string;
 
   @ApiProperty({ description: 'Maximum results', required: false, default: 10 })
   @IsOptional()

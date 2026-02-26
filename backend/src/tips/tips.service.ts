@@ -28,8 +28,17 @@ import { CreateTipDto } from './dto/create-tip.dto';
 import { ListAdminTipTransactionsQuery } from './dto/list-admin-tip-transactions.query';
 import { ListTipHistoryQuery } from './dto/list-tip-history.query';
 import { UpdateTipCurrencyDto } from './dto/update-tip-currency.dto';
-import { ceilDivide, formatAtomicAmount, parseAtomicAmount, parseAtomicAmountAllowZero } from './tip-amount.util';
-import { FEE_VAULT_OWNER_REF, MCR_CURRENCY_CODE, MCR_DECIMALS } from './tip.constants';
+import {
+  ceilDivide,
+  formatAtomicAmount,
+  parseAtomicAmount,
+  parseAtomicAmountAllowZero,
+} from './tip-amount.util';
+import {
+  FEE_VAULT_OWNER_REF,
+  MCR_CURRENCY_CODE,
+  MCR_DECIMALS,
+} from './tip.constants';
 
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;
@@ -109,7 +118,9 @@ export class TipsService {
       this.prisma,
     );
 
-    const accountByCurrency = new Map(accounts.map((row) => [row.currencyCode, row]));
+    const accountByCurrency = new Map(
+      accounts.map((row) => [row.currencyCode, row]),
+    );
     if (!accountByCurrency.has(activeCurrency.code)) {
       const refreshed = await this.prisma.tipAccount.findUnique({
         where: { id: activeAccount.id },
@@ -170,7 +181,10 @@ export class TipsService {
 
     const activeCurrency = await this.requireActiveCurrency();
     const requestedCurrencyCode = dto.currencyCode?.trim().toUpperCase();
-    if (requestedCurrencyCode && requestedCurrencyCode !== activeCurrency.code) {
+    if (
+      requestedCurrencyCode &&
+      requestedCurrencyCode !== activeCurrency.code
+    ) {
       throw new BadRequestException(
         `Tips currently support ${activeCurrency.code} only`,
       );
@@ -190,7 +204,9 @@ export class TipsService {
       throw new BadRequestException('You cannot tip yourself');
     }
 
-    const isHunter = recipient.roles.some((row) => row.role === RoleName.hunter);
+    const isHunter = recipient.roles.some(
+      (row) => row.role === RoleName.hunter,
+    );
     if (!isHunter) {
       throw new BadRequestException('Only hunters can receive tips');
     }
@@ -330,13 +346,10 @@ export class TipsService {
 
     try {
       const normalizedSymbol = created.currency.symbol.trim();
-      const symbol = normalizedSymbol.length > 0
-        ? normalizedSymbol
-        : created.currency.code;
+      const symbol =
+        normalizedSymbol.length > 0 ? normalizedSymbol : created.currency.code;
       const senderLabel =
-        created.sender.displayName ??
-        created.sender.username ??
-        'Someone';
+        created.sender.displayName ?? created.sender.username ?? 'Someone';
       const tipAmount = formatAtomicAmount(
         created.amountAtomic,
         created.currency.decimals,
@@ -379,7 +392,10 @@ export class TipsService {
 
   async listMyHistory(userId: string, query: ListTipHistoryQuery) {
     await this.ensureBootstrap();
-    const { limit, offset } = this.normalizePagination(query.limit, query.offset);
+    const { limit, offset } = this.normalizePagination(
+      query.limit,
+      query.offset,
+    );
     const direction = query.direction ?? 'all';
 
     const where: Prisma.TipTransactionWhereInput = {
@@ -416,7 +432,10 @@ export class TipsService {
 
   async listAdminTransactions(query: ListAdminTipTransactionsQuery) {
     await this.ensureBootstrap();
-    const { limit, offset } = this.normalizePagination(query.limit, query.offset);
+    const { limit, offset } = this.normalizePagination(
+      query.limit,
+      query.offset,
+    );
     const q = query.q?.trim();
     const direction = query.direction ?? 'all';
     const userId = query.userId?.trim();
@@ -453,11 +472,7 @@ export class TipsService {
           { recipient: { displayName: { contains: q, mode: 'insensitive' } } },
           { recipient: { username: { contains: q, mode: 'insensitive' } } },
           ...(uuidRegex.test(q)
-            ? [
-                { id: q },
-                { senderUserId: q },
-                { recipientUserId: q },
-              ]
+            ? [{ id: q }, { senderUserId: q }, { recipientUserId: q }]
             : []),
         ],
       });
@@ -508,7 +523,9 @@ export class TipsService {
         currencies.find((row) => row.isActiveTippingCurrency)?.code ?? null,
       currencies: currencies.map((row) => ({
         ...this.toCurrencyResponse(row, row.feeConfig),
-        feeVaultBalanceAtomic: (row.accounts[0]?.balanceAtomic ?? 0n).toString(),
+        feeVaultBalanceAtomic: (
+          row.accounts[0]?.balanceAtomic ?? 0n
+        ).toString(),
         feeVaultBalance: formatAtomicAmount(
           row.accounts[0]?.balanceAtomic ?? 0n,
           row.decimals,
@@ -534,8 +551,16 @@ export class TipsService {
     }
 
     const decimals = currency.decimals;
-    const maxTipAtomic = this.parseOptionalAtomic(dto.maxTip, decimals, 'maxTip');
-    const maxFeeAtomic = this.parseOptionalAtomic(dto.maxFee, decimals, 'maxFee');
+    const maxTipAtomic = this.parseOptionalAtomic(
+      dto.maxTip,
+      decimals,
+      'maxTip',
+    );
+    const maxFeeAtomic = this.parseOptionalAtomic(
+      dto.maxFee,
+      decimals,
+      'maxFee',
+    );
 
     const feeData: Prisma.TipFeeConfigUncheckedUpdateInput = {};
     if (dto.feeBps !== undefined) feeData.feeBps = dto.feeBps;
@@ -565,7 +590,9 @@ export class TipsService {
       BigInt(feeData.maxTipAtomic as bigint) <
         BigInt(feeData.minTipAtomic as bigint)
     ) {
-      throw new BadRequestException('maxTip must be greater than or equal to minTip');
+      throw new BadRequestException(
+        'maxTip must be greater than or equal to minTip',
+      );
     }
 
     if (
@@ -575,7 +602,9 @@ export class TipsService {
       BigInt(feeData.maxFeeAtomic as bigint) <
         BigInt(feeData.minFeeAtomic as bigint)
     ) {
-      throw new BadRequestException('maxFee must be greater than or equal to minFee');
+      throw new BadRequestException(
+        'maxFee must be greater than or equal to minFee',
+      );
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -861,7 +890,10 @@ export class TipsService {
         )} ${currency.symbol}`,
       );
     }
-    if (feeConfig.maxTipAtomic != null && amountAtomic > feeConfig.maxTipAtomic) {
+    if (
+      feeConfig.maxTipAtomic != null &&
+      amountAtomic > feeConfig.maxTipAtomic
+    ) {
       throw new BadRequestException(
         `Maximum tip is ${formatAtomicAmount(
           feeConfig.maxTipAtomic,
@@ -904,7 +936,9 @@ export class TipsService {
 
   private async resolveRecipient(dto: CreateTipDto, senderUserId: string) {
     if (!dto.toUserId && !dto.toUsername) {
-      throw new BadRequestException('Either toUserId or toUsername is required');
+      throw new BadRequestException(
+        'Either toUserId or toUsername is required',
+      );
     }
 
     if (dto.toUserId) {

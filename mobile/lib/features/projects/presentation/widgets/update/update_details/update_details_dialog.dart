@@ -32,7 +32,8 @@ class UpdateDetailsDialog extends StatefulWidget {
 }
 
 class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
-  final TextEditingController _commentController = TextEditingController();
+  final TextEditingController _commentController =
+      MentionHighlightTextController();
   late final CommentsStore _commentsStore;
   late final MentionsRepository _mentionsRepository;
   bool _isSubmittingComment = false;

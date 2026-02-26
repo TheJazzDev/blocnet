@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   EdgeAction,
@@ -339,9 +343,7 @@ export class EdgeEngineService {
     const followMap = new Map<string, FollowPreference>(
       context.follows.map((follow) => [follow.projectId, follow]),
     );
-    const since = new Date(
-      asOf.getTime() - windowDays * 24 * 60 * 60 * 1000,
-    );
+    const since = new Date(asOf.getTime() - windowDays * 24 * 60 * 60 * 1000);
 
     const updates = await this.prisma.update.findMany({
       where: {
@@ -510,7 +512,10 @@ export class EdgeEngineService {
       };
     }
 
-    const persistedDecision = await this.findPersistedDecision(userId, decisionId);
+    const persistedDecision = await this.findPersistedDecision(
+      userId,
+      decisionId,
+    );
     const decision = persistedDecision
       ? this.toDecisionFromPersisted(persistedDecision)
       : await this.resolveAndPersistDecision(userId, decisionId, asOf);
@@ -560,7 +565,11 @@ export class EdgeEngineService {
       userId,
       decisionId,
     );
-    const feedback = await this.persistFeedback(userId, persisted?.id ?? null, dto);
+    const feedback = await this.persistFeedback(
+      userId,
+      persisted?.id ?? null,
+      dto,
+    );
 
     await this.auditLogService.create({
       actorId: userId,
@@ -638,12 +647,13 @@ export class EdgeEngineService {
     const asOf = new Date();
     const enabled = await this.getBeeEnabled();
     const windowDays = Math.min(Math.max(query.windowDays ?? 7, 1), 30);
-    const decisionsLimit = Math.min(Math.max(query.decisionsLimit ?? 20, 5), 100);
+    const decisionsLimit = Math.min(
+      Math.max(query.decisionsLimit ?? 20, 5),
+      100,
+    );
     const projectsLimit = Math.min(Math.max(query.projectsLimit ?? 8, 3), 20);
     const reasonLimit = Math.min(Math.max(query.reasonLimit ?? 10, 3), 30);
-    const since = new Date(
-      asOf.getTime() - windowDays * 24 * 60 * 60 * 1000,
-    );
+    const since = new Date(asOf.getTime() - windowDays * 24 * 60 * 60 * 1000);
 
     if (!enabled) {
       return {
@@ -1122,11 +1132,13 @@ export class EdgeEngineService {
   }
 
   private getEdgeConfigModel() {
-    return (this.prisma as unknown as {
-      edgeConfig?: {
-        upsert?: (input: unknown) => Promise<unknown>;
-      };
-    }).edgeConfig;
+    return (
+      this.prisma as unknown as {
+        edgeConfig?: {
+          upsert?: (input: unknown) => Promise<unknown>;
+        };
+      }
+    ).edgeConfig;
   }
 
   private async getOrCreateConfig(): Promise<EdgeConfigRow> {
@@ -1265,11 +1277,13 @@ export class EdgeEngineService {
   private async persistDecisions(userId: string, decisions: EdgeDecision[]) {
     if (decisions.length === 0) return;
 
-    const edgeDecisionModel = (this.prisma as unknown as {
-      edgeDecision?: {
-        upsert?: (input: unknown) => Promise<unknown>;
-      };
-    }).edgeDecision;
+    const edgeDecisionModel = (
+      this.prisma as unknown as {
+        edgeDecision?: {
+          upsert?: (input: unknown) => Promise<unknown>;
+        };
+      }
+    ).edgeDecision;
     if (!edgeDecisionModel?.upsert) {
       return;
     }
@@ -1320,11 +1334,13 @@ export class EdgeEngineService {
   }
 
   private async findPersistedDecision(userId: string, decisionId: string) {
-    const edgeDecisionModel = (this.prisma as unknown as {
-      edgeDecision?: {
-        findUnique?: (input: unknown) => Promise<unknown>;
-      };
-    }).edgeDecision;
+    const edgeDecisionModel = (
+      this.prisma as unknown as {
+        edgeDecision?: {
+          findUnique?: (input: unknown) => Promise<unknown>;
+        };
+      }
+    ).edgeDecision;
     if (!edgeDecisionModel?.findUnique) {
       return null;
     }
@@ -1439,11 +1455,13 @@ export class EdgeEngineService {
       throw new NotFoundException('Edge decision not found');
     }
 
-    const projectFollowModel = (this.prisma as unknown as {
-      projectFollow?: {
-        findUnique?: (input: unknown) => Promise<unknown>;
-      };
-    }).projectFollow;
+    const projectFollowModel = (
+      this.prisma as unknown as {
+        projectFollow?: {
+          findUnique?: (input: unknown) => Promise<unknown>;
+        };
+      }
+    ).projectFollow;
     const followPreference = projectFollowModel?.findUnique
       ? ((await projectFollowModel.findUnique({
           where: {
@@ -1459,7 +1477,11 @@ export class EdgeEngineService {
         })) as FollowPreference | null)
       : null;
 
-    const decision = this.buildDecision(update, followPreference ?? undefined, asOf);
+    const decision = this.buildDecision(
+      update,
+      followPreference ?? undefined,
+      asOf,
+    );
     await this.persistDecisions(userId, [decision]);
     return decision;
   }
@@ -1468,12 +1490,14 @@ export class EdgeEngineService {
     userId: string,
     decisionId: string,
   ) {
-    const edgeDecisionModel = (this.prisma as unknown as {
-      edgeDecision?: {
-        findUnique?: (input: unknown) => Promise<unknown>;
-        upsert?: (input: unknown) => Promise<unknown>;
-      };
-    }).edgeDecision;
+    const edgeDecisionModel = (
+      this.prisma as unknown as {
+        edgeDecision?: {
+          findUnique?: (input: unknown) => Promise<unknown>;
+          upsert?: (input: unknown) => Promise<unknown>;
+        };
+      }
+    ).edgeDecision;
     if (!edgeDecisionModel?.findUnique || !edgeDecisionModel?.upsert) {
       return null;
     }
@@ -1494,11 +1518,13 @@ export class EdgeEngineService {
   ) {
     if (!decisionRecordId) return null;
 
-    const edgeFeedbackModel = (this.prisma as unknown as {
-      edgeFeedback?: {
-        create?: (input: unknown) => Promise<unknown>;
-      };
-    }).edgeFeedback;
+    const edgeFeedbackModel = (
+      this.prisma as unknown as {
+        edgeFeedback?: {
+          create?: (input: unknown) => Promise<unknown>;
+        };
+      }
+    ).edgeFeedback;
     if (!edgeFeedbackModel?.create) {
       return null;
     }
@@ -1621,7 +1647,10 @@ const toRecommendedAction = (
   urgency: UpdateUrgency,
   recency: number,
 ): EdgeFeedbackAction => {
-  if (edgeScore >= 0.72 || (urgency === UpdateUrgency.high && recency >= 0.55)) {
+  if (
+    edgeScore >= 0.72 ||
+    (urgency === UpdateUrgency.high && recency >= 0.55)
+  ) {
     return EdgeFeedbackAction.act;
   }
   if (edgeScore >= 0.46) {

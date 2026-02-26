@@ -23,23 +23,22 @@ export class CreateInternalTransferDto {
   asset?: WalletAsset;
 
   @ValidateIf(
-    (value: CreateInternalTransferDto) =>
-      !value.toAddress && !value.toUsername,
+    (value: CreateInternalTransferDto) => !value.toAddress && !value.toUsername,
   )
   @IsUUID()
   toUserId?: string;
 
   @ValidateIf(
-    (value: CreateInternalTransferDto) =>
-      !value.toUserId && !value.toUsername,
+    (value: CreateInternalTransferDto) => !value.toUserId && !value.toUsername,
   )
   @IsString()
-  @Matches(evmAddressPattern, { message: 'toAddress must be a valid EVM address' })
+  @Matches(evmAddressPattern, {
+    message: 'toAddress must be a valid EVM address',
+  })
   toAddress?: string;
 
   @ValidateIf(
-    (value: CreateInternalTransferDto) =>
-      !value.toUserId && !value.toAddress,
+    (value: CreateInternalTransferDto) => !value.toUserId && !value.toAddress,
   )
   @IsString()
   @Matches(usernamePattern, {

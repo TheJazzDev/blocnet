@@ -38,7 +38,8 @@ export const GOVERNANCE_ROLES: GovernanceRoleDefinition[] = [
   {
     role: AppRole.OWNER,
     label: 'Owner',
-    description: 'Highest authority with full governance and configuration control.',
+    description:
+      'Highest authority with full governance and configuration control.',
     order: 1,
   },
   {
@@ -50,7 +51,8 @@ export const GOVERNANCE_ROLES: GovernanceRoleDefinition[] = [
   {
     role: AppRole.MODERATOR,
     label: 'Moderator',
-    description: 'Content and operations reviewer with limited mutation permissions.',
+    description:
+      'Content and operations reviewer with limited mutation permissions.',
     order: 3,
   },
 ];
@@ -99,7 +101,8 @@ export const CAPABILITY_SECTIONS: CapabilitySectionDefinition[] = [
   {
     id: 'access',
     label: 'Access',
-    description: 'User lifecycle management, role management, and applications.',
+    description:
+      'User lifecycle management, role management, and applications.',
   },
   {
     id: 'system',

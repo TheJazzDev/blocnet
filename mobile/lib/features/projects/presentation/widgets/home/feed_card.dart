@@ -7,6 +7,7 @@ import 'package:blocnet/features/projects/presentation/widgets/update/update_det
 import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/update_bookmarks_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
@@ -201,16 +202,14 @@ class _FeedCardState extends State<FeedCard> {
                             ],
                           ),
                         ),
-                        child: CircleAvatar(
+                        child: AppAvatar(
                           radius: 20,
-                          backgroundColor: AppColors.bgElevated,
-                          backgroundImage: author.imageUrl.isNotEmpty
-                              ? NetworkImage(author.imageUrl)
-                              : null,
-                          child: author.imageUrl.isEmpty
-                              ? Icon(Icons.person,
-                                  size: 18, color: AppColors.textMuted)
-                              : null,
+                          imageUrl: author.imageUrl,
+                          fallback: Icon(
+                            Icons.person,
+                            size: 18,
+                            color: AppColors.textMuted,
+                          ),
                         ),
                       ),
                     ),

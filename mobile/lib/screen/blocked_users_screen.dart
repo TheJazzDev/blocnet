@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/blocks_store.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -190,23 +191,17 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   ),
                   child: Row(
                     children: [
-                      CircleAvatar(
+                      AppAvatar(
                         radius: 19,
-                        backgroundColor: AppColors.bgElevated,
-                        backgroundImage:
-                            (user.blocked.avatarUrl?.isNotEmpty ?? false)
-                                ? NetworkImage(user.blocked.avatarUrl!)
-                                : null,
-                        child: (user.blocked.avatarUrl?.isNotEmpty ?? false)
-                            ? null
-                            : Text(
-                                name.substring(0, 1).toUpperCase(),
-                                style: AppTypography.custom(
-                                  color: AppColors.primary400,
-                                  size: 13,
-                                  weight: FontWeight.w700,
-                                ),
-                              ),
+                        imageUrl: user.blocked.avatarUrl,
+                        fallback: Text(
+                          name.substring(0, 1).toUpperCase(),
+                          style: AppTypography.custom(
+                            color: AppColors.primary400,
+                            size: 13,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(

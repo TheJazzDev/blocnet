@@ -1,10 +1,11 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient, RoleName } from '@prisma/client';
 import { Pool } from 'pg';
 import { config as loadEnv } from 'dotenv';
 import { seedBadgesAndQuests } from './seed.badges-quests';
 
-loadEnv({ path: '.env.local', override: true, quiet: true });
+// Keep existing env vars (for CI/prod seeding) and only fallback to .env.local.
+loadEnv({ path: '.env.local', override: false, quiet: true });
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -154,7 +155,111 @@ const defaultTipCurrencies = [
   },
 ] as const;
 
+type AuthUserRow = {
+  id: string;
+  email: string | null;
+};
+
+async function resolveOwnerSeedIdentity(): Promise<{
+  ownerUserId: string;
+  ownerEmail: string;
+}> {
+  const envOwnerUserId = process.env.OWNER_USER_ID?.trim();
+  const envOwnerEmail = process.env.OWNER_EMAIL?.trim().toLowerCase();
+
+  if (!envOwnerUserId && !envOwnerEmail) {
+    throw new Error(
+      'OWNER_USER_ID and OWNER_EMAIL are required for prisma/seed.ts. ' +
+        'Use values from your real Supabase auth account.',
+    );
+  }
+
+  if (envOwnerUserId && envOwnerEmail) {
+    return { ownerUserId: envOwnerUserId, ownerEmail: envOwnerEmail };
+  }
+
+  if (envOwnerUserId) {
+    const rows = await prisma.$queryRaw<AuthUserRow[]>(
+      Prisma.sql`
+        select id::text as id, email
+        from auth.users
+        where id = ${envOwnerUserId}::uuid
+        limit 1
+      `,
+    );
+
+    const row = rows[0];
+    if (!row?.email) {
+      throw new Error(
+        `OWNER_EMAIL is missing and auth.users lookup failed for OWNER_USER_ID=${envOwnerUserId}.`,
+      );
+    }
+
+    return { ownerUserId: row.id, ownerEmail: row.email.toLowerCase() };
+  }
+
+  const rows = await prisma.$queryRaw<AuthUserRow[]>(
+    Prisma.sql`
+      select id::text as id, email
+      from auth.users
+      where lower(email) = lower(${envOwnerEmail!})
+      limit 1
+    `,
+  );
+
+  const row = rows[0];
+  if (!row?.id || !row.email) {
+    throw new Error(
+      `OWNER_USER_ID is missing and auth.users lookup failed for OWNER_EMAIL=${envOwnerEmail}.`,
+    );
+  }
+
+  return { ownerUserId: row.id, ownerEmail: row.email.toLowerCase() };
+}
+
 async function main() {
+  const { ownerUserId, ownerEmail } = await resolveOwnerSeedIdentity();
+
+  await prisma.profile.upsert({
+    where: { id: ownerUserId },
+    update: { email: ownerEmail },
+    create: {
+      id: ownerUserId,
+      email: ownerEmail,
+      displayName: 'Owner',
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_role: {
+        userId: ownerUserId,
+        role: RoleName.owner,
+      },
+    },
+    update: {},
+    create: {
+      userId: ownerUserId,
+      role: RoleName.owner,
+      grantedBy: ownerUserId,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_role: {
+        userId: ownerUserId,
+        role: RoleName.user,
+      },
+    },
+    update: {},
+    create: {
+      userId: ownerUserId,
+      role: RoleName.user,
+      grantedBy: ownerUserId,
+    },
+  });
+
   await prisma.walletRuntimeConfig.upsert({
     where: { id: 'default' },
     update: {},
@@ -374,7 +479,7 @@ async function main() {
   ]);
 
   console.log(
-    `[seed] completed | primaryTags=${primaryCount} secondaryTags=${secondaryCount} riskLimits=${riskCount} miningConfigs=${miningConfigCount} tipCurrencies=${tipCurrencyCount}`,
+    `[seed] completed | ownerUserId=${ownerUserId} ownerEmail=${ownerEmail} primaryTags=${primaryCount} secondaryTags=${secondaryCount} riskLimits=${riskCount} miningConfigs=${miningConfigCount} tipCurrencies=${tipCurrencyCount}`,
   );
 }
 

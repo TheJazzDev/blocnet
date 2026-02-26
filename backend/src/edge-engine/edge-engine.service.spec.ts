@@ -19,7 +19,9 @@ describe('EdgeEngineService', () => {
   };
 
   const configService = {
-    get: jest.fn().mockImplementation((_: string, fallback: unknown) => fallback),
+    get: jest
+      .fn()
+      .mockImplementation((_: string, fallback: unknown) => fallback),
   } as unknown as ConfigService;
 
   const auditLogService = {
@@ -38,7 +40,11 @@ describe('EdgeEngineService', () => {
       enabled: true,
       updatedAt: new Date('2026-02-23T00:00:00.000Z'),
     });
-    service = new EdgeEngineService(prisma as any, configService, auditLogService);
+    service = new EdgeEngineService(
+      prisma as any,
+      configService,
+      auditLogService,
+    );
   });
 
   it('ranks higher urgency and fresher updates first in feed', async () => {
@@ -72,13 +78,17 @@ describe('EdgeEngineService', () => {
     expect(result.items).toHaveLength(2);
     expect(result.items[0].decisionId).toBe('edge:update:update-high-fresh');
     expect(result.items[0].recommendedAction).toBe(EdgeFeedbackAction.act);
-    expect(result.items[0].edgeScore).toBeGreaterThan(result.items[1].edgeScore);
+    expect(result.items[0].edgeScore).toBeGreaterThan(
+      result.items[1].edgeScore,
+    );
   });
 
   it('returns explainability payload for a tracked decision', async () => {
     prisma.profile.findUnique.mockResolvedValue({
       id: 'user-1',
-      follows: [{ projectId: 'project-1', alertMinUrgency: UpdateUrgency.medium }],
+      follows: [
+        { projectId: 'project-1', alertMinUrgency: UpdateUrgency.medium },
+      ],
     });
     prisma.update.findFirst.mockResolvedValue({
       id: 'update-1',

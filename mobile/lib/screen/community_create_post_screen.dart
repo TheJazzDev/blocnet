@@ -6,6 +6,7 @@ import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/community_posts_store.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -19,13 +20,12 @@ class CommunityCreatePostScreen extends StatefulWidget {
 }
 
 class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
-  final TextEditingController _contentCtrl = TextEditingController();
+  final TextEditingController _contentCtrl = MentionHighlightTextController();
   final FocusNode _contentFocus = FocusNode();
   late final MentionsRepository _mentionsRepository;
   final List<CommunityTopic> _topics = const [
     CommunityTopic.general,
     CommunityTopic.marketTalk,
-    CommunityTopic.introductions,
   ];
   CommunityTopic _selectedTopic = CommunityTopic.general;
 
@@ -82,6 +82,10 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
     final displayName = auth.displayName?.trim().isNotEmpty == true
         ? auth.displayName!.trim()
         : (auth.email ?? 'Blocnet User').split('@').first;
+    final rawUsername = auth.username?.trim();
+    final username = rawUsername != null && rawUsername.isNotEmpty
+        ? (rawUsername.startsWith('@') ? rawUsername : '@$rawUsername')
+        : '@blocnet.user';
     final avatarUrl = auth.avatarUrl;
 
     return Scaffold(
@@ -107,25 +111,19 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
+                          AppAvatar(
                             radius: 20,
-                            backgroundColor: AppColors.bgElevated,
-                            backgroundImage:
-                                avatarUrl != null && avatarUrl.isNotEmpty
-                                    ? NetworkImage(avatarUrl)
-                                    : null,
-                            child: avatarUrl == null || avatarUrl.isEmpty
-                                ? Text(
-                                    displayName.isNotEmpty
-                                        ? displayName[0].toUpperCase()
-                                        : 'B',
-                                    style: AppTypography.custom(
-                                      color: AppColors.primary400,
-                                      size: 16,
-                                      weight: FontWeight.w700,
-                                    ),
-                                  )
-                                : null,
+                            imageUrl: avatarUrl,
+                            fallback: Text(
+                              displayName.isNotEmpty
+                                  ? displayName[0].toUpperCase()
+                                  : 'B',
+                              style: AppTypography.custom(
+                                color: AppColors.primary400,
+                                size: 16,
+                                weight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -141,10 +139,12 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                                   ),
                                 ),
                                 Text(
-                                  auth.email ?? '@blocnet.user',
-                                  style: AppTypography.custom(color: AppColors.textMuted,
+                                  username,
+                                  style: AppTypography.custom(
+                                    color: AppColors.textMuted,
                                     size: 12,
-                                    weight: FontWeight.w400,),
+                                    weight: FontWeight.w400,
+                                  ),
                                 ),
                               ],
                             ),
@@ -159,6 +159,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                         hintText: "What's on your mind?",
                         minLines: 8,
                         maxLines: 12,
+                        showFocusHighlight: false,
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -242,9 +243,11 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                             )
                           : Text(
                               'Post',
-                              style: AppTypography.custom(size: 14,
+                              style: AppTypography.custom(
+                                size: 14,
                                 color: Colors.black,
-                                weight: FontWeight.w700,),
+                                weight: FontWeight.w700,
+                              ),
                             ),
                     ),
                   ),

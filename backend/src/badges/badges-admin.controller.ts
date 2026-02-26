@@ -16,7 +16,10 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { AppRole } from '../common/enums/role.enum';
 import { BadgesService } from './badges.service';
-import { BadgeResponseDto, UserBadgeResponseDto } from './dto/badge-response.dto';
+import {
+  BadgeResponseDto,
+  UserBadgeResponseDto,
+} from './dto/badge-response.dto';
 import { CreateBadgeDto } from './dto/create-badge.dto';
 import { UpdateBadgeDto } from './dto/update-badge.dto';
 import { GrantBadgeDto } from './dto/grant-badge.dto';

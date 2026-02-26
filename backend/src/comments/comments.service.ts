@@ -107,7 +107,11 @@ export class CommentsService {
     return this.toCommentResponse(comment);
   }
 
-  async listComments(actor: AuthUser, updateId: string, query: ListCommentsQuery) {
+  async listComments(
+    actor: AuthUser,
+    updateId: string,
+    query: ListCommentsQuery,
+  ) {
     const update = await this.prisma.update.findUnique({
       where: { id: updateId },
       select: { id: true, status: true },

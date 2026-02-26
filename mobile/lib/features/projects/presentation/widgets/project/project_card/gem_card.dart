@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:blocnet/screen/public_profile_screen.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
@@ -333,24 +334,20 @@ class GemCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.primary500.withValues(alpha: 0.3),
+                                color:
+                                    AppColors.primary500.withValues(alpha: 0.3),
                                 width: 2,
                               ),
                             ),
-                            child: CircleAvatar(
+                            child: AppAvatar(
                               radius: 13,
+                              imageUrl: admin?.imageUrl,
                               backgroundColor: AppColors.bgSurface,
-                              backgroundImage:
-                                  (admin?.imageUrl.isNotEmpty ?? false)
-                                      ? NetworkImage(admin!.imageUrl)
-                                      : null,
-                              child: (admin == null || admin.imageUrl.isEmpty)
-                                  ? Icon(
-                                      Icons.person,
-                                      size: 14,
-                                      color: AppColors.textFaint,
-                                    )
-                                  : null,
+                              fallback: Icon(
+                                Icons.person,
+                                size: 14,
+                                color: AppColors.textFaint,
+                              ),
                             ),
                           ),
                         ),

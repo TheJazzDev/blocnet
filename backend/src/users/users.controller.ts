@@ -152,7 +152,8 @@ export class UsersController {
   )
   async uploadMyAvatar(
     @CurrentUser() user: AuthUser | undefined,
-    @UploadedFile() file?: {
+    @UploadedFile()
+    file?: {
       buffer: Buffer;
       mimetype: string;
       size: number;

@@ -365,9 +365,7 @@ export class TurnkeyCustodyAdapter implements CustodyAdapter {
       apiPrivateKey: Boolean(
         this.getOptionalConfigValue('TURNKEY_API_PRIVATE_KEY'),
       ),
-      apiKeyId: Boolean(
-        this.getOptionalConfigValue('TURNKEY_API_KEY_ID'),
-      ),
+      apiKeyId: Boolean(this.getOptionalConfigValue('TURNKEY_API_KEY_ID')),
     };
 
     if (mode === 'mock') {

@@ -1,5 +1,13 @@
 import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  Min,
+} from 'class-validator';
 
 const currencyCodePattern = /^[A-Z0-9]{2,12}$/;
 
@@ -34,4 +42,3 @@ export class ListTipHistoryQuery {
   @Min(0)
   offset?: number;
 }
-

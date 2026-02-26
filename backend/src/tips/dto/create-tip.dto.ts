@@ -57,4 +57,3 @@ export class CreateTipDto {
   @MaxLength(120)
   contextId?: string;
 }
-

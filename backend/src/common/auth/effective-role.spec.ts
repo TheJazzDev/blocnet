@@ -6,15 +6,11 @@ import {
 
 describe('effective-role resolver', () => {
   it('resolves top governance role by priority', () => {
+    expect(getAdminGovernanceRole([AppRole.MODERATOR, AppRole.ADMIN])).toBe(
+      AppRole.ADMIN,
+    );
     expect(
-      getAdminGovernanceRole([AppRole.MODERATOR, AppRole.ADMIN]),
-    ).toBe(AppRole.ADMIN);
-    expect(
-      getAdminGovernanceRole([
-        AppRole.MODERATOR,
-        AppRole.OWNER,
-        AppRole.ADMIN,
-      ]),
+      getAdminGovernanceRole([AppRole.MODERATOR, AppRole.OWNER, AppRole.ADMIN]),
     ).toBe(AppRole.OWNER);
   });
 
@@ -25,7 +21,10 @@ describe('effective-role resolver', () => {
     );
     expect(ownerToAdmin.actingAsRole).toBe(AppRole.ADMIN);
     expect(ownerToAdmin.realRoles).toEqual([AppRole.OWNER, AppRole.HUNTER]);
-    expect(ownerToAdmin.effectiveRoles).toEqual([AppRole.HUNTER, AppRole.ADMIN]);
+    expect(ownerToAdmin.effectiveRoles).toEqual([
+      AppRole.HUNTER,
+      AppRole.ADMIN,
+    ]);
 
     const ownerToModerator = resolveEffectiveRoles(
       [AppRole.OWNER],

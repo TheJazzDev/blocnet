@@ -10,6 +10,7 @@ import 'package:blocnet/services/blocks_store.dart';
 import 'package:blocnet/services/user_profile_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -290,24 +291,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
                     child: Column(
                       children: [
-                        CircleAvatar(
+                        AppAvatar(
                           radius: 42,
-                          backgroundColor: AppColors.bgElevated,
-                          backgroundImage: admin.imageUrl.isNotEmpty
-                              ? NetworkImage(admin.imageUrl)
-                              : null,
-                          child: admin.imageUrl.isEmpty
-                              ? Text(
-                                  admin.name.isNotEmpty
-                                      ? admin.name[0].toUpperCase()
-                                      : 'U',
-                                  style: AppTypography.custom(
-                                    color: AppColors.primary400,
-                                    size: 24,
-                                    weight: FontWeight.w700,
-                                  ),
-                                )
-                              : null,
+                          imageUrl: admin.imageUrl,
+                          fallback: Text(
+                            admin.name.isNotEmpty
+                                ? admin.name[0].toUpperCase()
+                                : 'U',
+                            style: AppTypography.custom(
+                              color: AppColors.primary400,
+                              size: 24,
+                              weight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Row(

@@ -4,6 +4,7 @@ import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/tips_store.dart';
 import 'package:blocnet/services/user_profile_store.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -476,14 +477,10 @@ class _RecipientHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
+          AppAvatar(
             radius: 18,
-            backgroundColor: AppColors.bgElevated,
-            backgroundImage:
-                avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-            child: avatarUrl.isEmpty
-                ? Icon(Icons.person, color: AppColors.textMuted, size: 18)
-                : null,
+            imageUrl: avatarUrl,
+            fallback: Icon(Icons.person, color: AppColors.textMuted, size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(

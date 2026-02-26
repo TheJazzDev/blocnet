@@ -34,7 +34,11 @@ export class BadgesService {
 
     return this.prisma.badge.findMany({
       where,
-      orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
+      orderBy: [
+        { category: 'asc' },
+        { sortOrder: 'asc' },
+        { createdAt: 'asc' },
+      ],
     });
   }
 
@@ -216,7 +220,9 @@ export class BadgesService {
         ...(dto.imageUrl && { imageUrl: dto.imageUrl }),
         ...(dto.category && { category: dto.category }),
         ...(dto.rarity && { rarity: dto.rarity }),
-        ...(dto.pointsRequirement !== undefined && { pointsRequirement: dto.pointsRequirement }),
+        ...(dto.pointsRequirement !== undefined && {
+          pointsRequirement: dto.pointsRequirement,
+        }),
         ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       },
@@ -311,7 +317,9 @@ export class BadgesService {
       });
       if (profile) {
         if (profile.isDeactivated) {
-          throw new BadRequestException('Cannot grant badge to deactivated user');
+          throw new BadRequestException(
+            'Cannot grant badge to deactivated user',
+          );
         }
         return profile.id;
       }
@@ -495,7 +503,9 @@ export class BadgesService {
     if (updateCount >= 10)
       await this.checkAndAwardBadge(userId, 'content-creator', { updateCount });
     if (updateCount >= 50)
-      await this.checkAndAwardBadge(userId, 'prolific-creator', { updateCount });
+      await this.checkAndAwardBadge(userId, 'prolific-creator', {
+        updateCount,
+      });
 
     // Comment milestones
     if (commentCount >= 1)
@@ -527,7 +537,9 @@ export class BadgesService {
     });
 
     if (referralCount >= 1)
-      await this.checkAndAwardBadge(userId, 'first-referral', { referralCount });
+      await this.checkAndAwardBadge(userId, 'first-referral', {
+        referralCount,
+      });
     if (referralCount >= 5)
       await this.checkAndAwardBadge(userId, 'recruiter', { referralCount });
     if (referralCount >= 25)
@@ -568,7 +580,10 @@ export class BadgesService {
   }
 
   private isBadgeHigherPriority(
-    left: Pick<Badge, 'rarity' | 'pointsRequirement' | 'sortOrder' | 'createdAt'>,
+    left: Pick<
+      Badge,
+      'rarity' | 'pointsRequirement' | 'sortOrder' | 'createdAt'
+    >,
     right: Pick<
       Badge,
       'rarity' | 'pointsRequirement' | 'sortOrder' | 'createdAt'

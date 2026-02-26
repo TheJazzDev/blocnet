@@ -3,6 +3,7 @@ import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -194,12 +195,10 @@ class _HunterAvatar extends StatelessWidget {
   }
 
   Widget _buildAvatarCircle() {
-    return CircleAvatar(
-      backgroundColor: AppColors.bgElevated,
-      backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-      child: imageUrl.isEmpty
-          ? Icon(Icons.person, size: 16, color: AppColors.textMuted)
-          : null,
+    return AppAvatar(
+      radius: 20,
+      imageUrl: imageUrl,
+      fallback: Icon(Icons.person, size: 16, color: AppColors.textMuted),
     );
   }
 }

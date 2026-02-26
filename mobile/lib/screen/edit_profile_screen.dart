@@ -107,7 +107,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() => _selectedAvatarFile = pickedFile);
     } catch (error) {
       if (!mounted) return;
-      AppSnackbar.showError(context, 'Image selection failed. Please try again.');
+      AppSnackbar.showError(
+          context, 'Image selection failed. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _isPickingImage = false);
@@ -141,20 +142,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppColors.bgSurface,
-                      backgroundImage: _selectedAvatarFile != null
-                          ? FileImage(_selectedAvatarFile!)
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.bgSurface,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: _selectedAvatarFile != null
+                          ? Image.file(
+                              _selectedAvatarFile!,
+                              fit: BoxFit.cover,
+                            )
                           : (auth.avatarUrl != null &&
-                                  auth.avatarUrl!.isNotEmpty
-                              ? NetworkImage(auth.avatarUrl!) as ImageProvider
-                              : null),
-                      child: _selectedAvatarFile == null &&
-                              (auth.avatarUrl == null ||
-                                  auth.avatarUrl!.isEmpty)
-                          ? Icon(Icons.person, color: AppColors.textMuted)
-                          : null,
+                                  auth.avatarUrl!.trim().isNotEmpty
+                              ? Image.network(
+                                  auth.avatarUrl!.trim(),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Icon(
+                                    Icons.person,
+                                    color: AppColors.textMuted,
+                                  ),
+                                )
+                              : Icon(Icons.person, color: AppColors.textMuted)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

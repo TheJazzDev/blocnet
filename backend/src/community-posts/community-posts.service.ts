@@ -36,8 +36,7 @@ export class CommunityPostsService {
     const limit = Math.min(query.limit ?? 30, 100);
 
     // Get list of blocked users
-    const blockedUserIds =
-      await this.blocksService.getBlockedUserIds(actor.id);
+    const blockedUserIds = await this.blocksService.getBlockedUserIds(actor.id);
 
     const where: Prisma.CommunityPostWhereInput = {
       topic: query.topic,

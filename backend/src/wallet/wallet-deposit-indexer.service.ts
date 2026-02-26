@@ -91,10 +91,13 @@ export class WalletDepositIndexerService
   }) {
     const txHash = this.normalizeTxHash(input.txHash);
     if (!txHash) {
-      throw new BadRequestException('txHash must be a valid EVM transaction hash');
+      throw new BadRequestException(
+        'txHash must be a valid EVM transaction hash',
+      );
     }
 
-    const configuredEnvironment = this.walletConfigService.walletChainEnvironment;
+    const configuredEnvironment =
+      this.walletConfigService.walletChainEnvironment;
     const requestedEnvironment =
       input.chainEnvironment ?? configuredEnvironment;
 
@@ -107,7 +110,9 @@ export class WalletDepositIndexerService
     const networks = this.walletConfigService
       .getDepositNetworkConfigs()
       .filter((network) => network.chainEnvironment === requestedEnvironment)
-      .filter((network) => (input.asset ? network.asset === input.asset : true));
+      .filter((network) =>
+        input.asset ? network.asset === input.asset : true,
+      );
 
     if (networks.length === 0) {
       const assetLabel = input.asset ? ` for asset ${input.asset}` : '';
@@ -117,9 +122,7 @@ export class WalletDepositIndexerService
     }
 
     const client = this.getHttpClient(networks[0]);
-    let receipt: Awaited<
-      ReturnType<PublicClient['getTransactionReceipt']>
-    >;
+    let receipt: Awaited<ReturnType<PublicClient['getTransactionReceipt']>>;
     try {
       receipt = await client.getTransactionReceipt({ hash: txHash });
     } catch {
@@ -142,10 +145,9 @@ export class WalletDepositIndexerService
     const requiresNative = networks.some(
       (network) => network.assetKind === WalletAssetKind.native,
     );
-    const tx =
-      requiresNative
-        ? await client.getTransaction({ hash: txHash }).catch(() => null)
-        : null;
+    const tx = requiresNative
+      ? await client.getTransaction({ hash: txHash }).catch(() => null)
+      : null;
 
     const networkResults: ManualReprocessNetworkResult[] = [];
     for (const network of networks) {
@@ -353,7 +355,10 @@ export class WalletDepositIndexerService
       if (logIndex === null) continue;
 
       const fromAddress = this.normalizeAddress(log.args.from) ?? ZERO_ADDRESS;
-      const confirmations = this.computeConfirmations(currentBlock, blockNumber);
+      const confirmations = this.computeConfirmations(
+        currentBlock,
+        blockNumber,
+      );
 
       const deposit = await this.recordDetectedDeposit({
         walletId: wallet.walletId,
@@ -497,8 +502,9 @@ export class WalletDepositIndexerService
     }
 
     const txIndex =
-      this.toLogIndex(receipt.transactionIndex ?? tx.transactionIndex ?? null) ??
-      0;
+      this.toLogIndex(
+        receipt.transactionIndex ?? tx.transactionIndex ?? null,
+      ) ?? 0;
     const fromAddress = this.normalizeAddress(tx.from) ?? ZERO_ADDRESS;
     const blockNumber = receipt.blockNumber;
     const confirmations = this.computeConfirmations(currentBlock, blockNumber);
