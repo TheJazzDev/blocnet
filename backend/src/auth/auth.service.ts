@@ -29,7 +29,6 @@ export class AuthService {
     private readonly walletProvisioningService: WalletProvisioningService,
   ) {
     const jwksUrl = this.configService.get<string>('SUPABASE_JWKS_URL');
-    console.log('JWKS URL:', jwksUrl);
     if (jwksUrl) {
       this.jwks = createRemoteJWKSet(new URL(jwksUrl));
     }
@@ -111,30 +110,13 @@ export class AuthService {
     return this.authenticateRequest(token);
   }
 
-  // private async verifyToken(token: string): Promise<JwtPayload> {
-  //   if (!this.jwks) {
-  //     throw new UnauthorizedException('JWKS not configured');
-  //   }
-
-  //   const { payload } = await jwtVerify(token, this.jwks);
-  //   return payload as JwtPayload;
-  // }
   private async verifyToken(token: string): Promise<JwtPayload> {
-    console.log('Token header:', token.split('.')[0]);
-
     if (!this.jwks) {
-      console.log('JWKS not initialized');
       throw new UnauthorizedException('JWKS not configured');
     }
 
-    try {
-      const { payload } = await jwtVerify(token, this.jwks);
-      console.log('JWT verified successfully');
-      return payload as JwtPayload;
-    } catch (err) {
-      console.error('JWT verification error:', err);
-      throw new UnauthorizedException('Failed to verify auth token');
-    }
+    const { payload } = await jwtVerify(token, this.jwks);
+    return payload as JwtPayload;
   }
 
   toRolePriority(roles: AppRole[]): number {
