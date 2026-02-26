@@ -40,13 +40,13 @@ export function HeroClean() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
           <Link
             href="#download"
-            className="w-full sm:w-auto px-8 py-4 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-base shadow-lg shadow-teal-500/25"
+            className="w-full sm:w-auto px-8 py-4 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-base shadow-lg shadow-teal-500/25 transition-opacity hover:opacity-90"
           >
             Download App
           </Link>
           <Link
             href="/about"
-            className="w-full sm:w-auto px-8 py-4 bg-surface-2/50 backdrop-blur-sm border border-border text-foreground rounded-xl font-semibold text-base"
+            className="w-full sm:w-auto px-8 py-4 bg-surface-2/50 backdrop-blur-sm border border-border text-foreground rounded-xl font-semibold text-base transition-colors hover:border-teal-500/30"
           >
             Learn More
           </Link>
@@ -62,7 +62,7 @@ export function HeroClean() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="p-6 bg-surface-2/50 backdrop-blur-sm border border-border rounded-xl"
+              className="p-6 bg-surface-2/50 backdrop-blur-sm border border-border rounded-xl transition-colors hover:border-teal-500/20"
             >
               <div className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-teal-400 to-primary">
                 {stat.value}

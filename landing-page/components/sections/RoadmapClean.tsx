@@ -148,7 +148,7 @@ export function RoadmapClean() {
             <div key={phase.phase} className="relative">
               {/* Phase Card */}
               <div
-                className={`relative p-8 bg-linear-to-br ${getStatusColor(phase.status)} backdrop-blur-sm border-2 rounded-2xl h-full`}
+                className={`relative p-8 bg-linear-to-br ${getStatusColor(phase.status)} backdrop-blur-sm border-2 rounded-2xl h-full transition-colors hover:border-opacity-70`}
               >
                 {/* Phase Number Badge */}
                 <div className="absolute -top-4 -left-4 w-14 h-14 bg-linear-to-br from-teal-500 to-primary rounded-full flex items-center justify-center border-4 border-[#09090b] shadow-lg shadow-teal-500/50">

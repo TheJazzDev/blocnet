@@ -131,7 +131,7 @@ export function AppDownloadClean() {
               {features.map((feature, index) => (
                 <div
                   key={index}
-                  className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl"
+                  className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl transition-colors hover:border-teal-500/30"
                 >
                   <div className="text-4xl mb-3">{feature.icon}</div>
                   <h3 className="text-lg font-bold text-foreground mb-2">
@@ -183,7 +183,7 @@ export function AppDownloadClean() {
                 type="button"
                 onClick={() => void handleDownload()}
                 disabled={isDownloading}
-                className="w-full px-8 py-5 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-bold text-lg shadow-lg shadow-teal-500/25 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                className="w-full px-8 py-5 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-bold text-lg shadow-lg shadow-teal-500/25 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3 transition-opacity hover:opacity-90"
               >
                 {isDownloading ? (
                   <>

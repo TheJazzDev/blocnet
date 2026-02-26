@@ -89,7 +89,7 @@ export function EdgeEngineClean() {
             {decisions.map((item) => (
               <div
                 key={item.action}
-                className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl"
+                className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl transition-colors hover:border-teal-500/30"
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-14 h-14 bg-linear-to-br ${item.color} rounded-xl flex items-center justify-center text-3xl`}>
@@ -117,7 +117,7 @@ export function EdgeEngineClean() {
             {scoringFactors.map((factor, index) => (
               <div
                 key={index}
-                className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-teal-500/20 rounded-xl"
+                className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-teal-500/20 rounded-xl transition-colors hover:border-teal-500/40"
               >
                 <div className="text-3xl mb-3">{factor.icon}</div>
                 <h4 className="text-base font-semibold text-foreground mb-2">
@@ -160,7 +160,7 @@ export function EdgeEngineClean() {
           </p>
           <a
             href="#download"
-            className="inline-block px-8 py-4 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-base shadow-lg shadow-teal-500/25"
+            className="inline-block px-8 py-4 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-semibold transition-opacity hover:opacity-90 text-base shadow-lg shadow-teal-500/25"
           >
             Get Started with BEE
           </a>

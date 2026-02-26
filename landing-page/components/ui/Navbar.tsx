@@ -57,10 +57,10 @@ export function Navbar() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`text-sm lg:text-base ${
+                  className={`text-sm lg:text-base transition-colors ${
                     pathname === link.href
                       ? 'text-teal-400 font-semibold'
-                      : 'text-muted'
+                      : 'text-muted hover:text-foreground'
                   }`}
                 >
                   {link.label}
@@ -83,14 +83,14 @@ export function Navbar() {
               href="https://x.com/blocnet_app"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-surface-2 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground"
+              className="hidden sm:inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-surface-2 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground transition-colors hover:border-teal-500/30"
             >
               <span>Follow on</span>
               <span className="font-bold">𝕏</span>
             </a>
             <a
               href={isHomePage ? '#download' : '/#download'}
-              className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 bg-teal-500 text-white rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm md:text-base"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 bg-teal-500 text-white rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm md:text-base transition-opacity hover:opacity-90"
             >
               Download App
             </a>

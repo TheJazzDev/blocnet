@@ -77,7 +77,7 @@ export function TokenomicsClean() {
           {tokenStats.map((stat) => (
             <div
               key={stat.label}
-              className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-teal-500/20 rounded-xl text-center"
+              className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-teal-500/20 rounded-xl text-center transition-colors hover:border-teal-500/40"
             >
               <p className="text-sm text-muted mb-2">
                 {stat.label}
@@ -102,7 +102,7 @@ export function TokenomicsClean() {
             {tokenAllocation.map((item, index) => (
               <div
                 key={index}
-                className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl text-center"
+                className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl text-center transition-colors hover:border-teal-500/30"
               >
                 <div
                   className="w-16 h-16 rounded-full mx-auto mb-4"
@@ -128,7 +128,7 @@ export function TokenomicsClean() {
             {utilities.map((utility, index) => (
               <div
                 key={index}
-                className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl"
+                className="p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-border rounded-xl transition-colors hover:border-teal-500/30"
               >
                 <div className="flex items-start gap-4">
                   <div className="shrink-0 w-12 h-12 bg-linear-to-br from-teal-500/20 to-primary/20 rounded-xl flex items-center justify-center border border-teal-500/30">

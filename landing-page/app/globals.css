@@ -39,3 +39,16 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Professional subtle interactions */
+button,
+a[href] {
+  cursor: pointer;
+}
+
+/* Focus states for accessibility */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #2dd4bf;
+  outline-offset: 2px;
+}

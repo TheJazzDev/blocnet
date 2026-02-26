@@ -28,7 +28,7 @@ export function Footer() {
                 href="https://x.com/blocnet_app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-surface-2 border border-border rounded-lg text-sm sm:text-base"
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-surface-2 border border-border rounded-lg text-sm sm:text-base transition-colors hover:border-teal-500/30"
                 aria-label="Follow us on X (Twitter)"
               >
                 𝕏
@@ -37,7 +37,7 @@ export function Footer() {
                 href="https://t.me/blocnet_app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-surface-2 border border-border rounded-lg text-sm sm:text-base"
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-surface-2 border border-border rounded-lg text-sm sm:text-base transition-colors hover:border-teal-500/30"
                 aria-label="Join our Telegram"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@ export function Footer() {
                 href="https://instagram.com/blocnet_app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-surface-2 border border-border rounded-lg text-sm sm:text-base"
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-surface-2 border border-border rounded-lg text-sm sm:text-base transition-colors hover:border-teal-500/30"
                 aria-label="Follow us on Instagram"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -59,7 +59,7 @@ export function Footer() {
                 href="https://tiktok.com/@blocnet_app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-surface-2 border border-border rounded-lg text-sm sm:text-base"
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-surface-2 border border-border rounded-lg text-sm sm:text-base transition-colors hover:border-teal-500/30"
                 aria-label="Follow us on TikTok"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -76,27 +76,27 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <a href="/#features" className="text-xs sm:text-sm text-muted">
+                <a href="/#features" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Features
                 </a>
               </li>
               <li>
-                <Link href="/roadmap" className="text-xs sm:text-sm text-muted">
+                <Link href="/roadmap" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Roadmap
                 </Link>
               </li>
               <li>
-                <a href="/#mining" className="text-xs sm:text-sm text-muted">
+                <a href="/#mining" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Mining
                 </a>
               </li>
               <li>
-                <a href="/#wallet" className="text-xs sm:text-sm text-muted">
+                <a href="/#wallet" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Wallet
                 </a>
               </li>
               <li>
-                <a href="/#community" className="text-xs sm:text-sm text-muted">
+                <a href="/#community" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Community
                 </a>
               </li>
@@ -110,27 +110,27 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <a href="https://x.com/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted">
+                <a href="https://x.com/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   X (Twitter)
                 </a>
               </li>
               <li>
-                <a href="https://t.me/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted">
+                <a href="https://t.me/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Telegram
                 </a>
               </li>
               <li>
-                <a href="https://instagram.com/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted">
+                <a href="https://instagram.com/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Instagram
                 </a>
               </li>
               <li>
-                <a href="https://tiktok.com/@blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted">
+                <a href="https://tiktok.com/@blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   TikTok
                 </a>
               </li>
               <li>
-                <a href="/#download" className="text-xs sm:text-sm text-muted">
+                <a href="/#download" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Download App
                 </a>
               </li>
@@ -144,27 +144,27 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <a href="https://t.me/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted">
+                <a href="https://t.me/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Help Center
                 </a>
               </li>
               <li>
-                <a href="mailto:blocnetapp@gmail.com" className="text-xs sm:text-sm text-muted">
+                <a href="mailto:blocnetapp@gmail.com" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Contact Us
                 </a>
               </li>
               <li>
-                <a href="#" className="text-xs sm:text-sm text-muted">
+                <Link href="/privacy" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-xs sm:text-sm text-muted">
+                <Link href="/terms" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="https://github.com/blocnet" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted">
+                <a href="https://github.com/blocnet" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   GitHub
                 </a>
               </li>
@@ -178,12 +178,12 @@ export function Footer() {
             © {new Date().getFullYear()} Blocnet. All rights reserved.
           </p>
           <div className="flex gap-4 sm:gap-6 text-xs sm:text-sm text-muted">
-            <a href="#">
+            <Link href="/privacy" className="transition-colors hover:text-foreground">
               Privacy Policy
-            </a>
-            <a href="#">
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-foreground">
               Terms of Service
-            </a>
+            </Link>
           </div>
         </div>
       </div>
