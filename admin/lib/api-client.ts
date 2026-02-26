@@ -743,6 +743,8 @@ export const clientApi = {
       depositsEnabled: boolean;
       withdrawalsEnabled: boolean;
       depositRealtimeEnabled: boolean;
+      bscRpcUrl: string | null;
+      bscRpcWsUrl: string | null;
       depositConfirmations: number;
       withdrawalConfirmations: number;
       walletAssetBntEnabled: boolean;

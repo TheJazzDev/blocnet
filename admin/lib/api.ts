@@ -588,6 +588,8 @@ export interface WalletRuntimeConfig {
   depositsEnabled: boolean;
   withdrawalsEnabled: boolean;
   depositRealtimeEnabled: boolean;
+  bscRpcUrl: string | null;
+  bscRpcWsUrl: string | null;
   depositConfirmations: number;
   withdrawalConfirmations: number;
   walletAssetBntEnabled: boolean;
@@ -1220,6 +1222,8 @@ export const api = {
       depositsEnabled: boolean;
       withdrawalsEnabled: boolean;
       depositRealtimeEnabled: boolean;
+      bscRpcUrl: string | null;
+      bscRpcWsUrl: string | null;
       depositConfirmations: number;
       withdrawalConfirmations: number;
       walletAssetBntEnabled: boolean;

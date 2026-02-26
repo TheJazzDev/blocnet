@@ -321,6 +321,12 @@ export default function WalletSettingsPage() {
         depositsEnabled: runtimeConfig.depositsEnabled,
         withdrawalsEnabled: runtimeConfig.withdrawalsEnabled,
         depositRealtimeEnabled: runtimeConfig.depositRealtimeEnabled,
+        bscRpcUrl: runtimeConfig.bscRpcUrl?.trim()
+          ? runtimeConfig.bscRpcUrl.trim()
+          : null,
+        bscRpcWsUrl: runtimeConfig.bscRpcWsUrl?.trim()
+          ? runtimeConfig.bscRpcWsUrl.trim()
+          : null,
         depositConfirmations: runtimeConfig.depositConfirmations,
         withdrawalConfirmations: runtimeConfig.withdrawalConfirmations,
         walletAssetBntEnabled: runtimeConfig.walletAssetBntEnabled,
@@ -567,6 +573,49 @@ export default function WalletSettingsPage() {
                           : prev,
                       );
                     }}
+                    disabled={!canMutate || savingRuntimeConfig}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    BSC RPC URL
+                  </p>
+                  <Input
+                    placeholder="https://..."
+                    value={runtimeConfig.bscRpcUrl ?? ""}
+                    onChange={(event) =>
+                      setRuntimeConfig((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              bscRpcUrl: event.target.value,
+                            }
+                          : prev,
+                      )
+                    }
+                    disabled={!canMutate || savingRuntimeConfig}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    BSC RPC WS URL
+                  </p>
+                  <Input
+                    placeholder="wss://..."
+                    value={runtimeConfig.bscRpcWsUrl ?? ""}
+                    onChange={(event) =>
+                      setRuntimeConfig((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              bscRpcWsUrl: event.target.value,
+                            }
+                          : prev,
+                      )
+                    }
                     disabled={!canMutate || savingRuntimeConfig}
                   />
                 </div>

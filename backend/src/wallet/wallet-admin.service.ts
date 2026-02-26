@@ -366,6 +366,8 @@ export class WalletAdminService {
       depositsEnabled: dto.depositsEnabled,
       withdrawalsEnabled: dto.withdrawalsEnabled,
       depositRealtimeEnabled: dto.depositRealtimeEnabled,
+      bscRpcUrl: dto.bscRpcUrl,
+      bscRpcWsUrl: dto.bscRpcWsUrl,
       depositConfirmations: dto.depositConfirmations,
       withdrawalConfirmations: dto.withdrawalConfirmations,
       walletAssetBntEnabled: dto.walletAssetBntEnabled,

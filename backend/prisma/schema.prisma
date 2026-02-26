@@ -1087,6 +1087,8 @@ model WalletRuntimeConfig {
   depositsEnabled       Boolean  @default(false)
   withdrawalsEnabled    Boolean  @default(false)
   depositRealtimeEnabled Boolean @default(true)
+  bscRpcUrl             String?
+  bscRpcWsUrl           String?
   depositConfirmations  Int?
   withdrawalConfirmations Int?
   walletAssetBntEnabled Boolean  @default(true)
