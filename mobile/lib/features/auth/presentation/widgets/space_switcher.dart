@@ -18,7 +18,7 @@ class SpaceSwitcher extends StatelessWidget {
     if (!auth.hasHunterSpace) return const SizedBox.shrink();
 
     final isHunterActive = auth.isInHunterSpace;
-    final icon = isHunterActive ? Icons.radar_rounded : Icons.person_rounded;
+    final icon = isHunterActive ? Icons.radar_rounded : Icons.public_rounded;
     final accent = AppColors.accentForSpace(isHunterActive);
     final targetLabel = isHunterActive ? 'User' : 'Hunter';
 

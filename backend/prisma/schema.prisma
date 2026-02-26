@@ -54,6 +54,7 @@ enum NotificationType {
   community_liked
   community_bookmarked
   comment_received
+  mention_received
   project_proposal_submitted
   project_proposal_reviewed
   admin_application_submitted
@@ -82,6 +83,21 @@ enum NotificationType {
   quest_verified
   quest_rejected
   system
+}
+
+enum NotificationCategory {
+  updates
+  social
+  governance
+  wallet
+  mining_referrals
+  rewards
+  system
+}
+
+enum DigestCadence {
+  daily
+  weekly
 }
 
 enum CommunityTopic {
@@ -254,80 +270,101 @@ enum EdgeAction {
 }
 
 model Profile {
-  id                             String                  @id @db.Uuid
-  email                          String                  @unique
-  username                       String?                 @unique
-  displayName                    String?
-  avatarUrl                      String?
-  bio                            String?
-  isDeactivated                  Boolean                 @default(false)
-  deactivatedAt                  DateTime?
-  deactivatedBy                  String?                 @db.Uuid
-  deactivationReason             String?
-  previousUsername               String?
-  previousDisplayName            String?
-  previousAvatarUrl              String?
-  previousBio                    String?
-  homeFeedLastSeenAt             DateTime?
-  referralCode                   String?                 @unique
-  referredById                   String?                 @db.Uuid
-  referredAt                     DateTime?
-  miningClaimedPoints            BigInt                  @default(0)
-  primaryBadgeId                 String?                 @db.Uuid
-  createdAt                      DateTime                @default(now())
-  updatedAt                      DateTime                @updatedAt
-  roles                          UserRole[]
-  ownedProjects                  Project[]               @relation("OwnedProjects")
-  hunterAssignments              ProjectHunter[]
-  authoredUpdates                Update[]                @relation("AuthoredUpdates")
-  authoredComments               Comment[]               @relation("AuthoredComments")
-  moderatedProjects              Project[]               @relation("ProjectModerator")
-  moderatedUpdates               Update[]                @relation("UpdateModerator")
-  moderatedComments              Comment[]               @relation("CommentModerator")
-  communityPosts                 CommunityPost[]         @relation("CommunityPostAuthor")
-  moderatedCommunityPosts        CommunityPost[]         @relation("CommunityPostModerator")
-  communityPostComments          CommunityPostComment[]  @relation("CommunityPostCommentAuthor")
-  moderatedCommunityPostComments CommunityPostComment[]  @relation("CommunityPostCommentModerator")
-  communityPostReactions         CommunityPostReaction[] @relation("CommunityPostReactionUser")
-  bookmarks                      Bookmark[]
-  followerLinks                  UserFollow[]            @relation("UserFollowFollowee")
-  followingLinks                 UserFollow[]            @relation("UserFollowFollower")
-  hunterInvites                  ProjectHunterInvite[]   @relation("InviteHunter")
-  sentInvites                    ProjectHunterInvite[]   @relation("InviteSender")
-  reviewedInvites                ProjectHunterInvite[]   @relation("InviteReviewer")
-  projectProposals               ProjectProposal[]       @relation("ProjectProposalApplicant")
-  reviewedProposals              ProjectProposal[]       @relation("ProjectProposalReviewer")
-  follows                        ProjectFollow[]
-  notifications                  Notification[]
-  actorNotifications             Notification[]          @relation("NotificationActor")
-  deviceTokens                   DeviceToken[]
-  adminApplications              AdminApplication[]      @relation("AdminApplicationApplicant")
-  wallet                         UserWallet?
-  ledgerAccounts                 LedgerAccount[]
-  kycProfile                     KycProfile?
-  withdrawalRequests             WithdrawalRequest[]     @relation("WithdrawalRequester")
-  reviewedWithdrawals            WithdrawalRequest[]     @relation("WithdrawalReviewer")
-  reviewedKycProfiles            KycProfile[]            @relation("KycReviewer")
-  tipAccounts                    TipAccount[]
-  tipTransactionsSent            TipTransaction[]        @relation("TipTxnSenderUser")
-  tipTransactionsReceived        TipTransaction[]        @relation("TipTxnRecipientUser")
-  tipConversions                 TipConversion[]
-  edgeDecisions                  EdgeDecision[]
-  edgeFeedback                   EdgeFeedback[]
-  audits                         AuditLog[]              @relation("ActorAuditLogs")
-  referrer                       Profile?                @relation("ProfileReferrer", fields: [referredById], references: [id], onDelete: SetNull)
-  referrals                      Profile[]               @relation("ProfileReferrer")
-  miningSessions                 MiningSession[]
-  miningPointLedgerEntries       MiningPointLedger[]
-  miningHourlyCheckpoints        MiningHourlyCheckpoint[]
-  primaryBadge                   Badge?                  @relation("ProfilePrimaryBadge", fields: [primaryBadgeId], references: [id], onDelete: SetNull)
-  earnedBadges                   UserBadge[]             @relation("UserEarnedBadges")
-  grantedBadges                  UserBadge[]             @relation("BadgeGrantor")
-  userQuests                     UserQuest[]
-  questSubmissions               QuestSubmission[]
+  id                              String                               @id @db.Uuid
+  email                           String                               @unique
+  username                        String?                              @unique
+  displayName                     String?
+  avatarUrl                       String?
+  bio                             String?
+  isDeactivated                   Boolean                              @default(false)
+  deactivatedAt                   DateTime?
+  deactivatedBy                   String?                              @db.Uuid
+  deactivationReason              String?
+  previousUsername                String?
+  previousDisplayName             String?
+  previousAvatarUrl               String?
+  previousBio                     String?
+  homeFeedLastSeenAt              DateTime?
+  referralCode                    String?                              @unique
+  referredById                    String?                              @db.Uuid
+  referredAt                      DateTime?
+  miningClaimedPoints             BigInt                               @default(0)
+  primaryBadgeId                  String?                              @db.Uuid
+  createdAt                       DateTime                             @default(now())
+  updatedAt                       DateTime                             @updatedAt
+  roles                           UserRole[]
+  ownedProjects                   Project[]                            @relation("OwnedProjects")
+  hunterAssignments               ProjectHunter[]
+  authoredUpdates                 Update[]                             @relation("AuthoredUpdates")
+  authoredComments                Comment[]                            @relation("AuthoredComments")
+  moderatedProjects               Project[]                            @relation("ProjectModerator")
+  moderatedUpdates                Update[]                             @relation("UpdateModerator")
+  moderatedComments               Comment[]                            @relation("CommentModerator")
+  communityPosts                  CommunityPost[]                      @relation("CommunityPostAuthor")
+  moderatedCommunityPosts         CommunityPost[]                      @relation("CommunityPostModerator")
+  communityPostComments           CommunityPostComment[]               @relation("CommunityPostCommentAuthor")
+  moderatedCommunityPostComments  CommunityPostComment[]               @relation("CommunityPostCommentModerator")
+  communityPostReactions          CommunityPostReaction[]              @relation("CommunityPostReactionUser")
+  bookmarks                       Bookmark[]
+  followerLinks                   UserFollow[]                         @relation("UserFollowFollowee")
+  followingLinks                  UserFollow[]                         @relation("UserFollowFollower")
+  hunterInvites                   ProjectHunterInvite[]                @relation("InviteHunter")
+  sentInvites                     ProjectHunterInvite[]                @relation("InviteSender")
+  reviewedInvites                 ProjectHunterInvite[]                @relation("InviteReviewer")
+  projectProposals                ProjectProposal[]                    @relation("ProjectProposalApplicant")
+  reviewedProposals               ProjectProposal[]                    @relation("ProjectProposalReviewer")
+  follows                         ProjectFollow[]
+  notifications                   Notification[]
+  notificationSettings            UserNotificationSettings?
+  notificationCategoryPreferences UserNotificationCategoryPreference[]
+  notificationTypeOverrides       UserNotificationTypeOverride[]
+  actorNotifications              Notification[]                       @relation("NotificationActor")
+  deviceTokens                    DeviceToken[]
+  adminApplications               AdminApplication[]                   @relation("AdminApplicationApplicant")
+  wallet                          UserWallet?
+  ledgerAccounts                  LedgerAccount[]
+  kycProfile                      KycProfile?
+  withdrawalRequests              WithdrawalRequest[]                  @relation("WithdrawalRequester")
+  reviewedWithdrawals             WithdrawalRequest[]                  @relation("WithdrawalReviewer")
+  reviewedKycProfiles             KycProfile[]                         @relation("KycReviewer")
+  tipAccounts                     TipAccount[]
+  tipTransactionsSent             TipTransaction[]                     @relation("TipTxnSenderUser")
+  tipTransactionsReceived         TipTransaction[]                     @relation("TipTxnRecipientUser")
+  tipConversions                  TipConversion[]
+  edgeDecisions                   EdgeDecision[]
+  edgeFeedback                    EdgeFeedback[]
+  audits                          AuditLog[]                           @relation("ActorAuditLogs")
+  referrer                        Profile?                             @relation("ProfileReferrer", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals                       Profile[]                            @relation("ProfileReferrer")
+  miningSessions                  MiningSession[]
+  miningPointLedgerEntries        MiningPointLedger[]
+  miningHourlyCheckpoints         MiningHourlyCheckpoint[]
+  primaryBadge                    Badge?                               @relation("ProfilePrimaryBadge", fields: [primaryBadgeId], references: [id], onDelete: SetNull)
+  earnedBadges                    UserBadge[]                          @relation("UserEarnedBadges")
+  grantedBadges                   UserBadge[]                          @relation("BadgeGrantor")
+  userQuests                      UserQuest[]
+  questSubmissions                QuestSubmission[]
+  mentions                        Mention[]                        @relation("UserMentioned")
+  blockedUsers                    UserBlock[]                      @relation("BlockerUser")
+  blockedByUsers                  UserBlock[]                      @relation("BlockedUser")
 
   @@index([referredById])
   @@index([primaryBadgeId])
+}
+
+model UserBlock {
+  id        String   @id @default(uuid()) @db.Uuid
+  blockerId String   @db.Uuid
+  blockedId String   @db.Uuid
+  reason    String?
+  createdAt DateTime @default(now())
+
+  blocker Profile @relation("BlockerUser", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked Profile @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
 }
 
 model UserRole {
@@ -527,9 +564,10 @@ model Comment {
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
 
-  update    Update   @relation(fields: [updateId], references: [id], onDelete: Cascade)
-  author    Profile  @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
-  moderator Profile? @relation("CommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  update    Update    @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  author    Profile   @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator Profile?  @relation("CommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  mentions  Mention[] @relation("CommentMentions")
 
   @@index([updateId, status, createdAt])
   @@index([authorId])
@@ -584,6 +622,7 @@ model CommunityPost {
   comments  CommunityPostComment[]
   reactions CommunityPostReaction[]
   bookmarks Bookmark[]
+  mentions  Mention[]               @relation("CommunityPostMentions")
 
   @@index([topic, status, createdAt])
   @@index([authorId, createdAt])
@@ -605,6 +644,7 @@ model CommunityPostComment {
   post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   author    Profile       @relation("CommunityPostCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   moderator Profile?      @relation("CommunityPostCommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  mentions  Mention[]     @relation("CommunityPostCommentMentions")
 
   @@index([postId, status, createdAt])
   @@index([authorId])
@@ -641,32 +681,75 @@ model Bookmark {
 }
 
 model Notification {
-  id        String           @id @default(uuid()) @db.Uuid
-  userId    String           @db.Uuid
-  type      NotificationType
-  actorUserId String?        @db.Uuid
-  projectId String?          @db.Uuid
-  updateId  String?          @db.Uuid
-  urgency   UpdateUrgency?
-  title     String
-  body      String
-  payload   Json?
-  deeplink  String?
-  dedupeKey String?
-  isRead    Boolean          @default(false)
-  readAt    DateTime?
-  createdAt DateTime         @default(now())
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @db.Uuid
+  type        NotificationType
+  actorUserId String?          @db.Uuid
+  projectId   String?          @db.Uuid
+  updateId    String?          @db.Uuid
+  urgency     UpdateUrgency?
+  title       String
+  body        String
+  payload     Json?
+  deeplink    String?
+  dedupeKey   String?
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
 
   user    Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
   actor   Profile? @relation("NotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull)
   project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   update  Update?  @relation(fields: [updateId], references: [id], onDelete: SetNull)
 
+  @@unique([userId, dedupeKey])
   @@index([userId, createdAt])
   @@index([userId, isRead, createdAt])
   @@index([type, createdAt])
   @@index([projectId])
-  @@unique([userId, dedupeKey])
+}
+
+model UserNotificationSettings {
+  userId             String        @id @db.Uuid
+  masterEnabled      Boolean       @default(true)
+  digestEmailEnabled Boolean       @default(true)
+  digestCadence      DigestCadence @default(daily)
+  digestHourLocal    Int           @default(8)
+  digestMinuteLocal  Int           @default(0)
+  timezone           String        @default("UTC")
+  lastDigestSentAt   DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserNotificationCategoryPreference {
+  id        String               @id @default(uuid()) @db.Uuid
+  userId    String               @db.Uuid
+  category  NotificationCategory
+  enabled   Boolean              @default(true)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@index([userId, category])
+}
+
+model UserNotificationTypeOverride {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  enabled   Boolean
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId, type])
 }
 
 model EdgeDecision {
@@ -871,24 +954,24 @@ model OnchainDeposit {
 }
 
 model SweepJob {
-  id             String         @id @default(uuid()) @db.Uuid
-  walletId       String         @db.Uuid
-  asset          WalletAsset    @default(BNT)
+  id             String          @id @default(uuid()) @db.Uuid
+  walletId       String          @db.Uuid
+  asset          WalletAsset     @default(BNT)
   assetKind      WalletAssetKind @default(erc20)
   tokenAddress   String?
   fromAddress    String
   toAddress      String
-  amount         Decimal        @db.Decimal(38, 18)
-  status         SweepJobStatus @default(queued)
-  attemptCount   Int            @default(0)
-  txHash         String?        @unique
-  idempotencyKey String         @unique
+  amount         Decimal         @db.Decimal(38, 18)
+  status         SweepJobStatus  @default(queued)
+  attemptCount   Int             @default(0)
+  txHash         String?         @unique
+  idempotencyKey String          @unique
   failureReason  String?
-  scheduledAt    DateTime       @default(now())
+  scheduledAt    DateTime        @default(now())
   startedAt      DateTime?
   finishedAt     DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   wallet  UserWallet      @relation(fields: [walletId], references: [id], onDelete: Cascade)
   deposit OnchainDeposit?
@@ -998,6 +1081,31 @@ model WalletAssetPriceConfig {
   updatedAt        DateTime    @updatedAt
 }
 
+model WalletRuntimeConfig {
+  id                    String   @id
+  walletEnabled         Boolean  @default(false)
+  depositsEnabled       Boolean  @default(false)
+  withdrawalsEnabled    Boolean  @default(false)
+  depositRealtimeEnabled Boolean @default(true)
+  depositConfirmations  Int?
+  withdrawalConfirmations Int?
+  walletAssetBntEnabled Boolean  @default(true)
+  walletAssetBnbEnabled Boolean  @default(true)
+  walletAssetUsdtEnabled Boolean @default(true)
+  withdrawalAssetsCsv   String   @default("BNT")
+  updatedAt             DateTime @updatedAt
+}
+
+model RuntimeFeatureConfig {
+  id                 String   @id
+  alphaRadarEnabled  Boolean  @default(true)
+  followPrefsEnabled Boolean  @default(true)
+  weeklyDigestEnabled Boolean @default(true)
+  miningEnabled      Boolean  @default(true)
+  referralsEnabled   Boolean  @default(true)
+  updatedAt          DateTime @updatedAt
+}
+
 model TipCurrency {
   code                    String          @id
   name                    String
@@ -1012,22 +1120,22 @@ model TipCurrency {
   feeConfig       TipFeeConfig?
   accounts        TipAccount[]
   transactions    TipTransaction[]
-  conversionsFrom TipConversion[] @relation("TipConversionFromCurrency")
-  conversionsTo   TipConversion[] @relation("TipConversionToCurrency")
+  conversionsFrom TipConversion[]  @relation("TipConversionFromCurrency")
+  conversionsTo   TipConversion[]  @relation("TipConversionToCurrency")
 
   @@index([isActiveTippingCurrency, isEnabled])
 }
 
 model TipFeeConfig {
-  id           String  @id @default(uuid()) @db.Uuid
-  currencyCode String  @unique
-  feeBps       Int     @default(0)
-  minTipAtomic BigInt  @default(1)
-  maxTipAtomic BigInt?
-  minFeeAtomic BigInt  @default(0)
-  maxFeeAtomic BigInt?
-  senderPaysFee Boolean @default(true)
-  isActive      Boolean @default(true)
+  id            String   @id @default(uuid()) @db.Uuid
+  currencyCode  String   @unique
+  feeBps        Int      @default(0)
+  minTipAtomic  BigInt   @default(1)
+  maxTipAtomic  BigInt?
+  minFeeAtomic  BigInt   @default(0)
+  maxFeeAtomic  BigInt?
+  senderPaysFee Boolean  @default(true)
+  isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -1035,17 +1143,17 @@ model TipFeeConfig {
 }
 
 model TipAccount {
-  id           String         @id @default(uuid()) @db.Uuid
-  accountType  TipAccountType
-  ownerRef     String
-  userId       String?        @db.Uuid
-  currencyCode String
-  balanceAtomic BigInt        @default(0)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id            String         @id @default(uuid()) @db.Uuid
+  accountType   TipAccountType
+  ownerRef      String
+  userId        String?        @db.Uuid
+  currencyCode  String
+  balanceAtomic BigInt         @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  user      Profile?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  currency  TipCurrency  @relation(fields: [currencyCode], references: [code], onDelete: Cascade)
+  user                 Profile?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency             TipCurrency      @relation(fields: [currencyCode], references: [code], onDelete: Cascade)
   sentTransactions     TipTransaction[] @relation("TipTxnSenderAccount")
   receivedTransactions TipTransaction[] @relation("TipTxnRecipientAccount")
   feeTransactions      TipTransaction[] @relation("TipTxnFeeAccount")
@@ -1056,23 +1164,23 @@ model TipAccount {
 }
 
 model TipTransaction {
-  id                String             @id @default(uuid()) @db.Uuid
-  type              TipTransactionType @default(tip)
-  senderAccountId   String             @db.Uuid
-  recipientAccountId String            @db.Uuid
-  feeAccountId      String?            @db.Uuid
-  senderUserId      String             @db.Uuid
-  recipientUserId   String             @db.Uuid
-  currencyCode      String
-  amountAtomic      BigInt
-  feeAtomic         BigInt             @default(0)
-  totalDebitAtomic  BigInt
-  note              String?
-  contextType       String?
-  contextId         String?
-  idempotencyKey    String             @unique
-  metadata          Json?
-  createdAt         DateTime           @default(now())
+  id                 String             @id @default(uuid()) @db.Uuid
+  type               TipTransactionType @default(tip)
+  senderAccountId    String             @db.Uuid
+  recipientAccountId String             @db.Uuid
+  feeAccountId       String?            @db.Uuid
+  senderUserId       String             @db.Uuid
+  recipientUserId    String             @db.Uuid
+  currencyCode       String
+  amountAtomic       BigInt
+  feeAtomic          BigInt             @default(0)
+  totalDebitAtomic   BigInt
+  note               String?
+  contextType        String?
+  contextId          String?
+  idempotencyKey     String             @unique
+  metadata           Json?
+  createdAt          DateTime           @default(now())
 
   senderAccount    TipAccount  @relation("TipTxnSenderAccount", fields: [senderAccountId], references: [id], onDelete: Restrict)
   recipientAccount TipAccount  @relation("TipTxnRecipientAccount", fields: [recipientAccountId], references: [id], onDelete: Restrict)
@@ -1108,8 +1216,8 @@ model TipConversion {
 }
 
 model MiningSession {
-  id                      String   @id @default(uuid()) @db.Uuid
-  userId                  String   @db.Uuid
+  id                      String    @id @default(uuid()) @db.Uuid
+  userId                  String    @db.Uuid
   startsAt                DateTime
   endsAt                  DateTime
   claimedAt               DateTime?
@@ -1117,8 +1225,8 @@ model MiningSession {
   activeReferralsSnapshot Int
   boostBpsSnapshot        Int
   effectivePointsPerCycle Int
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   user              Profile                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   ledger            MiningPointLedger[]
@@ -1145,9 +1253,9 @@ model MiningPointLedger {
 }
 
 model MiningHourlyCheckpoint {
-  id                      String   @id @default(uuid()) @db.Uuid
-  userId                  String   @db.Uuid
-  sessionId               String   @db.Uuid
+  id                      String    @id @default(uuid()) @db.Uuid
+  userId                  String    @db.Uuid
+  sessionId               String    @db.Uuid
   hourIndex               Int
   hourStartAt             DateTime
   hourEndAt               DateTime
@@ -1155,8 +1263,8 @@ model MiningHourlyCheckpoint {
   boostBpsSnapshot        Int
   points                  Int
   claimedAt               DateTime?
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   user    Profile       @relation(fields: [userId], references: [id], onDelete: Cascade)
   session MiningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -1193,8 +1301,8 @@ model Badge {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
-  userBadges     UserBadge[]          @relation("BadgeEarnedBy")
-  primaryForUsers Profile[]           @relation("ProfilePrimaryBadge")
+  userBadges      UserBadge[] @relation("BadgeEarnedBy")
+  primaryForUsers Profile[]   @relation("ProfilePrimaryBadge")
 
   @@index([category, sortOrder])
   @@index([rarity, isActive])
@@ -1218,23 +1326,23 @@ model UserBadge {
 }
 
 model Quest {
-  id                  String     @id @default(uuid()) @db.Uuid
-  slug                String     @unique
-  title               String
-  description         String
-  type                QuestType
-  category            BadgeCategory
-  rewardPoints        Int        @default(0)
-  rewardBadgeId       String?    @db.Uuid
-  targetUrl           String?
-  targetAction        String?
-  verificationMethod  String     @default("manual")
-  requiredProof       String?
-  isActive            Boolean    @default(true)
-  sortOrder           Int        @default(0)
-  expiresAt           DateTime?
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  id                 String        @id @default(uuid()) @db.Uuid
+  slug               String        @unique
+  title              String
+  description        String
+  type               QuestType
+  category           BadgeCategory
+  rewardPoints       Int           @default(0)
+  rewardBadgeId      String?       @db.Uuid
+  targetUrl          String?
+  targetAction       String?
+  verificationMethod String        @default("manual")
+  requiredProof      String?
+  isActive           Boolean       @default(true)
+  sortOrder          Int           @default(0)
+  expiresAt          DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   userQuests UserQuest[]
 
@@ -1286,4 +1394,24 @@ model QuestSubmission {
   @@index([userId, verificationStatus])
   @@index([userQuestId, submittedAt])
   @@index([verificationStatus, submittedAt])
+}
+
+model Mention {
+  id                      String   @id @default(uuid()) @db.Uuid
+  mentionedUserId         String   @db.Uuid
+  commentId               String?  @db.Uuid
+  communityPostId         String?  @db.Uuid
+  communityPostCommentId  String?  @db.Uuid
+  mentionText             String
+  createdAt               DateTime @default(now())
+
+  mentionedUser         Profile               @relation("UserMentioned", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+  comment               Comment?              @relation("CommentMentions", fields: [commentId], references: [id], onDelete: Cascade)
+  communityPost         CommunityPost?        @relation("CommunityPostMentions", fields: [communityPostId], references: [id], onDelete: Cascade)
+  communityPostComment  CommunityPostComment? @relation("CommunityPostCommentMentions", fields: [communityPostCommentId], references: [id], onDelete: Cascade)
+
+  @@index([mentionedUserId, createdAt])
+  @@index([commentId])
+  @@index([communityPostId])
+  @@index([communityPostCommentId])
 }

@@ -2,6 +2,10 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
+import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
+import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart';
+import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
+import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:blocnet/services/community_posts_store.dart';
@@ -26,6 +30,7 @@ class _CommunityPostDiscussionScreenState
   final ScrollController _threadScrollController = ScrollController();
   final Set<String> _knownCommentIds = <String>{};
   final Set<String> _pendingNewCommentIds = <String>{};
+  late final MentionsRepository _mentionsRepository;
   String? _postId;
   bool _isSending = false;
   bool _isCommentsBaselineReady = false;
@@ -35,6 +40,7 @@ class _CommunityPostDiscussionScreenState
   void initState() {
     super.initState();
     _postId = widget.postId;
+    _mentionsRepository = MentionsRepository(ApiClient());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final store = context.read<CommunityPostsStore>();
@@ -306,29 +312,12 @@ class _CommunityPostDiscussionScreenState
                     child: Row(
                       children: [
                         Expanded(
-                          child: TextField(
+                          child: MentionTextField(
                             controller: _commentCtrl,
-                            onTapOutside: (_) =>
-                                FocusManager.instance.primaryFocus?.unfocus(),
-                            style: AppTypography.custom(
-                              color: AppColors.textSecondary,
-                              size: 13,
-                              weight: FontWeight.w400,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Write a comment...',
-                              hintStyle: AppTypography.custom(
-                                color: AppColors.textFaint,
-                                size: 13,
-                                weight: FontWeight.w400,
-                              ),
-                              filled: false,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(horizontal: 2),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                            ),
+                            mentionsRepository: _mentionsRepository,
+                            hintText: 'Write a comment...',
+                            minLines: 1,
+                            maxLines: 4,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -467,8 +456,8 @@ class _PostDetailsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            post.content,
+          MentionText(
+            text: post.content,
             style: AppTypography.custom(
               color: AppColors.textSecondary,
               size: 14,
@@ -687,8 +676,8 @@ class _CommentCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  comment.content,
+                MentionText(
+                  text: comment.content,
                   style: AppTypography.custom(
                     color: AppColors.textSecondary,
                     size: 13,

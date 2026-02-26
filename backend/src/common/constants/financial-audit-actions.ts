@@ -25,6 +25,10 @@ export const FinancialAuditActions = {
   RiskLimitUpdated: 'wallet.risk_limit.updated',
   FeeConfigUpdated: 'wallet.fee_config.updated',
   AssetPriceConfigUpdated: 'wallet.asset_price_config.updated',
+  WalletRuntimeConfigUpdated: 'wallet.runtime_config.updated',
+  WalletDepositReprocessTriggered: 'wallet.deposit.reprocess.triggered',
+  WalletUserDisabled: 'wallet.user.disabled',
+  WalletUserEnabled: 'wallet.user.enabled',
 
   TipSent: 'tip.sent',
   TipCurrencySettingsUpdated: 'tip.currency.settings.updated',

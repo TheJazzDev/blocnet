@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -6,7 +11,9 @@ import {
   ChainEnvironment,
   WalletAsset,
   WalletAssetKind,
+  type WalletRuntimeConfig,
 } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 export type WalletDepositNetworkConfig = {
   asset: WalletAsset;
@@ -28,20 +35,178 @@ type WalletArtifactAddresses = {
   bscMainnet?: string | null;
 };
 
-@Injectable()
-export class WalletConfigService {
-  private readonly artifactAddresses: WalletArtifactAddresses;
+const WALLET_RUNTIME_CONFIG_ID = 'default';
+const RUNTIME_CONFIG_REFRESH_MS = 15_000;
 
-  constructor(private readonly configService: ConfigService) {
+type WalletRuntimeConfigSnapshot = {
+  id: string;
+  walletEnabled: boolean;
+  depositsEnabled: boolean;
+  withdrawalsEnabled: boolean;
+  depositRealtimeEnabled: boolean;
+  depositConfirmations: number | null;
+  withdrawalConfirmations: number | null;
+  walletAssetBntEnabled: boolean;
+  walletAssetBnbEnabled: boolean;
+  walletAssetUsdtEnabled: boolean;
+  withdrawalAssetsCsv: string;
+  updatedAt: Date;
+};
+
+export type WalletRuntimeConfigResponse = {
+  id: string;
+  walletEnabled: boolean;
+  depositsEnabled: boolean;
+  withdrawalsEnabled: boolean;
+  depositRealtimeEnabled: boolean;
+  depositConfirmations: number;
+  withdrawalConfirmations: number;
+  walletAssetBntEnabled: boolean;
+  walletAssetBnbEnabled: boolean;
+  walletAssetUsdtEnabled: boolean;
+  withdrawalEnabledAssets: WalletAsset[];
+  updatedAt: Date;
+};
+
+@Injectable()
+export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(WalletConfigService.name);
+  private readonly artifactAddresses: WalletArtifactAddresses;
+  private runtimeConfig: WalletRuntimeConfigSnapshot;
+  private runtimeRefreshHandle: NodeJS.Timeout | null = null;
+  private runtimeWarningLogged = false;
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
     this.artifactAddresses = this.loadArtifactAddresses();
+    this.runtimeConfig = this.readEnvRuntimeDefaults();
+  }
+
+  onModuleInit(): void {
+    void this.refreshRuntimeConfig();
+    this.runtimeRefreshHandle = setInterval(() => {
+      void this.refreshRuntimeConfig();
+    }, RUNTIME_CONFIG_REFRESH_MS);
+  }
+
+  onModuleDestroy(): void {
+    if (this.runtimeRefreshHandle) {
+      clearInterval(this.runtimeRefreshHandle);
+      this.runtimeRefreshHandle = null;
+    }
+  }
+
+  async getRuntimeConfig(): Promise<WalletRuntimeConfigResponse> {
+    await this.refreshRuntimeConfig();
+    return this.toRuntimeResponse(this.runtimeConfig);
+  }
+
+  async updateRuntimeConfig(
+    patch: Partial<{
+      walletEnabled: boolean;
+      depositsEnabled: boolean;
+      withdrawalsEnabled: boolean;
+      depositRealtimeEnabled: boolean;
+      depositConfirmations: number;
+      withdrawalConfirmations: number;
+      walletAssetBntEnabled: boolean;
+      walletAssetBnbEnabled: boolean;
+      walletAssetUsdtEnabled: boolean;
+      withdrawalEnabledAssets: WalletAsset[];
+    }>,
+  ): Promise<WalletRuntimeConfigResponse> {
+    const withdrawalAssets =
+      patch.withdrawalEnabledAssets === undefined
+        ? undefined
+        : this.normalizeWithdrawalAssetsList(patch.withdrawalEnabledAssets);
+
+    const row = await this.prisma.walletRuntimeConfig.upsert({
+      where: { id: WALLET_RUNTIME_CONFIG_ID },
+      update: {
+        ...(patch.walletEnabled === undefined
+          ? {}
+          : { walletEnabled: patch.walletEnabled }),
+        ...(patch.depositsEnabled === undefined
+          ? {}
+          : { depositsEnabled: patch.depositsEnabled }),
+        ...(patch.withdrawalsEnabled === undefined
+          ? {}
+          : { withdrawalsEnabled: patch.withdrawalsEnabled }),
+        ...(patch.depositRealtimeEnabled === undefined
+          ? {}
+          : { depositRealtimeEnabled: patch.depositRealtimeEnabled }),
+        ...(patch.depositConfirmations === undefined
+          ? {}
+          : {
+              depositConfirmations: this.normalizeConfirmations(
+                patch.depositConfirmations,
+              ),
+            }),
+        ...(patch.withdrawalConfirmations === undefined
+          ? {}
+          : {
+              withdrawalConfirmations: this.normalizeConfirmations(
+                patch.withdrawalConfirmations,
+              ),
+            }),
+        ...(patch.walletAssetBntEnabled === undefined
+          ? {}
+          : { walletAssetBntEnabled: patch.walletAssetBntEnabled }),
+        ...(patch.walletAssetBnbEnabled === undefined
+          ? {}
+          : { walletAssetBnbEnabled: patch.walletAssetBnbEnabled }),
+        ...(patch.walletAssetUsdtEnabled === undefined
+          ? {}
+          : { walletAssetUsdtEnabled: patch.walletAssetUsdtEnabled }),
+        ...(withdrawalAssets === undefined
+          ? {}
+          : { withdrawalAssetsCsv: withdrawalAssets.join(',') }),
+      },
+      create: {
+        id: WALLET_RUNTIME_CONFIG_ID,
+        walletEnabled: patch.walletEnabled ?? this.runtimeConfig.walletEnabled,
+        depositsEnabled:
+          patch.depositsEnabled ?? this.runtimeConfig.depositsEnabled,
+        withdrawalsEnabled:
+          patch.withdrawalsEnabled ?? this.runtimeConfig.withdrawalsEnabled,
+        depositRealtimeEnabled:
+          patch.depositRealtimeEnabled ??
+          this.runtimeConfig.depositRealtimeEnabled,
+        depositConfirmations:
+          patch.depositConfirmations === undefined
+            ? this.runtimeConfig.depositConfirmations
+            : this.normalizeConfirmations(patch.depositConfirmations),
+        withdrawalConfirmations:
+          patch.withdrawalConfirmations === undefined
+            ? this.runtimeConfig.withdrawalConfirmations
+            : this.normalizeConfirmations(patch.withdrawalConfirmations),
+        walletAssetBntEnabled:
+          patch.walletAssetBntEnabled ??
+          this.runtimeConfig.walletAssetBntEnabled,
+        walletAssetBnbEnabled:
+          patch.walletAssetBnbEnabled ??
+          this.runtimeConfig.walletAssetBnbEnabled,
+        walletAssetUsdtEnabled:
+          patch.walletAssetUsdtEnabled ??
+          this.runtimeConfig.walletAssetUsdtEnabled,
+        withdrawalAssetsCsv:
+          withdrawalAssets?.join(',') ?? this.runtimeConfig.withdrawalAssetsCsv,
+      },
+    });
+
+    this.runtimeConfig = this.toRuntimeSnapshot(row);
+    this.runtimeWarningLogged = false;
+    return this.toRuntimeResponse(this.runtimeConfig);
   }
 
   get walletEnabled(): boolean {
-    return this.configService.get<boolean>('WALLET_ENABLED') ?? false;
+    return this.runtimeConfig.walletEnabled;
   }
 
   get walletDepositRealtimeEnabled(): boolean {
-    return this.configService.get<boolean>('WALLET_DEPOSIT_REALTIME_ENABLED') ?? true;
+    return this.runtimeConfig.depositRealtimeEnabled;
   }
 
   get turnkeyMode(): TurnkeyMode {
@@ -60,7 +225,9 @@ export class WalletConfigService {
       return 'real';
     }
 
-    const legacyMock = this.configService.get<string | boolean>('TURNKEY_DEV_MOCK');
+    const legacyMock = this.configService.get<string | boolean>(
+      'TURNKEY_DEV_MOCK',
+    );
     if (legacyMock === true || legacyMock === 'true') {
       return 'mock';
     }
@@ -70,27 +237,27 @@ export class WalletConfigService {
   }
 
   get depositsEnabled(): boolean {
-    return this.configService.get<boolean>('DEPOSITS_ENABLED') ?? false;
+    return this.runtimeConfig.depositsEnabled;
   }
 
   get withdrawalsEnabled(): boolean {
-    return this.configService.get<boolean>('WITHDRAWALS_ENABLED') ?? false;
+    return this.runtimeConfig.withdrawalsEnabled;
   }
 
   get walletAssetBntEnabled(): boolean {
-    return this.configService.get<boolean>('WALLET_ASSET_BNT_ENABLED') ?? true;
+    return this.runtimeConfig.walletAssetBntEnabled;
   }
 
   get walletAssetBnbEnabled(): boolean {
-    return this.configService.get<boolean>('WALLET_ASSET_BNB_ENABLED') ?? true;
+    return this.runtimeConfig.walletAssetBnbEnabled;
   }
 
   get walletAssetUsdtEnabled(): boolean {
-    return this.configService.get<boolean>('WALLET_ASSET_USDT_ENABLED') ?? true;
+    return this.runtimeConfig.walletAssetUsdtEnabled;
   }
 
   get walletWithdrawalAssetsRaw(): string {
-    return this.configService.get<string>('WALLET_WITHDRAWAL_ASSETS') ?? 'BNT';
+    return this.runtimeConfig.withdrawalAssetsCsv;
   }
 
   get supportedAssets(): WalletAsset[] {
@@ -102,16 +269,9 @@ export class WalletConfigService {
   }
 
   get withdrawalEnabledAssets(): WalletAsset[] {
-    const normalized = this.walletWithdrawalAssetsRaw
-      .split(',')
-      .map((value) => value.trim().toUpperCase())
-      .filter(Boolean);
-    const configured = normalized.filter((value): value is WalletAsset =>
-      this.isWalletAsset(value),
+    const configured = this.parseWithdrawalAssetsCsv(
+      this.walletWithdrawalAssetsRaw,
     );
-    if (configured.length === 0) {
-      return [WalletAsset.BNT];
-    }
     return configured.filter((asset) => this.isAssetEnabled(asset));
   }
 
@@ -138,13 +298,14 @@ export class WalletConfigService {
 
   isTransferEnabledForAsset(asset: WalletAsset): boolean {
     return (
-      this.isAssetEnabled(asset) &&
-      this.withdrawalEnabledAssets.includes(asset)
+      this.isAssetEnabled(asset) && this.withdrawalEnabledAssets.includes(asset)
     );
   }
 
   getAssetKind(asset: WalletAsset): WalletAssetKind {
-    return asset === WalletAsset.BNB ? WalletAssetKind.native : WalletAssetKind.erc20;
+    return asset === WalletAsset.BNB
+      ? WalletAssetKind.native
+      : WalletAssetKind.erc20;
   }
 
   getAssetDecimals(asset: WalletAsset): number {
@@ -163,7 +324,9 @@ export class WalletConfigService {
   }
 
   get walletChainEnvironment(): ChainEnvironment {
-    const configured = this.getTrimmedString('WALLET_CHAIN_ENVIRONMENT')?.toLowerCase();
+    const configured = this.getTrimmedString(
+      'WALLET_CHAIN_ENVIRONMENT',
+    )?.toLowerCase();
     if (configured === ChainEnvironment.mainnet) {
       return ChainEnvironment.mainnet;
     }
@@ -278,10 +441,14 @@ export class WalletConfigService {
   }
 
   get depositInitialLookbackBlocks(): bigint {
-    const value = this.getNumber('WALLET_DEPOSIT_INITIAL_LOOKBACK_BLOCKS', 2000, {
-      min: 100,
-      max: 250000,
-    });
+    const value = this.getNumber(
+      'WALLET_DEPOSIT_INITIAL_LOOKBACK_BLOCKS',
+      2000,
+      {
+        min: 100,
+        max: 250000,
+      },
+    );
     return BigInt(value);
   }
 
@@ -338,7 +505,8 @@ export class WalletConfigService {
   ): WalletDepositNetworkConfig | null {
     const config = this.getDepositNetworkConfigs().find(
       (network) =>
-        network.chainEnvironment === chainEnvironment && network.asset === asset,
+        network.chainEnvironment === chainEnvironment &&
+        network.asset === asset,
     );
     return config ?? null;
   }
@@ -439,35 +607,23 @@ export class WalletConfigService {
   private getDepositConfirmationsForEnvironment(
     chainEnvironment: ChainEnvironment,
   ): number {
-    const defaultForEnvironment =
-      chainEnvironment === ChainEnvironment.mainnet ? 20 : 12;
-    const single = this.getOptionalNumber('WALLET_DEPOSIT_CONFIRMATIONS', {
-      min: 1,
-      max: 400,
-    });
-    if (single === null) {
-      return defaultForEnvironment;
+    const configured = this.runtimeConfig.depositConfirmations;
+    if (configured !== null) {
+      return this.normalizeConfirmations(configured);
     }
-    return this.walletChainEnvironment === chainEnvironment
-      ? single
-      : defaultForEnvironment;
+
+    return this.defaultConfirmationsForEnvironment(chainEnvironment);
   }
 
   private getWithdrawalConfirmationsForConfiguredEnvironment(
     chainEnvironment: ChainEnvironment,
   ): number {
-    const defaultForEnvironment =
-      chainEnvironment === ChainEnvironment.mainnet ? 20 : 12;
-    const single = this.getOptionalNumber('WALLET_WITHDRAWAL_CONFIRMATIONS', {
-      min: 1,
-      max: 400,
-    });
-    if (single === null) {
-      return defaultForEnvironment;
+    const configured = this.runtimeConfig.withdrawalConfirmations;
+    if (configured !== null) {
+      return this.normalizeConfirmations(configured);
     }
-    return this.walletChainEnvironment === chainEnvironment
-      ? single
-      : defaultForEnvironment;
+
+    return this.defaultConfirmationsForEnvironment(chainEnvironment);
   }
 
   private getDepositStartBlockForEnvironment(
@@ -564,13 +720,162 @@ export class WalletConfigService {
     );
   }
 
+  private async refreshRuntimeConfig(): Promise<void> {
+    try {
+      const row = await this.prisma.walletRuntimeConfig.upsert({
+        where: { id: WALLET_RUNTIME_CONFIG_ID },
+        update: {},
+        create: {
+          id: WALLET_RUNTIME_CONFIG_ID,
+          walletEnabled: this.runtimeConfig.walletEnabled,
+          depositsEnabled: this.runtimeConfig.depositsEnabled,
+          withdrawalsEnabled: this.runtimeConfig.withdrawalsEnabled,
+          depositRealtimeEnabled: this.runtimeConfig.depositRealtimeEnabled,
+          depositConfirmations: this.runtimeConfig.depositConfirmations,
+          withdrawalConfirmations: this.runtimeConfig.withdrawalConfirmations,
+          walletAssetBntEnabled: this.runtimeConfig.walletAssetBntEnabled,
+          walletAssetBnbEnabled: this.runtimeConfig.walletAssetBnbEnabled,
+          walletAssetUsdtEnabled: this.runtimeConfig.walletAssetUsdtEnabled,
+          withdrawalAssetsCsv: this.runtimeConfig.withdrawalAssetsCsv,
+        },
+      });
+      this.runtimeConfig = this.toRuntimeSnapshot(row);
+      this.runtimeWarningLogged = false;
+    } catch (error) {
+      if (!this.runtimeWarningLogged) {
+        this.runtimeWarningLogged = true;
+        this.logger.warn(
+          `Wallet runtime config unavailable, using env defaults: ${this.errorMessage(
+            error,
+          )}`,
+        );
+      }
+    }
+  }
+
+  private toRuntimeSnapshot(
+    row: WalletRuntimeConfig,
+  ): WalletRuntimeConfigSnapshot {
+    return {
+      id: row.id,
+      walletEnabled: row.walletEnabled,
+      depositsEnabled: row.depositsEnabled,
+      withdrawalsEnabled: row.withdrawalsEnabled,
+      depositRealtimeEnabled: row.depositRealtimeEnabled,
+      depositConfirmations: row.depositConfirmations,
+      withdrawalConfirmations: row.withdrawalConfirmations,
+      walletAssetBntEnabled: row.walletAssetBntEnabled,
+      walletAssetBnbEnabled: row.walletAssetBnbEnabled,
+      walletAssetUsdtEnabled: row.walletAssetUsdtEnabled,
+      withdrawalAssetsCsv: this.normalizeWithdrawalAssetsCsv(
+        row.withdrawalAssetsCsv,
+      ),
+      updatedAt: row.updatedAt,
+    };
+  }
+
+  private toRuntimeResponse(
+    config: WalletRuntimeConfigSnapshot,
+  ): WalletRuntimeConfigResponse {
+    return {
+      id: config.id,
+      walletEnabled: config.walletEnabled,
+      depositsEnabled: config.depositsEnabled,
+      withdrawalsEnabled: config.withdrawalsEnabled,
+      depositRealtimeEnabled: config.depositRealtimeEnabled,
+      depositConfirmations:
+        config.depositConfirmations ??
+        this.defaultConfirmationsForEnvironment(this.walletChainEnvironment),
+      withdrawalConfirmations:
+        config.withdrawalConfirmations ??
+        this.defaultConfirmationsForEnvironment(this.walletChainEnvironment),
+      walletAssetBntEnabled: config.walletAssetBntEnabled,
+      walletAssetBnbEnabled: config.walletAssetBnbEnabled,
+      walletAssetUsdtEnabled: config.walletAssetUsdtEnabled,
+      withdrawalEnabledAssets: this.parseWithdrawalAssetsCsv(
+        config.withdrawalAssetsCsv,
+      ),
+      updatedAt: config.updatedAt,
+    };
+  }
+
+  private readEnvRuntimeDefaults(): WalletRuntimeConfigSnapshot {
+    const withdrawalAssetsCsv = this.normalizeWithdrawalAssetsCsv(
+      this.configService.get<string>('WALLET_WITHDRAWAL_ASSETS') ?? 'BNT',
+    );
+
+    return {
+      id: WALLET_RUNTIME_CONFIG_ID,
+      walletEnabled: this.getBoolean('WALLET_ENABLED', false),
+      depositsEnabled: this.getBoolean('DEPOSITS_ENABLED', false),
+      withdrawalsEnabled: this.getBoolean('WITHDRAWALS_ENABLED', false),
+      depositRealtimeEnabled: this.getBoolean(
+        'WALLET_DEPOSIT_REALTIME_ENABLED',
+        true,
+      ),
+      depositConfirmations: this.getOptionalNumber(
+        'WALLET_DEPOSIT_CONFIRMATIONS',
+        {
+          min: 1,
+          max: 400,
+        },
+      ),
+      withdrawalConfirmations: this.getOptionalNumber(
+        'WALLET_WITHDRAWAL_CONFIRMATIONS',
+        {
+          min: 1,
+          max: 400,
+        },
+      ),
+      walletAssetBntEnabled: this.getBoolean('WALLET_ASSET_BNT_ENABLED', true),
+      walletAssetBnbEnabled: this.getBoolean('WALLET_ASSET_BNB_ENABLED', true),
+      walletAssetUsdtEnabled: this.getBoolean(
+        'WALLET_ASSET_USDT_ENABLED',
+        true,
+      ),
+      withdrawalAssetsCsv,
+      updatedAt: new Date(),
+    };
+  }
+
+  private normalizeWithdrawalAssetsList(assets: WalletAsset[]): WalletAsset[] {
+    const deduped = Array.from(new Set(assets));
+    return deduped.length > 0 ? deduped : [WalletAsset.BNT];
+  }
+
+  private parseWithdrawalAssetsCsv(csv: string): WalletAsset[] {
+    const configured = csv
+      .split(',')
+      .map((value) => value.trim().toUpperCase())
+      .filter((value): value is WalletAsset => this.isWalletAsset(value));
+    const deduped = Array.from(new Set(configured));
+    return deduped.length > 0 ? deduped : [WalletAsset.BNT];
+  }
+
+  private normalizeWithdrawalAssetsCsv(csv: string | null | undefined): string {
+    if (!csv) {
+      return 'BNT';
+    }
+    return this.parseWithdrawalAssetsCsv(csv).join(',');
+  }
+
+  private defaultConfirmationsForEnvironment(
+    chainEnvironment: ChainEnvironment,
+  ): number {
+    return chainEnvironment === ChainEnvironment.mainnet ? 20 : 12;
+  }
+
+  private normalizeConfirmations(value: number): number {
+    return Math.min(Math.max(Math.floor(value), 1), 400);
+  }
+
   private getTrimmedString(key: string): string | null {
-    const value = this.configService.get<string>(key);
-    if (!value) {
+    const value = this.configService.get<string | number | boolean>(key);
+    if (value === undefined || value === null) {
       return null;
     }
 
-    const normalized = value.trim();
+    const normalized = String(value).trim();
     return normalized.length > 0 ? normalized : null;
   }
 
@@ -644,7 +949,38 @@ export class WalletConfigService {
     return value;
   }
 
-  private normalizeAddress(value: string | null | undefined): `0x${string}` | null {
+  private getBoolean(key: string, fallback: boolean): boolean {
+    const raw = this.configService.get<string | number | boolean>(key);
+    if (raw === undefined || raw === null) {
+      return fallback;
+    }
+    if (typeof raw === 'boolean') {
+      return raw;
+    }
+    if (typeof raw === 'number') {
+      return raw !== 0;
+    }
+
+    const normalized = raw.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1' || normalized === 'yes') {
+      return true;
+    }
+    if (normalized === 'false' || normalized === '0' || normalized === 'no') {
+      return false;
+    }
+    return fallback;
+  }
+
+  private errorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
+  }
+
+  private normalizeAddress(
+    value: string | null | undefined,
+  ): `0x${string}` | null {
     if (!value) {
       return null;
     }
@@ -669,7 +1005,9 @@ export class WalletConfigService {
       }
 
       try {
-        const parsed = JSON.parse(readFileSync(filePath, 'utf8')) as WalletArtifactAddresses;
+        const parsed = JSON.parse(
+          readFileSync(filePath, 'utf8'),
+        ) as WalletArtifactAddresses;
         return parsed ?? {};
       } catch {
         return {};

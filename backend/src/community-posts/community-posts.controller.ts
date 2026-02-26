@@ -62,10 +62,15 @@ export class CommunityPostsController {
 
   @Get('community-posts/:postId/comments')
   async listComments(
+    @CurrentUser() user: AuthUser | undefined,
     @Param('postId') postId: string,
     @Query() query: ListCommunityCommentsQuery,
   ) {
-    return this.communityPostsService.listComments(postId, query);
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.communityPostsService.listComments(user, postId, query);
   }
 
   @Post('community-posts/:postId/comments')

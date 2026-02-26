@@ -993,6 +993,51 @@ class _TransactionsList extends StatelessWidget {
     return value?.trim() ?? '';
   }
 
+  String _explorerBaseUrlForSnapshot(WalletSnapshot? snapshot) {
+    final chainEnvironment =
+        snapshot?.walletChainEnvironment.toLowerCase().trim() ?? 'testnet';
+    if (chainEnvironment == 'mainnet' || snapshot?.walletChainId == 56) {
+      return 'https://bscscan.com';
+    }
+    return 'https://testnet.bscscan.com';
+  }
+
+  String? _buildExplorerTxUrl(BuildContext context, String txHash) {
+    final normalized = _trimValue(txHash);
+    if (normalized.isEmpty) return null;
+    if (!RegExp(r'^0x[a-fA-F0-9]{64}$').hasMatch(normalized)) {
+      return null;
+    }
+
+    final walletStore = context.read<WalletStore>();
+    final baseUrl = _explorerBaseUrlForSnapshot(walletStore.snapshot);
+    return '$baseUrl/tx/$normalized';
+  }
+
+  Future<void> _openExplorerTx(
+    BuildContext context,
+    String explorerTxUrl,
+  ) async {
+    final uri = Uri.tryParse(explorerTxUrl);
+    if (uri == null) {
+      _showWalletToast(
+        context,
+        message: 'Invalid explorer URL.',
+        type: _WalletToastType.error,
+      );
+      return;
+    }
+
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      _showWalletToast(
+        context,
+        message: 'Could not open block explorer.',
+        type: _WalletToastType.error,
+      );
+    }
+  }
+
   void _showCopiedToast(BuildContext context, String message) {
     _showWalletToast(
       context,
@@ -1009,6 +1054,7 @@ class _TransactionsList extends StatelessWidget {
     }
 
     final fields = <_WalletDetailField>[];
+    String? explorerTxUrl;
     if (tx != null) {
       final metadata = tx.metadata;
       final counterparty = tx.counterparty;
@@ -1023,6 +1069,7 @@ class _TransactionsList extends StatelessWidget {
       final toAddress = _trimValue(tx.metadataString('toAddress'));
       final txHash = _trimValue(tx.metadataString('txHash'));
       final note = _trimValue(tx.metadataString('note'));
+      explorerTxUrl = _buildExplorerTxUrl(context, txHash);
 
       fields.addAll([
         _WalletDetailField(label: 'Type', value: _toTitleCase(tx.reason)),
@@ -1111,6 +1158,8 @@ class _TransactionsList extends StatelessWidget {
       ]);
       if (withdrawal.broadcastTxHash != null &&
           withdrawal.broadcastTxHash!.trim().isNotEmpty) {
+        explorerTxUrl ??=
+            _buildExplorerTxUrl(context, withdrawal.broadcastTxHash!);
         fields.add(
           _WalletDetailField(
             label: 'Broadcast Tx Hash',
@@ -1264,6 +1313,28 @@ class _TransactionsList extends StatelessWidget {
                       ),
                     );
                   }),
+                  if (explorerTxUrl != null) ...[
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () => _openExplorerTx(
+                          sheetContext,
+                          explorerTxUrl!,
+                        ),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary500,
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size.fromHeight(44),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                        label: const Text('Verify on block explorer'),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

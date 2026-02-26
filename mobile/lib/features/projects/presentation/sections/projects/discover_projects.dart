@@ -54,6 +54,17 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                 updates: updatesStore.updates,
               )
             : const <String>{};
+        final updateCountByProject = <String, int>{};
+        for (final update in updatesStore.updates) {
+          updateCountByProject.update(
+            update.projectId,
+            (count) => count + 1,
+            ifAbsent: () => 1,
+          );
+        }
+        final visibleProjects = store.discoverProjects(
+          updates: updatesStore.updates,
+        );
 
         if (store.isFetching && store.projects.isEmpty) {
           return const Padding(
@@ -92,6 +103,40 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                     size: 12,
                     weight: FontWeight.w400,
                     height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (visibleProjects.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.filter_alt_off_outlined,
+                  size: 38,
+                  color: AppColors.textFaint,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'No gems match this filter',
+                  style: AppTypography.custom(
+                    color: AppColors.textSecondary,
+                    size: 14,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Adjust your filters to see more projects.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.custom(
+                    color: AppColors.textFaint,
+                    size: 12,
+                    weight: FontWeight.w400,
                   ),
                 ),
               ],
@@ -139,10 +184,15 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
             ),
             // Gem cards
             Column(
-              children: store.projects.map((project) {
+              children: visibleProjects.map((project) {
                 final isFollowed = store.isProjectFollowed(project.id);
+                final hypeScore = store.hypeScoreForProject(
+                  project,
+                  updatesCountOverride: updateCountByProject[project.id],
+                );
                 return GemCard(
                   project: project,
+                  hypeScore: hypeScore,
                   isFollowed: isFollowed,
                   isLoading: store.isTogglingFollow,
                   onFollowToggle: () => _toggleFollow(project),

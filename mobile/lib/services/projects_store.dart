@@ -1,5 +1,6 @@
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/data/models/follow_preference_model.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/repositories/updates_api_repository.dart';
@@ -24,6 +25,9 @@ class ProjectsStore extends ChangeNotifier {
   final Set<String> _followedProjectIds = <String>{};
   final Map<String, FollowPreference> _followPreferences =
       <String, FollowPreference>{};
+  final Set<String> _discoverPrimaryTagFilters = <String>{};
+  final Set<String> _discoverSecondaryTagFilters = <String>{};
+  final Set<Priority> _discoverPriorityFilters = <Priority>{};
   bool _isFetching = false;
   bool _isTogglingFollow = false;
   bool _isUpdatingFollowPreferences = false;
@@ -33,6 +37,16 @@ class ProjectsStore extends ChangeNotifier {
   Set<String> get followedProjectIds => Set.unmodifiable(_followedProjectIds);
   Map<String, FollowPreference> get followPreferences =>
       Map.unmodifiable(_followPreferences);
+  Set<String> get discoverPrimaryTagFilters =>
+      Set.unmodifiable(_discoverPrimaryTagFilters);
+  Set<String> get discoverSecondaryTagFilters =>
+      Set.unmodifiable(_discoverSecondaryTagFilters);
+  Set<Priority> get discoverPriorityFilters =>
+      Set.unmodifiable(_discoverPriorityFilters);
+  bool get hasDiscoverFilters =>
+      _discoverPrimaryTagFilters.isNotEmpty ||
+      _discoverSecondaryTagFilters.isNotEmpty ||
+      _discoverPriorityFilters.isNotEmpty;
   bool get isFetching => _isFetching;
   bool get isTogglingFollow => _isTogglingFollow;
   bool get isUpdatingFollowPreferences => _isUpdatingFollowPreferences;
@@ -138,6 +152,109 @@ class ProjectsStore extends ChangeNotifier {
       }
     }
     return null;
+  }
+
+  void setDiscoverFilters({
+    required Set<String> primaryTags,
+    required Set<String> secondaryTags,
+    required Set<Priority> priorities,
+  }) {
+    _discoverPrimaryTagFilters
+      ..clear()
+      ..addAll(primaryTags);
+    _discoverSecondaryTagFilters
+      ..clear()
+      ..addAll(secondaryTags);
+    _discoverPriorityFilters
+      ..clear()
+      ..addAll(priorities);
+    notifyListeners();
+  }
+
+  void clearDiscoverFilters() {
+    if (!hasDiscoverFilters) return;
+    _discoverPrimaryTagFilters.clear();
+    _discoverSecondaryTagFilters.clear();
+    _discoverPriorityFilters.clear();
+    notifyListeners();
+  }
+
+  List<Project> discoverProjects({
+    required Iterable<Update> updates,
+  }) {
+    final updateCountsByProject = <String, int>{};
+    final priorityLabelsByProject = <String, Set<String>>{};
+    for (final update in updates) {
+      updateCountsByProject.update(
+        update.projectId,
+        (count) => count + 1,
+        ifAbsent: () => 1,
+      );
+      priorityLabelsByProject
+          .putIfAbsent(update.projectId, () => <String>{})
+          .add(update.priority.label.trim().toLowerCase());
+    }
+
+    final selectedPriorityLabels = _discoverPriorityFilters
+        .map((priority) => priority.label.trim().toLowerCase())
+        .toSet();
+
+    final filtered = _projects.where((project) {
+      if (_discoverPrimaryTagFilters.isNotEmpty &&
+          !_discoverPrimaryTagFilters.contains(project.primaryTag.name)) {
+        return false;
+      }
+
+      if (_discoverSecondaryTagFilters.isNotEmpty) {
+        final projectSecondaryNames = project.secondaryTags
+            .map((tag) => tag.name.trim())
+            .where((name) => name.isNotEmpty)
+            .toSet();
+        final hasSecondaryMatch = projectSecondaryNames.any(
+          _discoverSecondaryTagFilters.contains,
+        );
+        if (!hasSecondaryMatch) {
+          return false;
+        }
+      }
+
+      if (selectedPriorityLabels.isNotEmpty) {
+        final projectLabels = priorityLabelsByProject[project.id] ?? <String>{};
+        if (!projectLabels.any(selectedPriorityLabels.contains)) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList(growable: false);
+
+    filtered.sort((left, right) {
+      final leftScore = hypeScoreForProject(
+        left,
+        updatesCountOverride: updateCountsByProject[left.id],
+      );
+      final rightScore = hypeScoreForProject(
+        right,
+        updatesCountOverride: updateCountsByProject[right.id],
+      );
+      final scoreCompare = rightScore.compareTo(leftScore);
+      if (scoreCompare != 0) {
+        return scoreCompare;
+      }
+      return right.createdAt.compareTo(left.createdAt);
+    });
+
+    return filtered;
+  }
+
+  double hypeScoreForProject(
+    Project project, {
+    int? updatesCountOverride,
+  }) {
+    final followers = project.followersCount;
+    final updatesCount = updatesCountOverride ?? (project.posts?.length ?? 0);
+    final raw = (followers * 0.05 + updatesCount * 0.3).clamp(0.0, 10.0);
+    return double.parse(raw.toStringAsFixed(1));
   }
 
   bool isProjectFollowed(String projectId) =>

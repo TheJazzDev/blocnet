@@ -75,7 +75,7 @@ class PrimaryButton extends StatelessWidget {
                   title,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: isEnabled ? Colors.black : AppColors.textMuted,
+                    color: isEnabled ? Colors.white : AppColors.textMuted,
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Geist',

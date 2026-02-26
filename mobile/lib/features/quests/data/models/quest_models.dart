@@ -263,6 +263,55 @@ class QuestSubmissionModel {
   }
 }
 
+class QuestVerificationResult {
+  const QuestVerificationResult({
+    required this.questId,
+    required this.questSlug,
+    required this.eligible,
+    required this.completed,
+    required this.alreadyCompleted,
+    required this.rewardPoints,
+    required this.currentProgress,
+    required this.targetProgress,
+    required this.metricLabel,
+    required this.missingRequirements,
+    required this.message,
+  });
+
+  final String questId;
+  final String questSlug;
+  final bool eligible;
+  final bool completed;
+  final bool alreadyCompleted;
+  final int rewardPoints;
+  final int currentProgress;
+  final int targetProgress;
+  final String metricLabel;
+  final List<String> missingRequirements;
+  final String message;
+
+  factory QuestVerificationResult.fromApi(Map<String, dynamic> json) {
+    final progress = _asStringKeyMap(json['progress']);
+    final rawMissing = json['missingRequirements'];
+    return QuestVerificationResult(
+      questId: json['questId']?.toString() ?? '',
+      questSlug: json['questSlug']?.toString() ?? '',
+      eligible: json['eligible'] == true,
+      completed: json['completed'] == true,
+      alreadyCompleted: json['alreadyCompleted'] == true,
+      rewardPoints: int.tryParse(json['rewardPoints']?.toString() ?? '') ?? 0,
+      currentProgress: int.tryParse(progress['current']?.toString() ?? '') ?? 0,
+      targetProgress: int.tryParse(progress['target']?.toString() ?? '') ?? 0,
+      metricLabel: progress['metricLabel']?.toString() ?? '',
+      missingRequirements: rawMissing is List
+          ? rawMissing.map((entry) => entry.toString()).toList()
+          : const [],
+      message:
+          json['message']?.toString() ?? 'Verification result unavailable.',
+    );
+  }
+}
+
 QuestType _questTypeFromApi(Object? raw) {
   switch ((raw ?? '').toString()) {
     case 'external_link':

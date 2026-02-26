@@ -281,6 +281,60 @@ class _EmptyManagedProjects extends StatelessWidget {
               height: 1.4,
             ),
           ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.manageProjects),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgElevated,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.borderSubtle),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'View Submissions',
+                      style: AppTypography.custom(
+                        color: AppColors.textSecondary,
+                        size: 10,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.submitProject),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primary500.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Submit Gem',
+                      style: AppTypography.custom(
+                        color: AppColors.primary400,
+                        size: 10,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

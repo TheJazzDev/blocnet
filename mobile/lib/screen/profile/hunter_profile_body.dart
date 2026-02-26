@@ -153,6 +153,18 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
               followingCount: followingCount,
             ),
             Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.editProfile),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: const Text('Edit Profile'),
+                ),
+              ),
+            ),
+            Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Row(
                 children: [
@@ -241,13 +253,6 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
                     subtitle: 'View and manage your referral code',
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.referralCode),
-                  ),
-                  _HunterTile(
-                    icon: Icons.edit_outlined,
-                    title: 'Edit Profile',
-                    subtitle: 'Update your avatar and public details',
-                    onTap: () =>
-                        Navigator.of(context).pushNamed(AppRoutes.editProfile),
                   ),
                   _HunterTile(
                     icon: Icons.notifications_outlined,

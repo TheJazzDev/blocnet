@@ -11,31 +11,31 @@ const _userTabs = [
     title: 'Discover',
     showSearch: true,
     showFilter: true,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
   _TabMeta(
     title: 'Community',
     showSearch: true,
     showFilter: false,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
   _TabMeta(
     title: 'Mining',
     showSearch: true,
     showFilter: false,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
   _TabMeta(
     title: 'Wallet',
     showSearch: true,
     showFilter: false,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
   _TabMeta(
     title: 'Profile',
     showSearch: false,
     showFilter: false,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
 ];
 
@@ -50,31 +50,31 @@ const _hunterTabs = [
     title: 'Discover',
     showSearch: true,
     showFilter: true,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
   _TabMeta(
     title: 'Hunter Hub',
     showSearch: true,
     showFilter: false,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
   _TabMeta(
     title: 'Mining',
     showSearch: true,
     showFilter: false,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
   _TabMeta(
     title: 'Wallet',
     showSearch: true,
     showFilter: false,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
   _TabMeta(
     title: 'Profile',
     showSearch: false,
     showFilter: false,
-    showNotificationBell: false,
+    showNotificationBell: true,
   ),
 ];
 

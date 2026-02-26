@@ -7,7 +7,9 @@ import {
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { BlocksService } from '../blocks/blocks.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { MentionsService } from '../mentions/mentions.service';
 import {
   buildCommunityPostInclude,
   communityPostCommentInclude,
@@ -25,17 +27,32 @@ export class CommunityPostsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
+    private readonly blocksService: BlocksService,
+    private readonly mentionsService: MentionsService,
   ) {}
 
   async listPosts(actor: AuthUser, query: ListCommunityPostsQuery) {
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
 
+    // Get list of blocked users
+    const blockedUserIds =
+      await this.blocksService.getBlockedUserIds(actor.id);
+
     const where: Prisma.CommunityPostWhereInput = {
       topic: query.topic,
-      authorId: query.authorId,
       status: ContentModerationStatus.active,
     };
+
+    // Handle authorId with block filtering
+    if (query.authorId) {
+      if (blockedUserIds.includes(query.authorId)) {
+        return [];
+      }
+      where.authorId = query.authorId;
+    } else if (blockedUserIds.length > 0) {
+      where.authorId = { notIn: blockedUserIds };
+    }
 
     const posts = await this.prisma.communityPost.findMany({
       where,
@@ -49,10 +66,15 @@ export class CommunityPostsService {
   }
 
   async getPost(actor: AuthUser, id: string) {
+    const blockedUserIds = await this.blocksService.getBlockedUserIds(actor.id);
+
     const post = await this.prisma.communityPost.findFirst({
       where: {
         id,
         status: ContentModerationStatus.active,
+        ...(blockedUserIds.length > 0
+          ? { authorId: { notIn: blockedUserIds } }
+          : {}),
       },
       include: buildCommunityPostInclude(actor.id),
     });
@@ -82,19 +104,48 @@ export class CommunityPostsService {
       metadata: { topic: post.topic },
     });
 
+    // Process mentions
+    await this.mentionsService.createCommunityPostMentions(
+      post.id,
+      dto.content,
+      actor.id,
+    );
+
     return toCommunityPostResponse(post);
   }
 
-  async listComments(postId: string, query: ListCommunityCommentsQuery) {
+  async listComments(
+    actor: AuthUser,
+    postId: string,
+    query: ListCommunityCommentsQuery,
+  ) {
     await this.ensurePostIsActive(postId);
 
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
+    const blockedUserIds = await this.blocksService.getBlockedUserIds(actor.id);
+    if (blockedUserIds.length > 0) {
+      const visiblePost = await this.prisma.communityPost.findFirst({
+        where: {
+          id: postId,
+          status: ContentModerationStatus.active,
+          authorId: { notIn: blockedUserIds },
+        },
+        select: { id: true },
+      });
+
+      if (!visiblePost) {
+        throw new NotFoundException('Community post not found');
+      }
+    }
 
     const comments = await this.prisma.communityPostComment.findMany({
       where: {
         postId,
         status: ContentModerationStatus.active,
+        ...(blockedUserIds.length > 0
+          ? { authorId: { notIn: blockedUserIds } }
+          : {}),
       },
       orderBy: { createdAt: 'asc' },
       skip: offset,
@@ -128,6 +179,13 @@ export class CommunityPostsService {
       resourceId: comment.id,
       metadata: { postId },
     });
+
+    // Process mentions
+    await this.mentionsService.createCommunityPostCommentMentions(
+      comment.id,
+      dto.content,
+      actor.id,
+    );
 
     return toCommunityPostCommentResponse(comment);
   }

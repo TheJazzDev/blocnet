@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BadgeCategory, QuestStatus, QuestType, QuestVerificationStatus } from '@prisma/client';
+import {
+  BadgeCategory,
+  QuestStatus,
+  QuestType,
+  QuestVerificationStatus,
+} from '@prisma/client';
 
 export class QuestResponseDto {
   @ApiProperty()
@@ -130,4 +135,44 @@ export class UserQuestsListResponseDto {
 
   @ApiProperty()
   inProgressCount: number;
+}
+
+export class QuestVerifyProgressDto {
+  @ApiProperty()
+  current: number;
+
+  @ApiProperty()
+  target: number;
+
+  @ApiProperty()
+  metricLabel: string;
+}
+
+export class QuestVerifyResponseDto {
+  @ApiProperty()
+  questId: string;
+
+  @ApiProperty()
+  questSlug: string;
+
+  @ApiProperty()
+  eligible: boolean;
+
+  @ApiProperty()
+  completed: boolean;
+
+  @ApiProperty()
+  alreadyCompleted: boolean;
+
+  @ApiProperty()
+  rewardPoints: number;
+
+  @ApiProperty({ type: QuestVerifyProgressDto })
+  progress: QuestVerifyProgressDto;
+
+  @ApiProperty({ type: [String] })
+  missingRequirements: string[];
+
+  @ApiProperty()
+  message: string;
 }

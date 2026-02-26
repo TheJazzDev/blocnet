@@ -5,9 +5,12 @@ import 'package:blocnet/services/admins_store.dart';
 import 'package:blocnet/services/app_store.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/badges_store.dart';
+import 'package:blocnet/services/blocks_store.dart';
+import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/deep_link_service.dart';
 import 'package:blocnet/services/edge_engine_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
+import 'package:blocnet/services/notification_settings_store.dart';
 import 'package:blocnet/services/push_notification_service.dart';
 import 'package:blocnet/services/quests_store.dart';
 import 'package:blocnet/services/tips_store.dart';
@@ -63,6 +66,7 @@ void main() async {
   final authStore = AuthStore();
   await authStore.bootstrapFromSession();
   final notificationsStore = NotificationsStore();
+  final notificationSettingsStore = NotificationSettingsStore();
   final initialRoute =
       authStore.isAuthenticated ? AppRoutes.main : AppRoutes.signIn;
 
@@ -94,6 +98,7 @@ void main() async {
     } else if (!authStore.isAuthenticated && pushInitialised) {
       pushInitialised = false;
       pushNotificationService.dispose();
+      notificationSettingsStore.clear();
     }
   }
 
@@ -116,15 +121,26 @@ void main() async {
         ChangeNotifierProvider<NotificationsStore>.value(
           value: notificationsStore,
         ),
+        ChangeNotifierProvider<NotificationSettingsStore>.value(
+          value: notificationSettingsStore,
+        ),
         ChangeNotifierProvider(create: (_) => CommentsStore()),
         ChangeNotifierProvider(create: (_) => MiningStore()),
         ChangeNotifierProvider(create: (_) => UserProfileStore()),
         ChangeNotifierProvider(create: (_) => TipsStore()),
         ChangeNotifierProvider(create: (_) => WalletStore()),
+        ChangeNotifierProvider(create: (_) => BlocksStore(ApiClient())),
         ChangeNotifierProvider(create: (_) => TagsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),
         ChangeNotifierProvider(create: (_) => BadgesStore()),
-        ChangeNotifierProvider(create: (_) => QuestsStore()),
+        ChangeNotifierProxyProvider<AuthStore, QuestsStore>(
+          create: (_) => QuestsStore(),
+          update: (_, auth, questsStore) {
+            final store = questsStore ?? QuestsStore();
+            store.ensureUserScope(auth.userId);
+            return store;
+          },
+        ),
         // ChangeNotifierProvider(create: (_) => PriorityStore()),
         ChangeNotifierProvider(create: (_) => ProjectsStore()),
       ],

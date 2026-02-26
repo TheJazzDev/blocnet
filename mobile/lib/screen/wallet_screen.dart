@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 part 'wallet/wallet_screen_sections.part.dart';
 part 'wallet/wallet_screen_actions.part.dart';

@@ -24,6 +24,7 @@ import { AdminDeleteUserDto } from './dto/admin-delete-user.dto';
 import { AdminHardDeleteUserDto } from './dto/admin-hard-delete-user.dto';
 import { AdminReactivateUserDto } from './dto/admin-reactivate-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
+import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UsersService } from './users.service';
 
@@ -255,5 +256,26 @@ export class AdminUsersController {
     }
 
     return this.usersService.hardDeleteUserByOwner(user, id, dto);
+  }
+
+  @Post('me/deactivate')
+  async deactivateMyAccount(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: DeactivateAccountDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.usersService.deactivateAccount(user.id, dto.reason);
+  }
+
+  @Post('me/reactivate')
+  async reactivateMyAccount(@CurrentUser() user: AuthUser | undefined) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.usersService.reactivateAccount(user.id);
   }
 }

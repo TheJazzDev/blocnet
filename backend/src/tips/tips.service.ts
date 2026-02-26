@@ -1,10 +1,12 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import {
+  NotificationType,
   Prisma,
   RoleName,
   TipAccountType,
@@ -20,6 +22,7 @@ import {
   createDeterministicIdempotencyKey,
   normalizeIdempotencyKey,
 } from '../common/utils/idempotency.util';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTipDto } from './dto/create-tip.dto';
 import { ListAdminTipTransactionsQuery } from './dto/list-admin-tip-transactions.query';
@@ -55,11 +58,13 @@ type TxClient = Prisma.TransactionClient | PrismaService;
 
 @Injectable()
 export class TipsService {
+  private readonly logger = new Logger(TipsService.name);
   private bootstrapPromise: Promise<void> | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getMyOverview(userId: string) {
@@ -322,6 +327,52 @@ export class TipsService {
         idempotencyKey,
       },
     });
+
+    try {
+      const normalizedSymbol = created.currency.symbol.trim();
+      const symbol = normalizedSymbol.length > 0
+        ? normalizedSymbol
+        : created.currency.code;
+      const senderLabel =
+        created.sender.displayName ??
+        created.sender.username ??
+        'Someone';
+      const tipAmount = formatAtomicAmount(
+        created.amountAtomic,
+        created.currency.decimals,
+      );
+
+      await this.notificationsService.notifyMany(
+        [
+          {
+            userId: recipient.id,
+            type: NotificationType.system,
+            actorUserId: senderUserId,
+            title: 'You received a tip',
+            body: `${senderLabel} tipped you ${tipAmount} ${symbol}.`,
+            payload: {
+              type: 'tip_received',
+              tipTransactionId: created.id,
+              senderUserId,
+              recipientUserId: recipient.id,
+              currencyCode: created.currencyCode,
+              amountAtomic: created.amountAtomic.toString(),
+              amount: tipAmount,
+              symbol,
+            } as Prisma.InputJsonValue,
+            deeplink: '/hunter-hub',
+            dedupeKey: `tip.received:${created.id}`,
+          },
+        ],
+        { push: true },
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to emit tip notification for tx ${created.id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
 
     return this.toTipTransactionResponse(created, senderUserId);
   }

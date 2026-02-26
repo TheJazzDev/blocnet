@@ -5,7 +5,6 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   MiningConfig,
   MiningPointSource,
@@ -16,6 +15,7 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
+import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import { MCR_CURRENCY_CODE } from '../tips/tip.constants';
 
 const MCR_ATOMIC_MULTIPLIER = 1000n;
@@ -70,7 +70,7 @@ export class MiningService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
     private readonly questsService: QuestsService,
@@ -185,9 +185,9 @@ export class MiningService {
           boostBpsSnapshot: 0,
           activeReferralsSnapshot: activeDirectReferrals,
           hourlyRateNow: Number(
-            (config.basePointsPerCycle / Math.max(config.cycleHours, 1)).toFixed(
-              4,
-            ),
+            (
+              config.basePointsPerCycle / Math.max(config.cycleHours, 1)
+            ).toFixed(4),
           ),
           currentHourEstimatedPoints: 0,
           completedHours: 0,
@@ -481,8 +481,9 @@ export class MiningService {
       },
     });
 
-    let nextSessionState: Awaited<ReturnType<typeof this.toSessionState>> | null =
-      null;
+    let nextSessionState: Awaited<
+      ReturnType<typeof this.toSessionState>
+    > | null = null;
 
     if (config.enabled) {
       const nextSessionAsOf = new Date();
@@ -833,21 +834,22 @@ export class MiningService {
     }
 
     const userIds = profiles.map((profile) => profile.id);
-    const maturedUnclaimedRows = await this.prisma.miningHourlyCheckpoint.groupBy({
-      by: ['userId'],
-      where: {
-        userId: {
-          in: userIds,
+    const maturedUnclaimedRows =
+      await this.prisma.miningHourlyCheckpoint.groupBy({
+        by: ['userId'],
+        where: {
+          userId: {
+            in: userIds,
+          },
+          claimedAt: null,
+          hourEndAt: {
+            lte: asOf,
+          },
         },
-        claimedAt: null,
-        hourEndAt: {
-          lte: asOf,
+        _sum: {
+          points: true,
         },
-      },
-      _sum: {
-        points: true,
-      },
-    });
+      });
 
     const maturedByUserId = new Map<string, number>(
       maturedUnclaimedRows.map((row) => [row.userId, row._sum.points ?? 0]),
@@ -864,7 +866,8 @@ export class MiningService {
           profile.miningClaimedPoints,
         );
         const maturedUnclaimedPoints = maturedByUserId.get(profile.id) ?? 0;
-        const lifetimeEarnedPoints = claimedTotalPoints + maturedUnclaimedPoints;
+        const lifetimeEarnedPoints =
+          claimedTotalPoints + maturedUnclaimedPoints;
         const sessionStatus: MiningSessionStatus = !currentSession
           ? 'idle'
           : currentSession.endsAt.getTime() <= asOf.getTime()
@@ -915,14 +918,9 @@ export class MiningService {
   }
 
   private withEnvFlagOverrides(config: MiningConfig): EffectiveMiningConfig {
-    const miningEnabledFlag = this.configService.get<boolean>(
-      'ENABLE_MINING',
-      true,
-    );
-    const referralsEnabledFlag = this.configService.get<boolean>(
-      'ENABLE_REFERRALS',
-      true,
-    );
+    const miningEnabledFlag = this.runtimeFeatureFlagsService.isMiningEnabled();
+    const referralsEnabledFlag =
+      this.runtimeFeatureFlagsService.isReferralsEnabled();
 
     return {
       enabled: config.enabled && miningEnabledFlag,
@@ -996,7 +994,9 @@ export class MiningService {
         hourIndex: true,
       },
     });
-    const existingHourIndexes = new Set(existingRows.map((row) => row.hourIndex));
+    const existingHourIndexes = new Set(
+      existingRows.map((row) => row.hourIndex),
+    );
 
     for (let hourIndex = 1; hourIndex <= maturedHours; hourIndex++) {
       if (existingHourIndexes.has(hourIndex)) {
@@ -1060,21 +1060,23 @@ export class MiningService {
       session.endsAt,
     );
 
-    const accruedAggregate = await this.prisma.miningHourlyCheckpoint.aggregate({
-      where: {
-        sessionId: session.id,
-        claimedAt: null,
-        hourEndAt: {
-          lte: asOf,
+    const accruedAggregate = await this.prisma.miningHourlyCheckpoint.aggregate(
+      {
+        where: {
+          sessionId: session.id,
+          claimedAt: null,
+          hourEndAt: {
+            lte: asOf,
+          },
+        },
+        _sum: {
+          points: true,
+        },
+        _max: {
+          hourIndex: true,
         },
       },
-      _sum: {
-        points: true,
-      },
-      _max: {
-        hourIndex: true,
-      },
-    });
+    );
 
     const completedHours = accruedAggregate._max.hourIndex ?? 0;
     const pointsMinedSoFar = accruedAggregate._sum.points ?? 0;
@@ -1096,7 +1098,8 @@ export class MiningService {
       asOf,
     );
     const wholeHours = mathFloor(elapsedHours);
-    const currentHourFraction = status === 'running' ? elapsedHours - wholeHours : 0;
+    const currentHourFraction =
+      status === 'running' ? elapsedHours - wholeHours : 0;
     const currentHourEstimatedPoints = Number(
       (hourlyRateNow * currentHourFraction).toFixed(4),
     );
@@ -1106,7 +1109,11 @@ export class MiningService {
       status,
       startsAt: session.startsAt,
       endsAt: session.endsAt,
-      progressPct: this.computeProgressPct(session.startsAt, session.endsAt, asOf),
+      progressPct: this.computeProgressPct(
+        session.startsAt,
+        session.endsAt,
+        asOf,
+      ),
       pointsMinedSoFar,
       effectivePointsPerCycle: projectedCyclePointsNow,
       boostBpsSnapshot: liveBoostBps,
@@ -1139,7 +1146,11 @@ export class MiningService {
     return Math.min(cycleHours, Math.floor(elapsedMs / (60 * 60 * 1000)));
   }
 
-  private computeElapsedHours(startsAt: Date, endsAt: Date, asOf: Date): number {
+  private computeElapsedHours(
+    startsAt: Date,
+    endsAt: Date,
+    asOf: Date,
+  ): number {
     const cappedEndMs = Math.min(asOf.getTime(), endsAt.getTime());
     const elapsedMs = cappedEndMs - startsAt.getTime();
     if (elapsedMs <= 0) {
@@ -1351,7 +1362,10 @@ export class MiningService {
     const uniqueDays: number[] = [];
     for (const row of rows) {
       const day = this.toUtcDayNumber(row.createdAt);
-      if (uniqueDays.length === 0 || uniqueDays[uniqueDays.length - 1] !== day) {
+      if (
+        uniqueDays.length === 0 ||
+        uniqueDays[uniqueDays.length - 1] !== day
+      ) {
         uniqueDays.push(day);
       }
     }

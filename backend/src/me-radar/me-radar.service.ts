@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ProjectStatus, UpdateStatus, UpdateUrgency } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 
 type ActiveProject = {
   projectId: string;
@@ -16,12 +16,12 @@ type ActiveProject = {
 export class MeRadarService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,
     private readonly auditLogService: AuditLogService,
   ) {}
 
   async getRadar(userId: string) {
-    const enabled = this.configService.get<boolean>('ENABLE_ALPHA_RADAR', true);
+    const enabled = this.runtimeFeatureFlagsService.isAlphaRadarEnabled();
     const profile = await this.prisma.profile.findUnique({
       where: { id: userId },
       select: {

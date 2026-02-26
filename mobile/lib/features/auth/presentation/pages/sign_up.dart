@@ -448,15 +448,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               onFieldSubmitted: (_) => _submit(),
               validator: _validateReferral,
             ),
-            const SizedBox(height: 4),
-            Text(
-              'If you were invited, enter your code now. OAuth signups can bind after login too.',
-              style: TextStyle(
-                color: AppColors.textFaint,
-                fontSize: 11,
-                fontFamily: 'Geist',
-              ),
-            ),
             const SizedBox(height: 24),
             Row(
               children: [

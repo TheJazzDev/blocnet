@@ -17,6 +17,8 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ListNotificationsQuery } from './dto/list-notifications.query';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
+import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
+import { NotificationPreferencesService } from './notification-preferences.service';
 import { NotificationsService } from './notifications.service';
 import { FcmService } from './fcm.service';
 
@@ -26,6 +28,7 @@ export class NotificationsController {
   constructor(
     private readonly notificationsService: NotificationsService,
     private readonly fcmService: FcmService,
+    private readonly notificationPreferencesService: NotificationPreferencesService,
   ) {}
 
   @Get()
@@ -44,6 +47,27 @@ export class NotificationsController {
   ) {
     if (!user) throw new UnauthorizedException('User context missing');
     return this.notificationsService.markAsRead(user.id, id);
+  }
+
+  @Get('preferences/catalog')
+  async getPreferenceCatalog(@CurrentUser() user: AuthUser | undefined) {
+    if (!user) throw new UnauthorizedException('User context missing');
+    return this.notificationPreferencesService.getCatalog();
+  }
+
+  @Get('preferences')
+  async getPreferences(@CurrentUser() user: AuthUser | undefined) {
+    if (!user) throw new UnauthorizedException('User context missing');
+    return this.notificationPreferencesService.getPreferences(user.id);
+  }
+
+  @Patch('preferences')
+  async updatePreferences(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: UpdateNotificationPreferencesDto,
+  ) {
+    if (!user) throw new UnauthorizedException('User context missing');
+    return this.notificationPreferencesService.updatePreferences(user.id, dto);
   }
 
   @Post('broadcast')
@@ -75,7 +99,8 @@ export class NotificationsController {
       insertedCount: dbResult.insertedCount,
       sentCount: fcmResult.sentCount,
       failureCount: (fcmResult as any).failureCount ?? 0,
-      recipientCount: (fcmResult as any).recipientCount ?? dbResult.insertedCount,
+      recipientCount:
+        (fcmResult as any).recipientCount ?? dbResult.insertedCount,
       skipped: fcmResult.skipped,
       skipReason: (fcmResult as any).skipReason ?? null,
     };

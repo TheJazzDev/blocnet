@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/tags_store.dart';
 import 'package:flutter/material.dart';
@@ -304,19 +305,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.bgBase,
-      elevation: 0,
-      centerTitle: false,
-      iconTheme: IconThemeData(color: AppColors.textMuted),
-      title: Text(
-        'Submit New Gem',
-        style: AppTypography.custom(
-          color: AppColors.textPrimary,
-          size: 16,
-          weight: FontWeight.w600,
-        ),
-      ),
+    return const CustomAppBar(
+      title: 'Submit New Gem',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
     );
   }
 

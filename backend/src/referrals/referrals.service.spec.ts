@@ -1,4 +1,3 @@
-import { ConfigService } from '@nestjs/config';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { ReferralsService } from './referrals.service';
 
@@ -16,22 +15,30 @@ describe('ReferralsService', () => {
     },
   };
 
-  const configService = {
-    get: jest.fn().mockImplementation((key: string, fallback?: unknown) => {
-      if (key === 'ENABLE_MINING') return true;
-      if (key === 'ENABLE_REFERRALS') return true;
-      return fallback;
-    }),
-  } as unknown as ConfigService;
+  const runtimeFeatureFlagsService = {
+    isMiningEnabled: jest.fn(),
+    isReferralsEnabled: jest.fn(),
+  };
 
   const auditLogService = {
     create: jest.fn(),
   } as unknown as AuditLogService;
+  const badgesService = {
+    checkReferralMilestones: jest.fn(),
+  };
+  const questsService = {
+    checkAndCompleteByAction: jest.fn(),
+  };
 
   let service: ReferralsService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+
+    runtimeFeatureFlagsService.isMiningEnabled.mockReturnValue(true);
+    runtimeFeatureFlagsService.isReferralsEnabled.mockReturnValue(true);
+    badgesService.checkReferralMilestones.mockResolvedValue(undefined);
+    questsService.checkAndCompleteByAction.mockResolvedValue(undefined);
 
     prisma.miningConfig.upsert.mockResolvedValue({
       id: 'default',
@@ -48,8 +55,10 @@ describe('ReferralsService', () => {
 
     service = new ReferralsService(
       prisma as any,
-      configService,
+      runtimeFeatureFlagsService as any,
       auditLogService,
+      badgesService as any,
+      questsService as any,
     );
   });
 

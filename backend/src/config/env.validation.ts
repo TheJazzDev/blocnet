@@ -40,6 +40,7 @@ export const envValidationSchema = Joi.object({
   SUPABASE_SECRET_KEY: Joi.string().allow('').optional(),
   SUPABASE_SERVICE_ROLE_KEY: Joi.string().allow('').optional(),
   SUPABASE_AVATARS_BUCKET: Joi.string().default('avatars'),
+  SUPABASE_QUEST_PROOFS_BUCKET: Joi.string().default('quest-proofs'),
   PUBLISHABLE_KEY: Joi.string().allow('').optional(),
   SUPABASE_JWKS_URL: Joi.string().uri().allow('').empty('').optional(),
   SUPABASE_JWT_SECRET: Joi.string().min(1).allow('').empty('').optional(),
@@ -47,6 +48,10 @@ export const envValidationSchema = Joi.object({
   FIREBASE_PROJECT_ID: Joi.string().allow('').optional(),
   FIREBASE_CLIENT_EMAIL: Joi.string().allow('').optional(),
   FIREBASE_PRIVATE_KEY: Joi.string().allow('').optional(),
+  RESEND_API_KEY: Joi.string().allow('').optional(),
+  EMAIL_FROM_ADDRESS: Joi.string().allow('').optional(),
+  FROM_EMAIL: Joi.string().allow('').optional(),
+  EMAIL_REPLY_TO: Joi.string().allow('').optional(),
 
   OWNER_USER_ID: Joi.string().min(1).optional(),
   OWNER_EMAIL: Joi.string()
@@ -58,6 +63,17 @@ export const envValidationSchema = Joi.object({
   ENABLE_FOLLOW_PREFS: Joi.boolean().default(true),
   ENABLE_EVENT_NOTIFICATIONS: Joi.boolean().default(true),
   ENABLE_WEEKLY_DIGEST: Joi.boolean().default(true),
+  NOTIFICATION_DIGEST_ENABLED: Joi.boolean().default(true),
+  NOTIFICATION_DIGEST_SEND_WINDOW_MINUTES: Joi.number()
+    .integer()
+    .min(1)
+    .max(60)
+    .default(10),
+  NOTIFICATION_DIGEST_BATCH_SIZE: Joi.number()
+    .integer()
+    .min(10)
+    .max(1000)
+    .default(200),
   ENABLE_MINING: Joi.boolean().default(true),
   ENABLE_REFERRALS: Joi.boolean().default(true),
 
@@ -96,18 +112,12 @@ export const envValidationSchema = Joi.object({
     .integer()
     .min(100)
     .default(2000),
-  WALLET_DEPOSIT_CONFIRMATIONS: Joi.number()
-    .integer()
-    .min(1)
-    .optional(),
+  WALLET_DEPOSIT_CONFIRMATIONS: Joi.number().integer().min(1).optional(),
   WALLET_WITHDRAWAL_POLL_INTERVAL_MS: Joi.number()
     .integer()
     .min(1000)
     .default(15000),
-  WALLET_WITHDRAWAL_CONFIRMATIONS: Joi.number()
-    .integer()
-    .min(1)
-    .optional(),
+  WALLET_WITHDRAWAL_CONFIRMATIONS: Joi.number().integer().min(1).optional(),
   WALLET_DEPOSIT_START_BLOCK: Joi.number()
     .integer()
     .min(0)

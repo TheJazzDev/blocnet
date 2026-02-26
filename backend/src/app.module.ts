@@ -6,8 +6,10 @@ import { AdminContentModule } from './admin-content/admin-content.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AuthModule } from './auth/auth.module';
 import { BadgesModule } from './badges/badges.module';
+import { BlocksModule } from './blocks/blocks.module';
 import { CommentsModule } from './comments/comments.module';
 import { CommunityPostsModule } from './community-posts/community-posts.module';
+import { MentionsModule } from './mentions/mentions.module';
 import { QuestsModule } from './quests/quests.module';
 import { DeviceTokensModule } from './device-tokens/device-tokens.module';
 import { EdgeEngineModule } from './edge-engine/edge-engine.module';
@@ -23,6 +25,7 @@ import { ProjectProposalsModule } from './project-proposals/project-proposals.mo
 import { ProjectsModule } from './projects/projects.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { RolesModule } from './roles/roles.module';
+import { RuntimeFeatureFlagsModule } from './runtime-flags/runtime-feature-flags.module';
 import { TagsModule } from './tags/tags.module';
 import { TipsModule } from './tips/tips.module';
 import { UsersModule } from './users/users.module';
@@ -43,6 +46,7 @@ import { envValidationSchema } from './config/env.validation';
       ],
       validationSchema: envValidationSchema,
     }),
+    RuntimeFeatureFlagsModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -51,6 +55,7 @@ import { envValidationSchema } from './config/env.validation';
     AdminApplicationsModule,
     AdminContentModule,
     BadgesModule,
+    BlocksModule,
     QuestsModule,
     ProjectsModule,
     ProjectAssignmentsModule,
@@ -59,6 +64,7 @@ import { envValidationSchema } from './config/env.validation';
     UpdatesModule,
     CommentsModule,
     CommunityPostsModule,
+    MentionsModule,
     FollowsModule,
     NotificationsModule,
     MeRadarModule,

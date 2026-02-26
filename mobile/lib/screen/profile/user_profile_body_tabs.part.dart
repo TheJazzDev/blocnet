@@ -62,15 +62,50 @@ class _ProfileTabBar extends StatelessWidget {
   }
 }
 
-class _BookmarksTab extends StatelessWidget {
+class _BookmarksTab extends StatefulWidget {
   const _BookmarksTab();
 
   @override
-  Widget build(BuildContext context) {
-    final profileStore = context.watch<UserProfileStore>();
-    final bookmarks = profileStore.bookmarks;
+  State<_BookmarksTab> createState() => _BookmarksTabState();
+}
 
-    if (profileStore.isLoadingBookmarks && bookmarks.isEmpty) {
+class _BookmarksTabState extends State<_BookmarksTab> {
+  Set<String> _bookmarkedIds = <String>{};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookmarkIds();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<UpdatesStore>().fetchUpdatesOnce();
+    });
+  }
+
+  Future<void> _loadBookmarkIds() async {
+    final bookmarkedIds = await UpdateBookmarksStore.bookmarkedIds();
+    if (!mounted) return;
+    setState(() {
+      _bookmarkedIds = bookmarkedIds;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _removeBookmark(String updateId) async {
+    await UpdateBookmarksStore.remove(updateId);
+    await _loadBookmarkIds();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final updatesStore = context.watch<UpdatesStore>();
+    final bookmarks = updatesStore.updates
+        .where((update) => _bookmarkedIds.contains(update.id))
+        .toList(growable: false)
+      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+
+    if ((_isLoading || updatesStore.isFetching) && bookmarks.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
           color: AppColors.userAccent,
@@ -88,14 +123,10 @@ class _BookmarksTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       itemCount: bookmarks.length,
       itemBuilder: (context, index) {
-        final post = bookmarks[index];
-        return _BookmarkItem(
-          post: post,
-          onRemove: () async {
-            await context.read<CommunityPostsStore>().toggleBookmark(post.id);
-            if (!context.mounted) return;
-            await context.read<UserProfileStore>().refreshBookmarks();
-          },
+        final update = bookmarks[index];
+        return _BookmarkedUpdateItem(
+          update: update,
+          onRemove: () => _removeBookmark(update.id),
         );
       },
     );
@@ -117,7 +148,7 @@ class _BookmarksEmptyState extends StatelessWidget {
                 size: 36, color: AppColors.textFaint),
             const SizedBox(height: 8),
             Text(
-              'Bookmark posts from Community to save them here',
+              'Bookmark updates to save them here',
               textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
@@ -132,124 +163,157 @@ class _BookmarksEmptyState extends StatelessWidget {
   }
 }
 
-class _BookmarkItem extends StatelessWidget {
-  const _BookmarkItem({
-    required this.post,
+class _BookmarkedUpdateItem extends StatelessWidget {
+  const _BookmarkedUpdateItem({
+    required this.update,
     required this.onRemove,
   });
 
-  final CommunityPost post;
+  final Update update;
   final VoidCallback onRemove;
+
+  void _openUpdate(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withValues(alpha: 0.72),
+      pageBuilder: (context, _, __) => UpdateDetailsDialog(id: update.id),
+      transitionDuration: const Duration(milliseconds: 280),
+      transitionBuilder: (context, animation, _, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final author = post.admin?.name ?? 'Blocnet User';
+    final projectName = update.project?.name ?? 'Project';
+    final preview = update.description.trim().isEmpty
+        ? update.content.trim()
+        : update.description.trim();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: AppColors.bgElevated,
-              borderRadius: BorderRadius.circular(8),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.userAccent.withValues(alpha: 0.2),
-                  AppColors.userAccent.withValues(alpha: 0.08),
+    return GestureDetector(
+      onTap: () => _openUpdate(context),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(8),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.userAccent.withValues(alpha: 0.2),
+                    AppColors.userAccent.withValues(alpha: 0.08),
+                  ],
+                ),
+              ),
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                size: 22,
+                color: AppColors.textFaint,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          update.title,
+                          style: AppTypography.custom(
+                            color: AppColors.textPrimary,
+                            size: 13,
+                            weight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        getTimeStamp(update.createdAt),
+                        style: AppTypography.custom(
+                          color: AppColors.textFaint,
+                          size: 10,
+                          weight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    preview,
+                    style: AppTypography.custom(
+                      color: AppColors.textMuted,
+                      size: 11,
+                      weight: FontWeight.w400,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        projectName,
+                        style: AppTypography.custom(
+                          color: AppColors.textFaint,
+                          size: 10,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: onRemove,
+                        behavior: HitTestBehavior.opaque,
+                        child: Icon(
+                          Icons.bookmark_remove_outlined,
+                          size: 16,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            child: Icon(Icons.forum_outlined,
-                size: 22, color: AppColors.textFaint),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        post.content,
-                        style: AppTypography.custom(
-                          color: AppColors.textPrimary,
-                          size: 13,
-                          weight: FontWeight.w600,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      getTimeStamp(post.createdAt),
-                      style: AppTypography.custom(
-                        color: AppColors.textFaint,
-                        size: 10,
-                        weight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Text(
-                      '@${author.toLowerCase().replaceAll(' ', '_')}',
-                      style: AppTypography.custom(
-                        color: AppColors.textFaint,
-                        size: 10,
-                        weight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgElevated,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: AppColors.borderSubtle),
-                      ),
-                      child: Text(
-                        post.topic.label,
-                        style: AppTypography.custom(
-                          color: AppColors.textFaint,
-                          size: 9,
-                          weight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: onRemove,
-                      behavior: HitTestBehavior.opaque,
-                      child: Icon(
-                        Icons.bookmark_remove_outlined,
-                        size: 16,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: AppColors.textFaint,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

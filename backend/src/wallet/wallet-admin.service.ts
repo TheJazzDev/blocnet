@@ -8,8 +8,9 @@ import {
   KycStatus,
   LedgerReason,
   Prisma,
-  WalletAsset,
+  WalletStatus,
   WithdrawalStatus,
+  type UserWallet,
 } from '@prisma/client';
 import { createPublicClient, http } from 'viem';
 import { AuditLogService } from '../audit-log/audit-log.service';
@@ -20,6 +21,7 @@ import { TurnkeyCustodyAdapter } from './custody/turnkey-custody.adapter';
 import { ListWalletAdminWithdrawalsQuery } from './dto/list-wallet-admin-withdrawals.query';
 import { ListWalletKycQuery } from './dto/list-wallet-kyc.query';
 import { ListWalletUsersQuery } from './dto/list-wallet-users.query';
+import { ReprocessDepositByTxHashDto } from './dto/reprocess-deposit-by-tx-hash.dto';
 import {
   ReviewWithdrawalDto,
   WithdrawalReviewDecision,
@@ -28,10 +30,12 @@ import { ReviewKycDto } from './dto/review-kyc.dto';
 import { UpdateRiskLimitDto } from './dto/update-risk-limit.dto';
 import { UpdateWalletAssetPriceDto } from './dto/update-wallet-asset-price.dto';
 import { UpdateWalletFeeDto } from './dto/update-wallet-fee.dto';
+import { UpdateWalletRuntimeConfigDto } from './dto/update-wallet-runtime-config.dto';
 import { DECIMAL_ZERO, toDecimalString } from './types/decimal';
 import { normalizeWalletAsset } from './wallet-asset.util';
 import { WalletAssetPricingService } from './wallet-asset-pricing.service';
 import { WalletConfigService } from './wallet-config.service';
+import { WalletDepositIndexerService } from './wallet-deposit-indexer.service';
 
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;
@@ -42,6 +46,7 @@ export class WalletAdminService {
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
     private readonly walletConfigService: WalletConfigService,
+    private readonly walletDepositIndexerService: WalletDepositIndexerService,
     private readonly turnkeyCustodyAdapter: TurnkeyCustodyAdapter,
     private readonly walletAssetPricingService: WalletAssetPricingService,
   ) {}
@@ -57,7 +62,9 @@ export class WalletAdminService {
     ] = await Promise.all([
       this.turnkeyCustodyAdapter.getHealth(),
       Promise.all([
-        this.checkNetworkHealth(this.walletConfigService.walletChainEnvironment),
+        this.checkNetworkHealth(
+          this.walletConfigService.walletChainEnvironment,
+        ),
       ]),
       this.prisma.userWallet.groupBy({
         by: ['status'],
@@ -140,6 +147,34 @@ export class WalletAdminService {
         withdrawalsByStatus,
       },
     };
+  }
+
+  async reprocessDepositByTxHash(
+    actorId: string,
+    dto: ReprocessDepositByTxHashDto,
+  ) {
+    const result =
+      await this.walletDepositIndexerService.reprocessTransactionByHash({
+        txHash: dto.txHash,
+        chainEnvironment: dto.chainEnvironment,
+        asset: dto.asset,
+      });
+
+    await this.auditLogService.create({
+      actorId,
+      action: FinancialAuditActions.WalletDepositReprocessTriggered,
+      resourceType: 'wallet_manual_deposit_reprocess',
+      resourceId: result.txHash,
+      metadata: {
+        txHash: result.txHash,
+        chainEnvironment: result.chainEnvironment,
+        txBlockNumber: result.txBlockNumber,
+        headBlockNumber: result.headBlockNumber,
+        summary: result.summary,
+      },
+    });
+
+    return result;
   }
 
   async listWalletUsers(query: ListWalletUsersQuery) {
@@ -231,6 +266,123 @@ export class WalletAdminService {
       limit,
       offset,
     };
+  }
+
+  async updateWalletUserStatus(
+    actorId: string,
+    userId: string,
+    disabled: boolean,
+  ) {
+    const user = await this.prisma.profile.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const existing = await this.prisma.userWallet.findUnique({
+      where: { userId },
+    });
+
+    let wallet: UserWallet;
+    if (!existing) {
+      if (!disabled) {
+        throw new BadRequestException('Wallet does not exist for this user');
+      }
+
+      wallet = await this.prisma.userWallet.create({
+        data: {
+          userId,
+          chainEnvironment: this.walletConfigService.walletChainEnvironment,
+          chainId: this.walletConfigService.walletProvisionChainId,
+          status: WalletStatus.disabled,
+          failureReason: 'Disabled by admin',
+        },
+      });
+    } else {
+      const nextStatus = disabled
+        ? WalletStatus.disabled
+        : this.resolveStatusWhenEnabled(existing);
+
+      wallet =
+        existing.status === nextStatus
+          ? existing
+          : await this.prisma.userWallet.update({
+              where: { id: existing.id },
+              data: {
+                status: nextStatus,
+                failureReason: disabled ? 'Disabled by admin' : null,
+              },
+            });
+    }
+
+    await this.auditLogService.create({
+      actorId,
+      action: disabled
+        ? FinancialAuditActions.WalletUserDisabled
+        : FinancialAuditActions.WalletUserEnabled,
+      resourceType: 'user_wallet',
+      resourceId: wallet.id,
+      metadata: {
+        userId,
+        email: user.email,
+        walletStatus: wallet.status,
+      },
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+      },
+      wallet: {
+        id: wallet.id,
+        status: wallet.status,
+        address: wallet.address,
+        providerWalletId: wallet.providerWalletId,
+        chainId: wallet.chainId,
+        chainEnvironment: wallet.chainEnvironment,
+        updatedAt: wallet.updatedAt,
+      },
+    };
+  }
+
+  async getRuntimeConfig() {
+    return this.walletConfigService.getRuntimeConfig();
+  }
+
+  async updateRuntimeConfig(
+    actorId: string,
+    dto: UpdateWalletRuntimeConfigDto,
+  ) {
+    const updated = await this.walletConfigService.updateRuntimeConfig({
+      walletEnabled: dto.walletEnabled,
+      depositsEnabled: dto.depositsEnabled,
+      withdrawalsEnabled: dto.withdrawalsEnabled,
+      depositRealtimeEnabled: dto.depositRealtimeEnabled,
+      depositConfirmations: dto.depositConfirmations,
+      withdrawalConfirmations: dto.withdrawalConfirmations,
+      walletAssetBntEnabled: dto.walletAssetBntEnabled,
+      walletAssetBnbEnabled: dto.walletAssetBnbEnabled,
+      walletAssetUsdtEnabled: dto.walletAssetUsdtEnabled,
+      withdrawalEnabledAssets: dto.withdrawalEnabledAssets,
+    });
+
+    await this.auditLogService.create({
+      actorId,
+      action: FinancialAuditActions.WalletRuntimeConfigUpdated,
+      resourceType: 'wallet_runtime_config',
+      resourceId: updated.id,
+      metadata: updated,
+    });
+
+    return updated;
   }
 
   async listWithdrawals(query: ListWalletAdminWithdrawalsQuery) {
@@ -739,7 +891,9 @@ export class WalletAdminService {
       throw new BadRequestException('Invalid wallet asset');
     }
 
-    let updated;
+    let updated: Awaited<
+      ReturnType<WalletAssetPricingService['updatePriceConfig']>
+    >;
     try {
       updated = await this.walletAssetPricingService.updatePriceConfig(asset, {
         providerId: dto.providerId,
@@ -763,6 +917,15 @@ export class WalletAdminService {
     });
 
     return updated;
+  }
+
+  private resolveStatusWhenEnabled(wallet: {
+    address: string | null;
+    providerWalletId: string | null;
+  }): WalletStatus {
+    return wallet.address && wallet.providerWalletId
+      ? WalletStatus.ready
+      : WalletStatus.provisioning;
   }
 
   private async checkNetworkHealth(chainEnvironment: ChainEnvironment) {

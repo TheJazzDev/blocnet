@@ -1,4 +1,3 @@
-import { ConfigService } from '@nestjs/config';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { MiningService } from './mining.service';
 
@@ -26,6 +25,7 @@ describe('MiningService', () => {
     },
     miningPointLedger: {
       create: jest.fn(),
+      findMany: jest.fn(),
     },
     tipCurrency: {
       upsert: jest.fn(),
@@ -43,22 +43,30 @@ describe('MiningService', () => {
     $transaction: jest.fn(),
   };
 
-  const configService = {
-    get: jest.fn().mockImplementation((key: string, fallback?: unknown) => {
-      if (key === 'ENABLE_MINING') return true;
-      if (key === 'ENABLE_REFERRALS') return true;
-      return fallback;
-    }),
-  } as unknown as ConfigService;
+  const runtimeFeatureFlagsService = {
+    isMiningEnabled: jest.fn(),
+    isReferralsEnabled: jest.fn(),
+  };
 
   const auditLogService = {
     create: jest.fn(),
   } as unknown as AuditLogService;
+  const badgesService = {
+    checkMiningMilestones: jest.fn(),
+  };
+  const questsService = {
+    checkAndCompleteByAction: jest.fn(),
+  };
 
   let service: MiningService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+
+    runtimeFeatureFlagsService.isMiningEnabled.mockReturnValue(true);
+    runtimeFeatureFlagsService.isReferralsEnabled.mockReturnValue(true);
+    badgesService.checkMiningMilestones.mockResolvedValue(undefined);
+    questsService.checkAndCompleteByAction.mockResolvedValue(undefined);
 
     prisma.miningConfig.upsert.mockResolvedValue({
       id: 'default',
@@ -92,6 +100,7 @@ describe('MiningService', () => {
     });
     prisma.miningHourlyCheckpoint.count.mockResolvedValue(0);
     prisma.miningHourlyCheckpoint.updateMany.mockResolvedValue({ count: 0 });
+    prisma.miningPointLedger.findMany.mockResolvedValue([]);
     prisma.tipCurrency.upsert.mockResolvedValue({});
     prisma.tipAccount.upsert.mockResolvedValue({});
 
@@ -118,7 +127,13 @@ describe('MiningService', () => {
       }),
     );
 
-    service = new MiningService(prisma as any, configService, auditLogService);
+    service = new MiningService(
+      prisma as any,
+      runtimeFeatureFlagsService as any,
+      auditLogService,
+      badgesService as any,
+      questsService as any,
+    );
   });
 
   it('returns existing running session when start is called during active cycle', async () => {

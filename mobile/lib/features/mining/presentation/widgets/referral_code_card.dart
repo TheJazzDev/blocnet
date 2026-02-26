@@ -118,13 +118,22 @@ class ReferralCodeCard extends StatelessWidget {
                 ),
                 if (isBound && referral?.referredBy != null) ...[
                   const SizedBox(height: 10),
-                  Text(
-                    'You are under ${referral!.referredBy!.displayName ?? referral.referredBy!.email ?? 'your referrer'}.',
-                    style: AppTypography.custom(
-                      color: AppColors.textSecondary,
-                      size: 11,
-                      weight: FontWeight.w500,
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final referrer = referral!.referredBy!;
+                      final referrerLabel = referrer.displayName ??
+                          referrer.email ??
+                          referrer.code ??
+                          'linked referrer';
+                      return Text(
+                        'You are under $referrerLabel.',
+                        style: AppTypography.custom(
+                          color: AppColors.textSecondary,
+                          size: 11,
+                          weight: FontWeight.w500,
+                        ),
+                      );
+                    },
                   ),
                 ],
                 if (canBind) ...[

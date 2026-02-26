@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
+  apiFetch,
   clientApi,
   type AdminMiningConfig,
   type AdminMiningMetrics,
@@ -32,6 +33,19 @@ export default function MiningPage() {
   const [supportSaving, setSupportSaving] = useState(false);
   const [supportError, setSupportError] = useState<string | null>(null);
   const [supportSuccess, setSupportSuccess] = useState<string | null>(null);
+  const [supportReferralLookup, setSupportReferralLookup] = useState<{
+    loading: boolean;
+    valid: boolean;
+    ownerEmail: string | null;
+    ownerName: string | null;
+    ownerId: string | null;
+  }>({
+    loading: false,
+    valid: false,
+    ownerEmail: null,
+    ownerName: null,
+    ownerId: null,
+  });
 
   async function load() {
     setLoading(true);
@@ -53,6 +67,57 @@ export default function MiningPage() {
   useEffect(() => {
     void load();
   }, []);
+
+  useEffect(() => {
+    const code = supportReferralCode.trim().toUpperCase();
+    if (!code) {
+      setSupportReferralLookup({
+        loading: false,
+        valid: false,
+        ownerEmail: null,
+        ownerName: null,
+        ownerId: null,
+      });
+      return;
+    }
+    if (!/^[A-Z0-9]{8}$/.test(code)) {
+      setSupportReferralLookup({
+        loading: false,
+        valid: false,
+        ownerEmail: null,
+        ownerName: null,
+        ownerId: null,
+      });
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSupportReferralLookup((prev) => ({ ...prev, loading: true }));
+      try {
+        const result = await apiFetch<{
+          valid: boolean;
+          referrer: { id: string; email: string | null; displayName: string | null } | null;
+        }>(`/referrals/validate?code=${encodeURIComponent(code)}`);
+        setSupportReferralLookup({
+          loading: false,
+          valid: result.valid,
+          ownerEmail: result.referrer?.email ?? null,
+          ownerName: result.referrer?.displayName ?? null,
+          ownerId: result.referrer?.id ?? null,
+        });
+      } catch {
+        setSupportReferralLookup({
+          loading: false,
+          valid: false,
+          ownerEmail: null,
+          ownerName: null,
+          ownerId: null,
+        });
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [supportReferralCode]);
 
   async function save() {
     if (!config) return;
@@ -329,6 +394,18 @@ export default function MiningPage() {
                     }
                     disabled={!canMutate || supportSaving}
                   />
+                  {supportReferralLookup.loading ? (
+                    <p className="text-xs text-muted-foreground">Looking up referral owner...</p>
+                  ) : supportReferralCode.trim() ? (
+                    supportReferralLookup.valid ? (
+                      <p className="text-xs text-emerald-500">
+                        Owner: {supportReferralLookup.ownerName ?? supportReferralLookup.ownerEmail ?? "Unknown"}{" "}
+                        ({supportReferralLookup.ownerEmail ?? "no email"}) · {supportReferralLookup.ownerId}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-destructive">Referral code not found.</p>
+                    )
+                  ) : null}
                 </div>
               </div>
               {supportError ? (

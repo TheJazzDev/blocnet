@@ -6,6 +6,7 @@ import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/blocks_store.dart';
 import 'package:blocnet/services/user_profile_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
@@ -43,6 +44,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   final UsersApiRepository _usersRepository = UsersApiRepository();
   bool _isFollowing = false;
   bool _isSubmittingFollow = false;
+  bool _isBlocked = false;
+  bool _isCheckingBlockStatus = false;
+  bool _isSubmittingBlock = false;
   bool _isLoadingPublicProfile = true;
   PublicProfileModel? _publicProfile;
 
@@ -50,6 +54,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   void initState() {
     super.initState();
     _loadPublicProfile();
+    _loadBlockStatus();
   }
 
   Future<void> _loadPublicProfile() async {
@@ -103,6 +108,105 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     }
   }
 
+  Future<void> _loadBlockStatus() async {
+    final authStore = context.read<AuthStore>();
+    if (authStore.userId == null || authStore.userId == widget.admin.id) {
+      return;
+    }
+
+    setState(() => _isCheckingBlockStatus = true);
+    try {
+      final blocked =
+          await context.read<BlocksStore>().isBlocked(widget.admin.id);
+      if (!mounted) return;
+      setState(() => _isBlocked = blocked);
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingBlockStatus = false);
+      }
+    }
+  }
+
+  Future<void> _toggleBlock() async {
+    if (_isSubmittingBlock) return;
+
+    final actionLabel = _isBlocked ? 'Unblock' : 'Block';
+    final description = _isBlocked
+        ? 'You will start seeing this user in your feeds again.'
+        : 'You will stop seeing this user in your feeds and comments.';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.bgSurface,
+        title: Text(
+          '$actionLabel user?',
+          style: AppTypography.custom(
+            color: AppColors.textPrimary,
+            size: 16,
+            weight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          description,
+          style: AppTypography.custom(
+            color: AppColors.textSecondary,
+            size: 13,
+            weight: FontWeight.w400,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancel',
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: 13,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              actionLabel,
+              style: AppTypography.custom(
+                color: _isBlocked ? AppColors.primary400 : AppColors.error500,
+                size: 13,
+                weight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isSubmittingBlock = true);
+    final blocksStore = context.read<BlocksStore>();
+
+    final ok = _isBlocked
+        ? await blocksStore.unblockUser(widget.admin.id)
+        : await blocksStore.blockUser(widget.admin.id);
+
+    if (!mounted) return;
+
+    if (ok) {
+      setState(() => _isBlocked = !_isBlocked);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(blocksStore.error ??
+              'Failed to ${actionLabel.toLowerCase()} user'),
+        ),
+      );
+    }
+
+    setState(() => _isSubmittingBlock = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final admin = widget.admin;
@@ -123,6 +227,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         authStore.userId != null &&
         authStore.userId != admin.id &&
         admin.id.trim().isNotEmpty;
+    final isOwnProfile = authStore.userId == admin.id;
 
     final content = Container(
       decoration: BoxDecoration(
@@ -433,6 +538,66 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                     ),
                             ),
                           ),
+                        if (!isOwnProfile) ...[
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 40,
+                            child: OutlinedButton.icon(
+                              onPressed:
+                                  _isCheckingBlockStatus || _isSubmittingBlock
+                                      ? null
+                                      : _toggleBlock,
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: _isBlocked
+                                      ? AppColors.primary400
+                                          .withValues(alpha: 0.5)
+                                      : AppColors.error500
+                                          .withValues(alpha: 0.45),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: _isBlocked
+                                    ? AppColors.primary500
+                                        .withValues(alpha: 0.08)
+                                    : AppColors.error500
+                                        .withValues(alpha: 0.08),
+                              ),
+                              icon: _isCheckingBlockStatus || _isSubmittingBlock
+                                  ? SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: _isBlocked
+                                            ? AppColors.primary400
+                                            : AppColors.error500,
+                                      ),
+                                    )
+                                  : Icon(
+                                      _isBlocked
+                                          ? Icons.check_circle_outline
+                                          : Icons.block_outlined,
+                                      size: 16,
+                                      color: _isBlocked
+                                          ? AppColors.primary400
+                                          : AppColors.error500,
+                                    ),
+                              label: Text(
+                                _isBlocked ? 'User blocked' : 'Block user',
+                                style: AppTypography.custom(
+                                  color: _isBlocked
+                                      ? AppColors.primary400
+                                      : AppColors.error500,
+                                  size: 12,
+                                  weight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         const _SectionLabel('Recent Activity'),
                         const SizedBox(height: 8),

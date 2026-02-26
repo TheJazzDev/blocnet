@@ -49,6 +49,8 @@ class WalletSnapshot {
   WalletSnapshot({
     required this.walletStatus,
     required this.walletAddress,
+    required this.walletChainEnvironment,
+    required this.walletChainId,
     required this.available,
     required this.pending,
     required this.locked,
@@ -63,6 +65,8 @@ class WalletSnapshot {
 
   final String walletStatus;
   final String? walletAddress;
+  final String walletChainEnvironment;
+  final int? walletChainId;
   final String available;
   final String pending;
   final String locked;
@@ -137,6 +141,11 @@ class WalletSnapshot {
     return WalletSnapshot(
       walletStatus: wallet['status']?.toString() ?? 'provisioning',
       walletAddress: wallet['address']?.toString(),
+      walletChainEnvironment:
+          wallet['chainEnvironment']?.toString() ?? 'testnet',
+      walletChainId: wallet['chainId'] is num
+          ? (wallet['chainId'] as num).toInt()
+          : int.tryParse(wallet['chainId']?.toString() ?? ''),
       available: balances['available']?.toString() ??
           bntAsset?.available ??
           (assets.isNotEmpty ? assets.first.available : '0'),

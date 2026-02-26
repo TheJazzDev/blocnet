@@ -1,11 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_hero_card.dart';
-import 'package:blocnet/features/mining/presentation/widgets/referral_code_card.dart';
 import 'package:blocnet/services/mining_store.dart';
 import 'package:blocnet/services/wallet_store.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
@@ -58,13 +56,6 @@ class _MiningScreenState extends State<MiningScreen> {
                 isClaiming: store.isClaiming,
               ),
               const SizedBox(height: 20),
-              ReferralCodeCard(
-                snapshot: store.snapshot,
-                onCopy: _onCopyCode,
-                onBind: () => _showBindSheet(store),
-                isBinding: store.isBindingReferral,
-              ),
-              const SizedBox(height: 20),
               _MiningSectionEntryCard(
                 icon: Icons.leaderboard_rounded,
                 title: 'Mining Leaderboard',
@@ -83,17 +74,6 @@ class _MiningScreenState extends State<MiningScreen> {
                     : '${store.snapshot?.hourlyHistory.length ?? 0} checkpoints recorded',
                 onTap: () => Navigator.of(context)
                     .pushNamed(AppRoutes.miningHourlyHistory),
-              ),
-              const SizedBox(height: 20),
-              _MiningSectionEntryCard(
-                icon: Icons.group_rounded,
-                title: 'Referral Downline',
-                subtitle: store.isLoadingDownline
-                    ? 'Loading referrals...'
-                    : '${store.downline.length} members in your network',
-                onTap: () => Navigator.of(context).pushNamed(
-                  AppRoutes.miningDownline,
-                ),
               ),
               const SizedBox(height: 12),
               if (store.isLoadingSnapshot && store.snapshot == null)
@@ -144,181 +124,6 @@ class _MiningScreenState extends State<MiningScreen> {
     } catch (_) {
       // surfaced via store.lastError
     }
-  }
-
-  Future<void> _onCopyCode() async {
-    final code = context.read<MiningStore>().snapshot?.referral.code;
-    if (code == null || code.isEmpty) return;
-
-    await Clipboard.setData(ClipboardData(text: code));
-    if (!mounted) return;
-    _showFeedback('Referral code copied.');
-  }
-
-  Future<void> _showBindSheet(MiningStore store) async {
-    final controller = TextEditingController();
-    final messenger = ScaffoldMessenger.of(context);
-    String? error;
-    bool validating = false;
-    bool binding = false;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setLocalState) {
-            Future<void> submit() async {
-              final code = controller.text.trim().toUpperCase();
-              if (code.length != 8) {
-                setLocalState(
-                    () => error = 'Referral code must be 8 characters.');
-                return;
-              }
-
-              setLocalState(() {
-                error = null;
-                validating = true;
-              });
-
-              final validation = await store.validateReferralCode(code);
-              if (!mounted) return;
-
-              if (validation == null || !validation.valid) {
-                setLocalState(() {
-                  validating = false;
-                  error = 'Referral code is invalid.';
-                });
-                return;
-              }
-
-              setLocalState(() {
-                validating = false;
-                binding = true;
-              });
-
-              try {
-                await store.bindReferralCode(code);
-                if (!sheetContext.mounted) return;
-                Navigator.of(sheetContext).pop();
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: const Text('Referral code bound successfully.'),
-                    backgroundColor: AppColors.successColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              } catch (_) {
-                if (!mounted) return;
-                setLocalState(() {
-                  binding = false;
-                  error = store.lastError ?? 'Failed to bind referral code.';
-                });
-              }
-            }
-
-            return SafeArea(
-              top: false,
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 16,
-                  bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.borderMuted,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Bind Referral Code',
-                      style: AppTypography.custom(
-                        size: 18,
-                        weight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: controller,
-                      maxLength: 8,
-                      textCapitalization: TextCapitalization.characters,
-                      style: AppTypography.custom(
-                        size: 14,
-                        weight: FontWeight.w400,
-                        color: AppColors.textPrimary,
-                      ),
-                      decoration: const InputDecoration(
-                        hintText: 'Enter 8-character code',
-                        counterText: '',
-                      ),
-                    ),
-                    if (error != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        error!,
-                        style: AppTypography.custom(
-                          size: 12,
-                          weight: FontWeight.w400,
-                          color: Colors.redAccent,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: validating || binding ? null : submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary500,
-                          foregroundColor: Colors.black,
-                        ),
-                        child: validating || binding
-                            ? SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: Colors.black,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                'Bind Code',
-                                style: AppTypography.custom(
-                                  size: 13,
-                                  weight: FontWeight.w700,
-                                  color: Colors.black,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
   void _showFeedback(String message, {bool isError = false}) {

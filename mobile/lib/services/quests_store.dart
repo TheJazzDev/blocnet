@@ -2,6 +2,7 @@ import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
 import 'package:blocnet/features/quests/data/repositories/quests_api_repository.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class QuestsStore extends ChangeNotifier {
@@ -15,6 +16,7 @@ class QuestsStore extends ChangeNotifier {
   int _totalCount = 0;
   int _completedCount = 0;
   int _inProgressCount = 0;
+  String? _scopedUserId;
   bool _isLoadingAll = false;
   bool _isLoadingMy = false;
   bool _isStarting = false;
@@ -46,9 +48,27 @@ class QuestsStore extends ChangeNotifier {
       .length;
   int get notStartedCount => _allQuests.length - _myQuests.length;
 
+  void ensureUserScope(String? userId) {
+    final normalized = (userId ?? '').trim();
+    if (_scopedUserId == normalized) return;
+    _scopedUserId = normalized;
+
+    _allQuests = const [];
+    _myQuests = const [];
+    _totalCount = 0;
+    _completedCount = 0;
+    _inProgressCount = 0;
+    _lastError = null;
+    _isLoadingAll = false;
+    _isLoadingMy = false;
+    _isStarting = false;
+    _isSubmitting = false;
+    _isClaiming = false;
+    notifyListeners();
+  }
+
   /// Get user quest IDs for quick lookup
-  Set<String> get startedQuestIds =>
-      _myQuests.map((uq) => uq.questId).toSet();
+  Set<String> get startedQuestIds => _myQuests.map((uq) => uq.questId).toSet();
 
   /// Check if user has started a specific quest
   bool hasStarted(String questId) => startedQuestIds.contains(questId);
@@ -189,15 +209,33 @@ class QuestsStore extends ChangeNotifier {
 
   Future<QuestSubmissionModel?> submitQuestProof({
     required String questSlug,
-    String? proofUrl,
     String? proofText,
     String? screenshot,
+    File? screenshotFile,
   }) async {
     if (_isSubmitting) return null;
 
-    // Validate that at least one proof is provided
-    if (proofUrl == null && proofText == null && screenshot == null) {
-      _lastError = 'Please provide at least one form of proof';
+    String? screenshotUrl = screenshot;
+    if (screenshotFile != null) {
+      try {
+        screenshotUrl = await _repository.uploadQuestProofImage(
+          questSlug: questSlug,
+          file: screenshotFile,
+        );
+      } catch (error) {
+        _lastError = describeError(error);
+        notifyListeners();
+        return null;
+      }
+      if (screenshotUrl == null || screenshotUrl.isEmpty) {
+        _lastError = 'Failed to upload screenshot. Please try again.';
+        notifyListeners();
+        return null;
+      }
+    }
+
+    if (screenshotUrl == null || screenshotUrl.isEmpty) {
+      _lastError = 'Please upload a screenshot image as proof.';
       notifyListeners();
       return null;
     }
@@ -208,9 +246,8 @@ class QuestsStore extends ChangeNotifier {
     try {
       final submission = await _repository.submitQuestProof(
         questSlug: questSlug,
-        proofUrl: proofUrl,
         proofText: proofText,
-        screenshot: screenshot,
+        screenshot: screenshotUrl,
       );
 
       // Refresh user quests to update status
@@ -227,7 +264,12 @@ class QuestsStore extends ChangeNotifier {
   }
 
   Future<bool> claimQuestReward(String questSlug) async {
-    if (_isClaiming) return false;
+    final result = await verifyQuest(questSlug);
+    return result != null && result.completed;
+  }
+
+  Future<QuestVerificationResult?> verifyQuest(String questSlug) async {
+    if (_isClaiming) return null;
 
     // Find the quest
     final quest = _allQuests.cast<QuestModel?>().firstWhere(
@@ -238,44 +280,39 @@ class QuestsStore extends ChangeNotifier {
     if (quest == null) {
       _lastError = 'Quest not found';
       notifyListeners();
-      return false;
+      return null;
     }
 
     // Check if quest requires manual verification
     if (quest.requiresManualVerification) {
-      _lastError = 'This quest requires manual verification. Please submit proof.';
+      _lastError =
+          'This quest requires manual verification. Please submit proof.';
       notifyListeners();
-      return false;
-    }
-
-    // Check if user has started this quest
-    final userQuest = getUserQuest(quest.id);
-    if (userQuest == null) {
-      _lastError = 'You have not started this quest';
-      notifyListeners();
-      return false;
-    }
-
-    // Check if already completed
-    if (userQuest.status == QuestStatus.completed) {
-      _lastError = 'You have already claimed this reward';
-      notifyListeners();
-      return false;
+      return null;
     }
 
     _isClaiming = true;
     notifyListeners();
 
     try {
-      await _repository.claimQuestReward(questSlug);
+      final response = await _repository.verifyQuest(questSlug);
+      if (response == null) {
+        _lastError = 'Could not verify quest right now.';
+        return null;
+      }
 
-      // Refresh user quests to update completion status
+      final result = QuestVerificationResult.fromApi(response);
+      if (!result.eligible) {
+        _lastError = null;
+        return result;
+      }
+
       await loadMyQuests(force: true);
       _lastError = null;
-      return true;
+      return result;
     } catch (error) {
       _lastError = describeError(error);
-      return false;
+      return null;
     } finally {
       _isClaiming = false;
       notifyListeners();

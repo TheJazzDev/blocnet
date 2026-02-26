@@ -1,5 +1,6 @@
 import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
+import 'package:blocnet/features/notifications/data/models/notification_preferences_model.dart';
 import 'package:blocnet/services/api/api_client.dart';
 
 class NotificationsApiRepository {
@@ -52,5 +53,40 @@ class NotificationsApiRepository {
     }
 
     return DigestSummary.fromApi(response);
+  }
+
+  Future<NotificationPreferencesCatalog> fetchPreferenceCatalog() async {
+    final response = await _apiClient.get('/notifications/preferences/catalog');
+    if (response is! Map<String, dynamic>) {
+      return const NotificationPreferencesCatalog(
+        categories: [],
+        criticalTypes: [],
+      );
+    }
+
+    return NotificationPreferencesCatalog.fromApi(response);
+  }
+
+  Future<NotificationPreferences?> fetchPreferences() async {
+    final response = await _apiClient.get('/notifications/preferences');
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return NotificationPreferences.fromApi(response);
+  }
+
+  Future<NotificationPreferences?> updatePreferences({
+    Map<String, dynamic>? body,
+  }) async {
+    final response = await _apiClient.patch(
+      '/notifications/preferences',
+      body: body,
+    );
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return NotificationPreferences.fromApi(response);
   }
 }

@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
@@ -97,19 +98,11 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
   }
 
   PreferredSizeWidget _appBar(BuildContext context, {required bool showAdd}) {
-    return AppBar(
-      backgroundColor: AppColors.bgBase,
-      title: Text(
-        'Manage Updates',
-        style: AppTypography.custom(
-          color: AppColors.textPrimary,
-          weight: FontWeight.w600,
-          size: 16,
-        ),
-      ),
-      centerTitle: false,
-      elevation: 0,
-      iconTheme: IconThemeData(color: AppColors.textMuted),
+    return CustomAppBar(
+      title: 'Manage Updates',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
       actions: [
         if (showAdd)
           GestureDetector(

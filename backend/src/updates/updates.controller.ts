@@ -40,13 +40,29 @@ export class UpdatesController {
   }
 
   @Get('updates')
-  async listUpdates(@Query() query: ListUpdatesQuery) {
-    return this.updatesService.listUpdates(query);
+  @UseGuards(AuthGuard)
+  async listUpdates(
+    @CurrentUser() user: AuthUser | undefined,
+    @Query() query: ListUpdatesQuery,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.updatesService.listUpdates(user, query);
   }
 
   @Get('updates/:id')
-  async getUpdate(@Param('id') id: string) {
-    return this.updatesService.getUpdate(id);
+  @UseGuards(AuthGuard)
+  async getUpdate(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.updatesService.getUpdate(user, id);
   }
 
   @Patch('updates/:id')

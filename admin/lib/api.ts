@@ -8,7 +8,9 @@ async function getToken(): Promise<string | null> {
   return store.get("admin_token")?.value ?? null;
 }
 
-function toQuery(params: Record<string, string | number | undefined | null>): string {
+function toQuery(
+  params: Record<string, string | number | undefined | null>,
+): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === null || value === "") continue;
@@ -18,7 +20,10 @@ function toQuery(params: Record<string, string | number | undefined | null>): st
   return encoded ? `?${encoded}` : "";
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
   const token = await getToken();
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -98,6 +103,14 @@ export interface AdminUserDetail {
   id: string;
   email: string;
   username: string | null;
+  referralCode: string | null;
+  referredAt: string | null;
+  referredBy: {
+    id: string;
+    email: string;
+    displayName: string | null;
+    referralCode: string | null;
+  } | null;
   displayName: string | null;
   avatarUrl: string | null;
   bio: string | null;
@@ -130,7 +143,72 @@ export interface AdminUserDetail {
     reviewedAt: string | null;
     reviewNote: string | null;
   } | null;
+  tips: {
+    accounts: Array<{
+      id: string;
+      accountType: "user" | "fee_vault";
+      ownerRef: string;
+      currencyCode: string;
+      balanceAtomic: string;
+      updatedAt: string;
+      currency: {
+        code: string;
+        symbol: string;
+        decimals: number;
+        kind: "points" | "token";
+        isEnabled: boolean;
+      };
+    }>;
+    sentByCurrency: Array<{
+      currencyCode: string;
+      txCount: number;
+      amountAtomic: string;
+      feeAtomic: string;
+      totalDebitAtomic: string;
+      currency: {
+        code: string;
+        symbol: string;
+        decimals: number;
+        kind: "points" | "token";
+        isEnabled: boolean;
+      } | null;
+    }>;
+    receivedByCurrency: Array<{
+      currencyCode: string;
+      txCount: number;
+      amountAtomic: string;
+      currency: {
+        code: string;
+        symbol: string;
+        decimals: number;
+        kind: "points" | "token";
+        isEnabled: boolean;
+      } | null;
+    }>;
+    conversionsByPair: Array<{
+      fromCurrencyCode: string;
+      toCurrencyCode: string;
+      txCount: number;
+      amountInAtomic: string;
+      amountOutAtomic: string;
+      fromCurrency: {
+        code: string;
+        symbol: string;
+        decimals: number;
+        kind: "points" | "token";
+        isEnabled: boolean;
+      } | null;
+      toCurrency: {
+        code: string;
+        symbol: string;
+        decimals: number;
+        kind: "points" | "token";
+        isEnabled: boolean;
+      } | null;
+    }>;
+  };
   counts: {
+    directReferrals: number;
     followers: number;
     following: number;
     watchedProjects: number;
@@ -142,6 +220,9 @@ export interface AdminUserDetail {
     withdrawals: number;
     deviceTokens: number;
     badges: number;
+    tipSent: number;
+    tipReceived: number;
+    tipConversions: number;
   };
 }
 
@@ -329,7 +410,11 @@ export interface Tag {
 }
 
 export type WalletStatus = "provisioning" | "ready" | "error" | "disabled";
-export type WalletKycStatus = "not_submitted" | "pending" | "approved" | "rejected";
+export type WalletKycStatus =
+  | "not_submitted"
+  | "pending"
+  | "approved"
+  | "rejected";
 export type WalletWithdrawalStatus =
   | "requested"
   | "pending_review"
@@ -372,6 +457,23 @@ export interface AdminWalletUsersResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface AdminWalletUserStatusResponse {
+  user: {
+    id: string;
+    email: string;
+    displayName: string | null;
+  };
+  wallet: {
+    id: string;
+    status: WalletStatus;
+    address: string | null;
+    providerWalletId: string | null;
+    chainId: number;
+    chainEnvironment: "testnet" | "mainnet";
+    updatedAt: string;
+  };
 }
 
 export interface AdminWalletWithdrawal {
@@ -480,6 +582,31 @@ export interface WalletAssetPriceConfig {
   updatedAt: string;
 }
 
+export interface WalletRuntimeConfig {
+  id: string;
+  walletEnabled: boolean;
+  depositsEnabled: boolean;
+  withdrawalsEnabled: boolean;
+  depositRealtimeEnabled: boolean;
+  depositConfirmations: number;
+  withdrawalConfirmations: number;
+  walletAssetBntEnabled: boolean;
+  walletAssetBnbEnabled: boolean;
+  walletAssetUsdtEnabled: boolean;
+  withdrawalEnabledAssets: WalletAssetCode[];
+  updatedAt: string;
+}
+
+export interface RuntimeFeatureFlagsConfig {
+  id: string;
+  alphaRadarEnabled: boolean;
+  followPrefsEnabled: boolean;
+  weeklyDigestEnabled: boolean;
+  miningEnabled: boolean;
+  referralsEnabled: boolean;
+  updatedAt: string;
+}
+
 export interface AdminWalletHealth {
   timestamp: string;
   flags: {
@@ -527,6 +654,28 @@ export interface AdminWalletHealth {
     depositsByStatus: Record<string, number>;
     sweepJobsByStatus: Record<string, number>;
     withdrawalsByStatus: Record<string, number>;
+  };
+}
+
+export interface AdminWalletDepositReprocessNetworkResult {
+  asset: WalletAssetCode;
+  detectedCount: number;
+  creditedCount: number;
+  depositIds: string[];
+  matched: boolean;
+  reason?: string;
+}
+
+export interface AdminWalletDepositReprocessResponse {
+  txHash: string;
+  chainEnvironment: "testnet" | "mainnet";
+  txBlockNumber: string;
+  headBlockNumber: string;
+  networkResults: AdminWalletDepositReprocessNetworkResult[];
+  summary: {
+    matchedAssets: number;
+    detectedDeposits: number;
+    creditedDeposits: number;
   };
 }
 
@@ -786,7 +935,10 @@ export const api = {
       })}`,
     ),
 
-  moderateProjectStatus: (id: string, body: { status: ProjectStatus; reason: string }) =>
+  moderateProjectStatus: (
+    id: string,
+    body: { status: ProjectStatus; reason: string },
+  ) =>
     apiFetch<AdminProject>(`/admin/content/projects/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify(body),
@@ -811,7 +963,10 @@ export const api = {
       })}`,
     ),
 
-  moderateUpdateStatus: (id: string, body: { status: UpdateStatus; reason: string }) =>
+  moderateUpdateStatus: (
+    id: string,
+    body: { status: UpdateStatus; reason: string },
+  ) =>
     apiFetch<AdminUpdate>(`/admin/content/updates/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify(body),
@@ -836,7 +991,10 @@ export const api = {
       })}`,
     ),
 
-  moderateCommentStatus: (id: string, body: { status: ContentStatus; reason: string }) =>
+  moderateCommentStatus: (
+    id: string,
+    body: { status: ContentStatus; reason: string },
+  ) =>
     apiFetch<AdminComment>(`/admin/content/comments/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify(body),
@@ -865,10 +1023,13 @@ export const api = {
     id: string,
     body: { status: ContentStatus; reason: string },
   ) =>
-    apiFetch<AdminCommunityPost>(`/admin/content/community-posts/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify(body),
-    }),
+    apiFetch<AdminCommunityPost>(
+      `/admin/content/community-posts/${id}/status`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      },
+    ),
 
   listAdminCommunityComments: (params?: {
     q?: string;
@@ -893,12 +1054,16 @@ export const api = {
     id: string,
     body: { status: ContentStatus; reason: string },
   ) =>
-    apiFetch<AdminCommunityComment>(`/admin/content/community-comments/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify(body),
-    }),
+    apiFetch<AdminCommunityComment>(
+      `/admin/content/community-comments/${id}/status`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      },
+    ),
 
-  listAdminApplications: () => apiFetch<AdminApplication[]>("/admin-applications"),
+  listAdminApplications: () =>
+    apiFetch<AdminApplication[]>("/admin-applications"),
 
   reviewAdminApplication: (
     id: string,
@@ -920,7 +1085,8 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  listAuditLog: (limit = 100) => apiFetch<AuditLog[]>(`/audit-log${toQuery({ limit })}`),
+  listAuditLog: (limit = 100) =>
+    apiFetch<AuditLog[]>(`/audit-log${toQuery({ limit })}`),
 
   promoteToAdmin: (userId: string, note?: string) =>
     apiFetch(`/roles/admins/${userId}/promote`, {
@@ -1021,7 +1187,68 @@ export const api = {
       })}`,
     ),
 
+  updateWalletUserStatus: (userId: string, body: { disabled: boolean }) =>
+    apiFetch<AdminWalletUserStatusResponse>(
+      `/admin/wallet/users/${userId}/status`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  reprocessWalletDepositByTxHash: (body: {
+    txHash: string;
+    chainEnvironment?: "testnet" | "mainnet";
+    asset?: WalletAssetCode;
+  }) =>
+    apiFetch<AdminWalletDepositReprocessResponse>(
+      "/admin/wallet/deposits/reprocess",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
   getWalletHealth: () => apiFetch<AdminWalletHealth>("/admin/wallet/health"),
+
+  getWalletRuntimeConfig: () =>
+    apiFetch<WalletRuntimeConfig>("/admin/wallet/settings/runtime"),
+
+  updateWalletRuntimeConfig: (
+    body: Partial<{
+      walletEnabled: boolean;
+      depositsEnabled: boolean;
+      withdrawalsEnabled: boolean;
+      depositRealtimeEnabled: boolean;
+      depositConfirmations: number;
+      withdrawalConfirmations: number;
+      walletAssetBntEnabled: boolean;
+      walletAssetBnbEnabled: boolean;
+      walletAssetUsdtEnabled: boolean;
+      withdrawalEnabledAssets: WalletAssetCode[];
+    }>,
+  ) =>
+    apiFetch<WalletRuntimeConfig>("/admin/wallet/settings/runtime", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  getRuntimeFeatureFlags: () =>
+    apiFetch<RuntimeFeatureFlagsConfig>("/admin/settings/runtime-features"),
+
+  updateRuntimeFeatureFlags: (
+    body: Partial<{
+      alphaRadarEnabled: boolean;
+      followPrefsEnabled: boolean;
+      weeklyDigestEnabled: boolean;
+      miningEnabled: boolean;
+      referralsEnabled: boolean;
+    }>,
+  ) =>
+    apiFetch<RuntimeFeatureFlagsConfig>("/admin/settings/runtime-features", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
 
   listWalletWithdrawals: (params?: {
     q?: string;
@@ -1071,7 +1298,8 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  listWalletRiskLimits: () => apiFetch<WalletRiskLimit[]>("/admin/wallet/settings/risk-limits"),
+  listWalletRiskLimits: () =>
+    apiFetch<WalletRiskLimit[]>("/admin/wallet/settings/risk-limits"),
 
   updateWalletRiskLimit: (
     tier: string,
@@ -1088,7 +1316,8 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  listWalletFeeConfigs: () => apiFetch<WalletFeeConfig[]>("/admin/wallet/settings/fees"),
+  listWalletFeeConfigs: () =>
+    apiFetch<WalletFeeConfig[]>("/admin/wallet/settings/fees"),
 
   updateWalletFeeConfig: (
     key: string,
@@ -1138,10 +1367,13 @@ export const api = {
       policyActive: boolean;
     }>,
   ) =>
-    apiFetch<AdminTipSettings>(`/admin/tips/settings/currencies/${currencyCode}`, {
-      method: "PATCH",
-      body: JSON.stringify(body),
-    }),
+    apiFetch<AdminTipSettings>(
+      `/admin/tips/settings/currencies/${currencyCode}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      },
+    ),
 
   setActiveTipCurrency: (body: { currencyCode: string }) =>
     apiFetch<AdminTipSettings>("/admin/tips/settings/active-currency", {
@@ -1170,9 +1402,7 @@ export const api = {
 
   getMiningConfig: () => apiFetch<AdminMiningConfig>("/admin/mining/config"),
 
-  updateMiningConfig: (
-    body: Partial<AdminMiningConfig>,
-  ) =>
+  updateMiningConfig: (body: Partial<AdminMiningConfig>) =>
     apiFetch<AdminMiningConfig>("/admin/mining/config", {
       method: "PATCH",
       body: JSON.stringify(body),
@@ -1180,7 +1410,11 @@ export const api = {
 
   getMiningMetrics: () => apiFetch<AdminMiningMetrics>("/admin/mining/metrics"),
 
-  getMiningLeaderboard: (params?: { q?: string; limit?: number; offset?: number }) =>
+  getMiningLeaderboard: (params?: {
+    q?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
     apiFetch<AdminMiningLeaderboardResponse>(
       `/admin/mining/leaderboard${toQuery({
         q: params?.q,

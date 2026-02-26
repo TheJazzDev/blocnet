@@ -155,6 +155,37 @@ const defaultTipCurrencies = [
 ] as const;
 
 async function main() {
+  await prisma.walletRuntimeConfig.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: {
+      id: 'default',
+      walletEnabled: false,
+      depositsEnabled: false,
+      withdrawalsEnabled: false,
+      depositRealtimeEnabled: true,
+      depositConfirmations: null,
+      withdrawalConfirmations: null,
+      walletAssetBntEnabled: true,
+      walletAssetBnbEnabled: true,
+      walletAssetUsdtEnabled: true,
+      withdrawalAssetsCsv: 'BNT',
+    },
+  });
+
+  await prisma.runtimeFeatureConfig.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: {
+      id: 'default',
+      alphaRadarEnabled: true,
+      followPrefsEnabled: true,
+      weeklyDigestEnabled: true,
+      miningEnabled: true,
+      referralsEnabled: true,
+    },
+  });
+
   await prisma.miningConfig.upsert({
     where: { id: 'default' },
     update: {
@@ -328,14 +359,19 @@ async function main() {
 
   await seedBadgesAndQuests(prisma);
 
-  const [primaryCount, secondaryCount, riskCount, miningConfigCount, tipCurrencyCount] =
-    await Promise.all([
-      prisma.primaryTag.count(),
-      prisma.secondaryTag.count(),
-      prisma.riskLimit.count(),
-      prisma.miningConfig.count(),
-      prisma.tipCurrency.count(),
-    ]);
+  const [
+    primaryCount,
+    secondaryCount,
+    riskCount,
+    miningConfigCount,
+    tipCurrencyCount,
+  ] = await Promise.all([
+    prisma.primaryTag.count(),
+    prisma.secondaryTag.count(),
+    prisma.riskLimit.count(),
+    prisma.miningConfig.count(),
+    prisma.tipCurrency.count(),
+  ]);
 
   console.log(
     `[seed] completed | primaryTags=${primaryCount} secondaryTags=${secondaryCount} riskLimits=${riskCount} miningConfigs=${miningConfigCount} tipCurrencies=${tipCurrencyCount}`,

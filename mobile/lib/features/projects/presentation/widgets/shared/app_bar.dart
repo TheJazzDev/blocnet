@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/space_switcher.dart';
@@ -21,7 +23,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showFilter = true,
     this.showSearch = true,
     this.showSpaceSwitcher = true,
-    this.showNotificationBell = false,
+    this.showNotificationBell = true,
     this.showProfileShortcut = false,
     this.showProfileAvatarLeading = false,
     this.actions = const [],
@@ -104,19 +106,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ...actions,
-                    if (showSearch) ...[
-                      const SizedBox(width: 6),
-                      _AppBarIconButton(
-                        icon: Icons.search_rounded,
-                        onTap: () {
-                          showSearchDialog(context);
-                        },
-                      ),
-                    ],
-                    if (showNotificationBell) ...[
-                      const SizedBox(width: 6),
-                      _NotificationBellButton(),
-                    ],
                     if (showProfileShortcut) ...[
                       const SizedBox(width: 6),
                       _AppBarIconButton(
@@ -140,6 +129,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                           );
                         },
                       ),
+                    ],
+                    if (showSearch) ...[
+                      const SizedBox(width: 6),
+                      _AppBarIconButton(
+                        icon: Icons.search_rounded,
+                        onTap: () {
+                          showSearchDialog(context);
+                        },
+                      ),
+                    ],
+                    if (showNotificationBell) ...[
+                      const SizedBox(width: 6),
+                      _NotificationBellButton(),
                     ],
                     if (showSpaceSwitcher) ...[
                       const SizedBox(width: 6),
@@ -287,10 +289,55 @@ class _ProfileAvatarButton extends StatelessWidget {
 // Notification bell button with unread badge
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _NotificationBellButton extends StatelessWidget {
+class _NotificationBellButton extends StatefulWidget {
+  @override
+  State<_NotificationBellButton> createState() => _NotificationBellButtonState();
+}
+
+class _NotificationBellButtonState extends State<_NotificationBellButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _shakeController;
+  int _lastUnreadCount = 0;
+  bool _initializedUnread = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 560),
+    );
+  }
+
+  @override
+  void dispose() {
+    _shakeController.dispose();
+    super.dispose();
+  }
+
+  void _syncUnreadCount(int unreadCount) {
+    if (!_initializedUnread) {
+      _initializedUnread = true;
+      _lastUnreadCount = unreadCount;
+      return;
+    }
+
+    final shouldShake = unreadCount > _lastUnreadCount;
+    _lastUnreadCount = unreadCount;
+    if (!shouldShake) return;
+
+    if (_shakeController.isAnimating) {
+      _shakeController.stop();
+    }
+    _shakeController
+      ..reset()
+      ..forward();
+  }
+
   @override
   Widget build(BuildContext context) {
     final unreadCount = context.watch<NotificationsStore>().unreadCount;
+    _syncUnreadCount(unreadCount);
     final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
     final accent = AppColors.accentForSpace(isHunterSpace);
 
@@ -302,21 +349,35 @@ class _NotificationBellButton extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.bgElevated,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.borderSubtle, width: 1),
+          AnimatedBuilder(
+            animation: _shakeController,
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderSubtle, width: 1),
+              ),
+              child: Icon(
+                unreadCount > 0
+                    ? Icons.notifications_rounded
+                    : Icons.notifications_outlined,
+                color: unreadCount > 0 ? accent : AppColors.textSecondary,
+                size: 18,
+              ),
             ),
-            child: Icon(
-              unreadCount > 0
-                  ? Icons.notifications_rounded
-                  : Icons.notifications_outlined,
-              color: unreadCount > 0 ? accent : AppColors.textSecondary,
-              size: 18,
-            ),
+            builder: (context, child) {
+              final progress = _shakeController.value;
+              final decay = 1 - progress;
+              final radians =
+                  math.sin(progress * math.pi * 10) * 0.22 * decay;
+              return Transform.rotate(
+                angle: radians,
+                alignment: Alignment.center,
+                child: child,
+              );
+            },
           ),
           if (unreadCount > 0)
             Positioned(

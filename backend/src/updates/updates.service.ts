@@ -8,6 +8,7 @@ import {
 import { UpdateStatus } from '@prisma/client';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { BlocksService } from '../blocks/blocks.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUpdateDto } from './dto/create-update.dto';
 import { UpdateUpdateDto } from './dto/update-update.dto';
@@ -28,6 +29,7 @@ export class UpdatesService {
     private readonly notificationsService: NotificationsService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
+    private readonly blocksService: BlocksService,
     private readonly fcmService: FcmService,
     private readonly questsService: QuestsService,
   ) {}
@@ -102,15 +104,19 @@ export class UpdatesService {
     return toUpdateResponse(update);
   }
 
-  async listUpdates(query: ListUpdatesQuery) {
+  async listUpdates(actor: AuthUser, query: ListUpdatesQuery) {
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
+    const blockedUserIds = await this.blocksService.getBlockedUserIds(actor.id);
 
     const updates = await this.prisma.update.findMany({
       where: {
         projectId: query.projectId,
         urgency: query.urgency,
         status: { not: UpdateStatus.hidden },
+        ...(blockedUserIds.length > 0
+          ? { authorId: { notIn: blockedUserIds } }
+          : {}),
       },
       orderBy: { createdAt: 'desc' },
       skip: offset,
@@ -121,11 +127,16 @@ export class UpdatesService {
     return updates.map((update) => toUpdateResponse(update));
   }
 
-  async getUpdate(id: string) {
+  async getUpdate(actor: AuthUser, id: string) {
+    const blockedUserIds = await this.blocksService.getBlockedUserIds(actor.id);
+
     const update = await this.prisma.update.findFirst({
       where: {
         id,
         status: { not: UpdateStatus.hidden },
+        ...(blockedUserIds.length > 0
+          ? { authorId: { notIn: blockedUserIds } }
+          : {}),
       },
       include: updateInclude,
     });

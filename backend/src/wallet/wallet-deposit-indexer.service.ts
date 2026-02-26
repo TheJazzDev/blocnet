@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
@@ -9,6 +11,8 @@ import {
   LedgerReason,
   OnchainDepositStatus,
   Prisma,
+  WalletAsset,
+  WalletStatus,
   WalletAssetKind,
   type UserWallet,
 } from '@prisma/client';
@@ -34,8 +38,22 @@ const TRANSFER_EVENT = parseAbiItem(
   'event Transfer(address indexed from, address indexed to, uint256 value)',
 );
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-type WalletAddressRecord = { walletId: string; userId: string; address: string };
+const TX_HASH_PATTERN = /^0x[a-fA-F0-9]{64}$/;
+type WalletAddressRecord = {
+  walletId: string;
+  userId: string;
+  address: string;
+};
 type WalletAddressMap = Map<string, WalletAddressRecord>;
+
+type ManualReprocessNetworkResult = {
+  asset: WalletAsset;
+  detectedCount: number;
+  creditedCount: number;
+  depositIds: string[];
+  matched: boolean;
+  reason?: string;
+};
 
 @Injectable()
 export class WalletDepositIndexerService
@@ -52,7 +70,10 @@ export class WalletDepositIndexerService
     ChainEnvironment,
     WalletAddressMap
   >();
-  private readonly walletAddressCacheUpdatedAt = new Map<ChainEnvironment, number>();
+  private readonly walletAddressCacheUpdatedAt = new Map<
+    ChainEnvironment,
+    number
+  >();
 
   private intervalHandle: NodeJS.Timeout | null = null;
   private isTickRunning = false;
@@ -63,35 +84,123 @@ export class WalletDepositIndexerService
     private readonly auditLogService: AuditLogService,
   ) {}
 
-  onModuleInit(): void {
-    if (!this.walletConfigService.depositIndexerEnabled) {
-      this.logger.log(
-        'Deposit indexer disabled (WALLET_ENABLED or DEPOSITS_ENABLED is false)',
-      );
-      return;
+  async reprocessTransactionByHash(input: {
+    txHash: string;
+    chainEnvironment?: ChainEnvironment;
+    asset?: WalletAsset;
+  }) {
+    const txHash = this.normalizeTxHash(input.txHash);
+    if (!txHash) {
+      throw new BadRequestException('txHash must be a valid EVM transaction hash');
     }
 
-    const networks = this.walletConfigService.getDepositNetworkConfigs();
+    const configuredEnvironment = this.walletConfigService.walletChainEnvironment;
+    const requestedEnvironment =
+      input.chainEnvironment ?? configuredEnvironment;
+
+    if (requestedEnvironment !== configuredEnvironment) {
+      throw new BadRequestException(
+        `Requested chainEnvironment ${requestedEnvironment} does not match configured wallet environment ${configuredEnvironment}`,
+      );
+    }
+
+    const networks = this.walletConfigService
+      .getDepositNetworkConfigs()
+      .filter((network) => network.chainEnvironment === requestedEnvironment)
+      .filter((network) => (input.asset ? network.asset === input.asset : true));
+
     if (networks.length === 0) {
-      this.logger.warn(
-        'Deposit indexer enabled but no deposit networks are configured (missing RPC URL or token address)',
+      const assetLabel = input.asset ? ` for asset ${input.asset}` : '';
+      throw new BadRequestException(
+        `No deposit network configuration found for ${requestedEnvironment}${assetLabel}`,
       );
-      return;
     }
 
-    this.initializeRealtimeSubscriptions(networks);
+    const client = this.getHttpClient(networks[0]);
+    let receipt: Awaited<
+      ReturnType<PublicClient['getTransactionReceipt']>
+    >;
+    try {
+      receipt = await client.getTransactionReceipt({ hash: txHash });
+    } catch {
+      throw new NotFoundException(
+        `Transaction ${txHash} was not found on ${requestedEnvironment}`,
+      );
+    }
 
+    if (receipt.blockNumber === null) {
+      throw new BadRequestException(
+        `Transaction ${txHash} is not mined yet on ${requestedEnvironment}`,
+      );
+    }
+
+    const [currentBlock, walletByAddress] = await Promise.all([
+      client.getBlockNumber(),
+      this.getWalletAddressMap(requestedEnvironment),
+    ]);
+
+    const requiresNative = networks.some(
+      (network) => network.assetKind === WalletAssetKind.native,
+    );
+    const tx =
+      requiresNative
+        ? await client.getTransaction({ hash: txHash }).catch(() => null)
+        : null;
+
+    const networkResults: ManualReprocessNetworkResult[] = [];
+    for (const network of networks) {
+      if (network.assetKind === WalletAssetKind.native) {
+        const result = await this.reprocessNativeForNetwork({
+          network,
+          txHash,
+          tx,
+          receipt,
+          currentBlock,
+          walletByAddress,
+        });
+        networkResults.push(result);
+        continue;
+      }
+
+      const result = await this.reprocessTokenForNetwork({
+        network,
+        txHash,
+        receipt,
+        currentBlock,
+        walletByAddress,
+        client,
+      });
+      networkResults.push(result);
+    }
+
+    return {
+      txHash,
+      chainEnvironment: requestedEnvironment,
+      txBlockNumber: receipt.blockNumber.toString(),
+      headBlockNumber: currentBlock.toString(),
+      networkResults,
+      summary: {
+        matchedAssets: networkResults.filter((item) => item.matched).length,
+        detectedDeposits: networkResults.reduce(
+          (sum, item) => sum + item.detectedCount,
+          0,
+        ),
+        creditedDeposits: networkResults.reduce(
+          (sum, item) => sum + item.creditedCount,
+          0,
+        ),
+      },
+    };
+  }
+
+  onModuleInit(): void {
     const intervalMs = this.walletConfigService.depositPollIntervalMs;
     this.intervalHandle = setInterval(() => {
       void this.tick();
     }, intervalMs);
 
     void this.tick();
-    this.logger.log(
-      `Deposit indexer started (interval=${intervalMs}ms networks=${networks
-        .map((n) => n.chainEnvironment)
-        .join(',')} realtime=${this.realtimeNetworkKeys.size})`,
-    );
+    this.logger.log(`Deposit indexer started (interval=${intervalMs}ms)`);
   }
 
   onModuleDestroy(): void {
@@ -99,16 +208,7 @@ export class WalletDepositIndexerService
       clearInterval(this.intervalHandle);
       this.intervalHandle = null;
     }
-    for (const [networkKey, unwatch] of this.realtimeUnwatchByNetwork.entries()) {
-      try {
-        unwatch();
-      } catch {
-        this.logger.warn(`Failed to stop realtime deposit stream for ${networkKey}`);
-      }
-    }
-    this.realtimeUnwatchByNetwork.clear();
-    this.realtimeNetworkKeys.clear();
-    this.realtimeQueues.clear();
+    this.stopRealtimeSubscriptions();
   }
 
   private async tick(): Promise<void> {
@@ -118,7 +218,18 @@ export class WalletDepositIndexerService
 
     this.isTickRunning = true;
     try {
+      if (!this.walletConfigService.depositIndexerEnabled) {
+        this.stopRealtimeSubscriptions();
+        return;
+      }
+
       const networks = this.walletConfigService.getDepositNetworkConfigs();
+      if (networks.length === 0) {
+        this.stopRealtimeSubscriptions();
+        return;
+      }
+
+      this.initializeRealtimeSubscriptions(networks);
       for (const network of networks) {
         await this.processNetwork(network);
       }
@@ -136,16 +247,305 @@ export class WalletDepositIndexerService
   ): Promise<void> {
     const client = this.getHttpClient(network);
     const currentBlock = await client.getBlockNumber();
-    const walletByAddress = await this.getWalletAddressMap(network.chainEnvironment);
+    const walletByAddress = await this.getWalletAddressMap(
+      network.chainEnvironment,
+    );
 
     if (
       walletByAddress.size > 0 &&
       !this.isRealtimeStreamingEnabledForNetwork(network)
     ) {
-      await this.scanNewTransfers(network, client, walletByAddress, currentBlock);
+      await this.scanNewTransfers(
+        network,
+        client,
+        walletByAddress,
+        currentBlock,
+      );
     }
 
     await this.finalizeDetectedDeposits(network, currentBlock);
+  }
+
+  private async reprocessTokenForNetwork(input: {
+    network: WalletDepositNetworkConfig;
+    txHash: `0x${string}`;
+    receipt: Awaited<ReturnType<PublicClient['getTransactionReceipt']>>;
+    currentBlock: bigint;
+    walletByAddress: WalletAddressMap;
+    client: PublicClient;
+  }): Promise<ManualReprocessNetworkResult> {
+    const { network, txHash, receipt, currentBlock, walletByAddress, client } =
+      input;
+
+    if (!network.tokenAddress) {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: `Token address is not configured for ${network.asset}`,
+      };
+    }
+
+    if (walletByAddress.size === 0) {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: `No wallet addresses are currently tracked for ${network.chainEnvironment}`,
+      };
+    }
+
+    if (receipt.status !== 'success') {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: 'Transaction status is not successful',
+      };
+    }
+
+    const blockNumber = receipt.blockNumber;
+    const logs = await client.getLogs({
+      address: network.tokenAddress,
+      event: TRANSFER_EVENT,
+      fromBlock: blockNumber,
+      toBlock: blockNumber,
+    });
+
+    const txLogs = logs.filter(
+      (log) =>
+        log.transactionHash &&
+        log.transactionHash.toLowerCase() === txHash.toLowerCase(),
+    );
+
+    if (txLogs.length === 0) {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: `No ${network.asset} transfer logs found for this transaction`,
+      };
+    }
+
+    let detectedCount = 0;
+    let creditedCount = 0;
+    const depositIds: string[] = [];
+
+    for (const log of txLogs) {
+      const toAddress = this.normalizeAddress(log.args.to);
+      if (!toAddress) continue;
+
+      const wallet = walletByAddress.get(toAddress);
+      if (!wallet) continue;
+
+      const amountRaw = log.args.value;
+      if (typeof amountRaw !== 'bigint' || amountRaw <= 0n) continue;
+
+      const logIndex = this.toLogIndex(log.logIndex);
+      if (logIndex === null) continue;
+
+      const fromAddress = this.normalizeAddress(log.args.from) ?? ZERO_ADDRESS;
+      const confirmations = this.computeConfirmations(currentBlock, blockNumber);
+
+      const deposit = await this.recordDetectedDeposit({
+        walletId: wallet.walletId,
+        userId: wallet.userId,
+        toAddress: wallet.address,
+        fromAddress,
+        txHash,
+        logIndex,
+        blockNumber,
+        amount: formatUnits(amountRaw, network.decimals),
+        confirmations,
+        chainEnvironment: network.chainEnvironment,
+        asset: network.asset,
+        assetKind: network.assetKind,
+        tokenAddress: network.tokenAddress,
+      });
+      detectedCount += 1;
+      depositIds.push(deposit.id);
+
+      if (confirmations >= network.confirmationsRequired) {
+        await this.creditDetectedDeposit(
+          deposit.id,
+          network.confirmationsRequired,
+          currentBlock,
+        );
+      }
+
+      const persisted = await this.prisma.onchainDeposit.findUnique({
+        where: { id: deposit.id },
+        select: {
+          creditedLedgerEntryId: true,
+          status: true,
+        },
+      });
+      if (
+        persisted?.creditedLedgerEntryId ||
+        persisted?.status === OnchainDepositStatus.credited ||
+        persisted?.status === OnchainDepositStatus.swept
+      ) {
+        creditedCount += 1;
+      }
+    }
+
+    if (detectedCount === 0) {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: `Transaction has ${network.asset} transfer logs but none target a tracked wallet`,
+      };
+    }
+
+    return {
+      asset: network.asset,
+      detectedCount,
+      creditedCount,
+      depositIds,
+      matched: true,
+    };
+  }
+
+  private async reprocessNativeForNetwork(input: {
+    network: WalletDepositNetworkConfig;
+    txHash: `0x${string}`;
+    tx: Awaited<ReturnType<PublicClient['getTransaction']>> | null;
+    receipt: Awaited<ReturnType<PublicClient['getTransactionReceipt']>>;
+    currentBlock: bigint;
+    walletByAddress: WalletAddressMap;
+  }): Promise<ManualReprocessNetworkResult> {
+    const { network, txHash, tx, receipt, currentBlock, walletByAddress } =
+      input;
+
+    if (walletByAddress.size === 0) {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: `No wallet addresses are currently tracked for ${network.chainEnvironment}`,
+      };
+    }
+
+    if (!tx) {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: 'Could not load transaction payload from RPC',
+      };
+    }
+
+    if (receipt.status !== 'success') {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: 'Transaction status is not successful',
+      };
+    }
+
+    const toAddress = this.normalizeAddress(tx.to);
+    if (!toAddress) {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: 'Transaction does not contain a valid destination address',
+      };
+    }
+
+    const wallet = walletByAddress.get(toAddress);
+    if (!wallet) {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: 'Destination address is not mapped to an app wallet',
+      };
+    }
+
+    if (typeof tx.value !== 'bigint' || tx.value <= 0n) {
+      return {
+        asset: network.asset,
+        detectedCount: 0,
+        creditedCount: 0,
+        depositIds: [],
+        matched: false,
+        reason: 'Native transfer amount is zero',
+      };
+    }
+
+    const txIndex =
+      this.toLogIndex(receipt.transactionIndex ?? tx.transactionIndex ?? null) ??
+      0;
+    const fromAddress = this.normalizeAddress(tx.from) ?? ZERO_ADDRESS;
+    const blockNumber = receipt.blockNumber;
+    const confirmations = this.computeConfirmations(currentBlock, blockNumber);
+
+    const deposit = await this.recordDetectedDeposit({
+      walletId: wallet.walletId,
+      userId: wallet.userId,
+      toAddress: wallet.address,
+      fromAddress,
+      txHash,
+      logIndex: txIndex,
+      blockNumber,
+      amount: formatUnits(tx.value, network.decimals),
+      confirmations,
+      chainEnvironment: network.chainEnvironment,
+      asset: network.asset,
+      assetKind: network.assetKind,
+      tokenAddress: null,
+    });
+
+    if (confirmations >= network.confirmationsRequired) {
+      await this.creditDetectedDeposit(
+        deposit.id,
+        network.confirmationsRequired,
+        currentBlock,
+      );
+    }
+
+    const persisted = await this.prisma.onchainDeposit.findUnique({
+      where: { id: deposit.id },
+      select: {
+        creditedLedgerEntryId: true,
+        status: true,
+      },
+    });
+    const credited =
+      Boolean(persisted?.creditedLedgerEntryId) ||
+      persisted?.status === OnchainDepositStatus.credited ||
+      persisted?.status === OnchainDepositStatus.swept;
+
+    return {
+      asset: network.asset,
+      detectedCount: 1,
+      creditedCount: credited ? 1 : 0,
+      depositIds: [deposit.id],
+      matched: true,
+    };
   }
 
   private getHttpClient(network: WalletDepositNetworkConfig): PublicClient {
@@ -210,7 +610,8 @@ export class WalletDepositIndexerService
     );
     const now = Date.now();
     const cached = this.walletAddressCacheByEnvironment.get(chainEnvironment);
-    const updatedAt = this.walletAddressCacheUpdatedAt.get(chainEnvironment) ?? 0;
+    const updatedAt =
+      this.walletAddressCacheUpdatedAt.get(chainEnvironment) ?? 0;
     if (cached && now - updatedAt < staleAfterMs) {
       return cached;
     }
@@ -219,6 +620,7 @@ export class WalletDepositIndexerService
       where: {
         chainEnvironment,
         address: { not: null },
+        status: { not: WalletStatus.disabled },
       },
       select: {
         id: true,
@@ -245,6 +647,24 @@ export class WalletDepositIndexerService
       }
       this.startRealtimeStream(network);
     }
+  }
+
+  private stopRealtimeSubscriptions() {
+    for (const [
+      networkKey,
+      unwatch,
+    ] of this.realtimeUnwatchByNetwork.entries()) {
+      try {
+        unwatch();
+      } catch {
+        this.logger.warn(
+          `Failed to stop realtime deposit stream for ${networkKey}`,
+        );
+      }
+    }
+    this.realtimeUnwatchByNetwork.clear();
+    this.realtimeNetworkKeys.clear();
+    this.realtimeQueues.clear();
   }
 
   private startRealtimeStream(network: WalletDepositNetworkConfig): void {
@@ -276,7 +696,10 @@ export class WalletDepositIndexerService
           emitOnBegin: false,
           onBlock: (block) => {
             this.enqueueRealtimeTask(network, () =>
-              this.handleRealtimeNativeBlock(network, block as { number: bigint; transactions: unknown[] }),
+              this.handleRealtimeNativeBlock(
+                network,
+                block as { number: bigint; transactions: unknown[] },
+              ),
             );
           },
           onError: (error) => {
@@ -289,7 +712,9 @@ export class WalletDepositIndexerService
         });
 
         this.realtimeUnwatchByNetwork.set(networkKey, unwatch);
-        this.logger.log(`Realtime native deposit stream enabled for ${networkKey}`);
+        this.logger.log(
+          `Realtime native deposit stream enabled for ${networkKey}`,
+        );
         return;
       }
 
@@ -315,7 +740,9 @@ export class WalletDepositIndexerService
         },
       });
       this.realtimeUnwatchByNetwork.set(networkKey, unwatch);
-      this.logger.log(`Realtime token deposit stream enabled for ${networkKey}`);
+      this.logger.log(
+        `Realtime token deposit stream enabled for ${networkKey}`,
+      );
     } catch (error) {
       this.realtimeNetworkKeys.delete(networkKey);
       this.logger.warn(
@@ -367,7 +794,9 @@ export class WalletDepositIndexerService
       return;
     }
 
-    const walletByAddress = await this.getWalletAddressMap(network.chainEnvironment);
+    const walletByAddress = await this.getWalletAddressMap(
+      network.chainEnvironment,
+    );
     if (walletByAddress.size === 0) {
       return;
     }
@@ -395,7 +824,10 @@ export class WalletDepositIndexerService
         continue;
       }
 
-      const confirmations = this.computeConfirmations(currentBlock, blockNumber);
+      const confirmations = this.computeConfirmations(
+        currentBlock,
+        blockNumber,
+      );
       const fromAddress = this.normalizeAddress(log.args?.from) ?? ZERO_ADDRESS;
 
       const deposit = await this.recordDetectedDeposit({
@@ -428,7 +860,9 @@ export class WalletDepositIndexerService
     network: WalletDepositNetworkConfig,
     block: { number: bigint; transactions: unknown[] },
   ): Promise<void> {
-    const walletByAddress = await this.getWalletAddressMap(network.chainEnvironment);
+    const walletByAddress = await this.getWalletAddressMap(
+      network.chainEnvironment,
+    );
     if (walletByAddress.size === 0) {
       return;
     }
@@ -461,7 +895,10 @@ export class WalletDepositIndexerService
 
       const txIndex = this.toLogIndex(tx.transactionIndex ?? null) ?? 0;
       const fromAddress = this.normalizeAddress(tx.from) ?? ZERO_ADDRESS;
-      const confirmations = this.computeConfirmations(currentBlock, block.number);
+      const confirmations = this.computeConfirmations(
+        currentBlock,
+        block.number,
+      );
 
       const deposit = await this.recordDetectedDeposit({
         walletId: wallet.walletId,
@@ -1013,6 +1450,14 @@ export class WalletDepositIndexerService
         ledgerEntryId: result.ledgerEntry.id,
       },
     });
+  }
+
+  private normalizeTxHash(value: string): `0x${string}` | null {
+    const normalized = value.trim().toLowerCase();
+    if (!TX_HASH_PATTERN.test(normalized)) {
+      return null;
+    }
+    return normalized as `0x${string}`;
   }
 
   private normalizeAddress(value: unknown): string | null {

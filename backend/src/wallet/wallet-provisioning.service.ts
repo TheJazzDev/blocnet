@@ -65,15 +65,26 @@ export class WalletProvisioningService {
     await this.ensureUserLedgerAccount(userId, wallet.id);
 
     if (!this.walletConfigService.walletEnabled) {
-      if (wallet.status !== WalletStatus.disabled) {
-        wallet = await this.prisma.userWallet.update({
-          where: { id: wallet.id },
-          data: {
-            status: WalletStatus.disabled,
-          },
-        });
-      }
       return wallet;
+    }
+
+    if (wallet.status === WalletStatus.disabled) {
+      const adminDisabled =
+        wallet.failureReason?.toLowerCase() === 'disabled by admin';
+      if (adminDisabled) {
+        return wallet;
+      }
+
+      wallet = await this.prisma.userWallet.update({
+        where: { id: wallet.id },
+        data: {
+          status:
+            wallet.address && wallet.providerWalletId
+              ? WalletStatus.ready
+              : WalletStatus.provisioning,
+          failureReason: null,
+        },
+      });
     }
 
     if (wallet.status === WalletStatus.ready && wallet.address) {

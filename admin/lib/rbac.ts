@@ -440,7 +440,7 @@ export function canManageTags(roles: string[]): boolean {
 }
 
 export function canMutateSettings(roles: string[]): boolean {
-  return hasRole(roles, "owner");
+  return hasRole(roles, "owner") || hasRole(roles, "admin");
 }
 
 export function canSendNotifications(roles: string[]): boolean {

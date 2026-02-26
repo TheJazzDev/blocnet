@@ -8,7 +8,11 @@ import {
 } from '@prisma/client';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
 import { PrismaService } from '../prisma/prisma.service';
+import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import type { BroadcastTarget } from './dto/broadcast-notification.dto';
+import { NotificationEmailService } from './email.service';
+import { isCriticalNotificationType } from './notification-preferences.constants';
+import { NotificationPreferencesService } from './notification-preferences.service';
 import { ListNotificationsQuery } from './dto/list-notifications.query';
 import { FcmService } from './fcm.service';
 import type {
@@ -30,6 +34,9 @@ export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,
+    private readonly notificationPreferencesService: NotificationPreferencesService,
+    private readonly notificationEmailService: NotificationEmailService,
     private readonly fcmService: FcmService,
   ) {}
 
@@ -187,7 +194,12 @@ export class NotificationsService {
           ),
       );
 
-    if (normalized.length === 0) {
+    const { deliverable } =
+      await this.notificationPreferencesService.filterEventsByPreference(
+        normalized,
+      );
+
+    if (deliverable.length === 0) {
       return {
         insertedCount: 0,
         insertedUserIds: [] as string[],
@@ -197,10 +209,10 @@ export class NotificationsService {
     }
 
     const inserted: NotificationEvent[] = [];
-    const withoutDedupe = normalized.filter(
+    const withoutDedupe = deliverable.filter(
       (event) => !event.dedupeKey || event.dedupeKey.trim().length === 0,
     );
-    const withDedupe = normalized.filter((event) =>
+    const withDedupe = deliverable.filter((event) =>
       Boolean(event.dedupeKey && event.dedupeKey.trim().length > 0),
     );
 
@@ -221,6 +233,28 @@ export class NotificationsService {
       });
       if (result.count > 0) {
         inserted.push(event);
+      }
+    }
+
+    const criticalInserted = inserted.filter((event) =>
+      isCriticalNotificationType(event.type),
+    );
+    if (criticalInserted.length > 0) {
+      for (const event of criticalInserted) {
+        try {
+          await this.notificationEmailService.sendCriticalEmail({
+            userId: event.userId,
+            title: event.title,
+            body: event.body,
+            deeplink: event.deeplink ?? null,
+          });
+        } catch (error) {
+          this.logger.warn(
+            `Failed to deliver critical email for user ${event.userId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
       }
     }
 
@@ -310,10 +344,8 @@ export class NotificationsService {
     projectId: string;
     urgency: UpdateUrgency;
   }) {
-    const followPrefsEnabled = this.configService.get<boolean>(
-      'ENABLE_FOLLOW_PREFS',
-      true,
-    );
+    const followPrefsEnabled =
+      this.runtimeFeatureFlagsService.isFollowPrefsEnabled();
     const follows = await this.prisma.projectFollow.findMany({
       where: { projectId: input.projectId },
       select: {

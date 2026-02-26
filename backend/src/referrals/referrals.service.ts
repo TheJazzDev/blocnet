@@ -5,11 +5,11 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
+import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 
 type ReferralConfig = {
   referralsEnabled: boolean;
@@ -31,7 +31,7 @@ export class ReferralsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
     private readonly questsService: QuestsService,
@@ -216,7 +216,9 @@ export class ReferralsService {
     rawCode: string,
   ) {
     const code = this.normalizeCode(rawCode);
-    const targetUser = await this.findProfileByIdOrEmail(rawTargetUserIdOrEmail);
+    const targetUser = await this.findProfileByIdOrEmail(
+      rawTargetUserIdOrEmail,
+    );
 
     if (targetUser.referredById) {
       throw new ConflictException('Target user already has a bound referrer');
@@ -481,14 +483,9 @@ export class ReferralsService {
       },
     });
 
-    const miningEnabledFlag = this.configService.get<boolean>(
-      'ENABLE_MINING',
-      true,
-    );
-    const referralsEnabledFlag = this.configService.get<boolean>(
-      'ENABLE_REFERRALS',
-      true,
-    );
+    const miningEnabledFlag = this.runtimeFeatureFlagsService.isMiningEnabled();
+    const referralsEnabledFlag =
+      this.runtimeFeatureFlagsService.isReferralsEnabled();
 
     return {
       referralsEnabled:

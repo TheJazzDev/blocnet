@@ -2,9 +2,11 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   MiningPointSource,
   Prisma,
@@ -12,6 +14,8 @@ import {
   QuestStatus,
   QuestVerificationStatus,
 } from '@prisma/client';
+import { randomUUID } from 'crypto';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { BadgesService } from '../badges/badges.service';
 import { generateUniqueSlug } from '../common/utils/slug.util';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -21,16 +25,64 @@ import { UpdateQuestDto } from './dto/update-quest.dto';
 import { SubmitQuestProofDto, VerifyQuestDto } from './dto/quest-action.dto';
 
 type PrismaLike = PrismaService | Prisma.TransactionClient;
+type UploadedQuestProofFile = {
+  buffer: Buffer;
+  mimetype: string;
+  size: number;
+};
+
+type AutoQuestEligibilityResult = {
+  eligible: boolean;
+  current: number;
+  target: number;
+  metricLabel: string;
+  missingRequirements: string[];
+  message: string;
+};
+
+const QUEST_PROOF_MAX_BYTES = 8 * 1024 * 1024;
+const ALLOWED_QUEST_PROOF_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+]);
 
 @Injectable()
 export class QuestsService {
   private readonly logger = new Logger(QuestsService.name);
+  private readonly supabaseUrl: string;
+  private readonly supabaseQuestProofsBucket: string;
+  private readonly supabaseStorageClient: SupabaseClient | null;
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
     private readonly badgesService: BadgesService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) {
+    this.supabaseUrl = this.configService.get<string>('SUPABASE_URL') ?? '';
+    this.supabaseQuestProofsBucket =
+      this.configService.get<string>('SUPABASE_QUEST_PROOFS_BUCKET') ||
+      'quest-proofs';
+    const serviceRoleKey =
+      this.configService.get<string>('SUPABASE_SECRET_KEY') ||
+      this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (this.supabaseUrl && serviceRoleKey) {
+      this.supabaseStorageClient = createClient(
+        this.supabaseUrl,
+        serviceRoleKey,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        },
+      );
+    } else {
+      this.supabaseStorageClient = null;
+    }
+  }
 
   /**
    * Get all active quests
@@ -42,15 +94,16 @@ export class QuestsService {
 
     // Filter out expired quests if not including inactive
     if (!includeInactive) {
-      where.OR = [
-        { expiresAt: null },
-        { expiresAt: { gt: new Date() } },
-      ];
+      where.OR = [{ expiresAt: null }, { expiresAt: { gt: new Date() } }];
     }
 
     return this.prisma.quest.findMany({
       where,
-      orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
+      orderBy: [
+        { category: 'asc' },
+        { sortOrder: 'asc' },
+        { createdAt: 'asc' },
+      ],
     });
   }
 
@@ -78,18 +131,21 @@ export class QuestsService {
       where.status = status;
     }
 
-    const [userQuests, totalCount, completedCount, inProgressCount] = await Promise.all([
-      this.prisma.userQuest.findMany({
-        where,
-        include: {
-          quest: true,
-        },
-        orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
-      }),
-      this.prisma.userQuest.count({ where: { userId } }),
-      this.prisma.userQuest.count({ where: { userId, status: 'completed' } }),
-      this.prisma.userQuest.count({ where: { userId, status: 'in_progress' } }),
-    ]);
+    const [userQuests, totalCount, completedCount, inProgressCount] =
+      await Promise.all([
+        this.prisma.userQuest.findMany({
+          where,
+          include: {
+            quest: true,
+          },
+          orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+        }),
+        this.prisma.userQuest.count({ where: { userId } }),
+        this.prisma.userQuest.count({ where: { userId, status: 'completed' } }),
+        this.prisma.userQuest.count({
+          where: { userId, status: 'in_progress' },
+        }),
+      ]);
 
     return {
       quests: userQuests,
@@ -112,9 +168,7 @@ export class QuestsService {
     ]);
 
     // Create a map of questId -> userQuest for easy lookup
-    const userQuestMap = new Map(
-      userQuests.map((uq) => [uq.questId, uq]),
-    );
+    const userQuestMap = new Map(userQuests.map((uq) => [uq.questId, uq]));
 
     // Merge quests with user progress
     return allQuests.map((quest) => {
@@ -175,11 +229,34 @@ export class QuestsService {
   /**
    * Submit quest proof for verification
    */
-  async submitQuestProof(userId: string, questSlug: string, dto: SubmitQuestProofDto) {
+  async submitQuestProof(
+    userId: string,
+    questSlug: string,
+    dto: SubmitQuestProofDto,
+  ) {
     const quest = await this.getQuestBySlug(questSlug);
 
-    // Get user quest
-    const userQuest = await this.prisma.userQuest.findUnique({
+    if (!quest.isActive) {
+      throw new BadRequestException('This quest is not active');
+    }
+
+    if (quest.expiresAt && quest.expiresAt < new Date()) {
+      throw new BadRequestException('This quest has expired');
+    }
+
+    if (quest.verificationMethod !== 'manual') {
+      throw new BadRequestException(
+        'This quest is auto-verified. Tap Verify instead.',
+      );
+    }
+
+    if (!dto.screenshot?.trim()) {
+      throw new BadRequestException(
+        'Please upload a screenshot image as proof.',
+      );
+    }
+
+    const existing = await this.prisma.userQuest.findUnique({
       where: {
         userId_questId: {
           userId,
@@ -188,13 +265,36 @@ export class QuestsService {
       },
     });
 
-    if (!userQuest) {
-      throw new BadRequestException('Quest not started. Please start the quest first.');
-    }
-
-    if (userQuest.status === 'completed') {
+    if (existing?.status === 'completed') {
       throw new BadRequestException('Quest already completed');
     }
+
+    if (existing?.status === 'pending_verification') {
+      throw new BadRequestException(
+        'Your previous submission is still pending verification.',
+      );
+    }
+
+    const now = new Date();
+    const userQuest = await this.prisma.userQuest.upsert({
+      where: {
+        userId_questId: {
+          userId,
+          questId: quest.id,
+        },
+      },
+      update: {
+        status: 'in_progress',
+        startedAt: existing?.startedAt ?? now,
+      },
+      create: {
+        userId,
+        questId: quest.id,
+        status: 'in_progress',
+        startedAt: now,
+        progress: 0,
+      },
+    });
 
     // Create submission
     const submission = await this.prisma.questSubmission.create({
@@ -213,76 +313,168 @@ export class QuestsService {
       where: { id: userQuest.id },
       data: {
         status: 'pending_verification',
+        progress: 100,
       },
     });
 
     return submission;
   }
 
-  /**
-   * Claim quest reward (for auto-verified quests)
-   */
-  async claimQuestReward(userId: string, questSlug: string) {
+  async uploadQuestProofImage(
+    userId: string,
+    questSlug: string,
+    file: UploadedQuestProofFile,
+  ) {
     const quest = await this.getQuestBySlug(questSlug);
-
-    // Check if quest is auto-verified
-    if (quest.verificationMethod !== 'auto') {
-      throw new BadRequestException('This quest requires manual verification');
+    if (quest.verificationMethod !== 'manual') {
+      throw new BadRequestException(
+        'Only manual quests accept screenshot proof uploads.',
+      );
+    }
+    if (!quest.isActive) {
+      throw new BadRequestException('This quest is not active');
+    }
+    if (quest.expiresAt && quest.expiresAt < new Date()) {
+      throw new BadRequestException('This quest has expired');
     }
 
-    // Get user quest
-    const userQuest = await this.prisma.userQuest.findUnique({
+    if (!ALLOWED_QUEST_PROOF_MIME_TYPES.has(file.mimetype)) {
+      throw new BadRequestException(
+        'Unsupported proof format. Use JPEG, PNG, or WEBP.',
+      );
+    }
+    if (file.size > QUEST_PROOF_MAX_BYTES) {
+      throw new BadRequestException('Proof image must be 8MB or smaller');
+    }
+
+    const storageClient = this.requireSupabaseStorageClient();
+    const extension = this.fileExtensionForMimeType(file.mimetype);
+    const objectPath = `${userId}/${quest.id}/${Date.now()}-${randomUUID()}.${extension}`;
+    const bucket = storageClient.storage.from(this.supabaseQuestProofsBucket);
+
+    const { error: uploadError } = await bucket.upload(
+      objectPath,
+      file.buffer,
+      {
+        contentType: file.mimetype,
+        upsert: false,
+      },
+    );
+
+    if (uploadError) {
+      throw new BadRequestException('Failed to upload proof image');
+    }
+
+    const {
+      data: { publicUrl },
+    } = bucket.getPublicUrl(objectPath);
+
+    return { screenshotUrl: publicUrl };
+  }
+
+  /**
+   * Verify quest completion (for auto-verified quests)
+   */
+  async verifyQuest(userId: string, questSlug: string) {
+    const quest = await this.getQuestBySlug(questSlug);
+
+    if (!quest.isActive) {
+      throw new BadRequestException('This quest is not active');
+    }
+
+    if (quest.expiresAt && quest.expiresAt < new Date()) {
+      throw new BadRequestException('This quest has expired');
+    }
+
+    if (quest.verificationMethod !== 'auto') {
+      throw new BadRequestException(
+        'This quest requires manual verification. Submit proof instead.',
+      );
+    }
+
+    const existing = await this.prisma.userQuest.findUnique({
       where: {
         userId_questId: {
           userId,
           questId: quest.id,
         },
       },
-      include: { quest: true },
     });
 
-    if (!userQuest) {
-      throw new BadRequestException('Quest not started');
+    if (existing?.status === 'completed') {
+      return {
+        questId: quest.id,
+        questSlug: quest.slug,
+        eligible: true,
+        completed: true,
+        alreadyCompleted: true,
+        rewardPoints: quest.rewardPoints,
+        progress: {
+          current: 1,
+          target: 1,
+          metricLabel: 'verification checks',
+        },
+        missingRequirements: [],
+        message: 'Quest already completed.',
+      };
     }
 
-    if (userQuest.status === 'completed') {
-      throw new BadRequestException('Quest already completed');
+    const eligibility = await this.evaluateAutoQuestEligibility(userId, quest);
+    if (!eligibility.eligible) {
+      return {
+        questId: quest.id,
+        questSlug: quest.slug,
+        eligible: false,
+        completed: false,
+        alreadyCompleted: false,
+        rewardPoints: quest.rewardPoints,
+        progress: {
+          current: eligibility.current,
+          target: eligibility.target,
+          metricLabel: eligibility.metricLabel,
+        },
+        missingRequirements: eligibility.missingRequirements,
+        message: eligibility.message,
+      };
     }
 
-    // Award rewards in a transaction
-    return this.prisma.$transaction(async (tx) => {
-      const completedAt = new Date();
+    const completedNow = await this.completeAutoQuest(userId, quest);
 
-      // Mark quest as completed
-      const completedRows = await tx.userQuest.updateMany({
-        where: {
-          id: userQuest.id,
-          status: { not: 'completed' },
-        },
-        data: {
-          status: 'completed',
-          completedAt,
-        },
-      });
-      if (completedRows.count === 0) {
-        throw new ConflictException('Quest already completed');
-      }
+    return {
+      questId: quest.id,
+      questSlug: quest.slug,
+      eligible: true,
+      completed: true,
+      alreadyCompleted: !completedNow,
+      rewardPoints: quest.rewardPoints,
+      progress: {
+        current: eligibility.target,
+        target: eligibility.target,
+        metricLabel: eligibility.metricLabel,
+      },
+      missingRequirements: [],
+      message: completedNow
+        ? `Quest verified. You earned ${quest.rewardPoints} MCR.`
+        : 'Quest already completed.',
+    };
+  }
 
-      const completedQuest = await tx.userQuest.findUniqueOrThrow({
-        where: { id: userQuest.id },
-        include: { quest: true },
-      });
-
-      await this.awardQuestRewards(tx, userId, quest);
-
-      return completedQuest;
-    });
+  /**
+   * Claim quest reward (for auto-verified quests)
+   */
+  async claimQuestReward(userId: string, questSlug: string) {
+    const result = await this.verifyQuest(userId, questSlug);
+    if (!result.eligible) {
+      throw new BadRequestException(result.message);
+    }
+    return result;
   }
 
   /**
    * Admin: Create a new quest
    */
   async createQuest(dto: CreateQuestDto, adminId: string) {
+    void adminId;
     const slug = await generateUniqueSlug({
       source: dto.title,
       desiredSlug: dto.slug,
@@ -320,6 +512,7 @@ export class QuestsService {
    * Admin: Update an existing quest
    */
   async updateQuest(questId: string, dto: UpdateQuestDto, adminId: string) {
+    void adminId;
     const quest = await this.prisma.quest.findUnique({
       where: { id: questId },
     });
@@ -354,12 +547,22 @@ export class QuestsService {
         ...(dto.description && { description: dto.description }),
         ...(dto.type && { type: dto.type }),
         ...(dto.category && { category: dto.category }),
-        ...(dto.rewardPoints !== undefined && { rewardPoints: dto.rewardPoints }),
-        ...(dto.rewardBadgeId !== undefined && { rewardBadgeId: dto.rewardBadgeId }),
+        ...(dto.rewardPoints !== undefined && {
+          rewardPoints: dto.rewardPoints,
+        }),
+        ...(dto.rewardBadgeId !== undefined && {
+          rewardBadgeId: dto.rewardBadgeId,
+        }),
         ...(dto.targetUrl !== undefined && { targetUrl: dto.targetUrl }),
-        ...(dto.targetAction !== undefined && { targetAction: dto.targetAction }),
-        ...(dto.verificationMethod && { verificationMethod: dto.verificationMethod }),
-        ...(dto.requiredProof !== undefined && { requiredProof: dto.requiredProof }),
+        ...(dto.targetAction !== undefined && {
+          targetAction: dto.targetAction,
+        }),
+        ...(dto.verificationMethod && {
+          verificationMethod: dto.verificationMethod,
+        }),
+        ...(dto.requiredProof !== undefined && {
+          requiredProof: dto.requiredProof,
+        }),
         ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
         ...(dto.expiresAt !== undefined && { expiresAt: dto.expiresAt }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
@@ -480,7 +683,11 @@ export class QuestsService {
   /**
    * Admin: Verify/approve quest submission
    */
-  async verifyQuestSubmission(dto: VerifyQuestDto, verifiedBy: string, approved: boolean) {
+  async verifyQuestSubmission(
+    dto: VerifyQuestDto,
+    verifiedBy: string,
+    approved: boolean,
+  ) {
     const submission = await this.prisma.questSubmission.findUnique({
       where: { id: dto.submissionId },
       include: {
@@ -520,6 +727,7 @@ export class QuestsService {
           data: {
             status: 'completed',
             completedAt: new Date(),
+            progress: 100,
           },
         });
 
@@ -537,7 +745,7 @@ export class QuestsService {
             updateId: null,
             urgency: null,
             title: 'Quest Completed!',
-            body: `Your quest "${quest.title}" has been verified. You earned ${quest.rewardPoints} points!`,
+            body: `Your quest "${quest.title}" has been verified. You earned ${quest.rewardPoints} MCR!`,
             payload: {
               questId: quest.id,
               questSlug: quest.slug,
@@ -574,6 +782,7 @@ export class QuestsService {
         where: { id: submission.userQuestId },
         data: {
           status: 'in_progress',
+          progress: 0,
         },
       });
 
@@ -610,7 +819,10 @@ export class QuestsService {
   private async awardQuestRewards(
     tx: PrismaLike,
     userId: string,
-    quest: Pick<Quest, 'id' | 'slug' | 'title' | 'rewardPoints' | 'rewardBadgeId'>,
+    quest: Pick<
+      Quest,
+      'id' | 'slug' | 'title' | 'rewardPoints' | 'rewardBadgeId'
+    >,
   ) {
     if (quest.rewardPoints > 0) {
       await tx.miningPointLedger.create({
@@ -655,7 +867,10 @@ export class QuestsService {
     }
   }
 
-  private async completeAutoQuest(userId: string, quest: Quest): Promise<boolean> {
+  private async completeAutoQuest(
+    userId: string,
+    quest: Quest,
+  ): Promise<boolean> {
     const completedAt = new Date();
 
     const completed = await this.prisma.$transaction(async (tx) => {
@@ -710,7 +925,7 @@ export class QuestsService {
         updateId: null,
         urgency: null,
         title: 'Quest Completed!',
-        body: `You completed "${quest.title}" and earned ${quest.rewardPoints} points.`,
+        body: `You completed "${quest.title}" and earned ${quest.rewardPoints} MCR.`,
         payload: {
           questId: quest.id,
           questSlug: quest.slug,
@@ -776,5 +991,250 @@ export class QuestsService {
 
     const completed = await this.completeAutoQuest(userId, quest);
     return completed ? { questId: quest.id, questSlug: quest.slug } : null;
+  }
+
+  private requireSupabaseStorageClient(): SupabaseClient {
+    if (this.supabaseStorageClient) {
+      return this.supabaseStorageClient;
+    }
+
+    throw new InternalServerErrorException(
+      'Supabase storage is not configured. Set SUPABASE_SECRET_KEY.',
+    );
+  }
+
+  private fileExtensionForMimeType(mimeType: string): string {
+    switch (mimeType) {
+      case 'image/jpeg':
+        return 'jpg';
+      case 'image/png':
+        return 'png';
+      case 'image/webp':
+        return 'webp';
+      default:
+        return 'bin';
+    }
+  }
+
+  private async evaluateAutoQuestEligibility(
+    userId: string,
+    quest: Quest,
+  ): Promise<AutoQuestEligibilityResult> {
+    const action = (quest.targetAction ?? '').trim();
+    switch (action) {
+      case 'profile_complete': {
+        const profile = await this.prisma.profile.findUnique({
+          where: { id: userId },
+          select: {
+            displayName: true,
+            username: true,
+            avatarUrl: true,
+            bio: true,
+          },
+        });
+        const hasDisplayName = Boolean(profile?.displayName?.trim());
+        const hasUsername = Boolean(profile?.username?.trim());
+        const hasAvatar = Boolean(profile?.avatarUrl?.trim());
+        const hasBio = Boolean(profile?.bio?.trim());
+        const current = [hasDisplayName, hasUsername, hasAvatar, hasBio].filter(
+          Boolean,
+        ).length;
+        const missingRequirements: string[] = [];
+        if (!hasDisplayName) {
+          missingRequirements.push('Add a display name to your profile.');
+        }
+        if (!hasUsername) {
+          missingRequirements.push('Add a username to your profile.');
+        }
+        if (!hasAvatar) {
+          missingRequirements.push('Add a profile picture.');
+        }
+        if (!hasBio) {
+          missingRequirements.push('Add a bio to your profile.');
+        }
+        const eligible = current >= 4;
+        return {
+          eligible,
+          current,
+          target: 4,
+          metricLabel: 'profile fields',
+          missingRequirements,
+          message: eligible
+            ? 'Profile requirements met.'
+            : 'Complete display name, username, profile picture, and bio to verify this quest.',
+        };
+      }
+      case 'follow_5_projects': {
+        const current = await this.prisma.projectFollow.count({
+          where: { userId },
+        });
+        const target = 5;
+        const eligible = current >= target;
+        const remaining = Math.max(target - current, 0);
+        return {
+          eligible,
+          current,
+          target,
+          metricLabel: 'projects followed',
+          missingRequirements: eligible
+            ? []
+            : [
+                `Follow ${remaining} more project${remaining == 1 ? '' : 's'} to verify this quest.`,
+              ],
+          message: eligible
+            ? 'Follow requirement met.'
+            : 'You have not followed enough projects yet.',
+        };
+      }
+      case 'first_comment': {
+        const current = await this.prisma.comment.count({
+          where: {
+            authorId: userId,
+            status: 'active',
+          },
+        });
+        const eligible = current >= 1;
+        return {
+          eligible,
+          current: Math.min(current, 1),
+          target: 1,
+          metricLabel: 'comments made',
+          missingRequirements: eligible
+            ? []
+            : ['Make at least one comment on an update.'],
+          message: eligible
+            ? 'Comment requirement met.'
+            : 'You need to post your first comment.',
+        };
+      }
+      case 'first_update': {
+        const current = await this.prisma.update.count({
+          where: {
+            authorId: userId,
+            status: 'published',
+          },
+        });
+        const eligible = current >= 1;
+        return {
+          eligible,
+          current: Math.min(current, 1),
+          target: 1,
+          metricLabel: 'updates posted',
+          missingRequirements: eligible
+            ? []
+            : ['Create and publish your first update.'],
+          message: eligible
+            ? 'Update requirement met.'
+            : 'You need to create your first update.',
+        };
+      }
+      case '7_day_streak': {
+        const current = await this.getClaimStreakUtcDays(userId);
+        const target = 7;
+        const eligible = current >= target;
+        const remaining = Math.max(target - current, 0);
+        return {
+          eligible,
+          current: Math.min(current, target),
+          target,
+          metricLabel: 'streak days',
+          missingRequirements: eligible
+            ? []
+            : [
+                `Claim mining rewards for ${remaining} more day${remaining == 1 ? '' : 's'} in a row.`,
+              ],
+          message: eligible
+            ? 'Streak requirement met.'
+            : 'You have not reached a 7-day streak yet.',
+        };
+      }
+      case 'refer_3_miners': {
+        const current = await this.prisma.profile.count({
+          where: {
+            referredById: userId,
+            miningSessions: {
+              some: {},
+            },
+          },
+        });
+        const target = 3;
+        const eligible = current >= target;
+        const remaining = Math.max(target - current, 0);
+        return {
+          eligible,
+          current: Math.min(current, target),
+          target,
+          metricLabel: 'active referrals',
+          missingRequirements: eligible
+            ? []
+            : [
+                `Refer ${remaining} more active miner${remaining == 1 ? '' : 's'} to verify this quest.`,
+              ],
+          message: eligible
+            ? 'Referral requirement met.'
+            : 'You do not have enough active referrals yet.',
+        };
+      }
+      default:
+        return {
+          eligible: false,
+          current: 0,
+          target: 1,
+          metricLabel: 'verification checks',
+          missingRequirements: [
+            'This quest cannot be auto-verified yet. Please contact support.',
+          ],
+          message: 'Auto-verification rule is not configured for this quest.',
+        };
+    }
+  }
+
+  private async getClaimStreakUtcDays(userId: string): Promise<number> {
+    const rows = await this.prisma.miningPointLedger.findMany({
+      where: {
+        userId,
+        source: MiningPointSource.cycle_claim,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      select: { createdAt: true },
+    });
+
+    if (rows.length === 0) {
+      return 0;
+    }
+
+    const uniqueDays: number[] = [];
+    for (const row of rows) {
+      const day = this.toUtcDayNumber(row.createdAt);
+      if (
+        uniqueDays.length === 0 ||
+        uniqueDays[uniqueDays.length - 1] !== day
+      ) {
+        uniqueDays.push(day);
+      }
+    }
+
+    if (uniqueDays.length === 0) {
+      return 0;
+    }
+
+    let streak = 1;
+    for (let i = 1; i < uniqueDays.length; i += 1) {
+      if (uniqueDays[i - 1] - 1 === uniqueDays[i]) {
+        streak += 1;
+        continue;
+      }
+      break;
+    }
+
+    return streak;
+  }
+
+  private toUtcDayNumber(date: Date): number {
+    return Math.floor(
+      Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) /
+        86_400_000,
+    );
   }
 }

@@ -6,6 +6,10 @@ import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
+import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
+import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart';
+import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
+import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/comments_store.dart';
 import 'package:blocnet/services/updates_store.dart';
@@ -30,6 +34,7 @@ class UpdateDetailsDialog extends StatefulWidget {
 class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
   final TextEditingController _commentController = TextEditingController();
   late final CommentsStore _commentsStore;
+  late final MentionsRepository _mentionsRepository;
   bool _isSubmittingComment = false;
   String? _commentError;
 
@@ -37,6 +42,7 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
   void initState() {
     super.initState();
     _commentsStore = context.read<CommentsStore>();
+    _mentionsRepository = MentionsRepository(ApiClient());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _commentsStore.fetchComments(widget.id);
@@ -81,7 +87,10 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
           backgroundColor: Colors.transparent,
           body: Column(
             children: [
-              UpdateDetailsHeader(priority: post.priority),
+              UpdateDetailsHeader(
+                priority: post.priority,
+                updateId: post.id,
+              ),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -104,6 +113,7 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                       _CommentsSection(
                         updateId: widget.id,
                         controller: _commentController,
+                        mentionsRepository: _mentionsRepository,
                         isSubmitting: _isSubmittingComment,
                         error: _commentError,
                         onSubmit: _createComment,
@@ -221,6 +231,7 @@ class _CommentsSection extends StatelessWidget {
   const _CommentsSection({
     required this.updateId,
     required this.controller,
+    required this.mentionsRepository,
     required this.isSubmitting,
     required this.error,
     required this.onSubmit,
@@ -228,6 +239,7 @@ class _CommentsSection extends StatelessWidget {
 
   final String updateId;
   final TextEditingController controller;
+  final MentionsRepository mentionsRepository;
   final bool isSubmitting;
   final String? error;
   final VoidCallback onSubmit;
@@ -286,93 +298,56 @@ class _CommentsSection extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             // Comment input
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.bgElevated,
-                    AppColors.bgElevated.withValues(alpha: 0.85),
-                  ],
+            Row(
+              children: [
+                Expanded(
+                  child: MentionTextField(
+                    controller: controller,
+                    mentionsRepository: mentionsRepository,
+                    hintText: 'Add a comment…',
+                    minLines: 1,
+                    maxLines: 4,
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: AppColors.borderSubtle.withValues(alpha: 0.5),
-                  width: 1.5,
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      minLines: 1,
-                      maxLines: 4,
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: isSubmitting ? null : onSubmit,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppColors.teal400, AppColors.primary500],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.teal400.withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.teal400.withValues(alpha: 0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      isSubmitting ? '…' : 'Send',
+                      style: const TextStyle(
+                        color: Colors.black,
                         fontSize: 13,
                         fontFamily: 'Geist',
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
-                        hintText: 'Add a comment…',
-                        hintStyle: TextStyle(
-                          color: AppColors.textFaint,
-                          fontSize: 13,
-                          fontFamily: 'Geist',
-                          fontWeight: FontWeight.w400,
-                        ),
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: isSubmitting ? null : onSubmit,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [AppColors.teal400, AppColors.primary500],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: AppColors.teal400.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.teal400.withValues(alpha: 0.2),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        isSubmitting ? '…' : 'Send',
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 13,
-                          fontFamily: 'Geist',
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
             if (error != null && error!.isNotEmpty) ...[
               const SizedBox(height: 6),
@@ -581,8 +556,8 @@ class _CommentTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            comment.content,
+          MentionText(
+            text: comment.content,
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,

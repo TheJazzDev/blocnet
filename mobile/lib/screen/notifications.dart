@@ -61,6 +61,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             backButton: true,
             showSearch: false,
             showFilter: false,
+            showNotificationBell: false,
             actions: [
               if (store.unreadCount > 0)
                 GestureDetector(

@@ -13,12 +13,44 @@ describe('NotificationsService', () => {
   const configService = {
     get: jest.fn().mockReturnValue(true),
   };
+  const runtimeFeatureFlagsService = {
+    isFollowPrefsEnabled: jest.fn(),
+  };
+  const notificationPreferencesService = {
+    filterEventsByPreference: jest.fn(),
+  };
+  const notificationEmailService = {
+    sendCriticalEmail: jest.fn(),
+  };
+  const fcmService = {
+    sendToUsers: jest.fn(),
+  };
 
   let service: NotificationsService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    service = new NotificationsService(prisma as any, configService as any);
+    jest.resetAllMocks();
+    runtimeFeatureFlagsService.isFollowPrefsEnabled.mockReturnValue(true);
+    notificationPreferencesService.filterEventsByPreference.mockImplementation(
+      async (events: any[]) => ({
+        deliverable: events,
+        suppressed: [],
+      }),
+    );
+    fcmService.sendToUsers.mockResolvedValue({
+      sentCount: 0,
+      failureCount: 0,
+      recipientCount: 0,
+      skipped: false,
+    });
+    service = new NotificationsService(
+      prisma as any,
+      configService as any,
+      runtimeFeatureFlagsService as any,
+      notificationPreferencesService as any,
+      notificationEmailService as any,
+      fcmService as any,
+    );
   });
 
   it('filters followers by mute window and min urgency', async () => {

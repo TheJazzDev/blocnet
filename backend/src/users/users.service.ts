@@ -29,6 +29,7 @@ import { projectInclude, toProjectResponse } from '../projects/projects.mapper';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { QuestsService } from '../quests/quests.service';
+import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import { AdminDeleteUserDto } from './dto/admin-delete-user.dto';
 import { AdminHardDeleteUserDto } from './dto/admin-hard-delete-user.dto';
 import { AdminReactivateUserDto } from './dto/admin-reactivate-user.dto';
@@ -49,8 +50,11 @@ type UploadedAvatarFile = {
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
   'image/jpeg',
+  'image/jpg',
   'image/png',
   'image/webp',
+  'image/heic',
+  'image/heif',
 ]);
 
 const PROFILE_ACTIVITY_ALLOWED_ACTIONS = [
@@ -94,6 +98,7 @@ export class UsersService {
     private readonly auditLogService: AuditLogService,
     private readonly notificationsService: NotificationsService,
     private readonly questsService: QuestsService,
+    private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,
   ) {
     this.supabaseUrl = this.configService.get<string>('SUPABASE_URL') ?? '';
     this.supabaseAvatarsBucket =
@@ -171,6 +176,7 @@ export class UsersService {
       id: profile.id,
       email: profile.email,
       username: profile.username,
+      referralCode: profile.referralCode,
       displayName: profile.displayName,
       avatarUrl: profile.avatarUrl,
       bio: profile.bio,
@@ -211,7 +217,7 @@ export class UsersService {
       throw new BadRequestException('Bio must be 300 characters or less');
     }
 
-    const profile = await this.prisma.profile.update({
+    await this.prisma.profile.update({
       where: { id: userId },
       data: {
         displayName: dto.displayName,
@@ -221,16 +227,22 @@ export class UsersService {
     });
 
     await this.triggerProfileCompleteQuestIfEligible(userId);
-    return profile;
+    const me = await this.getMe(userId);
+    if (!me) {
+      throw new NotFoundException('Active profile not found');
+    }
+
+    return me;
   }
 
   async uploadMyAvatar(userId: string, file: UploadedAvatarFile) {
     if (!file) {
       throw new BadRequestException('Avatar file is required');
     }
-    if (!ALLOWED_AVATAR_MIME_TYPES.has(file.mimetype)) {
+    const resolvedMimeType = this.resolveAvatarMimeType(file);
+    if (!resolvedMimeType) {
       throw new BadRequestException(
-        'Unsupported avatar format. Use JPEG, PNG, or WEBP.',
+        'Unsupported avatar format. Use JPEG, PNG, WEBP, or HEIC.',
       );
     }
     if (file.size > AVATAR_MAX_BYTES) {
@@ -250,7 +262,7 @@ export class UsersService {
     }
 
     const storageClient = this.requireSupabaseStorageClient();
-    const extension = this.fileExtensionForMimeType(file.mimetype);
+    const extension = this.fileExtensionForMimeType(resolvedMimeType);
     const objectPath = `${userId}/${Date.now()}-${randomUUID()}.${extension}`;
     const bucket = storageClient.storage.from(this.supabaseAvatarsBucket);
 
@@ -258,7 +270,7 @@ export class UsersService {
       objectPath,
       file.buffer,
       {
-        contentType: file.mimetype,
+        contentType: resolvedMimeType,
         upsert: false,
       },
     );
@@ -463,10 +475,39 @@ export class UsersService {
             },
           },
         },
+        referrer: {
+          select: {
+            id: true,
+            email: true,
+            displayName: true,
+            referralCode: true,
+          },
+        },
+        tipAccounts: {
+          orderBy: [{ currencyCode: 'asc' }],
+          select: {
+            id: true,
+            accountType: true,
+            ownerRef: true,
+            currencyCode: true,
+            balanceAtomic: true,
+            updatedAt: true,
+            currency: {
+              select: {
+                code: true,
+                symbol: true,
+                decimals: true,
+                kind: true,
+                isEnabled: true,
+              },
+            },
+          },
+        },
         wallet: true,
         kycProfile: true,
         _count: {
           select: {
+            referrals: true,
             followerLinks: true,
             followingLinks: true,
             follows: true,
@@ -478,6 +519,9 @@ export class UsersService {
             withdrawalRequests: true,
             deviceTokens: true,
             earnedBadges: true,
+            tipTransactionsSent: true,
+            tipTransactionsReceived: true,
+            tipConversions: true,
           },
         },
       },
@@ -487,10 +531,80 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    const [tipSentByCurrency, tipReceivedByCurrency, tipConversionsByPair] =
+      await Promise.all([
+        this.prisma.tipTransaction.groupBy({
+          by: ['currencyCode'],
+          where: { senderUserId: userId },
+          _count: { _all: true },
+          _sum: {
+            amountAtomic: true,
+            feeAtomic: true,
+            totalDebitAtomic: true,
+          },
+        }),
+        this.prisma.tipTransaction.groupBy({
+          by: ['currencyCode'],
+          where: { recipientUserId: userId },
+          _count: { _all: true },
+          _sum: {
+            amountAtomic: true,
+          },
+        }),
+        this.prisma.tipConversion.groupBy({
+          by: ['fromCurrencyCode', 'toCurrencyCode'],
+          where: { userId },
+          _count: { _all: true },
+          _sum: {
+            amountInAtomic: true,
+            amountOutAtomic: true,
+          },
+        }),
+      ]);
+
+    const currencyCodes = new Set<string>([
+      ...profile.tipAccounts.map((row) => row.currencyCode),
+      ...tipSentByCurrency.map((row) => row.currencyCode),
+      ...tipReceivedByCurrency.map((row) => row.currencyCode),
+      ...tipConversionsByPair.flatMap((row) => [
+        row.fromCurrencyCode,
+        row.toCurrencyCode,
+      ]),
+    ]);
+
+    const currencies =
+      currencyCodes.size === 0
+        ? []
+        : await this.prisma.tipCurrency.findMany({
+            where: {
+              code: {
+                in: [...currencyCodes],
+              },
+            },
+            select: {
+              code: true,
+              symbol: true,
+              decimals: true,
+              kind: true,
+              isEnabled: true,
+            },
+          });
+    const currencyMap = new Map(currencies.map((row) => [row.code, row]));
+
     return {
       id: profile.id,
       email: profile.email,
       username: profile.username,
+      referralCode: profile.referralCode,
+      referredAt: profile.referredAt,
+      referredBy: profile.referrer
+        ? {
+            id: profile.referrer.id,
+            email: profile.referrer.email,
+            displayName: profile.referrer.displayName,
+            referralCode: profile.referrer.referralCode,
+          }
+        : null,
       displayName: profile.displayName,
       avatarUrl: profile.avatarUrl,
       bio: profile.bio,
@@ -527,7 +641,48 @@ export class UsersService {
             reviewNote: profile.kycProfile.reviewNote,
           }
         : null,
+      tips: {
+        accounts: profile.tipAccounts.map((row) => ({
+          id: row.id,
+          accountType: row.accountType,
+          ownerRef: row.ownerRef,
+          currencyCode: row.currencyCode,
+          balanceAtomic: row.balanceAtomic.toString(),
+          updatedAt: row.updatedAt,
+          currency: row.currency,
+        })),
+        sentByCurrency: tipSentByCurrency.map((row) => {
+          const currency = currencyMap.get(row.currencyCode);
+          return {
+            currencyCode: row.currencyCode,
+            txCount: row._count._all,
+            amountAtomic: (row._sum.amountAtomic ?? 0n).toString(),
+            feeAtomic: (row._sum.feeAtomic ?? 0n).toString(),
+            totalDebitAtomic: (row._sum.totalDebitAtomic ?? 0n).toString(),
+            currency,
+          };
+        }),
+        receivedByCurrency: tipReceivedByCurrency.map((row) => {
+          const currency = currencyMap.get(row.currencyCode);
+          return {
+            currencyCode: row.currencyCode,
+            txCount: row._count._all,
+            amountAtomic: (row._sum.amountAtomic ?? 0n).toString(),
+            currency,
+          };
+        }),
+        conversionsByPair: tipConversionsByPair.map((row) => ({
+          fromCurrencyCode: row.fromCurrencyCode,
+          toCurrencyCode: row.toCurrencyCode,
+          txCount: row._count._all,
+          amountInAtomic: (row._sum.amountInAtomic ?? 0n).toString(),
+          amountOutAtomic: (row._sum.amountOutAtomic ?? 0n).toString(),
+          fromCurrency: currencyMap.get(row.fromCurrencyCode) ?? null,
+          toCurrency: currencyMap.get(row.toCurrencyCode) ?? null,
+        })),
+      },
       counts: {
+        directReferrals: profile._count.referrals,
         followers: profile._count.followerLinks,
         following: profile._count.followingLinks,
         watchedProjects: profile._count.follows,
@@ -539,6 +694,9 @@ export class UsersService {
         withdrawals: profile._count.withdrawalRequests,
         deviceTokens: profile._count.deviceTokens,
         badges: profile._count.earnedBadges,
+        tipSent: profile._count.tipTransactionsSent,
+        tipReceived: profile._count.tipTransactionsReceived,
+        tipConversions: profile._count.tipConversions,
       },
     };
   }
@@ -1238,11 +1396,15 @@ export class UsersService {
     }));
   }
 
-  async getDigestSummary(userId: string, windowDays = 7) {
-    const digestEnabled = this.configService.get<boolean>(
-      'ENABLE_WEEKLY_DIGEST',
-      true,
-    );
+  async getDigestSummary(
+    userId: string,
+    windowDays = 7,
+    options?: {
+      skipAudit?: boolean;
+    },
+  ) {
+    const digestEnabled =
+      this.runtimeFeatureFlagsService.isWeeklyDigestEnabled();
     const boundedWindow = Math.min(Math.max(windowDays, 1), 30);
     if (!digestEnabled) {
       return {
@@ -1275,10 +1437,12 @@ export class UsersService {
       (follow) => follow.projectId,
     );
     if (followedProjectIds.length === 0) {
-      await this.logDigestViewAuditIfDue(userId, {
-        windowDays: boundedWindow,
-        emptyFollowSet: true,
-      });
+      if (!options?.skipAudit) {
+        await this.logDigestViewAuditIfDue(userId, {
+          windowDays: boundedWindow,
+          emptyFollowSet: true,
+        });
+      }
 
       return {
         windowDays: boundedWindow,
@@ -1415,9 +1579,11 @@ export class UsersService {
       })
       .slice(0, 5);
 
-    await this.logDigestViewAuditIfDue(userId, {
-      windowDays: boundedWindow,
-    });
+    if (!options?.skipAudit) {
+      await this.logDigestViewAuditIfDue(userId, {
+        windowDays: boundedWindow,
+      });
+    }
 
     return {
       windowDays: boundedWindow,
@@ -1544,14 +1710,16 @@ export class UsersService {
   }
 
   private isProfileCompleteForQuest(profile: {
+    displayName: string | null;
     username: string | null;
     avatarUrl: string | null;
     bio: string | null;
   }): boolean {
     return Boolean(
+      profile.displayName?.trim() &&
       profile.username?.trim() &&
-        profile.avatarUrl?.trim() &&
-        profile.bio?.trim(),
+      profile.avatarUrl?.trim() &&
+      profile.bio?.trim(),
     );
   }
 
@@ -1559,6 +1727,7 @@ export class UsersService {
     const profile = await this.prisma.profile.findUnique({
       where: { id: userId },
       select: {
+        displayName: true,
         username: true,
         avatarUrl: true,
         bio: true,
@@ -1570,7 +1739,10 @@ export class UsersService {
     }
 
     try {
-      await this.questsService.checkAndCompleteByAction(userId, 'profile_complete');
+      await this.questsService.checkAndCompleteByAction(
+        userId,
+        'profile_complete',
+      );
     } catch (error) {
       this.logger.warn(
         `Failed to process auto quest trigger`,
@@ -1596,14 +1768,72 @@ export class UsersService {
   private fileExtensionForMimeType(mimeType: string): string {
     switch (mimeType) {
       case 'image/jpeg':
+      case 'image/jpg':
         return 'jpg';
       case 'image/png':
         return 'png';
       case 'image/webp':
         return 'webp';
+      case 'image/heic':
+        return 'heic';
+      case 'image/heif':
+        return 'heif';
       default:
         return 'bin';
     }
+  }
+
+  private resolveAvatarMimeType(file: UploadedAvatarFile): string | null {
+    const normalized = file.mimetype.trim().toLowerCase().split(';')[0];
+    if (ALLOWED_AVATAR_MIME_TYPES.has(normalized)) {
+      return normalized;
+    }
+    return this.detectAvatarMimeTypeFromBuffer(file.buffer);
+  }
+
+  private detectAvatarMimeTypeFromBuffer(buffer: Buffer): string | null {
+    if (
+      buffer.length >= 3 &&
+      buffer[0] === 0xff &&
+      buffer[1] === 0xd8 &&
+      buffer[2] === 0xff
+    ) {
+      return 'image/jpeg';
+    }
+
+    if (
+      buffer.length >= 8 &&
+      buffer[0] === 0x89 &&
+      buffer[1] === 0x50 &&
+      buffer[2] === 0x4e &&
+      buffer[3] === 0x47 &&
+      buffer[4] === 0x0d &&
+      buffer[5] === 0x0a &&
+      buffer[6] === 0x1a &&
+      buffer[7] === 0x0a
+    ) {
+      return 'image/png';
+    }
+
+    if (
+      buffer.length >= 12 &&
+      buffer.toString('ascii', 0, 4) === 'RIFF' &&
+      buffer.toString('ascii', 8, 12) === 'WEBP'
+    ) {
+      return 'image/webp';
+    }
+
+    if (buffer.length >= 12 && buffer.toString('ascii', 4, 8) === 'ftyp') {
+      const brand = buffer.toString('ascii', 8, 12).toLowerCase();
+      if (brand.startsWith('heic') || brand.startsWith('hevc')) {
+        return 'image/heic';
+      }
+      if (brand.startsWith('heif') || brand === 'mif1' || brand === 'msf1') {
+        return 'image/heif';
+      }
+    }
+
+    return null;
   }
 
   private async deletePreviousAvatarIfManaged(
@@ -1629,6 +1859,113 @@ export class UsersService {
     await this.requireSupabaseStorageClient()
       .storage.from(this.supabaseAvatarsBucket)
       .remove([previousPath]);
+  }
+
+  async deactivateAccount(userId: string, reason?: string) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        isDeactivated: true,
+        username: true,
+        displayName: true,
+        avatarUrl: true,
+        bio: true,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    if (profile.isDeactivated) {
+      throw new BadRequestException('Account is already deactivated');
+    }
+
+    const updated = await this.prisma.profile.update({
+      where: { id: userId },
+      data: {
+        isDeactivated: true,
+        deactivatedAt: new Date(),
+        deactivatedBy: userId,
+        deactivationReason: reason,
+        previousUsername: profile.username,
+        previousDisplayName: profile.displayName,
+        previousAvatarUrl: profile.avatarUrl,
+        previousBio: profile.bio,
+      },
+      select: {
+        id: true,
+        isDeactivated: true,
+        deactivatedAt: true,
+      },
+    });
+
+    await this.auditLogService.create({
+      actorId: userId,
+      action: 'account.deactivate',
+      resourceType: 'profile',
+      resourceId: userId,
+      metadata: { reason },
+    });
+
+    return updated;
+  }
+
+  async reactivateAccount(userId: string) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        isDeactivated: true,
+        previousUsername: true,
+        previousDisplayName: true,
+        previousAvatarUrl: true,
+        previousBio: true,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    if (!profile.isDeactivated) {
+      throw new BadRequestException('Account is not deactivated');
+    }
+
+    const updated = await this.prisma.profile.update({
+      where: { id: userId },
+      data: {
+        isDeactivated: false,
+        deactivatedAt: null,
+        deactivatedBy: null,
+        deactivationReason: null,
+        username: profile.previousUsername,
+        displayName: profile.previousDisplayName,
+        avatarUrl: profile.previousAvatarUrl,
+        bio: profile.previousBio,
+        previousUsername: null,
+        previousDisplayName: null,
+        previousAvatarUrl: null,
+        previousBio: null,
+      },
+      select: {
+        id: true,
+        isDeactivated: true,
+        username: true,
+        displayName: true,
+      },
+    });
+
+    await this.auditLogService.create({
+      actorId: userId,
+      action: 'account.reactivate',
+      resourceType: 'profile',
+      resourceId: userId,
+      metadata: {},
+    });
+
+    return updated;
   }
 
   private normalizePagination(opts: PaginationInput) {

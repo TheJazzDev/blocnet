@@ -17,13 +17,6 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  static const Set<String> _allowedAvatarExtensions = {
-    'jpg',
-    'jpeg',
-    'png',
-    'webp',
-  };
-
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _displayNameCtrl;
   late final TextEditingController _bioCtrl;
@@ -82,7 +75,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    Navigator.of(context).pop();
+    AppSnackbar.showSuccess(context, 'Profile updated successfully');
+    Navigator.of(context).pop(true);
   }
 
   Future<void> _pickAvatar() async {
@@ -98,16 +92,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
       if (image == null) {
-        return;
-      }
-
-      final extension = _fileExtension(image.path);
-      if (!_allowedAvatarExtensions.contains(extension)) {
-        if (!mounted) return;
-        AppSnackbar.showError(
-          context,
-          'Unsupported avatar format. Use JPG, PNG, or WEBP.',
-        );
         return;
       }
 
@@ -129,14 +113,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         setState(() => _isPickingImage = false);
       }
     }
-  }
-
-  String _fileExtension(String path) {
-    final segments = path.split('.');
-    if (segments.length < 2) {
-      return '';
-    }
-    return segments.last.toLowerCase();
   }
 
   @override

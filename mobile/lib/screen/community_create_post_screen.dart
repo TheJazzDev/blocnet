@@ -1,5 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/community/data/models/community_topic.dart';
+import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
+import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
+import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/community_posts_store.dart';
@@ -18,6 +21,7 @@ class CommunityCreatePostScreen extends StatefulWidget {
 class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
   final TextEditingController _contentCtrl = TextEditingController();
   final FocusNode _contentFocus = FocusNode();
+  late final MentionsRepository _mentionsRepository;
   final List<CommunityTopic> _topics = const [
     CommunityTopic.general,
     CommunityTopic.marketTalk,
@@ -28,6 +32,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
   @override
   void initState() {
     super.initState();
+    _mentionsRepository = MentionsRepository(ApiClient());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _contentFocus.requestFocus();
@@ -147,30 +152,13 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                         ],
                       ),
                       const SizedBox(height: 14),
-                      TextField(
+                      MentionTextField(
                         controller: _contentCtrl,
                         focusNode: _contentFocus,
-                        autofocus: true,
+                        mentionsRepository: _mentionsRepository,
+                        hintText: "What's on your mind?",
                         minLines: 8,
                         maxLines: 12,
-                        onTapOutside: (_) =>
-                            FocusManager.instance.primaryFocus?.unfocus(),
-                        style: AppTypography.custom(color: AppColors.textSecondary,
-                          size: 14,
-                          weight: FontWeight.w400,
-                          height: 1.45,),
-                        decoration: InputDecoration(
-                          hintText: "What's on your mind?",
-                          hintStyle: AppTypography.custom(color: AppColors.textFaint,
-                            size: 14,
-                            weight: FontWeight.w400,),
-                          filled: false,
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 2),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(

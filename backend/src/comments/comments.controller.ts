@@ -37,11 +37,17 @@ export class CommentsController {
   }
 
   @Get('updates/:updateId/comments')
+  @UseGuards(AuthGuard)
   async listComments(
+    @CurrentUser() user: AuthUser | undefined,
     @Param('updateId') updateId: string,
     @Query() query: ListCommentsQuery,
   ) {
-    return this.commentsService.listComments(updateId, query);
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.commentsService.listComments(user, updateId, query);
   }
 
   @Patch('comments/:id')

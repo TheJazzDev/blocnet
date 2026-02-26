@@ -1,12 +1,64 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/services/update_bookmarks_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';
 
-class UpdateDetailsHeader extends StatelessWidget {
-  const UpdateDetailsHeader({required this.priority, super.key});
+class UpdateDetailsHeader extends StatefulWidget {
+  const UpdateDetailsHeader({
+    required this.priority,
+    required this.updateId,
+    super.key,
+  });
 
   final Priority priority;
+  final String updateId;
+
+  @override
+  State<UpdateDetailsHeader> createState() => _UpdateDetailsHeaderState();
+}
+
+class _UpdateDetailsHeaderState extends State<UpdateDetailsHeader> {
+  bool _isBookmarked = false;
+  bool _isLoadingBookmark = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookmarkState();
+  }
+
+  Future<void> _loadBookmarkState() async {
+    final bookmarked =
+        await UpdateBookmarksStore.isBookmarked(widget.updateId);
+    if (!mounted) return;
+    setState(() {
+      _isBookmarked = bookmarked;
+    });
+  }
+
+  Future<void> _toggleBookmark() async {
+    if (_isLoadingBookmark) return;
+
+    setState(() => _isLoadingBookmark = true);
+    try {
+      final bookmarked = await UpdateBookmarksStore.toggle(widget.updateId);
+      if (!mounted) return;
+      setState(() => _isBookmarked = bookmarked);
+      AppSnackbar.showSuccess(
+        context,
+        bookmarked ? 'Update bookmarked' : 'Bookmark removed',
+      );
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, 'Could not update bookmark');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingBookmark = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,11 +71,11 @@ class UpdateDetailsHeader extends StatelessWidget {
             onTap: () => Navigator.of(context).pop(),
           ),
           const Spacer(),
-          PriorityLabel(priority: priority),
+          PriorityLabel(priority: widget.priority),
           const Spacer(),
           _HeaderIconButton(
-            icon: Icons.bookmark_border,
-            onTap: () {},
+            icon: _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border,
+            onTap: _toggleBookmark,
           ),
         ],
       ),

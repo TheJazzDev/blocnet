@@ -1,5 +1,6 @@
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'dart:io';
 
 Map<String, dynamic> _asStringKeyMap(Object? raw) {
   if (raw is! Map) return const <String, dynamic>{};
@@ -79,5 +80,36 @@ class QuestsApiRepository {
   /// Claim quest reward (auto-verified quests only)
   Future<void> claimQuestReward(String questSlug) async {
     await _apiClient.post('/quests/$questSlug/claim', body: {});
+  }
+
+  /// Verify quest and claim rewards (auto-verified quests only)
+  Future<Map<String, dynamic>?> verifyQuest(String questSlug) async {
+    final response =
+        await _apiClient.post('/quests/$questSlug/verify', body: {});
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+    return response;
+  }
+
+  /// Upload proof screenshot image and return public URL
+  Future<String?> uploadQuestProofImage({
+    required String questSlug,
+    required File file,
+  }) async {
+    final response = await _apiClient.postMultipartFile(
+      '/quests/$questSlug/proof-image',
+      fieldName: 'file',
+      file: file,
+    );
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final screenshotUrl = response['screenshotUrl']?.toString();
+    if (screenshotUrl == null || screenshotUrl.isEmpty) {
+      return null;
+    }
+    return screenshotUrl;
   }
 }

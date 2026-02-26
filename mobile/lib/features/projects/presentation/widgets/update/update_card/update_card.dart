@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:flutter/material.dart';
 import 'update_card_details.dart';
 import '../shared/update_tag_row.dart';
@@ -28,6 +29,34 @@ class UpdateCard extends StatelessWidget {
             parent: animation,
             curve: Curves.easeOutCubic,
           )),
+          child: child,
+        );
+      },
+    );
+  }
+
+  void _openProjectDetails(BuildContext context) {
+    final projectId = post.project?.id ?? post.projectId;
+    if (projectId.trim().isEmpty) return;
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return ProjectDetailsDialog(projectId: projectId);
+      },
+      transitionDuration: const Duration(milliseconds: 320),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(curved),
           child: child,
         );
       },
@@ -75,6 +104,7 @@ class UpdateCard extends StatelessWidget {
                         projectName: post.project?.name ?? 'Project',
                         priorityColor: priorityColor,
                         priorityLabel: post.priority.label,
+                        onProjectTap: () => _openProjectDetails(context),
                       ),
                       const SizedBox(height: 10),
                       // Tags
@@ -99,11 +129,13 @@ class _ProjectHeader extends StatelessWidget {
     required this.projectName,
     required this.priorityColor,
     required this.priorityLabel,
+    required this.onProjectTap,
   });
 
   final String projectName;
   final Color priorityColor;
   final String priorityLabel;
+  final VoidCallback onProjectTap;
 
   @override
   Widget build(BuildContext context) {
@@ -116,16 +148,20 @@ class _ProjectHeader extends StatelessWidget {
         ),
         const SizedBox(width: 5),
         Expanded(
-          child: Text(
-            projectName,
-            style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 11,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.2,
+          child: GestureDetector(
+            onTap: onProjectTap,
+            behavior: HitTestBehavior.opaque,
+            child: Text(
+              projectName,
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 11,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.2,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
-            overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: 8),

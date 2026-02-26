@@ -11,6 +11,7 @@ import {
   OnchainDepositStatus,
   Prisma,
   SweepJobStatus,
+  WalletStatus,
   WithdrawalStatus,
 } from '@prisma/client';
 import { createPublicClient, http, parseUnits, type PublicClient } from 'viem';
@@ -49,11 +50,6 @@ export class WalletSettlementWorkerService
   ) {}
 
   onModuleInit(): void {
-    if (!this.walletConfigService.walletEnabled) {
-      this.logger.log('Wallet settlement worker disabled (WALLET_ENABLED=false)');
-      return;
-    }
-
     const intervalMs = Math.min(
       this.walletConfigService.depositPollIntervalMs,
       this.walletConfigService.withdrawalPollIntervalMs,
@@ -64,7 +60,9 @@ export class WalletSettlementWorkerService
     }, intervalMs);
 
     void this.tick();
-    this.logger.log(`Wallet settlement worker started (interval=${intervalMs}ms)`);
+    this.logger.log(
+      `Wallet settlement worker started (interval=${intervalMs}ms)`,
+    );
   }
 
   onModuleDestroy(): void {
@@ -81,6 +79,10 @@ export class WalletSettlementWorkerService
 
     this.isTickRunning = true;
     try {
+      if (!this.walletConfigService.walletEnabled) {
+        return;
+      }
+
       if (this.walletConfigService.depositsEnabled) {
         await this.queueDepositSweeps();
         await this.processSweepJobs();
@@ -91,7 +93,9 @@ export class WalletSettlementWorkerService
         await this.processBroadcastingWithdrawals();
       }
     } catch (error) {
-      this.logger.error(`Wallet settlement tick failed: ${this.errorMessage(error)}`);
+      this.logger.error(
+        `Wallet settlement tick failed: ${this.errorMessage(error)}`,
+      );
     } finally {
       this.isTickRunning = false;
     }
@@ -102,6 +106,11 @@ export class WalletSettlementWorkerService
       where: {
         status: OnchainDepositStatus.credited,
         sweepJobId: null,
+        wallet: {
+          status: {
+            not: WalletStatus.disabled,
+          },
+        },
       },
       include: {
         wallet: {
@@ -119,9 +128,10 @@ export class WalletSettlementWorkerService
     });
 
     for (const candidate of candidates) {
-      const sweepAddress = this.walletConfigService.getTreasurySweepAddressForEnvironment(
-        candidate.wallet.chainEnvironment,
-      );
+      const sweepAddress =
+        this.walletConfigService.getTreasurySweepAddressForEnvironment(
+          candidate.wallet.chainEnvironment,
+        );
       if (!sweepAddress) {
         continue;
       }
@@ -130,7 +140,9 @@ export class WalletSettlementWorkerService
         continue;
       }
 
-      if (candidate.wallet.address.toLowerCase() === sweepAddress.toLowerCase()) {
+      if (
+        candidate.wallet.address.toLowerCase() === sweepAddress.toLowerCase()
+      ) {
         const updated = await this.prisma.onchainDeposit.updateMany({
           where: {
             id: candidate.id,
@@ -185,7 +197,10 @@ export class WalletSettlementWorkerService
           return null;
         }
 
-        if (deposit.status !== OnchainDepositStatus.credited || deposit.sweepJobId) {
+        if (
+          deposit.status !== OnchainDepositStatus.credited ||
+          deposit.sweepJobId
+        ) {
           return null;
         }
 
@@ -338,40 +353,41 @@ export class WalletSettlementWorkerService
         toDecimalString(job.amount),
         network.decimals,
       ).toString();
-      const transfer = network.assetKind === 'native'
-        ? await this.custodyAdapter.transferNative({
-            idempotencyKey: createDeterministicIdempotencyKey(
-              'deposit-sweep-transfer',
-              job.id,
-              job.idempotencyKey,
-            ),
-            chainId: network.chainId,
-            fromProviderWalletId: job.wallet.providerWalletId,
-            toAddress: job.toAddress as `0x${string}`,
-            amountWei,
-            metadata: {
-              sweepJobId: job.id,
-              depositId: job.deposit?.id ?? null,
-              asset: job.asset,
-            },
-          })
-        : await this.custodyAdapter.transferToken({
-            idempotencyKey: createDeterministicIdempotencyKey(
-              'deposit-sweep-transfer',
-              job.id,
-              job.idempotencyKey,
-            ),
-            chainId: network.chainId,
-            tokenAddress: network.tokenAddress as `0x${string}`,
-            fromProviderWalletId: job.wallet.providerWalletId,
-            toAddress: job.toAddress as `0x${string}`,
-            amountWei,
-            metadata: {
-              sweepJobId: job.id,
-              depositId: job.deposit?.id ?? null,
-              asset: job.asset,
-            },
-          });
+      const transfer =
+        network.assetKind === 'native'
+          ? await this.custodyAdapter.transferNative({
+              idempotencyKey: createDeterministicIdempotencyKey(
+                'deposit-sweep-transfer',
+                job.id,
+                job.idempotencyKey,
+              ),
+              chainId: network.chainId,
+              fromProviderWalletId: job.wallet.providerWalletId,
+              toAddress: job.toAddress as `0x${string}`,
+              amountWei,
+              metadata: {
+                sweepJobId: job.id,
+                depositId: job.deposit?.id ?? null,
+                asset: job.asset,
+              },
+            })
+          : await this.custodyAdapter.transferToken({
+              idempotencyKey: createDeterministicIdempotencyKey(
+                'deposit-sweep-transfer',
+                job.id,
+                job.idempotencyKey,
+              ),
+              chainId: network.chainId,
+              tokenAddress: network.tokenAddress as `0x${string}`,
+              fromProviderWalletId: job.wallet.providerWalletId,
+              toAddress: job.toAddress as `0x${string}`,
+              amountWei,
+              metadata: {
+                sweepJobId: job.id,
+                depositId: job.deposit?.id ?? null,
+                asset: job.asset,
+              },
+            });
 
       const updated = await this.prisma.$transaction(async (tx) => {
         const fresh = await tx.sweepJob.findUnique({
@@ -459,6 +475,11 @@ export class WalletSettlementWorkerService
     const withdrawals = await this.prisma.withdrawalRequest.findMany({
       where: {
         status: WithdrawalStatus.approved,
+        wallet: {
+          status: {
+            not: WalletStatus.disabled,
+          },
+        },
       },
       orderBy: [{ reviewedAt: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
       take: 20,
@@ -469,7 +490,9 @@ export class WalletSettlementWorkerService
     }
   }
 
-  private async broadcastApprovedWithdrawal(withdrawalId: string): Promise<void> {
+  private async broadcastApprovedWithdrawal(
+    withdrawalId: string,
+  ): Promise<void> {
     const claim = await this.prisma.withdrawalRequest.updateMany({
       where: {
         id: withdrawalId,
@@ -492,11 +515,20 @@ export class WalletSettlementWorkerService
         wallet: {
           select: {
             chainEnvironment: true,
+            status: true,
           },
         },
       },
     });
     if (!withdrawal) {
+      return;
+    }
+
+    if (withdrawal.wallet.status === WalletStatus.disabled) {
+      await this.revertWithdrawal(
+        withdrawalId,
+        'Wallet is disabled for this account',
+      );
       return;
     }
 
@@ -529,44 +561,45 @@ export class WalletSettlementWorkerService
         toDecimalString(withdrawal.netAmount),
         network.decimals,
       ).toString();
-      const transfer = network.assetKind === 'native'
-        ? await this.custodyAdapter.transferNative({
-            idempotencyKey: createDeterministicIdempotencyKey(
-              'withdrawal-broadcast',
-              withdrawal.id,
-              withdrawal.idempotencyKey,
-            ),
-            chainId: network.chainId,
-            fromProviderWalletId: treasuryWalletId,
-            toAddress: withdrawal.toAddress as `0x${string}`,
-            amountWei,
-            metadata: {
-              withdrawalId: withdrawal.id,
-              userId: withdrawal.userId,
-              asset: withdrawal.asset,
-              netAmount: toDecimalString(withdrawal.netAmount),
-              feeAmount: toDecimalString(withdrawal.feeAmount),
-            },
-          })
-        : await this.custodyAdapter.transferToken({
-            idempotencyKey: createDeterministicIdempotencyKey(
-              'withdrawal-broadcast',
-              withdrawal.id,
-              withdrawal.idempotencyKey,
-            ),
-            chainId: network.chainId,
-            tokenAddress: network.tokenAddress as `0x${string}`,
-            fromProviderWalletId: treasuryWalletId,
-            toAddress: withdrawal.toAddress as `0x${string}`,
-            amountWei,
-            metadata: {
-              withdrawalId: withdrawal.id,
-              userId: withdrawal.userId,
-              asset: withdrawal.asset,
-              netAmount: toDecimalString(withdrawal.netAmount),
-              feeAmount: toDecimalString(withdrawal.feeAmount),
-            },
-          });
+      const transfer =
+        network.assetKind === 'native'
+          ? await this.custodyAdapter.transferNative({
+              idempotencyKey: createDeterministicIdempotencyKey(
+                'withdrawal-broadcast',
+                withdrawal.id,
+                withdrawal.idempotencyKey,
+              ),
+              chainId: network.chainId,
+              fromProviderWalletId: treasuryWalletId,
+              toAddress: withdrawal.toAddress as `0x${string}`,
+              amountWei,
+              metadata: {
+                withdrawalId: withdrawal.id,
+                userId: withdrawal.userId,
+                asset: withdrawal.asset,
+                netAmount: toDecimalString(withdrawal.netAmount),
+                feeAmount: toDecimalString(withdrawal.feeAmount),
+              },
+            })
+          : await this.custodyAdapter.transferToken({
+              idempotencyKey: createDeterministicIdempotencyKey(
+                'withdrawal-broadcast',
+                withdrawal.id,
+                withdrawal.idempotencyKey,
+              ),
+              chainId: network.chainId,
+              tokenAddress: network.tokenAddress as `0x${string}`,
+              fromProviderWalletId: treasuryWalletId,
+              toAddress: withdrawal.toAddress as `0x${string}`,
+              amountWei,
+              metadata: {
+                withdrawalId: withdrawal.id,
+                userId: withdrawal.userId,
+                asset: withdrawal.asset,
+                netAmount: toDecimalString(withdrawal.netAmount),
+                feeAmount: toDecimalString(withdrawal.feeAmount),
+              },
+            });
 
       await this.prisma.withdrawalRequest.update({
         where: { id: withdrawal.id },
@@ -589,9 +622,10 @@ export class WalletSettlementWorkerService
       });
 
       if (transfer.simulated) {
-        const required = this.walletConfigService.getWithdrawalConfirmationsForEnvironment(
-          withdrawal.wallet.chainEnvironment,
-        );
+        const required =
+          this.walletConfigService.getWithdrawalConfirmationsForEnvironment(
+            withdrawal.wallet.chainEnvironment,
+          );
         await this.finalizeConfirmedWithdrawal(
           withdrawal.id,
           transfer.txHash,
@@ -613,11 +647,17 @@ export class WalletSettlementWorkerService
         broadcastTxHash: {
           not: null,
         },
+        wallet: {
+          status: {
+            not: WalletStatus.disabled,
+          },
+        },
       },
       include: {
         wallet: {
           select: {
             chainEnvironment: true,
+            status: true,
           },
         },
       },
@@ -639,6 +679,7 @@ export class WalletSettlementWorkerService
         wallet: {
           select: {
             chainEnvironment: true,
+            status: true,
           },
         },
       },
@@ -649,6 +690,14 @@ export class WalletSettlementWorkerService
       withdrawal.status !== WithdrawalStatus.broadcasting ||
       !withdrawal.broadcastTxHash
     ) {
+      return;
+    }
+
+    if (withdrawal.wallet.status === WalletStatus.disabled) {
+      await this.revertWithdrawal(
+        withdrawal.id,
+        'Wallet is disabled for this account',
+      );
       return;
     }
 
@@ -679,7 +728,10 @@ export class WalletSettlementWorkerService
     }
 
     const currentBlock = await client.getBlockNumber();
-    const confirmations = this.computeConfirmations(currentBlock, receipt.blockNumber);
+    const confirmations = this.computeConfirmations(
+      currentBlock,
+      receipt.blockNumber,
+    );
     const required =
       this.walletConfigService.getWithdrawalConfirmationsForEnvironment(
         withdrawal.wallet.chainEnvironment,
@@ -760,7 +812,9 @@ export class WalletSettlementWorkerService
         ]);
 
         if (!userAccount || !holdAccount) {
-          throw new Error('User ledger accounts are missing for withdrawal finalize');
+          throw new Error(
+            'User ledger accounts are missing for withdrawal finalize',
+          );
         }
 
         const finalizeKey =
@@ -979,7 +1033,9 @@ export class WalletSettlementWorkerService
         ]);
 
         if (!userAccount || !holdAccount) {
-          throw new Error('User ledger accounts are missing for withdrawal revert');
+          throw new Error(
+            'User ledger accounts are missing for withdrawal revert',
+          );
         }
 
         const revertKey =

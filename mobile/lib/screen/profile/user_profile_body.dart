@@ -2,13 +2,15 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
-import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/badges_store.dart';
-import 'package:blocnet/services/community_posts_store.dart';
 import 'package:blocnet/services/tips_store.dart';
+import 'package:blocnet/services/update_bookmarks_store.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/user_profile_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
@@ -47,12 +49,14 @@ class _UserProfileBodyState extends State<UserProfileBody> {
       final profileStore = context.read<UserProfileStore>();
       final tipsStore = context.read<TipsStore>();
       final badgesStore = context.read<BadgesStore>();
+      final updatesStore = context.read<UpdatesStore>();
       profileStore.fetchInitialOnce(userId: userId);
       profileStore.refreshFollowingProfiles();
       tipsStore.ensureUserScope(userId);
       tipsStore.loadOverview(force: true);
       tipsStore.loadSentHistory(force: true, limit: 100);
       badgesStore.loadMyBadges();
+      updatesStore.fetchUpdatesOnce();
     });
   }
 
@@ -78,6 +82,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
           context.read<TipsStore>().loadOverview(force: true),
           context.read<TipsStore>().loadSentHistory(force: true, limit: 100),
           context.read<BadgesStore>().loadMyBadges(force: true),
+          context.read<UpdatesStore>().refreshUpdates(),
         ]);
       },
       child: SingleChildScrollView(
@@ -92,6 +97,32 @@ class _UserProfileBodyState extends State<UserProfileBody> {
               primaryBadge: badgesStore.displayBadge,
             ),
             Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.editProfile),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 34),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  icon: const Icon(Icons.edit_outlined, size: 15),
+                  label: Text(
+                    'Edit Profile',
+                    style: AppTypography.custom(
+                      color: AppColors.textPrimary,
+                      size: 12,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
               child: Row(
                 children: [
@@ -104,7 +135,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
             ),
             const SizedBox(height: 16),
             _ProfileTabBar(
-              tabs: const ['Bookmarks', 'Watchlist', 'History'],
+              tabs: const ['History', 'Watchlist', 'Bookmarks'],
               activeIndex: _tabIndex,
               onChanged: (i) => setState(() => _tabIndex = i),
             ),
@@ -114,9 +145,9 @@ class _UserProfileBodyState extends State<UserProfileBody> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: switch (_tabIndex) {
-                  0 => const _BookmarksTab(),
+                  0 => const _HistoryTab(),
                   1 => const _WatchlistTab(),
-                  _ => const _HistoryTab(),
+                  _ => const _BookmarksTab(),
                 },
               ),
             ),
@@ -155,20 +186,6 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                     subtitle: 'View and manage your referral code',
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.referralCode),
-                  ),
-                  _ProfileTile(
-                    icon: Icons.edit_outlined,
-                    title: 'Edit Profile',
-                    subtitle: 'Update your avatar and public details',
-                    onTap: () =>
-                        Navigator.of(context).pushNamed(AppRoutes.editProfile),
-                  ),
-                  _ProfileTile(
-                    icon: Icons.notifications_outlined,
-                    title: 'Notifications',
-                    subtitle: 'View alerts and activity',
-                    onTap: () => Navigator.of(context)
-                        .pushNamed(AppRoutes.notifications),
                   ),
                   _ProfileTile(
                     icon: Icons.settings_outlined,

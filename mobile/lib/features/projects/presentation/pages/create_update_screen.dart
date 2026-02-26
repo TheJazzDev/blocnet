@@ -1,5 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/services/tags_store.dart';
@@ -39,9 +41,14 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       ]);
       if (!mounted) return;
 
-      if (_selectedProjectId == null && projectsStore.projects.isNotEmpty) {
+      final availableProjects = _availableProjectsForAuthor(
+        auth: context.read<AuthStore>(),
+        projects: projectsStore.projects,
+      );
+
+      if (_selectedProjectId == null && availableProjects.isNotEmpty) {
         setState(() {
-          _selectedProjectId = projectsStore.projects.first.id;
+          _selectedProjectId = availableProjects.first.id;
         });
       }
     });
@@ -59,6 +66,21 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
     final auth = context.watch<AuthStore>();
     final projectsStore = context.watch<ProjectsStore>();
     final tagsStore = context.watch<TagsStore>();
+    final availableProjects = _availableProjectsForAuthor(
+      auth: auth,
+      projects: projectsStore.projects,
+    );
+
+    if (_selectedProjectId != null &&
+        availableProjects.every((project) => project.id != _selectedProjectId)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _selectedProjectId =
+              availableProjects.isNotEmpty ? availableProjects.first.id : null;
+        });
+      });
+    }
 
     if (!auth.canCreateUpdate) {
       return Scaffold(
@@ -76,7 +98,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       );
     }
 
-    if (projectsStore.isFetching && projectsStore.projects.isEmpty) {
+    if (projectsStore.isFetching && availableProjects.isEmpty) {
       return Scaffold(
         backgroundColor: AppColors.bgBase,
         appBar: _buildAppBar(),
@@ -89,14 +111,16 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       );
     }
 
-    if (projectsStore.projects.isEmpty) {
+    if (availableProjects.isEmpty) {
       return Scaffold(
         backgroundColor: AppColors.bgBase,
         appBar: _buildAppBar(),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'No project is available for updates yet.',
+            _isHunterRestricted(auth)
+                ? 'No projects are assigned to your hunter account yet.'
+                : 'No project is available for updates yet.',
             style: AppTypography.custom(color: AppColors.textMuted,
               size: 13,
               weight: FontWeight.w400,),
@@ -133,7 +157,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 style: AppTypography.custom(color: AppColors.textSecondary,
                   size: 13,
                   weight: FontWeight.w400,),
-                items: projectsStore.projects
+                items: availableProjects
                     .map(
                       (project) => DropdownMenuItem<String>(
                         value: project.id,
@@ -319,19 +343,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.bgBase,
-      elevation: 0,
-      centerTitle: false,
-      iconTheme: IconThemeData(color: AppColors.textMuted),
-      title: Text(
-        'Create Update',
-        style: AppTypography.custom(
-          color: AppColors.textPrimary,
-          size: 16,
-          weight: FontWeight.w600,
-        ),
-      ),
+    return const CustomAppBar(
+      title: 'Create Update',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
     );
   }
 
@@ -417,6 +433,39 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  List<Project> _availableProjectsForAuthor({
+    required AuthStore auth,
+    required List<Project> projects,
+  }) {
+    if (!_isHunterRestricted(auth)) {
+      return projects;
+    }
+
+    final userId = auth.userId?.trim() ?? '';
+    final username = (auth.username ?? auth.displayName ?? '').trim();
+
+    final filtered = projects.where((project) {
+      if (userId.isNotEmpty &&
+          (project.adminId == userId || project.admin?.id == userId)) {
+        return true;
+      }
+
+      final projectUsername = project.admin?.username ?? project.admin?.name ?? '';
+      return _normalizeIdentity(projectUsername) == _normalizeIdentity(username) &&
+          _normalizeIdentity(username).isNotEmpty;
+    }).toList(growable: false);
+
+    return filtered;
+  }
+
+  bool _isHunterRestricted(AuthStore auth) {
+    return auth.isInHunterSpace || (auth.isHunter && !auth.isOwner && !auth.isAdmin);
+  }
+
+  String _normalizeIdentity(String value) {
+    return value.replaceAll('@', '').trim().toLowerCase();
   }
 }
 

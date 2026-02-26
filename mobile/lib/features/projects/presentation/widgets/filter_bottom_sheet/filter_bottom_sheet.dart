@@ -1,9 +1,12 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/projects/presentation/controllers/bottom_sheet_filter_controller.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
+import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
 import 'package:blocnet/shared/widgets/app_secondary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:provider/provider.dart';
 import '../shared/custom_backdrop_filter.dart';
 import '../dividers/horizontal_divider.dart';
 import 'filter_dropdown_section.dart';
@@ -17,17 +20,118 @@ class FilterBottomSheet extends StatefulWidget {
 }
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
-  late BottomSheetFilterController _controller;
+  Set<String> _primaryTagOptions = <String>{};
+  Set<String> _secondaryTagOptions = <String>{};
+  Set<String> _selectedPrimaryTags = <String>{};
+  Set<String> _selectedSecondaryTags = <String>{};
+  Set<Priority> _selectedPriorities = <Priority>{};
 
   @override
   void initState() {
     super.initState();
-    _controller = BottomSheetFilterController();
+    final projectsStore = context.read<ProjectsStore>();
+    final updatesStore = context.read<UpdatesStore>();
+    _selectedPrimaryTags = {...projectsStore.discoverPrimaryTagFilters};
+    _selectedSecondaryTags = {...projectsStore.discoverSecondaryTagFilters};
+    _selectedPriorities = {...projectsStore.discoverPriorityFilters};
+    _hydrateFilterOptions(projectsStore, updatesStore);
   }
 
-  void _getAllFilters() {
-    final allFilters = _controller.getFilters();
-    debugPrint(allFilters.toString());
+  void _hydrateFilterOptions(
+    ProjectsStore projectsStore,
+    UpdatesStore updatesStore,
+  ) {
+    final primaryTagValues = projectsStore.projects
+        .map((project) => project.primaryTag.name.trim())
+        .where((name) => name.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort((left, right) => left.compareTo(right));
+
+    final secondaryTagValues = projectsStore.projects
+        .expand((project) => project.secondaryTags)
+        .map((tag) => tag.name.trim())
+        .where((name) => name.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort((left, right) => left.compareTo(right));
+
+    final priorities = updatesStore.updates
+        .map((update) => update.priority)
+        .toSet()
+        .toList()
+      ..sort((left, right) => left.label.compareTo(right.label));
+
+    _primaryTagOptions = {...primaryTagValues};
+    _secondaryTagOptions = {...secondaryTagValues};
+
+    final allowedPriorities = priorities.isEmpty
+        ? Priority.getAll().toSet()
+        : priorities.toSet();
+    _selectedPriorities = _selectedPriorities
+        .where(allowedPriorities.contains)
+        .toSet();
+  }
+
+  Set<String> get _unselectedPrimaryTags =>
+      _primaryTagOptions.difference(_selectedPrimaryTags);
+  Set<String> get _unselectedSecondaryTags =>
+      _secondaryTagOptions.difference(_selectedSecondaryTags);
+  Set<Priority> get _unselectedPriorities =>
+      Priority.getAll().toSet().difference(_selectedPriorities);
+  bool get _hasSelection =>
+      _selectedPrimaryTags.isNotEmpty ||
+      _selectedSecondaryTags.isNotEmpty ||
+      _selectedPriorities.isNotEmpty;
+
+  void _togglePrimaryTag(String tag) {
+    setState(() {
+      if (_selectedPrimaryTags.contains(tag)) {
+        _selectedPrimaryTags.remove(tag);
+      } else {
+        _selectedPrimaryTags.add(tag);
+      }
+    });
+  }
+
+  void _toggleSecondaryTag(String tag) {
+    setState(() {
+      if (_selectedSecondaryTags.contains(tag)) {
+        _selectedSecondaryTags.remove(tag);
+      } else {
+        _selectedSecondaryTags.add(tag);
+      }
+    });
+  }
+
+  void _togglePriority(Priority priority) {
+    setState(() {
+      if (_selectedPriorities.contains(priority)) {
+        _selectedPriorities.remove(priority);
+      } else {
+        _selectedPriorities.add(priority);
+      }
+    });
+  }
+
+  void _applyFilters() {
+    final projectsStore = context.read<ProjectsStore>();
+    projectsStore.setDiscoverFilters(
+      primaryTags: _selectedPrimaryTags,
+      secondaryTags: _selectedSecondaryTags,
+      priorities: _selectedPriorities,
+    );
+    Navigator.of(context).pop();
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _selectedPrimaryTags.clear();
+      _selectedSecondaryTags.clear();
+      _selectedPriorities.clear();
+    });
+    context.read<ProjectsStore>().clearDiscoverFilters();
+    Navigator.of(context).pop();
   }
 
   @override
@@ -52,71 +156,50 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
+                  Text(
+                    'Filters',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FilterDropdownSection(
+                    title: 'Primary Tag',
+                    icon: Symbols.bookmark_star,
+                    selectedTags: _selectedPrimaryTags,
+                    unselectedTags: _unselectedPrimaryTags,
+                    onTagToggle: _togglePrimaryTag,
+                  ),
+                  CustomHorizontalDivider(margin: 16),
+                  FilterDropdownSection(
+                    title: 'Secondary Tag',
+                    icon: Symbols.bookmark,
+                    selectedTags: _selectedSecondaryTags,
+                    unselectedTags: _unselectedSecondaryTags,
+                    onTagToggle: _toggleSecondaryTag,
+                  ),
+                  CustomHorizontalDivider(margin: 16),
+                  PrioritySelector(
+                    selectedPriorities: _selectedPriorities,
+                    unselectedPriorities: _unselectedPriorities,
+                    onPriorityToggle: _togglePriority,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      Text(
-                        'Filters',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 15,
-                          fontFamily: 'Geist',
-                          fontWeight: FontWeight.w600,
-                        ),
+                      SecondaryButton(
+                        onPressed: _clearFilters,
+                        title: 'Clear All Filters',
+                        isEnabled: _hasSelection,
                       ),
-                      const SizedBox(height: 16),
-                      FilterDropdownSection(
-                        title: 'Primary Tag',
-                        icon: Symbols.bookmark_star,
-                        selectedTags: _controller.selectedPrimaryTags,
-                        unselectedTags: _controller.primaryTags,
-                        onTagToggle: (tag) {
-                          setState(() {
-                            _controller.togglePrimaryTag(tag);
-                          });
-                        },
-                      ),
-                      CustomHorizontalDivider(margin: 16),
-                      FilterDropdownSection(
-                        title: 'Secondary Tag',
-                        icon: Symbols.bookmark,
-                        selectedTags: _controller.selectedSecondaryTags,
-                        unselectedTags: _controller.secondaryTags,
-                        onTagToggle: (tag) {
-                          setState(() {
-                            _controller.toggleSecondaryTag(tag);
-                          });
-                        },
-                      ),
-                      CustomHorizontalDivider(margin: 16),
-                      PrioritySelector(
-                        selectedPriorities: _controller.selectedPriorities,
-                        unselectedPriorities: _controller.priorities,
-                        onPriorityToggle: (priority) {
-                          setState(() {
-                            _controller.togglePriority(priority);
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          SecondaryButton(
-                            onPressed: () {
-                              setState(() {
-                                _controller.clearAllFilters();
-                              });
-                            },
-                            title: 'Clear All Filters',
-                            isEnabled: _controller.isEnabled,
-                          ),
-                          SizedBox(width: 12),
-                          PrimaryButton(
-                            onPressed: _getAllFilters,
-                            title: 'Apply Filters',
-                            isEnabled: _controller.isEnabled,
-                          ),
-                        ],
+                      const SizedBox(width: 12),
+                      PrimaryButton(
+                        onPressed: _applyFilters,
+                        title: 'Apply Filters',
+                        isEnabled: _hasSelection,
                       ),
                     ],
                   ),

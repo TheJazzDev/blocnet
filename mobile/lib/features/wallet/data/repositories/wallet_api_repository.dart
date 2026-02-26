@@ -26,6 +26,8 @@ class WalletApiRepository {
           walletStatus:
               meResponse['walletStatus']?.toString() ?? 'provisioning',
           walletAddress: meResponse['walletAddress']?.toString(),
+          walletChainEnvironment: 'testnet',
+          walletChainId: 97,
           available: '0',
           pending: '0',
           locked: '0',

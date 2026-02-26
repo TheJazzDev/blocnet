@@ -11,7 +11,9 @@ import { AppRole } from '../common/enums/role.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
+import { BlocksService } from '../blocks/blocks.service';
 import { QuestsService } from '../quests/quests.service';
+import { MentionsService } from '../mentions/mentions.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ListCommentsQuery } from './dto/list-comments.query';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -51,7 +53,9 @@ export class CommentsService {
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
+    private readonly blocksService: BlocksService,
     private readonly questsService: QuestsService,
+    private readonly mentionsService: MentionsService,
   ) {}
 
   async createComment(
@@ -93,10 +97,17 @@ export class CommentsService {
     await this.badgesService.checkEngagementMilestones(actor.id);
     await this.triggerQuestAction(actor.id, 'first_comment');
 
+    // Process mentions
+    await this.mentionsService.createCommentMentions(
+      comment.id,
+      dto.content,
+      actor.id,
+    );
+
     return this.toCommentResponse(comment);
   }
 
-  async listComments(updateId: string, query: ListCommentsQuery) {
+  async listComments(actor: AuthUser, updateId: string, query: ListCommentsQuery) {
     const update = await this.prisma.update.findUnique({
       where: { id: updateId },
       select: { id: true, status: true },
@@ -112,11 +123,15 @@ export class CommentsService {
 
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
+    const blockedUserIds = await this.blocksService.getBlockedUserIds(actor.id);
 
     const comments = await this.prisma.comment.findMany({
       where: {
         updateId: updateId,
         status: ContentModerationStatus.active,
+        ...(blockedUserIds.length > 0
+          ? { authorId: { notIn: blockedUserIds } }
+          : {}),
       },
       orderBy: { createdAt: 'asc' },
       skip: offset,

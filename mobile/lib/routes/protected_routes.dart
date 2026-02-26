@@ -15,9 +15,11 @@ import 'package:blocnet/features/tips/presentation/pages/tip_history_screen.dart
 import 'package:blocnet/screen/main_screen.dart';
 import 'package:blocnet/screen/community_create_post_screen.dart';
 import 'package:blocnet/screen/community_post_discussion_screen.dart';
+import 'package:blocnet/screen/deactivate_account_screen.dart';
 import 'package:blocnet/screen/edit_profile_screen.dart';
 import 'package:blocnet/screen/help_support_screen.dart';
 import 'package:blocnet/screen/notifications.dart';
+import 'package:blocnet/screen/blocked_users_screen.dart';
 import 'package:blocnet/screen/profile_screen.dart';
 import 'package:blocnet/screen/referral_code_screen.dart';
 import 'package:blocnet/screen/settings_screen.dart';
@@ -44,6 +46,8 @@ class ProtectedRoutes {
   static const String quests = AppRoutes.quests;
   static const String referralCode = AppRoutes.referralCode;
   static const String helpSupport = AppRoutes.helpSupport;
+  static const String blockedUsers = AppRoutes.blockedUsers;
+  static const String deactivateAccount = AppRoutes.deactivateAccount;
   static const String createUpdate = AppRoutes.createUpdate;
   static const String submitProject = AppRoutes.submitProject;
   static const String manageProjects = AppRoutes.manageProjects;
@@ -109,6 +113,8 @@ class ProtectedRoutes {
       quests: (context) => const QuestsPage(),
       referralCode: (context) => const ReferralCodeScreen(),
       helpSupport: (context) => const HelpSupportScreen(),
+      blockedUsers: (context) => const BlockedUsersScreen(),
+      deactivateAccount: (context) => const DeactivateAccountScreen(),
       createUpdate: (context) => const CreateUpdateScreen(),
       submitProject: (context) => const SubmitProjectScreen(),
       manageProjects: (context) => const ManageProjectsScreen(),
@@ -147,6 +153,10 @@ class ProtectedRoutes {
     notifications,
     badges,
     quests,
+    referralCode,
+    helpSupport,
+    blockedUsers,
+    deactivateAccount,
     createUpdate,
     submitProject,
     manageProjects,

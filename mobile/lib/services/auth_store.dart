@@ -75,6 +75,7 @@ class AuthStore extends ChangeNotifier {
   String? _bio;
   List<String> _roles = const ['user'];
   String? _username;
+  String? _referralCode;
   DateTime? _memberSince;
   String? _walletStatus;
   String? _walletAddress;
@@ -95,6 +96,7 @@ class AuthStore extends ChangeNotifier {
   String? get avatarUrl => _avatarUrl;
   String? get bio => _bio;
   String? get username => _username;
+  String? get referralCode => _referralCode;
   DateTime? get memberSince => _memberSince;
   String? get walletStatus => _walletStatus;
   String? get walletAddress => _walletAddress;
@@ -272,11 +274,14 @@ class AuthStore extends ChangeNotifier {
         await setPendingReferralCode(normalizedReferral);
       }
 
-      final response = await Supabase.instance.client.auth.signUp(
-        email: email.trim(),
-        password: password,
-        data: {'username': username.trim()},
-      ).timeout(_authTimeout);
+      final response = await Supabase.instance.client.auth
+          .signUp(
+            email: email.trim(),
+            password: password,
+            data: {'username': username.trim()},
+            emailRedirectTo: AppConfig.supabaseEmailRedirectUrl.trim(),
+          )
+          .timeout(_authTimeout);
 
       _email = email.trim();
       final session = response.session;
@@ -640,6 +645,42 @@ class AuthStore extends ChangeNotifier {
     _clearAuth(notify: true);
   }
 
+  Future<bool> deactivateAccount({String? reason}) async {
+    if (_isSubmitting) return false;
+
+    _isSubmitting = true;
+    _lastError = null;
+    notifyListeners();
+
+    try {
+      await _apiClient.post(
+        '/users/me/deactivate',
+        body: {
+          if (reason != null && reason.trim().isNotEmpty)
+            'reason': reason.trim(),
+        },
+      );
+
+      await signOut();
+      return true;
+    } on ApiException catch (error) {
+      _lastError = describeApiError(
+        error,
+        fallback: 'Failed to deactivate account',
+      );
+      return false;
+    } catch (error) {
+      _lastError = describeApiError(
+        error,
+        fallback: 'Failed to deactivate account',
+      );
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
   Future<String?> getCurrentAccessTokenForBootstrap() async {
     if (!isSupabaseConfigured) {
       return null;
@@ -707,6 +748,7 @@ class AuthStore extends ChangeNotifier {
     _avatarUrl = null;
     _bio = null;
     _username = null;
+    _referralCode = null;
     _memberSince = null;
     _walletStatus = null;
     _walletAddress = null;
@@ -737,6 +779,7 @@ class AuthStore extends ChangeNotifier {
       _avatarUrl = response['avatarUrl']?.toString() ?? _avatarUrl;
       _bio = response['bio']?.toString() ?? _bio;
       _username = response['username']?.toString() ?? _username;
+      _referralCode = response['referralCode']?.toString() ?? _referralCode;
       _walletStatus = response['walletStatus']?.toString() ?? _walletStatus;
       _walletAddress = response['walletAddress']?.toString() ?? _walletAddress;
       _kycStatus = response['kycStatus']?.toString() ?? _kycStatus;

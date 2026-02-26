@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Query,
   UnauthorizedException,
   UseGuards,
@@ -17,11 +18,14 @@ import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ListWalletAdminWithdrawalsQuery } from './dto/list-wallet-admin-withdrawals.query';
 import { ListWalletKycQuery } from './dto/list-wallet-kyc.query';
 import { ListWalletUsersQuery } from './dto/list-wallet-users.query';
+import { ReprocessDepositByTxHashDto } from './dto/reprocess-deposit-by-tx-hash.dto';
 import { ReviewWithdrawalDto } from './dto/review-withdrawal.dto';
 import { ReviewKycDto } from './dto/review-kyc.dto';
 import { UpdateRiskLimitDto } from './dto/update-risk-limit.dto';
 import { UpdateWalletAssetPriceDto } from './dto/update-wallet-asset-price.dto';
 import { UpdateWalletFeeDto } from './dto/update-wallet-fee.dto';
+import { UpdateWalletRuntimeConfigDto } from './dto/update-wallet-runtime-config.dto';
+import { UpdateWalletUserStatusDto } from './dto/update-wallet-user-status.dto';
 import { WalletAdminService } from './wallet-admin.service';
 
 @Controller('admin/wallet')
@@ -38,6 +42,35 @@ export class WalletAdminController {
   @Get('users')
   async listWalletUsers(@Query() query: ListWalletUsersQuery) {
     return this.walletAdminService.listWalletUsers(query);
+  }
+
+  @Patch('users/:userId/status')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async updateWalletUserStatus(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+    @Body() dto: UpdateWalletUserStatusDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.walletAdminService.updateWalletUserStatus(
+      user.id,
+      userId,
+      dto.disabled,
+    );
+  }
+
+  @Post('deposits/reprocess')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async reprocessDepositByTxHash(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: ReprocessDepositByTxHashDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.walletAdminService.reprocessDepositByTxHash(user.id, dto);
   }
 
   @Get('withdrawals')
@@ -115,6 +148,23 @@ export class WalletAdminController {
   @Get('settings/prices')
   async listAssetPriceConfigs() {
     return this.walletAdminService.listAssetPriceConfigs();
+  }
+
+  @Get('settings/runtime')
+  async getRuntimeConfig() {
+    return this.walletAdminService.getRuntimeConfig();
+  }
+
+  @Patch('settings/runtime')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async updateRuntimeConfig(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: UpdateWalletRuntimeConfigDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.walletAdminService.updateRuntimeConfig(user.id, dto);
   }
 
   @Patch('settings/prices/:asset')

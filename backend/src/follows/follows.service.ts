@@ -1,9 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { UpdateUrgency } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
+import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import { UpdateFollowPreferencesDto } from './dto/update-follow-preferences.dto';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class FollowsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,
     private readonly auditLogService: AuditLogService,
     private readonly questsService: QuestsService,
   ) {}
@@ -95,10 +95,7 @@ export class FollowsService {
   }
 
   async getFollowPreferences(userId: string, projectId: string) {
-    const enabled = this.configService.get<boolean>(
-      'ENABLE_FOLLOW_PREFS',
-      true,
-    );
+    const enabled = this.runtimeFeatureFlagsService.isFollowPrefsEnabled();
     if (!enabled) {
       return {
         projectId,
@@ -140,10 +137,7 @@ export class FollowsService {
     projectId: string,
     dto: UpdateFollowPreferencesDto,
   ) {
-    const enabled = this.configService.get<boolean>(
-      'ENABLE_FOLLOW_PREFS',
-      true,
-    );
+    const enabled = this.runtimeFeatureFlagsService.isFollowPrefsEnabled();
     if (!enabled) {
       return this.getFollowPreferences(userId, projectId);
     }

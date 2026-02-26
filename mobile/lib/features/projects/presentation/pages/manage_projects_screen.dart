@@ -1,6 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/data/models/project_proposal_model.dart';
+import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
@@ -16,6 +19,11 @@ class ManageProjectsScreen extends StatefulWidget {
 }
 
 class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
+  final _proposalRepository = ProjectProposalsApiRepository();
+  List<ProjectProposalModel> _proposals = const <ProjectProposalModel>[];
+  bool _isLoadingProposals = false;
+  String? _proposalError;
+
   @override
   void initState() {
     super.initState();
@@ -23,8 +31,39 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
       await Future.wait([
         context.read<ProjectsStore>().fetchProjectsOnce(),
         context.read<UpdatesStore>().fetchUpdatesOnce(),
+        _loadMyProposals(force: true),
       ]);
     });
+  }
+
+  Future<void> _loadMyProposals({bool force = false}) async {
+    if (_isLoadingProposals && !force) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingProposals = true;
+      _proposalError = null;
+    });
+
+    try {
+      final proposals = await _proposalRepository.listMine(limit: 100);
+      if (!mounted) return;
+      setState(() {
+        _proposals = proposals;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _proposalError = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingProposals = false;
+        });
+      }
+    }
   }
 
   @override
@@ -34,7 +73,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     if (!auth.canSubmitProject) {
       return Scaffold(
         backgroundColor: AppColors.bgBase,
-        appBar: _buildAppBar(context, auth, showAdd: false),
+        appBar: _buildAppBar(context, showAdd: false),
         body: const Padding(
           padding: EdgeInsets.all(16),
           child: _AccessDenied(
@@ -62,7 +101,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.bgBase,
-          appBar: _buildAppBar(context, auth, showAdd: true),
+          appBar: _buildAppBar(context, showAdd: true),
           body: projectsStore.isFetching && projectsStore.projects.isEmpty
               ? Center(
                   child: CircularProgressIndicator(
@@ -77,6 +116,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                     await Future.wait([
                       projectsStore.refreshProjects(),
                       updatesStore.refreshUpdates(),
+                      _loadMyProposals(force: true),
                     ]);
                   },
                   child: ListView(
@@ -105,6 +145,34 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                         _EmptyHint('No contribution gems yet.')
                       else
                         ...contributed.map(_buildProjectTile),
+                      const SizedBox(height: 20),
+                      _SectionLabel('Submitted for Review'),
+                      const SizedBox(height: 8),
+                      if (_proposalError != null && _proposalError!.isNotEmpty)
+                        Text(
+                          _proposalError!,
+                          style: AppTypography.custom(
+                            color: AppColors.error500,
+                            size: 12,
+                            weight: FontWeight.w400,
+                          ),
+                        ),
+                      if (_isLoadingProposals && _proposals.isEmpty) ...[
+                        const SizedBox(height: 8),
+                        Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary500,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                      ] else if (_proposals.isEmpty)
+                        _EmptyHint('No submitted project proposals yet.')
+                      else
+                        ..._proposals.map(_buildProposalTile),
                     ],
                   ),
                 ),
@@ -115,22 +183,14 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
 
   PreferredSizeWidget _buildAppBar(
     BuildContext context,
-    AuthStore auth, {
+    {
     required bool showAdd,
   }) {
-    return AppBar(
-      backgroundColor: AppColors.bgBase,
-      title: Text(
-        'Manage My Gems',
-        style: AppTypography.custom(
-          color: AppColors.textPrimary,
-          weight: FontWeight.w600,
-          size: 16,
-        ),
-      ),
-      centerTitle: false,
-      elevation: 0,
-      iconTheme: IconThemeData(color: AppColors.textMuted),
+    return CustomAppBar(
+      title: 'Manage My Gems',
+      showSearch: false,
+      showFilter: false,
+      showSpaceSwitcher: false,
       actions: [
         if (showAdd)
           GestureDetector(
@@ -290,6 +350,124 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildProposalTile(ProjectProposalModel proposal) {
+    final reviewNote = proposal.reviewNote?.trim();
+    final hasReviewNote = reviewNote != null && reviewNote.isNotEmpty;
+    final statusColor = switch (proposal.status.toLowerCase()) {
+      'approved' => AppColors.successColor,
+      'rejected' => AppColors.error500,
+      _ => AppColors.warning500,
+    };
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  proposal.name,
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 14,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.35)),
+                ),
+                child: Text(
+                  proposal.statusLabel,
+                  style: AppTypography.custom(
+                    color: statusColor,
+                    size: 11,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Submitted ${_formatDate(proposal.createdAt)}',
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
+              size: 11,
+              weight: FontWeight.w500,
+            ),
+          ),
+          if (proposal.isApproved && proposal.createdProjectId != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Approved and converted to a live gem.',
+              style: AppTypography.custom(
+                color: AppColors.successColor,
+                size: 12,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ],
+          if (hasReviewNote) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Text(
+                'Admin note: $reviewNote',
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 12,
+                  weight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final local = date.toLocal();
+    return '${months[local.month - 1]} ${local.day}, ${local.year}';
   }
 }
 

@@ -4,6 +4,7 @@ import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
 import 'package:blocnet/features/quests/presentation/pages/quest_detail_page.dart';
+import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/quests_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -37,10 +38,13 @@ class _QuestsPageState extends State<QuestsPage>
   }
 
   Future<void> _loadQuests() async {
+    final auth = context.read<AuthStore>();
     final store = context.read<QuestsStore>();
+    store.ensureUserScope(auth.userId);
+    store.clearError();
     await Future.wait([
-      store.loadAllQuests(),
-      store.loadMyQuests(),
+      store.loadAllQuests(force: true),
+      store.loadMyQuests(force: true),
     ]);
   }
 
@@ -82,7 +86,8 @@ class _QuestsPageState extends State<QuestsPage>
                   ),
                   _buildCountTab(
                     label: 'In Progress',
-                    count: store.inProgressCount,
+                    count:
+                        store.inProgressCount + store.pendingVerificationCount,
                     icon: Icons.pending_actions,
                   ),
                   _buildCountTab(
@@ -101,7 +106,9 @@ class _QuestsPageState extends State<QuestsPage>
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (store.lastError != null) {
+                if (store.lastError != null &&
+                    store.allQuests.isEmpty &&
+                    store.myQuests.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -228,7 +235,7 @@ class _QuestsPageState extends State<QuestsPage>
             ),
             const SizedBox(height: 8),
             Text(
-              'Start a quest from the Available tab!',
+              'Open an available quest and verify when ready.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
@@ -467,7 +474,7 @@ class _QuestPointsPill extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            '$points pts',
+            '$points MCR',
             style: TextStyle(
               fontSize: 10,
               color: Colors.amber.shade400,

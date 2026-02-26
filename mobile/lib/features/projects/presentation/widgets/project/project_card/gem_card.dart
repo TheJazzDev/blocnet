@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
+import 'package:blocnet/screen/public_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
@@ -11,6 +12,7 @@ class GemCard extends StatelessWidget {
     required this.isFollowed,
     required this.onFollowToggle,
     required this.isLoading,
+    this.hypeScore,
     this.onPreferencesTap,
     this.onManageTap,
   });
@@ -19,6 +21,7 @@ class GemCard extends StatelessWidget {
   final bool isFollowed;
   final VoidCallback onFollowToggle;
   final bool isLoading;
+  final double? hypeScore;
   final VoidCallback? onPreferencesTap;
   final VoidCallback? onManageTap;
 
@@ -47,11 +50,10 @@ class GemCard extends StatelessWidget {
     );
   }
 
-  /// Derives a hype score 0–10 from followers + update count.
-  double _hypoScore() {
+  /// Derives a hype score 0-10 from followers + update count.
+  double _deriveHypeScore() {
     final followers = project.followersCount;
     final updates = project.posts?.length ?? 0;
-    // Score formula: clamp to 10
     final raw = (followers * 0.05 + updates * 0.3).clamp(0.0, 10.0);
     return double.parse(raw.toStringAsFixed(1));
   }
@@ -62,9 +64,15 @@ class GemCard extends StatelessWidget {
     return AppColors.hypeLow;
   }
 
+  void _openHunterProfile(BuildContext context) {
+    final hunter = project.admin;
+    if (hunter == null) return;
+    PublicProfileScreen.showSheet(context, hunter);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final score = _hypoScore();
+    final score = hypeScore ?? _deriveHypeScore();
     final scoreColor = _scoreColor(score);
     final admin = project.admin;
 
@@ -316,55 +324,62 @@ class GemCard extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color:
-                                  AppColors.primary500.withValues(alpha: 0.3),
-                              width: 2,
+                        GestureDetector(
+                          onTap: () => _openHunterProfile(context),
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.primary500.withValues(alpha: 0.3),
+                                width: 2,
+                              ),
                             ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 13,
-                            backgroundColor: AppColors.bgSurface,
-                            backgroundImage:
-                                (admin?.imageUrl.isNotEmpty ?? false)
-                                    ? NetworkImage(admin!.imageUrl)
-                                    : null,
-                            child: (admin == null || admin.imageUrl.isEmpty)
-                                ? Icon(
-                                    Icons.person,
-                                    size: 14,
-                                    color: AppColors.textFaint,
-                                  )
-                                : null,
+                            child: CircleAvatar(
+                              radius: 13,
+                              backgroundColor: AppColors.bgSurface,
+                              backgroundImage:
+                                  (admin?.imageUrl.isNotEmpty ?? false)
+                                      ? NetworkImage(admin!.imageUrl)
+                                      : null,
+                              child: (admin == null || admin.imageUrl.isEmpty)
+                                  ? Icon(
+                                      Icons.person,
+                                      size: 14,
+                                      color: AppColors.textFaint,
+                                    )
+                                  : null,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'Hunted by ',
-                                  style: AppTypography.custom(
-                                    color: AppColors.textSecondary,
-                                    size: 12,
-                                    weight: FontWeight.w500,
+                          child: GestureDetector(
+                            onTap: () => _openHunterProfile(context),
+                            behavior: HitTestBehavior.opaque,
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: 'Hunted by ',
+                                    style: AppTypography.custom(
+                                      color: AppColors.textSecondary,
+                                      size: 12,
+                                      weight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
-                                TextSpan(
-                                  text: admin?.name ?? 'Unknown',
-                                  style: AppTypography.custom(
-                                    color: AppColors.textPrimary,
-                                    size: 12,
-                                    weight: FontWeight.w700,
+                                  TextSpan(
+                                    text: admin?.name ?? 'Unknown',
+                                    style: AppTypography.custom(
+                                      color: AppColors.textPrimary,
+                                      size: 12,
+                                      weight: FontWeight.w700,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),

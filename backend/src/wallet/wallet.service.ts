@@ -10,6 +10,7 @@ import {
   LedgerReason,
   Prisma,
   WalletAsset,
+  WalletStatus,
   WithdrawalStatus,
   type LedgerEntry,
   type UserWallet,
@@ -86,7 +87,10 @@ export class WalletService {
       ),
     );
 
-    const accountByAsset = new Map<WalletAsset, (typeof userAccounts)[number]>();
+    const accountByAsset = new Map<
+      WalletAsset,
+      (typeof userAccounts)[number]
+    >();
     for (const account of userAccounts) {
       const currency = normalizeWalletAsset(account.currency);
       if (!currency) continue;
@@ -143,11 +147,13 @@ export class WalletService {
       },
       features: {
         walletEnabled: this.walletConfigService.walletEnabled,
+        userWalletEnabled: wallet.status !== WalletStatus.disabled,
         depositsEnabled: this.walletConfigService.depositsEnabled,
         withdrawalsEnabled: this.walletConfigService.withdrawalsEnabled,
         supportedAssets,
         transferEnabledAssets: this.walletConfigService.withdrawalEnabledAssets,
-        withdrawalEnabledAssets: this.walletConfigService.withdrawalEnabledAssets,
+        withdrawalEnabledAssets:
+          this.walletConfigService.withdrawalEnabledAssets,
       },
     };
   }
@@ -223,14 +229,18 @@ export class WalletService {
           {
             debitAccount: {
               userId,
-              accountType: { in: [LedgerAccountType.user, LedgerAccountType.hold] },
+              accountType: {
+                in: [LedgerAccountType.user, LedgerAccountType.hold],
+              },
               ...(selectedAsset ? { currency: selectedAsset } : {}),
             },
           },
           {
             creditAccount: {
               userId,
-              accountType: { in: [LedgerAccountType.user, LedgerAccountType.hold] },
+              accountType: {
+                in: [LedgerAccountType.user, LedgerAccountType.hold],
+              },
               ...(selectedAsset ? { currency: selectedAsset } : {}),
             },
           },
@@ -297,6 +307,10 @@ export class WalletService {
     const amount = parsePositiveDecimal(dto.amount, 'amount');
     const senderWallet =
       await this.walletProvisioningService.ensureWalletForUser(userId);
+    this.assertWalletActionAvailable(
+      senderWallet,
+      'Wallet is disabled for this account',
+    );
     const senderAccount =
       await this.walletProvisioningService.ensureUserLedgerAccount(
         userId,
@@ -324,6 +338,10 @@ export class WalletService {
     }
 
     const recipientWallet = await this.resolveRecipientWallet(dto, userId);
+    this.assertWalletActionAvailable(
+      recipientWallet,
+      'Recipient wallet is disabled',
+    );
     const recipientAccount =
       await this.walletProvisioningService.ensureUserLedgerAccount(
         recipientWallet.userId,
@@ -438,7 +456,8 @@ export class WalletService {
               recipientUserId: recipientWallet.userId,
               senderAddress: senderWallet.address,
               recipientAddress: recipientWallet.address,
-              recipientUsername: dto.toUsername?.trim().replace(/^@/, '') ?? null,
+              recipientUsername:
+                dto.toUsername?.trim().replace(/^@/, '') ?? null,
               asset,
             },
           },
@@ -595,6 +614,10 @@ export class WalletService {
 
     const wallet =
       await this.walletProvisioningService.ensureWalletForUser(userId);
+    this.assertWalletActionAvailable(
+      wallet,
+      'Wallet is disabled for this account',
+    );
     const userAccount =
       await this.walletProvisioningService.ensureUserLedgerAccount(
         userId,
@@ -838,7 +861,9 @@ export class WalletService {
       if (recipientProfile.id === actorUserId) {
         throw new BadRequestException('Cannot transfer to yourself');
       }
-      return this.walletProvisioningService.ensureWalletForUser(recipientProfile.id);
+      return this.walletProvisioningService.ensureWalletForUser(
+        recipientProfile.id,
+      );
     }
 
     const address = dto.toAddress?.trim();
@@ -947,9 +972,7 @@ export class WalletService {
           ? entry.creditAccount
           : null;
     const counterparty =
-      sourceAccount &&
-      sourceAccount.userId &&
-      sourceAccount.userId !== userId
+      sourceAccount && sourceAccount.userId && sourceAccount.userId !== userId
         ? {
             userId: sourceAccount.userId,
             username: sourceAccount.user?.username ?? null,
@@ -986,7 +1009,7 @@ export class WalletService {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
       return null;
     }
-    return input as Prisma.JsonObject;
+    return input;
   }
 
   private toWithdrawalResponse(withdrawal: {
@@ -1046,6 +1069,15 @@ export class WalletService {
   private assertWalletFeatureEnabled() {
     if (!this.walletConfigService.walletEnabled) {
       throw new ServiceUnavailableException('Wallet feature is disabled');
+    }
+  }
+
+  private assertWalletActionAvailable(
+    wallet: Pick<UserWallet, 'status'>,
+    message: string,
+  ) {
+    if (wallet.status === WalletStatus.disabled) {
+      throw new ServiceUnavailableException(message);
     }
   }
 
@@ -1113,7 +1145,7 @@ export class WalletService {
     return fee;
   }
 
-  private resolveRequestedAsset(rawAsset: WalletAsset | string | undefined) {
+  private resolveRequestedAsset(rawAsset: WalletAsset | undefined) {
     if (!rawAsset) {
       return WalletAsset.BNT;
     }
@@ -1156,8 +1188,7 @@ export class WalletService {
 
     const normalizedRows = rows.map((row) => ({
       amount: row.amount,
-      asset:
-        normalizeWalletAsset(row.debitAccount.currency) ?? WalletAsset.BNT,
+      asset: normalizeWalletAsset(row.debitAccount.currency) ?? WalletAsset.BNT,
     }));
     return this.sumUsdByAssetRows(normalizedRows);
   }
@@ -1170,14 +1201,13 @@ export class WalletService {
     }
 
     const uniqueAssets = [...new Set(rows.map((row) => row.asset))];
-    const prices = await this.walletAssetPricingService.getUsdPrices(uniqueAssets);
+    const prices =
+      await this.walletAssetPricingService.getUsdPrices(uniqueAssets);
 
     return rows.reduce((total, row) => {
       const price = prices[row.asset];
       if (!price) return total;
-      return total.add(
-        row.amount.mul(new Prisma.Decimal(price.usdPrice)),
-      );
+      return total.add(row.amount.mul(new Prisma.Decimal(price.usdPrice)));
     }, DECIMAL_ZERO);
   }
 
