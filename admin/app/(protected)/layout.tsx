@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { AdminShell } from "@/components/admin-shell";
 import { getAuthorizedAdminProfile } from "@/lib/admin-auth";
 import {
@@ -7,6 +7,7 @@ import {
   getRoleViewOptions,
   normalizeAdminPanelRole,
 } from "@/lib/rbac";
+import { resolveAdminEnvironmentFromHost } from "@/lib/environment";
 
 export default async function ProtectedLayout({
   children
@@ -19,6 +20,11 @@ export default async function ProtectedLayout({
   }
 
   const cookieStore = await cookies();
+  const headerStore = await headers();
+  const host =
+    headerStore.get("x-forwarded-host") ??
+    headerStore.get("host");
+  const environment = resolveAdminEnvironmentFromHost(host);
   const requestedRole = normalizeAdminPanelRole(cookieStore.get("admin_view_as_role")?.value);
   const topRole = getAdminGovernanceRole(profile.roles);
   const allowedViewOptions = getRoleViewOptions(profile.roles);
@@ -35,6 +41,8 @@ export default async function ProtectedLayout({
         displayName: profile.displayName,
         roles: profile.roles,
         actingAsRole,
+        environment,
+        hostName: host,
       }}
     >
       {children}

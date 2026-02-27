@@ -32,6 +32,11 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
+  getAdminEnvironmentLabel,
+  resolveAdminEnvironmentFromHost,
+  type AdminEnvironment,
+} from "@/lib/environment";
+import {
   canManageTags,
   canMutateSettings,
   canSendNotifications,
@@ -54,6 +59,8 @@ export interface AdminShellUser {
   displayName: string | null;
   roles: string[];
   actingAsRole?: AdminPanelRole | null;
+  environment?: AdminEnvironment;
+  hostName?: string | null;
 }
 
 export interface AdminSessionUser {
@@ -151,6 +158,8 @@ function SidebarContent({
   user,
   topRole,
   roleOptions,
+  environmentLabel,
+  hostName,
   onChangeRoleView,
   onResetRoleView,
 }: {
@@ -159,6 +168,8 @@ function SidebarContent({
   user: AdminSessionUser;
   topRole: AdminPanelRole | null;
   roleOptions: AdminPanelRole[];
+  environmentLabel: string;
+  hostName: string;
   onChangeRoleView: (role: AdminPanelRole | null) => void;
   onResetRoleView: () => void;
 }) {
@@ -170,8 +181,15 @@ function SidebarContent({
       <div className="flex items-center gap-2.5 px-4 py-5">
         <Image src="/logo2.png" alt="Blocnet" width={32} height={32} className="rounded-lg" />
         <div>
-          <h1 className="text-sm font-bold tracking-tight">Blocnet</h1>
-          <p className="text-[11px] text-muted-foreground">Admin Panel</p>
+          <h1 className="text-sm font-bold tracking-tight">
+            Blocnet Admin {environmentLabel}
+          </h1>
+          <p className="text-[11px] text-muted-foreground">
+            {environmentLabel} Environment
+          </p>
+          <p className="text-[10px] font-medium text-muted-foreground/80">
+            {hostName}
+          </p>
         </div>
       </div>
       <Separator />
@@ -273,14 +291,31 @@ export function AdminShell({
   const [actingAsRole, setActingAsRole] = useState<AdminPanelRole | null>(
     currentUser.actingAsRole ?? null,
   );
+  const [environment, setEnvironment] = useState<AdminEnvironment>(
+    currentUser.environment ?? "development",
+  );
+  const [hostName, setHostName] = useState<string>(
+    (currentUser.hostName?.trim() || "unknown-host").toLowerCase(),
+  );
 
   const realRoles = useMemo(() => Array.from(new Set(currentUser.roles)), [currentUser.roles]);
   const topRole = useMemo(() => getAdminGovernanceRole(realRoles), [realRoles]);
   const roleOptions = useMemo(() => getRoleViewOptions(realRoles), [realRoles]);
+  const environmentLabel = useMemo(
+    () => getAdminEnvironmentLabel(environment),
+    [environment],
+  );
+  const watermarkEnv = useMemo(() => environmentLabel.toUpperCase(), [environmentLabel]);
 
   useEffect(() => {
     setActingAsRole(currentUser.actingAsRole ?? null);
   }, [currentUser.actingAsRole]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setEnvironment(resolveAdminEnvironmentFromHost(window.location.hostname));
+    setHostName(window.location.host.toLowerCase());
+  }, []);
 
   useEffect(() => {
     if (actingAsRole && !roleOptions.includes(actingAsRole)) {
@@ -338,14 +373,32 @@ export function AdminShell({
 
   return (
     <AdminSessionContext.Provider value={sessionValue}>
-      <div className="flex h-screen overflow-hidden">
-        <aside className="hidden w-[260px] shrink-0 flex-col border-r bg-sidebar lg:flex">
+      <div className="relative flex h-screen overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+        >
+          <div className="absolute left-1/2 top-1/2 w-[220vmax] -translate-x-1/2 -translate-y-1/2 -rotate-[14deg]">
+            <p
+              className="select-none whitespace-nowrap text-center text-[clamp(2.8rem,8vw,8rem)] font-black uppercase tracking-[0.14em] text-primary/15"
+            >
+              {watermarkEnv} · {watermarkEnv} · {watermarkEnv}
+            </p>
+            <p className="mt-2 select-none whitespace-nowrap text-center text-[clamp(0.7rem,1.4vw,1.1rem)] font-semibold tracking-[0.12em] text-primary/35">
+              {hostName} · {hostName} · {hostName}
+            </p>
+          </div>
+        </div>
+
+        <aside className="relative z-10 hidden w-[260px] shrink-0 flex-col border-r bg-sidebar lg:flex">
           <SidebarContent
             pathname={pathname}
             onSignOut={handleSignOut}
             user={sessionValue}
             topRole={topRole}
             roleOptions={roleOptions}
+            environmentLabel={environmentLabel}
+            hostName={hostName}
             onChangeRoleView={handleRoleViewChange}
             onResetRoleView={resetRoleView}
           />
@@ -367,19 +420,34 @@ export function AdminShell({
             user={sessionValue}
             topRole={topRole}
             roleOptions={roleOptions}
+            environmentLabel={environmentLabel}
+            hostName={hostName}
             onChangeRoleView={handleRoleViewChange}
             onResetRoleView={resetRoleView}
           />
         </aside>
 
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
           <div className="flex h-14 items-center gap-3 border-b px-4 lg:hidden">
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
             <div className="flex items-center gap-2">
               <Image src="/logo2.png" alt="Blocnet" width={24} height={24} className="rounded" />
-              <span className="text-sm font-bold">Blocnet Admin</span>
+              <span className="text-sm font-bold">Blocnet Admin {environmentLabel}</span>
+            </div>
+          </div>
+
+          <div className="pointer-events-none fixed bottom-4 right-4 z-30">
+            <div
+              className={cn(
+                "rounded-md border px-3 py-1.5 text-[11px] font-semibold shadow-lg backdrop-blur-xs",
+                environment === "production"
+                  ? "border-teal-400/30 bg-teal-500/12 text-teal-200"
+                  : "border-amber-400/30 bg-amber-500/12 text-amber-200",
+              )}
+            >
+              {environmentLabel} · {hostName}
             </div>
           </div>
 
