@@ -1,0 +1,60 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#09090B"/>
+      <stop offset="0.55" stop-color="#1E1B4B"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
+      <path d="M 42 0 L 0 0 0 42" fill="none" stroke="#312E81" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#grid)" opacity="0.3"/>
+
+  <rect x="72" y="72" width="352" height="52" rx="26" fill="#111827" stroke="#818CF8" stroke-opacity="0.65"/>
+  <text x="98" y="105" fill="#A5B4FC" font-family="Geist, Inter, Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="0.08em">BLOCNET HUNTER SYSTEM</text>
+
+  <text x="72" y="245" fill="#F8FAFC" font-family="Geist, Inter, Arial, sans-serif" font-size="86" font-weight="800">From User</text>
+  <text x="72" y="330" fill="#F8FAFC" font-family="Geist, Inter, Arial, sans-serif" font-size="86" font-weight="800">to Hunter.</text>
+
+  <text x="72" y="404" fill="#C7D2FE" font-family="Geist, Inter, Arial, sans-serif" font-size="33" font-weight="550">Contribute updates. Manage projects.</text>
+  <text x="72" y="444" fill="#C7D2FE" font-family="Geist, Inter, Arial, sans-serif" font-size="33" font-weight="550">Build your reputation as a trusted hunter.</text>
+
+  <rect x="72" y="458" width="728" height="280" rx="24" fill="#111827" stroke="#334155"/>
+  <text x="112" y="522" fill="#E2E8F0" font-family="Geist, Inter, Arial, sans-serif" font-size="33" font-weight="700">Hunter Actions</text>
+
+  <rect x="112" y="548" width="648" height="50" rx="12" fill="#1F2937"/>
+  <text x="138" y="581" fill="#E5E7EB" font-family="Geist, Inter, Arial, sans-serif" font-size="26" font-weight="600">Create structured project updates with priority labels</text>
+
+  <rect x="112" y="612" width="648" height="50" rx="12" fill="#1F2937"/>
+  <text x="138" y="645" fill="#E5E7EB" font-family="Geist, Inter, Arial, sans-serif" font-size="26" font-weight="600">Submit and manage projects for the community</text>
+
+  <rect x="112" y="676" width="648" height="50" rx="12" fill="#1F2937"/>
+  <text x="138" y="709" fill="#E5E7EB" font-family="Geist, Inter, Arial, sans-serif" font-size="26" font-weight="600">Earn trust through quality signals and consistency</text>
+
+  <rect x="860" y="164" width="668" height="574" rx="28" fill="#111827" fill-opacity="0.9" stroke="#475569"/>
+  <text x="900" y="234" fill="#F8FAFC" font-family="Geist, Inter, Arial, sans-serif" font-size="36" font-weight="800">Season Leaderboard Preview</text>
+
+  <rect x="900" y="276" width="588" height="72" rx="14" fill="#312E81"/>
+  <text x="932" y="322" fill="#E0E7FF" font-family="Geist, Inter, Arial, sans-serif" font-size="30" font-weight="700">#1  CryptoMaster</text>
+  <text x="1418" y="322" text-anchor="end" fill="#C4B5FD" font-family="Geist, Inter, Arial, sans-serif" font-size="30" font-weight="700">2450 pts</text>
+
+  <rect x="900" y="364" width="588" height="72" rx="14" fill="#1F2937"/>
+  <text x="932" y="410" fill="#E5E7EB" font-family="Geist, Inter, Arial, sans-serif" font-size="30" font-weight="700">#2  BlockchainPro</text>
+  <text x="1418" y="410" text-anchor="end" fill="#CBD5E1" font-family="Geist, Inter, Arial, sans-serif" font-size="30" font-weight="700">2120 pts</text>
+
+  <rect x="900" y="452" width="588" height="72" rx="14" fill="#1F2937"/>
+  <text x="932" y="498" fill="#E5E7EB" font-family="Geist, Inter, Arial, sans-serif" font-size="30" font-weight="700">#3  TokenHunter</text>
+  <text x="1418" y="498" text-anchor="end" fill="#CBD5E1" font-family="Geist, Inter, Arial, sans-serif" font-size="30" font-weight="700">1890 pts</text>
+
+  <rect x="900" y="540" width="588" height="90" rx="14" fill="#312E81" stroke="#818CF8"/>
+  <text x="932" y="596" fill="#E0E7FF" font-family="Geist, Inter, Arial, sans-serif" font-size="34" font-weight="800">You can be here next</text>
+
+  <rect x="900" y="652" width="588" height="64" rx="14" fill="#111827" stroke="#818CF8"/>
+  <text x="932" y="694" fill="#C7D2FE" font-family="Geist, Inter, Arial, sans-serif" font-size="28" font-weight="650">Apply to become a Hunter in Blocnet</text>
+
+  <rect x="72" y="766" width="1456" height="72" rx="16" fill="#111827" stroke="#818CF8" stroke-opacity="0.6"/>
+  <text x="116" y="812" fill="#E2E8F0" font-family="Geist, Inter, Arial, sans-serif" font-size="32" font-weight="650">Follow @blocnet_app and join the next wave of trusted crypto contributors.</text>
+</svg>

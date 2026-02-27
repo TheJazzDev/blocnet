@@ -33,7 +33,7 @@ function getViewportSize(): ViewportSize {
 function getWatermarkFontSize(text: string, diagonal: number): number {
   const characterCount = Math.max(text.replace(/\s+/g, "").length, 1);
   const approximateEmWidth = characterCount * 0.74;
-  const targetWidth = diagonal * 0.86;
+  const targetWidth = diagonal * 0.76;
   const resolvedSize = targetWidth / approximateEmWidth;
   return Math.max(44, Math.min(resolvedSize, 320));
 }
@@ -77,7 +77,7 @@ export function EnvironmentWatermark({
         className="absolute bottom-0 left-0 origin-bottom-left"
         style={{
           width: `${diagonal}px`,
-          transform: `rotate(${-angle}deg)`,
+          transform: `rotate(${-angle+5}deg)`,
         }}
       >
         <p

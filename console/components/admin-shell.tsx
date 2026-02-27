@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -29,6 +28,7 @@ import {
   Sparkles,
   Award,
   Target,
+  Hexagon,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -52,7 +52,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { EnvironmentWatermark } from "@/components/environment-watermark";
+// import { EnvironmentWatermark } from "@/components/environment-watermark";
 
 export interface AdminShellUser {
   id: string;
@@ -160,7 +160,6 @@ function SidebarContent({
   topRole,
   roleOptions,
   environmentLabel,
-  hostName,
   onChangeRoleView,
   onResetRoleView,
 }: {
@@ -170,7 +169,6 @@ function SidebarContent({
   topRole: AdminPanelRole | null;
   roleOptions: AdminPanelRole[];
   environmentLabel: string;
-  hostName: string;
   onChangeRoleView: (role: AdminPanelRole | null) => void;
   onResetRoleView: () => void;
 }) {
@@ -180,7 +178,9 @@ function SidebarContent({
   return (
     <>
       <div className="flex items-center gap-2.5 px-4 py-5">
-        <Image src="/logo2.png" alt="Blocnet" width={32} height={32} className="rounded-lg" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+          <Hexagon className="h-6 w-6 text-primary-foreground" />
+        </div>
         <div>
           <h1 className="text-sm font-bold tracking-tight">
             Blocnet Admin {environmentLabel}
@@ -205,7 +205,7 @@ function SidebarContent({
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                       isActive
                         ? "bg-gradient-to-r from-primary/15 to-teal-400/10 text-primary"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                        : "text-muted-foreground hover:bg-gradient-to-r hover:from-primary/12 hover:to-cyan-400/12 hover:text-foreground",
                     )}
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
@@ -219,7 +219,7 @@ function SidebarContent({
       </ScrollArea>
       <Separator />
       <div className="space-y-3 p-4">
-        <div className="rounded-lg border bg-card p-3">
+        <div className="rounded-lg border border-border/70 bg-card/75 p-3">
           <p className="truncate text-xs font-medium">{user.displayName ?? user.email}</p>
           <p className="truncate text-[11px] text-muted-foreground">{user.email}</p>
           {topRole && (
@@ -230,7 +230,7 @@ function SidebarContent({
         </div>
 
         {roleOptions.length > 0 && selectedRole && (
-          <div className="rounded-lg border bg-card p-3">
+          <div className="rounded-lg border border-border/70 bg-card/75 p-3">
             <label htmlFor="role-view" className="text-[11px] font-medium text-muted-foreground">
               View As Role
             </label>
@@ -238,7 +238,7 @@ function SidebarContent({
               id="role-view"
               value={selectedRole}
               onChange={(event) => onChangeRoleView(normalizeAdminPanelRole(event.target.value))}
-              className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+              className="mt-1 w-full rounded-md border border-border/75 bg-background/75 px-2 py-1.5 text-xs"
             >
               {roleOptions.map((role) => (
                 <option key={role} value={role}>
@@ -367,10 +367,12 @@ export function AdminShell({
 
   return (
     <AdminSessionContext.Provider value={sessionValue}>
-      <div className="relative flex h-screen overflow-hidden">
-        <EnvironmentWatermark text={environmentLabel} />
+      <div className="relative flex h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_14%,rgba(99,102,241,0.16),transparent_34%),radial-gradient(circle_at_92%_8%,rgba(34,211,238,0.14),transparent_30%),var(--background)]">
+        {/* <EnvironmentWatermark text={environmentLabel} /> */}
+        <div className="pointer-events-none absolute -top-28 right-[-6rem] h-80 w-80 rounded-full bg-cyan-300/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-36 left-[-8rem] h-96 w-96 rounded-full bg-violet-400/10 blur-3xl" />
 
-        <aside className="relative z-10 hidden w-[260px] shrink-0 flex-col border-r bg-sidebar lg:flex">
+        <aside className="relative z-10 hidden w-[260px] shrink-0 flex-col border-r border-sidebar-border/70 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/92 lg:flex">
           <SidebarContent
             pathname={pathname}
             onSignOut={handleSignOut}
@@ -378,7 +380,6 @@ export function AdminShell({
             topRole={topRole}
             roleOptions={roleOptions}
             environmentLabel={environmentLabel}
-            hostName={hostName}
             onChangeRoleView={handleRoleViewChange}
             onResetRoleView={resetRoleView}
           />
@@ -390,7 +391,7 @@ export function AdminShell({
 
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r bg-sidebar transition-transform duration-200 lg:hidden",
+            "fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-sidebar-border/70 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/92 transition-transform duration-200 lg:hidden",
             mobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
@@ -401,19 +402,20 @@ export function AdminShell({
             topRole={topRole}
             roleOptions={roleOptions}
             environmentLabel={environmentLabel}
-            hostName={hostName}
             onChangeRoleView={handleRoleViewChange}
             onResetRoleView={resetRoleView}
           />
         </aside>
 
         <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
-          <div className="flex h-14 items-center gap-3 border-b px-4 lg:hidden">
+          <div className="flex h-14 items-center gap-3 border-b border-border/70 bg-background/80 px-4 backdrop-blur-sm lg:hidden">
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
             <div className="flex items-center gap-2">
-              <Image src="/logo2.png" alt="Blocnet" width={24} height={24} className="rounded" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
+                <Hexagon className="h-6 w-6 text-primary-foreground" />
+              </div>
               <span className="text-sm font-bold">Blocnet Admin {environmentLabel}</span>
             </div>
           </div>

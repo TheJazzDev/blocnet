@@ -43,13 +43,18 @@ class DeepLinkService {
   }
 
   Future<void> _handleUri(Uri uri) async {
-    // Only handle our scheme
-    if (uri.scheme != 'io.blocnet.app') return;
+    final isAppScheme = uri.scheme == 'io.blocnet.app';
+    final isSupabaseVerifyLink =
+        (uri.scheme == 'https' || uri.scheme == 'http') &&
+            uri.path.contains('/auth/v1/verify');
+    if (!isAppScheme && !isSupabaseVerifyLink) return;
 
     // Capture referral links like io.blocnet.app://signup?ref=AB12CD34
-    final rawReferralCode = uri.queryParameters['ref'];
-    if (rawReferralCode != null && rawReferralCode.trim().isNotEmpty) {
-      await authStore.setPendingReferralCode(rawReferralCode);
+    if (isAppScheme) {
+      final rawReferralCode = uri.queryParameters['ref'];
+      if (rawReferralCode != null && rawReferralCode.trim().isNotEmpty) {
+        await authStore.setPendingReferralCode(rawReferralCode);
+      }
     }
 
     // Supabase sends auth callbacks in two formats:
@@ -59,7 +64,7 @@ class DeepLinkService {
     Map<String, String> params = {};
 
     // Try fragment first (magic links, OAuth)
-    if (uri.fragment.isNotEmpty) {
+    if (isAppScheme && uri.fragment.isNotEmpty) {
       params = Uri.splitQueryString(uri.fragment);
     }
     // Fall back to query params (email confirmation)
@@ -69,10 +74,11 @@ class DeepLinkService {
 
     if (params.isEmpty) return;
 
-    final type = params['type'];
+    final type = params['type']?.toLowerCase();
     final accessToken = params['access_token'];
     final refreshToken = params['refresh_token'];
     final code = params['code']; // OAuth PKCE / email verification code
+    final tokenHash = params['token_hash'] ?? params['token'];
 
     // Handle auth code:
     // 1) Try OAuth PKCE exchange first.
@@ -96,19 +102,28 @@ class DeepLinkService {
       }
 
       try {
+        final otpType = _resolveOtpType(type) ?? OtpType.email;
         final otp = await Supabase.instance.client.auth.verifyOTP(
           token: code,
-          type: OtpType.email,
+          type: otpType,
         );
 
         if (otp.session != null) {
-          final success = await authStore.verifyAndSignIn(
-            otp.session!.accessToken,
-          );
-          navigatorKey.currentState?.pushNamedAndRemoveUntil(
-            success ? AppRoutes.main : AppRoutes.signIn,
-            (route) => false,
-          );
+          if (otpType == OtpType.recovery) {
+            navigatorKey.currentState?.pushNamedAndRemoveUntil(
+              AppRoutes.resetPassword,
+              (route) => false,
+              arguments: {'accessToken': otp.session!.accessToken},
+            );
+          } else {
+            final success = await authStore.verifyAndSignIn(
+              otp.session!.accessToken,
+            );
+            navigatorKey.currentState?.pushNamedAndRemoveUntil(
+              success ? AppRoutes.main : AppRoutes.signIn,
+              (route) => false,
+            );
+          }
         } else {
           navigatorKey.currentState?.pushNamedAndRemoveUntil(
             AppRoutes.signIn,
@@ -120,6 +135,52 @@ class DeepLinkService {
           AppRoutes.signIn,
           (route) => false,
         );
+      }
+      return;
+    }
+
+    // Handle token-hash email links (signup/recovery) that may not include
+    // access/refresh tokens in the callback URL.
+    if (tokenHash != null &&
+        tokenHash.trim().isNotEmpty &&
+        accessToken == null &&
+        refreshToken == null) {
+      final otpType = _resolveOtpType(type);
+      if (otpType != null) {
+        try {
+          final otp = await Supabase.instance.client.auth.verifyOTP(
+            tokenHash: tokenHash,
+            type: otpType,
+          );
+          final session = otp.session;
+          if (session != null) {
+            if (otpType == OtpType.recovery) {
+              navigatorKey.currentState?.pushNamedAndRemoveUntil(
+                AppRoutes.resetPassword,
+                (route) => false,
+                arguments: {'accessToken': session.accessToken},
+              );
+            } else {
+              final success = await authStore.verifyAndSignIn(
+                session.accessToken,
+              );
+              navigatorKey.currentState?.pushNamedAndRemoveUntil(
+                success ? AppRoutes.main : AppRoutes.signIn,
+                (route) => false,
+              );
+            }
+          } else {
+            navigatorKey.currentState?.pushNamedAndRemoveUntil(
+              AppRoutes.signIn,
+              (route) => false,
+            );
+          }
+        } catch (_) {
+          navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            AppRoutes.signIn,
+            (route) => false,
+          );
+        }
       }
       return;
     }
@@ -161,6 +222,29 @@ class DeepLinkService {
         AppRoutes.signIn,
         (route) => false,
       );
+    }
+  }
+
+  OtpType? _resolveOtpType(String? type) {
+    switch (type) {
+      case 'signup':
+        return OtpType.signup;
+      case 'recovery':
+        return OtpType.recovery;
+      case 'magiclink':
+        return OtpType.magiclink;
+      case 'invite':
+        return OtpType.invite;
+      case 'email':
+        return OtpType.email;
+      case 'email_change':
+        return OtpType.emailChange;
+      case 'phone_change':
+        return OtpType.phoneChange;
+      case 'sms':
+        return OtpType.sms;
+      default:
+        return null;
     }
   }
 

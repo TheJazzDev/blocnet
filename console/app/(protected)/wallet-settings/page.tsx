@@ -73,9 +73,11 @@ function formatKeyLabel(value: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function formatInteger(value: number | null | undefined) {
-  if (value == null || Number.isNaN(value)) return "n/a";
-  return value.toLocaleString("en-US");
+function formatInteger(value: string | number | null | undefined) {
+  if (value == null) return "n/a";
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) return String(value);
+  return parsed.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
 
 function formatAmount(

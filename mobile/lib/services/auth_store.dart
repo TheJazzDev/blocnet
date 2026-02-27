@@ -427,6 +427,7 @@ class AuthStore extends ChangeNotifier {
           .resend(
             type: OtpType.signup,
             email: email.trim(),
+            emailRedirectTo: AppConfig.supabaseEmailRedirectUrl.trim(),
           )
           .timeout(_authTimeout);
       return true;

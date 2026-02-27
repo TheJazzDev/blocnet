@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { headers } from "next/headers";
-import { Hexagon } from "lucide-react";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -14,7 +14,7 @@ import {
   getAdminEnvironmentLabel,
   resolveAdminEnvironmentFromHost,
 } from "@/lib/environment";
-import { EnvironmentWatermark } from "@/components/environment-watermark";
+// import { EnvironmentWatermark } from "@/components/environment-watermark";
 
 export default async function SignInPage() {
   const headerStore = await headers();
@@ -25,12 +25,12 @@ export default async function SignInPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
-      <EnvironmentWatermark text={environmentLabel} />
+      {/* <EnvironmentWatermark text={environmentLabel} /> */}
 
       <div className="relative z-10 w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <Hexagon className="h-6 w-6 text-primary-foreground" />
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl">
+            <Image src="/logo2.png" alt="Blocnet" width={48} height={48} priority />
           </div>
           <div className="text-center">
             <h1 className="text-xl font-bold tracking-tight">

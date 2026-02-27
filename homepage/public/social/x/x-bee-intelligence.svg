@@ -1,0 +1,60 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#09090B"/>
+      <stop offset="0.55" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2DD4BF"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1F2937" stroke-width="1"/>
+    </pattern>
+    <filter id="blur40" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#grid)" opacity="0.35"/>
+
+  <circle cx="1320" cy="140" r="180" fill="#2DD4BF" opacity="0.22" filter="url(#blur40)"/>
+  <circle cx="1180" cy="760" r="220" fill="#8B5CF6" opacity="0.2" filter="url(#blur40)"/>
+
+  <rect x="72" y="72" width="370" height="52" rx="26" fill="#0F172A" stroke="#2DD4BF" stroke-opacity="0.55"/>
+  <text x="98" y="105" fill="#2DD4BF" font-family="Geist, Inter, Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="0.08em">BLOCNET EDGE ENGINE</text>
+
+  <text x="72" y="245" fill="#F8FAFC" font-family="Geist, Inter, Arial, sans-serif" font-size="92" font-weight="800">Crypto Noise</text>
+  <text x="72" y="338" fill="#F8FAFC" font-family="Geist, Inter, Arial, sans-serif" font-size="92" font-weight="800">Is Expensive.</text>
+
+  <text x="72" y="422" fill="#94A3B8" font-family="Geist, Inter, Arial, sans-serif" font-size="35" font-weight="500">Blocnet turns scattered updates into clear action signals:</text>
+  <text x="72" y="470" fill="#94A3B8" font-family="Geist, Inter, Arial, sans-serif" font-size="35" font-weight="500">Act Now, Watch, or Ignore.</text>
+
+  <rect x="930" y="174" width="598" height="560" rx="28" fill="#0B1220" fill-opacity="0.88" stroke="#334155"/>
+
+  <rect x="968" y="232" width="522" height="122" rx="18" fill="#052E2B" stroke="#2DD4BF"/>
+  <text x="1002" y="281" fill="#A7F3D0" font-family="Geist, Inter, Arial, sans-serif" font-size="34" font-weight="800">ACT NOW</text>
+  <text x="1002" y="322" fill="#D1FAE5" font-family="Geist, Inter, Arial, sans-serif" font-size="24" font-weight="500">High-priority updates that need immediate action.</text>
+
+  <rect x="968" y="388" width="522" height="122" rx="18" fill="#3F2A0B" stroke="#F59E0B"/>
+  <text x="1002" y="437" fill="#FCD34D" font-family="Geist, Inter, Arial, sans-serif" font-size="34" font-weight="800">WATCH</text>
+  <text x="1002" y="478" fill="#FDE68A" font-family="Geist, Inter, Arial, sans-serif" font-size="24" font-weight="500">Important updates to monitor without panic.</text>
+
+  <rect x="968" y="544" width="522" height="122" rx="18" fill="#111827" stroke="#64748B"/>
+  <text x="1002" y="593" fill="#CBD5E1" font-family="Geist, Inter, Arial, sans-serif" font-size="34" font-weight="800">IGNORE</text>
+  <text x="1002" y="634" fill="#94A3B8" font-family="Geist, Inter, Arial, sans-serif" font-size="24" font-weight="500">Low-relevance content that should not steal focus.</text>
+
+  <rect x="72" y="742" width="1456" height="92" rx="20" fill="#0F172A" stroke="#2DD4BF" stroke-opacity="0.5"/>
+  <text x="116" y="800" fill="#E2E8F0" font-family="Geist, Inter, Arial, sans-serif" font-size="34" font-weight="650">Follow @blocnet_app  |  Download: blocnet.app</text>
+
+  <rect x="72" y="612" width="774" height="96" rx="20" fill="#0F172A" stroke="#334155"/>
+  <circle cx="130" cy="660" r="18" fill="url(#teal)"/>
+  <circle cx="182" cy="660" r="18" fill="url(#violet)"/>
+  <text x="226" y="671" fill="#C7D2FE" font-family="Geist, Inter, Arial, sans-serif" font-size="34" font-weight="700">AI-powered crypto decision intelligence</text>
+</svg>

@@ -31,6 +31,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { FormEvent, useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Loader2, Plus, Edit, Award } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 
 interface QuestModel {
   id: string;
@@ -99,35 +100,35 @@ function formatDate(dateString: string | null): string {
 function questTypeBadgeClass(type: string): string {
   switch (type) {
     case "internal_action":
-      return "bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-inset ring-amber-500/30";
+      return "border border-amber-400/30 bg-amber-400/12 text-amber-200";
     case "social_media":
-      return "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300 ring-1 ring-inset ring-fuchsia-500/30";
+      return "border border-fuchsia-400/30 bg-fuchsia-400/12 text-fuchsia-200";
     case "external_link":
     default:
-      return "bg-sky-500/15 text-sky-700 dark:text-sky-300 ring-1 ring-inset ring-sky-500/30";
+      return "border border-sky-400/30 bg-sky-400/12 text-sky-200";
   }
 }
 
 function questCategoryBadgeClass(category: string): string {
   switch (category) {
     case "mining":
-      return "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-500/30";
+      return "border border-indigo-400/30 bg-indigo-400/12 text-indigo-200";
     case "engagement":
-      return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/30";
+      return "border border-emerald-400/30 bg-emerald-400/12 text-emerald-200";
     case "social":
-      return "bg-pink-500/15 text-pink-700 dark:text-pink-300 ring-1 ring-inset ring-pink-500/30";
+      return "border border-pink-400/30 bg-pink-400/12 text-pink-200";
     case "trust":
-      return "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 ring-1 ring-inset ring-cyan-500/30";
+      return "border border-cyan-400/30 bg-cyan-400/12 text-cyan-200";
     case "special":
     default:
-      return "bg-violet-500/15 text-violet-700 dark:text-violet-300 ring-1 ring-inset ring-violet-500/30";
+      return "border border-violet-400/30 bg-violet-400/12 text-violet-200";
   }
 }
 
 function verificationBadgeClass(method: string): string {
   return method === "auto"
-    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/30"
-    : "bg-orange-500/15 text-orange-700 dark:text-orange-300 ring-1 ring-inset ring-orange-500/30";
+    ? "border border-emerald-400/30 bg-emerald-400/12 text-emerald-200"
+    : "border border-orange-400/30 bg-orange-400/12 text-orange-200";
 }
 
 export default function QuestsPage() {
@@ -272,8 +273,8 @@ export default function QuestsPage() {
   if (!canManageQuests) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-          <p className="text-sm text-red-800">You do not have permission to manage quests.</p>
+        <div className="rounded-lg border border-destructive/35 bg-destructive/10 p-6">
+          <p className="text-sm text-destructive-foreground">You do not have permission to manage quests.</p>
         </div>
       </div>
     );
@@ -281,19 +282,16 @@ export default function QuestsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Quests</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
-            Manage quests and tasks for user engagement
-          </p>
-        </div>
+      <PageHeader
+        title="Quests"
+        description="Manage quests, balance incentives, and monitor verification mix."
+      >
         <Button onClick={openCreate} size="sm" className="gap-2">
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Create Quest</span>
           <span className="sm:hidden">New</span>
         </Button>
-      </div>
+      </PageHeader>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-lg border bg-card p-3">
@@ -327,10 +325,10 @@ export default function QuestsPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <div className="rounded-lg border border-destructive/35 bg-destructive/10 p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />
-            <p className="text-sm text-red-800">{error}</p>
+            <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
+            <p className="text-sm text-destructive-foreground">{error}</p>
           </div>
         </div>
       )}
@@ -413,12 +411,12 @@ export default function QuestsPage() {
                     </TableCell>
                     <TableCell>
                       {quest.isActive ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-500/30 dark:text-emerald-300">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-400/12 px-2 py-1 text-xs font-medium text-emerald-200">
                           <CheckCircle2 className="h-3 w-3" />
                           Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-zinc-500/15 px-2 py-1 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-500/30 dark:text-zinc-300">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-zinc-400/30 bg-zinc-400/12 px-2 py-1 text-xs font-medium text-zinc-200">
                           <AlertCircle className="h-3 w-3" />
                           Inactive
                         </span>
