@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { Navbar } from '@/components/ui/Navbar';
+import { Footer } from '@/components/sections/Footer';
 
 export const metadata: Metadata = {
   title: 'Terms and Conditions — Blocnet',
@@ -7,8 +9,10 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[#09090b] pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#09090b] text-foreground">
+      <Navbar />
+      <main className="pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
         <div className="mb-10 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
             Terms and Conditions
@@ -101,7 +105,7 @@ export default function TermsPage() {
                 4.1 Token Nature
               </p>
               <p>
-                BNT is a utility token on the Solana blockchain designed for use within the Blocnet ecosystem. BNT is NOT an investment, security, or financial instrument. It does not represent ownership, equity, or profit-sharing rights in Blocnet.
+                BNT is a utility token on the BNB Smart Chain blockchain designed for use within the Blocnet ecosystem. BNT is NOT an investment, security, or financial instrument. It does not represent ownership, equity, or profit-sharing rights in Blocnet.
               </p>
 
               <p className="font-semibold text-foreground mt-4">
@@ -303,7 +307,9 @@ export default function TermsPage() {
             </p>
           </section>
         </div>
-      </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }

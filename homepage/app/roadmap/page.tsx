@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Navbar } from '@/components/ui/Navbar';
 import { Footer } from '@/components/sections/Footer';
-import { RoadmapClean } from '@/components/sections/RoadmapClean';
+import { Roadmap } from '@/components/sections/Roadmap';
 
 export const metadata: Metadata = {
   title: 'Roadmap — Blocnet',
@@ -28,7 +28,7 @@ export default function RoadmapPage() {
   return (
     <div className="min-h-screen bg-[#09090b] text-foreground">
       <Navbar />
-      <RoadmapClean />
+      <Roadmap />
       <Footer />
     </div>
   );

@@ -5,65 +5,69 @@ import Link from 'next/link';
 export function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8">
-      {/* Simple Background Grid */}
+      {/* Background Grid */}
       <div className="absolute inset-0 bg-[#09090b]">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto text-center">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-3 sm:mb-4 md:mb-6 leading-tight">
-          Your <span className="text-teal-400">Crypto Hub</span>
+        {/* Badges */}
+        <div className="flex flex-wrap gap-3 justify-center mb-6">
+          <span className="text-sm sm:text-base px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-full text-teal-400 backdrop-blur-sm">
+            ✨ AI-Powered Intelligence
+          </span>
+          <span className="text-sm sm:text-base px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary backdrop-blur-sm">
+            🌐 Crypto Update Network
+          </span>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
+          Your <span className="text-transparent bg-clip-text bg-linear-to-r from-teal-400 to-primary">Crypto Hub</span>
           <br />
           All in One Place
         </h1>
 
-        <p className="text-sm sm:text-base md:text-lg text-muted max-w-2xl mx-auto mb-4 sm:mb-6 px-4">
+        {/* Subtitle */}
+        <p className="text-base sm:text-lg md:text-xl text-muted max-w-3xl mx-auto mb-10 px-4 leading-relaxed">
           AI-powered crypto intelligence meets community-driven updates. Track
           projects, earn through mining, manage your wallet, and get smart
           recommendations from Blocnet Edge Engine (BEE).
         </p>
 
-        <div className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-6 sm:mb-8">
-          <span className="text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-teal-500/10 border border-teal-500/20 rounded-full text-teal-400">
-            AI-Powered Intelligence
-          </span>
-          <span className="text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-primary/10 border border-primary/20 rounded-full text-primary">
-            Crypto Update Network
-          </span>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
           <Link
             href="#download"
-            className="w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25"
+            className="w-full sm:w-auto px-8 py-4 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-base shadow-lg shadow-teal-500/25 transition-opacity hover:opacity-90"
           >
             Download App
           </Link>
           <Link
             href="/about"
-            className="w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-surface-2 to-surface-2/80 border border-border text-foreground rounded-xl font-semibold text-sm sm:text-base"
+            className="w-full sm:w-auto px-8 py-4 bg-surface-2/50 backdrop-blur-sm border border-border text-foreground rounded-xl font-semibold text-base transition-colors hover:border-teal-500/30"
           >
             Learn More
           </Link>
         </div>
 
         {/* Stats */}
-        <div className="mt-12 sm:mt-16 md:mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {[
-            { label: 'Active Users', value: '10K+' },
-            { label: 'Projects Tracked', value: '500+' },
-            { label: 'Updates Daily', value: '1K+' },
-            { label: 'Community Posts', value: '5K+' },
+            { value: '10K+', label: 'Active Users' },
+            { value: '500+', label: 'Projects Tracked' },
+            { value: '1K+', label: 'Updates Daily' },
+            { value: '5K+', label: 'Community Posts' },
           ].map((stat) => (
             <div
               key={stat.label}
-              className="p-4 sm:p-5 bg-surface-2/50 backdrop-blur-sm border border-border rounded-lg"
+              className="p-6 bg-surface-2/50 backdrop-blur-sm border border-border rounded-xl transition-colors hover:border-teal-500/20"
             >
-              <div className="text-xl sm:text-2xl font-bold text-teal-400">
+              <div className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-teal-400 to-primary">
                 {stat.value}
               </div>
-              <div className="text-xs sm:text-sm text-muted mt-1">
+              <div className="text-sm sm:text-base text-muted mt-2">
                 {stat.label}
               </div>
             </div>

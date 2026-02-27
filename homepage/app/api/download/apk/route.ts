@@ -1,3 +1,6 @@
+import { constants } from "node:fs";
+import { access } from "node:fs/promises";
+import path from "node:path";
 import { NextResponse } from "next/server";
 
 function resolveReleaseChannel(): "dev" | "prod" {
@@ -21,6 +24,23 @@ function resolveReleaseChannel(): "dev" | "prod" {
 
 export async function GET(request: Request) {
   const channel = resolveReleaseChannel();
+  const apkFilePath = path.join(
+    process.cwd(),
+    "public",
+    "apks",
+    channel,
+    "latest.apk",
+  );
+
+  try {
+    await access(apkFilePath, constants.R_OK);
+  } catch {
+    return NextResponse.json(
+      { message: "Android app is not available yet. Please check back soon." },
+      { status: 404 },
+    );
+  }
+
   const apkUrl = new URL(`/apks/${channel}/latest.apk`, request.url);
   return NextResponse.redirect(apkUrl);
 }

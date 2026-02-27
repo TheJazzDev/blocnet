@@ -27,6 +27,9 @@ export function Navbar() {
     { label: 'Mining', href: '/mining', type: 'page' },
     { label: 'Community', href: '/community', type: 'page' },
     { label: 'Roadmap', href: '/roadmap', type: 'page' },
+    { label: 'Contact', href: '/contact', type: 'page' },
+    { label: 'Privacy', href: '/privacy', type: 'page' },
+    { label: 'Terms', href: '/terms', type: 'page' },
   ];
 
   return (
@@ -51,7 +54,7 @@ export function Navbar() {
           </Link>
 
           {/* Nav Links - Hidden on Mobile */}
-          <div className="hidden md:flex items-center gap-6 lg:gap-8">
+          <div className="hidden md:flex items-center gap-4 lg:gap-6">
             {navLinks.map((link) =>
               link.type === 'page' ? (
                 <Link

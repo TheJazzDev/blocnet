@@ -37,14 +37,30 @@ export function SignInForm() {
 
       const { access_token, refresh_token } = data.session;
 
-      // Verify the user has panel-access role by calling the backend
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
-        headers: { Authorization: `Bearer ${access_token}` },
+      // Persist tokens first so same-origin /api/proxy can forward to backend.
+      const tokenRes = await fetch('/api/auth/set-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: access_token,
+          refreshToken: refresh_token,
+        }),
       });
+
+      if (!tokenRes.ok) {
+        setError('Session setup failed. Please try again.');
+        await supabase.auth.signOut();
+        await fetch('/api/auth/sign-out', { method: 'POST' });
+        return;
+      }
+
+      // Verify the user has panel-access role through same-origin proxy.
+      const res = await fetch('/api/proxy/me');
 
       if (!res.ok) {
         setError('Could not verify your account. Please try again.');
         await supabase.auth.signOut();
+        await fetch('/api/auth/sign-out', { method: 'POST' });
         return;
       }
 
@@ -62,21 +78,7 @@ export function SignInForm() {
           'Access denied. Only owners, admins, and moderators can access this panel.',
         );
         await supabase.auth.signOut();
-        return;
-      }
-
-      // Persist tokens via route handler (server sets httpOnly cookies)
-      const tokenRes = await fetch('/api/auth/set-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: access_token,
-          refreshToken: refresh_token,
-        }),
-      });
-
-      if (!tokenRes.ok) {
-        setError('Session setup failed. Please try again.');
+        await fetch('/api/auth/sign-out', { method: 'POST' });
         return;
       }
 
