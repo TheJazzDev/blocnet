@@ -1,8 +1,4 @@
-import {
-  EdgeAction,
-  Prisma,
-  UpdateUrgency,
-} from '@prisma/client';
+import { EdgeAction, Prisma, UpdateUrgency } from '@prisma/client';
 import { EdgeFeedbackAction } from './dto/edge-feedback.dto';
 
 export const EDGE_DECISION_PREFIX = 'edge:update:';
@@ -25,7 +21,9 @@ export type EdgeFeedCursor = {
   id: string | null;
 };
 
-export const parseEdgeFeedCursor = (cursorRaw: string): EdgeFeedCursor | null => {
+export const parseEdgeFeedCursor = (
+  cursorRaw: string,
+): EdgeFeedCursor | null => {
   const normalized = cursorRaw.trim();
   if (!normalized) return null;
 

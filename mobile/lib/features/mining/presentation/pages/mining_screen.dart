@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_hero_card.dart';
+import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:blocnet/services/mining_store.dart';
 import 'package:blocnet/services/wallet_store.dart';
 import 'package:flutter/material.dart';
@@ -61,7 +62,7 @@ class _MiningScreenState extends State<MiningScreen> {
                 title: 'Mining Leaderboard',
                 subtitle: store.isLoadingLeaderboard
                     ? 'Loading rankings...'
-                    : '${store.leaderboard.length} ranked miners',
+                    : '${formatGroupedNumber(store.leaderboard.length, maxDecimals: 0)} ranked miners',
                 onTap: () => Navigator.of(context)
                     .pushNamed(AppRoutes.miningLeaderboard),
               ),
@@ -71,7 +72,7 @@ class _MiningScreenState extends State<MiningScreen> {
                 title: 'Hourly Mining History',
                 subtitle: store.isLoadingSnapshot
                     ? 'Loading checkpoints...'
-                    : '${store.snapshot?.hourlyHistory.length ?? 0} checkpoints recorded',
+                    : '${formatGroupedNumber(store.snapshot?.hourlyHistory.length ?? 0, maxDecimals: 0)} checkpoints recorded',
                 onTap: () => Navigator.of(context)
                     .pushNamed(AppRoutes.miningHourlyHistory),
               ),
@@ -118,7 +119,7 @@ class _MiningScreenState extends State<MiningScreen> {
       }
       if (!mounted) return;
       final message = claimedNow > 0
-          ? 'Claimed $claimedNow MCR. New mining session started.'
+          ? 'Claimed ${formatGroupedNumber(claimedNow, maxDecimals: 0)} BNP. New mining session started.'
           : 'Rewards claimed. New mining session started.';
       _showFeedback(message);
     } catch (_) {

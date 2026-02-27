@@ -265,7 +265,7 @@ export default function MiningPage() {
 
               <ConfigInput
                 id="basePointsPerCycle"
-                label="Base MCR / Cycle"
+                label="Base BNP / Cycle"
                 value={config?.basePointsPerCycle}
                 disabled={!canMutate || !config}
                 onChange={(value) =>
@@ -339,10 +339,10 @@ export default function MiningPage() {
                 <p className="text-sm text-muted-foreground">No metrics available.</p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <Metric title="DAU Miners" value={metrics.dauMiners.toString()} />
-                  <Metric title="Cycle Starts" value={metrics.startsDay.toString()} />
-                  <Metric title="Claims" value={metrics.claimsDay.toString()} />
-                  <Metric title="Avg Boost" value={`${metrics.averageBoostBps} bps`} />
+                  <Metric title="DAU Miners" value={formatNumber(metrics.dauMiners)} />
+                  <Metric title="Cycle Starts" value={formatNumber(metrics.startsDay)} />
+                  <Metric title="Claims" value={formatNumber(metrics.claimsDay)} />
+                  <Metric title="Avg Boost" value={`${formatNumber(metrics.averageBoostBps)} bps`} />
                   <Metric
                     title="Referral Bind Rate"
                     value={`${(metrics.referralBindRate * 100).toFixed(1)}%`}
@@ -353,25 +353,25 @@ export default function MiningPage() {
                   />
                   <Metric
                     title="Total Direct Referrals"
-                    value={metrics.totalDirectReferrals.toString()}
+                    value={formatNumber(metrics.totalDirectReferrals)}
                   />
                   <Metric
                     title="Active Direct Referrals"
-                    value={metrics.activeDirectReferrals.toString()}
+                    value={formatNumber(metrics.activeDirectReferrals)}
                   />
                   <Metric
-                    title="Lifetime Mined (MCR)"
-                    value={metrics.lifetimeMinedMcr.toString()}
+                    title="Lifetime Mined (BNP)"
+                    value={formatNumber(metrics.lifetimeMinedMcr)}
                   />
                   <Metric
-                    title="Lifetime Claimed (MCR)"
-                    value={metrics.lifetimeClaimedMcr.toString()}
+                    title="Lifetime Claimed (BNP)"
+                    value={formatNumber(metrics.lifetimeClaimedMcr)}
                   />
                   <Metric
-                    title="Unclaimed (MCR)"
-                    value={metrics.lifetimeUnclaimedMcr.toString()}
+                    title="Unclaimed (BNP)"
+                    value={formatNumber(metrics.lifetimeUnclaimedMcr)}
                   />
-                  <Metric title="Total Miners" value={metrics.totalMiners.toString()} />
+                  <Metric title="Total Miners" value={formatNumber(metrics.totalMiners)} />
                 </div>
               )}
             </CardContent>
@@ -485,4 +485,8 @@ function Metric({ title, value }: { title: string; value: string }) {
       </Badge>
     </div>
   );
+}
+
+function formatNumber(value: number) {
+  return value.toLocaleString("en-US");
 }

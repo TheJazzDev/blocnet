@@ -193,7 +193,7 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
   {
     key: "wallet.tips.transactions.view",
     label: "View Tip Transactions",
-    description: "Read tipping history across mined MCR and token phases.",
+    description: "Read tipping history across mined BNP and token phases.",
     section: "wallet",
     roles: ["owner", "admin", "moderator"],
   },

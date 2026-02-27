@@ -246,7 +246,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${widget.quest.rewardPoints} MCR',
+                    '${widget.quest.rewardPoints} BNP',
                     style: AppTypography.custom(
                       color: AppColors.warning500,
                       size: 16,
@@ -682,7 +682,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
             : '';
         await _showVerificationResultModal(
           title: 'Quest Completed',
-          message: 'You earned ${result.rewardPoints} MCR.$suffix',
+          message: 'You earned ${result.rewardPoints} BNP.$suffix',
           isSuccess: true,
           closeLabel: 'Done',
         );

@@ -395,7 +395,7 @@ export class QuestsService {
       },
       missingRequirements: [],
       message: completedNow
-        ? `Quest verified. You earned ${quest.rewardPoints} MCR.`
+        ? `Quest verified. You earned ${quest.rewardPoints} BNP.`
         : 'Quest already completed.',
     };
   }
@@ -727,7 +727,7 @@ export class QuestsService {
             updateId: null,
             urgency: null,
             title: 'Quest Completed!',
-            body: `Your quest "${quest.title}" has been verified. You earned ${quest.rewardPoints} MCR!`,
+            body: `Your quest "${quest.title}" has been verified. You earned ${quest.rewardPoints} BNP!`,
             payload: {
               questId: quest.id,
               questSlug: quest.slug,
@@ -936,7 +936,7 @@ export class QuestsService {
         updateId: null,
         urgency: null,
         title: 'Quest Completed!',
-        body: `You completed "${quest.title}" and earned ${quest.rewardPoints} MCR.`,
+        body: `You completed "${quest.title}" and earned ${quest.rewardPoints} BNP.`,
         payload: {
           questId: quest.id,
           questSlug: quest.slug,

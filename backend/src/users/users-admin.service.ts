@@ -5,11 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  NotificationType,
-  Prisma,
-  RoleName,
-} from '@prisma/client';
+import { NotificationType, Prisma, RoleName } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';

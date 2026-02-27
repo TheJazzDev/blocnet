@@ -2,18 +2,18 @@
 
 export function Tokenomics() {
   const tokenAllocation = [
-    { label: 'Mining Rewards', percentage: 40, color: '#2dd4bf' },
-    { label: 'Ecosystem Growth', percentage: 25, color: '#8b5cf6' },
-    { label: 'Team & Advisors', percentage: 15, color: '#06b6d4' },
-    { label: 'Liquidity Pool', percentage: 10, color: '#3b82f6' },
-    { label: 'Treasury Reserve', percentage: 10, color: '#10b981' },
+    { label: 'Mining Rewards', percentage: 0, color: '#2dd4bf' },
+    { label: 'Ecosystem Growth', percentage: 0, color: '#8b5cf6' },
+    { label: 'Team & Advisors', percentage: 0, color: '#06b6d4' },
+    { label: 'Liquidity Pool', percentage: 0, color: '#3b82f6' },
+    { label: 'Treasury Reserve', percentage: 0, color: '#10b981' },
   ];
 
   const tokenStats = [
-    { label: 'Total Supply', value: '1 Billion', suffix: 'BNT' },
-    { label: 'In Circulation', value: '1 Billion', suffix: 'BNT' },
-    { label: 'Token Utility', value: 'Utility', suffix: '' },
-    { label: 'Blockchain', value: 'BNB Smart Chain (BSC)', suffix: '' },
+    { label: 'Total Supply', value: '0', suffix: 'BNT' },
+    { label: 'In Circulation', value: '0', suffix: 'BNT' },
+    { label: 'Token Utility', value: 'TBD', suffix: '' },
+    { label: 'Blockchain', value: 'TBD', suffix: '' },
   ];
 
   const utilities = [
@@ -67,8 +67,8 @@ export function Tokenomics() {
             Economics
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted max-w-2xl mx-auto">
-            Fair distribution model designed to reward community participation
-            and long-term platform growth
+            Tokenomics is currently being finalized. Final supply, chain, and
+            distribution will be announced closer to launch.
           </p>
         </div>
 

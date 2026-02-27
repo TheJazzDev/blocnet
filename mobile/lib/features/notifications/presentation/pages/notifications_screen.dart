@@ -155,13 +155,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return;
     }
 
-    final type = item.type ?? '';
-    final updateId = item.updateId ?? item.payload?['updateId']?.toString();
+    final type = item.type?.trim().toLowerCase() ?? '';
+    final deeplink = _parseNotificationDeeplink(item.deeplink);
+    final updateId = _firstNonEmpty(
+      item.updateId,
+      item.payload?['updateId']?.toString(),
+      deeplink.updateId,
+    );
+    final communityPostId = _firstNonEmpty(
+      item.payload?['postId']?.toString(),
+      deeplink.communityPostId,
+    );
 
     if (type == 'project_update' || type == 'comment_received') {
       if (updateId == null || updateId.isEmpty) return;
       await _openUpdateDetails(updateId);
       return;
+    }
+
+    if (type == 'mention_received') {
+      if (updateId != null && updateId.isNotEmpty) {
+        await _openUpdateDetails(updateId);
+        return;
+      }
+      if (communityPostId != null && communityPostId.isNotEmpty) {
+        _pushNamed(AppRoutes.communityDiscussion, arguments: communityPostId);
+        return;
+      }
     }
 
     if (_isWalletType(type)) {
@@ -175,7 +195,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
 
     if (type == 'community_liked' || type == 'community_bookmarked') {
-      final postId = item.payload?['postId']?.toString();
+      final postId = _firstNonEmpty(
+        item.payload?['postId']?.toString(),
+        deeplink.communityPostId,
+      );
       if (postId != null && postId.isNotEmpty) {
         _pushNamed(AppRoutes.communityDiscussion, arguments: postId);
       } else {
@@ -200,21 +223,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return;
     }
 
-    final deeplink = item.deeplink?.trim().toLowerCase() ?? '';
-    if (deeplink.contains('profile/badges') || deeplink.endsWith('/badges')) {
+    final deeplinkPath = deeplink.path;
+    if (deeplinkPath.contains('profile/badges') ||
+        deeplinkPath.endsWith('/badges')) {
       _pushNamed(AppRoutes.badges);
       return;
     }
-    if (deeplink.startsWith('/wallet/transactions')) {
+    if (deeplinkPath.startsWith('/wallet/transactions')) {
       _pushNamed(AppRoutes.walletTransactions);
       return;
     }
-    if (deeplink.startsWith('/wallet')) {
+    if (deeplinkPath.startsWith('/wallet')) {
       _pushNamed(AppRoutes.wallet);
       return;
     }
-    if (deeplink.startsWith('/updates') && updateId != null) {
+    if (deeplinkPath.startsWith('/updates') &&
+        updateId != null &&
+        updateId.isNotEmpty) {
       await _openUpdateDetails(updateId);
+      return;
+    }
+    if (deeplinkPath.startsWith('/community/posts') &&
+        communityPostId != null &&
+        communityPostId.isNotEmpty) {
+      _pushNamed(AppRoutes.communityDiscussion, arguments: communityPostId);
       return;
     }
 
@@ -226,13 +258,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     required bool isHunterSpace,
   }) {
     final type = item.type?.trim().toLowerCase() ?? '';
-    final deeplink = item.deeplink?.trim().toLowerCase() ?? '';
+    final deeplinkPath = _parseNotificationDeeplink(item.deeplink).path;
     final targetsCommunity =
-        type.startsWith('community_') || deeplink.startsWith('/community');
+        type.startsWith('community_') || deeplinkPath.startsWith('/community');
     final targetsHunterHub = _isHunterHubType(type) ||
-        deeplink.startsWith('/hunter-hub') ||
-        deeplink.startsWith('/manage-updates') ||
-        deeplink.startsWith('/manage-projects');
+        deeplinkPath.startsWith('/hunter-hub') ||
+        deeplinkPath.startsWith('/manage-updates') ||
+        deeplinkPath.startsWith('/manage-projects');
 
     if (isHunterSpace && targetsCommunity) {
       return _CrossSpaceSurface.community;
@@ -241,6 +273,84 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return _CrossSpaceSurface.hunterHub;
     }
     return null;
+  }
+
+  _ParsedNotificationDeeplink _parseNotificationDeeplink(String? rawDeeplink) {
+    final raw = rawDeeplink?.trim() ?? '';
+    if (raw.isEmpty) {
+      return const _ParsedNotificationDeeplink(path: '');
+    }
+
+    Uri? uri;
+    try {
+      uri = Uri.parse(raw);
+    } catch (_) {
+      uri = null;
+    }
+
+    if (uri == null) {
+      return _ParsedNotificationDeeplink(path: raw.toLowerCase());
+    }
+
+    final segments = <String>[
+      if (uri.scheme.isNotEmpty && uri.host.isNotEmpty) uri.host,
+      ...uri.pathSegments.where((segment) => segment.trim().isNotEmpty),
+    ];
+    final normalizedSegments = segments.map((segment) => segment.toLowerCase());
+    final path =
+        normalizedSegments.isEmpty ? '' : '/${normalizedSegments.join('/')}';
+
+    String? updateId =
+        _cleanIdentifier(uri.queryParameters['updateId']?.toString());
+    String? communityPostId =
+        _cleanIdentifier(uri.queryParameters['postId']?.toString());
+    String? commentId =
+        _cleanIdentifier(uri.queryParameters['commentId']?.toString());
+
+    if (segments.length >= 2 &&
+        segments[0].toLowerCase() == 'updates' &&
+        segments[1].toLowerCase() != 'comment') {
+      updateId = _cleanIdentifier(segments[1]);
+    }
+
+    if (segments.length >= 3 &&
+        segments[0].toLowerCase() == 'updates' &&
+        segments[1].toLowerCase() == 'comment') {
+      commentId = _cleanIdentifier(segments[2]) ?? commentId;
+    }
+
+    if (segments.length >= 3 &&
+        segments[0].toLowerCase() == 'community' &&
+        segments[1].toLowerCase() == 'posts' &&
+        segments[2].toLowerCase() != 'comment') {
+      communityPostId = _cleanIdentifier(segments[2]);
+    }
+
+    if (segments.length >= 4 &&
+        segments[0].toLowerCase() == 'community' &&
+        segments[1].toLowerCase() == 'posts' &&
+        segments[2].toLowerCase() == 'comment') {
+      commentId = _cleanIdentifier(segments[3]) ?? commentId;
+    }
+
+    return _ParsedNotificationDeeplink(
+      path: path,
+      updateId: updateId,
+      communityPostId: communityPostId,
+      commentId: commentId,
+    );
+  }
+
+  String? _firstNonEmpty(String? first, [String? second, String? third]) {
+    return _cleanIdentifier(first) ??
+        _cleanIdentifier(second) ??
+        _cleanIdentifier(third);
+  }
+
+  String? _cleanIdentifier(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
   }
 
   bool _isHunterHubType(String type) {
@@ -498,6 +608,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
     );
   }
+}
+
+class _ParsedNotificationDeeplink {
+  const _ParsedNotificationDeeplink({
+    required this.path,
+    this.updateId,
+    this.communityPostId,
+    this.commentId,
+  });
+
+  final String path;
+  final String? updateId;
+  final String? communityPostId;
+  final String? commentId;
 }
 
 class _DigestTile extends StatelessWidget {

@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
+import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -40,7 +41,7 @@ class MiningLeaderboardList extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                '${items.length}',
+                formatGroupedNumber(items.length, maxDecimals: 0),
                 style: AppTypography.custom(
                   color: AppColors.primary400,
                   size: 11,
@@ -224,7 +225,7 @@ class _LeaderboardTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${item.lifetimeEarnedPoints} lifetime MCR',
+                  '${formatGroupedNumber(item.lifetimeEarnedPoints, maxDecimals: 0)} lifetime BNP',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: 11,

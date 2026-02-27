@@ -31,6 +31,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   clientApi,
   type AdminStats,
+  type AdminWalletHealth,
   type AuditLog,
   type EdgeBriefResponse,
   type EdgeExplainResponse,
@@ -72,11 +73,19 @@ function parseAuditNumber(value: unknown) {
   return 0;
 }
 
+function formatTokenAmount(value: string | null | undefined, maxDecimals = 2) {
+  if (!value) return "0";
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return value;
+  return parsed.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
+}
+
 const ACTIVITY_PAGE_SIZE = 10;
 const TELEMETRY_LOG_LIMIT = 160;
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [walletHealth, setWalletHealth] = useState<AdminWalletHealth | null>(null);
   const [activityLogs, setActivityLogs] = useState<AuditLog[]>([]);
   const [telemetryLogs, setTelemetryLogs] = useState<AuditLog[]>([]);
   const [edgeBrief, setEdgeBrief] = useState<EdgeBriefResponse | null>(null);
@@ -99,13 +108,15 @@ export default function DashboardPage() {
     setLoadError(null);
 
     try {
-      const [s, firstLogs, telemetry, edge] = await Promise.all([
+      const [s, firstLogs, telemetry, edge, wallet] = await Promise.all([
         clientApi.getStats(),
         clientApi.listAuditLog(ACTIVITY_PAGE_SIZE, 0),
         clientApi.listAuditLog(TELEMETRY_LOG_LIMIT, 0),
         clientApi.getMyEdgeBrief(7),
+        clientApi.getWalletHealth().catch(() => null),
       ]);
       setStats(s);
+      setWalletHealth(wallet);
       setActivityLogs(firstLogs);
       setTelemetryLogs(telemetry);
       setActivityPage(0);
@@ -113,6 +124,7 @@ export default function DashboardPage() {
       setEdgeBrief(edge);
     } catch (e: unknown) {
       setStats(null);
+      setWalletHealth(null);
       setActivityLogs([]);
       setTelemetryLogs([]);
       setActivityPage(0);
@@ -232,6 +244,21 @@ export default function DashboardPage() {
     : [];
 
   const activeRate = stats && stats.totalUsers > 0 ? (stats.activeUsers / stats.totalUsers) * 100 : 0;
+  const walletAssetTotals = walletHealth?.economy.walletAssetHoldings ?? [];
+  const tipCurrencyTotals = walletHealth?.economy.tipCurrencyTotals ?? [];
+  const miningTotals = walletHealth?.economy.mining;
+
+  const bntHolding = walletAssetTotals.find((row) => row.asset === "BNT");
+  const bnbHolding = walletAssetTotals.find((row) => row.asset === "BNB");
+  const usdtHolding = walletAssetTotals.find((row) => row.asset === "USDT");
+
+  const bnpTip = tipCurrencyTotals.find((row) => row.currencyCode === "BNP");
+  const bntTip = tipCurrencyTotals.find((row) => row.currencyCode === "BNT");
+  const questTotals = walletHealth?.economy.quests;
+  const questShareOfClaimedPct =
+    miningTotals && miningTotals.lifetimeClaimedMcr > 0
+      ? ((questTotals?.rewardPointsTotal ?? 0) / miningTotals.lifetimeClaimedMcr) * 100
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -320,6 +347,95 @@ export default function DashboardPage() {
 
         <DashboardHealthCard />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="h-4 w-4" />
+            Economy Snapshot
+          </CardTitle>
+          <CardDescription>
+            Live aggregate balances and mining totals for admin comms and reporting.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <LoadingSpinner className="py-8" />
+          ) : walletHealth ? (
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCell
+                  label="Total BNT Held"
+                  value={formatTokenAmount(bntHolding?.totalBalance)}
+                  hint={`${bntHolding?.accounts ?? 0} wallets`}
+                />
+                <MetricCell
+                  label="Total BNB Held"
+                  value={formatTokenAmount(bnbHolding?.totalBalance)}
+                  hint={`${bnbHolding?.accounts ?? 0} wallets`}
+                />
+                <MetricCell
+                  label="Total USDT Held"
+                  value={formatTokenAmount(usdtHolding?.totalBalance)}
+                  hint={`${usdtHolding?.accounts ?? 0} wallets`}
+                />
+                <MetricCell
+                  label="Total BNP Mined"
+                  value={(miningTotals?.lifetimeMinedMcr ?? 0).toLocaleString()}
+                  hint={`${miningTotals?.totalMiners ?? 0} miners`}
+                />
+                <MetricCell
+                  label="Total BNP Claimed"
+                  value={(miningTotals?.lifetimeClaimedMcr ?? 0).toLocaleString()}
+                  hint="Lifetime"
+                />
+                <MetricCell
+                  label="Total BNP Unclaimed"
+                  value={(miningTotals?.lifetimeUnclaimedMcr ?? 0).toLocaleString()}
+                  hint="Lifetime outstanding"
+                />
+                <MetricCell
+                  label="BNP Tip Wallet Balance"
+                  value={formatTokenAmount(bnpTip?.totalUserBalance)}
+                  hint={`${bnpTip?.holders ?? 0} holders`}
+                />
+                <MetricCell
+                  label="BNT Tip Wallet Balance"
+                  value={formatTokenAmount(bntTip?.totalUserBalance)}
+                  hint={`${bntTip?.holders ?? 0} holders`}
+                />
+                <MetricCell
+                  label="Quest BNP Distributed"
+                  value={(questTotals?.rewardPointsTotal ?? 0).toLocaleString()}
+                  hint={`${(questTotals?.rewardedUsersTotal ?? 0).toLocaleString()} users rewarded`}
+                />
+                <MetricCell
+                  label="Quest Reward Events"
+                  value={(questTotals?.rewardEventsTotal ?? 0).toLocaleString()}
+                  hint={`${(questTotals?.completedUserQuestsTotal ?? 0).toLocaleString()} quest completions`}
+                />
+                <MetricCell
+                  label="Quest Share Of Claimed"
+                  value={`${questShareOfClaimedPct.toFixed(1)}%`}
+                  hint="Quest rewards / claimed BNP"
+                />
+                <MetricCell
+                  label="Quest Submissions"
+                  value={(questTotals?.submissions.total ?? 0).toLocaleString()}
+                  hint={`${(questTotals?.submissions.approved ?? 0).toLocaleString()} approved · ${(questTotals?.submissions.pending ?? 0).toLocaleString()} pending`}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Wallet runtime currently tracks BNT, BNB, and USDT. USDC/BUSD are not yet enabled assets.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Economy metrics are currently unavailable.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-2">
@@ -584,9 +700,9 @@ function MetricCell({
 }) {
   return (
     <div className="rounded-lg border p-2">
-      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className="text-[12px] text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold">{value}</p>
-      {hint ? <p className="text-[10px] text-muted-foreground">{hint}</p> : null}
+      {hint ? <p className="text-[12px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

@@ -48,7 +48,12 @@ export function SignInForm() {
       });
 
       if (!tokenRes.ok) {
-        setError('Session setup failed. Please try again.');
+        const bodyText = await tokenRes.text().catch(() => '');
+        setError(
+          bodyText
+            ? `Session setup failed [${tokenRes.status}]: ${bodyText}`
+            : `Session setup failed [${tokenRes.status}]. Please try again.`,
+        );
         await supabase.auth.signOut();
         await fetch('/api/auth/sign-out', { method: 'POST' });
         return;

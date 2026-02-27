@@ -36,9 +36,9 @@ import {
   parseAtomicAmountAllowZero,
 } from './tip-amount.util';
 import {
+  BNP_CURRENCY_CODE,
+  BNP_DECIMALS,
   FEE_VAULT_OWNER_REF,
-  MCR_CURRENCY_CODE,
-  MCR_DECIMALS,
 } from './tip.constants';
 
 const DEFAULT_PAGE_SIZE = 30;
@@ -79,39 +79,52 @@ export class TipsService {
 
   async getMyOverview(userId: string) {
     await this.ensureBootstrap();
-    const [activeCurrency, accounts, sentAggregateRows] = await Promise.all([
-      this.requireActiveCurrency(),
-      this.prisma.tipAccount.findMany({
-        where: {
-          userId,
-          accountType: TipAccountType.user,
-        },
-        include: {
-          currency: {
-            include: {
-              feeConfig: true,
+    const [activeCurrency, accounts, sentAggregateRows, receivedAggregateRows] =
+      await Promise.all([
+        this.requireActiveCurrency(),
+        this.prisma.tipAccount.findMany({
+          where: {
+            userId,
+            accountType: TipAccountType.user,
+          },
+          include: {
+            currency: {
+              include: {
+                feeConfig: true,
+              },
             },
           },
-        },
-        orderBy: {
-          currencyCode: 'asc',
-        },
-      }),
-      this.prisma.tipTransaction.groupBy({
-        by: ['currencyCode'],
-        where: {
-          senderUserId: userId,
-        },
-        _count: {
-          _all: true,
-        },
-        _sum: {
-          amountAtomic: true,
-          feeAtomic: true,
-          totalDebitAtomic: true,
-        },
-      }),
-    ]);
+          orderBy: {
+            currencyCode: 'asc',
+          },
+        }),
+        this.prisma.tipTransaction.groupBy({
+          by: ['currencyCode'],
+          where: {
+            senderUserId: userId,
+          },
+          _count: {
+            _all: true,
+          },
+          _sum: {
+            amountAtomic: true,
+            feeAtomic: true,
+            totalDebitAtomic: true,
+          },
+        }),
+        this.prisma.tipTransaction.groupBy({
+          by: ['currencyCode'],
+          where: {
+            recipientUserId: userId,
+          },
+          _count: {
+            _all: true,
+          },
+          _sum: {
+            amountAtomic: true,
+          },
+        }),
+      ]);
 
     const activeAccount = await this.ensureUserAccount(
       userId,
@@ -166,6 +179,30 @@ export class TipsService {
         totalDebitAtomic: 0n,
       });
 
+    const receivedSummaryByCurrency = receivedAggregateRows
+      .map((row) => {
+        const account = accountByCurrency.get(row.currencyCode);
+        if (!account) return null;
+        return this.toReceivedSummaryResponse({
+          currency: account.currency,
+          feeConfig: account.currency.feeConfig,
+          transactionCount: row._count._all,
+          amountAtomic: row._sum.amountAtomic ?? 0n,
+        });
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null);
+
+    const receivedSummary =
+      receivedSummaryByCurrency.find(
+        (row) => row.currency.code === activeCurrency.code,
+      ) ??
+      this.toReceivedSummaryResponse({
+        currency: activeCurrency,
+        feeConfig: activeCurrency.feeConfig,
+        transactionCount: 0,
+        amountAtomic: 0n,
+      });
+
     return {
       activeCurrency: this.toCurrencyResponse(
         activeCurrency,
@@ -174,6 +211,8 @@ export class TipsService {
       balances,
       sentSummary,
       sentSummaryByCurrency,
+      receivedSummary,
+      receivedSummaryByCurrency,
     };
   }
 
@@ -833,6 +872,25 @@ export class TipsService {
     };
   }
 
+  private toReceivedSummaryResponse({
+    currency,
+    feeConfig,
+    transactionCount,
+    amountAtomic,
+  }: {
+    currency: TipCurrency;
+    feeConfig: TipFeeConfig | null;
+    transactionCount: number;
+    amountAtomic: bigint;
+  }) {
+    return {
+      currency: this.toCurrencyResponse(currency, feeConfig),
+      transactionCount,
+      amountAtomic: amountAtomic.toString(),
+      amount: formatAtomicAmount(amountAtomic, currency.decimals),
+    };
+  }
+
   private resolveRecipientCreditAtomic(
     amountAtomic: bigint,
     feeAtomic: bigint,
@@ -989,7 +1047,7 @@ export class TipsService {
     tx: TxClient,
   ): Promise<TipAccount> {
     let initialBalance = 0n;
-    if (currencyCode === MCR_CURRENCY_CODE) {
+    if (currencyCode === BNP_CURRENCY_CODE) {
       const profile = await tx.profile.findUnique({
         where: { id: userId },
         select: { miningClaimedPoints: true },
@@ -1052,19 +1110,19 @@ export class TipsService {
   private async bootstrapDefaults() {
     await this.prisma.$transaction(async (tx) => {
       await tx.tipCurrency.upsert({
-        where: { code: MCR_CURRENCY_CODE },
+        where: { code: BNP_CURRENCY_CODE },
         update: {
-          name: 'Mine Credits',
-          symbol: 'MCR',
-          decimals: MCR_DECIMALS,
+          name: 'Blocnet Points',
+          symbol: 'BNP',
+          decimals: BNP_DECIMALS,
           kind: 'points',
           isEnabled: true,
         },
         create: {
-          code: MCR_CURRENCY_CODE,
-          name: 'Mine Credits',
-          symbol: 'MCR',
-          decimals: MCR_DECIMALS,
+          code: BNP_CURRENCY_CODE,
+          name: 'Blocnet Points',
+          symbol: 'BNP',
+          decimals: BNP_DECIMALS,
           kind: 'points',
           isEnabled: true,
           isActiveTippingCurrency: true,
@@ -1092,10 +1150,10 @@ export class TipsService {
       });
 
       await tx.tipFeeConfig.upsert({
-        where: { currencyCode: MCR_CURRENCY_CODE },
+        where: { currencyCode: BNP_CURRENCY_CODE },
         update: {},
         create: {
-          currencyCode: MCR_CURRENCY_CODE,
+          currencyCode: BNP_CURRENCY_CODE,
           feeBps: 500,
           minTipAtomic: 1n,
           minFeeAtomic: 0n,
@@ -1117,7 +1175,7 @@ export class TipsService {
         },
       });
 
-      await this.ensureFeeVaultAccount(MCR_CURRENCY_CODE, tx);
+      await this.ensureFeeVaultAccount(BNP_CURRENCY_CODE, tx);
       await this.ensureFeeVaultAccount('BNT', tx);
 
       const activeCount = await tx.tipCurrency.count({
@@ -1133,7 +1191,7 @@ export class TipsService {
           data: { isActiveTippingCurrency: false },
         });
         await tx.tipCurrency.update({
-          where: { code: MCR_CURRENCY_CODE },
+          where: { code: BNP_CURRENCY_CODE },
           data: { isActiveTippingCurrency: true },
         });
       }

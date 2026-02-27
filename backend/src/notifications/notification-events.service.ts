@@ -901,7 +901,7 @@ export class NotificationEventsService {
         type: NotificationType.mining_claimed,
         actorUserId: actorId,
         title: 'Mining claimed',
-        body: `You claimed ${mcr} MCR.`,
+        body: `You claimed ${mcr} BNP.`,
         payload: {
           sessionId: resourceId,
           points: mcr,

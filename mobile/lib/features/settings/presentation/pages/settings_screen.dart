@@ -97,7 +97,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildPrivacySection(context),
                   const SizedBox(height: 20),
                 ],
-                _SignOutButton(),
               ],
             ),
           ),
@@ -147,6 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           title: 'Push notifications',
           subtitle: 'Get in-app and device alerts',
           value: prefs.masterEnabled,
+          showDivider: true,
           onChanged: settingsStore.isSaving
               ? null
               : (value) {
@@ -159,6 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle:
               'Daily summary at ${_formatLocalDigestTime(prefs.digestHourLocal, prefs.digestMinuteLocal)}',
           value: prefs.digestEmailEnabled,
+          showDivider: true,
           onChanged: settingsStore.isSaving
               ? null
               : (value) {
@@ -182,7 +183,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required NotificationPreferences prefs,
     required NotificationPreferencesCatalog catalog,
   }) {
-    if (catalog.categories.isEmpty) {
+    final categories = catalog.categories;
+    if (categories.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -191,18 +193,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         const _SectionLabel('Notification Categories'),
         const SizedBox(height: 8),
-        ...catalog.categories.map(
-          (category) => _SettingSwitchTile(
+        ...categories.indexed.map(
+          (entry) {
+            final index = entry.$1;
+            final category = entry.$2;
+            return _SettingSwitchTile(
             icon: _iconForCategory(category.key),
             title: category.label,
             subtitle: _buildCategorySubtitle(category),
             value: prefs.isCategoryEnabled(category.key),
+            showDivider: index != categories.length - 1,
             onChanged: settingsStore.isSaving || !prefs.masterEnabled
                 ? null
                 : (value) {
                     settingsStore.setCategoryEnabled(category.key, value);
                   },
-          ),
+          );
+          },
         ),
       ],
     );
@@ -285,16 +292,6 @@ class _SettingsHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Settings',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 20,
-            fontFamily: 'Geist',
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
           'Control how you receive Blocnet updates.',
           style: TextStyle(
             color: AppColors.textMuted,
@@ -339,6 +336,7 @@ class _SettingSwitchTile extends StatelessWidget {
     required this.subtitle,
     required this.value,
     required this.onChanged,
+    this.showDivider = true,
   });
 
   final IconData icon;
@@ -346,101 +344,68 @@ class _SettingSwitchTile extends StatelessWidget {
   final String subtitle;
   final bool value;
   final ValueChanged<bool>? onChanged;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
     final isEnabled = onChanged != null;
     final iconColor = value ? AppColors.teal400 : AppColors.textMuted;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.bgSurface,
-            AppColors.bgSurface.withValues(alpha: 0.85),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: value
-              ? AppColors.teal400.withValues(alpha: 0.25)
-              : AppColors.borderSubtle,
-          width: 1.5,
-        ),
-        boxShadow: value
-            ? [
-                BoxShadow(
-                  color: AppColors.teal400.withValues(alpha: 0.08),
-                  blurRadius: 12,
-                  spreadRadius: 0,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: iconColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.custom(
+                        color: isEnabled
+                            ? AppColors.textPrimary
+                            : AppColors.textPrimary.withValues(alpha: 0.7),
+                        size: 14,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: AppTypography.custom(
+                        color: isEnabled
+                            ? AppColors.textMuted
+                            : AppColors.textMuted.withValues(alpha: 0.7),
+                        size: 12,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              ]
-            : null,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  iconColor.withValues(alpha: 0.15),
-                  iconColor.withValues(alpha: 0.08),
-                ],
               ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: iconColor.withValues(alpha: 0.2),
-                width: 1.5,
+              const SizedBox(width: 8),
+              Switch(
+                value: value,
+                onChanged: onChanged,
+                activeColor: AppColors.teal400,
+                activeTrackColor: AppColors.teal500.withValues(alpha: 0.35),
+                inactiveThumbColor: AppColors.textFaint,
+                inactiveTrackColor: AppColors.bgElevated,
               ),
-            ),
-            child: Icon(icon, size: 20, color: iconColor),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.custom(
-                    color: isEnabled
-                        ? AppColors.textPrimary
-                        : AppColors.textPrimary.withValues(alpha: 0.7),
-                    size: 14,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: AppTypography.custom(
-                    color: isEnabled
-                        ? AppColors.textMuted
-                        : AppColors.textMuted.withValues(alpha: 0.7),
-                    size: 12,
-                    weight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+        ),
+        if (showDivider)
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColors.borderSubtle,
           ),
-          const SizedBox(width: 8),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: AppColors.teal400,
-            activeTrackColor: AppColors.teal500.withValues(alpha: 0.35),
-            inactiveThumbColor: AppColors.textFaint,
-            inactiveTrackColor: AppColors.bgElevated,
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -458,14 +423,8 @@ class _CadenceSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderSubtle, width: 1.5),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
           Icon(
@@ -524,14 +483,8 @@ class _FeedViewSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderSubtle, width: 1.5),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
           Icon(
@@ -715,81 +668,6 @@ class _SettingsNavigationTile extends StatelessWidget {
               Icons.chevron_right,
               color: AppColors.textMuted,
               size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Sign Out Button ──────────────────────────────────────────────────────────
-
-class _SignOutButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        await context.read<AuthStore>().signOut();
-        if (!context.mounted) return;
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.signIn,
-          (Route<dynamic> route) => false,
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.error500.withValues(alpha: 0.08),
-              AppColors.error500.withValues(alpha: 0.05),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.error500.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.error500.withValues(alpha: 0.1),
-              blurRadius: 12,
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.error500.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.error500.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Icon(
-                Icons.logout_rounded,
-                size: 16,
-                color: AppColors.error500,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Sign Out',
-              style: AppTypography.custom(
-                color: AppColors.error500,
-                weight: FontWeight.w700,
-                size: 15,
-              ),
             ),
           ],
         ),

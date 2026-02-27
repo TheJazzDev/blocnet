@@ -64,6 +64,21 @@ function urgencyBadge(urgency: string) {
   return <Badge className="bg-slate-500/15 text-slate-300">Low</Badge>;
 }
 
+function dedupeTopDecisions(
+  overview: AdminEdgeOverviewResponse,
+): AdminEdgeOverviewResponse {
+  const seen = new Set<string>();
+  const topDecisions = overview.topDecisions.filter((decision) => {
+    if (seen.has(decision.decisionId)) {
+      return false;
+    }
+    seen.add(decision.decisionId);
+    return true;
+  });
+
+  return { ...overview, topDecisions };
+}
+
 export default function EdgeEnginePage() {
   const session = useAdminSession();
   const canMutateConfig = canMutateWallet(session.effectiveRoles);
@@ -102,16 +117,19 @@ export default function EdgeEnginePage() {
         clientApi.getAdminEdgeConfig(),
         clientApi.listAuditLog(250),
       ]);
+      const normalizedOverview = dedupeTopDecisions(overviewRes);
 
-      setOverview(overviewRes);
+      setOverview(normalizedOverview);
       setEdgeConfig(configRes);
       setAuditLog(logsRes);
 
       if (
         !selectedDecisionId ||
-        !overviewRes.topDecisions.some((decision) => decision.decisionId === selectedDecisionId)
+        !normalizedOverview.topDecisions.some(
+          (decision) => decision.decisionId === selectedDecisionId,
+        )
       ) {
-        setSelectedDecisionId(overviewRes.topDecisions[0]?.decisionId ?? null);
+        setSelectedDecisionId(normalizedOverview.topDecisions[0]?.decisionId ?? null);
       }
     } catch (e: unknown) {
       setOverview(null);

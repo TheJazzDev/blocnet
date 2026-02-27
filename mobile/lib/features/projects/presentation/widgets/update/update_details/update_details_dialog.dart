@@ -8,6 +8,7 @@ import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart';
+import 'package:blocnet/features/mentions/presentation/utils/mention_profile_navigator.dart';
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth_store.dart';
@@ -566,6 +567,12 @@ class _CommentTile extends StatelessWidget {
               fontWeight: FontWeight.w500,
               height: 1.6,
             ),
+            onMentionTap: (mentionUsername) async {
+              await MentionProfileNavigator.openFromUsername(
+                context,
+                mentionUsername,
+              );
+            },
           ),
         ],
       ),

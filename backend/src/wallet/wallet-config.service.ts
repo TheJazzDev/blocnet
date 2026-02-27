@@ -874,7 +874,9 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  private normalizeOptionalString(value: string | null | undefined): string | null {
+  private normalizeOptionalString(
+    value: string | null | undefined,
+  ): string | null {
     if (value === undefined || value === null) {
       return null;
     }

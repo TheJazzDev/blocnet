@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
+import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
@@ -302,7 +303,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'MCR/h',
+                            'BNP/h',
                             style: AppTypography.custom(
                               size: 16,
                               weight: FontWeight.w600,
@@ -325,7 +326,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${_formatDecimal(cycleMinedDisplay)} MCR earned • Claim after 24h',
+                        '${_formatDecimal(cycleMinedDisplay)} BNP earned • Claim after 24h',
                         style: AppTypography.custom(
                           size: 12,
                           weight: FontWeight.w600,
@@ -342,7 +343,8 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                     Expanded(
                       child: _CompactStat(
                         label: 'Mining Power',
-                        value: '${miningPower.toStringAsFixed(1)} TH/s',
+                        value:
+                            '${formatGroupedNumber(miningPower, maxDecimals: 1, minDecimals: 1)} TH/s',
                         icon: Icons.speed_rounded,
                         color: AppColors.primary400,
                       ),
@@ -351,7 +353,8 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                     Expanded(
                       child: _CompactStat(
                         label: 'Total Earned',
-                        value: '${balance?.lifetimeEarnedPoints ?? 0} MCR',
+                        value:
+                            '${formatGroupedNumber(balance?.lifetimeEarnedPoints ?? 0, maxDecimals: 0)} BNP',
                         icon: Icons.stars_rounded,
                         color: AppColors.warning500,
                       ),
@@ -364,7 +367,8 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                     Expanded(
                       child: _CompactStat(
                         label: 'Claimed',
-                        value: '${balance?.claimedTotalPoints ?? 0} MCR',
+                        value:
+                            '${formatGroupedNumber(balance?.claimedTotalPoints ?? 0, maxDecimals: 0)} BNP',
                         icon: Icons.check_circle_rounded,
                         color: AppColors.successColor,
                       ),
@@ -433,8 +437,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
   }
 
   String _formatDecimal(num value) {
-    final formatted = value.toStringAsFixed(2);
-    return formatted.replaceFirst(RegExp(r'\.?0+$'), '');
+    return formatGroupedNumber(value, maxDecimals: 2);
   }
 }
 
@@ -486,7 +489,8 @@ class _CompactStat extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: AppColors.bgElevated.withValues(alpha: 0.5),
-        border: Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.5)),
+        border:
+            Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [

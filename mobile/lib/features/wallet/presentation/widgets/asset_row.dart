@@ -123,7 +123,7 @@ class AssetRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  asset.available,
+                  formatTokenAmount(asset.available),
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
                     size: 16,

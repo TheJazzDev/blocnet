@@ -42,7 +42,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBRRUDnpcr-QF3RAuYAYfLJYi5GDPuuwto',
-    appId: '1:962979513672:android:f3b3ed5b2145d3c01b9f7d',
+    appId: '1:962979513672:android:670d7c168a78d2ba1b9f7d',
     messagingSenderId: '962979513672',
     projectId: 'blocnet-f2c6e',
     storageBucket: 'blocnet-f2c6e.firebasestorage.app',
@@ -50,11 +50,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyC-zrbrRMLycbDB2Ay7Qg7r3GXiZ5n7QgE',
-    appId: '1:962979513672:ios:19a8f2be84b0fd7d1b9f7d',
+    appId: '1:962979513672:ios:a1b4bd0d4d6d92e81b9f7d',
     messagingSenderId: '962979513672',
     projectId: 'blocnet-f2c6e',
     storageBucket: 'blocnet-f2c6e.firebasestorage.app',
-    iosBundleId: 'com.example.blocnet',
+    iosBundleId: 'io.blocnet.app',
   );
 
 }

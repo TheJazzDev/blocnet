@@ -185,12 +185,6 @@ function SidebarContent({
           <h1 className="text-sm font-bold tracking-tight">
             Blocnet Admin {environmentLabel}
           </h1>
-          <p className="text-[11px] text-muted-foreground">
-            {environmentLabel} Environment
-          </p>
-          <p className="text-[10px] font-medium text-muted-foreground/80">
-            {hostName}
-          </p>
         </div>
       </div>
       <Separator />
@@ -424,7 +418,7 @@ export function AdminShell({
             </div>
           </div>
 
-          <div className="pointer-events-none fixed bottom-4 right-4 z-30">
+          <div className="pointer-events-none fixed bottom-4 right-8 z-30">
             <div
               className={cn(
                 "rounded-md border px-3 py-1.5 text-[11px] font-semibold shadow-lg backdrop-blur-xs",
@@ -452,7 +446,7 @@ export function AdminShell({
           )}
 
           <main className="flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-7xl p-4 md:p-6 lg:p-8">{children}</div>
+            <div className="mx-auto p-4 md:p-6 lg:p-8">{children}</div>
           </main>
         </div>
       </div>

@@ -71,6 +71,7 @@ export class WalletQueryService {
     }
 
     const bntAccount = accountByAsset.get(WalletAsset.BNT);
+    const hideUsdPricing = wallet.chainEnvironment === 'testnet';
 
     const assets = supportedAssets.map((asset) => {
       const account = accountByAsset.get(asset);
@@ -78,8 +79,10 @@ export class WalletQueryService {
       const pending = account ? toDecimalString(account.pending) : '0';
       const locked = account ? toDecimalString(account.locked) : '0';
       const price = prices[asset];
+      const effectiveUsdPrice = hideUsdPricing ? '0' : price.usdPrice;
+      const effectivePriceSource = hideUsdPricing ? 'fallback' : price.source;
       const usdValue = new Prisma.Decimal(available)
-        .mul(new Prisma.Decimal(price.usdPrice))
+        .mul(new Prisma.Decimal(effectiveUsdPrice))
         .toString();
 
       return {
@@ -91,9 +94,9 @@ export class WalletQueryService {
         available,
         pending,
         locked,
-        usdPrice: price.usdPrice,
+        usdPrice: effectiveUsdPrice,
         usdValue,
-        priceSource: price.source,
+        priceSource: effectivePriceSource,
       };
     });
 

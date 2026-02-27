@@ -131,7 +131,7 @@ export default function TipsTransactionsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All currencies</SelectItem>
-                <SelectItem value="MCR">MCR</SelectItem>
+                <SelectItem value="BNP">BNP</SelectItem>
                 <SelectItem value="BNT">BNT</SelectItem>
               </SelectContent>
             </Select>

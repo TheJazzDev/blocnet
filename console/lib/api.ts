@@ -691,6 +691,20 @@ export interface AdminWalletHealth {
       lifetimeUnclaimedMcr: number;
       totalMiners: number;
     };
+    quests: {
+      rewardPointsTotal: number;
+      rewardEventsTotal: number;
+      rewardedUsersTotal: number;
+      completedUserQuestsTotal: number;
+      totalQuests: number;
+      activeQuests: number;
+      submissions: {
+        pending: number;
+        approved: number;
+        rejected: number;
+        total: number;
+      };
+    };
   };
 }
 
@@ -844,6 +858,10 @@ export interface AdminMiningLeaderboardResponse {
 
 export interface AdminBindReferralRequest {
   userIdOrEmail: string;
+  code: string;
+}
+
+export interface AdminBindUserReferralRequest {
   code: string;
 }
 
@@ -1468,6 +1486,12 @@ export const api = {
 
   adminBindReferral: (body: AdminBindReferralRequest) =>
     apiFetch<AdminBindReferralResponse>("/admin/referrals/bind", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  adminBindReferralForUser: (userId: string, body: AdminBindUserReferralRequest) =>
+    apiFetch<AdminBindReferralResponse>(`/admin/users/${userId}/referrals/bind`, {
       method: "POST",
       body: JSON.stringify(body),
     }),

@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
+import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -44,7 +45,7 @@ class DownlineList extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                '${items.length}',
+                formatGroupedNumber(items.length, maxDecimals: 0),
                 style: AppTypography.custom(
                   color: AppColors.primary400,
                   size: 11,
@@ -172,7 +173,7 @@ class _DownlineTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${item.claimedTotalPoints} claimed MCR',
+                  '${formatGroupedNumber(item.claimedTotalPoints, maxDecimals: 0)} claimed BNP',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: 11,

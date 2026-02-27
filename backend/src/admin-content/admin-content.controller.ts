@@ -107,7 +107,11 @@ export class AdminContentController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.adminCommunityService.moderateCommunityPostStatus(user, id, dto);
+    return this.adminCommunityService.moderateCommunityPostStatus(
+      user,
+      id,
+      dto,
+    );
   }
 
   @Get('community-comments')

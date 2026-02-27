@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
+import 'package:blocnet/features/mentions/presentation/utils/mention_profile_navigator.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart';
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
@@ -495,6 +496,12 @@ class _PostDetailsCard extends StatelessWidget {
               weight: FontWeight.w400,
               height: 1.55,
             ),
+            onMentionTap: (mentionUsername) async {
+              await MentionProfileNavigator.openFromUsername(
+                context,
+                mentionUsername,
+              );
+            },
           ),
           const SizedBox(height: 8),
           Row(
@@ -735,6 +742,12 @@ class _CommentCard extends StatelessWidget {
                     weight: FontWeight.w400,
                     height: 1.6,
                   ),
+                  onMentionTap: (mentionUsername) async {
+                    await MentionProfileNavigator.openFromUsername(
+                      context,
+                      mentionUsername,
+                    );
+                  },
                 ),
               ],
             ),

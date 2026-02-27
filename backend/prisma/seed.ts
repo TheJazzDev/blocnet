@@ -128,9 +128,9 @@ const defaultAssetPriceConfigs = [
 
 const defaultTipCurrencies = [
   {
-    code: 'MCR',
-    name: 'Mine Credits',
-    symbol: 'MCR',
+    code: 'BNP',
+    name: 'Blocnet Points',
+    symbol: 'BNP',
     decimals: 3,
     kind: 'points' as const,
     isEnabled: true,
@@ -458,7 +458,7 @@ async function main() {
   });
 
   await prisma.tipCurrency.update({
-    where: { code: 'MCR' },
+    where: { code: 'BNP' },
     data: { isActiveTippingCurrency: true },
   });
 

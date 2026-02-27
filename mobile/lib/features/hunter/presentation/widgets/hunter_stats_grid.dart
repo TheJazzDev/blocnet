@@ -11,7 +11,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 /// 3-cell stats grid shown at the top of the Hunter Hub.
-/// Displays live wallet tipping + update performance + followers.
+/// Displays received-tip stats + update performance + followers.
 class HunterStatsGrid extends StatelessWidget {
   const HunterStatsGrid({super.key});
 
@@ -63,10 +63,17 @@ class HunterStatsGrid extends StatelessWidget {
     );
 
     final receivedHistory = tipsStore.receivedHistory;
-    final totalTipsReceived = _sumTipAmount(receivedHistory);
-    final tipsCurrencySymbol =
-        _resolveCurrencySymbol(tipsStore, receivedHistory);
-    final tipBalance = _resolveTipBalance(tipsStore, receivedHistory);
+    final receivedSummary = _resolveReceivedSummary(tipsStore);
+    final totalTipsReceived =
+        _resolveTotalTipsReceived(receivedSummary, receivedHistory);
+    final tipsCurrencySymbol = _resolveCurrencySymbol(
+      tipsStore: tipsStore,
+      summary: receivedSummary,
+      rows: receivedHistory,
+    );
+    final tipBalance = totalTipsReceived;
+    final totalTipsCount =
+        receivedSummary?.transactionCount ?? tipsStore.receivedHistoryTotal;
     final latestTipAt = _latestTipAt(receivedHistory);
 
     return Column(
@@ -76,7 +83,7 @@ class HunterStatsGrid extends StatelessWidget {
               tipsStore.isLoadingReceivedHistory && receivedHistory.isEmpty,
           tipBalance: tipBalance,
           totalTipsReceived: totalTipsReceived,
-          totalTipsCount: tipsStore.receivedHistoryTotal,
+          totalTipsCount: totalTipsCount,
           currencySymbol: tipsCurrencySymbol,
           latestTipAt: latestTipAt,
           lastError: tipsStore.lastError,
@@ -134,7 +141,7 @@ class _TipsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final symbol = currencySymbol.trim().isEmpty ? 'MCR' : currencySymbol;
+    final symbol = currencySymbol.trim().isEmpty ? 'BNP' : currencySymbol;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -325,31 +332,50 @@ double _sumTipAmount(List<TipTransaction> rows) {
   });
 }
 
-String _resolveCurrencySymbol(TipsStore tipsStore, List<TipTransaction> rows) {
+TipReceivedSummary? _resolveReceivedSummary(TipsStore tipsStore) {
+  final overview = tipsStore.overview;
+  if (overview == null) return null;
+
+  final activeCode = overview.activeCurrency.code.trim().toUpperCase();
+  for (final summary in overview.receivedSummaryByCurrency) {
+    if (summary.currency.code.trim().toUpperCase() == activeCode) {
+      return summary;
+    }
+  }
+  return overview.receivedSummary;
+}
+
+double _resolveTotalTipsReceived(
+  TipReceivedSummary? summary,
+  List<TipTransaction> rows,
+) {
+  final parsed = _parseAmount(summary?.amount);
+  if (parsed != null) return parsed;
+  return _sumTipAmount(rows);
+}
+
+String _resolveCurrencySymbol({
+  required TipsStore tipsStore,
+  required TipReceivedSummary? summary,
+  required List<TipTransaction> rows,
+}) {
+  final summarySymbol = summary?.currency.symbol.trim();
+  if (summarySymbol != null && summarySymbol.isNotEmpty) {
+    return summarySymbol;
+  }
+
   final overviewSymbol = tipsStore.overview?.activeCurrency.symbol.trim();
   if (overviewSymbol != null && overviewSymbol.isNotEmpty) {
     return overviewSymbol;
   }
-  if (rows.isEmpty) return 'MCR';
+
+  if (rows.isEmpty) return 'BNP';
 
   final symbol = rows.first.currency.symbol.trim();
   if (symbol.isNotEmpty) return symbol;
   return rows.first.currency.code.trim().isNotEmpty
       ? rows.first.currency.code
-      : 'MCR';
-}
-
-double _resolveTipBalance(TipsStore tipsStore, List<TipTransaction> rows) {
-  final active = tipsStore.overview?.activeCurrency;
-  if (active != null) {
-    final balance = tipsStore.overview?.findBalance(active.code)?.balance;
-    final parsed = _parseAmount(balance);
-    if (parsed != null) {
-      return parsed;
-    }
-  }
-
-  return _sumTipAmount(rows);
+      : 'BNP';
 }
 
 DateTime? _latestTipAt(List<TipTransaction> rows) {

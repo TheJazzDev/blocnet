@@ -249,7 +249,7 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Amount (${active?.symbol ?? 'MCR'})',
+                          'Amount (${active?.symbol ?? 'BNP'})',
                           style: AppTypography.custom(
                             color: AppColors.textSecondary,
                             size: 12,

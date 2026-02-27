@@ -474,7 +474,7 @@ class _QuestPointsPill extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            '$points MCR',
+            '$points BNP',
             style: TextStyle(
               fontSize: 10,
               color: Colors.amber.shade400,

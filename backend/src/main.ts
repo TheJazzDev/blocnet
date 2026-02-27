@@ -62,7 +62,9 @@ async function bootstrap() {
     credentials: true,
     optionsSuccessStatus: 204,
   });
-  logger.log(`CORS origins configured: ${allowAnyOrigin ? '*' : allowedOrigins.join(', ')}`);
+  logger.log(
+    `CORS origins configured: ${allowAnyOrigin ? '*' : allowedOrigins.join(', ')}`,
+  );
 
   app.setGlobalPrefix('api');
   app.use((req: Request, res: Response, next: NextFunction) => {

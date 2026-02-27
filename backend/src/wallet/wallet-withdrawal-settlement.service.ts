@@ -1,5 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { LedgerReason, Prisma, WalletStatus, WithdrawalStatus } from '@prisma/client';
+import {
+  LedgerReason,
+  Prisma,
+  WalletStatus,
+  WithdrawalStatus,
+} from '@prisma/client';
 import { parseUnits, type PublicClient } from 'viem';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';

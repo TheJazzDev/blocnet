@@ -96,6 +96,40 @@ function formatDate(dateString: string | null): string {
   }
 }
 
+function questTypeBadgeClass(type: string): string {
+  switch (type) {
+    case "internal_action":
+      return "bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-inset ring-amber-500/30";
+    case "social_media":
+      return "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300 ring-1 ring-inset ring-fuchsia-500/30";
+    case "external_link":
+    default:
+      return "bg-sky-500/15 text-sky-700 dark:text-sky-300 ring-1 ring-inset ring-sky-500/30";
+  }
+}
+
+function questCategoryBadgeClass(category: string): string {
+  switch (category) {
+    case "mining":
+      return "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-500/30";
+    case "engagement":
+      return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/30";
+    case "social":
+      return "bg-pink-500/15 text-pink-700 dark:text-pink-300 ring-1 ring-inset ring-pink-500/30";
+    case "trust":
+      return "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 ring-1 ring-inset ring-cyan-500/30";
+    case "special":
+    default:
+      return "bg-violet-500/15 text-violet-700 dark:text-violet-300 ring-1 ring-inset ring-violet-500/30";
+  }
+}
+
+function verificationBadgeClass(method: string): string {
+  return method === "auto"
+    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/30"
+    : "bg-orange-500/15 text-orange-700 dark:text-orange-300 ring-1 ring-inset ring-orange-500/30";
+}
+
 export default function QuestsPage() {
   const session = useAdminSession();
   const [quests, setQuests] = useState<QuestModel[]>([]);
@@ -111,6 +145,16 @@ export default function QuestsPage() {
 
   const canManageQuests =
     session.effectiveRoles.includes("owner") || session.effectiveRoles.includes("admin");
+  const activeQuestsCount = quests.filter((quest) => quest.isActive).length;
+  const inactiveQuestsCount = quests.length - activeQuestsCount;
+  const autoVerifiedCount = quests.filter(
+    (quest) => quest.verificationMethod === "auto",
+  ).length;
+  const manualVerifiedCount = quests.length - autoVerifiedCount;
+  const configuredRewardPointsTotal = quests.reduce(
+    (total, quest) => total + (quest.rewardPoints ?? 0),
+    0,
+  );
 
   useEffect(() => {
     fetchData();
@@ -251,6 +295,37 @@ export default function QuestsPage() {
         </Button>
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-lg border bg-card p-3">
+          <p className="text-xs text-muted-foreground">Total Quests</p>
+          <p className="text-lg font-semibold">{quests.length.toLocaleString()}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <p className="text-xs text-muted-foreground">Active / Inactive</p>
+          <p className="text-lg font-semibold">
+            {activeQuestsCount.toLocaleString()} / {inactiveQuestsCount.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <p className="text-xs text-muted-foreground">Auto / Manual Verification</p>
+          <p className="text-lg font-semibold">
+            {autoVerifiedCount.toLocaleString()} / {manualVerifiedCount.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <p className="text-xs text-muted-foreground">Configured Reward Points</p>
+          <p className="text-lg font-semibold">{configuredRewardPointsTotal.toLocaleString()}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <p className="text-xs text-muted-foreground">Average Reward / Quest</p>
+          <p className="text-lg font-semibold">
+            {quests.length > 0
+              ? Math.round(configuredRewardPointsTotal / quests.length).toLocaleString()
+              : "0"}
+          </p>
+        </div>
+      </div>
+
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <div className="flex items-start gap-3">
@@ -298,12 +373,16 @@ export default function QuestsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                      <span
+                        className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${questTypeBadgeClass(quest.type)}`}
+                      >
                         {QUEST_TYPES.find((t) => t.value === quest.type)?.label ?? quest.type}
                       </span>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
+                      <span
+                        className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${questCategoryBadgeClass(quest.category)}`}
+                      >
                         {QUEST_CATEGORIES.find((c) => c.value === quest.category)?.label ??
                           quest.category}
                       </span>
@@ -327,23 +406,19 @@ export default function QuestsPage() {
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
                       <span
-                        className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${
-                          quest.verificationMethod === "auto"
-                            ? "bg-green-50 text-green-700 ring-1 ring-inset ring-green-700/10"
-                            : "bg-orange-50 text-orange-700 ring-1 ring-inset ring-orange-700/10"
-                        }`}
+                        className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${verificationBadgeClass(quest.verificationMethod)}`}
                       >
                         {quest.verificationMethod === "auto" ? "Auto" : "Manual"}
                       </span>
                     </TableCell>
                     <TableCell>
                       {quest.isActive ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700/10">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-500/30 dark:text-emerald-300">
                           <CheckCircle2 className="h-3 w-3" />
                           Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-700/10">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-zinc-500/15 px-2 py-1 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-500/30 dark:text-zinc-300">
                           <AlertCircle className="h-3 w-3" />
                           Inactive
                         </span>

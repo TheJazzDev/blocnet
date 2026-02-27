@@ -5,7 +5,10 @@ import {
 } from '@nestjs/common';
 import {
   ChainEnvironment,
+  MiningPointSource,
   Prisma,
+  QuestStatus,
+  QuestVerificationStatus,
   WalletStatus,
   type UserWallet,
 } from '@prisma/client';
@@ -17,7 +20,6 @@ import { TurnkeyCustodyAdapter } from './custody/turnkey-custody.adapter';
 import { normalizePagination } from '../common/utils/pagination.util';
 import { ListWalletUsersQuery } from './dto/list-wallet-users.query';
 import { ReprocessDepositByTxHashDto } from './dto/reprocess-deposit-by-tx-hash.dto';
-import { UpdateWalletRuntimeConfigDto } from './dto/update-wallet-runtime-config.dto';
 import { toDecimalString } from './types/decimal';
 import { WalletConfigService } from './wallet-config.service';
 import { WalletDepositIndexerService } from './wallet-deposit-indexer.service';
@@ -48,6 +50,12 @@ export class WalletAdminService {
       lifetimeMinedAggregate,
       lifetimeClaimedAggregate,
       lifetimeMinersRows,
+      questRewardAggregate,
+      questRewardRecipients,
+      questSubmissionCounts,
+      completedUserQuestsCount,
+      totalQuestsCount,
+      activeQuestsCount,
     ] = await Promise.all([
       this.turnkeyCustodyAdapter.getHealth(),
       Promise.all([
@@ -150,6 +158,43 @@ export class WalletAdminService {
           userId: true,
         },
         distinct: ['userId'],
+      }),
+      this.prisma.miningPointLedger.aggregate({
+        where: {
+          source: MiningPointSource.quest_reward,
+        },
+        _sum: {
+          points: true,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      this.prisma.miningPointLedger.findMany({
+        where: {
+          source: MiningPointSource.quest_reward,
+        },
+        select: {
+          userId: true,
+        },
+        distinct: ['userId'],
+      }),
+      this.prisma.questSubmission.groupBy({
+        by: ['verificationStatus'],
+        _count: {
+          _all: true,
+        },
+      }),
+      this.prisma.userQuest.count({
+        where: {
+          status: QuestStatus.completed,
+        },
+      }),
+      this.prisma.quest.count(),
+      this.prisma.quest.count({
+        where: {
+          isActive: true,
+        },
       }),
     ]);
 
@@ -268,6 +313,23 @@ export class WalletAdminService {
       lifetimeMinedMcr - lifetimeClaimedMcr,
       0,
     );
+    const questRewardPoints = questRewardAggregate._sum.points ?? 0;
+    const questRewardEvents = questRewardAggregate._count._all ?? 0;
+
+    const submissionsByStatus = {
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+    };
+    for (const row of questSubmissionCounts) {
+      if (row.verificationStatus === QuestVerificationStatus.pending) {
+        submissionsByStatus.pending = row._count._all;
+      } else if (row.verificationStatus === QuestVerificationStatus.approved) {
+        submissionsByStatus.approved = row._count._all;
+      } else if (row.verificationStatus === QuestVerificationStatus.rejected) {
+        submissionsByStatus.rejected = row._count._all;
+      }
+    }
 
     return {
       timestamp: new Date().toISOString(),
@@ -295,6 +357,21 @@ export class WalletAdminService {
           lifetimeClaimedMcr,
           lifetimeUnclaimedMcr,
           totalMiners: lifetimeMinersRows.length,
+        },
+        quests: {
+          rewardPointsTotal: questRewardPoints,
+          rewardEventsTotal: questRewardEvents,
+          rewardedUsersTotal: questRewardRecipients.length,
+          completedUserQuestsTotal: completedUserQuestsCount,
+          totalQuests: totalQuestsCount,
+          activeQuests: activeQuestsCount,
+          submissions: {
+            ...submissionsByStatus,
+            total:
+              submissionsByStatus.pending +
+              submissionsByStatus.approved +
+              submissionsByStatus.rejected,
+          },
         },
       },
     };
@@ -365,18 +442,38 @@ export class WalletAdminService {
           roles: { select: { role: true } },
           wallet: true,
           kycProfile: true,
-          ledgerAccounts: {
-            where: { accountType: 'user', currency: 'BNT' },
-            take: 1,
-          },
         },
       }),
       this.prisma.profile.count({ where }),
     ]);
 
+    const userIds = rows.map((row) => row.id);
+    const accounts =
+      userIds.length > 0
+        ? await this.prisma.ledgerAccount.findMany({
+            where: {
+              userId: { in: userIds },
+              accountType: 'user',
+              currency: 'BNT',
+            },
+            select: {
+              userId: true,
+              available: true,
+              pending: true,
+              locked: true,
+            },
+          })
+        : [];
+
+    const accountByUserId = new Map<string, (typeof accounts)[number]>();
+    for (const account of accounts) {
+      if (!account.userId) continue;
+      accountByUserId.set(account.userId, account);
+    }
+
     return {
       data: rows.map((row) => {
-        const account = row.ledgerAccounts[0];
+        const account = accountByUserId.get(row.id);
         return {
           id: row.id,
           email: row.email,

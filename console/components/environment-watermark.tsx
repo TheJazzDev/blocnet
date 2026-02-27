@@ -14,9 +14,14 @@ interface ViewportSize {
   height: number;
 }
 
+const SSR_SAFE_VIEWPORT: ViewportSize = {
+  width: 1440,
+  height: 900,
+};
+
 function getViewportSize(): ViewportSize {
   if (typeof window === "undefined") {
-    return { width: 1440, height: 900 };
+    return SSR_SAFE_VIEWPORT;
   }
 
   return {
@@ -38,7 +43,9 @@ export function EnvironmentWatermark({
   className,
   textClassName,
 }: EnvironmentWatermarkProps) {
-  const [viewport, setViewport] = useState<ViewportSize>(() => getViewportSize());
+  // Keep first render deterministic between server and client to avoid
+  // hydration mismatch, then measure real viewport after mount.
+  const [viewport, setViewport] = useState<ViewportSize>(SSR_SAFE_VIEWPORT);
 
   useEffect(() => {
     const handleResize = () => {
@@ -66,6 +73,7 @@ export function EnvironmentWatermark({
       className={cn("pointer-events-none fixed inset-0 z-0 overflow-hidden", className)}
     >
       <div
+        suppressHydrationWarning
         className="absolute bottom-0 left-0 origin-bottom-left"
         style={{
           width: `${diagonal}px`,
@@ -73,6 +81,7 @@ export function EnvironmentWatermark({
         }}
       >
         <p
+          suppressHydrationWarning
           className={cn(
             "w-full select-none text-center font-black uppercase leading-none tracking-[0.12em] text-primary/18",
             textClassName,

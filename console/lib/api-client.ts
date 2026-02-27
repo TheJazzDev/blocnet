@@ -97,6 +97,7 @@ export type {
   AdminMiningLeaderboardEntry,
   AdminMiningLeaderboardResponse,
   AdminBindReferralRequest,
+  AdminBindUserReferralRequest,
   AdminBindReferralResponse,
 } from "./api";
 
@@ -147,6 +148,7 @@ import type {
   AdminMiningMetrics,
   AdminMiningLeaderboardResponse,
   AdminBindReferralRequest,
+  AdminBindUserReferralRequest,
   AdminBindReferralResponse,
 } from "./api";
 
@@ -950,6 +952,15 @@ export const clientApi = {
 
   adminBindReferral: (body: AdminBindReferralRequest) =>
     apiFetch<AdminBindReferralResponse>("/admin/referrals/bind", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  adminBindReferralForUser: (
+    userId: string,
+    body: AdminBindUserReferralRequest,
+  ) =>
+    apiFetch<AdminBindReferralResponse>(`/admin/users/${userId}/referrals/bind`, {
       method: "POST",
       body: JSON.stringify(body),
     }),

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { NotificationType } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -202,6 +202,10 @@ export class MentionsService {
     }
 
     const authorName = author.displayName || author.email || 'Someone';
+    const notification = await this.resolveNotificationContext(
+      context,
+      authorName,
+    );
 
     // Create mention records and notifications for each mentioned user
     for (const user of users) {
@@ -220,33 +224,16 @@ export class MentionsService {
           },
         });
 
-        // Send notification
-        let title: string;
-        let body: string;
-        let deeplink: string;
-
-        if ('commentId' in context) {
-          title = 'You were mentioned';
-          body = `${authorName} mentioned you in a comment`;
-          deeplink = `/updates/comment/${context.commentId}`;
-        } else if ('communityPostId' in context) {
-          title = 'You were mentioned';
-          body = `${authorName} mentioned you in a post`;
-          deeplink = `/community/posts/${context.communityPostId}`;
-        } else {
-          title = 'You were mentioned';
-          body = `${authorName} mentioned you in a comment`;
-          deeplink = `/community/posts/comment/${context.communityPostCommentId}`;
-        }
-
         await this.notificationsService.notifyMany([
           {
             userId: user.id,
             type: NotificationType.mention_received,
             actorUserId: authorId,
-            title,
-            body,
-            deeplink,
+            title: notification.title,
+            body: notification.body,
+            payload: notification.payload,
+            updateId: notification.updateId,
+            deeplink: notification.deeplink,
             dedupeKey: `mention_${contextType}_${Object.values(context)[0]}_${user.id}`,
           },
         ]);
@@ -261,5 +248,76 @@ export class MentionsService {
         );
       }
     }
+  }
+
+  private async resolveNotificationContext(
+    context:
+      | { commentId: string }
+      | { communityPostId: string }
+      | { communityPostCommentId: string },
+    authorName: string,
+  ): Promise<{
+    title: string;
+    body: string;
+    deeplink: string;
+    payload: Prisma.InputJsonValue;
+    updateId: string | null;
+  }> {
+    const title = 'You were mentioned';
+
+    if ('commentId' in context) {
+      const comment = await this.prisma.comment.findUnique({
+        where: { id: context.commentId },
+        select: { updateId: true },
+      });
+      const updateId = comment?.updateId ?? null;
+
+      return {
+        title,
+        body: `${authorName} mentioned you in a comment`,
+        deeplink: updateId
+          ? `/updates/${updateId}?commentId=${context.commentId}`
+          : `/updates/comment/${context.commentId}`,
+        payload: {
+          mentionContext: 'update_comment',
+          commentId: context.commentId,
+          ...(updateId ? { updateId } : {}),
+        } as Prisma.InputJsonValue,
+        updateId,
+      };
+    }
+
+    if ('communityPostId' in context) {
+      return {
+        title,
+        body: `${authorName} mentioned you in a post`,
+        deeplink: `/community/posts/${context.communityPostId}`,
+        payload: {
+          mentionContext: 'community_post',
+          postId: context.communityPostId,
+        } as Prisma.InputJsonValue,
+        updateId: null,
+      };
+    }
+
+    const comment = await this.prisma.communityPostComment.findUnique({
+      where: { id: context.communityPostCommentId },
+      select: { postId: true },
+    });
+    const postId = comment?.postId ?? null;
+
+    return {
+      title,
+      body: `${authorName} mentioned you in a comment`,
+      deeplink: postId
+        ? `/community/posts/${postId}?commentId=${context.communityPostCommentId}`
+        : `/community/posts/comment/${context.communityPostCommentId}`,
+      payload: {
+        mentionContext: 'community_post_comment',
+        communityPostCommentId: context.communityPostCommentId,
+        ...(postId ? { postId } : {}),
+      } as Prisma.InputJsonValue,
+      updateId: null,
+    };
   }
 }

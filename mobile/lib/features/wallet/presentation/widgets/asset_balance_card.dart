@@ -85,7 +85,7 @@ class AssetBalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '${asset.available} ${asset.asset}',
+            '${formatTokenAmount(asset.available)} ${asset.asset}',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
               size: 32,

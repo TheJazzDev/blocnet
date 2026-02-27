@@ -84,7 +84,7 @@ export default function MiningLeaderboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Mining Leaderboard"
-        description="Search and review miner rankings by total earned MCR."
+        description="Search and review miner rankings by total earned BNP."
       >
         <Button variant="outline" onClick={() => setReloadTick((tick) => tick + 1)} disabled={loading}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}

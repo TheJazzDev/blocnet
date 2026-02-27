@@ -92,13 +92,17 @@ class TransactionsList extends StatelessWidget {
       final toAddress = trimValue(tx.metadataString('toAddress'));
       final txHash = trimValue(tx.metadataString('txHash'));
       final note = trimValue(tx.metadataString('note'));
-      explorerTxUrl = buildExplorerTxUrl(context.read<WalletStore>().snapshot, txHash);
+      explorerTxUrl =
+          buildExplorerTxUrl(context.read<WalletStore>().snapshot, txHash);
 
       fields.addAll([
         _WalletDetailField(label: 'Type', value: toTitleCase(tx.reason)),
         _WalletDetailField(
             label: 'Direction', value: directionLabel(tx.direction)),
-        _WalletDetailField(label: 'Amount', value: '${tx.amount} ${tx.asset}'),
+        _WalletDetailField(
+          label: 'Amount',
+          value: '${formatTokenAmount(tx.amount)} ${tx.asset}',
+        ),
         _WalletDetailField(label: 'Date', value: formatDate(tx.createdAt)),
       ]);
 
@@ -166,7 +170,8 @@ class TransactionsList extends StatelessWidget {
             label: 'Status', value: toTitleCase(withdrawal.status)),
         _WalletDetailField(
           label: 'Amount',
-          value: '-${withdrawal.amount} ${withdrawal.asset}',
+          value:
+              '-${formatTokenAmount(withdrawal.amount, absolute: true)} ${withdrawal.asset}',
         ),
         _WalletDetailField(
           label: 'Destination Wallet',
@@ -181,8 +186,8 @@ class TransactionsList extends StatelessWidget {
       ]);
       if (withdrawal.broadcastTxHash != null &&
           withdrawal.broadcastTxHash!.trim().isNotEmpty) {
-        explorerTxUrl ??=
-            buildExplorerTxUrl(context.read<WalletStore>().snapshot, withdrawal.broadcastTxHash!);
+        explorerTxUrl ??= buildExplorerTxUrl(
+            context.read<WalletStore>().snapshot, withdrawal.broadcastTxHash!);
         fields.add(
           _WalletDetailField(
             label: 'Broadcast Tx Hash',
@@ -403,7 +408,8 @@ class TransactionsList extends StatelessWidget {
           icon: icon,
           title: tx.reason.replaceAll('_', ' ').toUpperCase(),
           subtitle: formatDate(tx.createdAt),
-          amountLabel: '$sign${tx.amount} ${tx.asset}',
+          amountLabel:
+              '$sign${formatTokenAmount(tx.amount, absolute: true)} ${tx.asset}',
           amountColor: isOutgoing
               ? AppColors.error500
               : isIncoming
@@ -435,7 +441,8 @@ class TransactionsList extends StatelessWidget {
           icon: Icons.call_made_rounded,
           title: 'WITHDRAWAL',
           subtitle: '$addressLabel • ${formatDate(withdrawal.requestedAt)}',
-          amountLabel: '-${withdrawal.amount} ${withdrawal.asset}',
+          amountLabel:
+              '-${formatTokenAmount(withdrawal.amount, absolute: true)} ${withdrawal.asset}',
           amountColor: AppColors.error500,
           occurredAt: withdrawal.requestedAt,
           isOutgoing: true,

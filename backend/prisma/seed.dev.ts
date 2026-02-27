@@ -388,9 +388,9 @@ async function main() {
 
   const tipCurrencies = [
     {
-      code: 'MCR',
-      name: 'Mine Credits',
-      symbol: 'MCR',
+      code: 'BNP',
+      name: 'Blocnet Points',
+      symbol: 'BNP',
       decimals: 3,
       kind: TipCurrencyKind.points,
       isEnabled: true,
@@ -482,7 +482,7 @@ async function main() {
   });
 
   await prisma.tipCurrency.update({
-    where: { code: 'MCR' },
+    where: { code: 'BNP' },
     data: { isActiveTippingCurrency: true },
   });
 
@@ -493,7 +493,7 @@ async function main() {
         accountType_ownerRef_currencyCode: {
           accountType: TipAccountType.user,
           ownerRef: profile.id,
-          currencyCode: 'MCR',
+          currencyCode: 'BNP',
         },
       },
       update: {
@@ -503,7 +503,7 @@ async function main() {
         accountType: TipAccountType.user,
         ownerRef: profile.id,
         userId: profile.id,
-        currencyCode: 'MCR',
+        currencyCode: 'BNP',
         balanceAtomic: 0n,
       },
     });

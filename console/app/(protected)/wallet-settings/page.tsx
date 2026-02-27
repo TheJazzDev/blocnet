@@ -73,6 +73,24 @@ function formatKeyLabel(value: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function formatInteger(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return "n/a";
+  return value.toLocaleString("en-US");
+}
+
+function formatAmount(
+  value: string | number | null | undefined,
+  maxDecimals = 6,
+) {
+  if (value == null) return "n/a";
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) return String(value);
+  return parsed.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals,
+  });
+}
+
 function renderCountGroup(title: string, values: Record<string, number>) {
   return (
     <div className="rounded-lg border p-3">
@@ -83,7 +101,7 @@ function renderCountGroup(title: string, values: Record<string, number>) {
         {Object.entries(values).map(([key, value]) => (
           <div key={key} className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">{formatKeyLabel(key)}</span>
-            <span className="font-medium">{value}</span>
+            <span className="font-medium">{formatInteger(value)}</span>
           </div>
         ))}
       </div>
@@ -840,27 +858,31 @@ export default function WalletSettingsPage() {
                   {manualReprocessResult.chainEnvironment.toUpperCase()}
                 </Badge>
                 <span>
-                  Tx Block: {manualReprocessResult.txBlockNumber} | Head:{" "}
-                  {manualReprocessResult.headBlockNumber}
+                  Tx Block: {formatInteger(manualReprocessResult.txBlockNumber)}{" "}
+                  | Head: {formatInteger(manualReprocessResult.headBlockNumber)}
                 </span>
               </div>
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="rounded border p-2 text-xs">
                   <p className="text-muted-foreground">Matched Assets</p>
                   <p className="font-medium">
-                    {manualReprocessResult.summary.matchedAssets}
+                    {formatInteger(manualReprocessResult.summary.matchedAssets)}
                   </p>
                 </div>
                 <div className="rounded border p-2 text-xs">
                   <p className="text-muted-foreground">Detected Deposits</p>
                   <p className="font-medium">
-                    {manualReprocessResult.summary.detectedDeposits}
+                    {formatInteger(
+                      manualReprocessResult.summary.detectedDeposits,
+                    )}
                   </p>
                 </div>
                 <div className="rounded border p-2 text-xs">
                   <p className="text-muted-foreground">Credited Deposits</p>
                   <p className="font-medium">
-                    {manualReprocessResult.summary.creditedDeposits}
+                    {formatInteger(
+                      manualReprocessResult.summary.creditedDeposits,
+                    )}
                   </p>
                 </div>
               </div>
@@ -873,8 +895,8 @@ export default function WalletSettingsPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary">{row.asset}</Badge>
                       {boolBadge(row.matched, "Matched", "No Match")}
-                      <span>Detected: {row.detectedCount}</span>
-                      <span>Credited: {row.creditedCount}</span>
+                      <span>Detected: {formatInteger(row.detectedCount)}</span>
+                      <span>Credited: {formatInteger(row.creditedCount)}</span>
                     </div>
                     {row.reason ? <p className="mt-1">{row.reason}</p> : null}
                     {row.depositIds.length > 0 ? (
@@ -993,7 +1015,7 @@ export default function WalletSettingsPage() {
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium">
                         {network.chainEnvironment.toUpperCase()} (Chain{" "}
-                        {network.chainId})
+                        {formatInteger(network.chainId)})
                       </p>
                       {boolBadge(
                         network.rpcReachable,
@@ -1002,13 +1024,21 @@ export default function WalletSettingsPage() {
                       )}
                     </div>
                     <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                      <p>Latest block: {network.latestBlock ?? "n/a"}</p>
                       <p>
-                        Deposit start block:{" "}
-                        {network.depositStartBlock ?? "n/a"}
+                        Latest block:{" "}
+                        {network.latestBlock == null
+                          ? "n/a"
+                          : formatInteger(network.latestBlock)}
                       </p>
                       <p>
-                        Confirmations required: {network.confirmationsRequired}
+                        Deposit start block:{" "}
+                        {network.depositStartBlock == null
+                          ? "n/a"
+                          : formatInteger(network.depositStartBlock)}
+                      </p>
+                      <p>
+                        Confirmations required:{" "}
+                        {formatInteger(network.confirmationsRequired)}
                       </p>
                       <p>
                         Token address configured:{" "}
@@ -1070,14 +1100,15 @@ export default function WalletSettingsPage() {
                           <div className="flex items-center justify-between gap-2">
                             <Badge variant="secondary">{row.asset}</Badge>
                             <span className="font-medium text-foreground">
-                              {row.totalBalance}
+                              {formatAmount(row.totalBalance)}
                             </span>
                           </div>
                           <p className="mt-1">
-                            Avail {row.totalAvailable} | Pending{" "}
-                            {row.totalPending} | Locked {row.totalLocked}
+                            Avail {formatAmount(row.totalAvailable)} | Pending{" "}
+                            {formatAmount(row.totalPending)} | Locked{" "}
+                            {formatAmount(row.totalLocked)}
                           </p>
-                          <p>Accounts: {row.accounts}</p>
+                          <p>Accounts: {formatInteger(row.accounts)}</p>
                         </div>
                       ))
                     )}
@@ -1100,10 +1131,12 @@ export default function WalletSettingsPage() {
                           <div className="flex items-center justify-between gap-2">
                             <Badge variant="secondary">{row.asset}</Badge>
                             <span className="font-medium text-foreground">
-                              {row.totalAmount}
+                              {formatAmount(row.totalAmount)}
                             </span>
                           </div>
-                          <p className="mt-1">Deposits: {row.count}</p>
+                          <p className="mt-1">
+                            Deposits: {formatInteger(row.count)}
+                          </p>
                         </div>
                       ))
                     )}
@@ -1128,15 +1161,17 @@ export default function WalletSettingsPage() {
                           <Badge variant="secondary">{row.currencyCode}</Badge>
                           <Badge variant="outline">{row.kind}</Badge>
                           <span>
-                            Holders: {row.holders} | Tx: {row.transactions}
+                            Holders: {formatInteger(row.holders)} | Tx:{" "}
+                            {formatInteger(row.transactions)}
                           </span>
                         </div>
                         <p className="mt-1">
-                          User balance: {row.totalUserBalance} {row.symbol}
+                          User balance: {formatAmount(row.totalUserBalance)}{" "}
+                          {row.symbol}
                         </p>
                         <p>
-                          Tipped: {row.totalTipped} {row.symbol} | Fees:{" "}
-                          {row.totalFees} {row.symbol}
+                          Tipped: {formatAmount(row.totalTipped)} {row.symbol}{" "}
+                          | Fees: {formatAmount(row.totalFees)} {row.symbol}
                         </p>
                       </div>
                     ))
@@ -1145,27 +1180,31 @@ export default function WalletSettingsPage() {
 
                 <div className="grid gap-3 md:grid-cols-4">
                   <div className="rounded border p-2 text-xs">
-                    <p className="text-muted-foreground">Lifetime Mined (MCR)</p>
+                    <p className="text-muted-foreground">Lifetime Mined (BNP)</p>
                     <p className="font-medium">
-                      {walletHealth.economy.mining.lifetimeMinedMcr}
+                      {formatInteger(walletHealth.economy.mining.lifetimeMinedMcr)}
                     </p>
                   </div>
                   <div className="rounded border p-2 text-xs">
-                    <p className="text-muted-foreground">Lifetime Claimed (MCR)</p>
+                    <p className="text-muted-foreground">Lifetime Claimed (BNP)</p>
                     <p className="font-medium">
-                      {walletHealth.economy.mining.lifetimeClaimedMcr}
+                      {formatInteger(
+                        walletHealth.economy.mining.lifetimeClaimedMcr,
+                      )}
                     </p>
                   </div>
                   <div className="rounded border p-2 text-xs">
-                    <p className="text-muted-foreground">Unclaimed (MCR)</p>
+                    <p className="text-muted-foreground">Unclaimed (BNP)</p>
                     <p className="font-medium">
-                      {walletHealth.economy.mining.lifetimeUnclaimedMcr}
+                      {formatInteger(
+                        walletHealth.economy.mining.lifetimeUnclaimedMcr,
+                      )}
                     </p>
                   </div>
                   <div className="rounded border p-2 text-xs">
                     <p className="text-muted-foreground">Total Miners</p>
                     <p className="font-medium">
-                      {walletHealth.economy.mining.totalMiners}
+                      {formatInteger(walletHealth.economy.mining.totalMiners)}
                     </p>
                   </div>
                 </div>

@@ -10,14 +10,14 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
-import { MCR_CURRENCY_CODE } from '../tips/tip.constants';
+import { BNP_CURRENCY_CODE } from '../tips/tip.constants';
 import {
   MiningCalculatorService,
   EffectiveMiningConfig,
 } from './mining-calculator.service';
 import { MiningConfigService } from './mining-config.service';
 
-const MCR_ATOMIC_MULTIPLIER = 1000n;
+const BNP_ATOMIC_MULTIPLIER = 1000n;
 
 type MiningSessionStatus = 'idle' | 'running' | 'claimable';
 
@@ -410,15 +410,15 @@ export class MiningService {
         },
       });
 
-      const tipCreditAtomic = BigInt(claimPoints) * MCR_ATOMIC_MULTIPLIER;
+      const tipCreditAtomic = BigInt(claimPoints) * BNP_ATOMIC_MULTIPLIER;
       if (tipCreditAtomic > 0n) {
         await tx.tipCurrency.upsert({
-          where: { code: MCR_CURRENCY_CODE },
+          where: { code: BNP_CURRENCY_CODE },
           update: {},
           create: {
-            code: MCR_CURRENCY_CODE,
-            name: 'Mine Credits',
-            symbol: 'MCR',
+            code: BNP_CURRENCY_CODE,
+            name: 'Blocnet Points',
+            symbol: 'BNP',
             decimals: 3,
             kind: 'points',
             isEnabled: true,
@@ -431,7 +431,7 @@ export class MiningService {
             accountType_ownerRef_currencyCode: {
               accountType: TipAccountType.user,
               ownerRef: userId,
-              currencyCode: MCR_CURRENCY_CODE,
+              currencyCode: BNP_CURRENCY_CODE,
             },
           },
           update: {
@@ -444,7 +444,7 @@ export class MiningService {
             accountType: TipAccountType.user,
             ownerRef: userId,
             userId,
-            currencyCode: MCR_CURRENCY_CODE,
+            currencyCode: BNP_CURRENCY_CODE,
             balanceAtomic: tipCreditAtomic,
           },
         });

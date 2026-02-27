@@ -8,15 +8,7 @@ import { AdminUpdatesService } from './services/admin-updates.service';
 @Module({
   imports: [AuditLogModule],
   controllers: [AdminContentController],
-  providers: [
-    AdminProjectsService,
-    AdminUpdatesService,
-    AdminCommunityService,
-  ],
-  exports: [
-    AdminProjectsService,
-    AdminUpdatesService,
-    AdminCommunityService,
-  ],
+  providers: [AdminProjectsService, AdminUpdatesService, AdminCommunityService],
+  exports: [AdminProjectsService, AdminUpdatesService, AdminCommunityService],
 })
 export class AdminContentModule {}

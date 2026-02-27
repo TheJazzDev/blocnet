@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 const COOKIE_OPTS = {
@@ -9,27 +8,51 @@ const COOKIE_OPTS = {
 };
 
 export async function POST(req: Request) {
-  const body = (await req.json()) as { token?: string; refreshToken?: string };
+  let body: { token?: string; refreshToken?: string };
+  try {
+    body = (await req.json()) as { token?: string; refreshToken?: string };
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
   if (!body.token || typeof body.token !== "string") {
     return NextResponse.json({ error: "Missing token" }, { status: 400 });
   }
 
-  const store = await cookies();
+  const response = NextResponse.json({ ok: true });
+  let accessTokenStored = false;
+  let refreshTokenStored = false;
 
-  // Access token — keep a short TTL so an abandoned session doesn't linger
-  store.set("admin_token", body.token, {
-    ...COOKIE_OPTS,
-    maxAge: 60 * 60, // 1 hour
-  });
+  // Access token is best-effort; refresh cookie is enough for proxy refresh.
+  try {
+    response.cookies.set("admin_token", body.token, {
+      ...COOKIE_OPTS,
+      maxAge: 60 * 60, // 1 hour
+    });
+    accessTokenStored = true;
+  } catch {
+    accessTokenStored = false;
+  }
 
   // Refresh token — valid for 7 days (Supabase default)
   if (body.refreshToken && typeof body.refreshToken === "string") {
-    store.set("admin_refresh_token", body.refreshToken, {
-      ...COOKIE_OPTS,
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
+    try {
+      response.cookies.set("admin_refresh_token", body.refreshToken, {
+        ...COOKIE_OPTS,
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      });
+      refreshTokenStored = true;
+    } catch {
+      refreshTokenStored = false;
+    }
   }
 
-  return NextResponse.json({ ok: true });
+  if (!accessTokenStored && !refreshTokenStored) {
+    return NextResponse.json(
+      { error: "Failed to persist auth cookies" },
+      { status: 500 },
+    );
+  }
+
+  return response;
 }

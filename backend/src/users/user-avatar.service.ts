@@ -56,7 +56,10 @@ export class UserAvatarService {
     }
   }
 
-  async uploadAvatar(userId: string, file: UploadedAvatarFile): Promise<string> {
+  async uploadAvatar(
+    userId: string,
+    file: UploadedAvatarFile,
+  ): Promise<string> {
     if (!file) {
       throw new BadRequestException('Avatar file is required');
     }
@@ -111,7 +114,7 @@ export class UserAvatarService {
         includeSigned: true,
       },
     );
-    
+
     // If we couldn't parse a path, it's not managed by us
     if (!previousPath) {
       return;
@@ -119,18 +122,23 @@ export class UserAvatarService {
 
     // Check if we are accidentally trying to delete the new one
     if (currentAvatarUrl) {
-        const currentPath = this.extractManagedAvatarObjectPath(currentAvatarUrl, { includeSigned: true });
-        if (currentPath === previousPath) {
-            return;
-        }
+      const currentPath = this.extractManagedAvatarObjectPath(
+        currentAvatarUrl,
+        { includeSigned: true },
+      );
+      if (currentPath === previousPath) {
+        return;
+      }
     }
 
     try {
-        await this.requireSupabaseStorageClient()
+      await this.requireSupabaseStorageClient()
         .storage.from(this.supabaseAvatarsBucket)
         .remove([previousPath]);
     } catch (error) {
-        this.logger.warn(`Failed to delete previous avatar: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.warn(
+        `Failed to delete previous avatar: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 

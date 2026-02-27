@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
+import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:flutter/material.dart';
 
 class MiningHourlyHistoryCard extends StatelessWidget {
@@ -145,7 +146,7 @@ class _HistoryRow extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Hour ${item.hourIndex}  ·  Boost ${item.boostBpsSnapshot} bps  ·  Ref ${item.activeReferralsSnapshot}',
+                'Hour ${item.hourIndex}  ·  Boost ${formatGroupedNumber(item.boostBpsSnapshot, maxDecimals: 0)} bps  ·  Ref ${formatGroupedNumber(item.activeReferralsSnapshot, maxDecimals: 0)}',
                 style: AppTypography.custom(
                   size: 11.5,
                   weight: FontWeight.w400,
@@ -160,7 +161,7 @@ class _HistoryRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '+${item.points} MCR',
+              '+${formatGroupedNumber(item.points, maxDecimals: 0)} BNP',
               style: AppTypography.custom(
                 size: 14,
                 weight: FontWeight.w800,

@@ -20,6 +20,8 @@ import { AppRole } from '../common/enums/role.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { ReferralsService } from '../referrals/referrals.service';
+import { AdminBindUserReferralDto } from './dto/admin-bind-user-referral.dto';
 import { AdminDeleteUserDto } from './dto/admin-delete-user.dto';
 import { AdminHardDeleteUserDto } from './dto/admin-hard-delete-user.dto';
 import { AdminReactivateUserDto } from './dto/admin-reactivate-user.dto';
@@ -182,6 +184,7 @@ export class AdminUsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly usersAdminService: UsersAdminService,
+    private readonly referralsService: ReferralsService,
   ) {}
 
   @Get()
@@ -209,6 +212,20 @@ export class AdminUsersController {
   @Get(':id')
   async getUser(@Param('id') id: string) {
     return this.usersAdminService.getAdminUserById(id);
+  }
+
+  @Post(':id/referrals/bind')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async bindReferralForUser(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('id') id: string,
+    @Body() dto: AdminBindUserReferralDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.referralsService.bindByAdmin(user.id, id, dto.code);
   }
 
   @Patch(':id')

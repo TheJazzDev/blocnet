@@ -4,6 +4,7 @@ import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_action.dart';
 import 'package:blocnet/features/community/presentation/widgets/role_chip.dart';
+import 'package:blocnet/features/mentions/presentation/utils/mention_profile_navigator.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
@@ -136,6 +137,12 @@ class CommunityCard extends StatelessWidget {
                           height: 1.6,
                           weight: FontWeight.w400,
                         ),
+                        onMentionTap: (mentionUsername) async {
+                          await MentionProfileNavigator.openFromUsername(
+                            context,
+                            mentionUsername,
+                          );
+                        },
                       ),
                     ],
                   ),
