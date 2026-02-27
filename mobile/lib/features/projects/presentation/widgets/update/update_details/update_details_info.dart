@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
-import 'package:blocnet/screen/public_profile_screen.dart';
+import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';

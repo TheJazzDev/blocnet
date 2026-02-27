@@ -5,42 +5,23 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  MiningConfig,
-  MiningPointSource,
-  Prisma,
-  TipAccountType,
-} from '@prisma/client';
+import { MiningPointSource, Prisma, TipAccountType } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
-import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import { MCR_CURRENCY_CODE } from '../tips/tip.constants';
+import {
+  MiningCalculatorService,
+  EffectiveMiningConfig,
+} from './mining-calculator.service';
+import { MiningConfigService } from './mining-config.service';
 
 const MCR_ATOMIC_MULTIPLIER = 1000n;
 
 type MiningSessionStatus = 'idle' | 'running' | 'claimable';
 
-type EffectiveMiningConfig = {
-  enabled: boolean;
-  referralsEnabled: boolean;
-  cycleHours: number;
-  basePointsPerCycle: number;
-  perActiveReferralBoostBps: number;
-  maxBoostBps: number;
-  activeReferralWindowHours: number;
-  referralBindWindowHours: number;
-};
-
 type PrismaLike = PrismaService | Prisma.TransactionClient;
-
-type GetLeaderboardOptions = {
-  q?: string;
-  limit?: number;
-  offset?: number;
-  includePrivateFields?: boolean;
-};
 
 type MiningSessionRow = {
   id: string;
@@ -53,32 +34,22 @@ type MiningSessionRow = {
   activeReferralsSnapshot: number;
 };
 
-const DEFAULT_MINING_CONFIG: EffectiveMiningConfig = {
-  enabled: true,
-  referralsEnabled: true,
-  cycleHours: 24,
-  basePointsPerCycle: 120,
-  perActiveReferralBoostBps: 500,
-  maxBoostBps: 10000,
-  activeReferralWindowHours: 168,
-  referralBindWindowHours: 24,
-};
-
 @Injectable()
 export class MiningService {
   private readonly logger = new Logger(MiningService.name);
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
     private readonly questsService: QuestsService,
+    private readonly miningCalculator: MiningCalculatorService,
+    private readonly miningConfigService: MiningConfigService,
   ) {}
 
   async getMe(userId: string) {
     const asOf = new Date();
-    const config = await this.getEffectiveConfig();
+    const config = await this.miningConfigService.getEffectiveConfig();
 
     await this.syncHourlyAccrualForUser(userId, asOf, config);
 
@@ -241,7 +212,7 @@ export class MiningService {
   }
 
   async start(userId: string) {
-    const config = await this.getEffectiveConfig();
+    const config = await this.miningConfigService.getEffectiveConfig();
     if (!config.enabled) {
       throw new BadRequestException('Mining is disabled');
     }
@@ -278,7 +249,13 @@ export class MiningService {
       return {
         ok: true,
         status: 'running',
-        session: await this.toSessionState(userId, running, asOf, config),
+        session: await this.toSessionState(
+          userId,
+          running,
+          asOf,
+          config,
+          running.activeReferralsSnapshot,
+        ),
       };
     }
 
@@ -293,7 +270,12 @@ export class MiningService {
       });
     }
 
-    const session = await this.createMiningSession(userId, asOf, config);
+    const session = await this.createMiningSession(
+      userId,
+      config,
+      asOf,
+      this.prisma,
+    );
 
     await this.auditLogService.create({
       actorId: userId,
@@ -324,7 +306,7 @@ export class MiningService {
 
   async claim(userId: string) {
     const asOf = new Date();
-    const config = await this.getEffectiveConfig();
+    const config = await this.miningConfigService.getEffectiveConfig();
 
     await this.syncHourlyAccrualForUser(userId, asOf, config);
 
@@ -515,8 +497,9 @@ export class MiningService {
       } else if (!claimableAfterClaim) {
         const nextSession = await this.createMiningSession(
           userId,
-          nextSessionAsOf,
           config,
+          nextSessionAsOf,
+          this.prisma,
         );
 
         await this.auditLogService.create({
@@ -586,358 +569,6 @@ export class MiningService {
     };
   }
 
-  async getAdminConfig() {
-    return this.getEffectiveConfig();
-  }
-
-  async updateAdminConfig(
-    actorId: string,
-    patch: Partial<EffectiveMiningConfig>,
-  ) {
-    const row = await this.prisma.miningConfig.upsert({
-      where: { id: 'default' },
-      update: patch,
-      create: {
-        id: 'default',
-        ...DEFAULT_MINING_CONFIG,
-        ...patch,
-      },
-    });
-
-    const config = this.withEnvFlagOverrides(row);
-
-    await this.auditLogService.create({
-      actorId,
-      action: 'admin.mining.config.update',
-      resourceType: 'mining_config',
-      resourceId: row.id,
-      metadata: patch,
-    });
-
-    return config;
-  }
-
-  async getAdminMetrics() {
-    const asOf = new Date();
-    const since24h = new Date(asOf.getTime() - 24 * 60 * 60 * 1000);
-    const config = await this.getEffectiveConfig();
-
-    const [
-      dauMinersRows,
-      startsDay,
-      claimsDay,
-      avgBoost,
-      totalProfiles,
-      totalBoundProfiles,
-      activeDirectReferrals,
-    ] = await Promise.all([
-      this.prisma.miningSession.findMany({
-        where: {
-          startsAt: {
-            gte: since24h,
-          },
-        },
-        select: {
-          userId: true,
-        },
-        distinct: ['userId'],
-      }),
-      this.prisma.miningSession.count({
-        where: {
-          startsAt: {
-            gte: since24h,
-          },
-        },
-      }),
-      this.prisma.miningSession.count({
-        where: {
-          claimedAt: {
-            gte: since24h,
-          },
-        },
-      }),
-      this.prisma.miningSession.aggregate({
-        where: {
-          startsAt: {
-            gte: since24h,
-          },
-        },
-        _avg: {
-          boostBpsSnapshot: true,
-        },
-      }),
-      this.prisma.profile.count(),
-      this.prisma.profile.count({
-        where: {
-          referredById: {
-            not: null,
-          },
-        },
-      }),
-      this.countActiveReferralEdges(config, asOf),
-    ]);
-
-    const totalDirectReferrals = totalBoundProfiles;
-    const referralBindRate =
-      totalProfiles === 0
-        ? 0
-        : Number((totalBoundProfiles / totalProfiles).toFixed(4));
-    const activeReferralRatio =
-      totalDirectReferrals === 0
-        ? 0
-        : Number((activeDirectReferrals / totalDirectReferrals).toFixed(4));
-
-    return {
-      asOf,
-      dauMiners: dauMinersRows.length,
-      startsDay,
-      claimsDay,
-      averageBoostBps:
-        avgBoost._avg.boostBpsSnapshot == null
-          ? 0
-          : Math.round(avgBoost._avg.boostBpsSnapshot),
-      referralBindRate,
-      activeReferralRatio,
-      totalDirectReferrals,
-      activeDirectReferrals,
-    };
-  }
-
-  async getLeaderboard(options: GetLeaderboardOptions = {}) {
-    const asOf = new Date();
-    const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
-    const offset = Math.max(options.offset ?? 0, 0);
-    const searchQuery = options.q?.trim();
-
-    const searchFilters: Prisma.ProfileWhereInput[] = [];
-    if (searchQuery && searchQuery.length > 0) {
-      searchFilters.push(
-        {
-          displayName: {
-            contains: searchQuery,
-            mode: 'insensitive',
-          },
-        },
-        {
-          username: {
-            contains: searchQuery,
-            mode: 'insensitive',
-          },
-        },
-      );
-
-      if (options.includePrivateFields) {
-        searchFilters.push({
-          email: {
-            contains: searchQuery,
-            mode: 'insensitive',
-          },
-        });
-      }
-
-      if (searchQuery.length >= 8) {
-        searchFilters.push({
-          id: searchQuery,
-        });
-      }
-    }
-
-    const leaderboardWhere: Prisma.ProfileWhereInput = {
-      isDeactivated: false,
-      AND: [
-        {
-          OR: [
-            {
-              miningClaimedPoints: {
-                gt: BigInt(0),
-              },
-            },
-            {
-              miningSessions: {
-                some: {},
-              },
-            },
-          ],
-        },
-        ...(searchFilters.length > 0
-          ? [
-              {
-                OR: searchFilters,
-              } as Prisma.ProfileWhereInput,
-            ]
-          : []),
-      ],
-    };
-
-    const [profiles, total] = await Promise.all([
-      this.prisma.profile.findMany({
-        where: leaderboardWhere,
-        orderBy: [
-          {
-            miningClaimedPoints: 'desc',
-          },
-          {
-            createdAt: 'asc',
-          },
-        ],
-        skip: offset,
-        take: limit,
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          displayName: true,
-          avatarUrl: true,
-          miningClaimedPoints: true,
-          primaryBadge: {
-            select: {
-              id: true,
-              slug: true,
-              name: true,
-              description: true,
-              imageUrl: true,
-              category: true,
-              rarity: true,
-            },
-          },
-          miningSessions: {
-            where: {
-              claimedAt: null,
-            },
-            orderBy: {
-              startsAt: 'desc',
-            },
-            take: 1,
-            select: {
-              id: true,
-              startsAt: true,
-              endsAt: true,
-              boostBpsSnapshot: true,
-              activeReferralsSnapshot: true,
-            },
-          },
-        },
-      }),
-      this.prisma.profile.count({
-        where: leaderboardWhere,
-      }),
-    ]);
-
-    if (profiles.length === 0) {
-      return {
-        asOf,
-        total,
-        limit,
-        offset,
-        data: [] as Array<Record<string, unknown>>,
-      };
-    }
-
-    const userIds = profiles.map((profile) => profile.id);
-    const maturedUnclaimedRows =
-      await this.prisma.miningHourlyCheckpoint.groupBy({
-        by: ['userId'],
-        where: {
-          userId: {
-            in: userIds,
-          },
-          claimedAt: null,
-          hourEndAt: {
-            lte: asOf,
-          },
-        },
-        _sum: {
-          points: true,
-        },
-      });
-
-    const maturedByUserId = new Map<string, number>(
-      maturedUnclaimedRows.map((row) => [row.userId, row._sum.points ?? 0]),
-    );
-
-    return {
-      asOf,
-      total,
-      limit,
-      offset,
-      data: profiles.map((profile, index) => {
-        const currentSession = profile.miningSessions[0] ?? null;
-        const claimedTotalPoints = this.bigIntToNumber(
-          profile.miningClaimedPoints,
-        );
-        const maturedUnclaimedPoints = maturedByUserId.get(profile.id) ?? 0;
-        const lifetimeEarnedPoints =
-          claimedTotalPoints + maturedUnclaimedPoints;
-        const sessionStatus: MiningSessionStatus = !currentSession
-          ? 'idle'
-          : currentSession.endsAt.getTime() <= asOf.getTime()
-            ? 'claimable'
-            : 'running';
-
-        return {
-          rank: offset + index + 1,
-          userId: profile.id,
-          email: options.includePrivateFields ? profile.email : undefined,
-          username: profile.username,
-          displayName: profile.displayName,
-          avatarUrl: profile.avatarUrl,
-          primaryBadge: profile.primaryBadge ?? null,
-          claimedTotalPoints,
-          maturedUnclaimedPoints,
-          lifetimeEarnedPoints,
-          sessionStatus,
-          sessionProgressPct: currentSession
-            ? this.computeProgressPct(
-                currentSession.startsAt,
-                currentSession.endsAt,
-                asOf,
-              )
-            : 0,
-          sessionEndsAt: currentSession?.endsAt ?? null,
-          boostBpsSnapshot: currentSession?.boostBpsSnapshot ?? 0,
-          activeReferralsSnapshot: currentSession?.activeReferralsSnapshot ?? 0,
-        };
-      }),
-    };
-  }
-
-  private async getEffectiveConfig(): Promise<EffectiveMiningConfig> {
-    const row = await this.getOrCreateConfig();
-    return this.withEnvFlagOverrides(row);
-  }
-
-  private async getOrCreateConfig(): Promise<MiningConfig> {
-    return this.prisma.miningConfig.upsert({
-      where: { id: 'default' },
-      update: {},
-      create: {
-        id: 'default',
-        ...DEFAULT_MINING_CONFIG,
-      },
-    });
-  }
-
-  private withEnvFlagOverrides(config: MiningConfig): EffectiveMiningConfig {
-    const miningEnabledFlag = this.runtimeFeatureFlagsService.isMiningEnabled();
-    const referralsEnabledFlag =
-      this.runtimeFeatureFlagsService.isReferralsEnabled();
-
-    return {
-      enabled: config.enabled && miningEnabledFlag,
-      referralsEnabled:
-        config.enabled &&
-        config.referralsEnabled &&
-        miningEnabledFlag &&
-        referralsEnabledFlag,
-      cycleHours: config.cycleHours,
-      basePointsPerCycle: config.basePointsPerCycle,
-      perActiveReferralBoostBps: config.perActiveReferralBoostBps,
-      maxBoostBps: config.maxBoostBps,
-      activeReferralWindowHours: config.activeReferralWindowHours,
-      referralBindWindowHours: config.referralBindWindowHours,
-    };
-  }
-
   private async syncHourlyAccrualForUser(
     userId: string,
     asOf: Date,
@@ -971,11 +602,11 @@ export class MiningService {
     config: EffectiveMiningConfig,
     prisma: PrismaLike,
   ) {
-    const sessionCycleHours = this.computeSessionCycleHours(
+    const sessionCycleHours = this.miningCalculator.computeSessionCycleHours(
       session.startsAt,
       session.endsAt,
     );
-    const maturedHours = this.computeMaturedHours(
+    const maturedHours = this.miningCalculator.computeMaturedHours(
       session.startsAt,
       session.endsAt,
       asOf,
@@ -1019,12 +650,12 @@ export class MiningService {
         prisma,
       );
 
-      const boostBpsSnapshot = this.computeBoostBps(
+      const boostBpsSnapshot = this.miningCalculator.computeBoostBps(
         activeReferralsSnapshot,
         config,
       );
 
-      const points = this.computeHourlyCheckpointPoints(
+      const points = this.miningCalculator.computeHourlyCheckpointPoints(
         session.basePointsPerCycle,
         sessionCycleHours,
         boostBpsSnapshot,
@@ -1055,7 +686,7 @@ export class MiningService {
     const status: MiningSessionStatus =
       session.endsAt.getTime() <= asOf.getTime() ? 'claimable' : 'running';
 
-    const sessionCycleHours = this.computeSessionCycleHours(
+    const sessionCycleHours = this.miningCalculator.computeSessionCycleHours(
       session.startsAt,
       session.endsAt,
     );
@@ -1085,14 +716,18 @@ export class MiningService {
       activeDirectReferralsNow ??
       (await this.countActiveDirectReferrals(userId, config, asOf));
 
-    const liveBoostBps = this.computeBoostBps(activeReferrals, config);
-    const projectedCyclePointsNow = this.computeProjectedCyclePoints(
-      session.basePointsPerCycle,
-      liveBoostBps,
+    const liveBoostBps = this.miningCalculator.computeBoostBps(
+      activeReferrals,
+      config,
     );
+    const projectedCyclePointsNow =
+      this.miningCalculator.computeProjectedCyclePoints(
+        session.basePointsPerCycle,
+        liveBoostBps,
+      );
     const hourlyRateNow = projectedCyclePointsNow / sessionCycleHours;
 
-    const elapsedHours = this.computeElapsedHours(
+    const elapsedHours = this.miningCalculator.computeElapsedHours(
       session.startsAt,
       session.endsAt,
       asOf,
@@ -1109,7 +744,7 @@ export class MiningService {
       status,
       startsAt: session.startsAt,
       endsAt: session.endsAt,
-      progressPct: this.computeProgressPct(
+      progressPct: this.miningCalculator.computeProgressPct(
         session.startsAt,
         session.endsAt,
         asOf,
@@ -1120,119 +755,33 @@ export class MiningService {
       activeReferralsSnapshot: activeReferrals,
       hourlyRateNow: Number(hourlyRateNow.toFixed(4)),
       currentHourEstimatedPoints,
-      completedHours,
-      cycleHours: sessionCycleHours,
-      projectedCyclePointsNow,
     };
-  }
-
-  private computeSessionCycleHours(startsAt: Date, endsAt: Date): number {
-    const durationMs = endsAt.getTime() - startsAt.getTime();
-    if (durationMs <= 0) return 1;
-
-    return Math.max(1, Math.round(durationMs / (60 * 60 * 1000)));
-  }
-
-  private computeMaturedHours(
-    startsAt: Date,
-    endsAt: Date,
-    asOf: Date,
-    cycleHours: number,
-  ): number {
-    const cappedEndMs = Math.min(asOf.getTime(), endsAt.getTime());
-    const elapsedMs = cappedEndMs - startsAt.getTime();
-    if (elapsedMs <= 0) return 0;
-
-    return Math.min(cycleHours, Math.floor(elapsedMs / (60 * 60 * 1000)));
-  }
-
-  private computeElapsedHours(
-    startsAt: Date,
-    endsAt: Date,
-    asOf: Date,
-  ): number {
-    const cappedEndMs = Math.min(asOf.getTime(), endsAt.getTime());
-    const elapsedMs = cappedEndMs - startsAt.getTime();
-    if (elapsedMs <= 0) {
-      return 0;
-    }
-
-    const cycleHours = this.computeSessionCycleHours(startsAt, endsAt);
-    return Math.min(cycleHours, elapsedMs / (60 * 60 * 1000));
-  }
-
-  private computeProgressPct(startsAt: Date, endsAt: Date, asOf: Date): number {
-    const durationMs = endsAt.getTime() - startsAt.getTime();
-    if (durationMs <= 0) return 1;
-
-    const elapsedMs = asOf.getTime() - startsAt.getTime();
-    if (elapsedMs <= 0) return 0;
-    if (elapsedMs >= durationMs) return 1;
-
-    return elapsedMs / durationMs;
-  }
-
-  private computeBoostBps(
-    activeReferrals: number,
-    config: EffectiveMiningConfig,
-  ): number {
-    if (!config.referralsEnabled) {
-      return 0;
-    }
-
-    return Math.min(
-      activeReferrals * config.perActiveReferralBoostBps,
-      config.maxBoostBps,
-    );
-  }
-
-  private computeProjectedCyclePoints(
-    basePointsPerCycle: number,
-    boostBps: number,
-  ): number {
-    return Math.floor((basePointsPerCycle * (10000 + boostBps)) / 10000);
-  }
-
-  private computeHourlyCheckpointPoints(
-    basePointsPerCycle: number,
-    cycleHours: number,
-    boostBps: number,
-  ): number {
-    const projectedCyclePoints = this.computeProjectedCyclePoints(
-      basePointsPerCycle,
-      boostBps,
-    );
-
-    if (projectedCyclePoints <= 0) {
-      return 0;
-    }
-
-    return Math.floor(projectedCyclePoints / Math.max(cycleHours, 1));
   }
 
   private async createMiningSession(
     userId: string,
-    startsAt: Date,
     config: EffectiveMiningConfig,
-    prisma: PrismaLike = this.prisma,
-  ): Promise<MiningSessionRow> {
+    now: Date,
+    prisma: PrismaLike,
+  ) {
+    const startsAt = now;
+    const endsAt = new Date(startsAt.getTime() + config.cycleHours * 3600000);
+
     const activeReferralsSnapshot = await this.countActiveDirectReferralsAt(
       userId,
       config,
-      startsAt,
+      now,
       prisma,
     );
-    const boostBpsSnapshot = this.computeBoostBps(
+    const boostBpsSnapshot = this.miningCalculator.computeBoostBps(
       activeReferralsSnapshot,
       config,
     );
-    const effectivePointsPerCycle = this.computeProjectedCyclePoints(
-      config.basePointsPerCycle,
-      boostBpsSnapshot,
-    );
-    const endsAt = new Date(
-      startsAt.getTime() + config.cycleHours * 60 * 60 * 1000,
-    );
+    const effectivePointsPerCycle =
+      this.miningCalculator.computeProjectedCyclePoints(
+        config.basePointsPerCycle,
+        boostBpsSnapshot,
+      );
 
     return prisma.miningSession.create({
       data: {
@@ -1243,16 +792,6 @@ export class MiningService {
         activeReferralsSnapshot,
         boostBpsSnapshot,
         effectivePointsPerCycle,
-      },
-      select: {
-        id: true,
-        startsAt: true,
-        endsAt: true,
-        claimedAt: true,
-        basePointsPerCycle: true,
-        effectivePointsPerCycle: true,
-        boostBpsSnapshot: true,
-        activeReferralsSnapshot: true,
       },
     });
   }
@@ -1266,32 +805,29 @@ export class MiningService {
   }
 
   private async countActiveDirectReferralsAt(
-    userId: string,
+    referrerId: string,
     config: EffectiveMiningConfig,
     asOf: Date,
     prisma: PrismaLike,
-  ): Promise<number> {
+  ) {
     if (!config.referralsEnabled) {
       return 0;
     }
 
-    const cutoff = new Date(
-      asOf.getTime() - config.activeReferralWindowHours * 60 * 60 * 1000,
+    const windowStart = new Date(
+      asOf.getTime() - config.activeReferralWindowHours * 3600000,
     );
 
-    return prisma.profile.count({
+    const count = await prisma.profile.count({
       where: {
-        referredById: userId,
-        miningSessions: {
-          some: {
-            startsAt: {
-              gte: cutoff,
-              lte: asOf,
-            },
-          },
+        referredById: referrerId,
+        homeFeedLastSeenAt: {
+          gte: windowStart,
         },
       },
     });
+
+    return count;
   }
 
   private async countActiveReferralEdges(

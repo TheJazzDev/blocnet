@@ -1,6 +1,7 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { randomUUID } from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
@@ -8,6 +9,9 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('RequestLogger');
+
+  app.use(helmet());
+  logger.log('Helmet middleware applied');
 
   const allowedOrigins = [
     'http://localhost:3081', // admin panel (local)

@@ -12,6 +12,14 @@ import { WalletProvisioningService } from './wallet-provisioning.service';
 import { WalletSettlementWorkerService } from './wallet-settlement-worker.service';
 import { WalletService } from './wallet.service';
 import { WalletAssetPricingService } from './wallet-asset-pricing.service';
+import { WalletQueryService } from './wallet-query.service';
+import { WalletTransactionService } from './wallet-transaction.service';
+import { WalletDepositProcessorService } from './wallet-deposit-processor.service';
+import { WalletSweepService } from './wallet-sweep.service';
+import { WalletWithdrawalSettlementService } from './wallet-withdrawal-settlement.service';
+import { WalletAdminKycService } from './wallet-admin-kyc.service';
+import { WalletAdminWithdrawalService } from './wallet-admin-withdrawal.service';
+import { WalletAdminConfigService } from './wallet-admin-config.service';
 
 @Module({
   imports: [PrismaModule, AuditLogModule],
@@ -19,11 +27,19 @@ import { WalletAssetPricingService } from './wallet-asset-pricing.service';
   providers: [
     WalletConfigService,
     WalletDepositIndexerService,
+    WalletDepositProcessorService,
     WalletSettlementWorkerService,
+    WalletSweepService,
+    WalletWithdrawalSettlementService,
     WalletProvisioningService,
     WalletAssetPricingService,
+    WalletQueryService,
+    WalletTransactionService,
     WalletService,
     WalletAdminService,
+    WalletAdminKycService,
+    WalletAdminWithdrawalService,
+    WalletAdminConfigService,
     TurnkeyCustodyAdapter,
     {
       provide: CUSTODY_ADAPTER,
@@ -34,8 +50,13 @@ import { WalletAssetPricingService } from './wallet-asset-pricing.service';
     WalletConfigService,
     WalletProvisioningService,
     WalletAssetPricingService,
+    WalletQueryService,
+    WalletTransactionService,
     WalletService,
     WalletAdminService,
+    WalletAdminKycService,
+    WalletAdminWithdrawalService,
+    WalletAdminConfigService,
     CUSTODY_ADAPTER,
   ],
 })

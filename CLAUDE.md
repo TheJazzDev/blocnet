@@ -10,8 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 blocnet/
 ├── backend/        # NestJS API (source of truth for all business logic)
 ├── mobile/         # Flutter app (user-facing)
-├── admin/          # Next.js admin panel (reserved, minimal)
-└── landing_page/   # Next.js marketing page
+├── console/        # Next.js admin panel
+└── homepage/       # Next.js marketing page
 ```
 
 **Package manager**: `bun` for all Node projects. Use `bunx` instead of `npx`.
@@ -54,11 +54,11 @@ flutter test
 flutter analyze
 ```
 
-### Admin / Landing Page (`cd admin` or `cd landing_page`)
+### Console / Homepage (`cd console` or `cd homepage`)
 
 ```bash
 bun install
-bun run dev       # admin → :3081, landing → :3000
+bun run dev       # console → :3081, homepage → :3000
 bun run build
 bun run lint
 ```
@@ -72,7 +72,7 @@ bun run lint
 - Workflow: edit `schema.prisma` → `bunx prisma migrate dev --name <name>` → this auto-generates and applies
 - Never manually edit migration SQL files after creation
 
-### Tailwind CSS v4 (admin / landing_page)
+### Tailwind CSS v4 (console / homepage)
 - `shrink-0` not `flex-shrink-0`
 - `bg-linear-to-br` not `bg-gradient-to-br`
 - Always mobile-first: start with base (mobile) values, scale up with `sm:`, `md:`, `lg:`

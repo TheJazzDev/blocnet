@@ -4,7 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Badge, BadgeCategory, BadgeRarity, Prisma } from '@prisma/client';
+import { Badge, BadgeRarity, Prisma } from '@prisma/client';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { generateUniqueSlug } from '../common/utils/slug.util';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -22,6 +23,7 @@ export class BadgesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   /**
@@ -166,7 +168,7 @@ export class BadgesService {
       },
     });
 
-    return this.prisma.badge.create({
+    const created = await this.prisma.badge.create({
       data: {
         slug,
         name: dto.name,
@@ -179,6 +181,22 @@ export class BadgesService {
         isActive: true,
       },
     });
+
+    await this.auditLogService.create({
+      actorId: adminId,
+      action: 'badge.create',
+      resourceType: 'badge',
+      resourceId: created.id,
+      metadata: {
+        slug: created.slug,
+        name: created.name,
+        category: created.category,
+        rarity: created.rarity,
+        pointsRequirement: created.pointsRequirement,
+      },
+    });
+
+    return created;
   }
 
   /**
@@ -211,7 +229,7 @@ export class BadgesService {
       });
     }
 
-    return this.prisma.badge.update({
+    const updated = await this.prisma.badge.update({
       where: { id: badgeId },
       data: {
         ...(nextSlug && { slug: nextSlug }),
@@ -227,6 +245,33 @@ export class BadgesService {
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       },
     });
+
+    await this.auditLogService.create({
+      actorId: adminId,
+      action: 'badge.update',
+      resourceType: 'badge',
+      resourceId: updated.id,
+      metadata: {
+        previous: {
+          slug: badge.slug,
+          name: badge.name,
+          category: badge.category,
+          rarity: badge.rarity,
+          pointsRequirement: badge.pointsRequirement,
+          isActive: badge.isActive,
+        },
+        next: {
+          slug: updated.slug,
+          name: updated.name,
+          category: updated.category,
+          rarity: updated.rarity,
+          pointsRequirement: updated.pointsRequirement,
+          isActive: updated.isActive,
+        },
+      },
+    });
+
+    return updated;
   }
 
   /**
@@ -266,6 +311,18 @@ export class BadgesService {
       },
     });
     await this.ensurePrimaryBadgePriority(resolvedUserId, badge, this.prisma);
+
+    await this.auditLogService.create({
+      actorId: grantedById,
+      action: 'badge.grant',
+      resourceType: 'user_badge',
+      resourceId: userBadge.id,
+      metadata: {
+        userId: resolvedUserId,
+        badgeId: badge.id,
+        badgeSlug: badge.slug,
+      },
+    });
 
     // Send notification
     await this.notificationsService.notifyMany([
@@ -383,6 +440,18 @@ export class BadgesService {
           userId,
           badgeId: badge.id,
         },
+      },
+    });
+
+    await this.auditLogService.create({
+      actorId: adminId,
+      action: 'badge.revoke',
+      resourceType: 'user_badge',
+      resourceId: userBadge.id,
+      metadata: {
+        userId,
+        badgeId: badge.id,
+        badgeSlug: badge.slug,
       },
     });
 
@@ -604,7 +673,7 @@ export class BadgesService {
     return left.createdAt.getTime() > right.createdAt.getTime();
   }
 
-  private badgeRarityRank(rarity: BadgeRarity) {
+  private badgeRarityRank(rarity: BadgeRarity): number {
     switch (rarity) {
       case BadgeRarity.legendary:
         return 4;
@@ -614,6 +683,8 @@ export class BadgesService {
         return 2;
       case BadgeRarity.common:
         return 1;
+      default:
+        return 0;
     }
   }
 }

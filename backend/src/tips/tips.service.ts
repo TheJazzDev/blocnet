@@ -24,6 +24,7 @@ import {
 } from '../common/utils/idempotency.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { normalizePagination } from '../common/utils/pagination.util';
 import { CreateTipDto } from './dto/create-tip.dto';
 import { ListAdminTipTransactionsQuery } from './dto/list-admin-tip-transactions.query';
 import { ListTipHistoryQuery } from './dto/list-tip-history.query';
@@ -390,12 +391,9 @@ export class TipsService {
     return this.toTipTransactionResponse(created, senderUserId);
   }
 
-  async listMyHistory(userId: string, query: ListTipHistoryQuery) {
+  async listTipHistory(userId: string, query: ListTipHistoryQuery) {
     await this.ensureBootstrap();
-    const { limit, offset } = this.normalizePagination(
-      query.limit,
-      query.offset,
-    );
+    const { limit, offset } = normalizePagination(query.offset, query.limit);
     const direction = query.direction ?? 'all';
 
     const where: Prisma.TipTransactionWhereInput = {
@@ -432,10 +430,7 @@ export class TipsService {
 
   async listAdminTransactions(query: ListAdminTipTransactionsQuery) {
     await this.ensureBootstrap();
-    const { limit, offset } = this.normalizePagination(
-      query.limit,
-      query.offset,
-    );
+    const { limit, offset } = normalizePagination(query.offset, query.limit);
     const q = query.q?.trim();
     const direction = query.direction ?? 'all';
     const userId = query.userId?.trim();
@@ -1143,19 +1138,6 @@ export class TipsService {
         });
       }
     });
-  }
-
-  private normalizePagination(limit?: number, offset?: number) {
-    const safeLimit =
-      Number.isFinite(limit) && typeof limit === 'number'
-        ? Math.min(Math.max(limit, 1), MAX_PAGE_SIZE)
-        : DEFAULT_PAGE_SIZE;
-    const safeOffset =
-      Number.isFinite(offset) && typeof offset === 'number'
-        ? Math.max(offset, 0)
-        : 0;
-
-    return { limit: safeLimit, offset: safeOffset };
   }
 
   private parseOptionalAtomic(

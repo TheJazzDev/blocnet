@@ -27,6 +27,8 @@ import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UsersService } from './users.service';
+import { UsersAdminService } from './users-admin.service';
+import { UserDigestService } from './user-digest.service';
 
 // Public endpoint — no AuthGuard, called before signup to check uniqueness
 @Controller('users')
@@ -53,7 +55,10 @@ export class PublicUsersController {
 @Controller('me')
 @UseGuards(AuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly userDigestService: UserDigestService,
+  ) {}
 
   @Get()
   async getMe(@CurrentUser() user?: AuthUser) {
@@ -127,7 +132,7 @@ export class UsersController {
         ? parsedWindowDays
         : undefined;
 
-    return this.usersService.getDigestSummary(user.id, safeWindowDays);
+    return this.userDigestService.getDigestSummary(user.id, safeWindowDays);
   }
 
   @Patch()
@@ -174,7 +179,10 @@ export class UsersController {
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
 export class AdminUsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly usersAdminService: UsersAdminService,
+  ) {}
 
   @Get()
   async listUsers(
@@ -184,7 +192,7 @@ export class AdminUsersController {
     @Query('q') q?: string,
     @Query('status') status?: string,
   ) {
-    return this.usersService.listAllUsers({
+    return this.usersAdminService.listAllUsers({
       limit: limit ? Number(limit) : 50,
       offset: offset ? Number(offset) : 0,
       role: role && role !== 'all' ? role : undefined,
@@ -195,12 +203,12 @@ export class AdminUsersController {
 
   @Get('stats')
   async getStats() {
-    return this.usersService.getAdminStats();
+    return this.usersAdminService.getAdminStats();
   }
 
   @Get(':id')
   async getUser(@Param('id') id: string) {
-    return this.usersService.getAdminUserById(id);
+    return this.usersAdminService.getAdminUserById(id);
   }
 
   @Patch(':id')
@@ -214,7 +222,7 @@ export class AdminUsersController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.usersService.updateUserByAdmin(user, id, dto);
+    return this.usersAdminService.updateUserByAdmin(user, id, dto);
   }
 
   @Delete(':id')
@@ -228,7 +236,7 @@ export class AdminUsersController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.usersService.deleteUserByAdmin(user, id, dto);
+    return this.usersAdminService.deleteUserByAdmin(user, id, dto);
   }
 
   @Patch(':id/reactivate')
@@ -242,7 +250,7 @@ export class AdminUsersController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.usersService.reactivateUserByOwner(user, id, dto);
+    return this.usersAdminService.reactivateUserByOwner(user, id, dto);
   }
 
   @Delete(':id/hard')
@@ -256,7 +264,7 @@ export class AdminUsersController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.usersService.hardDeleteUserByOwner(user, id, dto);
+    return this.usersAdminService.hardDeleteUserByOwner(user, id, dto);
   }
 
   @Post('me/deactivate')

@@ -2,7 +2,6 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,8 +13,7 @@ import {
   QuestStatus,
   QuestVerificationStatus,
 } from '@prisma/client';
-import { randomUUID } from 'crypto';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { generateUniqueSlug } from '../common/utils/slug.util';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -23,13 +21,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestDto } from './dto/create-quest.dto';
 import { UpdateQuestDto } from './dto/update-quest.dto';
 import { SubmitQuestProofDto, VerifyQuestDto } from './dto/quest-action.dto';
+import {
+  QuestStorageService,
+  UploadedQuestProofFile,
+} from './quest-storage.service';
 
 type PrismaLike = PrismaService | Prisma.TransactionClient;
-type UploadedQuestProofFile = {
-  buffer: Buffer;
-  mimetype: string;
-  size: number;
-};
 
 type AutoQuestEligibilityResult = {
   eligible: boolean;
@@ -40,49 +37,18 @@ type AutoQuestEligibilityResult = {
   message: string;
 };
 
-const QUEST_PROOF_MAX_BYTES = 8 * 1024 * 1024;
-const ALLOWED_QUEST_PROOF_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
-
 @Injectable()
 export class QuestsService {
   private readonly logger = new Logger(QuestsService.name);
-  private readonly supabaseUrl: string;
-  private readonly supabaseQuestProofsBucket: string;
-  private readonly supabaseStorageClient: SupabaseClient | null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly badgesService: BadgesService,
     private readonly notificationsService: NotificationsService,
-  ) {
-    this.supabaseUrl = this.configService.get<string>('SUPABASE_URL') ?? '';
-    this.supabaseQuestProofsBucket =
-      this.configService.get<string>('SUPABASE_QUEST_PROOFS_BUCKET') ||
-      'quest-proofs';
-    const serviceRoleKey =
-      this.configService.get<string>('SUPABASE_SECRET_KEY') ||
-      this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (this.supabaseUrl && serviceRoleKey) {
-      this.supabaseStorageClient = createClient(
-        this.supabaseUrl,
-        serviceRoleKey,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        },
-      );
-    } else {
-      this.supabaseStorageClient = null;
-    }
-  }
+    private readonly questStorageService: QuestStorageService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   /**
    * Get all active quests
@@ -338,38 +304,13 @@ export class QuestsService {
       throw new BadRequestException('This quest has expired');
     }
 
-    if (!ALLOWED_QUEST_PROOF_MIME_TYPES.has(file.mimetype)) {
-      throw new BadRequestException(
-        'Unsupported proof format. Use JPEG, PNG, or WEBP.',
-      );
-    }
-    if (file.size > QUEST_PROOF_MAX_BYTES) {
-      throw new BadRequestException('Proof image must be 8MB or smaller');
-    }
-
-    const storageClient = this.requireSupabaseStorageClient();
-    const extension = this.fileExtensionForMimeType(file.mimetype);
-    const objectPath = `${userId}/${quest.id}/${Date.now()}-${randomUUID()}.${extension}`;
-    const bucket = storageClient.storage.from(this.supabaseQuestProofsBucket);
-
-    const { error: uploadError } = await bucket.upload(
-      objectPath,
-      file.buffer,
-      {
-        contentType: file.mimetype,
-        upsert: false,
-      },
+    const screenshotUrl = await this.questStorageService.uploadProofImage(
+      userId,
+      quest.id,
+      file,
     );
 
-    if (uploadError) {
-      throw new BadRequestException('Failed to upload proof image');
-    }
-
-    const {
-      data: { publicUrl },
-    } = bucket.getPublicUrl(objectPath);
-
-    return { screenshotUrl: publicUrl };
+    return { screenshotUrl };
   }
 
   /**
@@ -474,7 +415,6 @@ export class QuestsService {
    * Admin: Create a new quest
    */
   async createQuest(dto: CreateQuestDto, adminId: string) {
-    void adminId;
     const slug = await generateUniqueSlug({
       source: dto.title,
       desiredSlug: dto.slug,
@@ -488,7 +428,7 @@ export class QuestsService {
       },
     });
 
-    return this.prisma.quest.create({
+    const created = await this.prisma.quest.create({
       data: {
         slug,
         title: dto.title,
@@ -506,13 +446,28 @@ export class QuestsService {
         isActive: true,
       },
     });
+
+    await this.auditLogService.create({
+      actorId: adminId,
+      action: 'quest.create',
+      resourceType: 'quest',
+      resourceId: created.id,
+      metadata: {
+        slug: created.slug,
+        title: created.title,
+        category: created.category,
+        verificationMethod: created.verificationMethod,
+        rewardPoints: created.rewardPoints,
+      },
+    });
+
+    return created;
   }
 
   /**
    * Admin: Update an existing quest
    */
   async updateQuest(questId: string, dto: UpdateQuestDto, adminId: string) {
-    void adminId;
     const quest = await this.prisma.quest.findUnique({
       where: { id: questId },
     });
@@ -539,7 +494,7 @@ export class QuestsService {
       });
     }
 
-    return this.prisma.quest.update({
+    const updated = await this.prisma.quest.update({
       where: { id: questId },
       data: {
         ...(nextSlug && { slug: nextSlug }),
@@ -568,6 +523,33 @@ export class QuestsService {
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       },
     });
+
+    await this.auditLogService.create({
+      actorId: adminId,
+      action: 'quest.update',
+      resourceType: 'quest',
+      resourceId: updated.id,
+      metadata: {
+        previous: {
+          slug: quest.slug,
+          title: quest.title,
+          category: quest.category,
+          verificationMethod: quest.verificationMethod,
+          rewardPoints: quest.rewardPoints,
+          isActive: quest.isActive,
+        },
+        next: {
+          slug: updated.slug,
+          title: updated.title,
+          category: updated.category,
+          verificationMethod: updated.verificationMethod,
+          rewardPoints: updated.rewardPoints,
+          isActive: updated.isActive,
+        },
+      },
+    });
+
+    return updated;
   }
 
   /**
@@ -709,7 +691,7 @@ export class QuestsService {
 
     if (approved) {
       // Approve submission and award rewards
-      return this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx) => {
         // Update submission
         await tx.questSubmission.update({
           where: { id: submission.id },
@@ -761,6 +743,21 @@ export class QuestsService {
 
         return { message: 'Quest verified and rewards awarded' };
       });
+
+      await this.auditLogService.create({
+        actorId: verifiedBy,
+        action: 'quest.submission.approve',
+        resourceType: 'quest_submission',
+        resourceId: submission.id,
+        metadata: {
+          userId: submission.userId,
+          questId: submission.userQuest.quest.id,
+          questSlug: submission.userQuest.quest.slug,
+          reviewNotes: dto.reviewNotes,
+        },
+      });
+
+      return result;
     } else {
       const rejectionReason =
         dto.rejectionReason?.trim() || dto.reviewNotes?.trim() || null;
@@ -811,6 +808,20 @@ export class QuestsService {
           },
         },
       ]);
+
+      await this.auditLogService.create({
+        actorId: verifiedBy,
+        action: 'quest.submission.reject',
+        resourceType: 'quest_submission',
+        resourceId: submission.id,
+        metadata: {
+          userId: submission.userId,
+          questId: submission.userQuest.quest.id,
+          questSlug: submission.userQuest.quest.slug,
+          reviewNotes: dto.reviewNotes,
+          rejectionReason,
+        },
+      });
 
       return { message: 'Quest submission rejected' };
     }
@@ -991,29 +1002,6 @@ export class QuestsService {
 
     const completed = await this.completeAutoQuest(userId, quest);
     return completed ? { questId: quest.id, questSlug: quest.slug } : null;
-  }
-
-  private requireSupabaseStorageClient(): SupabaseClient {
-    if (this.supabaseStorageClient) {
-      return this.supabaseStorageClient;
-    }
-
-    throw new InternalServerErrorException(
-      'Supabase storage is not configured. Set SUPABASE_SECRET_KEY.',
-    );
-  }
-
-  private fileExtensionForMimeType(mimeType: string): string {
-    switch (mimeType) {
-      case 'image/jpeg':
-        return 'jpg';
-      case 'image/png':
-        return 'png';
-      case 'image/webp':
-        return 'webp';
-      default:
-        return 'bin';
-    }
   }
 
   private async evaluateAutoQuestEligibility(

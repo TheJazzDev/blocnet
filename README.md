@@ -3,7 +3,8 @@
 This repository now contains:
 - `mobile/` Flutter client
 - `backend/` NestJS API (Prisma + Supabase Postgres)
-- `admin/` Next.js admin panel
+- `console/` Next.js admin panel
+- `homepage/` Next.js marketing site
 - `contracts/` Hardhat smart contracts
 
 Master plan and execution reference:
@@ -53,3 +54,4 @@ Reference:
 - Health endpoint: `/api/health`.
 - Swagger UI: `http://localhost:3080/api/docs`.
 - For seed bootstrap, set `OWNER_USER_ID` and `OWNER_EMAIL` in `backend/.env.local`.
+

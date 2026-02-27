@@ -160,7 +160,7 @@ class _HistoryRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '+${item.points} pts',
+              '+${item.points} MCR',
               style: AppTypography.custom(
                 size: 14,
                 weight: FontWeight.w800,

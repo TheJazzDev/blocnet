@@ -9,6 +9,7 @@ import 'package:blocnet/services/blocks_store.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/deep_link_service.dart';
 import 'package:blocnet/services/edge_engine_store.dart';
+import 'package:blocnet/services/feed_view_mode_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/services/notification_settings_store.dart';
 import 'package:blocnet/services/push_notification_service.dart';
@@ -25,7 +26,7 @@ import 'package:blocnet/services/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'constants/app_routes.dart';
-import 'screen/page_not_found.dart';
+import 'package:blocnet/shared/pages/page_not_found.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -58,7 +59,6 @@ void main() async {
       anonKey: AppConfig.supabaseAnonKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
-        autoRefreshToken: false,
       ),
     );
   }
@@ -116,6 +116,7 @@ void main() async {
         ChangeNotifierProvider<AuthStore>.value(value: authStore),
         ChangeNotifierProvider(create: (_) => AppStore()),
         ChangeNotifierProvider(create: (_) => UpdatesStore()),
+        ChangeNotifierProvider(create: (_) => FeedViewModeStore()),
         ChangeNotifierProvider(create: (_) => CommunityPostsStore()),
         ChangeNotifierProvider(create: (_) => EdgeEngineStore()),
         ChangeNotifierProvider<NotificationsStore>.value(

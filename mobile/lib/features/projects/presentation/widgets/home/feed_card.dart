@@ -4,7 +4,7 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
-import 'package:blocnet/screen/public_profile_screen.dart';
+import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/services/update_bookmarks_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
@@ -13,11 +13,18 @@ import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 
+enum FeedCardLayout { card, list }
+
 /// A single feed card showing a hunter update in the home screen.
 class FeedCard extends StatefulWidget {
-  const FeedCard({super.key, required this.post});
+  const FeedCard({
+    super.key,
+    required this.post,
+    this.layout = FeedCardLayout.card,
+  });
 
   final Update post;
+  final FeedCardLayout layout;
 
   @override
   State<FeedCard> createState() => _FeedCardState();
@@ -126,6 +133,196 @@ class _FeedCardState extends State<FeedCard> {
     );
   }
 
+  Widget _buildListLayout({
+    required BuildContext context,
+    required Project project,
+    required String previewText,
+    required String? roleLabel,
+    required Color roleColor,
+    required Color priorityColor,
+  }) {
+    final author = post.admin!;
+    final rawUsername = author.username.trim();
+    final displayUsername = rawUsername.isEmpty
+        ? '@${author.name.toLowerCase().replaceAll(' ', '_')}'
+        : (rawUsername.startsWith('@') ? rawUsername : '@$rawUsername');
+    return InkWell(
+      onTap: () => _openDetails(context),
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => _openAuthorProfile(context),
+                  behavior: HitTestBehavior.opaque,
+                  child: AppAvatar(
+                    radius: 20,
+                    imageUrl: author.imageUrl,
+                    fallback: Icon(
+                      Icons.person,
+                      size: 18,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: GestureDetector(
+                              onTap: () => _openAuthorProfile(context),
+                              behavior: HitTestBehavior.opaque,
+                              child: Text(
+                                author.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.custom(
+                                  color: AppColors.textPrimary,
+                                  size: 14,
+                                  weight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (author.primaryBadge != null) ...[
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () => _openAuthorProfile(context),
+                              behavior: HitTestBehavior.opaque,
+                              child: BadgeIcon(
+                                badge: author.primaryBadge!,
+                                size: BadgeSize.small,
+                                showTooltip: false,
+                              ),
+                            ),
+                          ],
+                          if (roleLabel != null) ...[
+                            const SizedBox(width: 6),
+                            _FeedRoleChip(label: roleLabel, color: roleColor),
+                          ],
+                          const SizedBox(width: 8),
+                          Text(
+                            getTimeStamp(post.createdAt),
+                            style: AppTypography.custom(
+                              color: AppColors.textFaint,
+                              size: 11,
+                              weight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        displayUsername,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.custom(
+                          color: AppColors.textMuted,
+                          size: 12,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () => _openProjectDetails(context),
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.layers_outlined,
+                              size: 13,
+                              color: AppColors.textFaint,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'in ${project.name}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.custom(
+                                  color: AppColors.textMuted,
+                                  size: 12,
+                                  weight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: priorityColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: priorityColor.withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: Text(
+                                post.priority.label.toUpperCase(),
+                                style: AppTypography.custom(
+                                  color: priorityColor,
+                                  size: 9,
+                                  weight: FontWeight.w700,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (post.secondaryTags.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: post.secondaryTags.take(3).map((tag) {
+                            return _TagPill(label: tag.name);
+                          }).toList(),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Text(
+                        previewText,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.custom(
+                          color: AppColors.textSecondary,
+                          size: 13,
+                          weight: FontWeight.w400,
+                          height: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _ActionRow(
+                        onLikeTap: () => _handleLikeTap(context),
+                        onCommentTap: () => _handleCommentTap(context),
+                        onShareTap: () => _handleShareTap(context),
+                        onBookmarkTap: _handleBookmarkTap,
+                        isBookmarked: _isBookmarked,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final author = post.admin!;
@@ -137,6 +334,17 @@ class _FeedCardState extends State<FeedCard> {
     final previewText = post.description.trim().isEmpty
         ? post.content.trim()
         : post.description.trim();
+
+    if (widget.layout == FeedCardLayout.list) {
+      return _buildListLayout(
+        context: context,
+        project: project,
+        previewText: previewText,
+        roleLabel: roleLabel,
+        roleColor: roleColor,
+        priorityColor: priorityColor,
+      );
+    }
 
     return GestureDetector(
       onTap: () => _openDetails(context),
@@ -589,34 +797,35 @@ class _ActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _ActionButton(
-          icon: Icons.favorite_border_rounded,
-          label: null,
-          color: AppColors.error500,
-          onTap: onLikeTap,
+        Expanded(
+          child: _ActionButton(
+            icon: Icons.favorite_border_rounded,
+            color: AppColors.error500,
+            onTap: onLikeTap,
+          ),
         ),
-        const SizedBox(width: 12),
-        _ActionButton(
-          icon: Icons.chat_bubble_outline_rounded,
-          label: null,
-          color: AppColors.primary400,
-          onTap: onCommentTap,
+        Expanded(
+          child: _ActionButton(
+            icon: Icons.chat_bubble_outline_rounded,
+            color: AppColors.primary400,
+            onTap: onCommentTap,
+          ),
         ),
-        const SizedBox(width: 12),
-        _ActionButton(
-          icon: Icons.share_outlined,
-          label: null,
-          color: AppColors.teal400,
-          onTap: onShareTap,
+        Expanded(
+          child: _ActionButton(
+            icon: Icons.share_outlined,
+            color: AppColors.teal400,
+            onTap: onShareTap,
+          ),
         ),
-        const Spacer(),
-        _ActionButton(
-          icon: isBookmarked
-              ? Icons.bookmark_rounded
-              : Icons.bookmark_border_rounded,
-          label: null,
-          color: isBookmarked ? AppColors.primary400 : AppColors.textMuted,
-          onTap: onBookmarkTap,
+        Expanded(
+          child: _ActionButton(
+            icon: isBookmarked
+                ? Icons.bookmark_rounded
+                : Icons.bookmark_border_rounded,
+            color: isBookmarked ? AppColors.primary400 : AppColors.textMuted,
+            onTap: onBookmarkTap,
+          ),
         ),
       ],
     );
@@ -628,11 +837,9 @@ class _ActionButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     required this.color,
-    this.label,
   });
 
   final IconData icon;
-  final String? label;
   final Color color;
   final VoidCallback onTap;
 
@@ -640,31 +847,11 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: color.withValues(alpha: 0.15),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: color),
-            if (label != null) ...[
-              const SizedBox(width: 4),
-              Text(
-                label!,
-                style: AppTypography.custom(
-                  color: color,
-                  size: 12,
-                  weight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ],
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Center(
+          child: Icon(icon, size: 20, color: color),
         ),
       ),
     );

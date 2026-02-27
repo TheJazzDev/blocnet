@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  IsString,
   Max,
   Min,
 } from 'class-validator';
@@ -26,6 +27,14 @@ export class UpdateWalletRuntimeConfigDto {
   @IsOptional()
   @IsBoolean()
   depositRealtimeEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  bscRpcUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
+  bscRpcWsUrl?: string | null;
 
   @IsOptional()
   @IsInt()

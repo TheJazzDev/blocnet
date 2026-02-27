@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   OnModuleDestroy,
@@ -44,6 +45,8 @@ type WalletRuntimeConfigSnapshot = {
   depositsEnabled: boolean;
   withdrawalsEnabled: boolean;
   depositRealtimeEnabled: boolean;
+  bscRpcUrl: string | null;
+  bscRpcWsUrl: string | null;
   depositConfirmations: number | null;
   withdrawalConfirmations: number | null;
   walletAssetBntEnabled: boolean;
@@ -59,6 +62,8 @@ export type WalletRuntimeConfigResponse = {
   depositsEnabled: boolean;
   withdrawalsEnabled: boolean;
   depositRealtimeEnabled: boolean;
+  bscRpcUrl: string | null;
+  bscRpcWsUrl: string | null;
   depositConfirmations: number;
   withdrawalConfirmations: number;
   walletAssetBntEnabled: boolean;
@@ -109,6 +114,8 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
       depositsEnabled: boolean;
       withdrawalsEnabled: boolean;
       depositRealtimeEnabled: boolean;
+      bscRpcUrl: string | null;
+      bscRpcWsUrl: string | null;
       depositConfirmations: number;
       withdrawalConfirmations: number;
       walletAssetBntEnabled: boolean;
@@ -121,6 +128,14 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
       patch.withdrawalEnabledAssets === undefined
         ? undefined
         : this.normalizeWithdrawalAssetsList(patch.withdrawalEnabledAssets);
+    const runtimeRpcUrl =
+      patch.bscRpcUrl === undefined
+        ? undefined
+        : this.normalizeRuntimeUrl(patch.bscRpcUrl, ['http:', 'https:']);
+    const runtimeWsRpcUrl =
+      patch.bscRpcWsUrl === undefined
+        ? undefined
+        : this.normalizeRuntimeUrl(patch.bscRpcWsUrl, ['ws:', 'wss:']);
 
     const row = await this.prisma.walletRuntimeConfig.upsert({
       where: { id: WALLET_RUNTIME_CONFIG_ID },
@@ -137,6 +152,10 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
         ...(patch.depositRealtimeEnabled === undefined
           ? {}
           : { depositRealtimeEnabled: patch.depositRealtimeEnabled }),
+        ...(runtimeRpcUrl === undefined ? {} : { bscRpcUrl: runtimeRpcUrl }),
+        ...(runtimeWsRpcUrl === undefined
+          ? {}
+          : { bscRpcWsUrl: runtimeWsRpcUrl }),
         ...(patch.depositConfirmations === undefined
           ? {}
           : {
@@ -174,6 +193,14 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
         depositRealtimeEnabled:
           patch.depositRealtimeEnabled ??
           this.runtimeConfig.depositRealtimeEnabled,
+        bscRpcUrl:
+          runtimeRpcUrl === undefined
+            ? this.runtimeConfig.bscRpcUrl
+            : runtimeRpcUrl,
+        bscRpcWsUrl:
+          runtimeWsRpcUrl === undefined
+            ? this.runtimeConfig.bscRpcWsUrl
+            : runtimeWsRpcUrl,
         depositConfirmations:
           patch.depositConfirmations === undefined
             ? this.runtimeConfig.depositConfirmations
@@ -552,21 +579,21 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
   private getRpcUrlForEnvironment(
     chainEnvironment: ChainEnvironment,
   ): string | null {
-    const single = this.getTrimmedString('BSC_RPC_URL');
-    if (!single) {
+    if (this.walletChainEnvironment !== chainEnvironment) {
       return null;
     }
-    return this.walletChainEnvironment === chainEnvironment ? single : null;
+    return this.runtimeConfig.bscRpcUrl ?? this.getTrimmedString('BSC_RPC_URL');
   }
 
   private getWsRpcUrlForEnvironment(
     chainEnvironment: ChainEnvironment,
   ): string | null {
-    const single = this.getTrimmedString('BSC_RPC_WS_URL');
-    if (!single) {
+    if (this.walletChainEnvironment !== chainEnvironment) {
       return null;
     }
-    return this.walletChainEnvironment === chainEnvironment ? single : null;
+    return (
+      this.runtimeConfig.bscRpcWsUrl ?? this.getTrimmedString('BSC_RPC_WS_URL')
+    );
   }
 
   private getBntTokenAddressForEnvironment(
@@ -731,6 +758,8 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
           depositsEnabled: this.runtimeConfig.depositsEnabled,
           withdrawalsEnabled: this.runtimeConfig.withdrawalsEnabled,
           depositRealtimeEnabled: this.runtimeConfig.depositRealtimeEnabled,
+          bscRpcUrl: this.runtimeConfig.bscRpcUrl,
+          bscRpcWsUrl: this.runtimeConfig.bscRpcWsUrl,
           depositConfirmations: this.runtimeConfig.depositConfirmations,
           withdrawalConfirmations: this.runtimeConfig.withdrawalConfirmations,
           walletAssetBntEnabled: this.runtimeConfig.walletAssetBntEnabled,
@@ -762,6 +791,8 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
       depositsEnabled: row.depositsEnabled,
       withdrawalsEnabled: row.withdrawalsEnabled,
       depositRealtimeEnabled: row.depositRealtimeEnabled,
+      bscRpcUrl: this.normalizeOptionalString(row.bscRpcUrl),
+      bscRpcWsUrl: this.normalizeOptionalString(row.bscRpcWsUrl),
       depositConfirmations: row.depositConfirmations,
       withdrawalConfirmations: row.withdrawalConfirmations,
       walletAssetBntEnabled: row.walletAssetBntEnabled,
@@ -783,6 +814,9 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
       depositsEnabled: config.depositsEnabled,
       withdrawalsEnabled: config.withdrawalsEnabled,
       depositRealtimeEnabled: config.depositRealtimeEnabled,
+      bscRpcUrl: config.bscRpcUrl ?? this.getTrimmedString('BSC_RPC_URL'),
+      bscRpcWsUrl:
+        config.bscRpcWsUrl ?? this.getTrimmedString('BSC_RPC_WS_URL'),
       depositConfirmations:
         config.depositConfirmations ??
         this.defaultConfirmationsForEnvironment(this.walletChainEnvironment),
@@ -813,6 +847,8 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
         'WALLET_DEPOSIT_REALTIME_ENABLED',
         true,
       ),
+      bscRpcUrl: this.getTrimmedString('BSC_RPC_URL'),
+      bscRpcWsUrl: this.getTrimmedString('BSC_RPC_WS_URL'),
       depositConfirmations: this.getOptionalNumber(
         'WALLET_DEPOSIT_CONFIRMATIONS',
         {
@@ -836,6 +872,39 @@ export class WalletConfigService implements OnModuleInit, OnModuleDestroy {
       withdrawalAssetsCsv,
       updatedAt: new Date(),
     };
+  }
+
+  private normalizeOptionalString(value: string | null | undefined): string | null {
+    if (value === undefined || value === null) {
+      return null;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
+  private normalizeRuntimeUrl(
+    value: string | null | undefined,
+    allowedProtocols: string[],
+  ): string | null {
+    const normalized = this.normalizeOptionalString(value);
+    if (!normalized) {
+      return null;
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(normalized);
+    } catch {
+      throw new BadRequestException(`Invalid URL format: ${normalized}`);
+    }
+
+    if (!allowedProtocols.includes(parsed.protocol)) {
+      throw new BadRequestException(
+        `Invalid URL protocol. Allowed: ${allowedProtocols.join(', ')}`,
+      );
+    }
+
+    return parsed.toString();
   }
 
   private normalizeWithdrawalAssetsList(assets: WalletAsset[]): WalletAsset[] {

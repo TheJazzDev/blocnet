@@ -26,8 +26,8 @@ run_backend() {
 }
 
 run_admin() {
-  section "Admin checks"
-  cd "$ROOT_DIR/admin"
+  section "Console checks"
+  cd "$ROOT_DIR/console"
   if [[ "$SKIP_INSTALL" != "1" ]]; then
     bun install --frozen-lockfile
   fi

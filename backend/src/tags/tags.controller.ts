@@ -5,12 +5,15 @@ import {
   Param,
   Patch,
   Post,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AppRole } from '../common/enums/role.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { CreatePrimaryTagDto } from './dto/create-primary-tag.dto';
 import { CreateSecondaryTagDto } from './dto/create-secondary-tag.dto';
 import { UpdatePrimaryTagDto } from './dto/update-primary-tag.dto';
@@ -34,34 +37,54 @@ export class TagsController {
   @Post('primary')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AppRole.OWNER, AppRole.ADMIN)
-  async createPrimaryTag(@Body() dto: CreatePrimaryTagDto) {
-    return this.tagsService.createPrimaryTag(dto);
+  async createPrimaryTag(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: CreatePrimaryTagDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.tagsService.createPrimaryTag(user.id, dto);
   }
 
   @Post('secondary')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AppRole.OWNER, AppRole.ADMIN)
-  async createSecondaryTag(@Body() dto: CreateSecondaryTagDto) {
-    return this.tagsService.createSecondaryTag(dto);
+  async createSecondaryTag(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: CreateSecondaryTagDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.tagsService.createSecondaryTag(user.id, dto);
   }
 
   @Patch('primary/:id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async updatePrimaryTag(
+    @CurrentUser() user: AuthUser | undefined,
     @Param('id') id: string,
     @Body() dto: UpdatePrimaryTagDto,
   ) {
-    return this.tagsService.updatePrimaryTag(id, dto);
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.tagsService.updatePrimaryTag(user.id, id, dto);
   }
 
   @Patch('secondary/:id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async updateSecondaryTag(
+    @CurrentUser() user: AuthUser | undefined,
     @Param('id') id: string,
     @Body() dto: UpdateSecondaryTagDto,
   ) {
-    return this.tagsService.updateSecondaryTag(id, dto);
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+    return this.tagsService.updateSecondaryTag(user.id, id, dto);
   }
 }

@@ -1,10 +1,12 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
-import 'package:blocnet/screen/public_profile_screen.dart';
+import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
+
+enum GemCardLayout { card, list }
 
 class GemCard extends StatelessWidget {
   const GemCard({
@@ -13,6 +15,7 @@ class GemCard extends StatelessWidget {
     required this.isFollowed,
     required this.onFollowToggle,
     required this.isLoading,
+    this.layout = GemCardLayout.card,
     this.hypeScore,
     this.onPreferencesTap,
     this.onManageTap,
@@ -22,6 +25,7 @@ class GemCard extends StatelessWidget {
   final bool isFollowed;
   final VoidCallback onFollowToggle;
   final bool isLoading;
+  final GemCardLayout layout;
   final double? hypeScore;
   final VoidCallback? onPreferencesTap;
   final VoidCallback? onManageTap;
@@ -71,11 +75,196 @@ class GemCard extends StatelessWidget {
     PublicProfileScreen.showSheet(context, hunter);
   }
 
+  Widget _buildListLayout(
+    BuildContext context,
+    double score,
+    Color scoreColor,
+  ) {
+    final admin = project.admin;
+    return InkWell(
+      onTap: () => _openDetails(context),
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary500.withValues(alpha: 0.2),
+                    AppColors.primary500.withValues(alpha: 0.08),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary500.withValues(alpha: 0.25),
+                ),
+              ),
+              child: project.logo.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: Image.network(
+                        project.logo,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.layers_outlined,
+                          size: 18,
+                          color: AppColors.primary400,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      Icons.layers_outlined,
+                      size: 18,
+                      color: AppColors.primary400,
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          project.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.custom(
+                            color: AppColors.textPrimary,
+                            size: 14,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        score.toStringAsFixed(1),
+                        style: AppTypography.custom(
+                          color: scoreColor,
+                          size: 12,
+                          weight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${project.primaryTag.name} • ${project.followersCount} followers • ${project.posts?.length ?? 0} updates',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.custom(
+                      color: AppColors.textFaint,
+                      size: 11,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                  if (project.description.trim().isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    Text(
+                      project.description.trim(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.custom(
+                        color: AppColors.textSecondary,
+                        size: 12,
+                        weight: FontWeight.w400,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                  if (admin != null) ...[
+                    const SizedBox(height: 6),
+                    GestureDetector(
+                      onTap: () => _openHunterProfile(context),
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        children: [
+                          AppAvatar(
+                            radius: 9,
+                            imageUrl: admin.imageUrl,
+                            backgroundColor: AppColors.bgSurface,
+                            fallback: Icon(
+                              Icons.person,
+                              size: 10,
+                              color: AppColors.textFaint,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Hunted by ${admin.name}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.custom(
+                                color: AppColors.textMuted,
+                                size: 11,
+                                weight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: isLoading ? null : onFollowToggle,
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 150),
+                opacity: isLoading ? 0.6 : 1,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isFollowed
+                        ? AppColors.primary500.withValues(alpha: 0.18)
+                        : AppColors.bgElevated,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: isFollowed
+                          ? AppColors.primary500.withValues(alpha: 0.45)
+                          : AppColors.borderSubtle,
+                    ),
+                  ),
+                  child: Text(
+                    isFollowed ? 'Following' : 'Follow',
+                    style: AppTypography.custom(
+                      color: isFollowed
+                          ? AppColors.primary400
+                          : AppColors.textFaint,
+                      size: 11,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final score = hypeScore ?? _deriveHypeScore();
     final scoreColor = _scoreColor(score);
     final admin = project.admin;
+
+    if (layout == GemCardLayout.list) {
+      return _buildListLayout(context, score, scoreColor);
+    }
 
     return GestureDetector(
       onTap: () => _openDetails(context),

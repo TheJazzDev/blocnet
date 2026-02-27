@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/follow_preference_bottom_sheet.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_card/gem_card.dart';
 import 'package:blocnet/services/auth_store.dart';
@@ -11,7 +12,12 @@ import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
 class DiscoverProjectsSection extends StatefulWidget {
-  const DiscoverProjectsSection({super.key});
+  const DiscoverProjectsSection({
+    required this.viewMode,
+    super.key,
+  });
+
+  final FeedViewMode viewMode;
 
   @override
   State<DiscoverProjectsSection> createState() =>
@@ -42,6 +48,50 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
       projectId: project.id,
       projectName: project.name,
     );
+  }
+
+  List<Widget> _buildProjectRows({
+    required List<Project> visibleProjects,
+    required ProjectsStore store,
+    required Set<String> manageableIds,
+    required Map<String, int> updateCountByProject,
+  }) {
+    final rows = <Widget>[];
+    for (var index = 0; index < visibleProjects.length; index++) {
+      final project = visibleProjects[index];
+      final isFollowed = store.isProjectFollowed(project.id);
+      final hypeScore = store.hypeScoreForProject(
+        project,
+        updatesCountOverride: updateCountByProject[project.id],
+      );
+      rows.add(
+        GemCard(
+          project: project,
+          hypeScore: hypeScore,
+          isFollowed: isFollowed,
+          isLoading: store.isTogglingFollow,
+          layout: widget.viewMode == FeedViewMode.card
+              ? GemCardLayout.card
+              : GemCardLayout.list,
+          onFollowToggle: () => _toggleFollow(project),
+          onPreferencesTap: isFollowed ? () => _openPreferences(project) : null,
+          onManageTap: manageableIds.contains(project.id)
+              ? () => Navigator.of(context).pushNamed(AppRoutes.manageProjects)
+              : null,
+        ),
+      );
+      if (widget.viewMode == FeedViewMode.list &&
+          index < visibleProjects.length - 1) {
+        rows.add(
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+        );
+      }
+    }
+
+    return rows;
   }
 
   @override
@@ -182,28 +232,13 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                 ],
               ),
             ),
-            // Gem cards
             Column(
-              children: visibleProjects.map((project) {
-                final isFollowed = store.isProjectFollowed(project.id);
-                final hypeScore = store.hypeScoreForProject(
-                  project,
-                  updatesCountOverride: updateCountByProject[project.id],
-                );
-                return GemCard(
-                  project: project,
-                  hypeScore: hypeScore,
-                  isFollowed: isFollowed,
-                  isLoading: store.isTogglingFollow,
-                  onFollowToggle: () => _toggleFollow(project),
-                  onPreferencesTap:
-                      isFollowed ? () => _openPreferences(project) : null,
-                  onManageTap: manageableIds.contains(project.id)
-                      ? () => Navigator.of(context)
-                          .pushNamed(AppRoutes.manageProjects)
-                      : null,
-                );
-              }).toList(),
+              children: _buildProjectRows(
+                visibleProjects: visibleProjects,
+                store: store,
+                manageableIds: manageableIds,
+                updateCountByProject: updateCountByProject,
+              ),
             ),
           ],
         );

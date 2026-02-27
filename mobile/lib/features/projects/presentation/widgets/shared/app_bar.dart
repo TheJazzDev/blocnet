@@ -6,7 +6,7 @@ import 'package:blocnet/features/auth/presentation/widgets/space_switcher.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/blocnet_search_delegate.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
-import 'package:blocnet/screen/public_profile_screen.dart';
+import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/services/updates_store.dart';
@@ -291,7 +291,8 @@ class _ProfileAvatarButton extends StatelessWidget {
 
 class _NotificationBellButton extends StatefulWidget {
   @override
-  State<_NotificationBellButton> createState() => _NotificationBellButtonState();
+  State<_NotificationBellButton> createState() =>
+      _NotificationBellButtonState();
 }
 
 class _NotificationBellButtonState extends State<_NotificationBellButton>
@@ -370,10 +371,12 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
             builder: (context, child) {
               final progress = _shakeController.value;
               final decay = 1 - progress;
-              final radians =
-                  math.sin(progress * math.pi * 10) * 0.22 * decay;
-              return Transform.rotate(
-                angle: radians,
+              final radians = math.sin(progress * math.pi * 10) * 0.22 * decay;
+              final scale = 1 + (math.sin(progress * math.pi) * 0.14);
+              return Transform(
+                transform: Matrix4.identity()
+                  ..scale(scale)
+                  ..rotateZ(radians),
                 alignment: Alignment.center,
                 child: child,
               );
@@ -384,21 +387,25 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
               top: -3,
               right: -3,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: AppColors.bgBase, width: 1.5),
                 ),
-                child: Text(
-                  unreadCount > 99 ? '99+' : unreadCount.toString(),
-                  style: AppTypography.custom(
-                    color: Colors.white,
-                    size: 8,
-                    weight: FontWeight.w700,
+                child: Center(
+                  child: Text(
+                    unreadCount > 99 ? '99+' : unreadCount.toString(),
+                    style: AppTypography.custom(
+                      color: Colors.white,
+                      size: 8,
+                      weight: FontWeight.w700,
+                      height: 1.0,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
             ),

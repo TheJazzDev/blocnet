@@ -1,0 +1,8 @@
+class AppPreferenceKeys {
+  AppPreferenceKeys._();
+
+  static const String feedViewMode = 'home_updates_feed_view_mode';
+
+  @Deprecated('Use feedViewMode')
+  static const String updatesFeedViewMode = feedViewMode;
+}

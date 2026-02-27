@@ -21,6 +21,7 @@ import { UpdateNotificationPreferencesDto } from './dto/update-notification-pref
 import { NotificationPreferencesService } from './notification-preferences.service';
 import { NotificationsService } from './notifications.service';
 import { FcmService } from './fcm.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('notifications')
 @UseGuards(AuthGuard)
@@ -29,6 +30,7 @@ export class NotificationsController {
     private readonly notificationsService: NotificationsService,
     private readonly fcmService: FcmService,
     private readonly notificationPreferencesService: NotificationPreferencesService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get()
@@ -94,15 +96,33 @@ export class NotificationsController {
         userIds: dto.userIds,
       }),
     ]);
+    const failureCount = fcmResult.failureCount ?? 0;
+    const recipientCount = fcmResult.recipientCount ?? dbResult.insertedCount;
+    const skipReason =
+      'skipReason' in fcmResult ? (fcmResult.skipReason ?? null) : null;
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'notification.broadcast.send',
+        resourceType: 'notification_broadcast',
+        metadata: {
+          target: dto.target,
+          requestedUserCount: dto.userIds?.length ?? null,
+          insertedCount: dbResult.insertedCount,
+          sentCount: fcmResult.sentCount,
+          failureCount,
+        },
+      },
+    });
 
     return {
       insertedCount: dbResult.insertedCount,
       sentCount: fcmResult.sentCount,
-      failureCount: (fcmResult as any).failureCount ?? 0,
-      recipientCount:
-        (fcmResult as any).recipientCount ?? dbResult.insertedCount,
+      failureCount,
+      recipientCount,
       skipped: fcmResult.skipped,
-      skipReason: (fcmResult as any).skipReason ?? null,
+      skipReason,
     };
   }
 }
