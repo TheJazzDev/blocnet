@@ -54,6 +54,18 @@ export function RoadmapClean() {
     {
       phase: 4,
       quarter: 'Q3 2026',
+      title: 'Community Rewards & Trust',
+      status: 'upcoming',
+      icon: '🤝',
+      achievements: [
+        'Hunter tipping rewards at scale',
+        'Community loyalty badges',
+        'Reputation and trust signals',
+      ],
+    },
+    {
+      phase: 5,
+      quarter: 'Q4 2026',
       title: 'Monetization & Growth',
       status: 'upcoming',
       icon: '📈',
@@ -64,10 +76,10 @@ export function RoadmapClean() {
       ],
     },
     {
-      phase: 5,
-      quarter: 'Q4 2026',
+      phase: 6,
+      quarter: '2027',
       title: 'Ecosystem Expansion',
-      status: 'upcoming',
+      status: 'future',
       icon: '🌐',
       achievements: [
         'Web3 jobs marketplace',
@@ -76,8 +88,8 @@ export function RoadmapClean() {
       ],
     },
     {
-      phase: 6,
-      quarter: '2027',
+      phase: 7,
+      quarter: '2028',
       title: 'Global Scale',
       status: 'future',
       icon: '🌍',
