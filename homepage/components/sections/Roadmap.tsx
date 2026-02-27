@@ -1,6 +1,6 @@
 'use client';
 
-export function RoadmapClean() {
+export function Roadmap() {
   const phases = [
     {
       phase: 0,

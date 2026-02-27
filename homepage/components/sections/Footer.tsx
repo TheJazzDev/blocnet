@@ -144,14 +144,14 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <a href="https://t.me/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                <a href="https://blocnet.app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Help Center
                 </a>
               </li>
               <li>
-                <a href="mailto:blocnetapp@gmail.com" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                <Link href="/contact" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Contact Us
-                </a>
+                </Link>
               </li>
               <li>
                 <Link href="/privacy" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
@@ -162,11 +162,6 @@ export function Footer() {
                 <Link href="/terms" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Terms of Service
                 </Link>
-              </li>
-              <li>
-                <a href="https://github.com/blocnet" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  GitHub
-                </a>
               </li>
             </ul>
           </div>

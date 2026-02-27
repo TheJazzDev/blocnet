@@ -13,20 +13,56 @@ async function bootstrap() {
   app.use(helmet());
   logger.log('Helmet middleware applied');
 
-  const allowedOrigins = [
-    'http://localhost:3081', // admin panel (local)
-    'http://localhost:3000', // landing page (local)
-    ...(process.env.CORS_ORIGINS
-      ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
-      : []),
+  const defaultAllowedOrigins = [
+    'http://localhost:3081',
+    'http://localhost:3000',
+    'https://console.blocnet.app',
+    'https://dev-console.blocnet.app',
+    'https://blocnet-console.vercel.app',
+    'https://blocnet-dev-console.vercel.app',
   ];
+  const envAllowedOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(/[,\n;\s]+/)
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const allowAnyOrigin =
+    process.env.CORS_ALLOW_ANY_ORIGIN === 'true' ||
+    envAllowedOrigins.includes('*');
+  const allowedOriginSet = new Set([
+    ...defaultAllowedOrigins,
+    ...envAllowedOrigins.filter((origin) => origin !== '*'),
+  ]);
+  const allowedOrigins = [...allowedOriginSet];
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow non-browser callers (e.g. server-to-server) without an Origin header.
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (allowAnyOrigin || allowedOriginSet.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'x-admin-view-as-role',
+      'x-request-id',
+      'apikey',
+      'x-client-info',
+    ],
+    exposedHeaders: ['x-request-id'],
     credentials: true,
+    optionsSuccessStatus: 204,
   });
+  logger.log(`CORS origins configured: ${allowAnyOrigin ? '*' : allowedOrigins.join(', ')}`);
 
   app.setGlobalPrefix('api');
   app.use((req: Request, res: Response, next: NextFunction) => {

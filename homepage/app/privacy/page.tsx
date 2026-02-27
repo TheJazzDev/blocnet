@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { Navbar } from '@/components/ui/Navbar';
+import { Footer } from '@/components/sections/Footer';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — Blocnet',
@@ -7,8 +9,10 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#09090b] pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#09090b] text-foreground">
+      <Navbar />
+      <main className="pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
         <div className="mb-10 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
             Privacy Policy
@@ -119,7 +123,7 @@ export default function PrivacyPage() {
                 4.2 When We Share Information
               </p>
               <ul className="list-disc pl-5 sm:pl-6 space-y-2">
-                <li><span className="font-medium text-foreground">Public Blockchain:</span> Wallet addresses and transactions are public on Solana blockchain</li>
+                <li><span className="font-medium text-foreground">Public Blockchain:</span> Wallet addresses and transactions are public on BNB Smart Chain</li>
                 <li><span className="font-medium text-foreground">Service Providers:</span> Trusted third-party services (hosting, analytics, authentication) under strict data protection agreements</li>
                 <li><span className="font-medium text-foreground">Community Content:</span> Updates, comments, and profiles are visible to other users as intended by the platform</li>
                 <li><span className="font-medium text-foreground">Legal Requirements:</span> When required by law, court order, or to protect rights and safety</li>
@@ -135,7 +139,7 @@ export default function PrivacyPage() {
               </p>
               <ul className="list-disc pl-5 sm:pl-6 space-y-2">
                 <li>Supabase (authentication and database hosting)</li>
-                <li>Solana blockchain network</li>
+                <li>BNB Smart Chain network</li>
                 <li>Analytics providers (anonymized data)</li>
                 <li>Cloud infrastructure providers</li>
               </ul>
@@ -367,7 +371,9 @@ export default function PrivacyPage() {
             </p>
           </section>
         </div>
-      </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }
