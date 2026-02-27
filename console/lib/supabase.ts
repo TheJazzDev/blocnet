@@ -11,7 +11,7 @@ export function getSupabaseClient(): SupabaseClient {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
       "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_PUBLISHABLE_KEY. " +
-        "Create admin/.env.local from admin/.env.local.example."
+        "Create console/.env.local from console/.env.local.example."
     );
   }
 

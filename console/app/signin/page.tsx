@@ -14,6 +14,7 @@ import {
   getAdminEnvironmentLabel,
   resolveAdminEnvironmentFromHost,
 } from "@/lib/environment";
+import { EnvironmentWatermark } from "@/components/environment-watermark";
 
 export default async function SignInPage() {
   const headerStore = await headers();
@@ -21,25 +22,10 @@ export default async function SignInPage() {
   const environment = resolveAdminEnvironmentFromHost(host);
   const environmentLabel = getAdminEnvironmentLabel(environment);
   const hostName = (host ?? "unknown-host").toLowerCase();
-  const watermarkEnv = environmentLabel.toUpperCase();
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div className="absolute left-1/2 top-1/2 w-[220vmax] -translate-x-1/2 -translate-y-1/2 -rotate-[14deg]">
-          <p
-            className="select-none whitespace-nowrap text-center text-[clamp(2.8rem,8vw,7.5rem)] font-black uppercase tracking-[0.14em] text-primary/15"
-          >
-            {watermarkEnv} · {watermarkEnv} · {watermarkEnv}
-          </p>
-          <p className="mt-2 select-none whitespace-nowrap text-center text-[clamp(0.7rem,1.4vw,1.1rem)] font-semibold tracking-[0.12em] text-primary/35">
-            {hostName} · {hostName} · {hostName}
-          </p>
-        </div>
-      </div>
+      <EnvironmentWatermark text={environmentLabel} />
 
       <div className="relative z-10 w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3">

@@ -20,7 +20,8 @@ Long-term vision (post-MVP):
 ## Monorepo Structure (Locked)
 - `mobile/` Flutter app (user-facing product)
 - `backend/` NestJS API (single source of business logic)
-- `admin/` reserved for future Next.js admin panel
+- `console/` Next.js admin panel
+- `homepage/` Next.js marketing page
 
 ## Locked Architecture Decisions
 - Backend: NestJS (shared API for mobile now and admin web later).

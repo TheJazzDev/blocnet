@@ -52,6 +52,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { EnvironmentWatermark } from "@/components/environment-watermark";
 
 export interface AdminShellUser {
   id: string;
@@ -305,7 +306,6 @@ export function AdminShell({
     () => getAdminEnvironmentLabel(environment),
     [environment],
   );
-  const watermarkEnv = useMemo(() => environmentLabel.toUpperCase(), [environmentLabel]);
 
   useEffect(() => {
     setActingAsRole(currentUser.actingAsRole ?? null);
@@ -374,21 +374,7 @@ export function AdminShell({
   return (
     <AdminSessionContext.Provider value={sessionValue}>
       <div className="relative flex h-screen overflow-hidden">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
-        >
-          <div className="absolute left-1/2 top-1/2 w-[220vmax] -translate-x-1/2 -translate-y-1/2 -rotate-[14deg]">
-            <p
-              className="select-none whitespace-nowrap text-center text-[clamp(2.8rem,8vw,8rem)] font-black uppercase tracking-[0.14em] text-primary/15"
-            >
-              {watermarkEnv} · {watermarkEnv} · {watermarkEnv}
-            </p>
-            <p className="mt-2 select-none whitespace-nowrap text-center text-[clamp(0.7rem,1.4vw,1.1rem)] font-semibold tracking-[0.12em] text-primary/35">
-              {hostName} · {hostName} · {hostName}
-            </p>
-          </div>
-        </div>
+        <EnvironmentWatermark text={environmentLabel} />
 
         <aside className="relative z-10 hidden w-[260px] shrink-0 flex-col border-r bg-sidebar lg:flex">
           <SidebarContent
