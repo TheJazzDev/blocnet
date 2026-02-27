@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8 pt-14 sm:pt-16 md:pt-0">
       {/* Background Grid */}
       <div className="absolute inset-0 bg-[#09090b]">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
@@ -55,10 +55,10 @@ export function Hero() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {[
-            { value: '10K+', label: 'Active Users' },
-            { value: '500+', label: 'Projects Tracked' },
-            { value: '1K+', label: 'Updates Daily' },
-            { value: '5K+', label: 'Community Posts' },
+            { value: '0', label: 'Active Users' },
+            { value: '0', label: 'Projects Tracked' },
+            { value: '0', label: 'Daily Updates' },
+            { value: '0', label: 'Daily Community Posts' },
           ].map((stat) => (
             <div
               key={stat.label}

@@ -6,14 +6,14 @@ export function Tokenomics() {
     { label: 'Ecosystem Growth', percentage: 25, color: '#8b5cf6' },
     { label: 'Team & Advisors', percentage: 15, color: '#06b6d4' },
     { label: 'Liquidity Pool', percentage: 10, color: '#3b82f6' },
-    { label: 'Community Airdrops', percentage: 10, color: '#10b981' },
+    { label: 'Treasury Reserve', percentage: 10, color: '#10b981' },
   ];
 
   const tokenStats = [
-    { label: 'Total Supply', value: '1,000,000,000', suffix: 'BNT' },
-    { label: 'Initial Circulation', value: '100,000,000', suffix: 'BNT' },
-    { label: 'Token Type', value: 'Utility', suffix: '' },
-    { label: 'Blockchain', value: 'BNB Smart Chain', suffix: '' },
+    { label: 'Total Supply', value: '1 Billion', suffix: 'BNT' },
+    { label: 'In Circulation', value: '1 Billion', suffix: 'BNT' },
+    { label: 'Token Utility', value: 'Utility', suffix: '' },
+    { label: 'Blockchain', value: 'BNB Smart Chain (BSC)', suffix: '' },
   ];
 
   const utilities = [
@@ -82,7 +82,7 @@ export function Tokenomics() {
               <p className="text-sm text-muted mb-2">
                 {stat.label}
               </p>
-              <p className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-teal-400 to-primary">
+              <p className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-teal-400 to-primary leading-tight break-words">
                 {stat.value}
               </p>
               {stat.suffix && (
