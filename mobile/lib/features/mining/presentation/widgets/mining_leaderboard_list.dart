@@ -224,7 +224,7 @@ class _LeaderboardTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${item.lifetimeEarnedPoints} lifetime pts',
+                  '${item.lifetimeEarnedPoints} lifetime MCR',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: 11,

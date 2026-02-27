@@ -115,6 +115,7 @@ export default function QuestSubmissionsPage() {
   const [selectedSubmission, setSelectedSubmission] = useState<QuestSubmission | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const canReviewSubmissions =
     session.effectiveRoles.includes("owner") || session.effectiveRoles.includes("admin");
@@ -147,6 +148,7 @@ export default function QuestSubmissionsPage() {
   function openReview(submission: QuestSubmission) {
     setSelectedSubmission(submission);
     setReviewNotes(submission.reviewNotes ?? "");
+    setReviewError(null);
     setReviewOpen(true);
   }
 
@@ -155,6 +157,7 @@ export default function QuestSubmissionsPage() {
     if (!selectedSubmission) return;
 
     setIsSubmitting(true);
+    setReviewError(null);
     try {
       await apiFetch(`/admin/quests/submissions/${selectedSubmission.id}/approve`, {
         method: "POST",
@@ -163,9 +166,11 @@ export default function QuestSubmissionsPage() {
       setReviewOpen(false);
       setSelectedSubmission(null);
       setReviewNotes("");
-      fetchSubmissions();
+      void fetchSubmissions();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to approve submission");
+      setReviewError(
+        err instanceof Error ? err.message : "Failed to approve submission",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -176,11 +181,12 @@ export default function QuestSubmissionsPage() {
     if (!selectedSubmission) return;
 
     if (!reviewNotes.trim()) {
-      alert("Please provide a reason for rejection");
+      setReviewError("Please provide a reason for rejection");
       return;
     }
 
     setIsSubmitting(true);
+    setReviewError(null);
     try {
       await apiFetch(`/admin/quests/submissions/${selectedSubmission.id}/reject`, {
         method: "POST",
@@ -189,9 +195,11 @@ export default function QuestSubmissionsPage() {
       setReviewOpen(false);
       setSelectedSubmission(null);
       setReviewNotes("");
-      fetchSubmissions();
+      void fetchSubmissions();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to reject submission");
+      setReviewError(
+        err instanceof Error ? err.message : "Failed to reject submission",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -392,7 +400,17 @@ export default function QuestSubmissionsPage() {
       )}
 
       {/* Review Dialog */}
-      <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
+      <Dialog
+        open={reviewOpen}
+        onOpenChange={(nextOpen) => {
+          setReviewOpen(nextOpen);
+          if (!nextOpen) {
+            setSelectedSubmission(null);
+            setReviewNotes("");
+            setReviewError(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Review Quest Submission</DialogTitle>
@@ -557,6 +575,11 @@ export default function QuestSubmissionsPage() {
                       rows={3}
                     />
                   </div>
+                  {reviewError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                      <p className="text-sm text-red-700">{reviewError}</p>
+                    </div>
+                  )}
                   <DialogFooter className="gap-2">
                     <Button
                       type="button"

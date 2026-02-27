@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAdminSession } from "@/components/admin-shell";
 import { apiFetch, clientApi, type AdminUserDetail } from "@/lib/api-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 // Import all section components
 import { UserDetailsHeader } from "./components/UserDetailsHeader";
@@ -32,7 +41,6 @@ type AdminBadgeModel = {
 export default function UserManagementPage() {
   const session = useAdminSession();
   const params = useParams();
-  const router = useRouter();
   const userId = (params?.id as string) ?? "";
 
   const [user, setUser] = useState<AdminUserDetail | null>(null);
@@ -40,6 +48,12 @@ export default function UserManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState<{
+    key: string;
+    confirmText: string;
+    submit: () => Promise<unknown>;
+  } | null>(null);
   const [allBadges, setAllBadges] = useState<AdminBadgeModel[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -94,15 +108,10 @@ export default function UserManagementPage() {
     setUser(detail);
   }
 
-  async function runAction(
+  async function executeAction(
     key: string,
     submit: () => Promise<unknown>,
-    opts?: { confirmText?: string },
   ) {
-    if (opts?.confirmText) {
-      const ok = window.confirm(opts.confirmText);
-      if (!ok) return;
-    }
     setActionLoading(key);
     setActionError(null);
     try {
@@ -113,6 +122,30 @@ export default function UserManagementPage() {
     } finally {
       setActionLoading(null);
     }
+  }
+
+  async function runAction(
+    key: string,
+    submit: () => Promise<unknown>,
+    opts?: { confirmText?: string },
+  ) {
+    if (opts?.confirmText) {
+      setPendingConfirmation({
+        key,
+        confirmText: opts.confirmText,
+        submit,
+      });
+      setConfirmOpen(true);
+      return;
+    }
+    await executeAction(key, submit);
+  }
+
+  async function confirmPendingAction() {
+    if (!pendingConfirmation) return;
+    await executeAction(pendingConfirmation.key, pendingConfirmation.submit);
+    setConfirmOpen(false);
+    setPendingConfirmation(null);
   }
 
   // Action handlers
@@ -377,6 +410,48 @@ export default function UserManagementPage() {
           <AuditLogSection userId={user.id} />
         </TabsContent>
       </Tabs>
+
+      <Dialog
+        open={confirmOpen}
+        onOpenChange={(nextOpen) => {
+          setConfirmOpen(nextOpen);
+          if (!nextOpen) {
+            setPendingConfirmation(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogDescription>
+              {pendingConfirmation?.confirmText ?? "Please confirm this action."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+              disabled={Boolean(actionLoading)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={
+                pendingConfirmation?.key.includes("revoke") ||
+                pendingConfirmation?.key.includes("delete") ||
+                pendingConfirmation?.key.includes("deactivate")
+                  ? "destructive"
+                  : "default"
+              }
+              onClick={() => void confirmPendingAction()}
+              disabled={!pendingConfirmation || Boolean(actionLoading)}
+            >
+              {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

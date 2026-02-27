@@ -157,12 +157,21 @@ export default function WalletSettingsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [risk, fees, prices, runtime] = await Promise.all([
+      const [riskResult, feesResult, pricesResult, runtimeResult] =
+        await Promise.allSettled([
         clientApi.listWalletRiskLimits(),
         clientApi.listWalletFeeConfigs(),
         clientApi.listWalletAssetPriceConfigs(),
         clientApi.getWalletRuntimeConfig(),
       ]);
+
+      const risk = riskResult.status === "fulfilled" ? riskResult.value : [];
+      const fees = feesResult.status === "fulfilled" ? feesResult.value : [];
+      const prices =
+        pricesResult.status === "fulfilled" ? pricesResult.value : [];
+      const runtime =
+        runtimeResult.status === "fulfilled" ? runtimeResult.value : null;
+
       setRiskLimits(risk);
       setFeeConfigs(fees);
       setAssetPriceConfigs(prices);
@@ -201,6 +210,26 @@ export default function WalletSettingsPage() {
         };
       }
       setAssetPriceDrafts(nextPriceDrafts);
+
+      const failures: string[] = [];
+      if (riskResult.status === "rejected") {
+        failures.push("risk limits");
+      }
+      if (feesResult.status === "rejected") {
+        failures.push("fee configs");
+      }
+      if (pricesResult.status === "rejected") {
+        failures.push("asset price configs");
+      }
+      if (runtimeResult.status === "rejected") {
+        failures.push("runtime config");
+      }
+
+      if (failures.length > 0) {
+        setError(
+          `Some wallet settings failed to load (${failures.join(", ")}). Check backend/database connectivity.`,
+        );
+      }
     } catch (e: unknown) {
       setRiskLimits([]);
       setFeeConfigs([]);
@@ -1018,6 +1047,128 @@ export default function WalletSettingsPage() {
                   "Withdrawals",
                   walletHealth.counts.withdrawalsByStatus,
                 )}
+              </div>
+
+              <div className="space-y-3 rounded-lg border p-3">
+                <p className="text-sm font-medium">Economy Snapshot</p>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-2 rounded border p-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Wallet Asset Holdings
+                    </p>
+                    {walletHealth.economy.walletAssetHoldings.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        No wallet balances found.
+                      </p>
+                    ) : (
+                      walletHealth.economy.walletAssetHoldings.map((row) => (
+                        <div
+                          key={row.asset}
+                          className="rounded border p-2 text-xs text-muted-foreground"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <Badge variant="secondary">{row.asset}</Badge>
+                            <span className="font-medium text-foreground">
+                              {row.totalBalance}
+                            </span>
+                          </div>
+                          <p className="mt-1">
+                            Avail {row.totalAvailable} | Pending{" "}
+                            {row.totalPending} | Locked {row.totalLocked}
+                          </p>
+                          <p>Accounts: {row.accounts}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="space-y-2 rounded border p-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Credited Deposits (By Asset)
+                    </p>
+                    {walletHealth.economy.creditedDepositsTotals.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        No credited deposits yet.
+                      </p>
+                    ) : (
+                      walletHealth.economy.creditedDepositsTotals.map((row) => (
+                        <div
+                          key={row.asset}
+                          className="rounded border p-2 text-xs text-muted-foreground"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <Badge variant="secondary">{row.asset}</Badge>
+                            <span className="font-medium text-foreground">
+                              {row.totalAmount}
+                            </span>
+                          </div>
+                          <p className="mt-1">Deposits: {row.count}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2 rounded border p-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Tip Currency Totals
+                  </p>
+                  {walletHealth.economy.tipCurrencyTotals.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      No tip currency balances found.
+                    </p>
+                  ) : (
+                    walletHealth.economy.tipCurrencyTotals.map((row) => (
+                      <div
+                        key={row.currencyCode}
+                        className="rounded border p-2 text-xs text-muted-foreground"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary">{row.currencyCode}</Badge>
+                          <Badge variant="outline">{row.kind}</Badge>
+                          <span>
+                            Holders: {row.holders} | Tx: {row.transactions}
+                          </span>
+                        </div>
+                        <p className="mt-1">
+                          User balance: {row.totalUserBalance} {row.symbol}
+                        </p>
+                        <p>
+                          Tipped: {row.totalTipped} {row.symbol} | Fees:{" "}
+                          {row.totalFees} {row.symbol}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-4">
+                  <div className="rounded border p-2 text-xs">
+                    <p className="text-muted-foreground">Lifetime Mined (MCR)</p>
+                    <p className="font-medium">
+                      {walletHealth.economy.mining.lifetimeMinedMcr}
+                    </p>
+                  </div>
+                  <div className="rounded border p-2 text-xs">
+                    <p className="text-muted-foreground">Lifetime Claimed (MCR)</p>
+                    <p className="font-medium">
+                      {walletHealth.economy.mining.lifetimeClaimedMcr}
+                    </p>
+                  </div>
+                  <div className="rounded border p-2 text-xs">
+                    <p className="text-muted-foreground">Unclaimed (MCR)</p>
+                    <p className="font-medium">
+                      {walletHealth.economy.mining.lifetimeUnclaimedMcr}
+                    </p>
+                  </div>
+                  <div className="rounded border p-2 text-xs">
+                    <p className="text-muted-foreground">Total Miners</p>
+                    <p className="font-medium">
+                      {walletHealth.economy.mining.totalMiners}
+                    </p>
+                  </div>
+                </div>
               </div>
             </>
           )}

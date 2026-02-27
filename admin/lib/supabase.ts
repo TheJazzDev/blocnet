@@ -17,9 +17,10 @@ export function getSupabaseClient(): SupabaseClient {
 
   _client = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
+      // Admin auth authority is httpOnly cookies + server refresh paths.
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
     },
   });
   return _client;

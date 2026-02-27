@@ -111,7 +111,18 @@ class BadgeIcon extends StatelessWidget {
     if (uri == null) return false;
     if (!uri.hasScheme || !uri.hasAuthority) return false;
     final scheme = uri.scheme.toLowerCase();
-    return scheme == 'http' || scheme == 'https';
+    if (scheme != 'http' && scheme != 'https') return false;
+
+    final host = uri.host.toLowerCase();
+    const blockedHosts = {
+      'via.placeholder.com',
+      'placeholder.com',
+      'placehold.co',
+      'placehold.it',
+    };
+    if (blockedHosts.contains(host)) return false;
+
+    return true;
   }
 }
 

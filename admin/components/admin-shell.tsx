@@ -21,6 +21,7 @@ import {
   Bell,
   Wallet,
   Shield,
+  ShieldCheck,
   Zap,
   CheckCircle2,
   HandCoins,
@@ -92,9 +93,10 @@ function buildNavItems(userRoles: string[]) {
     { href: "/updates", label: "Updates", icon: Newspaper },
     { href: "/comments", label: "Comments", icon: MessageSquare },
     { href: "/community", label: "Community", icon: MessagesSquare },
+    { href: "/applications", label: "Applications", icon: FileCheck },
   ];
 
-  const walletItems = [
+  const economyItems = [
     { href: "/wallet-users", label: "Wallet Users", icon: Wallet },
     { href: "/wallet-withdrawals", label: "Withdrawals", icon: ScrollText },
     { href: "/wallet-kyc", label: "KYC Reviews", icon: Shield },
@@ -103,28 +105,21 @@ function buildNavItems(userRoles: string[]) {
     { href: "/tip-settings", label: "Tip Settings", icon: HandCoins },
   ];
 
-  const engagementItems = [
-    { href: "/edge-engine", label: "Edge Engine", icon: Sparkles },
-    { href: "/mining", label: "Mining", icon: Zap },
-  ];
-  engagementItems.push({
-    href: "/mining/leaderboard",
-    label: "Leaderboard",
-    icon: CheckCircle2,
-  });
-
   const gamificationItems = [
+    { href: "/mining", label: "Mining", icon: Zap },
+    { href: "/mining/leaderboard", label: "Leaderboard", icon: CheckCircle2 },
     { href: "/badges", label: "Badges", icon: Award },
     { href: "/quests", label: "Quests", icon: Target },
     { href: "/quest-submissions", label: "Quest Reviews", icon: FileCheck },
   ];
 
   const accessItems = [
-    { href: "/users", label: "Users & Roles", icon: Users },
-    { href: "/roles", label: "Roles & Access", icon: Shield },
-    { href: "/applications", label: "Applications", icon: FileCheck },
+    { href: "/users", label: "Members", icon: Users },
+    { href: "/admin-access", label: "Admin Panel Access", icon: ShieldCheck },
+    { href: "/roles", label: "Role Matrix", icon: Shield },
   ];
 
+  const engagementItems = [{ href: "/edge-engine", label: "Edge Engine", icon: Sparkles }];
   const systemItems = [{ href: "/audit-log", label: "Audit Log", icon: ScrollText }];
 
   if (canManageTags(userRoles)) {
@@ -132,7 +127,7 @@ function buildNavItems(userRoles: string[]) {
   }
 
   if (canSendNotifications(userRoles)) {
-    systemItems.push({ href: "/notifications", label: "Notifications", icon: Bell });
+    engagementItems.push({ href: "/notifications", label: "Notifications", icon: Bell });
   }
 
   if (canMutateSettings(userRoles)) {
@@ -142,10 +137,10 @@ function buildNavItems(userRoles: string[]) {
   return [
     { label: "Overview", items: overviewItems },
     { label: "Content", items: contentItems },
-    { label: "Wallet", items: walletItems },
-    { label: "Engagement", items: engagementItems },
+    { label: "Economy", items: economyItems },
     { label: "Gamification", items: gamificationItems },
     { label: "Access", items: accessItems },
+    { label: "Engagement", items: engagementItems },
     { label: "System", items: systemItems },
   ].filter((group) => group.items.length > 0);
 }

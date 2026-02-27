@@ -4,12 +4,14 @@ import { NotificationEmailService } from './email.service';
 import { NotificationPreferencesService } from './notification-preferences.service';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
+import { NotificationEventsService } from './notification-events.service';
 import { FcmService } from './fcm.service';
 
 @Module({
   controllers: [NotificationsController],
   providers: [
     NotificationsService,
+    NotificationEventsService,
     NotificationPreferencesService,
     NotificationEmailService,
     DigestComposerService,
@@ -17,6 +19,7 @@ import { FcmService } from './fcm.service';
   ],
   exports: [
     NotificationsService,
+    NotificationEventsService,
     NotificationPreferencesService,
     NotificationEmailService,
     DigestComposerService,

@@ -14,11 +14,15 @@ import { ClaimMiningDto } from './dto/claim-mining.dto';
 import { ListMiningLeaderboardQuery } from './dto/list-mining-leaderboard.query';
 import { StartMiningDto } from './dto/start-mining.dto';
 import { MiningService } from './mining.service';
+import { MiningLeaderboardService } from './mining-leaderboard.service';
 
 @Controller('mining')
 @UseGuards(AuthGuard)
 export class MiningController {
-  constructor(private readonly miningService: MiningService) {}
+  constructor(
+    private readonly miningService: MiningService,
+    private readonly miningLeaderboardService: MiningLeaderboardService,
+  ) {}
 
   @Get('me')
   async getMe(@CurrentUser() user: AuthUser | undefined) {
@@ -38,7 +42,7 @@ export class MiningController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.miningService.getLeaderboard({
+    return this.miningLeaderboardService.getLeaderboard({
       q: query.q,
       limit: query.limit,
       offset: query.offset,

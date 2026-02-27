@@ -65,8 +65,8 @@ export default function RolesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Roles & Access"
-        description="Canonical role matrix for owner, admin, and moderator governance in the admin panel."
+        title="Role Matrix"
+        description="Capability reference for owner, admin, and moderator governance in the admin panel."
       />
 
       <div className="grid gap-4 md:grid-cols-3">

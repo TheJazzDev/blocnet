@@ -118,7 +118,7 @@ class _MiningScreenState extends State<MiningScreen> {
       }
       if (!mounted) return;
       final message = claimedNow > 0
-          ? 'Claimed $claimedNow points. New mining session started.'
+          ? 'Claimed $claimedNow MCR. New mining session started.'
           : 'Rewards claimed. New mining session started.';
       _showFeedback(message);
     } catch (_) {

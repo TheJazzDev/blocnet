@@ -15,17 +15,21 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ListMiningLeaderboardQuery } from './dto/list-mining-leaderboard.query';
 import { UpdateMiningConfigDto } from './dto/update-mining-config.dto';
-import { MiningService } from './mining.service';
+import { MiningAdminService } from './mining-admin.service';
+import { MiningLeaderboardService } from './mining-leaderboard.service';
 
 @Controller('admin/mining')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
 export class MiningAdminController {
-  constructor(private readonly miningService: MiningService) {}
+  constructor(
+    private readonly miningAdminService: MiningAdminService,
+    private readonly miningLeaderboardService: MiningLeaderboardService,
+  ) {}
 
   @Get('config')
   async getConfig() {
-    return this.miningService.getAdminConfig();
+    return this.miningAdminService.getAdminConfig();
   }
 
   @Patch('config')
@@ -38,17 +42,17 @@ export class MiningAdminController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.miningService.updateAdminConfig(user.id, dto);
+    return this.miningAdminService.updateAdminConfig(user.id, dto);
   }
 
   @Get('metrics')
   async getMetrics() {
-    return this.miningService.getAdminMetrics();
+    return this.miningAdminService.getAdminMetrics();
   }
 
   @Get('leaderboard')
   async getLeaderboard(@Query() query: ListMiningLeaderboardQuery) {
-    return this.miningService.getLeaderboard({
+    return this.miningLeaderboardService.getLeaderboard({
       q: query.q,
       limit: query.limit,
       offset: query.offset,

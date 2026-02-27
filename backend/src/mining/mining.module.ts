@@ -5,11 +5,27 @@ import { QuestsModule } from '../quests/quests.module';
 import { MiningAdminController } from './mining-admin.controller';
 import { MiningController } from './mining.controller';
 import { MiningService } from './mining.service';
+import { MiningCalculatorService } from './mining-calculator.service';
+import { MiningConfigService } from './mining-config.service';
+import { MiningAdminService } from './mining-admin.service';
+import { MiningLeaderboardService } from './mining-leaderboard.service';
 
 @Module({
   imports: [AuditLogModule, BadgesModule, QuestsModule],
   controllers: [MiningController, MiningAdminController],
-  providers: [MiningService],
-  exports: [MiningService],
+  providers: [
+    MiningService,
+    MiningCalculatorService,
+    MiningConfigService,
+    MiningAdminService,
+    MiningLeaderboardService,
+  ],
+  exports: [
+    MiningService,
+    MiningCalculatorService,
+    MiningConfigService,
+    MiningAdminService,
+    MiningLeaderboardService,
+  ],
 })
 export class MiningModule {}

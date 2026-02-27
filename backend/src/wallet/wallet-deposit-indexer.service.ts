@@ -8,9 +8,7 @@ import {
 } from '@nestjs/common';
 import {
   ChainEnvironment,
-  LedgerReason,
   OnchainDepositStatus,
-  Prisma,
   WalletAsset,
   WalletStatus,
   WalletAssetKind,
@@ -26,13 +24,12 @@ import {
   type PublicClient,
 } from 'viem';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
-import { createDeterministicIdempotencyKey } from '../common/utils/idempotency.util';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   WalletConfigService,
   type WalletDepositNetworkConfig,
 } from './wallet-config.service';
+import { WalletDepositProcessorService } from './wallet-deposit-processor.service';
 
 const TRANSFER_EVENT = parseAbiItem(
   'event Transfer(address indexed from, address indexed to, uint256 value)',
@@ -82,6 +79,7 @@ export class WalletDepositIndexerService
     private readonly prisma: PrismaService,
     private readonly walletConfigService: WalletConfigService,
     private readonly auditLogService: AuditLogService,
+    private readonly depositProcessor: WalletDepositProcessorService,
   ) {}
 
   async reprocessTransactionByHash(input: {
@@ -360,7 +358,7 @@ export class WalletDepositIndexerService
         blockNumber,
       );
 
-      const deposit = await this.recordDetectedDeposit({
+      const deposit = await this.depositProcessor.recordDetectedDeposit({
         walletId: wallet.walletId,
         userId: wallet.userId,
         toAddress: wallet.address,
@@ -379,7 +377,7 @@ export class WalletDepositIndexerService
       depositIds.push(deposit.id);
 
       if (confirmations >= network.confirmationsRequired) {
-        await this.creditDetectedDeposit(
+        await this.depositProcessor.creditDetectedDeposit(
           deposit.id,
           network.confirmationsRequired,
           currentBlock,
@@ -509,7 +507,7 @@ export class WalletDepositIndexerService
     const blockNumber = receipt.blockNumber;
     const confirmations = this.computeConfirmations(currentBlock, blockNumber);
 
-    const deposit = await this.recordDetectedDeposit({
+    const deposit = await this.depositProcessor.recordDetectedDeposit({
       walletId: wallet.walletId,
       userId: wallet.userId,
       toAddress: wallet.address,
@@ -526,7 +524,7 @@ export class WalletDepositIndexerService
     });
 
     if (confirmations >= network.confirmationsRequired) {
-      await this.creditDetectedDeposit(
+      await this.depositProcessor.creditDetectedDeposit(
         deposit.id,
         network.confirmationsRequired,
         currentBlock,
@@ -671,6 +669,28 @@ export class WalletDepositIndexerService
     this.realtimeUnwatchByNetwork.clear();
     this.realtimeNetworkKeys.clear();
     this.realtimeQueues.clear();
+    this.realtimeClients.clear();
+  }
+
+  private teardownRealtimeStream(
+    networkKey: string,
+    chainEnvironment: ChainEnvironment,
+  ) {
+    const unwatch = this.realtimeUnwatchByNetwork.get(networkKey);
+    if (unwatch) {
+      try {
+        unwatch();
+      } catch {
+        this.logger.warn(
+          `Failed to teardown realtime deposit stream for ${networkKey}`,
+        );
+      }
+      this.realtimeUnwatchByNetwork.delete(networkKey);
+    }
+
+    this.realtimeNetworkKeys.delete(networkKey);
+    this.realtimeQueues.delete(networkKey);
+    this.realtimeClients.delete(chainEnvironment);
   }
 
   private startRealtimeStream(network: WalletDepositNetworkConfig): void {
@@ -702,10 +722,7 @@ export class WalletDepositIndexerService
           emitOnBegin: false,
           onBlock: (block) => {
             this.enqueueRealtimeTask(network, () =>
-              this.handleRealtimeNativeBlock(
-                network,
-                block as { number: bigint; transactions: unknown[] },
-              ),
+              this.handleRealtimeNativeBlock(network, block),
             );
           },
           onError: (error) => {
@@ -714,6 +731,7 @@ export class WalletDepositIndexerService
                 error,
               )}`,
             );
+            this.teardownRealtimeStream(networkKey, network.chainEnvironment);
           },
         });
 
@@ -743,6 +761,7 @@ export class WalletDepositIndexerService
               error,
             )}`,
           );
+          this.teardownRealtimeStream(networkKey, network.chainEnvironment);
         },
       });
       this.realtimeUnwatchByNetwork.set(networkKey, unwatch);
@@ -836,7 +855,7 @@ export class WalletDepositIndexerService
       );
       const fromAddress = this.normalizeAddress(log.args?.from) ?? ZERO_ADDRESS;
 
-      const deposit = await this.recordDetectedDeposit({
+      const deposit = await this.depositProcessor.recordDetectedDeposit({
         walletId: wallet.walletId,
         userId: wallet.userId,
         toAddress: wallet.address,
@@ -853,7 +872,7 @@ export class WalletDepositIndexerService
       });
 
       if (confirmations >= network.confirmationsRequired) {
-        await this.creditDetectedDeposit(
+        await this.depositProcessor.creditDetectedDeposit(
           deposit.id,
           network.confirmationsRequired,
           currentBlock,
@@ -864,8 +883,13 @@ export class WalletDepositIndexerService
 
   private async handleRealtimeNativeBlock(
     network: WalletDepositNetworkConfig,
-    block: { number: bigint; transactions: unknown[] },
+    block: unknown,
   ): Promise<void> {
+    const parsedBlock = this.parseRealtimeNativeBlock(block);
+    if (!parsedBlock) {
+      return;
+    }
+
     const walletByAddress = await this.getWalletAddressMap(
       network.chainEnvironment,
     );
@@ -874,7 +898,7 @@ export class WalletDepositIndexerService
     }
 
     const currentBlock = await this.getHttpClient(network).getBlockNumber();
-    for (const rawTx of block.transactions) {
+    for (const rawTx of parsedBlock.transactions) {
       if (typeof rawTx === 'string') {
         continue;
       }
@@ -903,17 +927,17 @@ export class WalletDepositIndexerService
       const fromAddress = this.normalizeAddress(tx.from) ?? ZERO_ADDRESS;
       const confirmations = this.computeConfirmations(
         currentBlock,
-        block.number,
+        parsedBlock.number,
       );
 
-      const deposit = await this.recordDetectedDeposit({
+      const deposit = await this.depositProcessor.recordDetectedDeposit({
         walletId: wallet.walletId,
         userId: wallet.userId,
         toAddress: wallet.address,
         fromAddress,
         txHash,
         logIndex: txIndex,
-        blockNumber: block.number,
+        blockNumber: parsedBlock.number,
         amount: formatUnits(value, network.decimals),
         confirmations,
         chainEnvironment: network.chainEnvironment,
@@ -923,13 +947,42 @@ export class WalletDepositIndexerService
       });
 
       if (confirmations >= network.confirmationsRequired) {
-        await this.creditDetectedDeposit(
+        await this.depositProcessor.creditDetectedDeposit(
           deposit.id,
           network.confirmationsRequired,
           currentBlock,
         );
       }
     }
+  }
+
+  private parseRealtimeNativeBlock(
+    block: unknown,
+  ): { number: bigint; transactions: unknown[] } | null {
+    if (!block || typeof block !== 'object') {
+      return null;
+    }
+
+    const candidate = block as {
+      number?: bigint | null;
+      transactions?: unknown;
+    };
+
+    if (typeof candidate.number !== 'bigint') {
+      return null;
+    }
+
+    if (!Array.isArray(candidate.transactions)) {
+      this.logger.warn(
+        'Realtime native block payload missing transactions array; skipping block',
+      );
+      return null;
+    }
+
+    return {
+      number: candidate.number,
+      transactions: candidate.transactions,
+    };
   }
 
   private async scanNewTransfers(
@@ -1031,7 +1084,7 @@ export class WalletDepositIndexerService
       );
       const fromAddress = this.normalizeAddress(log.args.from) ?? ZERO_ADDRESS;
 
-      const deposit = await this.recordDetectedDeposit({
+      const deposit = await this.depositProcessor.recordDetectedDeposit({
         walletId: wallet.walletId,
         userId: wallet.userId,
         toAddress: wallet.address,
@@ -1048,7 +1101,7 @@ export class WalletDepositIndexerService
       });
 
       if (confirmations >= network.confirmationsRequired) {
-        await this.creditDetectedDeposit(
+        await this.depositProcessor.creditDetectedDeposit(
           deposit.id,
           network.confirmationsRequired,
           currentBlock,
@@ -1095,7 +1148,7 @@ export class WalletDepositIndexerService
           block.number,
         );
 
-        const deposit = await this.recordDetectedDeposit({
+        const deposit = await this.depositProcessor.recordDetectedDeposit({
           walletId: wallet.walletId,
           userId: wallet.userId,
           toAddress: wallet.address,
@@ -1112,7 +1165,7 @@ export class WalletDepositIndexerService
         });
 
         if (confirmations >= network.confirmationsRequired) {
-          await this.creditDetectedDeposit(
+          await this.depositProcessor.creditDetectedDeposit(
             deposit.id,
             network.confirmationsRequired,
             currentBlock,
@@ -1161,85 +1214,6 @@ export class WalletDepositIndexerService
     return 0n;
   }
 
-  private async recordDetectedDeposit(input: {
-    walletId: string;
-    userId: string;
-    fromAddress: string;
-    toAddress: string;
-    txHash: string;
-    logIndex: number;
-    blockNumber: bigint;
-    amount: string;
-    confirmations: number;
-    chainEnvironment: ChainEnvironment;
-    asset: WalletDepositNetworkConfig['asset'];
-    assetKind: WalletDepositNetworkConfig['assetKind'];
-    tokenAddress: WalletDepositNetworkConfig['tokenAddress'];
-  }) {
-    const existing = await this.prisma.onchainDeposit.findUnique({
-      where: {
-        txHash_logIndex_asset: {
-          txHash: input.txHash,
-          logIndex: input.logIndex,
-          asset: input.asset,
-        },
-      },
-    });
-
-    if (existing) {
-      if (existing.confirmations !== input.confirmations) {
-        return this.prisma.onchainDeposit.update({
-          where: { id: existing.id },
-          data: {
-            confirmations: input.confirmations,
-          },
-        });
-      }
-
-      return existing;
-    }
-
-    const created = await this.prisma.onchainDeposit.create({
-      data: {
-        walletId: input.walletId,
-        fromAddress: input.fromAddress,
-        toAddress: input.toAddress,
-        amount: input.amount,
-        asset: input.asset,
-        assetKind: input.assetKind,
-        tokenAddress: input.tokenAddress,
-        txHash: input.txHash,
-        logIndex: input.logIndex,
-        blockNumber: input.blockNumber,
-        confirmations: input.confirmations,
-        status: OnchainDepositStatus.detected,
-        idempotencyKey: createDeterministicIdempotencyKey(
-          'deposit-detect',
-          input.chainEnvironment,
-          input.asset,
-          input.txHash,
-          input.logIndex,
-        ),
-      },
-    });
-
-    await this.auditLogService.create({
-      actorId: input.userId,
-      action: FinancialAuditActions.DepositDetected,
-      resourceType: 'onchain_deposit',
-      resourceId: created.id,
-      metadata: {
-        walletId: input.walletId,
-        txHash: input.txHash,
-        logIndex: input.logIndex,
-        amount: input.amount,
-        asset: input.asset,
-      },
-    });
-
-    return created;
-  }
-
   private async finalizeDetectedDeposits(
     network: WalletDepositNetworkConfig,
     currentBlock: bigint,
@@ -1271,191 +1245,12 @@ export class WalletDepositIndexerService
     });
 
     for (const candidate of candidates) {
-      await this.creditDetectedDeposit(
+      await this.depositProcessor.creditDetectedDeposit(
         candidate.id,
         network.confirmationsRequired,
         currentBlock,
       );
     }
-  }
-
-  private async creditDetectedDeposit(
-    depositId: string,
-    confirmationsRequired: number,
-    currentBlock: bigint,
-  ) {
-    const result = await this.prisma.$transaction(
-      async (tx) => {
-        const deposit = await tx.onchainDeposit.findUnique({
-          where: { id: depositId },
-          include: {
-            wallet: {
-              select: {
-                userId: true,
-                id: true,
-              },
-            },
-          },
-        });
-
-        if (!deposit) {
-          return null;
-        }
-
-        const confirmations = this.computeConfirmations(
-          currentBlock,
-          deposit.blockNumber,
-        );
-
-        if (confirmations < confirmationsRequired) {
-          if (deposit.confirmations !== confirmations) {
-            await tx.onchainDeposit.update({
-              where: { id: deposit.id },
-              data: {
-                confirmations,
-              },
-            });
-          }
-          return null;
-        }
-
-        if (
-          deposit.status !== OnchainDepositStatus.detected ||
-          deposit.creditedLedgerEntryId
-        ) {
-          if (deposit.confirmations !== confirmations) {
-            await tx.onchainDeposit.update({
-              where: { id: deposit.id },
-              data: {
-                confirmations,
-              },
-            });
-          }
-          return null;
-        }
-
-        const creditIdempotencyKey = createDeterministicIdempotencyKey(
-          'deposit-credit',
-          deposit.asset,
-          deposit.txHash,
-          deposit.logIndex,
-        );
-
-        let ledgerEntry = await tx.ledgerEntry.findUnique({
-          where: { idempotencyKey: creditIdempotencyKey },
-        });
-
-        const userAccount = await tx.ledgerAccount.upsert({
-          where: {
-            userId_accountType_currency: {
-              userId: deposit.wallet.userId,
-              accountType: 'user',
-              currency: deposit.asset,
-            },
-          },
-          update: {
-            walletId: deposit.wallet.id,
-          },
-          create: {
-            userId: deposit.wallet.userId,
-            walletId: deposit.wallet.id,
-            accountType: 'user',
-            currency: deposit.asset,
-          },
-        });
-
-        let treasuryAccount = await tx.ledgerAccount.findFirst({
-          where: {
-            userId: null,
-            accountType: 'treasury',
-            currency: deposit.asset,
-          },
-        });
-
-        if (!treasuryAccount) {
-          treasuryAccount = await tx.ledgerAccount.create({
-            data: {
-              userId: null,
-              accountType: 'treasury',
-              currency: deposit.asset,
-            },
-          });
-        }
-
-        if (!ledgerEntry) {
-          await tx.ledgerAccount.update({
-            where: { id: userAccount.id },
-            data: {
-              available: userAccount.available.add(deposit.amount),
-            },
-          });
-
-          await tx.ledgerAccount.update({
-            where: { id: treasuryAccount.id },
-            data: {
-              available: treasuryAccount.available.sub(deposit.amount),
-            },
-          });
-
-          ledgerEntry = await tx.ledgerEntry.create({
-            data: {
-              debitAccountId: treasuryAccount.id,
-              creditAccountId: userAccount.id,
-              amount: deposit.amount,
-              reason: LedgerReason.deposit_credit,
-              idempotencyKey: creditIdempotencyKey,
-              metadata: {
-                depositId: deposit.id,
-                txHash: deposit.txHash,
-                logIndex: deposit.logIndex,
-                fromAddress: deposit.fromAddress,
-                toAddress: deposit.toAddress,
-                asset: deposit.asset,
-                tokenAddress: deposit.tokenAddress,
-              },
-            },
-          });
-        }
-
-        const updatedDeposit = await tx.onchainDeposit.update({
-          where: { id: deposit.id },
-          data: {
-            status: OnchainDepositStatus.credited,
-            creditedLedgerEntryId: ledgerEntry.id,
-            confirmations,
-            creditedAt: deposit.creditedAt ?? new Date(),
-          },
-        });
-
-        return {
-          deposit: updatedDeposit,
-          ledgerEntry,
-          userId: deposit.wallet.userId,
-        };
-      },
-      {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      },
-    );
-
-    if (!result) {
-      return;
-    }
-
-    await this.auditLogService.create({
-      actorId: result.userId,
-      action: FinancialAuditActions.DepositCredited,
-      resourceType: 'onchain_deposit',
-      resourceId: result.deposit.id,
-      metadata: {
-        userId: result.userId,
-        txHash: result.deposit.txHash,
-        logIndex: result.deposit.logIndex,
-        amount: result.deposit.amount.toString(),
-        asset: result.deposit.asset,
-        ledgerEntryId: result.ledgerEntry.id,
-      },
-    });
   }
 
   private normalizeTxHash(value: string): `0x${string}` | null {

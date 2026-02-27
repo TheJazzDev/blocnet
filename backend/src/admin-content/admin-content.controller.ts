@@ -14,7 +14,6 @@ import { AppRole } from '../common/enums/role.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
-import { AdminContentService } from './admin-content.service';
 import { ListAdminCommentsQuery } from './dto/list-admin-comments.query';
 import { ListAdminCommunityCommentsQuery } from './dto/list-admin-community-comments.query';
 import { ListAdminCommunityPostsQuery } from './dto/list-admin-community-posts.query';
@@ -25,16 +24,23 @@ import { ModerateCommunityCommentStatusDto } from './dto/moderate-community-comm
 import { ModerateCommunityPostStatusDto } from './dto/moderate-community-post-status.dto';
 import { ModerateProjectStatusDto } from './dto/moderate-project-status.dto';
 import { ModerateUpdateStatusDto } from './dto/moderate-update-status.dto';
+import { AdminCommunityService } from './services/admin-community.service';
+import { AdminProjectsService } from './services/admin-projects.service';
+import { AdminUpdatesService } from './services/admin-updates.service';
 
 @Controller('admin/content')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
 export class AdminContentController {
-  constructor(private readonly adminContentService: AdminContentService) {}
+  constructor(
+    private readonly adminProjectsService: AdminProjectsService,
+    private readonly adminUpdatesService: AdminUpdatesService,
+    private readonly adminCommunityService: AdminCommunityService,
+  ) {}
 
   @Get('projects')
   async listProjects(@Query() query: ListAdminProjectsQuery) {
-    return this.adminContentService.listProjects(query);
+    return this.adminProjectsService.listProjects(query);
   }
 
   @Patch('projects/:id/status')
@@ -47,12 +53,12 @@ export class AdminContentController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.adminContentService.moderateProjectStatus(user, id, dto);
+    return this.adminProjectsService.moderateProjectStatus(user, id, dto);
   }
 
   @Get('updates')
   async listUpdates(@Query() query: ListAdminUpdatesQuery) {
-    return this.adminContentService.listUpdates(query);
+    return this.adminUpdatesService.listUpdates(query);
   }
 
   @Patch('updates/:id/status')
@@ -65,12 +71,12 @@ export class AdminContentController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.adminContentService.moderateUpdateStatus(user, id, dto);
+    return this.adminUpdatesService.moderateUpdateStatus(user, id, dto);
   }
 
   @Get('comments')
   async listComments(@Query() query: ListAdminCommentsQuery) {
-    return this.adminContentService.listComments(query);
+    return this.adminUpdatesService.listComments(query);
   }
 
   @Patch('comments/:id/status')
@@ -83,12 +89,12 @@ export class AdminContentController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.adminContentService.moderateCommentStatus(user, id, dto);
+    return this.adminUpdatesService.moderateCommentStatus(user, id, dto);
   }
 
   @Get('community-posts')
   async listCommunityPosts(@Query() query: ListAdminCommunityPostsQuery) {
-    return this.adminContentService.listCommunityPosts(query);
+    return this.adminCommunityService.listCommunityPosts(query);
   }
 
   @Patch('community-posts/:id/status')
@@ -101,12 +107,12 @@ export class AdminContentController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.adminContentService.moderateCommunityPostStatus(user, id, dto);
+    return this.adminCommunityService.moderateCommunityPostStatus(user, id, dto);
   }
 
   @Get('community-comments')
   async listCommunityComments(@Query() query: ListAdminCommunityCommentsQuery) {
-    return this.adminContentService.listCommunityComments(query);
+    return this.adminCommunityService.listCommunityComments(query);
   }
 
   @Patch('community-comments/:id/status')
@@ -119,7 +125,7 @@ export class AdminContentController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.adminContentService.moderateCommunityCommentStatus(
+    return this.adminCommunityService.moderateCommunityCommentStatus(
       user,
       id,
       dto,

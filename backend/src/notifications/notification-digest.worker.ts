@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { DigestCadence } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { UsersService } from '../users/users.service';
+import { UserDigestService } from '../users/user-digest.service';
 import {
   DEFAULT_DIGEST_HOUR_LOCAL,
   DEFAULT_DIGEST_MINUTE_LOCAL,
@@ -31,7 +31,7 @@ export class NotificationDigestWorker implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-    private readonly usersService: UsersService,
+    private readonly userDigestService: UserDigestService,
     private readonly digestComposer: DigestComposerService,
     private readonly emailService: NotificationEmailService,
   ) {}
@@ -164,7 +164,7 @@ export class NotificationDigestWorker implements OnModuleInit, OnModuleDestroy {
             }
 
             const windowDays = cadence === DigestCadence.daily ? 1 : 7;
-            const summary = await this.usersService.getDigestSummary(
+            const summary = await this.userDigestService.getDigestSummary(
               profile.id,
               windowDays,
               { skipAudit: true },

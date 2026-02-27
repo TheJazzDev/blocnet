@@ -265,7 +265,7 @@ export default function MiningPage() {
 
               <ConfigInput
                 id="basePointsPerCycle"
-                label="Base Points / Cycle"
+                label="Base MCR / Cycle"
                 value={config?.basePointsPerCycle}
                 disabled={!canMutate || !config}
                 onChange={(value) =>
@@ -359,6 +359,19 @@ export default function MiningPage() {
                     title="Active Direct Referrals"
                     value={metrics.activeDirectReferrals.toString()}
                   />
+                  <Metric
+                    title="Lifetime Mined (MCR)"
+                    value={metrics.lifetimeMinedMcr.toString()}
+                  />
+                  <Metric
+                    title="Lifetime Claimed (MCR)"
+                    value={metrics.lifetimeClaimedMcr.toString()}
+                  />
+                  <Metric
+                    title="Unclaimed (MCR)"
+                    value={metrics.lifetimeUnclaimedMcr.toString()}
+                  />
+                  <Metric title="Total Miners" value={metrics.totalMiners.toString()} />
                 </div>
               )}
             </CardContent>

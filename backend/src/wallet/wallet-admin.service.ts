@@ -5,40 +5,22 @@ import {
 } from '@nestjs/common';
 import {
   ChainEnvironment,
-  KycStatus,
-  LedgerReason,
   Prisma,
   WalletStatus,
-  WithdrawalStatus,
   type UserWallet,
 } from '@prisma/client';
 import { createPublicClient, http } from 'viem';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
-import { normalizeIdempotencyKey } from '../common/utils/idempotency.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { TurnkeyCustodyAdapter } from './custody/turnkey-custody.adapter';
-import { ListWalletAdminWithdrawalsQuery } from './dto/list-wallet-admin-withdrawals.query';
-import { ListWalletKycQuery } from './dto/list-wallet-kyc.query';
+import { normalizePagination } from '../common/utils/pagination.util';
 import { ListWalletUsersQuery } from './dto/list-wallet-users.query';
 import { ReprocessDepositByTxHashDto } from './dto/reprocess-deposit-by-tx-hash.dto';
-import {
-  ReviewWithdrawalDto,
-  WithdrawalReviewDecision,
-} from './dto/review-withdrawal.dto';
-import { ReviewKycDto } from './dto/review-kyc.dto';
-import { UpdateRiskLimitDto } from './dto/update-risk-limit.dto';
-import { UpdateWalletAssetPriceDto } from './dto/update-wallet-asset-price.dto';
-import { UpdateWalletFeeDto } from './dto/update-wallet-fee.dto';
 import { UpdateWalletRuntimeConfigDto } from './dto/update-wallet-runtime-config.dto';
-import { DECIMAL_ZERO, toDecimalString } from './types/decimal';
-import { normalizeWalletAsset } from './wallet-asset.util';
-import { WalletAssetPricingService } from './wallet-asset-pricing.service';
+import { toDecimalString } from './types/decimal';
 import { WalletConfigService } from './wallet-config.service';
 import { WalletDepositIndexerService } from './wallet-deposit-indexer.service';
-
-const DEFAULT_PAGE_SIZE = 30;
-const MAX_PAGE_SIZE = 100;
 
 @Injectable()
 export class WalletAdminService {
@@ -48,7 +30,6 @@ export class WalletAdminService {
     private readonly walletConfigService: WalletConfigService,
     private readonly walletDepositIndexerService: WalletDepositIndexerService,
     private readonly turnkeyCustodyAdapter: TurnkeyCustodyAdapter,
-    private readonly walletAssetPricingService: WalletAssetPricingService,
   ) {}
 
   async getWalletHealth() {
@@ -59,6 +40,14 @@ export class WalletAdminService {
       depositCounts,
       sweepCounts,
       withdrawalCounts,
+      ledgerTotalsByCurrency,
+      tipBalancesByCurrency,
+      tipVolumeByCurrency,
+      tipCurrencies,
+      creditedDepositsByAsset,
+      lifetimeMinedAggregate,
+      lifetimeClaimedAggregate,
+      lifetimeMinersRows,
     ] = await Promise.all([
       this.turnkeyCustodyAdapter.getHealth(),
       Promise.all([
@@ -81,6 +70,86 @@ export class WalletAdminService {
       this.prisma.withdrawalRequest.groupBy({
         by: ['status'],
         _count: { _all: true },
+      }),
+      this.prisma.ledgerAccount.groupBy({
+        by: ['currency'],
+        where: {
+          accountType: 'user',
+        },
+        _sum: {
+          available: true,
+          pending: true,
+          locked: true,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      this.prisma.tipAccount.groupBy({
+        by: ['currencyCode'],
+        where: {
+          accountType: 'user',
+        },
+        _sum: {
+          balanceAtomic: true,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      this.prisma.tipTransaction.groupBy({
+        by: ['currencyCode'],
+        where: {
+          type: 'tip',
+        },
+        _sum: {
+          amountAtomic: true,
+          feeAtomic: true,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      this.prisma.tipCurrency.findMany({
+        select: {
+          code: true,
+          symbol: true,
+          decimals: true,
+          kind: true,
+        },
+      }),
+      this.prisma.onchainDeposit.groupBy({
+        by: ['asset'],
+        where: {
+          status: 'credited',
+        },
+        _sum: {
+          amount: true,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      this.prisma.miningHourlyCheckpoint.aggregate({
+        _sum: {
+          points: true,
+        },
+      }),
+      this.prisma.miningHourlyCheckpoint.aggregate({
+        where: {
+          claimedAt: {
+            not: null,
+          },
+        },
+        _sum: {
+          points: true,
+        },
+      }),
+      this.prisma.miningHourlyCheckpoint.findMany({
+        select: {
+          userId: true,
+        },
+        distinct: ['userId'],
       }),
     ]);
 
@@ -129,6 +198,77 @@ export class WalletAdminService {
       withdrawalsByStatus[row.status] = row._count._all;
     }
 
+    const walletAssetHoldings = ledgerTotalsByCurrency.map((row) => {
+      const available = toDecimalString(row._sum.available);
+      const pending = toDecimalString(row._sum.pending);
+      const locked = toDecimalString(row._sum.locked);
+      return {
+        asset: row.currency,
+        accounts: row._count._all,
+        totalAvailable: available,
+        totalPending: pending,
+        totalLocked: locked,
+        totalBalance: new Prisma.Decimal(available)
+          .plus(pending)
+          .plus(locked)
+          .toString(),
+      };
+    });
+
+    const tipCurrencyMap = new Map(
+      tipCurrencies.map((row) => [row.code, row] as const),
+    );
+    const tipBalanceMap = new Map(
+      tipBalancesByCurrency.map((row) => [row.currencyCode, row] as const),
+    );
+    const tipVolumeMap = new Map(
+      tipVolumeByCurrency.map((row) => [row.currencyCode, row] as const),
+    );
+    const tipCodes = Array.from(
+      new Set([
+        ...tipBalanceMap.keys(),
+        ...tipVolumeMap.keys(),
+        ...tipCurrencyMap.keys(),
+      ]),
+    ).sort();
+
+    const tipCurrencyTotals = tipCodes.map((currencyCode) => {
+      const currency = tipCurrencyMap.get(currencyCode);
+      const decimals = currency?.decimals ?? 0;
+      const balance = tipBalanceMap.get(currencyCode);
+      const volume = tipVolumeMap.get(currencyCode);
+      const totalBalanceAtomic = balance?._sum.balanceAtomic ?? 0n;
+      const totalTippedAtomic = volume?._sum.amountAtomic ?? 0n;
+      const totalFeesAtomic = volume?._sum.feeAtomic ?? 0n;
+      return {
+        currencyCode,
+        symbol: currency?.symbol ?? currencyCode,
+        decimals,
+        kind: currency?.kind ?? 'token',
+        holders: balance?._count._all ?? 0,
+        transactions: volume?._count._all ?? 0,
+        totalUserBalanceAtomic: totalBalanceAtomic.toString(),
+        totalUserBalance: this.formatAtomicAmount(totalBalanceAtomic, decimals),
+        totalTippedAtomic: totalTippedAtomic.toString(),
+        totalTipped: this.formatAtomicAmount(totalTippedAtomic, decimals),
+        totalFeesAtomic: totalFeesAtomic.toString(),
+        totalFees: this.formatAtomicAmount(totalFeesAtomic, decimals),
+      };
+    });
+
+    const creditedDepositsTotals = creditedDepositsByAsset.map((row) => ({
+      asset: row.asset,
+      count: row._count._all,
+      totalAmount: toDecimalString(row._sum.amount),
+    }));
+
+    const lifetimeMinedMcr = lifetimeMinedAggregate._sum.points ?? 0;
+    const lifetimeClaimedMcr = lifetimeClaimedAggregate._sum.points ?? 0;
+    const lifetimeUnclaimedMcr = Math.max(
+      lifetimeMinedMcr - lifetimeClaimedMcr,
+      0,
+    );
+
     return {
       timestamp: new Date().toISOString(),
       flags: {
@@ -145,6 +285,17 @@ export class WalletAdminService {
         depositsByStatus,
         sweepJobsByStatus,
         withdrawalsByStatus,
+      },
+      economy: {
+        walletAssetHoldings,
+        tipCurrencyTotals,
+        creditedDepositsTotals,
+        mining: {
+          lifetimeMinedMcr,
+          lifetimeClaimedMcr,
+          lifetimeUnclaimedMcr,
+          totalMiners: lifetimeMinersRows.length,
+        },
       },
     };
   }
@@ -178,10 +329,7 @@ export class WalletAdminService {
   }
 
   async listWalletUsers(query: ListWalletUsersQuery) {
-    const { limit, offset } = this.normalizePagination(
-      query.limit,
-      query.offset,
-    );
+    const { limit, offset } = normalizePagination(query.offset, query.limit);
     const q = query.q?.trim();
 
     const uuidRegex =
@@ -353,574 +501,6 @@ export class WalletAdminService {
     };
   }
 
-  async getRuntimeConfig() {
-    return this.walletConfigService.getRuntimeConfig();
-  }
-
-  async updateRuntimeConfig(
-    actorId: string,
-    dto: UpdateWalletRuntimeConfigDto,
-  ) {
-    const updated = await this.walletConfigService.updateRuntimeConfig({
-      walletEnabled: dto.walletEnabled,
-      depositsEnabled: dto.depositsEnabled,
-      withdrawalsEnabled: dto.withdrawalsEnabled,
-      depositRealtimeEnabled: dto.depositRealtimeEnabled,
-      bscRpcUrl: dto.bscRpcUrl,
-      bscRpcWsUrl: dto.bscRpcWsUrl,
-      depositConfirmations: dto.depositConfirmations,
-      withdrawalConfirmations: dto.withdrawalConfirmations,
-      walletAssetBntEnabled: dto.walletAssetBntEnabled,
-      walletAssetBnbEnabled: dto.walletAssetBnbEnabled,
-      walletAssetUsdtEnabled: dto.walletAssetUsdtEnabled,
-      withdrawalEnabledAssets: dto.withdrawalEnabledAssets,
-    });
-
-    await this.auditLogService.create({
-      actorId,
-      action: FinancialAuditActions.WalletRuntimeConfigUpdated,
-      resourceType: 'wallet_runtime_config',
-      resourceId: updated.id,
-      metadata: updated,
-    });
-
-    return updated;
-  }
-
-  async listWithdrawals(query: ListWalletAdminWithdrawalsQuery) {
-    const { limit, offset } = this.normalizePagination(
-      query.limit,
-      query.offset,
-    );
-    const q = query.q?.trim();
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const isUuid = q ? uuidRegex.test(q) : false;
-
-    const where = {
-      ...(query.status ? { status: query.status } : {}),
-      ...(q
-        ? {
-            OR: [
-              { toAddress: { contains: q, mode: 'insensitive' as const } },
-              {
-                broadcastTxHash: { contains: q, mode: 'insensitive' as const },
-              },
-              ...(isUuid
-                ? [{ id: { equals: q } }, { userId: { equals: q } }]
-                : []),
-              {
-                requester: {
-                  email: { contains: q, mode: 'insensitive' as const },
-                },
-              },
-              {
-                requester: {
-                  displayName: { contains: q, mode: 'insensitive' as const },
-                },
-              },
-            ],
-          }
-        : {}),
-    };
-
-    const [rows, total] = await Promise.all([
-      this.prisma.withdrawalRequest.findMany({
-        where,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        skip: offset,
-        take: limit,
-        include: {
-          requester: {
-            select: {
-              id: true,
-              email: true,
-              displayName: true,
-            },
-          },
-          reviewer: {
-            select: {
-              id: true,
-              email: true,
-              displayName: true,
-            },
-          },
-        },
-      }),
-      this.prisma.withdrawalRequest.count({ where }),
-    ]);
-
-    return {
-      data: rows.map((row) => ({
-        id: row.id,
-        status: row.status,
-        toAddress: row.toAddress,
-        amount: toDecimalString(row.amount),
-        feeAmount: toDecimalString(row.feeAmount),
-        netAmount: toDecimalString(row.netAmount),
-        reason: row.reason,
-        rejectReason: row.rejectReason,
-        failureReason: row.failureReason,
-        broadcastTxHash: row.broadcastTxHash,
-        confirmations: row.confirmations,
-        requester: row.requester,
-        reviewer: row.reviewer,
-        requestedAt: row.requestedAt,
-        reviewedAt: row.reviewedAt,
-        confirmedAt: row.confirmedAt,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      })),
-      total,
-      limit,
-      offset,
-    };
-  }
-
-  async reviewWithdrawal(
-    actorId: string,
-    withdrawalId: string,
-    dto: ReviewWithdrawalDto,
-  ) {
-    const withdrawal = await this.prisma.withdrawalRequest.findUnique({
-      where: { id: withdrawalId },
-      include: {
-        requester: true,
-      },
-    });
-
-    if (!withdrawal) {
-      throw new NotFoundException('Withdrawal request not found');
-    }
-
-    if (
-      withdrawal.status !== WithdrawalStatus.requested &&
-      withdrawal.status !== WithdrawalStatus.pending_review
-    ) {
-      throw new BadRequestException('Withdrawal request is not pending review');
-    }
-
-    if (dto.status === WithdrawalReviewDecision.approved) {
-      const updated = await this.prisma.withdrawalRequest.update({
-        where: { id: withdrawalId },
-        data: {
-          status: WithdrawalStatus.approved,
-          reviewedBy: actorId,
-          reviewedAt: new Date(),
-          rejectReason: null,
-        },
-      });
-
-      await this.auditLogService.create({
-        actorId,
-        action: FinancialAuditActions.WithdrawalApproved,
-        resourceType: 'withdrawal_request',
-        resourceId: withdrawalId,
-        metadata: {
-          reason: dto.reason,
-        },
-      });
-
-      return updated;
-    }
-
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const fresh = await tx.withdrawalRequest.findUnique({
-        where: { id: withdrawalId },
-      });
-
-      if (!fresh) {
-        throw new NotFoundException('Withdrawal request not found');
-      }
-
-      const [freshUserAccount, freshHoldAccount] = await Promise.all([
-        tx.ledgerAccount.findUnique({
-          where: {
-            userId_accountType_currency: {
-              userId: fresh.userId,
-              accountType: 'user',
-              currency: 'BNT',
-            },
-          },
-        }),
-        tx.ledgerAccount.findUnique({
-          where: {
-            userId_accountType_currency: {
-              userId: fresh.userId,
-              accountType: 'hold',
-              currency: 'BNT',
-            },
-          },
-        }),
-      ]);
-
-      if (!freshUserAccount || !freshHoldAccount) {
-        throw new NotFoundException('Ledger accounts not found');
-      }
-
-      if (freshHoldAccount.available.lt(fresh.amount)) {
-        throw new BadRequestException('Hold balance is lower than withdrawal');
-      }
-
-      await tx.ledgerAccount.update({
-        where: { id: freshUserAccount.id },
-        data: {
-          available: freshUserAccount.available.add(fresh.amount),
-          locked: freshUserAccount.locked.sub(fresh.amount),
-        },
-      });
-
-      await tx.ledgerAccount.update({
-        where: { id: freshHoldAccount.id },
-        data: {
-          available: freshHoldAccount.available.sub(fresh.amount),
-        },
-      });
-
-      const releaseEntry = await tx.ledgerEntry.create({
-        data: {
-          debitAccountId: freshHoldAccount.id,
-          creditAccountId: freshUserAccount.id,
-          amount: fresh.amount,
-          reason: LedgerReason.withdrawal_reject_release,
-          idempotencyKey:
-            normalizeIdempotencyKey(`${fresh.idempotencyKey}:reject`) ??
-            `${fresh.idempotencyKey}:reject`,
-          metadata: {
-            withdrawalId: fresh.id,
-            reason: dto.reason,
-          },
-        },
-      });
-
-      return tx.withdrawalRequest.update({
-        where: { id: withdrawalId },
-        data: {
-          status: WithdrawalStatus.rejected,
-          reviewedBy: actorId,
-          reviewedAt: new Date(),
-          rejectReason: dto.reason,
-          finalizeLedgerEntryId: releaseEntry.id,
-        },
-      });
-    });
-
-    await this.auditLogService.create({
-      actorId,
-      action: FinancialAuditActions.WithdrawalRejected,
-      resourceType: 'withdrawal_request',
-      resourceId: withdrawalId,
-      metadata: {
-        reason: dto.reason,
-      },
-    });
-
-    return updated;
-  }
-
-  async listKyc(query: ListWalletKycQuery) {
-    const { limit, offset } = this.normalizePagination(
-      query.limit,
-      query.offset,
-    );
-    const q = query.q?.trim();
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const isUuid = q ? uuidRegex.test(q) : false;
-
-    const where = {
-      ...(query.status ? { status: query.status } : {}),
-      ...(q
-        ? {
-            OR: [
-              {
-                user: {
-                  email: { contains: q, mode: 'insensitive' as const },
-                },
-              },
-              {
-                user: {
-                  displayName: { contains: q, mode: 'insensitive' as const },
-                },
-              },
-              ...(isUuid ? [{ userId: { equals: q } }] : []),
-            ],
-          }
-        : {}),
-    };
-
-    const [rows, total] = await Promise.all([
-      this.prisma.kycProfile.findMany({
-        where,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        skip: offset,
-        take: limit,
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              displayName: true,
-            },
-          },
-          reviewer: {
-            select: {
-              id: true,
-              email: true,
-              displayName: true,
-            },
-          },
-        },
-      }),
-      this.prisma.kycProfile.count({ where }),
-    ]);
-
-    return {
-      data: rows.map((row) => ({
-        id: row.id,
-        userId: row.userId,
-        user: row.user,
-        status: row.status,
-        tier: row.tier,
-        country: row.country,
-        fullName: row.fullName,
-        documentType: row.documentType,
-        documentNumberLast4: row.documentNumberLast4,
-        documentUrl: row.documentUrl,
-        submittedAt: row.submittedAt,
-        reviewedAt: row.reviewedAt,
-        reviewNote: row.reviewNote,
-        reviewer: row.reviewer,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      })),
-      total,
-      limit,
-      offset,
-    };
-  }
-
-  async reviewKyc(actorId: string, userId: string, dto: ReviewKycDto) {
-    if (
-      dto.status !== KycStatus.approved &&
-      dto.status !== KycStatus.rejected
-    ) {
-      throw new BadRequestException(
-        'KYC review status must be approved or rejected',
-      );
-    }
-
-    const existing = await this.prisma.kycProfile.findUnique({
-      where: { userId },
-    });
-
-    if (!existing) {
-      throw new NotFoundException('KYC profile not found');
-    }
-
-    const nextTier = dto.tier?.trim() || existing.tier;
-    if (dto.status === KycStatus.approved) {
-      const tierExists = await this.prisma.riskLimit.findUnique({
-        where: { tier: nextTier },
-        select: { id: true },
-      });
-      if (!tierExists) {
-        throw new BadRequestException(`Unknown risk tier: ${nextTier}`);
-      }
-    }
-
-    const updated = await this.prisma.kycProfile.update({
-      where: { userId },
-      data: {
-        status: dto.status,
-        tier: nextTier,
-        reviewedBy: actorId,
-        reviewedAt: new Date(),
-        reviewNote: dto.note.trim(),
-      },
-    });
-
-    await this.auditLogService.create({
-      actorId,
-      action: FinancialAuditActions.KycReviewed,
-      resourceType: 'kyc_profile',
-      resourceId: updated.id,
-      metadata: {
-        userId,
-        status: updated.status,
-        tier: updated.tier,
-        note: dto.note,
-      },
-    });
-
-    return updated;
-  }
-
-  async listRiskLimits() {
-    return this.prisma.riskLimit.findMany({
-      orderBy: { tier: 'asc' },
-    });
-  }
-
-  async updateRiskLimit(
-    actorId: string,
-    tier: string,
-    dto: UpdateRiskLimitDto,
-  ) {
-    const existing = await this.prisma.riskLimit.findUnique({
-      where: { tier },
-    });
-    if (!existing) {
-      throw new NotFoundException('Risk limit tier not found');
-    }
-
-    const updated = await this.prisma.riskLimit.update({
-      where: { tier },
-      data: {
-        ...(dto.description !== undefined
-          ? { description: dto.description.trim() || null }
-          : {}),
-        ...(dto.requiresKyc !== undefined
-          ? { requiresKyc: dto.requiresKyc }
-          : {}),
-        ...(dto.maxWithdrawalPerTx !== undefined
-          ? {
-              maxWithdrawalPerTx: this.parseNonNegativeDecimal(
-                dto.maxWithdrawalPerTx,
-                'maxWithdrawalPerTx',
-              ),
-            }
-          : {}),
-        ...(dto.maxWithdrawalPerDay !== undefined
-          ? {
-              maxWithdrawalPerDay: this.parseNonNegativeDecimal(
-                dto.maxWithdrawalPerDay,
-                'maxWithdrawalPerDay',
-              ),
-            }
-          : {}),
-        ...(dto.maxInternalTransferPerDay !== undefined
-          ? {
-              maxInternalTransferPerDay: this.parseNonNegativeDecimal(
-                dto.maxInternalTransferPerDay,
-                'maxInternalTransferPerDay',
-              ),
-            }
-          : {}),
-      },
-    });
-
-    await this.auditLogService.create({
-      actorId,
-      action: FinancialAuditActions.RiskLimitUpdated,
-      resourceType: 'risk_limit',
-      resourceId: updated.id,
-      metadata: {
-        tier,
-      },
-    });
-
-    return updated;
-  }
-
-  async listFeeConfigs() {
-    return this.prisma.walletFeeConfig.findMany({
-      orderBy: [{ isActive: 'desc' }, { updatedAt: 'desc' }],
-    });
-  }
-
-  async updateFeeConfig(actorId: string, key: string, dto: UpdateWalletFeeDto) {
-    const existing = await this.prisma.walletFeeConfig.findUnique({
-      where: { key },
-    });
-    if (!existing) {
-      throw new NotFoundException('Fee config not found');
-    }
-
-    const updated = await this.prisma.walletFeeConfig.update({
-      where: { key },
-      data: {
-        ...(dto.flatFee !== undefined
-          ? { flatFee: this.parseNonNegativeDecimal(dto.flatFee, 'flatFee') }
-          : {}),
-        ...(dto.percentFee !== undefined
-          ? {
-              percentFee: this.parseNonNegativeDecimal(
-                dto.percentFee,
-                'percentFee',
-              ),
-            }
-          : {}),
-        ...(dto.minFee !== undefined
-          ? { minFee: this.parseNonNegativeDecimal(dto.minFee, 'minFee') }
-          : {}),
-        ...(dto.maxFee !== undefined
-          ? {
-              maxFee:
-                dto.maxFee === null || dto.maxFee === ''
-                  ? null
-                  : this.parseNonNegativeDecimal(dto.maxFee, 'maxFee'),
-            }
-          : {}),
-        ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
-      },
-    });
-
-    await this.auditLogService.create({
-      actorId,
-      action: FinancialAuditActions.FeeConfigUpdated,
-      resourceType: 'wallet_fee_config',
-      resourceId: updated.id,
-      metadata: {
-        key,
-      },
-    });
-
-    return updated;
-  }
-
-  async listAssetPriceConfigs() {
-    return this.walletAssetPricingService.listPriceConfigs();
-  }
-
-  async updateAssetPriceConfig(
-    actorId: string,
-    assetRaw: string,
-    dto: UpdateWalletAssetPriceDto,
-  ) {
-    const asset = normalizeWalletAsset(assetRaw);
-    if (!asset) {
-      throw new BadRequestException('Invalid wallet asset');
-    }
-
-    let updated: Awaited<
-      ReturnType<WalletAssetPricingService['updatePriceConfig']>
-    >;
-    try {
-      updated = await this.walletAssetPricingService.updatePriceConfig(asset, {
-        providerId: dto.providerId,
-        fallbackUsdPrice: dto.fallbackUsdPrice,
-        isActive: dto.isActive,
-      });
-    } catch (error) {
-      throw new BadRequestException(
-        error instanceof Error ? error.message : 'Invalid price config payload',
-      );
-    }
-
-    await this.auditLogService.create({
-      actorId,
-      action: FinancialAuditActions.AssetPriceConfigUpdated,
-      resourceType: 'wallet_asset_price_config',
-      resourceId: updated.id,
-      metadata: {
-        asset,
-      },
-    });
-
-    return updated;
-  }
-
   private resolveStatusWhenEnabled(wallet: {
     address: string | null;
     providerWalletId: string | null;
@@ -1012,35 +592,25 @@ export class WalletAdminService {
     }
   }
 
-  private normalizePagination(limit?: number, offset?: number) {
-    const safeLimit =
-      Number.isFinite(limit) && typeof limit === 'number'
-        ? Math.min(Math.max(limit, 1), MAX_PAGE_SIZE)
-        : DEFAULT_PAGE_SIZE;
-    const safeOffset =
-      Number.isFinite(offset) && typeof offset === 'number'
-        ? Math.max(offset, 0)
-        : 0;
-
-    return { limit: safeLimit, offset: safeOffset };
-  }
-
-  private parseNonNegativeDecimal(
-    value: string,
-    fieldName: string,
-  ): Prisma.Decimal {
-    let decimal: Prisma.Decimal;
-    try {
-      decimal = new Prisma.Decimal(value);
-    } catch {
-      throw new BadRequestException(
-        `${fieldName} must be a valid decimal value`,
-      );
+  private formatAtomicAmount(value: bigint, decimals: number): string {
+    if (decimals <= 0) {
+      return value.toString();
     }
 
-    if (decimal.lt(DECIMAL_ZERO)) {
-      throw new BadRequestException(`${fieldName} cannot be negative`);
+    const isNegative = value < 0n;
+    const absolute = isNegative ? -value : value;
+    const multiplier = 10n ** BigInt(decimals);
+    const whole = absolute / multiplier;
+    const fraction = absolute % multiplier;
+    const fractionString = fraction
+      .toString()
+      .padStart(decimals, '0')
+      .replace(/0+$/, '');
+
+    if (fractionString.length === 0) {
+      return `${isNegative ? '-' : ''}${whole.toString()}`;
     }
-    return decimal;
+
+    return `${isNegative ? '-' : ''}${whole.toString()}.${fractionString}`;
   }
 }

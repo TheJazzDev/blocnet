@@ -141,6 +141,10 @@ export default function BadgesPage() {
   const [grantSearchLoading, setGrantSearchLoading] = useState(false);
   const [grantSelected, setGrantSelected] = useState<UserSearchResult | null>(null);
   const [granting, setGranting] = useState(false);
+  const [grantFeedback, setGrantFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const groupedBadges = useMemo(() => {
     const grouped = new Map<string, BadgeModel[]>();
@@ -308,6 +312,7 @@ export default function BadgesPage() {
     setGrantUserIdentifier("");
     setGrantMatches([]);
     setGrantSelected(null);
+    setGrantFeedback(null);
     setGrantOpen(true);
   }
 
@@ -324,9 +329,15 @@ export default function BadgesPage() {
         body: JSON.stringify({ userIdentifier }),
       });
       setGrantOpen(false);
-      alert(`Badge granted to ${userIdentifier}`);
+      setGrantFeedback({
+        type: "success",
+        message: `Badge granted to ${userIdentifier}.`,
+      });
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Failed to grant badge");
+      setGrantFeedback({
+        type: "error",
+        message: e instanceof Error ? e.message : "Failed to grant badge",
+      });
     } finally {
       setGranting(false);
     }
@@ -357,6 +368,19 @@ export default function BadgesPage() {
       {error && (
         <Card>
           <CardContent className="pt-6 text-sm text-destructive">{error}</CardContent>
+        </Card>
+      )}
+      {grantFeedback && (
+        <Card className={grantFeedback.type === "error" ? "border-red-500/30 bg-red-500/5" : "border-emerald-500/30 bg-emerald-500/5"}>
+          <CardContent
+            className={
+              grantFeedback.type === "error"
+                ? "pt-6 text-sm text-red-300"
+                : "pt-6 text-sm text-emerald-300"
+            }
+          >
+            {grantFeedback.message}
+          </CardContent>
         </Card>
       )}
 

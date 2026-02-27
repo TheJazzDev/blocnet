@@ -172,7 +172,7 @@ class _DownlineTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${item.claimedTotalPoints} claimed pts',
+                  '${item.claimedTotalPoints} claimed MCR',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: 11,

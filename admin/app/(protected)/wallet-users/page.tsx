@@ -9,6 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -86,6 +94,12 @@ export default function WalletUsersPage() {
     null,
   );
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingStatusAction, setPendingStatusAction] = useState<{
+    userId: string;
+    email: string;
+    nextDisabled: boolean;
+  } | null>(null);
 
   const [searchInput, setSearchInput] = useState("");
   const [q, setQ] = useState("");
@@ -142,6 +156,25 @@ export default function WalletUsersPage() {
     } finally {
       setStatusSavingUserId(null);
     }
+  }
+
+  function openStatusConfirm(
+    userId: string,
+    email: string,
+    nextDisabled: boolean,
+  ) {
+    setPendingStatusAction({ userId, email, nextDisabled });
+    setConfirmOpen(true);
+  }
+
+  async function confirmStatusChange() {
+    if (!pendingStatusAction) return;
+    await updateWalletStatus(
+      pendingStatusAction.userId,
+      pendingStatusAction.nextDisabled,
+    );
+    setConfirmOpen(false);
+    setPendingStatusAction(null);
   }
 
   return (
@@ -293,15 +326,11 @@ export default function WalletUsersPage() {
                             disabled={!canMutate || saving}
                             onClick={() => {
                               const nextDisabled = !disabled;
-                              const label = nextDisabled ? "disable" : "enable";
-                              if (
-                                !window.confirm(
-                                  `Are you sure you want to ${label} this user wallet?`,
-                                )
-                              ) {
-                                return;
-                              }
-                              void updateWalletStatus(row.id, nextDisabled);
+                              openStatusConfirm(
+                                row.id,
+                                row.email,
+                                nextDisabled,
+                              );
                             }}
                           >
                             {saving ? (
@@ -346,6 +375,48 @@ export default function WalletUsersPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={confirmOpen}
+        onOpenChange={(nextOpen) => {
+          setConfirmOpen(nextOpen);
+          if (!nextOpen) {
+            setPendingStatusAction(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Wallet Status Update</DialogTitle>
+            <DialogDescription>
+              {pendingStatusAction
+                ? `Are you sure you want to ${pendingStatusAction.nextDisabled ? "disable" : "enable"} wallet access for ${pendingStatusAction.email}?`
+                : "Confirm wallet status update."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+              disabled={Boolean(statusSavingUserId)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={
+                pendingStatusAction?.nextDisabled ? "destructive" : "default"
+              }
+              onClick={() => void confirmStatusChange()}
+              disabled={!pendingStatusAction || Boolean(statusSavingUserId)}
+            >
+              {statusSavingUserId ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

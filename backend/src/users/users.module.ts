@@ -10,6 +10,9 @@ import {
   UsersController,
 } from './users.controller';
 import { UsersService } from './users.service';
+import { UsersAdminService } from './users-admin.service';
+import { UserDigestService } from './user-digest.service';
+import { UserAvatarService } from './user-avatar.service';
 
 @Module({
   imports: [AuditLogModule, NotificationsModule, QuestsModule],
@@ -19,7 +22,18 @@ import { UsersService } from './users.service';
     AdminUsersController,
     ProfilesController,
   ],
-  providers: [UsersService, NotificationDigestWorker],
-  exports: [UsersService],
+  providers: [
+    UsersService,
+    UsersAdminService,
+    UserDigestService,
+    UserAvatarService,
+    NotificationDigestWorker,
+  ],
+  exports: [
+    UsersService,
+    UsersAdminService,
+    UserDigestService,
+    UserAvatarService,
+  ],
 })
 export class UsersModule {}

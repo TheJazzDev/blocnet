@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/feed_view_mode_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
@@ -156,6 +158,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   Widget build(BuildContext context) {
     final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final feedViewMode = context.watch<FeedViewModeStore>().mode;
     final accent = AppColors.accentForSpace(isHunterSpace);
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -182,8 +185,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverToBoxAdapter(
                     child: _activeSection == Sections.yourProjects
-                        ? const _YourGemsWrapper()
-                        : const DiscoverProjectsSection(),
+                        ? _YourGemsWrapper(viewMode: feedViewMode)
+                        : DiscoverProjectsSection(viewMode: feedViewMode),
                   ),
                 ),
               ],
@@ -350,14 +353,16 @@ class _Tab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _YourGemsWrapper extends StatelessWidget {
-  const _YourGemsWrapper();
+  const _YourGemsWrapper({required this.viewMode});
+
+  final FeedViewMode viewMode;
 
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
     return Column(
       children: [
-        const YourProjectsSection(),
+        YourProjectsSection(viewMode: viewMode),
         SizedBox(height: bottomPad),
       ],
     );

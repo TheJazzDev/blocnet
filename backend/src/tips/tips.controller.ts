@@ -28,14 +28,14 @@ export class TipsController {
   }
 
   @Get('history')
-  async listMyHistory(
+  async listHistory(
     @CurrentUser() user: AuthUser | undefined,
     @Query() query: ListTipHistoryQuery,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
-    return this.tipsService.listMyHistory(user.id, query);
+    return this.tipsService.listTipHistory(user.id, query);
   }
 
   @Post('send')

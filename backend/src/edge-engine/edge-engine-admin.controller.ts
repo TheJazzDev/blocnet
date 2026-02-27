@@ -15,13 +15,13 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { GetAdminEdgeOverviewQuery } from './dto/get-admin-edge-overview.query';
 import { UpdateEdgeConfigDto } from './dto/update-edge-config.dto';
-import { EdgeEngineService } from './edge-engine.service';
+import { EdgeAdminService } from './edge-admin.service';
 
 @Controller('admin/edge')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
 export class EdgeEngineAdminController {
-  constructor(private readonly edgeEngineService: EdgeEngineService) {}
+  constructor(private readonly edgeAdminService: EdgeAdminService) {}
 
   @Get('config')
   async getConfig(@CurrentUser() user: AuthUser | undefined) {
@@ -29,7 +29,7 @@ export class EdgeEngineAdminController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.edgeEngineService.getAdminConfig(user.id);
+    return this.edgeAdminService.getAdminConfig(user.id);
   }
 
   @Patch('config')
@@ -42,7 +42,7 @@ export class EdgeEngineAdminController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.edgeEngineService.updateAdminConfig(user.id, dto);
+    return this.edgeAdminService.updateAdminConfig(user.id, dto);
   }
 
   @Get('overview')
@@ -54,6 +54,6 @@ export class EdgeEngineAdminController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.edgeEngineService.getAdminOverview(user.id, query);
+    return this.edgeAdminService.getAdminOverview(user.id, query);
   }
 }

@@ -1,0 +1,3 @@
+ALTER TABLE "WalletRuntimeConfig"
+  ADD COLUMN IF NOT EXISTS "bscRpcUrl" TEXT,
+  ADD COLUMN IF NOT EXISTS "bscRpcWsUrl" TEXT;

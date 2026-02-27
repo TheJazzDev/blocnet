@@ -1,18 +1,58 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/cards/tag_card.dart';
 
 class ExploreSection extends StatelessWidget {
-  const ExploreSection({required this.allPosts, super.key});
+  const ExploreSection({
+    required this.allPosts,
+    required this.feedViewMode,
+    super.key,
+  });
 
   final List<Update> allPosts;
+  final FeedViewMode feedViewMode;
+
+  List<Widget> _buildFeedRows(List<Update> posts) {
+    final safePosts =
+        posts.where((post) => post.project != null && post.admin != null);
+    if (feedViewMode == FeedViewMode.card) {
+      return safePosts.map((post) => FeedCard(post: post)).toList();
+    }
+
+    final rows = <Widget>[];
+    final list = safePosts.toList();
+    for (var index = 0; index < list.length; index++) {
+      rows.add(
+        FeedCard(
+          post: list[index],
+          layout: FeedCardLayout.list,
+        ),
+      );
+      if (index < list.length - 1) {
+        rows.add(
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+        );
+      }
+    }
+
+    return rows;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final latestPosts = [...allPosts]..sort((a, b) {
+        return b.createdAt.compareTo(a.createdAt);
+      });
+    final rows = _buildFeedRows(latestPosts);
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,14 +114,21 @@ class ExploreSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: allPosts.length,
-                  itemBuilder: (context, index) {
-                    return UpdateCard(post: allPosts[index]);
-                  },
-                ),
+                if (rows.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(
+                      'No updates yet.',
+                      style: TextStyle(
+                        color: AppColors.textFaint,
+                        fontSize: 12,
+                        fontFamily: 'Geist',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  )
+                else
+                  Column(children: rows),
               ],
             ),
           ),

@@ -1,4 +1,6 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/cards/stat_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_label/filter_label.dart';
@@ -10,7 +12,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class YourProjectsSection extends StatefulWidget {
-  const YourProjectsSection({super.key});
+  const YourProjectsSection({
+    required this.viewMode,
+    super.key,
+  });
+
+  final FeedViewMode viewMode;
 
   @override
   State<YourProjectsSection> createState() => _YourProjectsSectionState();
@@ -18,6 +25,31 @@ class YourProjectsSection extends StatefulWidget {
 
 class _YourProjectsSectionState extends State<YourProjectsSection> {
   final Set<String> _selectedFilters = <String>{};
+
+  List<Widget> _buildProjectRows(List<Project> projects) {
+    final rows = <Widget>[];
+    for (var index = 0; index < projects.length; index++) {
+      rows.add(
+        YourProjectCard(
+          project: projects[index],
+          layout: widget.viewMode == FeedViewMode.card
+              ? YourProjectCardLayout.card
+              : YourProjectCardLayout.list,
+        ),
+      );
+
+      if (widget.viewMode == FeedViewMode.list && index < projects.length - 1) {
+        rows.add(
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+        );
+      }
+    }
+
+    return rows;
+  }
 
   @override
   void initState() {
@@ -148,11 +180,8 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
               },
             ),
             const SizedBox(height: 16),
-            Wrap(
-              children: List.generate(
-                filteredProjects.length,
-                (index) => YourProjectCard(project: filteredProjects[index]),
-              ),
+            Column(
+              children: _buildProjectRows(filteredProjects),
             ),
           ],
         );

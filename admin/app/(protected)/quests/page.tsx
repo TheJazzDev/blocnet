@@ -96,21 +96,6 @@ function formatDate(dateString: string | null): string {
   }
 }
 
-function formatDateTime(dateString: string | null): string {
-  if (!dateString) return "—";
-  try {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return "Invalid Date";
-  }
-}
-
 export default function QuestsPage() {
   const session = useAdminSession();
   const [quests, setQuests] = useState<QuestModel[]>([]);
@@ -121,6 +106,8 @@ export default function QuestsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedQuest, setSelectedQuest] = useState<QuestModel | null>(null);
+  const [createSubmitError, setCreateSubmitError] = useState<string | null>(null);
+  const [editSubmitError, setEditSubmitError] = useState<string | null>(null);
 
   const canManageQuests =
     session.effectiveRoles.includes("owner") || session.effectiveRoles.includes("admin");
@@ -148,11 +135,13 @@ export default function QuestsPage() {
   }
 
   function openCreate() {
+    setCreateSubmitError(null);
     setCreateOpen(true);
   }
 
   function openEdit(quest: QuestModel) {
     setSelectedQuest(quest);
+    setEditSubmitError(null);
     setEditOpen(true);
   }
 
@@ -178,15 +167,18 @@ export default function QuestsPage() {
       payload.rewardBadgeId = rewardBadgeId;
     }
 
+    setCreateSubmitError(null);
     try {
       await apiFetch("/admin/quests", {
         method: "POST",
         body: JSON.stringify(payload),
       });
       setCreateOpen(false);
-      fetchData();
+      void fetchData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to create quest");
+      setCreateSubmitError(
+        err instanceof Error ? err.message : "Failed to create quest",
+      );
     }
   }
 
@@ -217,6 +209,7 @@ export default function QuestsPage() {
       payload.rewardBadgeId = null;
     }
 
+    setEditSubmitError(null);
     try {
       await apiFetch(`/admin/quests/${selectedQuest.id}`, {
         method: "PATCH",
@@ -224,9 +217,11 @@ export default function QuestsPage() {
       });
       setEditOpen(false);
       setSelectedQuest(null);
-      fetchData();
+      void fetchData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to update quest");
+      setEditSubmitError(
+        err instanceof Error ? err.message : "Failed to update quest",
+      );
     }
   }
 
@@ -371,7 +366,15 @@ export default function QuestsPage() {
       )}
 
       {/* Create Dialog */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog
+        open={createOpen}
+        onOpenChange={(nextOpen) => {
+          setCreateOpen(nextOpen);
+          if (!nextOpen) {
+            setCreateSubmitError(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Quest</DialogTitle>
@@ -511,6 +514,9 @@ export default function QuestsPage() {
                 <Input id="create-expiresAt" name="expiresAt" type="datetime-local" />
               </div>
             </div>
+            {createSubmitError ? (
+              <p className="mb-2 text-sm text-destructive">{createSubmitError}</p>
+            ) : null}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
                 Cancel
@@ -522,7 +528,15 @@ export default function QuestsPage() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog
+        open={editOpen}
+        onOpenChange={(nextOpen) => {
+          setEditOpen(nextOpen);
+          if (!nextOpen) {
+            setEditSubmitError(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Quest</DialogTitle>
@@ -699,6 +713,9 @@ export default function QuestsPage() {
                   </Select>
                 </div>
               </div>
+              {editSubmitError ? (
+                <p className="mb-2 text-sm text-destructive">{editSubmitError}</p>
+              ) : null}
               <DialogFooter>
                 <Button
                   type="button"

@@ -302,7 +302,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'pts/h',
+                            'MCR/h',
                             style: AppTypography.custom(
                               size: 16,
                               weight: FontWeight.w600,
@@ -325,7 +325,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${_formatDecimal(cycleMinedDisplay)} pts earned • Claim after 24h',
+                        '${_formatDecimal(cycleMinedDisplay)} MCR earned • Claim after 24h',
                         style: AppTypography.custom(
                           size: 12,
                           weight: FontWeight.w600,
@@ -351,7 +351,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                     Expanded(
                       child: _CompactStat(
                         label: 'Total Earned',
-                        value: '${balance?.lifetimeEarnedPoints ?? 0} pts',
+                        value: '${balance?.lifetimeEarnedPoints ?? 0} MCR',
                         icon: Icons.stars_rounded,
                         color: AppColors.warning500,
                       ),
@@ -364,7 +364,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                     Expanded(
                       child: _CompactStat(
                         label: 'Claimed',
-                        value: '${balance?.claimedTotalPoints ?? 0} pts',
+                        value: '${balance?.claimedTotalPoints ?? 0} MCR',
                         icon: Icons.check_circle_rounded,
                         color: AppColors.successColor,
                       ),

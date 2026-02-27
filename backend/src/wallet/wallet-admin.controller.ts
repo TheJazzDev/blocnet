@@ -27,12 +27,20 @@ import { UpdateWalletFeeDto } from './dto/update-wallet-fee.dto';
 import { UpdateWalletRuntimeConfigDto } from './dto/update-wallet-runtime-config.dto';
 import { UpdateWalletUserStatusDto } from './dto/update-wallet-user-status.dto';
 import { WalletAdminService } from './wallet-admin.service';
+import { WalletAdminKycService } from './wallet-admin-kyc.service';
+import { WalletAdminWithdrawalService } from './wallet-admin-withdrawal.service';
+import { WalletAdminConfigService } from './wallet-admin-config.service';
 
 @Controller('admin/wallet')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
 export class WalletAdminController {
-  constructor(private readonly walletAdminService: WalletAdminService) {}
+  constructor(
+    private readonly walletAdminService: WalletAdminService,
+    private readonly walletAdminKycService: WalletAdminKycService,
+    private readonly walletAdminWithdrawalService: WalletAdminWithdrawalService,
+    private readonly walletAdminConfigService: WalletAdminConfigService,
+  ) {}
 
   @Get('health')
   async getWalletHealth() {
@@ -75,7 +83,7 @@ export class WalletAdminController {
 
   @Get('withdrawals')
   async listWithdrawals(@Query() query: ListWalletAdminWithdrawalsQuery) {
-    return this.walletAdminService.listWithdrawals(query);
+    return this.walletAdminWithdrawalService.listWithdrawals(query);
   }
 
   @Patch('withdrawals/:id/review')
@@ -88,12 +96,12 @@ export class WalletAdminController {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
-    return this.walletAdminService.reviewWithdrawal(user.id, id, dto);
+    return this.walletAdminWithdrawalService.reviewWithdrawal(user.id, id, dto);
   }
 
   @Get('kyc')
   async listKyc(@Query() query: ListWalletKycQuery) {
-    return this.walletAdminService.listKyc(query);
+    return this.walletAdminKycService.listKyc(query);
   }
 
   @Patch('kyc/:userId/review')
@@ -106,12 +114,12 @@ export class WalletAdminController {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
-    return this.walletAdminService.reviewKyc(user.id, userId, dto);
+    return this.walletAdminKycService.reviewKyc(user.id, userId, dto);
   }
 
   @Get('settings/risk-limits')
   async listRiskLimits() {
-    return this.walletAdminService.listRiskLimits();
+    return this.walletAdminConfigService.listRiskLimits();
   }
 
   @Patch('settings/risk-limits/:tier')
@@ -124,12 +132,12 @@ export class WalletAdminController {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
-    return this.walletAdminService.updateRiskLimit(user.id, tier, dto);
+    return this.walletAdminConfigService.updateRiskLimit(user.id, tier, dto);
   }
 
   @Get('settings/fees')
   async listFeeConfigs() {
-    return this.walletAdminService.listFeeConfigs();
+    return this.walletAdminConfigService.listFeeConfigs();
   }
 
   @Patch('settings/fees/:key')
@@ -142,17 +150,17 @@ export class WalletAdminController {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
-    return this.walletAdminService.updateFeeConfig(user.id, key, dto);
+    return this.walletAdminConfigService.updateFeeConfig(user.id, key, dto);
   }
 
   @Get('settings/prices')
   async listAssetPriceConfigs() {
-    return this.walletAdminService.listAssetPriceConfigs();
+    return this.walletAdminConfigService.listAssetPriceConfigs();
   }
 
   @Get('settings/runtime')
   async getRuntimeConfig() {
-    return this.walletAdminService.getRuntimeConfig();
+    return this.walletAdminConfigService.getRuntimeConfig();
   }
 
   @Patch('settings/runtime')
@@ -164,7 +172,7 @@ export class WalletAdminController {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
-    return this.walletAdminService.updateRuntimeConfig(user.id, dto);
+    return this.walletAdminConfigService.updateRuntimeConfig(user.id, dto);
   }
 
   @Patch('settings/prices/:asset')
@@ -177,6 +185,10 @@ export class WalletAdminController {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
-    return this.walletAdminService.updateAssetPriceConfig(user.id, asset, dto);
+    return this.walletAdminConfigService.updateAssetPriceConfig(
+      user.id,
+      asset,
+      dto,
+    );
   }
 }

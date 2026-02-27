@@ -657,6 +657,41 @@ export interface AdminWalletHealth {
     sweepJobsByStatus: Record<string, number>;
     withdrawalsByStatus: Record<string, number>;
   };
+  economy: {
+    walletAssetHoldings: Array<{
+      asset: string;
+      accounts: number;
+      totalAvailable: string;
+      totalPending: string;
+      totalLocked: string;
+      totalBalance: string;
+    }>;
+    tipCurrencyTotals: Array<{
+      currencyCode: string;
+      symbol: string;
+      decimals: number;
+      kind: TipCurrencyKind;
+      holders: number;
+      transactions: number;
+      totalUserBalanceAtomic: string;
+      totalUserBalance: string;
+      totalTippedAtomic: string;
+      totalTipped: string;
+      totalFeesAtomic: string;
+      totalFees: string;
+    }>;
+    creditedDepositsTotals: Array<{
+      asset: WalletAssetCode;
+      count: number;
+      totalAmount: string;
+    }>;
+    mining: {
+      lifetimeMinedMcr: number;
+      lifetimeClaimedMcr: number;
+      lifetimeUnclaimedMcr: number;
+      totalMiners: number;
+    };
+  };
 }
 
 export interface AdminWalletDepositReprocessNetworkResult {
@@ -776,6 +811,10 @@ export interface AdminMiningMetrics {
   activeReferralRatio: number;
   totalDirectReferrals: number;
   activeDirectReferrals: number;
+  lifetimeMinedMcr: number;
+  lifetimeClaimedMcr: number;
+  lifetimeUnclaimedMcr: number;
+  totalMiners: number;
 }
 
 export interface AdminMiningLeaderboardEntry {

@@ -16,6 +16,7 @@ const PROTECTED_PREFIXES = [
   "/tips-transactions",
   "/tip-settings",
   "/users",
+  "/admin-access",
   "/roles",
   "/applications",
   "/audit-log",
@@ -146,7 +147,18 @@ export async function proxy(request: NextRequest) {
 
     const refreshed = await refreshWithSupabase(refreshToken);
     if (refreshed.ok) {
-      const response = NextResponse.next();
+      // 1. Update request cookies so Server Components see the new token immediately
+      request.cookies.set("admin_token", refreshed.accessToken);
+      request.cookies.set("admin_refresh_token", refreshed.refreshToken);
+
+      // 2. Pass the updated request headers to the downstream application
+      const response = NextResponse.next({
+        request: {
+          headers: request.headers,
+        },
+      });
+
+      // 3. Set cookies on the response so the browser persists them
       response.cookies.set("admin_token", refreshed.accessToken, {
         ...COOKIE_OPTS,
         maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
@@ -183,6 +195,7 @@ export const config = {
     "/tips-transactions/:path*",
     "/tip-settings/:path*",
     "/users/:path*",
+    "/admin-access/:path*",
     "/roles/:path*",
     "/applications/:path*",
     "/audit-log/:path*",
