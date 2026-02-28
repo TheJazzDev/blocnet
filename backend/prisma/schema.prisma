@@ -334,6 +334,10 @@ model Profile {
   edgeDecisions                   EdgeDecision[]
   edgeFeedback                    EdgeFeedback[]
   audits                          AuditLog[]                           @relation("ActorAuditLogs")
+  adminTotpCredential             AdminTotpCredential?
+  adminTotpRecoveryCodes          AdminTotpRecoveryCode[]
+  adminTwoFactorSessions          AdminTwoFactorSession[]
+  adminTotpEnrollmentChallenge    AdminTotpEnrollmentChallenge?
   referrer                        Profile?                             @relation("ProfileReferrer", fields: [referredById], references: [id], onDelete: SetNull)
   referrals                       Profile[]                            @relation("ProfileReferrer")
   miningSessions                  MiningSession[]
@@ -1106,6 +1110,87 @@ model RuntimeFeatureConfig {
   miningEnabled      Boolean  @default(true)
   referralsEnabled   Boolean  @default(true)
   updatedAt          DateTime @updatedAt
+}
+
+model AdminSecurityPolicy {
+  id                        String   @id
+  require2faForAdminPanel   Boolean  @default(false)
+  updatedById               String?  @db.Uuid
+  updatedAt                 DateTime @updatedAt
+}
+
+model AdminTotpCredential {
+  userId         String   @id @db.Uuid
+  secretCipher   String
+  secretIv       String
+  secretAuthTag  String
+  enabledAt      DateTime @default(now())
+  lastUsedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([enabledAt])
+}
+
+model AdminTotpEnrollmentChallenge {
+  userId         String   @id @db.Uuid
+  secretCipher   String
+  secretIv       String
+  secretAuthTag  String
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+model AdminTotpRecoveryCode {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  codeHash   String
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
+  @@index([userId, consumedAt])
+}
+
+model AdminTwoFactorSession {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt, revokedAt])
+}
+
+model SocialCredential {
+  id              String   @id @default(uuid()) @db.Uuid
+  provider        String
+  accountLabel    String?
+  username        String?
+  passwordCipher  String
+  passwordIv      String
+  passwordAuthTag String
+  notes           String?
+  createdById     String   @db.Uuid
+  updatedById     String?  @db.Uuid
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([provider, updatedAt])
+  @@index([createdAt])
 }
 
 model TipCurrency {

@@ -17,11 +17,13 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ListNotificationsQuery } from './dto/list-notifications.query';
 import { BroadcastNotificationDto } from './dto/broadcast-notification.dto';
+import { BroadcastEmailDto } from './dto/broadcast-email.dto';
 import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
 import { NotificationPreferencesService } from './notification-preferences.service';
 import { NotificationsService } from './notifications.service';
 import { FcmService } from './fcm.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationEmailService } from './email.service';
 
 @Controller('notifications')
 @UseGuards(AuthGuard)
@@ -29,6 +31,7 @@ export class NotificationsController {
   constructor(
     private readonly notificationsService: NotificationsService,
     private readonly fcmService: FcmService,
+    private readonly notificationEmailService: NotificationEmailService,
     private readonly notificationPreferencesService: NotificationPreferencesService,
     private readonly prisma: PrismaService,
   ) {}
@@ -123,6 +126,74 @@ export class NotificationsController {
       recipientCount,
       skipped: fcmResult.skipped,
       skipReason,
+    };
+  }
+
+  @Get('email/status')
+  @UseGuards(RolesGuard)
+  @Roles(AppRole.ADMIN, AppRole.OWNER)
+  getEmailStatus(@CurrentUser() user: AuthUser | undefined) {
+    if (!user) throw new UnauthorizedException('User context missing');
+    return this.notificationEmailService.getStatus();
+  }
+
+  @Post('broadcast-email')
+  @UseGuards(RolesGuard)
+  @Roles(AppRole.ADMIN, AppRole.OWNER)
+  async broadcastEmail(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: BroadcastEmailDto,
+  ) {
+    if (!user) throw new UnauthorizedException('User context missing');
+
+    const recipients =
+      await this.notificationsService.resolveBroadcastEmailRecipients(
+        dto.target,
+        dto.userIds,
+      );
+
+    const sendResult =
+      await this.notificationEmailService.sendAdminBroadcastEmails({
+        recipients: recipients.map((row) => ({
+          userId: row.id,
+          email: row.email,
+          displayName: row.displayName,
+          username: row.username,
+        })),
+        subject: dto.subject,
+        previewText: dto.previewText,
+        message: dto.message,
+        fromAddress: dto.fromAddress,
+        fromName: dto.fromName,
+        replyTo: dto.replyTo,
+        ctaLabel: dto.ctaLabel,
+        ctaUrl: dto.ctaUrl,
+      });
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: 'notification.broadcast.email.send',
+        resourceType: 'notification_broadcast_email',
+        metadata: {
+          target: dto.target,
+          requestedUserCount: dto.userIds?.length ?? null,
+          recipientCount: recipients.length,
+          delivered: sendResult.delivered,
+          failed: sendResult.failed,
+          skipped: sendResult.skipped,
+        },
+      },
+    });
+
+    return {
+      recipientCount: recipients.length,
+      delivered: sendResult.delivered,
+      failed: sendResult.failed,
+      skipped: sendResult.skipped,
+      skippedReason: sendResult.skippedReason,
+      estimatedRatePerMinute:
+        this.notificationEmailService.getStatus().broadcastRatePerMinute,
     };
   }
 }

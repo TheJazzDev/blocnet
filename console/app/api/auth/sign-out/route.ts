@@ -6,5 +6,6 @@ export async function POST() {
   store.delete("admin_token");
   store.delete("admin_refresh_token");
   store.delete("admin_view_as_role");
+  store.delete("admin_2fa_session");
   return NextResponse.json({ ok: true });
 }

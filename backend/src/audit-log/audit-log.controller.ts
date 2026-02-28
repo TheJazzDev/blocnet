@@ -11,6 +11,7 @@ import { AppRole } from '../common/enums/role.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { ListOpsEventsQuery } from './dto/list-ops-events.query';
 import { AuditLogService } from './audit-log.service';
 
 @Controller('audit-log')
@@ -32,5 +33,18 @@ export class AuditLogController {
     const parsedLimit = limit ? Number(limit) : 100;
     const parsedOffset = offset ? Number(offset) : 0;
     return this.auditLogService.listForUser(user, parsedLimit, parsedOffset);
+  }
+
+  @Get('ops-events')
+  @Roles(AppRole.OWNER)
+  async listOpsEvents(
+    @CurrentUser() user: AuthUser | undefined,
+    @Query() query: ListOpsEventsQuery,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.auditLogService.listOpsEvents(user, query);
   }
 }

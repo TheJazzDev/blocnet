@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { AdminTwoFactorService } from '../../admin-security/admin-two-factor.service';
 import {
   resolveEffectiveRoles,
   type EffectiveRoleResolution,
@@ -15,9 +16,12 @@ import type { AuthUser } from '../interfaces/auth-user.interface';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly adminTwoFactorService: AdminTwoFactorService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<{
       user?: AuthUser;
       headers: Record<string, string | string[] | undefined>;
@@ -65,6 +69,50 @@ export class RolesGuard implements CanActivate {
 
     if (!hasPermission) {
       throw new ForbiddenException('Insufficient role permissions');
+    }
+
+    const adminPanelHeader = request.headers['x-admin-panel-request'];
+    const isAdminPanelRequest = Array.isArray(adminPanelHeader)
+      ? adminPanelHeader[0] === '1'
+      : adminPanelHeader === '1';
+
+    const includesGovernanceRole = requiredRoles.some((role) =>
+      role === AppRole.OWNER ||
+      role === AppRole.ADMIN ||
+      role === AppRole.MODERATOR,
+    );
+
+    if (isAdminPanelRequest && includesGovernanceRole) {
+      const shouldEnforce =
+        await this.adminTwoFactorService.shouldEnforceChallengeForAdminPanel(
+          effectiveUser.id,
+          effectiveUser.realRoles ?? effectiveUser.roles,
+        );
+
+      if (shouldEnforce) {
+        const sessionHeader = request.headers['x-admin-2fa-session'];
+        const sessionToken = Array.isArray(sessionHeader)
+          ? (sessionHeader[0] ?? '').trim()
+          : (sessionHeader ?? '').trim();
+
+        if (!sessionToken) {
+          throw new ForbiddenException(
+            'Two-factor authentication is required for admin panel access',
+          );
+        }
+
+        const validation = await this.adminTwoFactorService.validateSession({
+          userId: effectiveUser.id,
+          roles: effectiveUser.realRoles ?? effectiveUser.roles,
+          sessionToken,
+        });
+
+        if (!validation.valid) {
+          throw new ForbiddenException(
+            'Two-factor authentication is required for admin panel access',
+          );
+        }
+      }
     }
 
     return true;

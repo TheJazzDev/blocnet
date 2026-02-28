@@ -176,6 +176,8 @@ export class NotificationDigestWorker implements OnModuleInit, OnModuleDestroy {
                 displayName: profile.displayName,
                 username: profile.username,
               },
+              cadence: cadence === DigestCadence.weekly ? 'weekly' : 'daily',
+              windowDays,
               summary: {
                 missedHighUrgency: summary.missedHighUrgency,
                 activeProjects: summary.activeProjects,

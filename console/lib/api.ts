@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import axios, { type AxiosRequestConfig, type Method } from "axios";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3080/api";
 
@@ -25,22 +26,36 @@ async function apiFetch<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const token = await getToken();
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-    cache: "no-store",
-  });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText);
-    throw new Error(`API ${res.status}: ${text}`);
+  const method = (options.method ?? "GET").toUpperCase() as Method;
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...Object.fromEntries(new Headers(options.headers ?? {})),
+  };
+
+  const requestConfig: AxiosRequestConfig = {
+    url: `${API_BASE}${path}`,
+    method,
+    headers,
+    validateStatus: () => true,
+  };
+
+  if (method !== "GET" && method !== "HEAD" && options.body != null) {
+    requestConfig.data = options.body;
   }
 
-  return res.json() as Promise<T>;
+  const res = await axios.request<T>(requestConfig);
+
+  if (res.status < 200 || res.status >= 300) {
+    const detail =
+      typeof res.data === "string"
+        ? res.data
+        : JSON.stringify(res.data ?? `HTTP ${res.status}`);
+    throw new Error(`API ${res.status}: ${detail}`);
+  }
+
+  return res.data;
 }
 
 export interface AdminMe {
@@ -401,6 +416,48 @@ export interface AuditLog {
   createdAt: string;
 }
 
+export type OpsEventSource =
+  | "email"
+  | "wallet"
+  | "tips"
+  | "social"
+  | "auth"
+  | "notifications"
+  | "system";
+export type OpsEventProvider =
+  | "resend"
+  | "supabase"
+  | "turnkey"
+  | "bsc"
+  | "x"
+  | "instagram"
+  | "tiktok"
+  | "youtube"
+  | "linkedin"
+  | "discord"
+  | "telegram"
+  | "internal"
+  | "unknown";
+export type OpsEventStatus = "success" | "warning" | "error" | "info";
+
+export interface OpsEvent {
+  id: string;
+  action: string;
+  source: OpsEventSource;
+  provider: OpsEventProvider;
+  status: OpsEventStatus;
+  resourceType: string;
+  resourceId: string | null;
+  summary: string;
+  actor: {
+    id: string;
+    email: string;
+    displayName: string | null;
+  } | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface Tag {
   id: string;
   name: string;
@@ -607,6 +664,82 @@ export interface RuntimeFeatureFlagsConfig {
   miningEnabled: boolean;
   referralsEnabled: boolean;
   updatedAt: string;
+}
+
+export interface AdminTwoFactorPreflight {
+  eligible: boolean;
+  totpEnabled: boolean;
+  recoveryCodesRemaining: number;
+  policyRequired: boolean;
+  challengeRequired: boolean;
+}
+
+export interface AdminTwoFactorPolicy {
+  id: string;
+  require2faForAdminPanel: boolean;
+  updatedById: string | null;
+  updatedAt: string;
+  summary: {
+    eligibleUsers: number;
+    enabledUsers: number;
+    missingUsers: number;
+  };
+}
+
+export interface AdminTwoFactorEnrollmentStartResponse {
+  secret: string;
+  otpAuthUrl: string;
+  issuer: string;
+  accountName: string;
+  expiresAt: string;
+}
+
+export interface AdminTwoFactorEnrollmentConfirmResponse {
+  enabled: true;
+  recoveryCodes: string[];
+  sessionToken: string;
+  sessionExpiresAt: string;
+}
+
+export interface AdminTwoFactorRecoveryCodesResponse {
+  recoveryCodes: string[];
+}
+
+export interface AdminTwoFactorDisableResponse {
+  disabled: true;
+}
+
+export interface AdminTwoFactorLoginVerifyResponse {
+  sessionToken: string;
+  expiresAt: string;
+}
+
+export interface AdminTwoFactorSessionValidationResponse {
+  valid: boolean;
+  required: boolean;
+  expiresAt: string | null;
+}
+
+export interface AdminSocialCredential {
+  id: string;
+  provider: string;
+  accountLabel: string | null;
+  username: string | null;
+  notes: string | null;
+  passwordMasked: string;
+  createdById: string;
+  updatedById: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminSocialCredentialsResponse {
+  data: AdminSocialCredential[];
+}
+
+export interface AdminSocialCredentialRevealResponse {
+  id: string;
+  password: string;
 }
 
 export interface AdminWalletHealth {
@@ -1147,6 +1280,29 @@ export const api = {
   listAuditLog: (limit = 100) =>
     apiFetch<AuditLog[]>(`/audit-log${toQuery({ limit })}`),
 
+  listOpsEvents: (params?: {
+    q?: string;
+    source?: "all" | OpsEventSource;
+    provider?: "all" | OpsEventProvider;
+    status?: "all" | OpsEventStatus;
+    from?: string;
+    to?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<OpsEvent[]>(
+      `/audit-log/ops-events${toQuery({
+        q: params?.q,
+        source: params?.source,
+        provider: params?.provider,
+        status: params?.status,
+        from: params?.from,
+        to: params?.to,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
   promoteToAdmin: (userId: string, note?: string) =>
     apiFetch(`/roles/admins/${userId}/promote`, {
       method: "POST",
@@ -1310,6 +1466,116 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+
+  getAdminTwoFactorPreflight: () =>
+    apiFetch<AdminTwoFactorPreflight>("/admin/security/2fa/preflight"),
+
+  getAdminTwoFactorPolicy: () =>
+    apiFetch<AdminTwoFactorPolicy>("/admin/security/2fa/policy"),
+
+  updateAdminTwoFactorPolicy: (body: { require2faForAdminPanel: boolean }) =>
+    apiFetch<AdminTwoFactorPolicy>("/admin/security/2fa/policy", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  startAdminTwoFactorEnrollment: () =>
+    apiFetch<AdminTwoFactorEnrollmentStartResponse>(
+      "/admin/security/2fa/enrollment/start",
+      {
+        method: "POST",
+      },
+    ),
+
+  confirmAdminTwoFactorEnrollment: (body: { code: string }) =>
+    apiFetch<AdminTwoFactorEnrollmentConfirmResponse>(
+      "/admin/security/2fa/enrollment/confirm",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  regenerateAdminTwoFactorRecoveryCodes: (body: {
+    code?: string;
+    recoveryCode?: string;
+  }) =>
+    apiFetch<AdminTwoFactorRecoveryCodesResponse>(
+      "/admin/security/2fa/recovery/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  disableAdminTwoFactor: (body: { code?: string; recoveryCode?: string }) =>
+    apiFetch<AdminTwoFactorDisableResponse>("/admin/security/2fa/disable", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  verifyAdminTwoFactorLogin: (body: { code?: string; recoveryCode?: string }) =>
+    apiFetch<AdminTwoFactorLoginVerifyResponse>(
+      "/admin/security/2fa/login/verify",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  validateAdminTwoFactorSession: (sessionToken?: string) =>
+    apiFetch<AdminTwoFactorSessionValidationResponse>(
+      "/admin/security/2fa/session/validate",
+      {
+        method: "POST",
+        body: JSON.stringify({ sessionToken }),
+      },
+    ),
+
+  listSocialCredentials: () =>
+    apiFetch<AdminSocialCredentialsResponse>(
+      "/admin/settings/social-credentials",
+    ),
+
+  revealSocialCredentialPassword: (id: string) =>
+    apiFetch<AdminSocialCredentialRevealResponse>(
+      `/admin/settings/social-credentials/${id}/reveal`,
+    ),
+
+  createSocialCredential: (body: {
+    provider: string;
+    accountLabel?: string;
+    username?: string;
+    password: string;
+    notes?: string;
+  }) =>
+    apiFetch<AdminSocialCredential>("/admin/settings/social-credentials", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateSocialCredential: (
+    id: string,
+    body: Partial<{
+      provider: string;
+      accountLabel: string;
+      username: string;
+      password: string;
+      notes: string;
+    }>,
+  ) =>
+    apiFetch<AdminSocialCredential>(`/admin/settings/social-credentials/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteSocialCredential: (id: string) =>
+    apiFetch<{ id: string; deleted: true }>(
+      `/admin/settings/social-credentials/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
   listWalletWithdrawals: (params?: {
     q?: string;

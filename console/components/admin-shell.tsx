@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import axios from "axios";
 import {
+  Activity,
   LayoutDashboard,
   FolderKanban,
   Users,
@@ -38,8 +40,10 @@ import {
 } from "@/lib/environment";
 import {
   canManageTags,
+  canManageSocialCredentials,
   canMutateSettings,
   canSendNotifications,
+  canViewOpsEvents,
   formatRoleLabel,
   getAdminGovernanceRole,
   getRoleViewOptions,
@@ -129,6 +133,18 @@ function buildNavItems(userRoles: string[]) {
 
   const engagementItems = [{ href: "/edge-engine", label: "Edge Engine", icon: Sparkles }];
   const systemItems = [{ href: "/audit-log", label: "Audit Log", icon: ScrollText }];
+
+  if (canViewOpsEvents(userRoles)) {
+    systemItems.push({ href: "/ops-events", label: "Ops Events", icon: Activity });
+  }
+
+  if (canManageSocialCredentials(userRoles)) {
+    systemItems.push({
+      href: "/social-credentials",
+      label: "Social Credentials",
+      icon: Shield,
+    });
+  }
 
   if (canManageTags(userRoles)) {
     contentItems.push({ href: "/tags", label: "Tags", icon: Tags });
@@ -318,6 +334,47 @@ export function AdminShell({
     }
   }, [actingAsRole, roleOptions]);
 
+  useEffect(() => {
+    let disposed = false;
+
+    const refreshSession = async () => {
+      if (disposed) return;
+      try {
+        await axios.get("/api/proxy/me", {
+          validateStatus: () => true,
+        });
+      } catch {
+        // Ignore background refresh errors; route guards still handle auth.
+      }
+    };
+
+    void refreshSession();
+
+    const intervalId = window.setInterval(() => {
+      void refreshSession();
+    }, 45 * 60 * 1000);
+
+    const handleFocus = () => {
+      void refreshSession();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshSession();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   const effectiveRoles = useMemo(
     () => resolveEffectiveRoles(realRoles, actingAsRole),
     [actingAsRole, realRoles],
@@ -346,7 +403,7 @@ export function AdminShell({
   async function handleSignOut() {
     setRoleViewCookie(null);
     await supabase.auth.signOut();
-    await fetch("/api/auth/sign-out", { method: "POST" });
+    await axios.post("/api/auth/sign-out");
     router.push("/signin");
     router.refresh();
   }

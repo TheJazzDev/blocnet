@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resetRefreshTokenLockForTests, runRefreshWithTokenLock } from "./route";
+import {
+  resetRefreshTokenLockForTests,
+  runRefreshWithTokenLock,
+} from "@/lib/admin-session-refresh";
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {

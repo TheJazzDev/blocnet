@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -13,8 +14,9 @@ export function DashboardHealthCard() {
     const apiBase =
       process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3080/api";
 
-    fetch(`${apiBase}/health`, { cache: "no-store" })
-      .then((r) => setApiStatus(r.ok ? "ok" : "error"))
+    axios
+      .get(`${apiBase}/health`, { validateStatus: () => true })
+      .then((r) => setApiStatus(r.status >= 200 && r.status < 300 ? "ok" : "error"))
       .catch(() => setApiStatus("error"));
   }, []);
 

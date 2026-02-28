@@ -317,6 +317,14 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     roles: [AppRole.OWNER, AppRole.ADMIN],
   },
   {
+    key: 'system.social_credentials.manage',
+    label: 'Manage Social Credentials',
+    description:
+      'Manage encrypted social media account credentials (owner only).',
+    section: 'system',
+    roles: [AppRole.OWNER],
+  },
+  {
     key: 'system.settings.mutate',
     label: 'Mutate Settings',
     description: 'Update global admin panel configuration settings.',

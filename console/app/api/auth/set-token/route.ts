@@ -23,6 +23,9 @@ export async function POST(req: Request) {
   let accessTokenStored = false;
   let refreshTokenStored = false;
 
+  // New sign-ins must establish a fresh 2FA admin session.
+  response.cookies.delete("admin_2fa_session");
+
   // Access token is best-effort; refresh cookie is enough for proxy refresh.
   try {
     response.cookies.set("admin_token", body.token, {

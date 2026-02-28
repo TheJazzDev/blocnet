@@ -1,7 +1,6 @@
 "use client";
 
 import { Target, CheckCircle2, Clock, XCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type QuestsSectionProps = {
@@ -13,8 +12,9 @@ type QuestsSectionProps = {
  * TODO: Integrate with backend quests API endpoints
  */
 export function QuestsSection({ userId }: QuestsSectionProps) {
+  void userId;
   // TODO: Fetch quests data from API
-  // const questsData = await fetch(`/admin/quests/users/${userId}`)
+  // const questsData = await clientApi.getUserQuestMetrics(userId)
 
   return (
     <Card>

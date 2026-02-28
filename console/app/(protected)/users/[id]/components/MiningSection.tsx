@@ -13,8 +13,9 @@ type MiningSectionProps = {
  * TODO: Integrate with backend mining API endpoints
  */
 export function MiningSection({ userId }: MiningSectionProps) {
+  void userId;
   // TODO: Fetch mining data from API
-  // const miningData = await fetch(`/admin/mining/users/${userId}`)
+  // const miningData = await clientApi.getMiningUserMetrics(userId)
 
   return (
     <Card>

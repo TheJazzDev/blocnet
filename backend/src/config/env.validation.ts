@@ -50,7 +50,31 @@ export const envValidationSchema = Joi.object({
   RESEND_API_KEY: Joi.string().allow('').optional(),
   EMAIL_FROM_ADDRESS: Joi.string().allow('').optional(),
   FROM_EMAIL: Joi.string().allow('').optional(),
+  EMAIL_FROM_NAME: Joi.string().allow('').optional(),
+  EMAIL_ADMIN_FROM_ADDRESS: Joi.string().allow('').optional(),
+  EMAIL_ADMIN_FROM_NAME: Joi.string().allow('').optional(),
+  EMAIL_FROM_ALLOWLIST: Joi.string().allow('').optional(),
   EMAIL_REPLY_TO: Joi.string().allow('').optional(),
+  EMAIL_BROADCAST_RATE_PER_MINUTE: Joi.number()
+    .integer()
+    .min(1)
+    .max(600)
+    .default(120),
+  EMAIL_LOGO_URL: Joi.string().uri().allow('').optional(),
+  SOCIAL_WEBHOOK_SECRET: Joi.string().allow('').optional(),
+  ADMIN_SOCIAL_CREDENTIALS_ENCRYPTION_KEY: Joi.string()
+    .pattern(/^[A-Fa-f0-9]{64}$/)
+    .allow('')
+    .optional(),
+  ADMIN_TOTP_ENCRYPTION_KEY: Joi.string()
+    .pattern(/^[A-Fa-f0-9]{64}$/)
+    .allow('')
+    .optional(),
+  ADMIN_2FA_SESSION_TTL_HOURS: Joi.number()
+    .integer()
+    .min(1)
+    .max(24 * 30)
+    .default(24 * 7),
 
   OWNER_USER_ID: Joi.string().min(1).optional(),
   OWNER_EMAIL: Joi.string()

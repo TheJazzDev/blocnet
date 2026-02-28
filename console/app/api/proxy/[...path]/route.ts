@@ -1,80 +1,39 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getSupabaseClient } from "@/lib/supabase";
+import axios, { type Method } from "axios";
+import {
+  ADMIN_ACCESS_COOKIE,
+  ADMIN_REFRESH_COOKIE,
+  ADMIN_TWO_FACTOR_COOKIE,
+  clearAdminSessionCookies,
+  refreshAdminSession,
+  runRefreshWithTokenLock,
+  setAdminSessionCookies,
+} from "@/lib/admin-session-refresh";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3080/api";
-const COOKIE_OPTS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-};
-
-const inFlightRefreshByToken = new Map<string, Promise<string | undefined>>();
-
-export function runRefreshWithTokenLock(
-  refreshToken: string,
-  refresher: () => Promise<string | undefined>,
-): Promise<string | undefined> {
-  const inFlight = inFlightRefreshByToken.get(refreshToken);
-  if (inFlight) {
-    return inFlight;
-  }
-
-  const refreshPromise = refresher().finally(() => {
-    const current = inFlightRefreshByToken.get(refreshToken);
-    if (current === refreshPromise) {
-      inFlightRefreshByToken.delete(refreshToken);
-    }
-  });
-
-  inFlightRefreshByToken.set(refreshToken, refreshPromise);
-  return refreshPromise;
-}
-
-export function resetRefreshTokenLockForTests(): void {
-  inFlightRefreshByToken.clear();
-}
-
-function isConcurrentRefreshError(message: string | undefined): boolean {
-  const normalized = message?.toLowerCase() ?? "";
-  return normalized.includes("already used") || normalized.includes("reuse interval");
-}
 
 async function refreshAccessToken(): Promise<string | undefined> {
   const store = await cookies();
-  const refreshToken = store.get("admin_refresh_token")?.value;
+  const refreshToken = store.get(ADMIN_REFRESH_COOKIE)?.value;
   if (!refreshToken) return undefined;
 
   return runRefreshWithTokenLock(refreshToken, async () => {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase.auth.refreshSession({
-      refresh_token: refreshToken,
-    });
-
-    if (error || !data.session) {
+    const result = await refreshAdminSession(refreshToken);
+    if (!result.ok) {
       // Avoid deleting cookies when refresh rotation races across parallel requests.
-      if (!isConcurrentRefreshError(error?.message)) {
-        store.delete("admin_token");
-        store.delete("admin_refresh_token");
+      if (!result.concurrent) {
+        clearAdminSessionCookies(store);
       }
       return undefined;
     }
 
-    const { access_token, refresh_token } = data.session;
-
-    store.set("admin_token", access_token, {
-      ...COOKIE_OPTS,
-      maxAge: 60 * 60,
+    setAdminSessionCookies(store, {
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
     });
-
-    store.set("admin_refresh_token", refresh_token, {
-      ...COOKIE_OPTS,
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    return access_token;
+    return result.accessToken;
   });
 }
 
@@ -83,8 +42,9 @@ async function handler(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const store = await cookies();
-  let token = store.get("admin_token")?.value;
+  let token = store.get(ADMIN_ACCESS_COOKIE)?.value;
   const viewAsRole = store.get("admin_view_as_role")?.value;
+  const twoFactorSession = store.get(ADMIN_TWO_FACTOR_COOKIE)?.value;
 
   if (!token) {
     token = await refreshAccessToken();
@@ -104,14 +64,22 @@ async function handler(
       : undefined;
 
   const runWithToken = async (accessToken: string) =>
-    fetch(url, {
-      method: request.method,
+    axios.request<string>({
+      url,
+      method: request.method as Method,
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
+        "x-admin-panel-request": "1",
         ...(viewAsRole ? { "x-admin-view-as-role": viewAsRole } : {}),
+        ...(twoFactorSession
+          ? { "x-admin-2fa-session": twoFactorSession }
+          : {}),
       },
-      body,
+      data: body,
+      responseType: "text",
+      transformResponse: [(raw) => raw],
+      validateStatus: () => true,
     });
 
   let res = await runWithToken(token);
@@ -122,12 +90,13 @@ async function handler(
     }
   }
 
-  const data = await res.text();
+  const data = typeof res.data === "string" ? res.data : JSON.stringify(res.data ?? {});
+  const contentType = res.headers["content-type"];
 
   return new NextResponse(data, {
     status: res.status,
     headers: {
-      "Content-Type": res.headers.get("content-type") ?? "application/json",
+      "Content-Type": contentType ?? "application/json",
     },
   });
 }

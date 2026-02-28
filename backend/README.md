@@ -34,6 +34,17 @@ bun run start:dev
 - `DATABASE_URL` is used by runtime Prisma adapter (`@prisma/adapter-pg`).
 - `DIRECT_URL` is preferred for Prisma migration commands.
 
+## Email Broadcast Env
+- `RESEND_API_KEY`
+- `EMAIL_FROM_ADDRESS` or `FROM_EMAIL` (default digest sender address)
+- `EMAIL_FROM_NAME` (default: `Blocnet Digest`)
+- `EMAIL_ADMIN_FROM_ADDRESS` (default: `EMAIL_FROM_ADDRESS`)
+- `EMAIL_ADMIN_FROM_NAME` (default: `Blocnet Updates`)
+- `EMAIL_FROM_ALLOWLIST` (comma-separated list of allowed sender addresses for admin broadcasts)
+- `EMAIL_REPLY_TO`
+- `EMAIL_BROADCAST_RATE_PER_MINUTE` (default: `120`, range: `1-600`)
+- `EMAIL_LOGO_URL` (optional, defaults to `https://blocnet.app/logo2.png`)
+
 ## Test
 ```bash
 bun run test

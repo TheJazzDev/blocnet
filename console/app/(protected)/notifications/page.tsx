@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Loader2, Search, Send, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,26 +43,89 @@ interface BroadcastResult {
   skipReason?: string | null;
 }
 
+interface EmailStatus {
+  configured: boolean;
+  reason: string | null;
+  defaultFromAddress: string;
+  defaultFromName: string;
+  adminFromAddress: string;
+  adminFromName: string;
+  allowedFromAddresses: string[];
+  replyTo: string | null;
+  broadcastRatePerMinute: number;
+}
+
+interface EmailBroadcastResult {
+  recipientCount: number;
+  delivered: number;
+  failed: number;
+  skipped: number;
+  skippedReason: string | null;
+  estimatedRatePerMinute: number;
+}
+
 export default function NotificationsPage() {
   const session = useAdminSession();
+  const canSend = session.effectiveRoles.some((r) => r === "admin" || r === "owner");
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [target, setTarget] = useState<BroadcastTarget>("all");
   const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SelectedUser[]>([]);
   const [searching, setSearching] = useState(false);
-
+  const [searched, setSearched] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<BroadcastResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canSend = session.effectiveRoles.some((r) => r === "admin" || r === "owner");
+  const [emailStatus, setEmailStatus] = useState<EmailStatus | null>(null);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailPreviewText, setEmailPreviewText] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailFromAddress, setEmailFromAddress] = useState("");
+  const [emailFromName, setEmailFromName] = useState("");
+  const [emailReplyTo, setEmailReplyTo] = useState("");
+  const [emailCtaLabel, setEmailCtaLabel] = useState("Open Blocnet App");
+  const [emailCtaUrl, setEmailCtaUrl] = useState("https://blocnet.app/notifications");
+  const [emailTarget, setEmailTarget] = useState<BroadcastTarget>("all");
+  const [emailSelectedUsers, setEmailSelectedUsers] = useState<SelectedUser[]>([]);
+  const [emailSearchQuery, setEmailSearchQuery] = useState("");
+  const [emailSearchResults, setEmailSearchResults] = useState<SelectedUser[]>([]);
+  const [emailSearching, setEmailSearching] = useState(false);
+  const [emailSearched, setEmailSearched] = useState(false);
+  const [emailConfirmOpen, setEmailConfirmOpen] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult] = useState<EmailBroadcastResult | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
-  const [searched, setSearched] = useState(false);
+  useEffect(() => {
+    if (!canSend) return;
+    let cancelled = false;
+
+    async function loadEmailStatus() {
+      try {
+        const status = await clientApi.getNotificationEmailStatus();
+        if (cancelled) return;
+        setEmailStatus(status);
+        setEmailFromAddress((prev) => prev || status.adminFromAddress || status.defaultFromAddress || "");
+        setEmailFromName((prev) => prev || status.adminFromName || status.defaultFromName || "");
+        setEmailReplyTo((prev) => prev || status.replyTo || "");
+      } catch (e: unknown) {
+        if (!cancelled) {
+          setEmailError(e instanceof Error ? e.message : "Failed to load email settings");
+        }
+      }
+    }
+
+    void loadEmailStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canSend]);
 
   async function handleSearch(q?: string) {
     const query = (q ?? searchQuery).trim();
@@ -86,6 +149,28 @@ export default function NotificationsPage() {
     }
   }
 
+  async function handleEmailSearch(q?: string) {
+    const query = (q ?? emailSearchQuery).trim();
+    if (query.length < 2) return;
+    setEmailSearching(true);
+    setEmailSearched(false);
+    try {
+      const res = await clientApi.listUsers({ q: query, limit: 10 });
+      setEmailSearchResults(
+        (res.data ?? []).map((u) => ({
+          id: u.id,
+          displayName: u.displayName ?? null,
+          email: u.email,
+        })),
+      );
+    } catch {
+      setEmailSearchResults([]);
+    } finally {
+      setEmailSearching(false);
+      setEmailSearched(true);
+    }
+  }
+
   function addUser(user: SelectedUser) {
     if (!selectedUsers.find((u) => u.id === user.id)) {
       setSelectedUsers((prev) => [...prev, user]);
@@ -95,8 +180,21 @@ export default function NotificationsPage() {
     setSearched(false);
   }
 
+  function addEmailUser(user: SelectedUser) {
+    if (!emailSelectedUsers.find((u) => u.id === user.id)) {
+      setEmailSelectedUsers((prev) => [...prev, user]);
+    }
+    setEmailSearchQuery("");
+    setEmailSearchResults([]);
+    setEmailSearched(false);
+  }
+
   function removeUser(id: string) {
     setSelectedUsers((prev) => prev.filter((u) => u.id !== id));
+  }
+
+  function removeEmailUser(id: string) {
+    setEmailSelectedUsers((prev) => prev.filter((u) => u.id !== id));
   }
 
   function handleSubmit(e: FormEvent) {
@@ -106,6 +204,15 @@ export default function NotificationsPage() {
     setError(null);
     setResult(null);
     setConfirmOpen(true);
+  }
+
+  function handleEmailSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!canSend || !emailSubject.trim() || !emailMessage.trim()) return;
+    if (emailTarget === "specific" && emailSelectedUsers.length === 0) return;
+    setEmailError(null);
+    setEmailResult(null);
+    setEmailConfirmOpen(true);
   }
 
   async function confirmSend() {
@@ -131,13 +238,46 @@ export default function NotificationsPage() {
     }
   }
 
+  async function confirmEmailSend() {
+    setEmailSending(true);
+    setEmailError(null);
+    try {
+      const response = await clientApi.broadcastEmail({
+        subject: emailSubject.trim(),
+        message: emailMessage.trim(),
+        target: emailTarget,
+        userIds: emailTarget === "specific" ? emailSelectedUsers.map((u) => u.id) : undefined,
+        previewText: emailPreviewText.trim() || undefined,
+        fromAddress: emailFromAddress.trim() || undefined,
+        fromName: emailFromName.trim() || undefined,
+        replyTo: emailReplyTo.trim() || undefined,
+        ctaLabel: emailCtaLabel.trim() || undefined,
+        ctaUrl: emailCtaUrl.trim() || undefined,
+      });
+      setEmailResult(response);
+      setEmailSubject("");
+      setEmailPreviewText("");
+      setEmailMessage("");
+      setEmailTarget("all");
+      setEmailSelectedUsers([]);
+      setEmailCtaLabel("Open Blocnet App");
+      setEmailCtaUrl("https://blocnet.app/notifications");
+    } catch (e: unknown) {
+      setEmailError(e instanceof Error ? e.message : "Failed to send email broadcast");
+    } finally {
+      setEmailSending(false);
+      setEmailConfirmOpen(false);
+    }
+  }
+
   const selectedTargetOption = TARGET_OPTIONS.find((o) => o.value === target)!;
+  const selectedEmailTargetOption = TARGET_OPTIONS.find((o) => o.value === emailTarget)!;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Push Notifications"
-        description="Broadcast notifications to users via push and in-app delivery."
+        title="Notifications"
+        description="Broadcast push notifications and email announcements from a single admin surface."
       />
 
       {!canSend && (
@@ -176,11 +316,10 @@ export default function NotificationsPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Compose form */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Compose</CardTitle>
+              <CardTitle className="text-base">Push + In-app Broadcast</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -209,7 +348,6 @@ export default function NotificationsPage() {
                   <p className="text-xs text-muted-foreground text-right">{body.length}/500</p>
                 </div>
 
-                {/* Target selector */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Audience</label>
                   <div className="grid grid-cols-2 gap-2">
@@ -232,7 +370,6 @@ export default function NotificationsPage() {
                   </div>
                 </div>
 
-                {/* Specific user search */}
                 {target === "specific" && (
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Add recipients</label>
@@ -249,10 +386,10 @@ export default function NotificationsPage() {
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               e.preventDefault();
-                              handleSearch();
+                              void handleSearch();
                             }
                           }}
-                          placeholder="Name, username or email — press Enter to search"
+                          placeholder="Name, username or email"
                           className="pl-9"
                           disabled={!canSend}
                         />
@@ -262,14 +399,10 @@ export default function NotificationsPage() {
                         variant="outline"
                         size="sm"
                         disabled={!canSend || searching || searchQuery.trim().length < 2}
-                        onClick={() => handleSearch()}
+                        onClick={() => void handleSearch()}
                         className="shrink-0"
                       >
-                        {searching ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "Search"
-                        )}
+                        {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
                       </Button>
                     </div>
 
@@ -286,9 +419,7 @@ export default function NotificationsPage() {
                               {(user.displayName ?? user.email)[0].toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {user.displayName ?? "—"}
-                              </p>
+                              <p className="text-sm font-medium truncate">{user.displayName ?? "—"}</p>
                               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                             </div>
                           </button>
@@ -339,11 +470,10 @@ export default function NotificationsPage() {
           </Card>
         </div>
 
-        {/* Preview */}
         <div>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Preview</CardTitle>
+              <CardTitle className="text-base">Push Preview</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="rounded-xl border bg-card p-4 shadow-sm space-y-1">
@@ -383,7 +513,310 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      {/* Confirm dialog */}
+      {emailResult && (
+        <Card className="border-green-500/30 bg-green-500/5">
+          <CardContent className="pt-6">
+            <p className="text-sm font-medium text-green-400">Email broadcast sent</p>
+            <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <span>Recipients: <strong className="text-foreground">{emailResult.recipientCount}</strong></span>
+              <span>Delivered: <strong className="text-foreground">{emailResult.delivered}</strong></span>
+              {emailResult.failed > 0 && (
+                <span>Failed: <strong className="text-destructive">{emailResult.failed}</strong></span>
+              )}
+              {emailResult.skipped > 0 && (
+                <span>Skipped: <strong className="text-amber-400">{emailResult.skipped}</strong></span>
+              )}
+              <span>
+                Rate cap: <strong className="text-foreground">{emailResult.estimatedRatePerMinute}/min</strong>
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {emailError && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="pt-6 text-sm text-destructive">{emailError}</CardContent>
+        </Card>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Email Broadcast</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                {emailStatus && !emailStatus.configured && (
+                  <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                    Email provider is not configured: {emailStatus.reason ?? "missing settings"}
+                  </div>
+                )}
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">From Address</label>
+                    <Input
+                      value={emailFromAddress}
+                      onChange={(e) => setEmailFromAddress(e.target.value)}
+                      placeholder="updates@blocnet.app"
+                      list="email-from-allowlist"
+                      disabled={!canSend}
+                    />
+                    <datalist id="email-from-allowlist">
+                      {(emailStatus?.allowedFromAddresses ?? []).map((addr) => (
+                        <option key={addr} value={addr} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">From Name</label>
+                    <Input
+                      value={emailFromName}
+                      onChange={(e) => setEmailFromName(e.target.value)}
+                      placeholder="Blocnet Updates"
+                      maxLength={120}
+                      disabled={!canSend}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Reply-To (optional)</label>
+                  <Input
+                    value={emailReplyTo}
+                    onChange={(e) => setEmailReplyTo(e.target.value)}
+                    placeholder="support@blocnet.app"
+                    maxLength={320}
+                    disabled={!canSend}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Subject</label>
+                  <Input
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    placeholder="Blocnet is now live"
+                    maxLength={140}
+                    disabled={!canSend}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Preview Text (optional)</label>
+                  <Input
+                    value={emailPreviewText}
+                    onChange={(e) => setEmailPreviewText(e.target.value)}
+                    placeholder="Shown in mailbox preview"
+                    maxLength={140}
+                    disabled={!canSend}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Message</label>
+                  <Textarea
+                    value={emailMessage}
+                    onChange={(e) => setEmailMessage(e.target.value)}
+                    placeholder="Write your announcement message..."
+                    maxLength={6000}
+                    rows={8}
+                    disabled={!canSend}
+                  />
+                  <p className="text-xs text-muted-foreground text-right">{emailMessage.length}/6000</p>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">CTA Label (optional)</label>
+                    <Input
+                      value={emailCtaLabel}
+                      onChange={(e) => setEmailCtaLabel(e.target.value)}
+                      placeholder="Open Blocnet App"
+                      maxLength={40}
+                      disabled={!canSend}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">CTA URL (optional)</label>
+                    <Input
+                      value={emailCtaUrl}
+                      onChange={(e) => setEmailCtaUrl(e.target.value)}
+                      placeholder="https://blocnet.app/notifications"
+                      maxLength={2048}
+                      disabled={!canSend}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Audience</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TARGET_OPTIONS.map((opt) => (
+                      <button
+                        key={`email-${opt.value}`}
+                        type="button"
+                        onClick={() => setEmailTarget(opt.value)}
+                        disabled={!canSend}
+                        className={`rounded-lg border p-3 text-left transition-colors ${
+                          emailTarget === opt.value
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        }`}
+                      >
+                        <p className="text-sm font-medium">{opt.label}</p>
+                        <p className="text-xs mt-0.5 opacity-70">{opt.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {emailTarget === "specific" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Add recipients</label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={emailSearchQuery}
+                          onChange={(e) => {
+                            setEmailSearchQuery(e.target.value);
+                            setEmailSearched(false);
+                            setEmailSearchResults([]);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              void handleEmailSearch();
+                            }
+                          }}
+                          placeholder="Name, username or email"
+                          className="pl-9"
+                          disabled={!canSend}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!canSend || emailSearching || emailSearchQuery.trim().length < 2}
+                        onClick={() => void handleEmailSearch()}
+                        className="shrink-0"
+                      >
+                        {emailSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+                      </Button>
+                    </div>
+
+                    {emailSearchResults.length > 0 && (
+                      <div className="rounded-lg border bg-popover shadow-md overflow-hidden">
+                        {emailSearchResults.map((user) => (
+                          <button
+                            key={`email-user-${user.id}`}
+                            type="button"
+                            onClick={() => addEmailUser(user)}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors"
+                          >
+                            <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                              {(user.displayName ?? user.email)[0].toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{user.displayName ?? "—"}</p>
+                              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {emailSearched && emailSearchResults.length === 0 && (
+                      <p className="text-xs text-muted-foreground px-1">
+                        No users found for &quot;{emailSearchQuery}&quot;.
+                      </p>
+                    )}
+
+                    {emailSelectedUsers.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {emailSelectedUsers.map((user) => (
+                          <Badge key={`email-selected-${user.id}`} variant="secondary" className="gap-1.5 pr-1">
+                            {user.displayName ?? user.email}
+                            <button
+                              type="button"
+                              onClick={() => removeEmailUser(user.id)}
+                              className="rounded-full hover:bg-destructive/20 p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={
+                    !canSend ||
+                    !emailSubject.trim() ||
+                    !emailMessage.trim() ||
+                    !emailFromAddress.trim() ||
+                    (emailTarget === "specific" && emailSelectedUsers.length === 0) ||
+                    (emailStatus != null && !emailStatus.configured)
+                  }
+                  className="w-full"
+                >
+                  <Send className="h-4 w-4" />
+                  Send Email Broadcast
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Email Preview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-xl border bg-card p-4 shadow-sm">
+                <p className="text-xs text-muted-foreground">From</p>
+                <p className="text-sm font-medium">{emailFromName || "Blocnet Updates"} &lt;{emailFromAddress || "updates@blocnet.app"}&gt;</p>
+                <p className="mt-3 text-xs text-muted-foreground">Subject</p>
+                <p className="text-sm font-semibold leading-tight">
+                  {emailSubject || <span className="text-muted-foreground italic">Email subject</span>}
+                </p>
+                <p className="mt-3 text-xs text-muted-foreground">Body</p>
+                <p className="text-xs whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                  {emailMessage || "Email message content"}
+                </p>
+              </div>
+
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <div className="flex justify-between">
+                  <span>Audience</span>
+                  <span className="font-medium text-foreground">{selectedEmailTargetOption.label}</span>
+                </div>
+                {emailTarget === "specific" && (
+                  <div className="flex justify-between">
+                    <span>Recipients</span>
+                    <span className="font-medium text-foreground">{emailSelectedUsers.length} selected</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span>Rate Limit</span>
+                  <span className="font-medium text-foreground">
+                    {emailStatus?.broadcastRatePerMinute ?? "-"}/min
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
@@ -409,6 +842,36 @@ export default function NotificationsPage() {
             <Button onClick={confirmSend} disabled={sending}>
               {sending && <Loader2 className="h-4 w-4 animate-spin" />}
               Confirm & Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={emailConfirmOpen} onOpenChange={setEmailConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send email broadcast?</DialogTitle>
+            <DialogDescription>
+              This will send email to{" "}
+              <strong>
+                {emailTarget === "specific"
+                  ? `${emailSelectedUsers.length} selected user${emailSelectedUsers.length !== 1 ? "s" : ""}`
+                  : selectedEmailTargetOption.label.toLowerCase()}
+              </strong>
+              . Delivery speed follows your configured per-minute rate.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border bg-muted/40 p-3 space-y-1">
+            <p className="text-sm font-semibold">{emailSubject || "Untitled"}</p>
+            <p className="text-xs text-muted-foreground line-clamp-4">{emailMessage || "No message"}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailConfirmOpen(false)} disabled={emailSending}>
+              Cancel
+            </Button>
+            <Button onClick={confirmEmailSend} disabled={emailSending}>
+              {emailSending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Confirm & Send Email
             </Button>
           </DialogFooter>
         </DialogContent>

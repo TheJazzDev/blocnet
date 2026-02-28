@@ -338,11 +338,26 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     roles: ["owner", "admin", "moderator"],
   },
   {
+    key: "system.ops_events.view",
+    label: "View Ops Events",
+    description:
+      "Owner-only operational event stream for email, wallet, tips, and auth workflows.",
+    section: "system",
+    roles: ["owner"],
+  },
+  {
     key: "system.notifications.send",
     label: "Send Notifications",
     description: "Broadcast push and in-app notifications.",
     section: "system",
     roles: ["owner", "admin"],
+  },
+  {
+    key: "system.social_credentials.manage",
+    label: "Manage Social Credentials",
+    description: "Manage encrypted social media credentials (owner only).",
+    section: "system",
+    roles: ["owner"],
   },
   {
     key: "system.settings.mutate",
@@ -449,6 +464,14 @@ export function canSendNotifications(roles: string[]): boolean {
 
 export function canMutateWallet(roles: string[]): boolean {
   return hasRole(roles, "owner") || hasRole(roles, "admin");
+}
+
+export function canViewOpsEvents(roles: string[]): boolean {
+  return hasRole(roles, "owner");
+}
+
+export function canManageSocialCredentials(roles: string[]): boolean {
+  return hasRole(roles, "owner");
 }
 
 export function isModeratorOnly(roles: string[]): boolean {

@@ -1,6 +1,7 @@
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
 import { AppRole } from '../enums/role.enum';
+import { AdminTwoFactorService } from '../../admin-security/admin-two-factor.service';
 
 function createContext(request: {
   user?: {
@@ -22,11 +23,15 @@ function createContext(request: {
 }
 
 describe('RolesGuard', () => {
-  it('uses effective roles for authorization checks', () => {
+  it('uses effective roles for authorization checks', async () => {
     const reflector = {
       getAllAndOverride: jest.fn().mockReturnValue([AppRole.MODERATOR]),
     } as unknown as Reflector;
-    const guard = new RolesGuard(reflector);
+    const adminTwoFactorService = {
+      shouldEnforceChallengeForAdminPanel: jest.fn().mockResolvedValue(false),
+      validateSession: jest.fn(),
+    } as unknown as AdminTwoFactorService;
+    const guard = new RolesGuard(reflector, adminTwoFactorService);
 
     const request = {
       user: {
@@ -39,18 +44,22 @@ describe('RolesGuard', () => {
       },
     };
 
-    const result = guard.canActivate(createContext(request));
+    const result = await guard.canActivate(createContext(request));
     expect(result).toBe(true);
     expect(request.user?.realRoles).toEqual([AppRole.OWNER, AppRole.HUNTER]);
     expect(request.user?.roles).toEqual([AppRole.HUNTER, AppRole.MODERATOR]);
     expect(request.user?.actingAsRole).toBe(AppRole.MODERATOR);
   });
 
-  it('ignores invalid or upward role requests', () => {
+  it('ignores invalid or upward role requests', async () => {
     const reflector = {
       getAllAndOverride: jest.fn().mockReturnValue([AppRole.MODERATOR]),
     } as unknown as Reflector;
-    const guard = new RolesGuard(reflector);
+    const adminTwoFactorService = {
+      shouldEnforceChallengeForAdminPanel: jest.fn().mockResolvedValue(false),
+      validateSession: jest.fn(),
+    } as unknown as AdminTwoFactorService;
+    const guard = new RolesGuard(reflector, adminTwoFactorService);
 
     const request = {
       user: {
@@ -63,7 +72,7 @@ describe('RolesGuard', () => {
       },
     };
 
-    const result = guard.canActivate(createContext(request));
+    const result = await guard.canActivate(createContext(request));
     expect(result).toBe(true);
     expect(request.user?.roles).toEqual([AppRole.MODERATOR]);
     expect(request.user?.actingAsRole).toBeNull();

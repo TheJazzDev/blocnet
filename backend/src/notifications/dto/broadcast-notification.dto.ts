@@ -26,7 +26,7 @@ export class BroadcastNotificationDto {
   @IsIn(['all', 'hunters', 'users', 'specific'])
   target!: BroadcastTarget;
 
-  @ValidateIf((o) => o.target === 'specific')
+  @ValidateIf((o: { target?: BroadcastTarget }) => o.target === 'specific')
   @IsArray()
   @IsUUID('4', { each: true })
   userIds?: string[];

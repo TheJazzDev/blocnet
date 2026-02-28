@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
 import { AdminApplicationsModule } from './admin-applications/admin-applications.module';
 import { AdminContentModule } from './admin-content/admin-content.module';
+import { AdminTwoFactorModule } from './admin-security/admin-two-factor.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { AuthModule } from './auth/auth.module';
 import { BadgesModule } from './badges/badges.module';
@@ -28,6 +29,8 @@ import { ProjectsModule } from './projects/projects.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { RolesModule } from './roles/roles.module';
 import { RuntimeFeatureFlagsModule } from './runtime-flags/runtime-feature-flags.module';
+import { SocialCredentialsModule } from './social-credentials/social-credentials.module';
+import { SocialModule } from './social/social.module';
 import { TagsModule } from './tags/tags.module';
 import { TipsModule } from './tips/tips.module';
 import { UsersModule } from './users/users.module';
@@ -49,6 +52,9 @@ import { envValidationSchema } from './config/env.validation';
       validationSchema: envValidationSchema,
     }),
     RuntimeFeatureFlagsModule,
+    AdminTwoFactorModule,
+    SocialCredentialsModule,
+    SocialModule,
     PrismaModule,
     AuthModule,
     UsersModule,

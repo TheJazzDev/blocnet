@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { AdminShell } from "@/components/admin-shell";
 import { getAuthorizedAdminProfile } from "@/lib/admin-auth";
+import { api } from "@/lib/api";
 import {
   getAdminGovernanceRole,
   getRoleViewOptions,
@@ -20,6 +21,26 @@ export default async function ProtectedLayout({
   }
 
   const cookieStore = await cookies();
+  const twoFactorSession = cookieStore.get("admin_2fa_session")?.value;
+
+  const twoFactorPreflight = await api
+    .getAdminTwoFactorPreflight()
+    .catch(() => null);
+
+  if (twoFactorPreflight?.challengeRequired) {
+    if (!twoFactorSession) {
+      redirect("/signin?reason=2fa_required");
+    }
+
+    const validation = await api
+      .validateAdminTwoFactorSession(twoFactorSession)
+      .catch(() => null);
+
+    if (!validation?.valid) {
+      redirect("/signin?reason=2fa_required");
+    }
+  }
+
   const headerStore = await headers();
   const host =
     headerStore.get("x-forwarded-host") ??

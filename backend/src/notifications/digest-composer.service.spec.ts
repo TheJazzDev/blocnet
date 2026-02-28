@@ -38,7 +38,7 @@ describe('DigestComposerService', () => {
     expect(result.subject).toContain('Your Blocnet Daily Digest');
     expect(result.html).toContain('Missed High Urgency Updates');
     expect(result.text).toContain(
-      'Open Blocnet: https://blocnet.app/notifications',
+      'Open Blocnet App: https://blocnet.app/notifications',
     );
 
     const updateLinks = result.html.match(/\/updates\//g) ?? [];
@@ -64,5 +64,30 @@ describe('DigestComposerService', () => {
     expect(result.hasContent).toBe(false);
     expect(result.html).toBe('');
     expect(result.text).toBe('');
+  });
+
+  it('renders weekly cadence copy and subject', () => {
+    const result = service.compose({
+      recipient: {
+        email: 'user@example.com',
+      },
+      cadence: 'weekly',
+      windowDays: 7,
+      summary: {
+        missedHighUrgency: [
+          {
+            updateId: 'u-1',
+            title: 'Weekly update',
+            projectName: 'BlocNet',
+            createdAt: new Date('2026-02-24T07:00:00.000Z'),
+          },
+        ],
+        activeProjects: [],
+        topCommunityPosts: [],
+      },
+    });
+
+    expect(result.subject).toContain('Your Blocnet Weekly Digest');
+    expect(result.text).toContain('Here’s what you missed in the last 7 days.');
   });
 });

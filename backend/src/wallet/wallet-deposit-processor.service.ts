@@ -84,6 +84,19 @@ export class WalletDepositProcessorService {
       `Detected new ${params.asset} deposit: ${params.amount} (tx=${params.txHash})`,
     );
 
+    await this.auditLogService.create({
+      actorId: params.userId,
+      action: FinancialAuditActions.DepositDetected,
+      resourceType: 'onchain_deposit',
+      resourceId: deposit.id,
+      metadata: {
+        asset: params.asset,
+        amount: params.amount,
+        txHash: params.txHash,
+        chainEnvironment: params.chainEnvironment,
+      },
+    });
+
     return deposit;
   }
 

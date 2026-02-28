@@ -1,6 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NotificationType, Prisma, UpdateUrgency } from '@prisma/client';
+import {
+  NotificationType,
+  Prisma,
+  RoleName,
+  UpdateUrgency,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import type { BroadcastTarget } from './dto/broadcast-notification.dto';
@@ -113,38 +118,10 @@ export class NotificationsService {
     target: BroadcastTarget;
     userIds?: string[];
   }) {
-    let resolvedUserIds: string[] = [];
-
-    if (input.target === 'specific' && input.userIds?.length) {
-      resolvedUserIds = [...new Set(input.userIds)];
-    } else if (input.target === 'hunters') {
-      const roles = await this.prisma.userRole.findMany({
-        where: { role: { in: ['hunter', 'admin', 'owner'] as any } },
-        select: { userId: true },
-        distinct: ['userId'],
-      });
-      resolvedUserIds = roles.map((r) => r.userId);
-    } else if (input.target === 'users') {
-      const elevated = await this.prisma.userRole.findMany({
-        where: { role: { in: ['hunter', 'admin', 'owner'] as any } },
-        select: { userId: true },
-        distinct: ['userId'],
-      });
-      const elevatedIds = new Set(elevated.map((r) => r.userId));
-      const all = await this.prisma.userRole.findMany({
-        where: { role: 'user' as any },
-        select: { userId: true },
-        distinct: ['userId'],
-      });
-      resolvedUserIds = all
-        .map((r) => r.userId)
-        .filter((id) => !elevatedIds.has(id));
-    } else {
-      const profiles = await this.prisma.profile.findMany({
-        select: { id: true },
-      });
-      resolvedUserIds = profiles.map((p) => p.id);
-    }
+    const resolvedUserIds = await this.resolveBroadcastUserIds(
+      input.target,
+      input.userIds,
+    );
 
     if (resolvedUserIds.length === 0) {
       return { insertedCount: 0 };
@@ -166,6 +143,76 @@ export class NotificationsService {
     });
 
     return { insertedCount: result.count };
+  }
+
+  async resolveBroadcastUserIds(target: BroadcastTarget, userIds?: string[]) {
+    if (target === 'specific' && userIds?.length) {
+      return [...new Set(userIds)];
+    }
+
+    if (target === 'hunters') {
+      const roles = await this.prisma.userRole.findMany({
+        where: {
+          role: {
+            in: [RoleName.hunter, RoleName.admin, RoleName.owner],
+          },
+        },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      return roles.map((row) => row.userId);
+    }
+
+    if (target === 'users') {
+      const elevated = await this.prisma.userRole.findMany({
+        where: {
+          role: {
+            in: [RoleName.hunter, RoleName.admin, RoleName.owner],
+          },
+        },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      const elevatedIds = new Set(elevated.map((row) => row.userId));
+      const all = await this.prisma.userRole.findMany({
+        where: { role: RoleName.user },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      return all
+        .map((row) => row.userId)
+        .filter((userId) => !elevatedIds.has(userId));
+    }
+
+    const profiles = await this.prisma.profile.findMany({
+      where: { isDeactivated: false },
+      select: { id: true },
+    });
+    return profiles.map((profile) => profile.id);
+  }
+
+  async resolveBroadcastEmailRecipients(
+    target: BroadcastTarget,
+    userIds?: string[],
+  ) {
+    const resolvedUserIds = await this.resolveBroadcastUserIds(target, userIds);
+    if (resolvedUserIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.profile.findMany({
+      where: {
+        id: { in: resolvedUserIds },
+        isDeactivated: false,
+        email: { not: '' },
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        username: true,
+      },
+    });
   }
 
   async notifyMany(events: NotificationEvent[], options?: NotifyManyOptions) {

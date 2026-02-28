@@ -17,7 +17,13 @@ export class PrismaService
       throw new Error('DATABASE_URL is required for Prisma.');
     }
 
-    const pool = new Pool({ connectionString });
+    const pool = new Pool({
+      connectionString,
+      max: 20, // Maximum number of connections in the pool
+      idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+      connectionTimeoutMillis: 10000, // Return error after 10 seconds if cannot connect
+      allowExitOnIdle: false, // Keep pool alive even if all clients are idle
+    });
     const adapter = new PrismaPg(pool);
 
     super({
