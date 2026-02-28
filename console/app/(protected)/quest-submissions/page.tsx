@@ -205,6 +205,38 @@ export default function QuestSubmissionsPage() {
     }
   }
 
+  async function handleRevoke(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!selectedSubmission) return;
+
+    if (!reviewNotes.trim()) {
+      setReviewError("Please provide a reason for revocation");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setReviewError(null);
+    try {
+      await apiFetch(`/admin/quests/submissions/${selectedSubmission.id}/revoke`, {
+        method: "POST",
+        body: JSON.stringify({
+          reviewNotes,
+          revocationReason: reviewNotes,
+        }),
+      });
+      setReviewOpen(false);
+      setSelectedSubmission(null);
+      setReviewNotes("");
+      void fetchSubmissions();
+    } catch (err: unknown) {
+      setReviewError(
+        err instanceof Error ? err.message : "Failed to revoke submission approval",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   if (!canReviewSubmissions) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -624,7 +656,61 @@ export default function QuestSubmissionsPage() {
                 </form>
               )}
 
-              {selectedSubmission.status !== "pending" && (
+              {/* Revoke Approved Submission */}
+              {selectedSubmission.status === "approved" && (
+                <form className="space-y-4">
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                    <p className="text-sm text-red-700">
+                      Revoking will mark this submission as rejected and reverse awarded quest points.
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="revocation-notes">Revocation Reason (Required)</Label>
+                    <Textarea
+                      id="revocation-notes"
+                      value={reviewNotes}
+                      onChange={(e) => setReviewNotes(e.target.value)}
+                      placeholder="Explain why this approved submission is being revoked..."
+                      rows={3}
+                    />
+                  </div>
+                  {reviewError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                      <p className="text-sm text-red-700">{reviewError}</p>
+                    </div>
+                  )}
+                  <DialogFooter className="gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setReviewOpen(false);
+                        setSelectedSubmission(null);
+                        setReviewNotes("");
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={(e) => handleRevoke(e as unknown as FormEvent<HTMLFormElement>)}
+                      disabled={isSubmitting}
+                      className="gap-2"
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4" />
+                      )}
+                      Revoke Approval
+                    </Button>
+                  </DialogFooter>
+                </form>
+              )}
+
+              {selectedSubmission.status === "rejected" && (
                 <DialogFooter>
                   <Button
                     type="button"

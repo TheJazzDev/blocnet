@@ -21,6 +21,7 @@ const ENROLLMENT_TTL_MS = 10 * 60 * 1000;
 const RECOVERY_CODE_COUNT = 10;
 const RECOVERY_CODE_SEGMENT_LENGTH = 4;
 const RECOVERY_CODE_SEGMENTS = 3;
+const SESSION_EXTENSION_LEEWAY_MS = 30 * 60 * 1000;
 
 export type AdminTwoFactorPreflight = {
   eligible: boolean;
@@ -91,7 +92,7 @@ export class AdminTwoFactorService {
       totpEnabled,
       recoveryCodesRemaining: remaining,
       policyRequired,
-      challengeRequired: policyRequired || totpEnabled,
+      challengeRequired: totpEnabled,
     };
   }
 
@@ -105,15 +106,7 @@ export class AdminTwoFactorService {
       return false;
     }
 
-    const [policy, credential] = await Promise.all([
-      this.getPolicy(),
-      this.prisma.adminTotpCredential.findUnique({
-        where: { userId },
-        select: { userId: true },
-      }),
-    ]);
-
-    return policy.require2faForAdminPanel || Boolean(credential);
+    return true;
   }
 
   async startEnrollment(input: {
@@ -160,8 +153,8 @@ export class AdminTwoFactorService {
       },
     });
 
-    const issuer = 'Blocnet Admin';
-    const accountName = input.email?.trim() || input.userId;
+    const issuer = this.resolveTotpIssuer();
+    const accountName = this.resolveTotpAccountName(input.email, input.userId);
 
     return {
       secret,
@@ -420,9 +413,26 @@ export class AdminTwoFactorService {
         expiresAt: { gt: new Date() },
       },
       select: {
+        id: true,
         expiresAt: true,
       },
     });
+
+    if (row) {
+      const remainingMs = row.expiresAt.getTime() - Date.now();
+      if (remainingMs <= SESSION_EXTENSION_LEEWAY_MS) {
+        const extendedExpiresAt = this.computeSessionExpiry();
+        await this.prisma.adminTwoFactorSession.update({
+          where: { id: row.id },
+          data: { expiresAt: extendedExpiresAt },
+        });
+        return {
+          valid: true,
+          required: true,
+          expiresAt: extendedExpiresAt,
+        };
+      }
+    }
 
     return {
       valid: Boolean(row),
@@ -797,6 +807,19 @@ export class AdminTwoFactorService {
     return 24 * 7;
   }
 
+  private resolveTotpIssuer(): string {
+    const envLabel = this.isProductionDeployment() ? 'PROD' : 'DEV';
+    return `Blocnet Console (${envLabel})`;
+  }
+
+  private resolveTotpAccountName(email: string | null, userId: string): string {
+    const normalizedEmail = email?.trim();
+    if (normalizedEmail && normalizedEmail.length > 0) {
+      return normalizedEmail;
+    }
+    return userId;
+  }
+
   private resolveEncryptionKey(): Buffer {
     const raw = (
       this.configService.get<string>('ADMIN_TOTP_ENCRYPTION_KEY') ?? ''
@@ -813,11 +836,7 @@ export class AdminTwoFactorService {
       return Buffer.alloc(0);
     }
 
-    const nodeEnv =
-      (this.configService.get<string>('NODE_ENV') ?? 'development').trim() ||
-      'development';
-
-    if (nodeEnv === 'production') {
+    if (this.isProductionDeployment()) {
       this.logger.error('ADMIN_TOTP_ENCRYPTION_KEY is required in production');
       return Buffer.alloc(0);
     }
@@ -827,6 +846,29 @@ export class AdminTwoFactorService {
     );
 
     return createHash('sha256').update('blocnet.dev.admin-totp').digest();
+  }
+
+  private isProductionDeployment(): boolean {
+    const deployment = this.resolveDeploymentEnvironment();
+    return deployment === 'production' || deployment === 'prod';
+  }
+
+  private resolveDeploymentEnvironment(): string {
+    const candidates = [
+      this.configService.get<string>('APP_ENV'),
+      this.configService.get<string>('VERCEL_ENV'),
+      this.configService.get<string>('RAILWAY_ENVIRONMENT'),
+      this.configService.get<string>('NODE_ENV'),
+    ];
+
+    for (const candidate of candidates) {
+      const normalized = candidate?.trim().toLowerCase();
+      if (normalized) {
+        return normalized;
+      }
+    }
+
+    return 'development';
   }
 
   private assertVaultAvailable(): void {

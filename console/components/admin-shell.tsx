@@ -28,6 +28,7 @@ import {
   HandCoins,
   ReceiptText,
   Sparkles,
+  Brain,
   Award,
   Target,
   Hexagon,
@@ -97,10 +98,24 @@ function setRoleViewCookie(role: AdminPanelRole | null) {
   document.cookie = `${ROLE_VIEW_COOKIE}=${role}; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`;
 }
 
-function buildNavItems(userRoles: string[]) {
-  const overviewItems = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }];
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+};
 
-  const contentItems = [
+function buildNavItems(userRoles: string[]) {
+  const overviewItems: NavItem[] = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }];
+
+  const edgeEngineItems: NavItem[] = [
+    { href: "/edge-engine", label: "Command Center", icon: Sparkles, exact: true },
+    { href: "/edge-engine/decision-engine", label: "Decision Engine", icon: Zap },
+    { href: "/edge-engine/ml-analysis", label: "ML Analysis", icon: Brain },
+    { href: "/edge-engine/settings", label: "Edge Settings", icon: Settings },
+  ];
+
+  const contentItems: NavItem[] = [
     { href: "/projects", label: "Projects", icon: FolderKanban },
     { href: "/updates", label: "Updates", icon: Newspaper },
     { href: "/comments", label: "Comments", icon: MessageSquare },
@@ -108,7 +123,7 @@ function buildNavItems(userRoles: string[]) {
     { href: "/applications", label: "Applications", icon: FileCheck },
   ];
 
-  const economyItems = [
+  const economyItems: NavItem[] = [
     { href: "/wallet-users", label: "Wallet Users", icon: Wallet },
     { href: "/wallet-withdrawals", label: "Withdrawals", icon: ScrollText },
     { href: "/wallet-kyc", label: "KYC Reviews", icon: Shield },
@@ -117,7 +132,7 @@ function buildNavItems(userRoles: string[]) {
     { href: "/tip-settings", label: "Tip Settings", icon: HandCoins },
   ];
 
-  const gamificationItems = [
+  const gamificationItems: NavItem[] = [
     { href: "/mining", label: "Mining", icon: Zap },
     { href: "/mining/leaderboard", label: "Leaderboard", icon: CheckCircle2 },
     { href: "/badges", label: "Badges", icon: Award },
@@ -125,14 +140,14 @@ function buildNavItems(userRoles: string[]) {
     { href: "/quest-submissions", label: "Quest Reviews", icon: FileCheck },
   ];
 
-  const accessItems = [
+  const accessItems: NavItem[] = [
     { href: "/users", label: "Members", icon: Users },
     { href: "/admin-access", label: "Admin Panel Access", icon: ShieldCheck },
     { href: "/roles", label: "Role Matrix", icon: Shield },
   ];
 
-  const engagementItems = [{ href: "/edge-engine", label: "Edge Engine", icon: Sparkles }];
-  const systemItems = [{ href: "/audit-log", label: "Audit Log", icon: ScrollText }];
+  const engagementItems: NavItem[] = [];
+  const systemItems: NavItem[] = [{ href: "/audit-log", label: "Audit Log", icon: ScrollText }];
 
   if (canViewOpsEvents(userRoles)) {
     systemItems.push({ href: "/ops-events", label: "Ops Events", icon: Activity });
@@ -160,6 +175,7 @@ function buildNavItems(userRoles: string[]) {
 
   return [
     { label: "Overview", items: overviewItems },
+    { label: "Edge Engine", items: edgeEngineItems },
     { label: "Content", items: contentItems },
     { label: "Economy", items: economyItems },
     { label: "Gamification", items: gamificationItems },
@@ -212,7 +228,9 @@ function SidebarContent({
                 {group.label}
               </p>
               {group.items.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const isActive = item.exact
+                  ? pathname === item.href
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
                     key={item.href}
@@ -334,47 +352,6 @@ export function AdminShell({
     }
   }, [actingAsRole, roleOptions]);
 
-  useEffect(() => {
-    let disposed = false;
-
-    const refreshSession = async () => {
-      if (disposed) return;
-      try {
-        await axios.get("/api/proxy/me", {
-          validateStatus: () => true,
-        });
-      } catch {
-        // Ignore background refresh errors; route guards still handle auth.
-      }
-    };
-
-    void refreshSession();
-
-    const intervalId = window.setInterval(() => {
-      void refreshSession();
-    }, 45 * 60 * 1000);
-
-    const handleFocus = () => {
-      void refreshSession();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        void refreshSession();
-      }
-    };
-
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      disposed = true;
-      window.clearInterval(intervalId);
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
   const effectiveRoles = useMemo(
     () => resolveEffectiveRoles(realRoles, actingAsRole),
     [actingAsRole, realRoles],
@@ -443,7 +420,10 @@ export function AdminShell({
         </aside>
 
         {mobileOpen && (
-          <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMobileOpen(false)} />
+          <div
+            className="fixed inset-0 z-40 cursor-pointer bg-black/60 lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
         )}
 
         <aside

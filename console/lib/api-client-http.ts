@@ -6,6 +6,12 @@ const PROXY_BASE = "/api/proxy";
 const REFRESH_ENDPOINT = "/api/auth/refresh-token";
 
 type RetryableRequestConfig = AxiosRequestConfig & { _retry?: boolean };
+type ApiFetchOptions = RequestInit & {
+  successMessage?: string;
+  errorMessage?: string;
+  suppressSuccessToast?: boolean;
+  suppressErrorToast?: boolean;
+};
 
 const proxyApi = axios.create({
   baseURL: PROXY_BASE,
@@ -19,6 +25,14 @@ const refreshApi = axios.create({
 });
 
 let inFlightRefresh: Promise<void> | null = null;
+const MAX_AUTH_RETRIES = 2;
+const AUTH_RETRY_DELAY_MS = 350;
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+}
 
 function normalizeHeaders(headers?: HeadersInit): Record<string, string> {
   if (!headers) return {};
@@ -45,11 +59,56 @@ function normalizeHeaders(headers?: HeadersInit): Record<string, string> {
   return normalized;
 }
 
+function isMutationMethod(method: Method): boolean {
+  return method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
+}
+
+function extractMessageFromPayload(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const candidate = payload as Record<string, unknown>;
+  const value = candidate.message;
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+async function showToast(kind: "success" | "error", message: string): Promise<void> {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const { toast } = await import("sonner");
+  if (kind === "success") {
+    toast.success(message);
+    return;
+  }
+  toast.error(message);
+}
+
 async function refreshSessionOnce(): Promise<void> {
   if (!inFlightRefresh) {
     inFlightRefresh = refreshApi
-      .post(REFRESH_ENDPOINT)
+      .post<{ ok?: boolean; concurrent?: boolean }>(REFRESH_ENDPOINT, undefined, {
+        validateStatus: () => true,
+      })
       .then((res) => {
+        if (res.status === 200) {
+          return;
+        }
+
+        if (res.status >= 200 && res.status < 300) {
+          return;
+        }
+
+        if (res.status === 503) {
+          throw new Error("Refresh temporarily unavailable");
+        }
+
+        if (res.status === 401) {
+          throw new Error("Refresh token invalid");
+        }
+
         if (res.status < 200 || res.status >= 300) {
           throw new Error(`Refresh failed with ${res.status}`);
         }
@@ -66,19 +125,34 @@ proxyApi.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const status = error.response?.status;
-    const request = error.config as RetryableRequestConfig | undefined;
+    const request = error.config as (RetryableRequestConfig & {
+      _authRetryCount?: number;
+    }) | undefined;
 
-    if (status === 401 && request && !request._retry) {
-      request._retry = true;
-      try {
-        await refreshSessionOnce();
-        return await proxyApi.request(request);
-      } catch {
-        // Fall through to sign-in redirect + error propagation.
+    if (status === 401 && request) {
+      const retryCount = request._authRetryCount ?? 0;
+      if (retryCount < MAX_AUTH_RETRIES) {
+        request._authRetryCount = retryCount + 1;
+        request._retry = true;
+        try {
+          await refreshSessionOnce();
+          return await proxyApi.request(request);
+        } catch {
+          if (request._authRetryCount < MAX_AUTH_RETRIES) {
+            await wait(AUTH_RETRY_DELAY_MS);
+            return await proxyApi.request(request);
+          }
+        }
       }
     }
 
     if (status === 401 && typeof window !== "undefined") {
+      try {
+        // One final grace attempt before hard redirect; helps with refresh-rotation races.
+        await wait(AUTH_RETRY_DELAY_MS);
+      } catch {
+        // Ignore wait errors.
+      }
       window.location.href = `/signin?next=${encodeURIComponent(window.location.pathname)}`;
     }
 
@@ -100,7 +174,7 @@ export function toQuery(
 
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit = {},
+  options: ApiFetchOptions = {},
 ): Promise<T> {
   const method = (options.method ?? "GET").toUpperCase() as Method;
   const requestConfig: RetryableRequestConfig = {
@@ -119,20 +193,43 @@ export async function apiFetch<T>(
 
   try {
     const response = await proxyApi.request<T>(requestConfig);
+
+    if (isMutationMethod(method) && !options.suppressSuccessToast) {
+      const successMessage =
+        options.successMessage ??
+        extractMessageFromPayload(response.data) ??
+        "Action completed successfully.";
+      void showToast("success", successMessage);
+    }
+
     return response.data;
   } catch (error) {
+    let toastMessage = options.errorMessage ?? "Request failed";
+
     if (axios.isAxiosError(error)) {
       const status = error.response?.status ?? "ERR";
       const data = error.response?.data;
       let detail = error.message;
       if (typeof data === "string" && data.trim().length > 0) {
         detail = data;
+      } else if (extractMessageFromPayload(data)) {
+        detail = extractMessageFromPayload(data)!;
       } else if (data && typeof data === "object") {
         detail = JSON.stringify(data);
       }
-      throw new Error(`API ${status}: ${detail}`);
+      const errorMessage = `API ${status}: ${detail}`;
+      toastMessage = detail;
+      if (!options.suppressErrorToast) {
+        void showToast("error", toastMessage);
+      }
+      throw new Error(errorMessage);
     }
 
+    if (!options.suppressErrorToast) {
+      const fallbackMessage =
+        error instanceof Error ? error.message : toastMessage;
+      void showToast("error", fallbackMessage);
+    }
     throw error instanceof Error ? error : new Error("Unknown API error");
   }
 }

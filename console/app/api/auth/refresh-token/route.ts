@@ -22,17 +22,25 @@ export async function POST() {
 
   if (!result.ok) {
     // Another in-flight request may have already rotated the refresh token.
-    if (result.concurrent) {
+    if (result.reason === "concurrent") {
       return NextResponse.json({ ok: true, concurrent: true });
     }
 
-    clearAdminSessionCookies(store, { clearTwoFactor: true });
-    return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    if (result.reason === "invalid") {
+      clearAdminSessionCookies(store, { clearTwoFactor: true });
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
+    return NextResponse.json(
+      { error: "Session refresh temporarily unavailable" },
+      { status: 503 },
+    );
   }
 
-  setAdminSessionCookies(store, {
+  const response = NextResponse.json({ ok: true, concurrent: false });
+  setAdminSessionCookies(response.cookies, {
     accessToken: result.accessToken,
     refreshToken: result.refreshToken,
   });
-  return NextResponse.json({ ok: true, concurrent: false });
+  return response;
 }

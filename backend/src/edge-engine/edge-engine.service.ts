@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -39,6 +40,7 @@ import {
   toRecommendedAction,
   urgencyScore,
 } from './edge-engine.utils';
+import { MLClientService } from './ml-client.service';
 
 type UpdateCandidateRow = {
   id: string;
@@ -69,6 +71,13 @@ type EdgeDecision = {
     novelty: number;
     penalties: number;
   };
+  // ML-enhanced fields
+  mlQuality?: number;
+  mlSentiment?: string;
+  mlTopics?: string[];
+  mlActionability?: number;
+  mlInsights?: string[];
+  mlProvider?: string;
   update: {
     id: string;
     title: string;
@@ -117,10 +126,13 @@ type EdgeConfigRow = {
 
 @Injectable()
 export class EdgeEngineService {
+  private readonly logger = new Logger(EdgeEngineService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
+    private readonly mlClient: MLClientService,
   ) {}
 
   async getFeed(userId: string, query: ListEdgeFeedQuery) {
@@ -202,6 +214,7 @@ export class EdgeEngineService {
         id: true,
         projectId: true,
         title: true,
+        contentMd: true,
         urgency: true,
         createdAt: true,
         secondaryTags: {
@@ -229,7 +242,15 @@ export class EdgeEngineService {
         return b.update.createdAt.getTime() - a.update.createdAt.getTime();
       });
 
-    const items = decisions.slice(0, limit);
+    // Build content map for ML enhancement
+    const updateContentMap = new Map<string, string>(
+      updates.map((u) => [u.id, u.contentMd]),
+    );
+
+    // Enhance with ML analysis before limiting
+    const enhancedDecisions = await this.enhanceDecisionsWithML(decisions, updateContentMap);
+
+    const items = enhancedDecisions.slice(0, limit);
     const nextCursor =
       updates.length === limit
         ? toEdgeFeedCursor(
@@ -339,6 +360,7 @@ export class EdgeEngineService {
         id: true,
         projectId: true,
         title: true,
+        contentMd: true,
         urgency: true,
         createdAt: true,
         secondaryTags: {
@@ -362,7 +384,13 @@ export class EdgeEngineService {
       )
       .sort((a, b) => b.edgeScore - a.edgeScore);
 
-    await this.persistDecisions(userId, decisions);
+    // Build content map and enhance with ML
+    const updateContentMap = new Map<string, string>(
+      updates.map((u) => [u.id, u.contentMd]),
+    );
+    const enhancedDecisions = await this.enhanceDecisionsWithML(decisions, updateContentMap);
+
+    await this.persistDecisions(userId, enhancedDecisions);
 
     const highUrgencyCount = updates.filter(
       (update) => update.urgency === UpdateUrgency.high,
@@ -705,6 +733,56 @@ export class EdgeEngineService {
     return `This decision is ranked at ${decision.edgeScore} because urgency is ${decision.update.urgency}, recency is ${decision.components.recency}, and relevance to your followed project is ${decision.components.relevance}.`;
   }
 
+  private async enhanceDecisionsWithML(
+    decisions: EdgeDecision[],
+    updateContentMap: Map<string, string>,
+  ): Promise<EdgeDecision[]> {
+    const mlEnabled = await this.mlClient.isEnabled();
+    if (!mlEnabled) {
+      this.logger.debug('ML client is disabled, skipping ML enhancement');
+      return decisions;
+    }
+
+    if (decisions.length === 0) {
+      return decisions;
+    }
+
+    try {
+      // Prepare content for batch analysis
+      const contents = decisions.map((d) => {
+        const updateContent = updateContentMap.get(d.update.id);
+        return updateContent ? `${d.update.title}\n\n${updateContent}` : d.update.title;
+      });
+
+      // Analyze in batch
+      const analyses = await this.mlClient.analyzeBatch(contents);
+
+      // Enhance decisions with ML results
+      return decisions.map((decision, index) => {
+        const analysis = analyses[index];
+
+        if (!analysis) {
+          // ML analysis failed for this item, return original decision
+          return decision;
+        }
+
+        return {
+          ...decision,
+          mlQuality: analysis.quality,
+          mlSentiment: analysis.sentiment,
+          mlTopics: analysis.topics,
+          mlActionability: analysis.actionability,
+          mlInsights: analysis.key_insights,
+          mlProvider: 'bee', // Indicates BEE ML service was used
+        };
+      });
+    } catch (error) {
+      this.logger.error(`ML enhancement failed: ${error.message}`, error.stack);
+      // Return original decisions if ML fails
+      return decisions;
+    }
+  }
+
   private async persistDecisions(userId: string, decisions: EdgeDecision[]) {
     if (decisions.length === 0) return;
 
@@ -741,6 +819,13 @@ export class EdgeEngineService {
             relevanceScore: decision.components.relevance,
             noveltyScore: decision.components.novelty,
             penaltyScore: decision.components.penalties,
+            // ML-enhanced fields
+            mlQuality: decision.mlQuality,
+            mlSentiment: decision.mlSentiment,
+            mlTopics: decision.mlTopics as Prisma.InputJsonValue,
+            mlActionability: decision.mlActionability,
+            mlInsights: decision.mlInsights as Prisma.InputJsonValue,
+            mlProvider: decision.mlProvider,
             generatedAt,
           },
           create: {
@@ -757,6 +842,13 @@ export class EdgeEngineService {
             relevanceScore: decision.components.relevance,
             noveltyScore: decision.components.novelty,
             penaltyScore: decision.components.penalties,
+            // ML-enhanced fields
+            mlQuality: decision.mlQuality,
+            mlSentiment: decision.mlSentiment,
+            mlTopics: decision.mlTopics as Prisma.InputJsonValue,
+            mlActionability: decision.mlActionability,
+            mlInsights: decision.mlInsights as Prisma.InputJsonValue,
+            mlProvider: decision.mlProvider,
             generatedAt,
           },
         }),

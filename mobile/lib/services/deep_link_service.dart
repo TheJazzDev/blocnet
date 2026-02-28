@@ -14,6 +14,25 @@ class DeepLinkService {
 
   StreamSubscription<Uri>? _sub;
 
+  static const Set<String> _supportedDirectRoutes = {
+    AppRoutes.main,
+    AppRoutes.signIn,
+    AppRoutes.signUp,
+    AppRoutes.verifyEmail,
+    AppRoutes.notifications,
+    AppRoutes.settings,
+    AppRoutes.wallet,
+    AppRoutes.mining,
+    AppRoutes.profile,
+    AppRoutes.quests,
+    AppRoutes.badges,
+    AppRoutes.helpSupport,
+    AppRoutes.referralCode,
+    AppRoutes.home,
+    AppRoutes.discover,
+    AppRoutes.trending,
+  };
+
   DeepLinkService({
     required this.navigatorKey,
     required this.authStore,
@@ -43,28 +62,47 @@ class DeepLinkService {
   }
 
   Future<void> _handleUri(Uri uri) async {
+    final host = uri.host.toLowerCase();
+    final isBlocnetHost = host == 'blocnet.app' || host == 'www.blocnet.app';
     final isAppScheme = uri.scheme == 'io.blocnet.app';
     final isSupabaseVerifyLink =
         (uri.scheme == 'https' || uri.scheme == 'http') &&
             uri.path.contains('/auth/v1/verify');
-    if (!isAppScheme && !isSupabaseVerifyLink) return;
+    final isBlocnetAuthCallback =
+        isBlocnetHost && uri.path.startsWith('/auth/');
+    final isBlocnetReferralPath = isBlocnetHost &&
+        uri.pathSegments.isNotEmpty &&
+        uri.pathSegments.first == 'ref';
 
-    // Capture referral links like io.blocnet.app://signup?ref=AB12CD34
-    if (isAppScheme) {
-      final rawReferralCode = uri.queryParameters['ref'];
-      if (rawReferralCode != null && rawReferralCode.trim().isNotEmpty) {
-        await authStore.setPendingReferralCode(rawReferralCode);
+    if (!isAppScheme && !isSupabaseVerifyLink && !isBlocnetHost) {
+      return;
+    }
+
+    // Capture referral links like:
+    // - io.blocnet.app://signup?ref=AB12CD34
+    // - https://blocnet.app/ref/AB12CD34
+    String? rawReferralCode = uri.queryParameters['ref'];
+    if ((rawReferralCode == null || rawReferralCode.trim().isEmpty) &&
+        isBlocnetReferralPath &&
+        uri.pathSegments.length > 1) {
+      rawReferralCode = uri.pathSegments[1];
+    }
+    if (rawReferralCode != null && rawReferralCode.trim().isNotEmpty) {
+      await authStore.setPendingReferralCode(rawReferralCode);
+      if (!authStore.isAuthenticated) {
+        navigatorKey.currentState?.pushNamed(AppRoutes.signUp);
       }
     }
 
     // Supabase sends auth callbacks in two formats:
     // 1. Hash fragment: io.blocnet.app://#access_token=xxx&refresh_token=yyy&type=signup
     // 2. Query params: io.blocnet.app://?code=xxx (email confirmation)
+    // 3. Universal link callback: https://blocnet.app/auth/callback#access_token=...
 
     Map<String, String> params = {};
 
     // Try fragment first (magic links, OAuth)
-    if (isAppScheme && uri.fragment.isNotEmpty) {
+    if ((isAppScheme || isBlocnetAuthCallback) && uri.fragment.isNotEmpty) {
       params = Uri.splitQueryString(uri.fragment);
     }
     // Fall back to query params (email confirmation)
@@ -72,7 +110,12 @@ class DeepLinkService {
       params = uri.queryParameters;
     }
 
-    if (params.isEmpty) return;
+    if (params.isEmpty) {
+      if (isBlocnetHost) {
+        _handleBlocnetPathNavigation(uri);
+      }
+      return;
+    }
 
     final type = params['type']?.toLowerCase();
     final accessToken = params['access_token'];
@@ -246,6 +289,42 @@ class DeepLinkService {
       default:
         return null;
     }
+  }
+
+  void _handleBlocnetPathNavigation(Uri uri) {
+    final segments = uri.pathSegments.where((segment) => segment.isNotEmpty);
+    final path = '/${segments.join('/')}';
+    if (path == '/' || path.isEmpty) {
+      return;
+    }
+
+    if (path == '/settings/notifications') {
+      navigatorKey.currentState?.pushNamed(AppRoutes.settings);
+      return;
+    }
+
+    // External URLs that do not map 1:1 to app routes can still open the app.
+    if (path.startsWith('/updates') ||
+        path.startsWith('/projects') ||
+        path.startsWith('/community')) {
+      navigatorKey.currentState?.pushNamed(AppRoutes.main);
+      return;
+    }
+
+    if (!_supportedDirectRoutes.contains(path)) {
+      return;
+    }
+
+    final args = <String, dynamic>{};
+    final email = uri.queryParameters['email']?.trim();
+    if (email != null && email.isNotEmpty) {
+      args['email'] = email;
+    }
+
+    navigatorKey.currentState?.pushNamed(
+      path,
+      arguments: args.isEmpty ? null : args,
+    );
   }
 
   Future<void> handleUriForTesting(Uri uri) => _handleUri(uri);

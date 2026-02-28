@@ -10,6 +10,7 @@ import {
   WalletConfigService,
   type WalletDepositNetworkConfig,
 } from './wallet-config.service';
+import { DatabaseHealthService } from '../prisma/database-health.service';
 import { WalletSweepService } from './wallet-sweep.service';
 import { WalletWithdrawalSettlementService } from './wallet-withdrawal-settlement.service';
 
@@ -22,9 +23,11 @@ export class WalletSettlementWorkerService
 
   private intervalHandle: NodeJS.Timeout | null = null;
   private isTickRunning = false;
+  private lastDbUnavailableLogAt = 0;
 
   constructor(
     private readonly walletConfigService: WalletConfigService,
+    private readonly databaseHealthService: DatabaseHealthService,
     private readonly walletSweepService: WalletSweepService,
     private readonly walletWithdrawalSettlementService: WalletWithdrawalSettlementService,
   ) {}
@@ -60,6 +63,12 @@ export class WalletSettlementWorkerService
     this.isTickRunning = true;
     try {
       if (!this.walletConfigService.walletEnabled) {
+        return;
+      }
+
+      const databaseHealthy = await this.databaseHealthService.isDatabaseHealthy();
+      if (!databaseHealthy) {
+        this.logDbUnavailableSkip();
         return;
       }
 
@@ -117,5 +126,14 @@ export class WalletSettlementWorkerService
       return error.message;
     }
     return String(error);
+  }
+
+  private logDbUnavailableSkip() {
+    const now = Date.now();
+    if (now - this.lastDbUnavailableLogAt < 60_000) {
+      return;
+    }
+    this.lastDbUnavailableLogAt = now;
+    this.logger.warn('Skipping settlement tick because database is unavailable.');
   }
 }

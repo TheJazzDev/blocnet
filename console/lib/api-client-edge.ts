@@ -32,7 +32,7 @@ export const edgeApi = {
 
   getAdminEdgeConfig: () => apiFetch<AdminEdgeConfig>("/admin/edge/config"),
 
-  updateAdminEdgeConfig: (body: Partial<Pick<AdminEdgeConfig, "enabled">>) =>
+  updateAdminEdgeConfig: (body: Partial<Omit<AdminEdgeConfig, "id" | "updatedAt">>) =>
     apiFetch<AdminEdgeConfig>("/admin/edge/config", {
       method: "PATCH",
       body: JSON.stringify(body),

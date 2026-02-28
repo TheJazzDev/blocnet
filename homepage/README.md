@@ -24,6 +24,20 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 Landing page has a dedicated download section at `#download`.
 
+## Mobile Deep Link Association
+
+The homepage serves:
+- `/.well-known/assetlinks.json` (Android App Links)
+- `/.well-known/apple-app-site-association` (iOS Universal Links)
+
+Set these environment variables in deployment:
+
+- `BLOCNET_ANDROID_APP_ID` (default: `io.blocnet.app`)
+- `BLOCNET_ANDROID_SHA256_CERT_FINGERPRINTS` (comma-separated SHA256 cert fingerprints)
+- `BLOCNET_IOS_APP_IDS` (optional comma-separated full app IDs like `TEAMID.io.blocnet.app`)
+- `BLOCNET_IOS_TEAM_ID` (used when `BLOCNET_IOS_APP_IDS` is not provided)
+- `BLOCNET_IOS_BUNDLE_ID` (default: `io.blocnet.app`)
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

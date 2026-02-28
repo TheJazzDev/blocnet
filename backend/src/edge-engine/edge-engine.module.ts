@@ -4,11 +4,12 @@ import { EdgeEngineAdminController } from './edge-engine-admin.controller';
 import { EdgeEngineController } from './edge-engine.controller';
 import { EdgeEngineService } from './edge-engine.service';
 import { EdgeAdminService } from './edge-admin.service';
+import { MLClientService } from './ml-client.service';
 
 @Module({
   imports: [AuditLogModule],
   controllers: [EdgeEngineController, EdgeEngineAdminController],
-  providers: [EdgeEngineService, EdgeAdminService],
-  exports: [EdgeEngineService, EdgeAdminService],
+  providers: [EdgeEngineService, EdgeAdminService, MLClientService],
+  exports: [EdgeEngineService, EdgeAdminService, MLClientService],
 })
 export class EdgeEngineModule {}

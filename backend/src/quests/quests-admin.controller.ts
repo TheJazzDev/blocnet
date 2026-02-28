@@ -16,6 +16,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { AppRole } from '../common/enums/role.enum';
 import { CreateQuestDto } from './dto/create-quest.dto';
 import { UpdateQuestDto } from './dto/update-quest.dto';
+import { RevokeQuestSubmissionDto } from './dto/quest-action.dto';
 import { QuestResponseDto } from './dto/quest-response.dto';
 import { QuestsService } from './quests.service';
 
@@ -128,5 +129,21 @@ export class QuestsAdminController {
       adminId,
       false,
     );
+  }
+
+  @Post('submissions/:submissionId/revoke')
+  @ApiOperation({
+    summary: 'Admin: Revoke an approved quest submission and reverse rewards',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Submission approval revoked and rewards reversed',
+  })
+  async revokeSubmission(
+    @Param('submissionId') submissionId: string,
+    @Body() dto: RevokeQuestSubmissionDto,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.questsService.revokeQuestSubmission(submissionId, adminId, dto);
   }
 }

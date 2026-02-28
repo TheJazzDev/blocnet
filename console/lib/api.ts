@@ -239,6 +239,80 @@ export interface AdminUserDetail {
     tipReceived: number;
     tipConversions: number;
   };
+  mining: {
+    claimedTotalPoints: number;
+    maturedUnclaimedPoints: number;
+    lifetimeEarnedPoints: number;
+    totalLedgerPoints: number;
+    activeDirectReferrals: number;
+    hourlyRateNow: number;
+    activeSession: {
+      id: string;
+      startsAt: string;
+      endsAt: string;
+      claimedAt: string | null;
+      status: "running" | "claimable" | "claimed";
+      progressPct: number;
+      basePointsPerCycle: number;
+      effectivePointsPerCycle: number;
+      boostBpsSnapshot: number;
+      activeReferralsSnapshot: number;
+      claimedPoints: number;
+    } | null;
+    recentSessions: Array<{
+      id: string;
+      startsAt: string;
+      endsAt: string;
+      claimedAt: string | null;
+      status: "running" | "claimable" | "claimed";
+      progressPct: number;
+      basePointsPerCycle: number;
+      effectivePointsPerCycle: number;
+      boostBpsSnapshot: number;
+      activeReferralsSnapshot: number;
+      claimedPoints: number;
+    }>;
+  };
+  quests: {
+    totalQuests: number;
+    activeQuests: number;
+    userQuestCounts: {
+      notStarted: number;
+      inProgress: number;
+      pendingVerification: number;
+      completed: number;
+    };
+    submissions: {
+      pending: number;
+      approved: number;
+      rejected: number;
+      total: number;
+    };
+    rewardPointsTotal: number;
+    rewardEventsTotal: number;
+    recentProgress: Array<{
+      userQuestId: string;
+      questId: string;
+      questSlug: string;
+      questTitle: string;
+      questCategory: string;
+      status: "not_started" | "in_progress" | "pending_verification" | "completed";
+      progress: number;
+      rewardPoints: number;
+      verificationMethod: string;
+      isActive: boolean;
+      startedAt: string | null;
+      completedAt: string | null;
+      updatedAt: string;
+      lastSubmission: {
+        verificationStatus: "pending" | "approved" | "rejected";
+        submittedAt: string;
+        verifiedAt: string | null;
+        reviewNotes: string | null;
+        rejectionReason: string | null;
+      } | null;
+    }>;
+  };
 }
 
 export interface AdminDeleteUserResponse {

@@ -32,6 +32,9 @@ export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'test', 'production')
     .default('development'),
+  APP_ENV: Joi.string().allow('').optional(),
+  VERCEL_ENV: Joi.string().allow('').optional(),
+  RAILWAY_ENVIRONMENT: Joi.string().allow('').optional(),
   PORT: Joi.number().port().default(3080),
 
   DATABASE_URL: Joi.string().min(1).required(),

@@ -24,6 +24,7 @@ import {
   type PublicClient,
 } from 'viem';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { DatabaseHealthService } from '../prisma/database-health.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   WalletConfigService,
@@ -74,10 +75,12 @@ export class WalletDepositIndexerService
 
   private intervalHandle: NodeJS.Timeout | null = null;
   private isTickRunning = false;
+  private lastDbUnavailableLogAt = 0;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly walletConfigService: WalletConfigService,
+    private readonly databaseHealthService: DatabaseHealthService,
     private readonly auditLogService: AuditLogService,
     private readonly depositProcessor: WalletDepositProcessorService,
   ) {}
@@ -220,6 +223,13 @@ export class WalletDepositIndexerService
     try {
       if (!this.walletConfigService.depositIndexerEnabled) {
         this.stopRealtimeSubscriptions();
+        return;
+      }
+
+      const databaseHealthy = await this.databaseHealthService.isDatabaseHealthy();
+      if (!databaseHealthy) {
+        this.stopRealtimeSubscriptions();
+        this.logDbUnavailableSkip();
         return;
       }
 
@@ -1318,6 +1328,17 @@ export class WalletDepositIndexerService
       return error.message;
     }
     return String(error);
+  }
+
+  private logDbUnavailableSkip() {
+    const now = Date.now();
+    if (now - this.lastDbUnavailableLogAt < 60_000) {
+      return;
+    }
+    this.lastDbUnavailableLogAt = now;
+    this.logger.warn(
+      'Skipping deposit indexer tick because database is unavailable.',
+    );
   }
 
   private scanCursorKey(network: WalletDepositNetworkConfig) {

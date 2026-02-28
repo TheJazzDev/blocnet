@@ -139,6 +139,27 @@ export interface AdminEdgeOverviewResponse {
     explainViews: number;
     feedbackEvents: number;
   };
+  ml: {
+    enabled: boolean;
+    analyzedDecisions: number;
+    coverageRate: number;
+    avgQuality: number;
+    avgActionability: number;
+    sentiments: {
+      positive: number;
+      neutral: number;
+      negative: number;
+      other: number;
+    };
+    providers: Array<{
+      provider: string;
+      count: number;
+    }>;
+    topTopics: Array<{
+      topic: string;
+      count: number;
+    }>;
+  };
   topProjects: Array<{
     projectId: string;
     projectName: string;
@@ -185,12 +206,32 @@ export interface AdminEdgeOverviewResponse {
       novelty: number;
       penalties: number;
     };
+    ml: {
+      quality: number | null;
+      sentiment: string | null;
+      topics: string[];
+      actionability: number | null;
+      insights: string[];
+      provider: string | null;
+    };
   }>;
 }
 
 export interface AdminEdgeConfig {
   id: string;
   enabled: boolean;
+  mlEnabled: boolean;
+  mlUrl: string;
+  mlTimeout: number;
+  mlProvider: string;
+  mlWebSearch: boolean;
+  mlOllamaModel: string;
+  mlOllamaEmbeddingModel: string;
+  mlOllamaTimeout: number;
+  mlGroqModel: string;
+  mlGeminiModel: string;
+  mlGeminiEmbeddingModel: string;
+  mlCacheTtl: number;
+  mlMaxContentLength: number;
   updatedAt: string;
 }
-

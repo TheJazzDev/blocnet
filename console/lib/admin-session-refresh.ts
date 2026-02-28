@@ -13,6 +13,7 @@ export const ADMIN_COOKIE_OPTS = {
 
 export const ADMIN_ACCESS_TOKEN_MAX_AGE_SECONDS = 60 * 60;
 export const ADMIN_REFRESH_TOKEN_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+export const ADMIN_TWO_FACTOR_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
 export type AdminSessionRefreshResult =
   | {
@@ -22,7 +23,8 @@ export type AdminSessionRefreshResult =
     }
   | {
       ok: false;
-      concurrent: boolean;
+      reason: "concurrent" | "invalid" | "transient";
+      message?: string;
     };
 
 type CookieDeleteStore = {
@@ -64,6 +66,23 @@ export function isConcurrentRefreshError(message: string | undefined): boolean {
   return normalized.includes("already used") || normalized.includes("reuse interval");
 }
 
+function isInvalidRefreshError(
+  message: string | undefined,
+  status: number | undefined,
+): boolean {
+  if (status === 400 || status === 401) {
+    return true;
+  }
+
+  const normalized = message?.toLowerCase() ?? "";
+  return (
+    normalized.includes("invalid refresh token") ||
+    normalized.includes("refresh token not found") ||
+    normalized.includes("session not found") ||
+    normalized.includes("invalid grant")
+  );
+}
+
 export async function refreshAdminSession(
   refreshToken: string,
 ): Promise<AdminSessionRefreshResult> {
@@ -74,7 +93,15 @@ export async function refreshAdminSession(
     });
 
     if (error || !data.session) {
-      return { ok: false, concurrent: isConcurrentRefreshError(error?.message) };
+      const message = error?.message;
+      const status = typeof error?.status === "number" ? error.status : undefined;
+      if (isConcurrentRefreshError(message)) {
+        return { ok: false, reason: "concurrent", message };
+      }
+      if (isInvalidRefreshError(message, status)) {
+        return { ok: false, reason: "invalid", message };
+      }
+      return { ok: false, reason: "transient", message };
     }
 
     return {
@@ -83,7 +110,7 @@ export async function refreshAdminSession(
       refreshToken: data.session.refresh_token,
     };
   } catch {
-    return { ok: false, concurrent: false };
+    return { ok: false, reason: "transient" };
   }
 }
 

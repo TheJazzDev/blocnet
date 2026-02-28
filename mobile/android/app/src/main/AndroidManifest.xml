@@ -26,12 +26,20 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Deep link: handles io.blocnet.app://login-callback -->
-            <intent-filter android:autoVerify="true">
+            <!-- Custom-scheme links -->
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="io.blocnet.app"/>
+            </intent-filter>
+            <!-- Verified app links for auth/referral callbacks -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="blocnet.app" android:pathPrefix="/"/>
+                <data android:scheme="https" android:host="www.blocnet.app" android:pathPrefix="/"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

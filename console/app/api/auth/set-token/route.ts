@@ -18,6 +18,12 @@ export async function POST(req: Request) {
   if (!body.token || typeof body.token !== "string") {
     return NextResponse.json({ error: "Missing token" }, { status: 400 });
   }
+  if (!body.refreshToken || typeof body.refreshToken !== "string") {
+    return NextResponse.json(
+      { error: "Missing refreshToken" },
+      { status: 400 },
+    );
+  }
 
   const response = NextResponse.json({ ok: true });
   let accessTokenStored = false;
@@ -38,21 +44,26 @@ export async function POST(req: Request) {
   }
 
   // Refresh token — valid for 7 days (Supabase default)
-  if (body.refreshToken && typeof body.refreshToken === "string") {
-    try {
-      response.cookies.set("admin_refresh_token", body.refreshToken, {
-        ...COOKIE_OPTS,
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-      });
-      refreshTokenStored = true;
-    } catch {
-      refreshTokenStored = false;
-    }
+  try {
+    response.cookies.set("admin_refresh_token", body.refreshToken, {
+      ...COOKIE_OPTS,
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+    refreshTokenStored = true;
+  } catch {
+    refreshTokenStored = false;
   }
 
-  if (!accessTokenStored && !refreshTokenStored) {
+  if (!refreshTokenStored) {
     return NextResponse.json(
-      { error: "Failed to persist auth cookies" },
+      { error: "Failed to persist refresh token cookie" },
+      { status: 500 },
+    );
+  }
+
+  if (!accessTokenStored) {
+    return NextResponse.json(
+      { error: "Failed to persist access token cookie" },
       { status: 500 },
     );
   }

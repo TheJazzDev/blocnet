@@ -1,0 +1,7 @@
+# Full dependency set (runtime + optional extras).
+# For faster local startup, install only runtime deps:
+#   pip install -r requirements-runtime.txt
+
+-r requirements-runtime.txt
+-r requirements-embeddings.txt
+-r requirements-dev.txt

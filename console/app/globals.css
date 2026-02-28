@@ -91,6 +91,7 @@
   a[href],
   summary,
   label[for],
+  [aria-haspopup]:not([aria-disabled="true"]),
   [data-radix-collection-item]:not([data-disabled]) {
     cursor: pointer;
   }

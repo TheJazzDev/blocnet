@@ -42,6 +42,7 @@
     "@supabase/supabase-js": "^2.97.0",
     "@turnkey/api-key-stamper": "^0.6.1",
     "@turnkey/http": "^3.16.3",
+    "axios": "^1.13.6",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "dotenv": "^17.2.3",

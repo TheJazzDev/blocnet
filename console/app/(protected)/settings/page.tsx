@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import {
   LogOut,
   Server,
@@ -13,6 +14,8 @@ import {
   Key,
   Loader2,
   Save,
+  Copy,
+  Check,
 } from "lucide-react";
 import axios from "axios";
 import {
@@ -72,6 +75,16 @@ export default function SettingsPage() {
   const [generatedRecoveryCodes, setGeneratedRecoveryCodes] = useState<
     string[]
   >([]);
+  const [showManualSetup, setShowManualSetup] = useState(false);
+  const [showAdvancedOtpUri, setShowAdvancedOtpUri] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [qrCodeError, setQrCodeError] = useState<string | null>(null);
+  const [recoveryCopyStatus, setRecoveryCopyStatus] = useState<string | null>(
+    null,
+  );
+  const [lastCopiedRecoveryCode, setLastCopiedRecoveryCode] = useState<
+    string | null
+  >(null);
   const isOwner = session.realRoles.includes("owner");
 
   async function loadRuntimeFlags() {
@@ -148,7 +161,13 @@ export default function SettingsPage() {
     try {
       const payload = await clientApi.startAdminTwoFactorEnrollment();
       setEnrollment(payload);
+      setShowManualSetup(false);
+      setShowAdvancedOtpUri(false);
+      setQrCodeDataUrl(null);
+      setQrCodeError(null);
       setGeneratedRecoveryCodes([]);
+      setRecoveryCopyStatus(null);
+      setLastCopiedRecoveryCode(null);
       setConfirmCode("");
       setTwoFactorStatus("Enrollment challenge started. Confirm to enable 2FA.");
     } catch (error) {
@@ -178,9 +197,15 @@ export default function SettingsPage() {
       });
       setGeneratedRecoveryCodes(payload.recoveryCodes);
       setEnrollment(null);
+      setShowManualSetup(false);
+      setShowAdvancedOtpUri(false);
+      setQrCodeDataUrl(null);
+      setQrCodeError(null);
       setConfirmCode("");
       setActionCode("");
       setActionRecoveryCode("");
+      setRecoveryCopyStatus(null);
+      setLastCopiedRecoveryCode(null);
       setTwoFactorStatus(
         "Two-factor authentication enabled. Save your recovery codes now.",
       );
@@ -231,6 +256,8 @@ export default function SettingsPage() {
       setGeneratedRecoveryCodes(payload.recoveryCodes);
       setActionCode("");
       setActionRecoveryCode("");
+      setRecoveryCopyStatus(null);
+      setLastCopiedRecoveryCode(null);
       setTwoFactorStatus("Recovery codes rotated.");
       await loadTwoFactorState();
     } catch (error) {
@@ -255,8 +282,14 @@ export default function SettingsPage() {
       await axios.post("/api/auth/2fa/clear");
       setGeneratedRecoveryCodes([]);
       setEnrollment(null);
+      setShowManualSetup(false);
+      setShowAdvancedOtpUri(false);
+      setQrCodeDataUrl(null);
+      setQrCodeError(null);
       setActionCode("");
       setActionRecoveryCode("");
+      setRecoveryCopyStatus(null);
+      setLastCopiedRecoveryCode(null);
       setTwoFactorStatus("Two-factor authentication disabled.");
       await loadTwoFactorState();
     } catch (error) {
@@ -272,6 +305,64 @@ export default function SettingsPage() {
     void loadRuntimeFlags();
     void loadTwoFactorState();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      if (!enrollment?.otpAuthUrl) {
+        setQrCodeDataUrl(null);
+        setQrCodeError(null);
+        return;
+      }
+
+      try {
+        const dataUrl = await QRCode.toDataURL(enrollment.otpAuthUrl, {
+          width: 220,
+          margin: 1,
+        });
+        if (cancelled) return;
+        setQrCodeDataUrl(dataUrl);
+        setQrCodeError(null);
+      } catch {
+        if (cancelled) return;
+        setQrCodeDataUrl(null);
+        setQrCodeError("Could not render QR code. Use manual setup instead.");
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enrollment]);
+
+  async function copyToClipboard(value: string, successMessage: string, code?: string) {
+    try {
+      if (!navigator.clipboard) {
+        throw new Error("Clipboard API unavailable");
+      }
+      await navigator.clipboard.writeText(value);
+      setRecoveryCopyStatus(successMessage);
+      setLastCopiedRecoveryCode(code ?? null);
+    } catch {
+      setRecoveryCopyStatus(null);
+      setLastCopiedRecoveryCode(null);
+      setTwoFactorStatus("Could not copy. Please copy manually.");
+    }
+  }
+
+  async function copyAllRecoveryCodes() {
+    if (generatedRecoveryCodes.length === 0) {
+      return;
+    }
+    await copyToClipboard(generatedRecoveryCodes.join("\n"), "All recovery codes copied.");
+  }
+
+  async function copyRecoveryCode(code: string) {
+    await copyToClipboard(code, `Copied ${code}.`, code);
+  }
 
   return (
     <div className="space-y-6">
@@ -568,14 +659,66 @@ export default function SettingsPage() {
 
                   {enrollment && (
                     <div className="space-y-3">
-                      <div className="space-y-1">
-                        <Label>Secret Key</Label>
-                        <Input value={enrollment.secret} readOnly />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>OTPAuth URI</Label>
-                        <Input value={enrollment.otpAuthUrl} readOnly />
-                      </div>
+                      {qrCodeDataUrl ? (
+                        <div className="space-y-1">
+                          <Label>Scan QR Code</Label>
+                          <div className="flex justify-center rounded-md border border-border p-3">
+                            <img
+                              src={qrCodeDataUrl}
+                              alt="TOTP enrollment QR code"
+                              width={220}
+                              height={220}
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+                      {qrCodeError ? (
+                        <p className="text-xs text-muted-foreground">{qrCodeError}</p>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setShowManualSetup((prev) => {
+                            const next = !prev;
+                            if (!next) {
+                              setShowAdvancedOtpUri(false);
+                            }
+                            return next;
+                          })
+                        }
+                        disabled={twoFactorSaving}
+                      >
+                        {showManualSetup
+                          ? "Hide Manual Setup"
+                          : "Use Manual Setup Instead"}
+                      </Button>
+                      {showManualSetup && (
+                        <div className="space-y-3 rounded-md border border-border p-3">
+                          <div className="space-y-1">
+                            <Label>Secret Key</Label>
+                            <Input value={enrollment.secret} readOnly />
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() =>
+                              setShowAdvancedOtpUri((prev) => !prev)
+                            }
+                            disabled={twoFactorSaving}
+                          >
+                            {showAdvancedOtpUri
+                              ? "Hide Advanced URI"
+                              : "Show Advanced URI"}
+                          </Button>
+                          {showAdvancedOtpUri && (
+                            <div className="space-y-1">
+                              <Label>OTPAuth URI</Label>
+                              <Input value={enrollment.otpAuthUrl} readOnly />
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div className="space-y-1">
                         <Label>Confirm Authenticator Code</Label>
                         <Input
@@ -665,16 +808,42 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="mb-3"
+              onClick={() => void copyAllRecoveryCodes()}
+              disabled={twoFactorSaving || generatedRecoveryCodes.length === 0}
+            >
+              <Copy className="h-4 w-4" />
+              Copy All Codes
+            </Button>
+            <div className="grid gap-2 sm:grid-cols-2">
               {generatedRecoveryCodes.map((code) => (
-                <code
+                <div
                   key={code}
-                  className="rounded-md border border-border/70 bg-background/80 px-2 py-1 text-xs"
+                  className="flex items-center justify-between rounded-md border border-border/70 bg-background/80 px-2 py-1"
                 >
-                  {code}
-                </code>
+                  <code className="text-xs">{code}</code>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void copyRecoveryCode(code)}
+                    disabled={twoFactorSaving}
+                  >
+                    {lastCopiedRecoveryCode === code ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    {lastCopiedRecoveryCode === code ? "Copied" : "Copy"}
+                  </Button>
+                </div>
               ))}
             </div>
+            {recoveryCopyStatus ? (
+              <p className="mt-2 text-xs text-muted-foreground">{recoveryCopyStatus}</p>
+            ) : null}
           </CardContent>
         </Card>
       )}

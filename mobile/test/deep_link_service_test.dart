@@ -70,4 +70,60 @@ void main() {
     expect(consumedRefreshToken, 'url-refresh-token');
     expect(authStore.verifiedAccessToken, 'session-access-token');
   });
+
+  test('https auth callback consumes refresh token and verifies session',
+      () async {
+    final authStore = _DeepLinkAuthStore();
+    String? consumedRefreshToken;
+
+    final service = DeepLinkService(
+      navigatorKey: GlobalKey<NavigatorState>(),
+      authStore: authStore,
+      setSessionWithRefreshToken: (refreshToken) async {
+        consumedRefreshToken = refreshToken;
+
+        final user = User(
+          id: 'user-2',
+          appMetadata: const <String, dynamic>{},
+          userMetadata: const <String, dynamic>{},
+          aud: 'authenticated',
+          createdAt: DateTime(2024, 1, 1).toIso8601String(),
+        );
+        return AuthResponse(
+          session: Session(
+            accessToken: 'session-access-token-https',
+            refreshToken: 'rotated-refresh-token-https',
+            tokenType: 'bearer',
+            user: user,
+          ),
+        );
+      },
+    );
+
+    await service.handleUriForTesting(
+      Uri.parse(
+        'https://blocnet.app/auth/callback#access_token=url-access-token&refresh_token=url-refresh-token&type=signup',
+      ),
+    );
+
+    expect(consumedRefreshToken, 'url-refresh-token');
+    expect(authStore.verifiedAccessToken, 'session-access-token-https');
+  });
+
+  test('referral path stores pending code', () async {
+    final authStore = _DeepLinkAuthStore();
+    final service = DeepLinkService(
+      navigatorKey: GlobalKey<NavigatorState>(),
+      authStore: authStore,
+      setSessionWithRefreshToken: (refreshToken) async {
+        throw UnimplementedError();
+      },
+    );
+
+    await service.handleUriForTesting(
+      Uri.parse('https://blocnet.app/ref/AB12CD34'),
+    );
+
+    expect(authStore.savedReferralCode, 'AB12CD34');
+  });
 }

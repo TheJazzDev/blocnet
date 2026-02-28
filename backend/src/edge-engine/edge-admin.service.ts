@@ -16,6 +16,19 @@ import {
 type EdgeConfigRow = {
   id: string;
   enabled: boolean;
+  mlEnabled: boolean;
+  mlUrl: string;
+  mlTimeout: number;
+  mlProvider: string;
+  mlWebSearch: boolean;
+  mlOllamaModel: string;
+  mlOllamaEmbeddingModel: string;
+  mlOllamaTimeout: number;
+  mlGroqModel: string;
+  mlGeminiModel: string;
+  mlGeminiEmbeddingModel: string;
+  mlCacheTtl: number;
+  mlMaxContentLength: number;
   updatedAt: Date;
 };
 
@@ -30,6 +43,12 @@ type AdminTopDecisionRow = {
   relevanceScore: number;
   noveltyScore: number;
   penaltyScore: number;
+  mlQuality: number | null;
+  mlSentiment: string | null;
+  mlTopics: Prisma.JsonValue | null;
+  mlActionability: number | null;
+  mlInsights: Prisma.JsonValue | null;
+  mlProvider: string | null;
   generatedAt: Date;
   user: {
     id: string;
@@ -48,6 +67,13 @@ type AdminTopDecisionRow = {
     createdAt: Date;
   };
 };
+
+function normalizeStringArray(value: Prisma.JsonValue | null) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => String(entry).trim())
+    .filter((entry) => entry.length > 0);
+}
 
 @Injectable()
 export class EdgeAdminService {
@@ -84,6 +110,25 @@ export class EdgeAdminService {
       where: { id: EDGE_CONFIG_ID },
       update: {
         ...(patch.enabled === undefined ? {} : { enabled: patch.enabled }),
+        ...(patch.mlEnabled === undefined ? {} : { mlEnabled: patch.mlEnabled }),
+        ...(patch.mlUrl === undefined ? {} : { mlUrl: patch.mlUrl }),
+        ...(patch.mlTimeout === undefined ? {} : { mlTimeout: patch.mlTimeout }),
+        ...(patch.mlProvider === undefined ? {} : { mlProvider: patch.mlProvider }),
+        ...(patch.mlWebSearch === undefined ? {} : { mlWebSearch: patch.mlWebSearch }),
+        ...(patch.mlOllamaModel === undefined ? {} : { mlOllamaModel: patch.mlOllamaModel }),
+        ...(patch.mlOllamaEmbeddingModel === undefined
+          ? {}
+          : { mlOllamaEmbeddingModel: patch.mlOllamaEmbeddingModel }),
+        ...(patch.mlOllamaTimeout === undefined ? {} : { mlOllamaTimeout: patch.mlOllamaTimeout }),
+        ...(patch.mlGroqModel === undefined ? {} : { mlGroqModel: patch.mlGroqModel }),
+        ...(patch.mlGeminiModel === undefined ? {} : { mlGeminiModel: patch.mlGeminiModel }),
+        ...(patch.mlGeminiEmbeddingModel === undefined
+          ? {}
+          : { mlGeminiEmbeddingModel: patch.mlGeminiEmbeddingModel }),
+        ...(patch.mlCacheTtl === undefined ? {} : { mlCacheTtl: patch.mlCacheTtl }),
+        ...(patch.mlMaxContentLength === undefined
+          ? {}
+          : { mlMaxContentLength: patch.mlMaxContentLength }),
       },
       create: {
         id: EDGE_CONFIG_ID,
@@ -92,6 +137,19 @@ export class EdgeAdminService {
       select: {
         id: true,
         enabled: true,
+        mlEnabled: true,
+        mlUrl: true,
+        mlTimeout: true,
+        mlProvider: true,
+        mlWebSearch: true,
+        mlOllamaModel: true,
+        mlOllamaEmbeddingModel: true,
+        mlOllamaTimeout: true,
+        mlGroqModel: true,
+        mlGeminiModel: true,
+        mlGeminiEmbeddingModel: true,
+        mlCacheTtl: true,
+        mlMaxContentLength: true,
         updatedAt: true,
       },
     })) as EdgeConfigRow;
@@ -111,7 +169,9 @@ export class EdgeAdminService {
 
   async getAdminOverview(actorId: string, query: GetAdminEdgeOverviewQuery) {
     const asOf = new Date();
-    const enabled = await this.getBeeEnabled();
+    const config = await this.getOrCreateConfig();
+    const enabled = config.enabled;
+    const mlEnabled = config.mlEnabled;
     const windowDays = Math.min(Math.max(query.windowDays ?? 7, 1), 30);
     const decisionsLimit = Math.min(
       Math.max(query.decisionsLimit ?? 20, 5),
@@ -151,6 +211,27 @@ export class EdgeAdminService {
           briefViews: 0,
           explainViews: 0,
           feedbackEvents: 0,
+        },
+        ml: {
+          enabled: mlEnabled,
+          analyzedDecisions: 0,
+          coverageRate: 0,
+          avgQuality: 0,
+          avgActionability: 0,
+          sentiments: {
+            positive: 0,
+            neutral: 0,
+            negative: 0,
+            other: 0,
+          },
+          providers: [] as Array<{
+            provider: string;
+            count: number;
+          }>,
+          topTopics: [] as Array<{
+            topic: string;
+            count: number;
+          }>,
         },
         topProjects: [] as Array<{
           projectId: string;
@@ -198,6 +279,14 @@ export class EdgeAdminService {
             novelty: number;
             penalties: number;
           };
+          ml: {
+            quality: number | null;
+            sentiment: string | null;
+            topics: string[];
+            actionability: number | null;
+            insights: string[];
+            provider: string | null;
+          };
         }>,
       };
     }
@@ -223,6 +312,12 @@ export class EdgeAdminService {
       briefViews,
       explainViews,
       feedbackEvents,
+      mlAnalyzedDecisions,
+      mlQualityAverage,
+      mlActionabilityAverage,
+      mlProviderGroups,
+      mlSentimentGroups,
+      mlTopicRows,
     ] = await Promise.all([
       this.prisma.edgeDecision.count({
         where: {
@@ -339,6 +434,12 @@ export class EdgeAdminService {
           relevanceScore: true,
           noveltyScore: true,
           penaltyScore: true,
+          mlQuality: true,
+          mlSentiment: true,
+          mlTopics: true,
+          mlActionability: true,
+          mlInsights: true,
+          mlProvider: true,
           generatedAt: true,
           user: {
             select: {
@@ -454,6 +555,91 @@ export class EdgeAdminService {
           },
         },
       }),
+      this.prisma.edgeDecision.count({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+          OR: [
+            { mlQuality: { not: null } },
+            { mlSentiment: { not: null } },
+            { mlTopics: { not: Prisma.DbNull } },
+            { mlActionability: { not: null } },
+            { mlInsights: { not: Prisma.DbNull } },
+          ],
+        },
+      }),
+      this.prisma.edgeDecision.aggregate({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+        },
+        _avg: {
+          mlQuality: true,
+        },
+      }),
+      this.prisma.edgeDecision.aggregate({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+        },
+        _avg: {
+          mlActionability: true,
+        },
+      }),
+      this.prisma.edgeDecision.groupBy({
+        by: ['mlProvider'],
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+          mlProvider: {
+            not: null,
+          },
+        },
+        _count: {
+          mlProvider: true,
+        },
+        orderBy: {
+          _count: {
+            mlProvider: 'desc',
+          },
+        },
+        take: 6,
+      }),
+      this.prisma.edgeDecision.groupBy({
+        by: ['mlSentiment'],
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+          mlSentiment: {
+            not: null,
+          },
+        },
+        _count: {
+          mlSentiment: true,
+        },
+      }),
+      this.prisma.edgeDecision.findMany({
+        where: {
+          generatedAt: {
+            gte: since,
+          },
+          mlTopics: {
+            not: Prisma.DbNull,
+          },
+        },
+        orderBy: {
+          generatedAt: 'desc',
+        },
+        take: 5000,
+        select: {
+          mlTopics: true,
+        },
+      }),
     ]);
 
     const projectIds = topProjectGroups.map((row) => row.projectId);
@@ -519,6 +705,45 @@ export class EdgeAdminService {
         count,
       }));
 
+    const topicCounts = new Map<string, number>();
+    for (const row of mlTopicRows) {
+      for (const topic of normalizeStringArray(row.mlTopics)) {
+        const normalized = topic.toLowerCase();
+        topicCounts.set(normalized, (topicCounts.get(normalized) ?? 0) + 1);
+      }
+    }
+    const topTopics = Array.from(topicCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([topic, count]) => ({
+        topic,
+        count,
+      }));
+
+    const sentimentSummary = {
+      positive: 0,
+      neutral: 0,
+      negative: 0,
+      other: 0,
+    };
+    for (const row of mlSentimentGroups) {
+      const sentiment = row.mlSentiment?.trim().toLowerCase();
+      const count = row._count?.mlSentiment ?? 0;
+      if (sentiment === 'positive') {
+        sentimentSummary.positive += count;
+        continue;
+      }
+      if (sentiment === 'neutral') {
+        sentimentSummary.neutral += count;
+        continue;
+      }
+      if (sentiment === 'negative') {
+        sentimentSummary.negative += count;
+        continue;
+      }
+      sentimentSummary.other += count;
+    }
+
     await this.auditLogService.create({
       actorId,
       action: 'edge.admin.overview.view',
@@ -560,6 +785,22 @@ export class EdgeAdminService {
         explainViews,
         feedbackEvents,
       },
+      ml: {
+        enabled: mlEnabled,
+        analyzedDecisions: mlAnalyzedDecisions,
+        coverageRate:
+          decisionsCount > 0 ? roundScore(mlAnalyzedDecisions / decisionsCount) : 0,
+        avgQuality: roundScore(mlQualityAverage._avg.mlQuality ?? 0),
+        avgActionability: roundScore(
+          mlActionabilityAverage._avg.mlActionability ?? 0,
+        ),
+        sentiments: sentimentSummary,
+        providers: mlProviderGroups.map((row) => ({
+          provider: row.mlProvider ?? 'unknown',
+          count: row._count?.mlProvider ?? 0,
+        })),
+        topTopics,
+      },
       topProjects: topProjectGroups.map((row) => {
         const project = projectMap.get(row.projectId);
         return {
@@ -593,6 +834,20 @@ export class EdgeAdminService {
           novelty: roundScore(row.noveltyScore),
           penalties: roundScore(row.penaltyScore),
         },
+        ml: {
+          quality:
+            row.mlQuality === null || row.mlQuality === undefined
+              ? null
+              : roundScore(row.mlQuality),
+          sentiment: row.mlSentiment,
+          topics: normalizeStringArray(row.mlTopics),
+          actionability:
+            row.mlActionability === null || row.mlActionability === undefined
+              ? null
+              : roundScore(row.mlActionability),
+          insights: normalizeStringArray(row.mlInsights),
+          provider: row.mlProvider,
+        },
       })),
     };
   }
@@ -615,6 +870,19 @@ export class EdgeAdminService {
       return {
         id: EDGE_CONFIG_ID,
         enabled: defaultEnabled,
+        mlEnabled: false,
+        mlUrl: 'http://localhost:8083',
+        mlTimeout: 10000,
+        mlProvider: 'auto',
+        mlWebSearch: false,
+        mlOllamaModel: 'llama3.3:70b',
+        mlOllamaEmbeddingModel: 'nomic-embed-text',
+        mlOllamaTimeout: 120000,
+        mlGroqModel: 'llama-3.3-70b-versatile',
+        mlGeminiModel: 'gemini-2.0-flash-exp',
+        mlGeminiEmbeddingModel: 'models/text-embedding-004',
+        mlCacheTtl: 86400,
+        mlMaxContentLength: 10000,
         updatedAt: new Date(),
       };
     }
@@ -629,15 +897,23 @@ export class EdgeAdminService {
       select: {
         id: true,
         enabled: true,
+        mlEnabled: true,
+        mlUrl: true,
+        mlTimeout: true,
+        mlProvider: true,
+        mlWebSearch: true,
+        mlOllamaModel: true,
+        mlOllamaEmbeddingModel: true,
+        mlOllamaTimeout: true,
+        mlGroqModel: true,
+        mlGeminiModel: true,
+        mlGeminiEmbeddingModel: true,
+        mlCacheTtl: true,
+        mlMaxContentLength: true,
         updatedAt: true,
       },
     })) as EdgeConfigRow;
 
     return row;
-  }
-
-  private async getBeeEnabled() {
-    const config = await this.getOrCreateConfig();
-    return config.enabled;
   }
 }

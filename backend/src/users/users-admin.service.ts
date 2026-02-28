@@ -5,7 +5,14 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { NotificationType, Prisma, RoleName } from '@prisma/client';
+import {
+  MiningPointSource,
+  NotificationType,
+  Prisma,
+  QuestStatus,
+  QuestVerificationStatus,
+  RoleName,
+} from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
@@ -176,6 +183,8 @@ export class UsersAdminService {
   }
 
   async getAdminUserById(userId: string) {
+    const asOf = new Date();
+
     const profile = await this.prisma.profile.findUnique({
       where: { id: userId },
       include: {
@@ -263,7 +272,23 @@ export class UsersAdminService {
       throw new NotFoundException('User not found');
     }
 
-    const [tipSentByCurrency, tipReceivedByCurrency, tipConversionsByPair] =
+    const [
+      tipSentByCurrency,
+      tipReceivedByCurrency,
+      tipConversionsByPair,
+      miningConfig,
+      latestUnclaimedSession,
+      recentMiningSessions,
+      maturedUnclaimedAggregate,
+      miningPointsAggregate,
+      claimedPointsBySessionRows,
+      userQuestStatusCounts,
+      questSubmissionStatusCounts,
+      questRewardAggregate,
+      recentQuestProgressRows,
+      totalQuestsCount,
+      activeQuestsCount,
+    ] =
       await Promise.all([
         this.prisma.tipTransaction.groupBy({
           by: ['currencyCode'],
@@ -292,7 +317,288 @@ export class UsersAdminService {
             amountOutAtomic: true,
           },
         }),
+        this.prisma.miningConfig.findUnique({
+          where: { id: 'default' },
+          select: {
+            cycleHours: true,
+            activeReferralWindowHours: true,
+          },
+        }),
+        this.prisma.miningSession.findFirst({
+          where: {
+            userId,
+            claimedAt: null,
+          },
+          orderBy: {
+            startsAt: 'desc',
+          },
+          select: {
+            id: true,
+            startsAt: true,
+            endsAt: true,
+            claimedAt: true,
+            basePointsPerCycle: true,
+            effectivePointsPerCycle: true,
+            boostBpsSnapshot: true,
+            activeReferralsSnapshot: true,
+          },
+        }),
+        this.prisma.miningSession.findMany({
+          where: {
+            userId,
+          },
+          orderBy: {
+            startsAt: 'desc',
+          },
+          take: 10,
+          select: {
+            id: true,
+            startsAt: true,
+            endsAt: true,
+            claimedAt: true,
+            basePointsPerCycle: true,
+            effectivePointsPerCycle: true,
+            boostBpsSnapshot: true,
+            activeReferralsSnapshot: true,
+          },
+        }),
+        this.prisma.miningHourlyCheckpoint.aggregate({
+          where: {
+            userId,
+            claimedAt: null,
+            hourEndAt: {
+              lte: asOf,
+            },
+          },
+          _sum: {
+            points: true,
+          },
+        }),
+        this.prisma.miningPointLedger.aggregate({
+          where: {
+            userId,
+          },
+          _sum: {
+            points: true,
+          },
+        }),
+        this.prisma.miningPointLedger.groupBy({
+          by: ['sessionId'],
+          where: {
+            userId,
+            source: MiningPointSource.cycle_claim,
+            sessionId: {
+              not: null,
+            },
+          },
+          _sum: {
+            points: true,
+          },
+        }),
+        this.prisma.userQuest.groupBy({
+          by: ['status'],
+          where: {
+            userId,
+          },
+          _count: {
+            _all: true,
+          },
+        }),
+        this.prisma.questSubmission.groupBy({
+          by: ['verificationStatus'],
+          where: {
+            userId,
+          },
+          _count: {
+            _all: true,
+          },
+        }),
+        this.prisma.miningPointLedger.aggregate({
+          where: {
+            userId,
+            source: MiningPointSource.quest_reward,
+          },
+          _sum: {
+            points: true,
+          },
+          _count: {
+            _all: true,
+          },
+        }),
+        this.prisma.userQuest.findMany({
+          where: {
+            userId,
+          },
+          orderBy: [{ updatedAt: 'desc' }],
+          take: 12,
+          select: {
+            id: true,
+            status: true,
+            progress: true,
+            startedAt: true,
+            completedAt: true,
+            updatedAt: true,
+            quest: {
+              select: {
+                id: true,
+                slug: true,
+                title: true,
+                category: true,
+                rewardPoints: true,
+                verificationMethod: true,
+                isActive: true,
+              },
+            },
+            submissions: {
+              orderBy: [{ submittedAt: 'desc' }],
+              take: 1,
+              select: {
+                verificationStatus: true,
+                submittedAt: true,
+                verifiedAt: true,
+                reviewNotes: true,
+                rejectionReason: true,
+              },
+            },
+          },
+        }),
+        this.prisma.quest.count(),
+        this.prisma.quest.count({
+          where: {
+            isActive: true,
+            OR: [{ expiresAt: null }, { expiresAt: { gt: asOf } }],
+          },
+        }),
       ]);
+
+    const activeReferralWindowHours =
+      miningConfig?.activeReferralWindowHours ?? 168;
+    const activeReferralWindowStart = new Date(
+      asOf.getTime() - activeReferralWindowHours * 60 * 60 * 1000,
+    );
+    const activeDirectReferrals = await this.prisma.profile.count({
+      where: {
+        referredById: userId,
+        homeFeedLastSeenAt: {
+          gte: activeReferralWindowStart,
+        },
+      },
+    });
+
+    const claimedTotalPoints =
+      typeof profile.miningClaimedPoints === 'bigint'
+        ? Number(profile.miningClaimedPoints)
+        : Number(profile.miningClaimedPoints ?? 0);
+    const maturedUnclaimedPoints = maturedUnclaimedAggregate._sum.points ?? 0;
+    const totalLedgerPoints = miningPointsAggregate._sum.points ?? 0;
+
+    const claimedPointsBySession = new Map<string, number>();
+    for (const row of claimedPointsBySessionRows) {
+      if (!row.sessionId) {
+        continue;
+      }
+      claimedPointsBySession.set(row.sessionId, row._sum.points ?? 0);
+    }
+
+    const recentMining = recentMiningSessions.map((session) => {
+      const sessionDurationMs = Math.max(
+        session.endsAt.getTime() - session.startsAt.getTime(),
+        1,
+      );
+      const elapsedMs = Math.max(
+        0,
+        Math.min(asOf.getTime() - session.startsAt.getTime(), sessionDurationMs),
+      );
+      const progressPct = Number(((elapsedMs / sessionDurationMs) * 100).toFixed(2));
+      const status = session.claimedAt
+        ? 'claimed'
+        : session.endsAt.getTime() <= asOf.getTime()
+          ? 'claimable'
+          : 'running';
+
+      return {
+        id: session.id,
+        startsAt: session.startsAt,
+        endsAt: session.endsAt,
+        claimedAt: session.claimedAt,
+        status,
+        progressPct,
+        basePointsPerCycle: session.basePointsPerCycle,
+        effectivePointsPerCycle: session.effectivePointsPerCycle,
+        boostBpsSnapshot: session.boostBpsSnapshot,
+        activeReferralsSnapshot: session.activeReferralsSnapshot,
+        claimedPoints: claimedPointsBySession.get(session.id) ?? 0,
+      };
+    });
+
+    const activeSession = latestUnclaimedSession
+      ? recentMining.find((entry) => entry.id === latestUnclaimedSession.id) ?? null
+      : null;
+    const activeSessionDurationHours = activeSession
+      ? Math.max(
+          (new Date(activeSession.endsAt).getTime() -
+            new Date(activeSession.startsAt).getTime()) /
+            3_600_000,
+          1,
+        )
+      : Math.max(miningConfig?.cycleHours ?? 24, 1);
+    const hourlyRateNow = activeSession
+      ? Number(
+          (activeSession.effectivePointsPerCycle / activeSessionDurationHours).toFixed(
+            4,
+          ),
+        )
+      : 0;
+
+    const questCountsByStatus = {
+      notStarted: 0,
+      inProgress: 0,
+      pendingVerification: 0,
+      completed: 0,
+    };
+    for (const row of userQuestStatusCounts) {
+      if (row.status === QuestStatus.not_started) {
+        questCountsByStatus.notStarted = row._count._all;
+      } else if (row.status === QuestStatus.in_progress) {
+        questCountsByStatus.inProgress = row._count._all;
+      } else if (row.status === QuestStatus.pending_verification) {
+        questCountsByStatus.pendingVerification = row._count._all;
+      } else if (row.status === QuestStatus.completed) {
+        questCountsByStatus.completed = row._count._all;
+      }
+    }
+
+    const questSubmissionCounts = {
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      total: 0,
+    };
+    for (const row of questSubmissionStatusCounts) {
+      if (row.verificationStatus === QuestVerificationStatus.pending) {
+        questSubmissionCounts.pending = row._count._all;
+      } else if (row.verificationStatus === QuestVerificationStatus.approved) {
+        questSubmissionCounts.approved = row._count._all;
+      } else if (row.verificationStatus === QuestVerificationStatus.rejected) {
+        questSubmissionCounts.rejected = row._count._all;
+      }
+    }
+    questSubmissionCounts.total =
+      questSubmissionCounts.pending +
+      questSubmissionCounts.approved +
+      questSubmissionCounts.rejected;
+
+    // Keep admin profile quest metrics aligned with the moderation queue:
+    // pending verification should reflect pending submissions. If stale
+    // user_quest rows exist without pending submissions, fold them back into
+    // in-progress for reporting consistency.
+    if (
+      questCountsByStatus.pendingVerification > questSubmissionCounts.pending
+    ) {
+      questCountsByStatus.inProgress +=
+        questCountsByStatus.pendingVerification - questSubmissionCounts.pending;
+    }
+    questCountsByStatus.pendingVerification = questSubmissionCounts.pending;
 
     const currencyCodes = new Set<string>([
       ...profile.tipAccounts.map((row) => row.currencyCode),
@@ -429,6 +735,48 @@ export class UsersAdminService {
         tipSent: profile._count.tipTransactionsSent,
         tipReceived: profile._count.tipTransactionsReceived,
         tipConversions: profile._count.tipConversions,
+      },
+      mining: {
+        claimedTotalPoints,
+        maturedUnclaimedPoints,
+        lifetimeEarnedPoints: claimedTotalPoints + maturedUnclaimedPoints,
+        totalLedgerPoints,
+        activeDirectReferrals,
+        activeSession,
+        hourlyRateNow,
+        recentSessions: recentMining,
+      },
+      quests: {
+        totalQuests: totalQuestsCount,
+        activeQuests: activeQuestsCount,
+        userQuestCounts: questCountsByStatus,
+        submissions: questSubmissionCounts,
+        rewardPointsTotal: questRewardAggregate._sum.points ?? 0,
+        rewardEventsTotal: questRewardAggregate._count._all,
+        recentProgress: recentQuestProgressRows.map((row) => ({
+          userQuestId: row.id,
+          questId: row.quest.id,
+          questSlug: row.quest.slug,
+          questTitle: row.quest.title,
+          questCategory: row.quest.category,
+          status: row.status,
+          progress: row.progress,
+          rewardPoints: row.quest.rewardPoints,
+          verificationMethod: row.quest.verificationMethod,
+          isActive: row.quest.isActive,
+          startedAt: row.startedAt,
+          completedAt: row.completedAt,
+          updatedAt: row.updatedAt,
+          lastSubmission: row.submissions[0]
+            ? {
+                verificationStatus: row.submissions[0].verificationStatus,
+                submittedAt: row.submissions[0].submittedAt,
+                verifiedAt: row.submissions[0].verifiedAt,
+                reviewNotes: row.submissions[0].reviewNotes,
+                rejectionReason: row.submissions[0].rejectionReason,
+              }
+            : null,
+        })),
       },
     };
   }

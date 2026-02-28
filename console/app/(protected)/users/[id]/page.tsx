@@ -390,8 +390,8 @@ export default function UserManagementPage() {
 
         {/* Mining & Quests Tab */}
         <TabsContent value="mining-quests" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          <MiningSection userId={user.id} />
-          <QuestsSection userId={user.id} />
+          <MiningSection user={user} />
+          <QuestsSection user={user} />
         </TabsContent>
 
         {/* Activity Tab */}

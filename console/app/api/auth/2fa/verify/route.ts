@@ -1,6 +1,13 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import axios from "axios";
+import {
+  ADMIN_ACCESS_COOKIE,
+  ADMIN_REFRESH_COOKIE,
+  refreshAdminSession,
+  runRefreshWithTokenLock,
+  setAdminSessionCookies,
+} from "@/lib/admin-session-refresh";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3080/api";
 
@@ -18,7 +25,24 @@ type VerifyBody = {
 
 export async function POST(req: Request) {
   const store = await cookies();
-  const accessToken = store.get("admin_token")?.value;
+  let accessToken = store.get(ADMIN_ACCESS_COOKIE)?.value;
+  let refreshedSession: { accessToken: string; refreshToken: string } | null = null;
+
+  if (!accessToken) {
+    const refreshToken = store.get(ADMIN_REFRESH_COOKIE)?.value;
+    if (refreshToken) {
+      const refreshed = await runRefreshWithTokenLock(refreshToken, () =>
+        refreshAdminSession(refreshToken),
+      );
+      if (refreshed.ok) {
+        accessToken = refreshed.accessToken;
+        refreshedSession = {
+          accessToken: refreshed.accessToken,
+          refreshToken: refreshed.refreshToken,
+        };
+      }
+    }
+  }
 
   if (!accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -70,6 +94,9 @@ export async function POST(req: Request) {
     : 60 * 60 * 24 * 7;
 
   const next = NextResponse.json({ ok: true, expiresAt: response.data.expiresAt });
+  if (refreshedSession) {
+    setAdminSessionCookies(next.cookies, refreshedSession);
+  }
   next.cookies.set("admin_2fa_session", sessionToken, {
     ...COOKIE_OPTS,
     maxAge: maxAgeSeconds,

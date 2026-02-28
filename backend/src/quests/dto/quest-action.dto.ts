@@ -34,3 +34,15 @@ export class VerifyQuestDto {
   @IsOptional()
   reviewNotes?: string;
 }
+
+export class RevokeQuestSubmissionDto {
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  reviewNotes?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  revocationReason?: string;
+}

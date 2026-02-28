@@ -274,14 +274,11 @@ class AuthStore extends ChangeNotifier {
         await setPendingReferralCode(normalizedReferral);
       }
 
-      final response = await Supabase.instance.client.auth
-          .signUp(
-            email: email.trim(),
-            password: password,
-            data: {'username': username.trim()},
-            emailRedirectTo: AppConfig.supabaseEmailRedirectUrl.trim(),
-          )
-          .timeout(_authTimeout);
+      final response = await Supabase.instance.client.auth.signUp(
+        email: email.trim(),
+        password: password,
+        data: {'username': username.trim()},
+      ).timeout(_authTimeout);
 
       _email = email.trim();
       final session = response.session;
@@ -427,7 +424,6 @@ class AuthStore extends ChangeNotifier {
           .resend(
             type: OtpType.signup,
             email: email.trim(),
-            emailRedirectTo: AppConfig.supabaseEmailRedirectUrl.trim(),
           )
           .timeout(_authTimeout);
       return true;
@@ -437,6 +433,59 @@ class AuthStore extends ChangeNotifier {
     } on TimeoutException {
       _lastError =
           'Auth request timed out after ${_authTimeout.inSeconds}s. Check your network and Supabase settings.';
+      return false;
+    } catch (error) {
+      _lastError = error.toString();
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> verifyEmailWithCode({
+    required String email,
+    required String code,
+  }) async {
+    if (_isSubmitting) return false;
+    if (!isSupabaseConfigured) {
+      _lastError = 'Supabase is not configured in app runtime defines';
+      notifyListeners();
+      return false;
+    }
+
+    final normalizedEmail = email.trim();
+    final normalizedCode = code.trim();
+    if (normalizedEmail.isEmpty || normalizedCode.isEmpty) {
+      _lastError = 'Email and verification code are required';
+      notifyListeners();
+      return false;
+    }
+
+    _isSubmitting = true;
+    _lastError = null;
+    notifyListeners();
+
+    try {
+      final otp = await Supabase.instance.client.auth
+          .verifyOTP(
+            email: normalizedEmail,
+            token: normalizedCode,
+            type: OtpType.signup,
+          )
+          .timeout(_authTimeout);
+      final session = otp.session;
+      if (session == null) {
+        _lastError = 'Verification did not return an active session';
+        return false;
+      }
+      return verifyAndSignIn(session.accessToken, setSubmitting: false);
+    } on AuthException catch (error) {
+      _lastError = error.message;
+      return false;
+    } on TimeoutException {
+      _lastError =
+          'Verification timed out after ${_authTimeout.inSeconds}s. Check your network and try again.';
       return false;
     } catch (error) {
       _lastError = error.toString();

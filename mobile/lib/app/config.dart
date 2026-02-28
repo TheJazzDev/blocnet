@@ -34,7 +34,7 @@ class AppConfig {
 
   static const String supabaseEmailRedirectUrl = String.fromEnvironment(
     'SUPABASE_EMAIL_REDIRECT_URL',
-    defaultValue: 'io.blocnet.app://auth/callback',
+    defaultValue: 'https://blocnet.app/auth/callback',
   );
 
   static bool get isSupabaseConfigured =>

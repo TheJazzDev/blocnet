@@ -333,6 +333,7 @@ model Profile {
   tipConversions                  TipConversion[]
   edgeDecisions                   EdgeDecision[]
   edgeFeedback                    EdgeFeedback[]
+  edgeEngagements                 EdgeEngagement[]
   audits                          AuditLog[]                           @relation("ActorAuditLogs")
   adminTotpCredential             AdminTotpCredential?
   adminTotpRecoveryCodes          AdminTotpRecoveryCode[]
@@ -497,13 +498,14 @@ model Update {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  project       Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  author        Profile              @relation("AuthoredUpdates", fields: [authorId], references: [id], onDelete: Cascade)
-  moderator     Profile?             @relation("UpdateModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
-  notifications Notification[]
-  comments      Comment[]
-  secondaryTags UpdateSecondaryTag[]
-  edgeDecisions EdgeDecision[]
+  project         Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author          Profile              @relation("AuthoredUpdates", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator       Profile?             @relation("UpdateModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  notifications   Notification[]
+  comments        Comment[]
+  secondaryTags   UpdateSecondaryTag[]
+  edgeDecisions   EdgeDecision[]
+  edgeEngagements EdgeEngagement[]
 
   @@index([projectId, urgency])
   @@index([authorId])
@@ -771,14 +773,22 @@ model EdgeDecision {
   relevanceScore     Float
   noveltyScore       Float
   penaltyScore       Float
+  // ML-enhanced fields
+  mlQuality          Float?
+  mlSentiment        String?
+  mlTopics           Json?
+  mlActionability    Float?
+  mlInsights         Json?
+  mlProvider         String?
   generatedAt        DateTime   @default(now())
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  user      Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  update    Update         @relation(fields: [updateId], references: [id], onDelete: Cascade)
-  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  feedbacks EdgeFeedback[]
+  user        Profile           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  update      Update            @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  feedbacks   EdgeFeedback[]
+  engagements EdgeEngagement[]
 
   @@unique([userId, decisionId])
   @@index([userId, generatedAt])
@@ -805,9 +815,46 @@ model EdgeFeedback {
 }
 
 model EdgeConfig {
-  id        String   @id
-  enabled   Boolean  @default(true)
-  updatedAt DateTime @updatedAt
+  id                      String   @id
+  enabled                 Boolean  @default(true)
+  mlEnabled               Boolean  @default(false)
+  mlUrl                   String   @default("http://localhost:8083")
+  mlTimeout               Int      @default(10000)
+  mlProvider              String   @default("auto") // auto, ollama, groq, gemini
+  mlWebSearch             Boolean  @default(false)
+  mlOllamaModel           String   @default("llama3.3:70b")
+  mlOllamaEmbeddingModel  String   @default("nomic-embed-text")
+  mlOllamaTimeout         Int      @default(120000)
+  mlGroqModel             String   @default("llama-3.3-70b-versatile")
+  mlGeminiModel           String   @default("gemini-2.0-flash-exp")
+  mlGeminiEmbeddingModel  String   @default("models/text-embedding-004")
+  mlCacheTtl              Int      @default(86400)
+  mlMaxContentLength      Int      @default(10000)
+  updatedAt               DateTime @updatedAt
+}
+
+model EdgeEngagement {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  decisionRecordId String?  @db.Uuid
+  decisionId       String
+  updateId         String   @db.Uuid
+  // Explicit engagement signals
+  action           EdgeAction?
+  clicked          Boolean  @default(false)
+  // Implicit engagement signals
+  viewDurationMs   Int?
+  scrollDepth      Float?
+  createdAt        DateTime @default(now())
+
+  user     Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  update   Update         @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  decision EdgeDecision?  @relation(fields: [decisionRecordId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([updateId, createdAt])
+  @@index([decisionRecordId, createdAt])
+  @@index([decisionId, createdAt])
 }
 
 model DeviceToken {

@@ -49,7 +49,7 @@ export default async function SignInPage() {
           <CardHeader>
             <CardTitle className="text-base">Sign In</CardTitle>
             <CardDescription>
-              Use your Supabase credentials to access the admin panel.
+              Use your credentials to access the admin panel.
             </CardDescription>
           </CardHeader>
           <CardContent>

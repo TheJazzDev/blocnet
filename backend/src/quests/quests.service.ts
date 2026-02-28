@@ -20,7 +20,11 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestDto } from './dto/create-quest.dto';
 import { UpdateQuestDto } from './dto/update-quest.dto';
-import { SubmitQuestProofDto, VerifyQuestDto } from './dto/quest-action.dto';
+import {
+  RevokeQuestSubmissionDto,
+  SubmitQuestProofDto,
+  VerifyQuestDto,
+} from './dto/quest-action.dto';
 import {
   QuestStorageService,
   UploadedQuestProofFile,
@@ -715,7 +719,10 @@ export class QuestsService {
 
         const quest = submission.userQuest.quest;
         const userId = submission.userId;
-        await this.awardQuestRewards(tx, userId, quest);
+        await this.awardQuestRewards(tx, userId, quest, {
+          submissionId: submission.id,
+          awardedBy: verifiedBy,
+        });
 
         // Send notification
         await this.notificationsService.notifyMany([
@@ -827,6 +834,114 @@ export class QuestsService {
     }
   }
 
+  async revokeQuestSubmission(
+    submissionId: string,
+    revokedBy: string,
+    dto: RevokeQuestSubmissionDto,
+  ) {
+    const reason =
+      dto.revocationReason?.trim() || dto.reviewNotes?.trim() || null;
+    if (!reason) {
+      throw new BadRequestException('Revocation reason is required');
+    }
+
+    const submission = await this.prisma.questSubmission.findUnique({
+      where: { id: submissionId },
+      include: {
+        userQuest: {
+          include: {
+            quest: true,
+          },
+        },
+      },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    if (submission.verificationStatus !== QuestVerificationStatus.approved) {
+      throw new BadRequestException(
+        'Only approved submissions can be revoked',
+      );
+    }
+
+    const rewards = await this.prisma.$transaction(async (tx) => {
+      await tx.questSubmission.update({
+        where: { id: submission.id },
+        data: {
+          verificationStatus: QuestVerificationStatus.rejected,
+          verifiedBy: revokedBy,
+          verifiedAt: new Date(),
+          reviewNotes: dto.reviewNotes ?? reason,
+          rejectionReason: reason,
+        },
+      });
+
+      await tx.userQuest.update({
+        where: { id: submission.userQuestId },
+        data: {
+          status: QuestStatus.in_progress,
+          progress: 0,
+          completedAt: null,
+        },
+      });
+
+      return this.revokeQuestRewards(
+        tx,
+        submission.userId,
+        submission.userQuest.quest,
+        submission.id,
+        reason,
+      );
+    });
+
+    await this.notificationsService.notifyMany([
+      {
+        userId: submission.userId,
+        type: 'quest_rejected',
+        actorUserId: revokedBy,
+        projectId: null,
+        updateId: null,
+        urgency: null,
+        title: 'Quest Approval Revoked',
+        body: `A previously approved submission for "${submission.userQuest.quest.title}" was revoked: ${reason}`,
+        payload: {
+          questId: submission.userQuest.quest.id,
+          questSlug: submission.userQuest.quest.slug,
+          revocationReason: reason,
+          pointsReversed: rewards.pointsReversed,
+        },
+        deeplink: `blocnet://quests/${submission.userQuest.quest.slug}`,
+        pushData: {
+          type: 'quest_rejected',
+          questId: submission.userQuest.quest.id,
+        },
+      },
+    ]);
+
+    await this.auditLogService.create({
+      actorId: revokedBy,
+      action: 'quest.submission.revoke',
+      resourceType: 'quest_submission',
+      resourceId: submission.id,
+      metadata: {
+        userId: submission.userId,
+        questId: submission.userQuest.quest.id,
+        questSlug: submission.userQuest.quest.slug,
+        reviewNotes: dto.reviewNotes,
+        revocationReason: reason,
+        pointsReversed: rewards.pointsReversed,
+        badgeRevoked: rewards.badgeRevoked,
+      },
+    });
+
+    return {
+      message: 'Quest approval revoked and rewards reversed',
+      ...rewards,
+    };
+  }
+
   private async awardQuestRewards(
     tx: PrismaLike,
     userId: string,
@@ -834,6 +949,10 @@ export class QuestsService {
       Quest,
       'id' | 'slug' | 'title' | 'rewardPoints' | 'rewardBadgeId'
     >,
+    options?: {
+      submissionId?: string;
+      awardedBy?: string;
+    },
   ) {
     if (quest.rewardPoints > 0) {
       await tx.miningPointLedger.create({
@@ -845,6 +964,10 @@ export class QuestsService {
             questId: quest.id,
             questSlug: quest.slug,
             questTitle: quest.title,
+            ...(options?.submissionId
+              ? { questSubmissionId: options.submissionId }
+              : {}),
+            ...(options?.awardedBy ? { awardedBy: options.awardedBy } : {}),
           },
         },
       });
@@ -876,6 +999,133 @@ export class QuestsService {
         );
       }
     }
+  }
+
+  private async revokeQuestRewards(
+    tx: PrismaLike,
+    userId: string,
+    quest: Pick<
+      Quest,
+      'id' | 'slug' | 'title' | 'rewardPoints' | 'rewardBadgeId'
+    >,
+    submissionId: string,
+    reason: string,
+  ) {
+    let pointsReversed = 0;
+    let badgeRevoked = false;
+
+    if (quest.rewardPoints > 0) {
+      const rewardLedger = await tx.miningPointLedger.findFirst({
+        where: {
+          userId,
+          source: MiningPointSource.quest_reward,
+          points: { gt: 0 },
+          OR: [
+            { metadata: { path: ['questSubmissionId'], equals: submissionId } },
+            { metadata: { path: ['questId'], equals: quest.id } },
+          ],
+        },
+        orderBy: [{ createdAt: 'desc' }],
+      });
+
+      await tx.miningPointLedger.create({
+        data: {
+          userId,
+          source: MiningPointSource.quest_reward,
+          points: -Math.abs(quest.rewardPoints),
+          metadata: {
+            questId: quest.id,
+            questSlug: quest.slug,
+            questTitle: quest.title,
+            questSubmissionId: submissionId,
+            reason,
+            kind: 'quest_reward_reversal',
+            reversedLedgerId: rewardLedger?.id ?? null,
+          },
+        },
+      });
+
+      const profile = await tx.profile.findUnique({
+        where: { id: userId },
+        select: { miningClaimedPoints: true },
+      });
+      const currentPoints =
+        typeof profile?.miningClaimedPoints === 'bigint'
+          ? profile.miningClaimedPoints
+          : BigInt(profile?.miningClaimedPoints ?? 0);
+      const reversalAmount = BigInt(Math.abs(quest.rewardPoints));
+      const nextPoints =
+        currentPoints > reversalAmount ? currentPoints - reversalAmount : 0n;
+
+      await tx.profile.update({
+        where: { id: userId },
+        data: {
+          miningClaimedPoints: nextPoints,
+        },
+      });
+
+      pointsReversed = Math.abs(quest.rewardPoints);
+    }
+
+    if (quest.rewardBadgeId) {
+      const userBadge = await tx.userBadge.findUnique({
+        where: {
+          userId_badgeId: {
+            userId,
+            badgeId: quest.rewardBadgeId,
+          },
+        },
+        select: {
+          badgeId: true,
+          metadata: true,
+        },
+      });
+
+      if (userBadge && this.wasQuestBadgeAward(userBadge.metadata, quest.id)) {
+        await tx.userBadge.delete({
+          where: {
+            userId_badgeId: {
+              userId,
+              badgeId: quest.rewardBadgeId,
+            },
+          },
+        });
+
+        const profile = await tx.profile.findUnique({
+          where: { id: userId },
+          select: { primaryBadgeId: true },
+        });
+
+        if (profile?.primaryBadgeId === quest.rewardBadgeId) {
+          const fallbackBadge = await tx.userBadge.findFirst({
+            where: { userId },
+            orderBy: [{ earnedAt: 'desc' }],
+            select: { badgeId: true },
+          });
+
+          await tx.profile.update({
+            where: { id: userId },
+            data: { primaryBadgeId: fallbackBadge?.badgeId ?? null },
+          });
+        }
+
+        badgeRevoked = true;
+      }
+    }
+
+    return { pointsReversed, badgeRevoked };
+  }
+
+  private wasQuestBadgeAward(
+    metadata: Prisma.JsonValue | null,
+    questId: string,
+  ): boolean {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+      return false;
+    }
+
+    const objectMetadata = metadata as Prisma.JsonObject;
+    return objectMetadata.questId === questId;
   }
 
   private async completeAutoQuest(
