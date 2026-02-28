@@ -206,7 +206,16 @@ export class MLClientService {
 
       this.logger.debug(`Batch analysis complete: ${response.data.length} results`);
 
-      return response.data.map((item) => item.analysis);
+      return response.data.map((item, index) => {
+        if (item.provider_used === 'error') {
+          this.logger.warn(
+            `BEE batch item ${index} failed: ${item.analysis.urgency_justification}`,
+          );
+          return null;
+        }
+
+        return item.analysis;
+      });
     } catch (error) {
       this.logger.error(`BEE batch analysis failed: ${error.message}`, error.stack);
       return contents.map(() => null); // Fallback to default scoring

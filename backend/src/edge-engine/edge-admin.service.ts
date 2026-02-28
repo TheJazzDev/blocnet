@@ -5,7 +5,9 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { EdgeFeedbackAction } from './dto/edge-feedback.dto';
 import { GetAdminEdgeOverviewQuery } from './dto/get-admin-edge-overview.query';
+import { RecomputeEdgeDecisionsDto } from './dto/recompute-edge-decisions.dto';
 import { UpdateEdgeConfigDto } from './dto/update-edge-config.dto';
+import { EdgeEngineService } from './edge-engine.service';
 import {
   EDGE_CONFIG_ID,
   normalizeReasonCodes,
@@ -81,6 +83,7 @@ export class EdgeAdminService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
+    private readonly edgeEngineService: EdgeEngineService,
   ) {}
 
   async getAdminConfig(actorId: string) {
@@ -165,6 +168,130 @@ export class EdgeAdminService {
     });
 
     return row;
+  }
+
+  async recomputeDecisions(actorId: string, dto: RecomputeEdgeDecisionsDto) {
+    const config = await this.getOrCreateConfig();
+    const windowDays = Math.min(Math.max(dto.windowDays ?? 7, 1), 30);
+    const userLimit = Math.min(Math.max(dto.userLimit ?? 5, 1), 50);
+
+    if (!config.enabled) {
+      throw new BadRequestException(
+        'BEE runtime is disabled. Enable Edge Engine runtime first.',
+      );
+    }
+
+    const targetUserIds = dto.userId
+      ? [dto.userId]
+      : (
+          await this.prisma.projectFollow.findMany({
+            select: {
+              userId: true,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+            distinct: ['userId'],
+            take: userLimit,
+          })
+        ).map((row) => row.userId);
+
+    if (targetUserIds.length === 0) {
+      await this.auditLogService.create({
+        actorId,
+        action: 'edge.admin.recompute.run',
+        resourceType: 'edge_recompute',
+        metadata: {
+          mlEnabled: config.mlEnabled,
+          windowDays,
+          userLimit,
+          targetUsers: 0,
+        },
+      });
+
+      return {
+        ok: true,
+        mlEnabled: config.mlEnabled,
+        windowDays,
+        requestedUsers: dto.userId ? 1 : userLimit,
+        processedUsers: 0,
+        successfulUsers: 0,
+        failedUsers: 0,
+        totalSignals: 0,
+        details: [] as Array<{
+          userId: string;
+          ok: boolean;
+          totalSignals: number;
+          headline: string | null;
+          error: string | null;
+        }>,
+        ranAt: new Date(),
+      };
+    }
+
+    let successfulUsers = 0;
+    let failedUsers = 0;
+    let totalSignals = 0;
+    const details: Array<{
+      userId: string;
+      ok: boolean;
+      totalSignals: number;
+      headline: string | null;
+      error: string | null;
+    }> = [];
+
+    for (const userId of targetUserIds) {
+      try {
+        const brief = await this.edgeEngineService.getBrief(userId, {
+          windowDays,
+        });
+        successfulUsers += 1;
+        totalSignals += brief.totalSignals;
+        details.push({
+          userId,
+          ok: true,
+          totalSignals: brief.totalSignals,
+          headline: brief.headline,
+          error: null,
+        });
+      } catch (error) {
+        failedUsers += 1;
+        details.push({
+          userId,
+          ok: false,
+          totalSignals: 0,
+          headline: null,
+          error: this.errorMessage(error),
+        });
+      }
+    }
+
+    await this.auditLogService.create({
+      actorId,
+      action: 'edge.admin.recompute.run',
+      resourceType: 'edge_recompute',
+      metadata: {
+        mlEnabled: config.mlEnabled,
+        windowDays,
+        targetUsers: targetUserIds.length,
+        successfulUsers,
+        failedUsers,
+        totalSignals,
+      },
+    });
+
+    return {
+      ok: true,
+      mlEnabled: config.mlEnabled,
+      windowDays,
+      requestedUsers: dto.userId ? 1 : userLimit,
+      processedUsers: targetUserIds.length,
+      successfulUsers,
+      failedUsers,
+      totalSignals,
+      details,
+      ranAt: new Date(),
+    };
   }
 
   async getAdminOverview(actorId: string, query: GetAdminEdgeOverviewQuery) {
@@ -915,5 +1042,12 @@ export class EdgeAdminService {
     })) as EdgeConfigRow;
 
     return row;
+  }
+
+  private errorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
   }
 }

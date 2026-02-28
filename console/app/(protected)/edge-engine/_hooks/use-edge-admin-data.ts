@@ -77,6 +77,7 @@ export function useEdgeAdminData(initialWindowDays = 7) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [configSaving, setConfigSaving] = useState(false);
+  const [recomputeRunning, setRecomputeRunning] = useState(false);
   const [configStatus, setConfigStatus] = useState<EdgeConfigNotice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedOnce = useRef(false);
@@ -184,6 +185,29 @@ export function useEdgeAdminData(initialWindowDays = 7) {
     }
   }, [edgeConfig, loadData, windowDays]);
 
+  const recomputeEdgeDecisions = useCallback(async () => {
+    setRecomputeRunning(true);
+    setConfigStatus(null);
+    try {
+      const result = await clientApi.recomputeAdminEdge({
+        userLimit: 5,
+        windowDays,
+      });
+      setConfigStatus({
+        type: "success",
+        message: `Recompute complete. ${result.successfulUsers}/${result.processedUsers} users succeeded with ${result.totalSignals} total signals.`,
+      });
+      await loadData({ withSpinner: false, nextWindowDays: windowDays });
+    } catch (e: unknown) {
+      setConfigStatus({
+        type: "error",
+        message: getReadableError(e),
+      });
+    } finally {
+      setRecomputeRunning(false);
+    }
+  }, [loadData, windowDays]);
+
   return {
     windowDays,
     setWindowDays,
@@ -194,9 +218,11 @@ export function useEdgeAdminData(initialWindowDays = 7) {
     loading,
     refreshing,
     configSaving,
+    recomputeRunning,
     configStatus,
     error,
     refresh,
     saveEdgeConfig,
+    recomputeEdgeDecisions,
   };
 }

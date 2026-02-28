@@ -22,9 +22,11 @@ export default function EdgeEngineSettingsPage() {
     refreshing,
     error,
     configSaving,
+    recomputeRunning,
     configStatus,
     refresh,
     saveEdgeConfig,
+    recomputeEdgeDecisions,
   } = useEdgeAdminData(7);
 
   return (
@@ -340,13 +342,23 @@ export default function EdgeEngineSettingsPage() {
               <p className="text-xs text-muted-foreground">
                 Settings apply immediately to new decision generation jobs.
               </p>
-              <Button
-                onClick={() => void saveEdgeConfig()}
-                disabled={!canMutateConfig || !edgeConfig || configSaving}
-              >
-                {configSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save Configuration
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => void recomputeEdgeDecisions()}
+                  disabled={!canMutateConfig || recomputeRunning || configSaving}
+                >
+                  {recomputeRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Recompute Now
+                </Button>
+                <Button
+                  onClick={() => void saveEdgeConfig()}
+                  disabled={!canMutateConfig || !edgeConfig || configSaving || recomputeRunning}
+                >
+                  {configSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save Configuration
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

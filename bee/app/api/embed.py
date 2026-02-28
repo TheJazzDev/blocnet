@@ -64,9 +64,13 @@ async def generate_embedding(
             # Use specific provider
             provider = await registry.get_provider(request.provider)
             if not provider:
+                reason = registry.get_unavailability_reason(request.provider)
+                detail = f"Provider '{request.provider}' not available"
+                if reason:
+                    detail = f"{detail}: {reason}"
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Provider '{request.provider}' not available"
+                    detail=detail
                 )
 
             result = await provider.generate_embedding(text=request.text)

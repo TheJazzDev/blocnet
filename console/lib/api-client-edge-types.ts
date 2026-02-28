@@ -235,3 +235,22 @@ export interface AdminEdgeConfig {
   mlMaxContentLength: number;
   updatedAt: string;
 }
+
+export interface AdminEdgeRecomputeResponse {
+  ok: boolean;
+  mlEnabled: boolean;
+  windowDays: number;
+  requestedUsers: number;
+  processedUsers: number;
+  successfulUsers: number;
+  failedUsers: number;
+  totalSignals: number;
+  details: Array<{
+    userId: string;
+    ok: boolean;
+    totalSignals: number;
+    headline: string | null;
+    error: string | null;
+  }>;
+  ranAt: string;
+}

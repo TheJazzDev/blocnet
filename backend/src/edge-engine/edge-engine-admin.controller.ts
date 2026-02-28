@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Post,
   Patch,
   Query,
   UnauthorizedException,
@@ -14,6 +15,7 @@ import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { GetAdminEdgeOverviewQuery } from './dto/get-admin-edge-overview.query';
+import { RecomputeEdgeDecisionsDto } from './dto/recompute-edge-decisions.dto';
 import { UpdateEdgeConfigDto } from './dto/update-edge-config.dto';
 import { EdgeAdminService } from './edge-admin.service';
 
@@ -43,6 +45,19 @@ export class EdgeEngineAdminController {
     }
 
     return this.edgeAdminService.updateAdminConfig(user.id, dto);
+  }
+
+  @Post('recompute')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async recompute(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: RecomputeEdgeDecisionsDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.edgeAdminService.recomputeDecisions(user.id, dto);
   }
 
   @Get('overview')

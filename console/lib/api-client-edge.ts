@@ -1,6 +1,7 @@
 import { apiFetch, toQuery } from "./api-client-http";
 import type {
   AdminEdgeConfig,
+  AdminEdgeRecomputeResponse,
   AdminEdgeOverviewResponse,
   EdgeBriefResponse,
   EdgeExplainResponse,
@@ -36,6 +37,16 @@ export const edgeApi = {
     apiFetch<AdminEdgeConfig>("/admin/edge/config", {
       method: "PATCH",
       body: JSON.stringify(body),
+    }),
+
+  recomputeAdminEdge: (body?: {
+    userId?: string;
+    userLimit?: number;
+    windowDays?: number;
+  }) =>
+    apiFetch<AdminEdgeRecomputeResponse>("/admin/edge/recompute", {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
     }),
 
   sendMyEdgeFeedback: (body: {

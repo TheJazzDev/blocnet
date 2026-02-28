@@ -29,6 +29,7 @@ class ProviderInfo(BaseModel):
 
     name: str
     available: bool
+    reason: str | None = None
     supports_web_search: bool
     priority: int
 
@@ -96,6 +97,7 @@ async def list_providers(
             ProviderInfo(
                 name=p['name'],
                 available=p['available'],
+                reason=p.get('reason'),
                 supports_web_search=p['supports_web_search'],
                 priority=p['priority']
             )

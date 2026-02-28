@@ -85,4 +85,5 @@ export type {
   EdgeFeedbackResponse,
   AdminEdgeOverviewResponse,
   AdminEdgeConfig,
+  AdminEdgeRecomputeResponse,
 } from "./api-client-edge-types";
