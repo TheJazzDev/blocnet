@@ -4,79 +4,36 @@ import { useState } from 'react';
 
 const androidVersion = process.env.NEXT_PUBLIC_ANDROID_VERSION;
 
-function extractFilename(contentDisposition: string | null): string {
-  if (!contentDisposition) {
-    return 'blocnet-latest.apk';
-  }
-
-  const utfMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
-  if (utfMatch?.[1]) {
-    try {
-      return decodeURIComponent(utfMatch[1]);
-    } catch {
-      return utfMatch[1];
-    }
-  }
-
-  const plainMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
-  if (plainMatch?.[1]) {
-    return plainMatch[1];
-  }
-
-  return 'blocnet-latest.apk';
-}
-
 export function AppDownload() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleDownload() {
+  function handleDownload() {
     if (isDownloading) return;
 
     setIsDownloading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/download/apk', {
-        method: 'GET',
-        cache: 'no-store',
-      });
-
-      if (!response.ok) {
-        let message = 'Failed to download APK.';
-        try {
-          const payload = (await response.json()) as { message?: string };
-          if (payload?.message) {
-            message = payload.message;
-          }
-        } catch {
-          const fallbackText = await response.text();
-          if (fallbackText) {
-            message = fallbackText;
-          }
-        }
-
-        throw new Error(message);
-      }
-
-      const blob = await response.blob();
-      const filename = extractFilename(response.headers.get('content-disposition'));
-      const objectUrl = window.URL.createObjectURL(blob);
+      // Create a hidden anchor tag and trigger native browser download
       const anchor = document.createElement('a');
-
-      anchor.href = objectUrl;
-      anchor.download = filename;
+      anchor.href = '/api/download/apk';
+      anchor.download = 'blocnet-latest.apk';
+      anchor.style.display = 'none';
       document.body.appendChild(anchor);
       anchor.click();
-      anchor.remove();
-      window.URL.revokeObjectURL(objectUrl);
+
+      // Clean up after a short delay
+      setTimeout(() => {
+        anchor.remove();
+        setIsDownloading(false);
+      }, 100);
     } catch (downloadError) {
       const message =
         downloadError instanceof Error
           ? downloadError.message
           : 'Unable to download APK right now.';
       setError(message);
-    } finally {
       setIsDownloading(false);
     }
   }
@@ -193,7 +150,7 @@ export function AppDownload() {
 
               <button
                 type="button"
-                onClick={() => void handleDownload()}
+                onClick={handleDownload}
                 disabled={isDownloading}
                 className="w-full px-8 py-5 bg-linear-to-r from-teal-500 to-primary text-white rounded-xl font-bold text-lg shadow-lg shadow-teal-500/25 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3 transition-opacity hover:opacity-90"
               >
