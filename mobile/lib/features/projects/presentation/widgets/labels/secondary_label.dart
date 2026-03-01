@@ -11,12 +11,11 @@ class SecondaryLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final raw = tag.toString();
-    final displayText = (useDisplayText && raw.length > 8)
-        ? '${raw.substring(0, 8)}…'
-        : raw;
+    final displayText =
+        (useDisplayText && raw.length > 8) ? '${raw.substring(0, 8)}…' : raw;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
       decoration: BoxDecoration(
         color: AppColors.primary500.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),

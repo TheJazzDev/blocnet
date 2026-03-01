@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DigestCadence } from '@prisma/client';
+import { DatabaseHealthService } from '../prisma/database-health.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserDigestService } from '../users/user-digest.service';
 import {
@@ -27,10 +28,12 @@ export class NotificationDigestWorker implements OnModuleInit, OnModuleDestroy {
 
   private timer: NodeJS.Timeout | null = null;
   private isRunning = false;
+  private lastDbUnavailableLogAt = 0;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly databaseHealthService: DatabaseHealthService,
     private readonly userDigestService: UserDigestService,
     private readonly digestComposer: DigestComposerService,
     private readonly emailService: NotificationEmailService,
@@ -46,12 +49,12 @@ export class NotificationDigestWorker implements OnModuleInit, OnModuleDestroy {
 
     const intervalMs = 5 * 60 * 1000;
     this.timer = setInterval(() => {
-      void this.tick();
+      void this.runTickSafely();
     }, intervalMs);
 
     // Warm start once after boot.
     setTimeout(() => {
-      void this.tick();
+      void this.runTickSafely();
     }, 10_000);
   }
 
@@ -74,6 +77,12 @@ export class NotificationDigestWorker implements OnModuleInit, OnModuleDestroy {
     const now = new Date();
 
     try {
+      const databaseHealthy = await this.databaseHealthService.isDatabaseHealthy();
+      if (!databaseHealthy) {
+        this.logDbUnavailableSkip();
+        return;
+      }
+
       const sendWindowMinutes = this.configService.get<number>(
         'NOTIFICATION_DIGEST_SEND_WINDOW_MINUTES',
         10,
@@ -227,8 +236,24 @@ export class NotificationDigestWorker implements OnModuleInit, OnModuleDestroy {
 
         cursor = profiles[profiles.length - 1]?.id;
       }
+    } catch (error) {
+      if (this.isDatabaseUnavailableError(error)) {
+        this.logDbUnavailableSkip();
+      } else {
+        this.logger.error(`Digest tick failed: ${this.errorMessage(error)}`);
+      }
     } finally {
       this.isRunning = false;
+    }
+  }
+
+  private async runTickSafely(): Promise<void> {
+    try {
+      await this.tick();
+    } catch (error) {
+      this.logger.error(
+        `Digest tick rejected unexpectedly: ${this.errorMessage(error)}`,
+      );
     }
   }
 
@@ -271,5 +296,39 @@ export class NotificationDigestWorker implements OnModuleInit, OnModuleDestroy {
 
     const diffMs = input.now.getTime() - input.lastSentAt.getTime();
     return diffMs < 7 * 24 * 60 * 60 * 1000;
+  }
+
+  private logDbUnavailableSkip() {
+    const now = Date.now();
+    if (now - this.lastDbUnavailableLogAt < 60_000) {
+      return;
+    }
+    this.lastDbUnavailableLogAt = now;
+    this.logger.warn('Skipping digest tick because database is unavailable.');
+  }
+
+  private isDatabaseUnavailableError(error: unknown): boolean {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P1001'
+    ) {
+      return true;
+    }
+
+    const message = this.errorMessage(error).toLowerCase();
+    return (
+      message.includes("can't reach database server") ||
+      message.includes('connection terminated due to connection timeout') ||
+      message.includes('timeout exceeded when trying to connect')
+    );
+  }
+
+  private errorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
   }
 }

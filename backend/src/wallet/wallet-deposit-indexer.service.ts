@@ -76,6 +76,7 @@ export class WalletDepositIndexerService
   private intervalHandle: NodeJS.Timeout | null = null;
   private isTickRunning = false;
   private lastDbUnavailableLogAt = 0;
+  private realtimeAutoDisableInProgress = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -736,12 +737,12 @@ export class WalletDepositIndexerService
             );
           },
           onError: (error) => {
-            this.logger.error(
-              `Realtime native stream error for ${networkKey}: ${this.errorMessage(
-                error,
-              )}`,
+            void this.handleRealtimeStreamFailure(
+              networkKey,
+              network.chainEnvironment,
+              'native',
+              error,
             );
-            this.teardownRealtimeStream(networkKey, network.chainEnvironment);
           },
         });
 
@@ -766,12 +767,12 @@ export class WalletDepositIndexerService
           );
         },
         onError: (error) => {
-          this.logger.error(
-            `Realtime token stream error for ${networkKey}: ${this.errorMessage(
-              error,
-            )}`,
+          void this.handleRealtimeStreamFailure(
+            networkKey,
+            network.chainEnvironment,
+            'token',
+            error,
           );
-          this.teardownRealtimeStream(networkKey, network.chainEnvironment);
         },
       });
       this.realtimeUnwatchByNetwork.set(networkKey, unwatch);
@@ -779,12 +780,50 @@ export class WalletDepositIndexerService
         `Realtime token deposit stream enabled for ${networkKey}`,
       );
     } catch (error) {
-      this.realtimeNetworkKeys.delete(networkKey);
+      void this.handleRealtimeStreamFailure(
+        networkKey,
+        network.chainEnvironment,
+        'startup',
+        error,
+      );
+    }
+  }
+
+  private async handleRealtimeStreamFailure(
+    networkKey: string,
+    chainEnvironment: ChainEnvironment,
+    streamType: 'native' | 'token' | 'startup',
+    error: unknown,
+  ): Promise<void> {
+    this.logger.warn(
+      `Realtime ${streamType} stream warning for ${networkKey}: ${this.errorMessage(
+        error,
+      )}`,
+    );
+
+    this.teardownRealtimeStream(networkKey, chainEnvironment);
+
+    if (this.realtimeAutoDisableInProgress) {
+      return;
+    }
+    this.realtimeAutoDisableInProgress = true;
+
+    try {
+      this.stopRealtimeSubscriptions();
+      const updated = await this.walletConfigService.updateRuntimeConfig({
+        depositRealtimeEnabled: false,
+      });
       this.logger.warn(
-        `Failed to start realtime stream for ${networkKey}: ${this.errorMessage(
-          error,
+        `Disabled realtime wallet deposit streaming automatically after websocket failure (depositRealtimeEnabled=${updated.depositRealtimeEnabled})`,
+      );
+    } catch (updateError) {
+      this.logger.warn(
+        `Failed to auto-disable realtime wallet deposit streaming: ${this.errorMessage(
+          updateError,
         )}`,
       );
+    } finally {
+      this.realtimeAutoDisableInProgress = false;
     }
   }
 

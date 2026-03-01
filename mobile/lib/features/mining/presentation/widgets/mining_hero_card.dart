@@ -134,279 +134,241 @@ class _MiningHeroCardState extends State<MiningHeroCard>
             : 'Idle';
     final statusSubtext = _statusSubtext(session, _now);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF141622),
-            AppColors.bgSurface,
-          ],
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          right: -44,
+          top: -26,
+          child: Container(
+            width: 180,
+            height: 180,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.primary500.withValues(alpha: 0.18),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary500.withValues(alpha: 0.15),
-            blurRadius: 28,
-            spreadRadius: -8,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -44,
-            top: -26,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primary500.withValues(alpha: 0.18),
-                    Colors.transparent,
-                  ],
-                ),
+        Positioned(
+          left: -34,
+          bottom: -30,
+          child: Container(
+            width: 150,
+            height: 150,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.primary400.withValues(alpha: 0.08),
+                  Colors.transparent,
+                ],
               ),
             ),
           ),
-          Positioned(
-            left: -34,
-            bottom: -30,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primary400.withValues(alpha: 0.08),
-                    Colors.transparent,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.bolt_rounded,
+                    color: AppColors.primary400,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          statusSubtext,
+                          style: AppTypography.custom(
+                            size: 12,
+                            weight: FontWeight.w500,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _StatusTag(
+                    label: statusLabel,
+                    color: canClaim
+                        ? AppColors.successColor
+                        : session?.isRunning == true
+                            ? AppColors.primary500
+                            : AppColors.textFaint,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: AnimatedBuilder(
+                  animation: Listenable.merge([
+                    _orbitController,
+                    _counterOrbitController,
+                    _pulseController,
+                    _waveController,
+                  ]),
+                  builder: (context, _) => _MiningCoreVisual(
+                    isRunning: session?.isRunning == true,
+                    orbitValue: _orbitController.value,
+                    counterOrbitValue: _counterOrbitController.value,
+                    pulseValue: _pulseController.value,
+                    waveValue: _waveController.value,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              // Main earning display
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.primary500.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'EARNING PER HOUR',
+                      style: AppTypography.custom(
+                        size: 10,
+                        weight: FontWeight.w700,
+                        color: AppColors.textFaint,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          _formatDecimal(hourlyReward),
+                          style: AppTypography.custom(
+                            size: 42,
+                            weight: FontWeight.w800,
+                            color: AppColors.primary400,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'BNP/h',
+                          style: AppTypography.custom(
+                            size: 16,
+                            weight: FontWeight.w600,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        minHeight: 6,
+                        value: progressPct,
+                        backgroundColor: AppColors.bgElevated,
+                        color: canClaim
+                            ? AppColors.successColor
+                            : AppColors.primary500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${_formatDecimal(cycleMinedDisplay)} BNP earned • Claim after 24h',
+                      style: AppTypography.custom(
+                        size: 12,
+                        weight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary500.withValues(alpha: 0.17),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(
-                        Icons.bolt_rounded,
-                        color: AppColors.primary400,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Mining Hub',
-                            style: AppTypography.custom(
-                              size: 17,
-                              weight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            statusSubtext,
-                            style: AppTypography.custom(
-                              size: 12,
-                              weight: FontWeight.w500,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _StatusTag(
-                      label: statusLabel,
-                      color: canClaim
-                          ? AppColors.successColor
-                          : session?.isRunning == true
-                              ? AppColors.primary500
-                              : AppColors.textFaint,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Center(
-                  child: AnimatedBuilder(
-                    animation: Listenable.merge([
-                      _orbitController,
-                      _counterOrbitController,
-                      _pulseController,
-                      _waveController,
-                    ]),
-                    builder: (context, _) => _MiningCoreVisual(
-                      isRunning: session?.isRunning == true,
-                      orbitValue: _orbitController.value,
-                      counterOrbitValue: _counterOrbitController.value,
-                      pulseValue: _pulseController.value,
-                      waveValue: _waveController.value,
+              const SizedBox(height: 12),
+              // Stats grid
+              Row(
+                children: [
+                  Expanded(
+                    child: _CompactStat(
+                      label: 'Mining Power',
+                      value:
+                          '${formatGroupedNumber(miningPower, maxDecimals: 1, minDecimals: 1)} TH/s',
+                      icon: Icons.speed_rounded,
+                      color: AppColors.primary400,
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                // Main earning display
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary500.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.primary500.withValues(alpha: 0.2),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _CompactStat(
+                      label: 'Total Earned',
+                      value:
+                          '${formatGroupedNumber(balance?.lifetimeEarnedPoints ?? 0, maxDecimals: 0)} BNP',
+                      icon: Icons.stars_rounded,
+                      color: AppColors.warning500,
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'EARNING PER HOUR',
-                        style: AppTypography.custom(
-                          size: 10,
-                          weight: FontWeight.w700,
-                          color: AppColors.textFaint,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            _formatDecimal(hourlyReward),
-                            style: AppTypography.custom(
-                              size: 42,
-                              weight: FontWeight.w800,
-                              color: AppColors.primary400,
-                              height: 1,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'BNP/h',
-                            style: AppTypography.custom(
-                              size: 16,
-                              weight: FontWeight.w600,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          minHeight: 6,
-                          value: progressPct,
-                          backgroundColor: AppColors.bgElevated,
-                          color: canClaim
-                              ? AppColors.successColor
-                              : AppColors.primary500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${_formatDecimal(cycleMinedDisplay)} BNP earned • Claim after 24h',
-                        style: AppTypography.custom(
-                          size: 12,
-                          weight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _CompactStat(
+                      label: 'Claimed',
+                      value:
+                          '${formatGroupedNumber(balance?.claimedTotalPoints ?? 0, maxDecimals: 0)} BNP',
+                      icon: Icons.check_circle_rounded,
+                      color: AppColors.successColor,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                // Stats grid
-                Row(
-                  children: [
-                    Expanded(
-                      child: _CompactStat(
-                        label: 'Mining Power',
-                        value:
-                            '${formatGroupedNumber(miningPower, maxDecimals: 1, minDecimals: 1)} TH/s',
-                        icon: Icons.speed_rounded,
-                        color: AppColors.primary400,
-                      ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _CompactStat(
+                      label: 'Referrals',
+                      value: '$activeDirectReferrals active',
+                      icon: Icons.people_rounded,
+                      color: AppColors.teal400,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _CompactStat(
-                        label: 'Total Earned',
-                        value:
-                            '${formatGroupedNumber(balance?.lifetimeEarnedPoints ?? 0, maxDecimals: 0)} BNP',
-                        icon: Icons.stars_rounded,
-                        color: AppColors.warning500,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _CompactStat(
-                        label: 'Claimed',
-                        value:
-                            '${formatGroupedNumber(balance?.claimedTotalPoints ?? 0, maxDecimals: 0)} BNP',
-                        icon: Icons.check_circle_rounded,
-                        color: AppColors.successColor,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _CompactStat(
-                        label: 'Referrals',
-                        value: '$activeDirectReferrals active',
-                        icon: Icons.people_rounded,
-                        color: AppColors.teal400,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                if (canStart)
-                  _MiningActionButton(
-                    label: 'Start Mining',
-                    color: AppColors.primary500,
-                    textColor: Colors.black,
-                    onPressed: busy ? null : widget.onStart,
-                    isLoading: widget.isStarting,
                   ),
-                if (canStart) const SizedBox(height: 10),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (canStart)
                 _MiningActionButton(
-                  label:
-                      claimLocked ? 'Claim Rewards (Locked)' : 'Claim Rewards',
-                  color: AppColors.successColor,
+                  label: 'Start Mining',
+                  color: AppColors.primary500,
                   textColor: Colors.black,
-                  onPressed: (claimLocked || busy) ? null : widget.onClaim,
-                  isLoading: widget.isClaiming,
+                  onPressed: busy ? null : widget.onStart,
+                  isLoading: widget.isStarting,
                 ),
-              ],
-            ),
+              if (canStart) const SizedBox(height: 10),
+              _MiningActionButton(
+                label: claimLocked ? 'Claim Rewards (Locked)' : 'Claim Rewards',
+                color: AppColors.successColor,
+                textColor: Colors.black,
+                onPressed: (claimLocked || busy) ? null : widget.onClaim,
+                isLoading: widget.isClaiming,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

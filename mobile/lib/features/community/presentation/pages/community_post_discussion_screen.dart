@@ -10,11 +10,14 @@ import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/services/community_posts_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CommunityPostDiscussionScreen extends StatefulWidget {
   const CommunityPostDiscussionScreen({super.key, this.postId});
@@ -29,11 +32,13 @@ class CommunityPostDiscussionScreen extends StatefulWidget {
 class _CommunityPostDiscussionScreenState
     extends State<CommunityPostDiscussionScreen> {
   final TextEditingController _commentCtrl = MentionHighlightTextController();
+  final FocusNode _commentFocusNode = FocusNode();
   final ScrollController _threadScrollController = ScrollController();
   final Set<String> _knownCommentIds = <String>{};
   final Set<String> _pendingNewCommentIds = <String>{};
   late final MentionsRepository _mentionsRepository;
   String? _postId;
+  bool _focusComposerOnLoad = false;
   bool _isSending = false;
   bool _isCommentsBaselineReady = false;
   VoidCallback? _storeListener;
@@ -60,11 +65,11 @@ class _CommunityPostDiscussionScreenState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_postId != null && _postId!.isNotEmpty) return;
-
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is String && args.isNotEmpty) {
+      if (_postId == args) return;
       _postId = args;
+      _focusComposerOnLoad = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         final store = context.read<CommunityPostsStore>();
@@ -72,6 +77,27 @@ class _CommunityPostDiscussionScreenState
         store.fetchPostById(args);
         store.fetchComments(args);
         store.watchCommentsRealtime(args);
+      });
+      return;
+    }
+
+    if (args is Map) {
+      final postId = args['postId']?.toString();
+      if (postId == null || postId.isEmpty || _postId == postId) {
+        return;
+      }
+      _postId = postId;
+      _focusComposerOnLoad = args['focusComposer'] == true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final store = context.read<CommunityPostsStore>();
+        _attachStoreListener();
+        store.fetchPostById(postId);
+        store.fetchComments(postId);
+        store.watchCommentsRealtime(postId);
+        if (_focusComposerOnLoad) {
+          _focusComposerSoon();
+        }
       });
     }
   }
@@ -152,8 +178,16 @@ class _CommunityPostDiscussionScreenState
     _threadScrollController
       ..removeListener(_handleThreadScroll)
       ..dispose();
+    _commentFocusNode.dispose();
     _commentCtrl.dispose();
     super.dispose();
+  }
+
+  void _focusComposerSoon() {
+    Future<void>.delayed(const Duration(milliseconds: 220), () {
+      if (!mounted) return;
+      _commentFocusNode.requestFocus();
+    });
   }
 
   Future<void> _sendComment(String postId) async {
@@ -249,6 +283,8 @@ class _CommunityPostDiscussionScreenState
                                 _PostDetailsCard(
                                   post: post,
                                   onLike: () => store.toggleLike(post.id),
+                                  onCommentTap: _focusComposerSoon,
+                                  onShareTap: () => _openShareSheet(post),
                                   onBookmark: () =>
                                       store.toggleBookmark(post.id),
                                 ),
@@ -334,6 +370,7 @@ class _CommunityPostDiscussionScreenState
                         Expanded(
                           child: MentionTextField(
                             controller: _commentCtrl,
+                            focusNode: _commentFocusNode,
                             mentionsRepository: _mentionsRepository,
                             hintText: 'Write a comment...',
                             minLines: 1,
@@ -369,17 +406,141 @@ class _CommunityPostDiscussionScreenState
       },
     );
   }
+
+  Future<void> _openShareSheet(CommunityPost post) async {
+    final webLink = 'https://blocnet.app/community/${post.id}';
+    final deepLink = 'blocnet://community/posts/${post.id}';
+    final shareText = '${post.content.trim()}\n$webLink';
+
+    Future<void> copyLink() async {
+      await Clipboard.setData(ClipboardData(text: webLink));
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      AppSnackbar.showSuccess(context, 'Post link copied');
+    }
+
+    Future<void> openExternal(Uri uri, String platformName) async {
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: shareText));
+        if (!mounted) return;
+        AppSnackbar.showError(
+          context,
+          'Could not open $platformName. Link copied instead.',
+        );
+      }
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.bgSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.borderMuted,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Share post',
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 16,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  post.content.trim(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 12,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _ShareOptionTile(
+                  icon: Icons.copy_all_rounded,
+                  title: 'Copy link',
+                  subtitle: webLink,
+                  onTap: copyLink,
+                ),
+                _ShareOptionTile(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  title: 'Share to WhatsApp',
+                  subtitle: 'Open WhatsApp with post link',
+                  onTap: () => openExternal(
+                    Uri.parse(
+                      'https://wa.me/?text=${Uri.encodeComponent(shareText)}',
+                    ),
+                    'WhatsApp',
+                  ),
+                ),
+                _ShareOptionTile(
+                  icon: Icons.send_outlined,
+                  title: 'Share to Telegram',
+                  subtitle: 'Open Telegram with post link',
+                  onTap: () => openExternal(
+                    Uri.parse(
+                      'https://t.me/share/url?url=${Uri.encodeComponent(webLink)}&text=${Uri.encodeComponent(post.content.trim())}',
+                    ),
+                    'Telegram',
+                  ),
+                ),
+                _ShareOptionTile(
+                  icon: Icons.link_rounded,
+                  title: 'Copy deep link',
+                  subtitle: deepLink,
+                  onTap: () async {
+                    await Clipboard.setData(ClipboardData(text: deepLink));
+                    if (!context.mounted) return;
+                    Navigator.of(context).pop();
+                    AppSnackbar.showSuccess(context, 'Deep link copied');
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _PostDetailsCard extends StatelessWidget {
   const _PostDetailsCard({
     required this.post,
     required this.onLike,
+    required this.onCommentTap,
+    required this.onShareTap,
     required this.onBookmark,
   });
 
   final CommunityPost post;
   final VoidCallback onLike;
+  final VoidCallback onCommentTap;
+  final VoidCallback onShareTap;
   final VoidCallback onBookmark;
 
   void _openAuthorProfile(BuildContext context) {
@@ -505,37 +666,50 @@ class _PostDetailsCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: _DiscussionAction(
-                  icon: post.isLiked
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  value: '${post.likesCount}',
-                  color:
-                      post.isLiked ? AppColors.warning500 : AppColors.textMuted,
-                  onTap: onLike,
-                ),
+              _DiscussionAction(
+                icon: post.isLiked
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                value: '${post.likesCount}',
+                color:
+                    post.isLiked ? AppColors.warning500 : AppColors.textMuted,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onLike();
+                },
               ),
-              Expanded(
-                child: _DiscussionAction(
-                  icon: Icons.mode_comment_outlined,
-                  value: '${post.commentsCount}',
-                  color: AppColors.textMuted,
-                  onTap: () {},
-                ),
+              _DiscussionAction(
+                icon: Icons.mode_comment_outlined,
+                value: '${post.commentsCount}',
+                color: AppColors.textMuted,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onCommentTap();
+                },
               ),
-              Expanded(
-                child: _DiscussionAction(
-                  icon: post.isBookmarked
-                      ? Icons.bookmark_rounded
-                      : Icons.bookmark_outline_rounded,
-                  value: '',
-                  color: post.isBookmarked
-                      ? AppColors.primary400
-                      : AppColors.textMuted,
-                  onTap: onBookmark,
-                ),
+              _DiscussionAction(
+                icon: Icons.share_outlined,
+                value: '',
+                color: AppColors.teal400,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onShareTap();
+                },
+              ),
+              _DiscussionAction(
+                icon: post.isBookmarked
+                    ? Icons.bookmark_rounded
+                    : Icons.bookmark_outline_rounded,
+                value: '',
+                color: post.isBookmarked
+                    ? AppColors.primary400
+                    : AppColors.textMuted,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onBookmark();
+                },
               ),
             ],
           ),
@@ -584,28 +758,76 @@ class _DiscussionAction extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Align(
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: color),
-              if (value.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Text(
-                  value,
-                  style: AppTypography.custom(
-                    color: color,
-                    size: 12,
-                    weight: FontWeight.w600,
-                  ),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            if (value.isNotEmpty) ...[
+              const SizedBox(width: 6),
+              Text(
+                value,
+                style: AppTypography.custom(
+                  color: color,
+                  size: 12,
+                  weight: FontWeight.w600,
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _ShareOptionTile extends StatelessWidget {
+  const _ShareOptionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: AppColors.bgElevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Icon(icon, color: AppColors.textSecondary, size: 18),
+      ),
+      title: Text(
+        title,
+        style: AppTypography.custom(
+          color: AppColors.textPrimary,
+          size: 13,
+          weight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTypography.custom(
+          color: AppColors.textFaint,
+          size: 11,
+          weight: FontWeight.w400,
+        ),
+      ),
+      onTap: onTap,
     );
   }
 }

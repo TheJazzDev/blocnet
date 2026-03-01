@@ -56,7 +56,7 @@ class _MiningScreenState extends State<MiningScreen> {
                 isStarting: store.isStarting,
                 isClaiming: store.isClaiming,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               _MiningSectionEntryCard(
                 icon: Icons.leaderboard_rounded,
                 title: 'Mining Leaderboard',
@@ -66,7 +66,11 @@ class _MiningScreenState extends State<MiningScreen> {
                 onTap: () => Navigator.of(context)
                     .pushNamed(AppRoutes.miningLeaderboard),
               ),
-              const SizedBox(height: 20),
+              Divider(
+                height: 1,
+                color: AppColors.borderSubtle.withValues(alpha: 0.8),
+              ),
+              const SizedBox(height: 4),
               _MiningSectionEntryCard(
                 icon: Icons.schedule_rounded,
                 title: 'Hourly Mining History',
@@ -169,29 +173,14 @@ class _MiningSectionEntryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface.withValues(alpha: 0.82),
-          borderRadius: BorderRadius.circular(14),
-          border:
-              Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.5)),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primary500.withValues(alpha: 0.12),
-              ),
-              alignment: Alignment.center,
-              child: Icon(
-                icon,
-                color: AppColors.primary400,
-                size: 18,
-              ),
+            Icon(
+              icon,
+              color: AppColors.primary400,
+              size: 20,
             ),
             const SizedBox(width: 12),
             Expanded(

@@ -24,9 +24,14 @@ import 'update_details_info.dart';
 import 'update_details_tags.dart';
 
 class UpdateDetailsDialog extends StatefulWidget {
-  const UpdateDetailsDialog({required this.id, super.key});
+  const UpdateDetailsDialog({
+    required this.id,
+    this.focusCommentComposer = false,
+    super.key,
+  });
 
   final String id;
+  final bool focusCommentComposer;
 
   @override
   State<UpdateDetailsDialog> createState() => _PostDetailsDialogState();
@@ -35,6 +40,9 @@ class UpdateDetailsDialog extends StatefulWidget {
 class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
   final TextEditingController _commentController =
       MentionHighlightTextController();
+  final FocusNode _commentFocusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _commentsSectionKey = GlobalKey();
   late final CommentsStore _commentsStore;
   late final MentionsRepository _mentionsRepository;
   bool _isSubmittingComment = false;
@@ -49,12 +57,15 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
       if (!mounted) return;
       _commentsStore.fetchComments(widget.id);
       _commentsStore.watchCommentsRealtime(widget.id);
+      _focusCommentComposerIfRequested();
     });
   }
 
   @override
   void dispose() {
     _commentsStore.unwatchCommentsRealtime(widget.id);
+    _scrollController.dispose();
+    _commentFocusNode.dispose();
     _commentController.dispose();
     super.dispose();
   }
@@ -95,6 +106,7 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
               ),
               Expanded(
                 child: SingleChildScrollView(
+                  controller: _scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,8 +125,10 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                       RenderMarkdownContent(content: post.content),
                       const SizedBox(height: 24),
                       _CommentsSection(
+                        key: _commentsSectionKey,
                         updateId: widget.id,
                         controller: _commentController,
+                        focusNode: _commentFocusNode,
                         mentionsRepository: _mentionsRepository,
                         isSubmitting: _isSubmittingComment,
                         error: _commentError,
@@ -171,6 +185,28 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
     } finally {
       if (mounted) setState(() => _isSubmittingComment = false);
     }
+  }
+
+  Future<void> _focusCommentComposerIfRequested() async {
+    if (!widget.focusCommentComposer) return;
+
+    await Future<void>.delayed(const Duration(milliseconds: 240));
+    if (!mounted) return;
+
+    if (_scrollController.hasClients) {
+      final targetOffset = (_scrollController.offset + 360).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      );
+      _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+      );
+    }
+
+    if (!mounted) return;
+    _commentFocusNode.requestFocus();
   }
 
   Widget _buildTipHunterAction(Update post) {
@@ -231,8 +267,10 @@ class _Divider extends StatelessWidget {
 
 class _CommentsSection extends StatelessWidget {
   const _CommentsSection({
+    super.key,
     required this.updateId,
     required this.controller,
+    required this.focusNode,
     required this.mentionsRepository,
     required this.isSubmitting,
     required this.error,
@@ -241,6 +279,7 @@ class _CommentsSection extends StatelessWidget {
 
   final String updateId;
   final TextEditingController controller;
+  final FocusNode focusNode;
   final MentionsRepository mentionsRepository;
   final bool isSubmitting;
   final String? error;
@@ -305,6 +344,7 @@ class _CommentsSection extends StatelessWidget {
                 Expanded(
                   child: MentionTextField(
                     controller: controller,
+                    focusNode: focusNode,
                     mentionsRepository: mentionsRepository,
                     hintText: 'Add a comment…',
                     minLines: 1,

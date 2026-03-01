@@ -23,6 +23,9 @@ describe('NotificationDigestWorker', () => {
   const usersService = {
     getDigestSummary: jest.fn(),
   };
+  const databaseHealthService = {
+    isDatabaseHealthy: jest.fn(),
+  };
 
   const digestComposer = {
     compose: jest.fn(),
@@ -41,10 +44,12 @@ describe('NotificationDigestWorker', () => {
     worker = new NotificationDigestWorker(
       configService as any,
       prisma as any,
+      databaseHealthService as any,
       usersService as any,
       digestComposer as any,
       emailService as any,
     );
+    databaseHealthService.isDatabaseHealthy.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -139,5 +144,14 @@ describe('NotificationDigestWorker', () => {
 
     expect(emailService.sendDigestEmail).not.toHaveBeenCalled();
     expect(prisma.userNotificationSettings.upsert).not.toHaveBeenCalled();
+  });
+
+  it('skips tick safely when database is unavailable', async () => {
+    databaseHealthService.isDatabaseHealthy.mockResolvedValue(false);
+
+    await expect(worker.tick()).resolves.toBeUndefined();
+
+    expect(prisma.profile.findMany).not.toHaveBeenCalled();
+    expect(emailService.sendDigestEmail).not.toHaveBeenCalled();
   });
 });

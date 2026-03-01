@@ -212,6 +212,16 @@ class CommunityPostsStore extends ChangeNotifier {
     if (current == null) return;
 
     _pendingLikePostIds.add(postId);
+    final optimisticLiked = !current.isLiked;
+    final optimisticLikes = optimisticLiked
+        ? current.likesCount + 1
+        : (current.likesCount > 0 ? current.likesCount - 1 : 0);
+    _replacePost(
+      current.copyWith(
+        isLiked: optimisticLiked,
+        likesCount: optimisticLikes,
+      ),
+    );
     notifyListeners();
 
     try {
@@ -224,6 +234,7 @@ class CommunityPostsStore extends ChangeNotifier {
       }
       _lastError = null;
     } catch (error) {
+      _replacePost(current);
       _lastError = error.toString();
     } finally {
       _pendingLikePostIds.remove(postId);
@@ -238,6 +249,11 @@ class CommunityPostsStore extends ChangeNotifier {
     if (current == null) return;
 
     _pendingBookmarkPostIds.add(postId);
+    _replacePost(
+      current.copyWith(
+        isBookmarked: !current.isBookmarked,
+      ),
+    );
     notifyListeners();
 
     try {
@@ -250,6 +266,7 @@ class CommunityPostsStore extends ChangeNotifier {
       }
       _lastError = null;
     } catch (error) {
+      _replacePost(current);
       _lastError = error.toString();
     } finally {
       _pendingBookmarkPostIds.remove(postId);

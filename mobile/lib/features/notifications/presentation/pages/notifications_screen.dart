@@ -2,9 +2,11 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/feed_view_mode_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
@@ -53,11 +55,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         final digest = store.digestSummary;
         final hasDigest = digest?.hasAnyInsight ?? false;
         final hasContent = store.notifications.isNotEmpty || hasDigest;
+        final viewMode = context.watch<FeedViewModeStore>().mode;
 
         return Scaffold(
           backgroundColor: AppColors.bgBase,
           appBar: CustomAppBar(
-            title: 'Alerts',
+            title: 'Notifications',
             backButton: true,
             showSearch: false,
             showFilter: false,
@@ -103,26 +106,36 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       backgroundColor: AppColors.bgSurface,
                       onRefresh: store.refreshNotifications,
                       child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 96),
                         itemBuilder: (context, index) {
                           final hasDigestTile = hasDigest;
+                          final itemCount =
+                              store.notifications.length + (hasDigest ? 1 : 0);
+                          final isLastItem = index == itemCount - 1;
 
                           if (hasDigestTile && index == 0) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: _DigestTile(
-                                digest: digest!,
-                                onTap: () => _openDigestSheet(digest),
+                            return _NotificationRowWrapper(
+                              mode: viewMode,
+                              showDivider: !isLastItem,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                child: _DigestTile(
+                                  digest: digest!,
+                                  onTap: () => _openDigestSheet(digest),
+                                ),
                               ),
                             );
                           }
 
                           final itemIndex = hasDigestTile ? index - 1 : index;
                           final item = store.notifications[itemIndex];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
+                          return _NotificationRowWrapper(
+                            mode: viewMode,
+                            showDivider: !isLastItem,
                             child: _NotificationTile(
                               item: item,
+                              mode: viewMode,
                               onTap: () async {
                                 await store.markAsRead(item.id);
                                 if (!mounted) return;
@@ -828,9 +841,14 @@ _NotificationVisualStyle _styleForNotificationType(String? type) {
 }
 
 class _NotificationTile extends StatelessWidget {
-  const _NotificationTile({required this.item, required this.onTap});
+  const _NotificationTile({
+    required this.item,
+    required this.mode,
+    required this.onTap,
+  });
 
   final NotificationModel item;
+  final FeedViewMode mode;
   final VoidCallback onTap;
 
   String _timeLabel() {
@@ -846,55 +864,45 @@ class _NotificationTile extends StatelessWidget {
     final isUnread = !item.isRead;
     final style = _styleForNotificationType(item.type);
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isUnread
-              ? AppColors.teal500.withValues(alpha: 0.06)
-              : AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isUnread
-                ? AppColors.teal500.withValues(alpha: 0.3)
-                : AppColors.borderSubtle,
-          ),
+      splashColor: AppColors.primary500.withValues(alpha: 0.08),
+      highlightColor: Colors.transparent,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          vertical: mode == FeedViewMode.card ? 10 : 12,
+          horizontal: mode == FeedViewMode.card ? 10 : 0,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Unread dot
-            Padding(
-              padding: const EdgeInsets.only(top: 5),
-              child: Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isUnread ? AppColors.teal400 : Colors.transparent,
-                ),
+            Container(
+              width: 7,
+              height: 7,
+              margin: const EdgeInsets.only(top: 6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isUnread ? AppColors.teal400 : Colors.transparent,
               ),
             ),
             const SizedBox(width: 8),
             Container(
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               decoration: BoxDecoration(
                 color: style.color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: style.color.withValues(alpha: 0.35),
                 ),
               ),
               child: Icon(
                 style.icon,
-                size: 16,
+                size: 15,
                 color: style.color,
               ),
             ),
             const SizedBox(width: 10),
-            // Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -905,8 +913,8 @@ class _NotificationTile extends StatelessWidget {
                       color: isUnread
                           ? AppColors.textPrimary
                           : AppColors.textSecondary,
-                      size: 13,
-                      weight: FontWeight.w600,
+                      size: 12.5,
+                      weight: isUnread ? FontWeight.w700 : FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -914,9 +922,9 @@ class _NotificationTile extends StatelessWidget {
                     item.body,
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 12,
+                      size: 11.5,
                       weight: FontWeight.w400,
-                      height: 1.45,
+                      height: 1.4,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -924,11 +932,8 @@ class _NotificationTile extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: style.color.withValues(alpha: 0.15),
+                      color: style.color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: style.color.withValues(alpha: 0.35),
-                      ),
                     ),
                     child: Text(
                       style.label,
@@ -947,13 +952,51 @@ class _NotificationTile extends StatelessWidget {
               _timeLabel(),
               style: AppTypography.custom(
                 color: AppColors.textFaint,
-                size: 11,
+                size: 10.5,
                 weight: FontWeight.w400,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NotificationRowWrapper extends StatelessWidget {
+  const _NotificationRowWrapper({
+    required this.mode,
+    required this.showDivider,
+    required this.child,
+  });
+
+  final FeedViewMode mode;
+  final bool showDivider;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (mode == FeedViewMode.card) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: child,
+      );
+    }
+
+    return Column(
+      children: [
+        child,
+        if (showDivider)
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle,
+          ),
+      ],
     );
   }
 }
@@ -989,7 +1032,7 @@ class _EmptyNotificationsState extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'No alerts yet',
+              'No notifications yet',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
                 size: 15,

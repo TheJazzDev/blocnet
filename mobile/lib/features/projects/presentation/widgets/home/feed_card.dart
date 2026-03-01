@@ -6,11 +6,13 @@ import 'package:blocnet/features/projects/presentation/widgets/project/project_d
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/services/update_bookmarks_store.dart';
+import 'package:blocnet/services/update_likes_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 
 enum FeedCardLayout { card, list }
@@ -30,15 +32,23 @@ class FeedCard extends StatefulWidget {
   State<FeedCard> createState() => _FeedCardState();
 }
 
-class _FeedCardState extends State<FeedCard> {
+class _FeedCardState extends State<FeedCard>
+    with SingleTickerProviderStateMixin {
   bool _isBookmarked = false;
+  bool _isLiked = false;
+  late final AnimationController _likePulseController;
 
   Update get post => widget.post;
 
   @override
   void initState() {
     super.initState();
+    _likePulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
     _loadBookmarkState();
+    _loadLikeState();
   }
 
   Future<void> _loadBookmarkState() async {
@@ -47,13 +57,25 @@ class _FeedCardState extends State<FeedCard> {
     setState(() => _isBookmarked = bookmarked);
   }
 
-  void _openDetails(BuildContext context) {
+  Future<void> _loadLikeState() async {
+    final liked = await UpdateLikesStore.isLiked(post.id);
+    if (!mounted) return;
+    setState(() => _isLiked = liked);
+  }
+
+  void _openDetails(
+    BuildContext context, {
+    bool focusCommentComposer = false,
+  }) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Dismiss',
       barrierColor: Colors.black.withValues(alpha: 0.75),
-      pageBuilder: (context, _, __) => UpdateDetailsDialog(id: post.id),
+      pageBuilder: (context, _, __) => UpdateDetailsDialog(
+        id: post.id,
+        focusCommentComposer: focusCommentComposer,
+      ),
       transitionDuration: const Duration(milliseconds: 280),
       transitionBuilder: (context, animation, _, child) {
         return SlideTransition(
@@ -103,23 +125,145 @@ class _FeedCardState extends State<FeedCard> {
     );
   }
 
-  void _handleLikeTap(BuildContext context) {
+  Future<void> _handleLikeTap(BuildContext context) async {
     HapticFeedback.selectionClick();
-    _openDetails(context);
+    final next = await UpdateLikesStore.toggle(post.id);
+    if (!mounted) return;
+    setState(() => _isLiked = next);
+    _likePulseController
+      ..stop()
+      ..reset()
+      ..forward();
   }
 
   void _handleCommentTap(BuildContext context) {
     HapticFeedback.selectionClick();
-    _openDetails(context);
+    _openDetails(context, focusCommentComposer: true);
   }
 
   Future<void> _handleShareTap(BuildContext context) async {
     HapticFeedback.selectionClick();
+    await _openShareSheet(context);
+  }
+
+  Future<void> _openShareSheet(BuildContext context) async {
+    final webLink = 'https://blocnet.app/updates/${post.id}';
     final deepLink = 'blocnet://updates/${post.id}';
-    final text = '${post.title}\n$deepLink';
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!context.mounted) return;
-    AppSnackbar.showSuccess(context, 'Update link copied to clipboard');
+    final shareText = '${post.title}\n$webLink';
+
+    Future<void> copyLink() async {
+      await Clipboard.setData(ClipboardData(text: webLink));
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      AppSnackbar.showSuccess(context, 'Update link copied');
+    }
+
+    Future<void> openExternal(Uri uri, String platformName) async {
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: shareText));
+        if (!context.mounted) return;
+        AppSnackbar.showError(
+          context,
+          'Could not open $platformName. Link copied instead.',
+        );
+      }
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.bgSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.borderMuted,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Share update',
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 16,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  post.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 12,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _ShareOptionTile(
+                  icon: Icons.copy_all_rounded,
+                  title: 'Copy link',
+                  subtitle: webLink,
+                  onTap: copyLink,
+                ),
+                _ShareOptionTile(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  title: 'Share to WhatsApp',
+                  subtitle: 'Open WhatsApp with update link',
+                  onTap: () => openExternal(
+                    Uri.parse(
+                      'https://wa.me/?text=${Uri.encodeComponent(shareText)}',
+                    ),
+                    'WhatsApp',
+                  ),
+                ),
+                _ShareOptionTile(
+                  icon: Icons.send_outlined,
+                  title: 'Share to Telegram',
+                  subtitle: 'Open Telegram with update link',
+                  onTap: () => openExternal(
+                    Uri.parse(
+                      'https://t.me/share/url?url=${Uri.encodeComponent(webLink)}&text=${Uri.encodeComponent(post.title)}',
+                    ),
+                    'Telegram',
+                  ),
+                ),
+                _ShareOptionTile(
+                  icon: Icons.link_rounded,
+                  title: 'Copy deep link',
+                  subtitle: deepLink,
+                  onTap: () async {
+                    await Clipboard.setData(ClipboardData(text: deepLink));
+                    if (!context.mounted) return;
+                    Navigator.of(context).pop();
+                    AppSnackbar.showSuccess(context, 'Deep link copied');
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _handleBookmarkTap() async {
@@ -131,6 +275,12 @@ class _FeedCardState extends State<FeedCard> {
       context,
       next ? 'Update bookmarked' : 'Bookmark removed',
     );
+  }
+
+  @override
+  void dispose() {
+    _likePulseController.dispose();
+    super.dispose();
   }
 
   Widget _buildListLayout({
@@ -305,12 +455,42 @@ class _FeedCardState extends State<FeedCard> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _ActionRow(
-                        onLikeTap: () => _handleLikeTap(context),
-                        onCommentTap: () => _handleCommentTap(context),
-                        onShareTap: () => _handleShareTap(context),
-                        onBookmarkTap: _handleBookmarkTap,
-                        isBookmarked: _isBookmarked,
+                      GestureDetector(
+                        onTap: () {},
+                        behavior: HitTestBehavior.translucent,
+                        child: _ActionRow(
+                          likeIcon: ScaleTransition(
+                            scale: TweenSequence<double>([
+                              TweenSequenceItem(
+                                tween: Tween<double>(begin: 1, end: 1.28),
+                                weight: 45,
+                              ),
+                              TweenSequenceItem(
+                                tween: Tween<double>(begin: 1.28, end: 1),
+                                weight: 55,
+                              ),
+                            ]).animate(
+                              CurvedAnimation(
+                                parent: _likePulseController,
+                                curve: Curves.easeOutBack,
+                              ),
+                            ),
+                            child: Icon(
+                              _isLiked
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              size: 21,
+                              color: _isLiked
+                                  ? AppColors.error500
+                                  : AppColors.textMuted,
+                            ),
+                          ),
+                          onLikeTap: () => _handleLikeTap(context),
+                          onCommentTap: () => _handleCommentTap(context),
+                          onShareTap: () => _handleShareTap(context),
+                          onBookmarkTap: _handleBookmarkTap,
+                          isBookmarked: _isBookmarked,
+                        ),
                       ),
                     ],
                   ),
@@ -553,12 +733,41 @@ class _FeedCardState extends State<FeedCard> {
                 const SizedBox(height: 14),
 
                 // ── Action row: like · comment · share | bookmark ──
-                _ActionRow(
-                  onLikeTap: () => _handleLikeTap(context),
-                  onCommentTap: () => _handleCommentTap(context),
-                  onShareTap: () => _handleShareTap(context),
-                  onBookmarkTap: _handleBookmarkTap,
-                  isBookmarked: _isBookmarked,
+                GestureDetector(
+                  onTap: () {},
+                  behavior: HitTestBehavior.translucent,
+                  child: _ActionRow(
+                    likeIcon: ScaleTransition(
+                      scale: TweenSequence<double>([
+                        TweenSequenceItem(
+                          tween: Tween<double>(begin: 1, end: 1.28),
+                          weight: 45,
+                        ),
+                        TweenSequenceItem(
+                          tween: Tween<double>(begin: 1.28, end: 1),
+                          weight: 55,
+                        ),
+                      ]).animate(
+                        CurvedAnimation(
+                          parent: _likePulseController,
+                          curve: Curves.easeOutBack,
+                        ),
+                      ),
+                      child: Icon(
+                        _isLiked
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        size: 21,
+                        color:
+                            _isLiked ? AppColors.error500 : AppColors.textMuted,
+                      ),
+                    ),
+                    onLikeTap: () => _handleLikeTap(context),
+                    onCommentTap: () => _handleCommentTap(context),
+                    onShareTap: () => _handleShareTap(context),
+                    onBookmarkTap: _handleBookmarkTap,
+                    isBookmarked: _isBookmarked,
+                  ),
                 ),
               ],
             ),
@@ -780,6 +989,7 @@ class _TagPill extends StatelessWidget {
 
 class _ActionRow extends StatelessWidget {
   const _ActionRow({
+    required this.likeIcon,
     required this.onLikeTap,
     required this.onCommentTap,
     required this.onShareTap,
@@ -787,6 +997,7 @@ class _ActionRow extends StatelessWidget {
     required this.isBookmarked,
   });
 
+  final Widget likeIcon;
   final VoidCallback onLikeTap;
   final VoidCallback onCommentTap;
   final VoidCallback onShareTap;
@@ -796,36 +1007,37 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.favorite_border_rounded,
-            color: AppColors.error500,
-            onTap: onLikeTap,
-          ),
+        _ActionButton(
+          icon: likeIcon,
+          onTap: onLikeTap,
         ),
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.chat_bubble_outline_rounded,
+        _ActionButton(
+          icon: Icon(
+            Icons.chat_bubble_outline_rounded,
+            size: 21,
             color: AppColors.primary400,
-            onTap: onCommentTap,
           ),
+          onTap: onCommentTap,
         ),
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.share_outlined,
+        _ActionButton(
+          icon: Icon(
+            Icons.share_outlined,
+            size: 21,
             color: AppColors.teal400,
-            onTap: onShareTap,
           ),
+          onTap: onShareTap,
         ),
-        Expanded(
-          child: _ActionButton(
-            icon: isBookmarked
+        _ActionButton(
+          icon: Icon(
+            isBookmarked
                 ? Icons.bookmark_rounded
                 : Icons.bookmark_border_rounded,
+            size: 21,
             color: isBookmarked ? AppColors.primary400 : AppColors.textMuted,
-            onTap: onBookmarkTap,
           ),
+          onTap: onBookmarkTap,
         ),
       ],
     );
@@ -836,11 +1048,36 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.onTap,
-    required this.color,
+  });
+
+  final Widget icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 42,
+        height: 26,
+        child: Center(child: icon),
+      ),
+    );
+  }
+}
+
+class _ShareOptionTile extends StatelessWidget {
+  const _ShareOptionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
   });
 
   final IconData icon;
-  final Color color;
+  final String title;
+  final String subtitle;
   final VoidCallback onTap;
 
   @override
@@ -849,9 +1086,38 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Center(
-          child: Icon(icon, size: 20, color: color),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.textSecondary, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTypography.custom(
+                      color: AppColors.textPrimary,
+                      size: 13,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.custom(
+                      color: AppColors.textFaint,
+                      size: 11,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

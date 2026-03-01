@@ -1,4 +1,3 @@
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -18,32 +17,27 @@ class CommunityAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: color),
-        if (value.isNotEmpty) ...[
-          const SizedBox(width: 6),
-          Text(
-            value,
-            style: AppTypography.custom(
-              color: color,
-              size: 12,
-              weight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ],
-    );
-
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Align(
-          alignment: Alignment.center,
-          child: content,
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            if (value.isNotEmpty) ...[
+              const SizedBox(width: 6),
+              Text(
+                value,
+                style: AppTypography.custom(
+                  color: color,
+                  size: 12,
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

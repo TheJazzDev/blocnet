@@ -9,6 +9,7 @@ import 'package:blocnet/features/community/presentation/pages/community_screen.d
 import 'package:blocnet/features/profile/presentation/pages/profile_screen.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_screen.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/connectivity_store.dart';
 import 'package:blocnet/services/mining_store.dart';
 import 'package:blocnet/services/notifications_store.dart';
 import 'package:flutter/material.dart';
@@ -195,6 +196,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   onNavTap: _onUserNavTap,
                 ),
         ),
+        const _OfflineStatusBanner(),
         if (_isSwitchingSpace) const _SpaceSwitchOverlay(),
       ],
     );
@@ -422,6 +424,52 @@ class _TabMeta {
   final bool showSearch;
   final bool showFilter;
   final bool showNotificationBell;
+}
+
+class _OfflineStatusBanner extends StatelessWidget {
+  const _OfflineStatusBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final isOffline = context.watch<ConnectivityStore>().isOffline;
+    if (!isOffline) {
+      return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      top: MediaQuery.paddingOf(context).top + 10,
+      left: 16,
+      right: 16,
+      child: IgnorePointer(
+        ignoring: true,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.warning500,
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.24),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              'You are offline. Showing cached data.',
+              style: AppTypography.custom(
+                color: Colors.black,
+                size: 12,
+                weight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ReferralPromptSheet extends StatefulWidget {

@@ -2,9 +2,11 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/project_proposal_model.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/feed_view_mode_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
@@ -85,10 +87,10 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
 
     return Consumer2<ProjectsStore, UpdatesStore>(
       builder: (context, projectsStore, updatesStore, _) {
+        final viewMode = context.watch<FeedViewModeStore>().mode;
         final userId = auth.userId ?? '';
-        final owned = projectsStore.projects
-            .where((p) => p.adminId == userId)
-            .toList();
+        final owned =
+            projectsStore.projects.where((p) => p.adminId == userId).toList();
 
         final contributedIds = updatesStore.updates
             .where((u) => u.adminId == userId)
@@ -126,9 +128,11 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                           projectsStore.lastError!.isNotEmpty) ...[
                         Text(
                           projectsStore.lastError!,
-                          style: AppTypography.custom(color: AppColors.error500,
+                          style: AppTypography.custom(
+                            color: AppColors.error500,
                             size: 12,
-                            weight: FontWeight.w400,),
+                            weight: FontWeight.w400,
+                          ),
                         ),
                         const SizedBox(height: 10),
                       ],
@@ -137,14 +141,14 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                       if (owned.isEmpty)
                         _EmptyHint('No approved gems created by you yet.')
                       else
-                        ...owned.map(_buildProjectTile),
+                        ..._buildProjectRows(owned, viewMode),
                       const SizedBox(height: 20),
                       _SectionLabel('Gems you contribute to'),
                       const SizedBox(height: 8),
                       if (contributed.isEmpty)
                         _EmptyHint('No contribution gems yet.')
                       else
-                        ...contributed.map(_buildProjectTile),
+                        ..._buildProjectRows(contributed, viewMode),
                       const SizedBox(height: 20),
                       _SectionLabel('Submitted for Review'),
                       const SizedBox(height: 8),
@@ -172,7 +176,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                       ] else if (_proposals.isEmpty)
                         _EmptyHint('No submitted project proposals yet.')
                       else
-                        ..._proposals.map(_buildProposalTile),
+                        ..._buildProposalRows(_proposals, viewMode),
                     ],
                   ),
                 ),
@@ -181,9 +185,54 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     );
   }
 
+  List<Widget> _buildProjectRows(
+    List<Project> projects,
+    FeedViewMode viewMode,
+  ) {
+    final rows = <Widget>[];
+    for (var index = 0; index < projects.length; index++) {
+      rows.add(
+        viewMode == FeedViewMode.card
+            ? _buildProjectTile(projects[index])
+            : _buildProjectListTile(projects[index]),
+      );
+      if (viewMode == FeedViewMode.list && index < projects.length - 1) {
+        rows.add(
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+        );
+      }
+    }
+    return rows;
+  }
+
+  List<Widget> _buildProposalRows(
+    List<ProjectProposalModel> proposals,
+    FeedViewMode viewMode,
+  ) {
+    final rows = <Widget>[];
+    for (var index = 0; index < proposals.length; index++) {
+      rows.add(
+        viewMode == FeedViewMode.card
+            ? _buildProposalTile(proposals[index])
+            : _buildProposalListTile(proposals[index]),
+      );
+      if (viewMode == FeedViewMode.list && index < proposals.length - 1) {
+        rows.add(
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+        );
+      }
+    }
+    return rows;
+  }
+
   PreferredSizeWidget _buildAppBar(
-    BuildContext context,
-    {
+    BuildContext context, {
     required bool showAdd,
   }) {
     return CustomAppBar(
@@ -196,16 +245,13 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
           GestureDetector(
             onTap: () =>
                 Navigator.of(context).pushNamed(AppRoutes.submitProject),
+            behavior: HitTestBehavior.opaque,
             child: Container(
               margin: const EdgeInsets.only(right: 16),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.borderSubtle, width: 1),
-              ),
-              child: Icon(Icons.add, size: 18, color: AppColors.textMuted),
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              child: Icon(Icons.add, size: 22, color: AppColors.textSecondary),
             ),
           ),
       ],
@@ -352,6 +398,51 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     );
   }
 
+  Widget _buildProjectListTile(Project project) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      child: Row(
+        children: [
+          Icon(
+            Icons.layers_outlined,
+            size: 18,
+            color: AppColors.primary400,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  project.name,
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 14,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${project.primaryTag.name} • ${project.followersCount} followers',
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 11,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: AppColors.textFaint,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProposalTile(ProjectProposalModel proposal) {
     final reviewNote = proposal.reviewNote?.trim();
     final hasReviewNote = reviewNote != null && reviewNote.isNotEmpty;
@@ -387,12 +478,12 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
               ),
               const SizedBox(width: 10),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.35)),
+                  border:
+                      Border.all(color: statusColor.withValues(alpha: 0.35)),
                 ),
                 child: Text(
                   proposal.statusLabel,
@@ -451,6 +542,67 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     );
   }
 
+  Widget _buildProposalListTile(ProjectProposalModel proposal) {
+    final statusColor = switch (proposal.status.toLowerCase()) {
+      'approved' => AppColors.successColor,
+      'rejected' => AppColors.error500,
+      _ => AppColors.warning500,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      child: Row(
+        children: [
+          Icon(
+            Icons.hourglass_top_rounded,
+            size: 18,
+            color: statusColor,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  proposal.name,
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: 14,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Submitted ${_formatDate(proposal.createdAt)}',
+                  style: AppTypography.custom(
+                    color: AppColors.textMuted,
+                    size: 11,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: statusColor.withValues(alpha: 0.35)),
+            ),
+            child: Text(
+              proposal.statusLabel,
+              style: AppTypography.custom(
+                color: statusColor,
+                size: 10,
+                weight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatDate(DateTime date) {
     const months = <String>[
       'Jan',
@@ -501,9 +653,11 @@ class _EmptyHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
         message,
-        style: AppTypography.custom(color: AppColors.textFaint,
+        style: AppTypography.custom(
+          color: AppColors.textFaint,
           size: 13,
-          weight: FontWeight.w400,),
+          weight: FontWeight.w400,
+        ),
       ),
     );
   }
@@ -517,9 +671,11 @@ class _AccessDenied extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       message,
-      style: AppTypography.custom(color: AppColors.textMuted,
+      style: AppTypography.custom(
+        color: AppColors.textMuted,
         size: 14,
-        weight: FontWeight.w400,),
+        weight: FontWeight.w400,
+      ),
     );
   }
 }

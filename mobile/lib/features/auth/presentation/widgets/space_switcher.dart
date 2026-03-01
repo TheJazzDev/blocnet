@@ -9,7 +9,12 @@ import 'package:provider/provider.dart';
 ///
 /// Only renders when [AuthStore.hasHunterSpace] is true.
 class SpaceSwitcher extends StatelessWidget {
-  const SpaceSwitcher({super.key});
+  const SpaceSwitcher({
+    super.key,
+    this.minimal = true,
+  });
+
+  final bool minimal;
 
   @override
   Widget build(BuildContext context) {
@@ -41,32 +46,32 @@ class SpaceSwitcher extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: accent.withValues(alpha: 0.38),
-                width: 1,
-              ),
-            ),
-            child: Center(
-              child: auth.isSwitchingSpace
-                  ? SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: accent,
-                      ),
-                    )
-                  : Icon(
-                      icon,
-                      size: 18,
+            width: minimal ? 34 : 38,
+            height: minimal ? 34 : 38,
+            decoration: minimal
+                ? null
+                : BoxDecoration(
+                    color: accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: accent.withValues(alpha: 0.38),
+                      width: 1,
+                    ),
+                  ),
+            child: auth.isSwitchingSpace
+                ? SizedBox(
+                    width: minimal ? 18 : 14,
+                    height: minimal ? 18 : 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
                       color: accent,
                     ),
-            ),
+                  )
+                : Icon(
+                    icon,
+                    size: minimal ? 22 : 18,
+                    color: accent,
+                  ),
           ),
         ),
       ),

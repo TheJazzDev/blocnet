@@ -1,0 +1,19 @@
+# Production runtime dependencies for BEE ML Service
+# Core web framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.10.0
+python-dotenv==1.0.1
+
+# HTTP client
+httpx==0.27.2
+
+# LLM providers
+groq==0.11.0
+google-generativeai==0.8.3
+
+# Optional: Embeddings (heavy - comment out if not using local embeddings)
+# sentence-transformers==3.3.1
+
+# Optional: Redis cache backend
+redis==5.2.0

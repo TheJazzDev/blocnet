@@ -1,15 +1,55 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/projects/data/models/project_proposal_model.dart';
+import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
-/// Horizontal scrollable row of the hunter's managed project cards.
-class ManagedProjectsRow extends StatelessWidget {
+/// Horizontal scrollable row of the hunter's managed + pending project cards.
+class ManagedProjectsRow extends StatefulWidget {
   const ManagedProjectsRow({super.key});
+
+  @override
+  State<ManagedProjectsRow> createState() => _ManagedProjectsRowState();
+}
+
+class _ManagedProjectsRowState extends State<ManagedProjectsRow> {
+  final ProjectProposalsApiRepository _proposalRepository =
+      ProjectProposalsApiRepository();
+  List<ProjectProposalModel> _pendingProposals = const <ProjectProposalModel>[];
+  bool _isLoadingPendingProposals = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadPendingProposals();
+    });
+  }
+
+  Future<void> _loadPendingProposals() async {
+    setState(() => _isLoadingPendingProposals = true);
+    try {
+      final rows = await _proposalRepository.listMine(
+        status: 'pending',
+        limit: 20,
+      );
+      if (!mounted) return;
+      setState(() => _pendingProposals = rows);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _pendingProposals = const <ProjectProposalModel>[]);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingPendingProposals = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,11 +68,32 @@ class ManagedProjectsRow extends StatelessWidget {
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    if (managed.isEmpty) {
+    final items = <_ManagedItem>[
+      ...managed.map(_ManagedItem.fromProject),
+      ..._pendingProposals.map(_ManagedItem.fromProposal),
+    ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    if (items.isEmpty && _isLoadingPendingProposals) {
+      return SizedBox(
+        height: 130,
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              color: AppColors.primary500,
+              strokeWidth: 2,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (items.isEmpty) {
       return _EmptyManagedProjects();
     }
 
-    final visibleProjects = managed.take(5).toList(growable: false);
+    final visibleProjects = items.take(6).toList(growable: false);
 
     return SizedBox(
       height: 160,
@@ -41,22 +102,75 @@ class ManagedProjectsRow extends StatelessWidget {
         itemCount: visibleProjects.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, i) =>
-            _ManagedProjectCard(project: visibleProjects[i]),
+            _ManagedProjectCard(item: visibleProjects[i]),
       ),
     );
   }
 }
 
-class _ManagedProjectCard extends StatelessWidget {
-  const _ManagedProjectCard({required this.project});
+class _ManagedItem {
+  const _ManagedItem({
+    required this.id,
+    required this.name,
+    required this.status,
+    required this.createdAt,
+    required this.isPendingProposal,
+  });
 
-  final Project project;
+  factory _ManagedItem.fromProject(Project project) {
+    return _ManagedItem(
+      id: project.id,
+      name: project.name,
+      status: _resolveProjectStatus(project.status),
+      createdAt: project.createdAt,
+      isPendingProposal: false,
+    );
+  }
+
+  factory _ManagedItem.fromProposal(ProjectProposalModel proposal) {
+    return _ManagedItem(
+      id: proposal.id,
+      name: proposal.name,
+      status: proposal.statusLabel,
+      createdAt: proposal.createdAt,
+      isPendingProposal: true,
+    );
+  }
+
+  final String id;
+  final String name;
+  final String status;
+  final DateTime createdAt;
+  final bool isPendingProposal;
+
+  static String _resolveProjectStatus(String rawStatus) {
+    final normalized = rawStatus.trim().toLowerCase();
+    switch (normalized) {
+      case 'active':
+        return 'Active';
+      case 'paused':
+        return 'Paused';
+      case 'hidden':
+        return 'Hidden';
+      case 'archived':
+        return 'Archived';
+      case 'pending':
+        return 'Pending';
+      default:
+        return 'Active';
+    }
+  }
+}
+
+class _ManagedProjectCard extends StatelessWidget {
+  const _ManagedProjectCard({required this.item});
+
+  final _ManagedItem item;
 
   @override
   Widget build(BuildContext context) {
-    final name = project.name.trim().isNotEmpty ? project.name : 'Unnamed';
+    final name = item.name.trim().isNotEmpty ? item.name : 'Unnamed';
     final ticker = _deriveTicker(name);
-    final status = _resolveStatus(project);
 
     return Container(
       width: 160,
@@ -73,7 +187,7 @@ class _ManagedProjectCard extends StatelessWidget {
             children: [
               _ProjectIcon(name: name),
               const Spacer(),
-              _StatusChip(status: status),
+              _StatusChip(status: item.status),
             ],
           ),
           const SizedBox(height: 10),
@@ -99,7 +213,10 @@ class _ManagedProjectCard extends StatelessWidget {
             ),
           ],
           const Spacer(),
-          _ActionButton(status: status),
+          _ActionButton(
+            status: item.status,
+            isPendingProposal: item.isPendingProposal,
+          ),
         ],
       ),
     );
@@ -112,7 +229,6 @@ class _ManagedProjectCard extends StatelessWidget {
         .toList();
     if (words.isEmpty) return '';
 
-    // Prefer acronym for multi-word names, otherwise first 4 letters.
     if (words.length > 1) {
       final acronym = words.map((w) => w[0]).join().toUpperCase();
       return acronym.length > 5 ? acronym.substring(0, 5) : acronym;
@@ -121,22 +237,6 @@ class _ManagedProjectCard extends StatelessWidget {
     final compact = words.first.replaceAll(RegExp(r'[^A-Za-z0-9]'), '');
     if (compact.isEmpty) return '';
     return compact.toUpperCase().substring(0, compact.length.clamp(0, 4));
-  }
-
-  String _resolveStatus(Project project) {
-    final normalized = project.status.trim().toLowerCase();
-    switch (normalized) {
-      case 'active':
-        return 'Active';
-      case 'paused':
-        return 'Paused';
-      case 'hidden':
-        return 'Hidden';
-      case 'archived':
-        return 'Archived';
-      default:
-        return 'Active';
-    }
   }
 }
 
@@ -182,6 +282,7 @@ class _StatusChip extends StatelessWidget {
     final color = switch (status) {
       'Active' => AppColors.successColor,
       'Paused' => AppColors.warning500,
+      'Pending' => AppColors.warning500,
       'Hidden' => AppColors.textMuted,
       'Archived' => AppColors.textMuted,
       _ => AppColors.textMuted,
@@ -206,14 +307,19 @@ class _StatusChip extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.status});
+  const _ActionButton({
+    required this.status,
+    required this.isPendingProposal,
+  });
 
   final String status;
+  final bool isPendingProposal;
 
   @override
   Widget build(BuildContext context) {
     final label = switch (status) {
       'Active' => 'Manage',
+      'Pending' => 'Pending',
       'Paused' => 'Review',
       'Hidden' => 'View',
       'Archived' => 'View',
@@ -234,7 +340,7 @@ class _ActionButton extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Text(
-            label,
+            isPendingProposal ? 'Open' : label,
             style: AppTypography.custom(
               color: AppColors.primary400,
               size: 11,
@@ -300,34 +406,8 @@ class _EmptyManagedProjects extends StatelessWidget {
                       'View Submissions',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 10,
+                        size: 11,
                         weight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.submitProject),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 9),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary500.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.primary500.withValues(alpha: 0.35),
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Submit Gem',
-                      style: AppTypography.custom(
-                        color: AppColors.primary400,
-                        size: 10,
-                        weight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -346,14 +426,18 @@ bool _isCurrentHunterProject({
   required String userId,
   required String username,
 }) {
-  if (userId.isNotEmpty &&
-      (project.adminId == userId || project.admin?.id == userId)) {
+  final normalizedUserId = userId.trim();
+  final normalizedUsername = _normalizeIdentity(username);
+
+  if (normalizedUserId.isNotEmpty &&
+      (project.adminId == normalizedUserId ||
+          project.admin?.id == normalizedUserId)) {
     return true;
   }
 
   final projectUsername = project.admin?.username ?? project.admin?.name ?? '';
-  return _normalizeIdentity(projectUsername) == _normalizeIdentity(username) &&
-      _normalizeIdentity(username).isNotEmpty;
+  return _normalizeIdentity(projectUsername) == normalizedUsername &&
+      normalizedUsername.isNotEmpty;
 }
 
 String _normalizeIdentity(String value) {

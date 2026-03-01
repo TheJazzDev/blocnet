@@ -75,7 +75,6 @@ class UpdatesStore extends ChangeNotifier {
     } catch (error) {
       _lastError = error.toString();
       debugPrint('Failed to fetch updates from API: $error');
-      _updates.clear();
     } finally {
       _isFetching = false;
       notifyListeners();

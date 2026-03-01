@@ -119,7 +119,6 @@ class ProjectsStore extends ChangeNotifier {
     } catch (error) {
       _lastError = error.toString();
       debugPrint('Failed to fetch projects from API: $error');
-      _projects.clear();
     } finally {
       _isFetching = false;
       notifyListeners();

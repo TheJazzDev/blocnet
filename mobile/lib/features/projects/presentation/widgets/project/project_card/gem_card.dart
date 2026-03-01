@@ -218,33 +218,39 @@ class GemCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             GestureDetector(
-              onTap: isLoading ? null : onFollowToggle,
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 150),
-                opacity: isLoading ? 0.6 : 1,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isFollowed
-                        ? AppColors.primary500.withValues(alpha: 0.18)
-                        : AppColors.bgElevated,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: isFollowed
-                          ? AppColors.primary500.withValues(alpha: 0.45)
-                          : AppColors.borderSubtle,
+              onTap: () {},
+              behavior: HitTestBehavior.translucent,
+              child: GestureDetector(
+                onTap: isLoading ? null : onFollowToggle,
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 150),
+                  opacity: isLoading ? 0.6 : 1,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
                     ),
-                  ),
-                  child: Text(
-                    isFollowed ? 'Following' : 'Follow',
-                    style: AppTypography.custom(
+                    decoration: BoxDecoration(
                       color: isFollowed
-                          ? AppColors.primary400
-                          : AppColors.textFaint,
-                      size: 11,
-                      weight: FontWeight.w700,
+                          ? AppColors.primary500.withValues(alpha: 0.18)
+                          : AppColors.bgElevated,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: isFollowed
+                            ? AppColors.primary500.withValues(alpha: 0.45)
+                            : AppColors.borderSubtle,
+                      ),
+                    ),
+                    child: Text(
+                      isFollowed ? 'Following' : 'Follow',
+                      style: AppTypography.custom(
+                        color: isFollowed
+                            ? AppColors.primary400
+                            : AppColors.textFaint,
+                        size: 11,
+                        weight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -581,130 +587,134 @@ class GemCard extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   // ── Action row ──
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (onManageTap != null) ...[
-                        GestureDetector(
-                          onTap: onManageTap,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.bgElevated,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.borderSubtle,
+                  GestureDetector(
+                    onTap: () {},
+                    behavior: HitTestBehavior.translucent,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (onManageTap != null) ...[
+                          GestureDetector(
+                            onTap: onManageTap,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
                               ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.tune_rounded,
-                                  size: 15,
-                                  color: AppColors.textSecondary,
+                              decoration: BoxDecoration(
+                                color: AppColors.bgElevated,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.borderSubtle,
                                 ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Manage',
-                                  style: AppTypography.custom(
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.tune_rounded,
+                                    size: 15,
                                     color: AppColors.textSecondary,
-                                    size: 12,
-                                    weight: FontWeight.w700,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    'Manage',
+                                    style: AppTypography.custom(
+                                      color: AppColors.textSecondary,
+                                      size: 12,
+                                      weight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      if (isFollowed && onPreferencesTap != null) ...[
+                          const SizedBox(width: 10),
+                        ],
+                        if (isFollowed && onPreferencesTap != null) ...[
+                          GestureDetector(
+                            onTap: onPreferencesTap,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color:
+                                    AppColors.primary500.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.primary500
+                                      .withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.notifications_active_outlined,
+                                size: 16,
+                                color: AppColors.primary400,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
                         GestureDetector(
-                          onTap: onPreferencesTap,
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color:
-                                  AppColors.primary500.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.primary500
-                                    .withValues(alpha: 0.25),
+                          onTap: isLoading ? null : onFollowToggle,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 150),
+                            opacity: isLoading ? 0.6 : 1,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
                               ),
-                            ),
-                            child: Icon(
-                              Icons.notifications_active_outlined,
-                              size: 16,
-                              color: AppColors.primary400,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      GestureDetector(
-                        onTap: isLoading ? null : onFollowToggle,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 150),
-                          opacity: isLoading ? 0.6 : 1,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: isFollowed
-                                  ? LinearGradient(
-                                      colors: [
-                                        AppColors.primary500
-                                            .withValues(alpha: 0.2),
-                                        AppColors.primary500
-                                            .withValues(alpha: 0.15),
-                                      ],
-                                    )
-                                  : null,
-                              color: isFollowed ? null : AppColors.bgElevated,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isFollowed
-                                    ? AppColors.primary500
-                                        .withValues(alpha: 0.5)
-                                    : AppColors.borderSubtle,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isFollowed
-                                      ? Icons.favorite_rounded
-                                      : Icons.favorite_border_rounded,
-                                  size: 16,
+                              decoration: BoxDecoration(
+                                gradient: isFollowed
+                                    ? LinearGradient(
+                                        colors: [
+                                          AppColors.primary500
+                                              .withValues(alpha: 0.2),
+                                          AppColors.primary500
+                                              .withValues(alpha: 0.15),
+                                        ],
+                                      )
+                                    : null,
+                                color: isFollowed ? null : AppColors.bgElevated,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
                                   color: isFollowed
-                                      ? AppColors.primary400
-                                      : AppColors.textSecondary,
+                                      ? AppColors.primary500
+                                          .withValues(alpha: 0.5)
+                                      : AppColors.borderSubtle,
+                                  width: 1.5,
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isFollowed ? 'Following' : 'Follow',
-                                  style: AppTypography.custom(
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isFollowed
+                                        ? Icons.favorite_rounded
+                                        : Icons.favorite_border_rounded,
+                                    size: 16,
                                     color: isFollowed
                                         ? AppColors.primary400
                                         : AppColors.textSecondary,
-                                    size: 12,
-                                    weight: FontWeight.w700,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isFollowed ? 'Following' : 'Follow',
+                                    style: AppTypography.custom(
+                                      color: isFollowed
+                                          ? AppColors.primary400
+                                          : AppColors.textSecondary,
+                                      size: 12,
+                                      weight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),

@@ -26,6 +26,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showNotificationBell = true,
     this.showProfileShortcut = false,
     this.showProfileAvatarLeading = false,
+    this.minimalActionIcons = true,
     this.actions = const [],
   });
 
@@ -41,6 +42,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showNotificationBell;
   final bool showProfileShortcut;
   final bool showProfileAvatarLeading;
+  final bool minimalActionIcons;
   final List<Widget> actions;
 
   @override
@@ -71,6 +73,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     child: showBack
                         ? _AppBarIconButton(
                             icon: Icons.arrow_back_rounded,
+                            minimal: false,
                             onTap: () {
                               if (navigator.canPop()) {
                                 navigator.pop();
@@ -110,6 +113,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       const SizedBox(width: 6),
                       _AppBarIconButton(
                         icon: Icons.person_outline_rounded,
+                        minimal: minimalActionIcons,
                         onTap: () {
                           Navigator.of(context).pushNamed(AppRoutes.profile);
                         },
@@ -119,6 +123,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       const SizedBox(width: 6),
                       _AppBarIconButton(
                         icon: Icons.tune_rounded,
+                        minimal: minimalActionIcons,
                         onTap: () {
                           showModalBottomSheet(
                             context: context,
@@ -134,6 +139,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       const SizedBox(width: 6),
                       _AppBarIconButton(
                         icon: Icons.search_rounded,
+                        minimal: minimalActionIcons,
                         onTap: () {
                           showSearchDialog(context);
                         },
@@ -141,11 +147,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ],
                     if (showNotificationBell) ...[
                       const SizedBox(width: 6),
-                      _NotificationBellButton(),
+                      _NotificationBellButton(minimal: minimalActionIcons),
                     ],
                     if (showSpaceSwitcher) ...[
                       const SizedBox(width: 6),
-                      const SpaceSwitcher(),
+                      SpaceSwitcher(minimal: minimalActionIcons),
                     ],
                   ],
                 ),
@@ -193,25 +199,42 @@ Future<void> _openSearch(BuildContext context) async {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AppBarIconButton extends StatelessWidget {
-  const _AppBarIconButton({required this.icon, required this.onTap});
+  const _AppBarIconButton({
+    required this.icon,
+    required this.onTap,
+    this.minimal = false,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final bool minimal;
 
   @override
   Widget build(BuildContext context) {
+    final iconWidget = Icon(
+      icon,
+      color: AppColors.textSecondary,
+      size: minimal ? 21 : 18,
+    );
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderSubtle, width: 1),
-        ),
-        child: Icon(icon, color: AppColors.textSecondary, size: 18),
-      ),
+      behavior: HitTestBehavior.opaque,
+      child: minimal
+          ? SizedBox(
+              width: 34,
+              height: 34,
+              child: Center(child: iconWidget),
+            )
+          : Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderSubtle, width: 1),
+              ),
+              child: iconWidget,
+            ),
     );
   }
 }
@@ -290,6 +313,10 @@ class _ProfileAvatarButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _NotificationBellButton extends StatefulWidget {
+  const _NotificationBellButton({this.minimal = false});
+
+  final bool minimal;
+
   @override
   State<_NotificationBellButton> createState() =>
       _NotificationBellButtonState();
@@ -352,22 +379,38 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
         children: [
           AnimatedBuilder(
             animation: _shakeController,
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderSubtle, width: 1),
-              ),
-              child: Icon(
-                unreadCount > 0
-                    ? Icons.notifications_rounded
-                    : Icons.notifications_outlined,
-                color: unreadCount > 0 ? accent : AppColors.textSecondary,
-                size: 18,
-              ),
-            ),
+            child: widget.minimal
+                ? SizedBox(
+                    width: 34,
+                    height: 34,
+                    child: Center(
+                      child: Icon(
+                        unreadCount > 0
+                            ? Icons.notifications_rounded
+                            : Icons.notifications_outlined,
+                        color:
+                            unreadCount > 0 ? accent : AppColors.textSecondary,
+                        size: 22,
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.bgElevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border:
+                          Border.all(color: AppColors.borderSubtle, width: 1),
+                    ),
+                    child: Icon(
+                      unreadCount > 0
+                          ? Icons.notifications_rounded
+                          : Icons.notifications_outlined,
+                      color: unreadCount > 0 ? accent : AppColors.textSecondary,
+                      size: 18,
+                    ),
+                  ),
             builder: (context, child) {
               final progress = _shakeController.value;
               final decay = 1 - progress;
@@ -384,12 +427,12 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
           ),
           if (unreadCount > 0)
             Positioned(
-              top: -3,
-              right: -3,
+              top: widget.minimal ? -2 : -3,
+              right: widget.minimal ? -3 : -3,
               child: Container(
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(8),
@@ -400,7 +443,7 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
                     unreadCount > 99 ? '99+' : unreadCount.toString(),
                     style: AppTypography.custom(
                       color: Colors.white,
-                      size: 8,
+                      size: 9,
                       weight: FontWeight.w700,
                       height: 1.0,
                     ),

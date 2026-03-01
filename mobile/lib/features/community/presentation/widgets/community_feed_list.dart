@@ -74,6 +74,13 @@ class CommunityFeedList extends StatelessWidget {
             AppRoutes.communityDiscussion,
             arguments: posts[index].id,
           ),
+          onCommentTap: () => Navigator.of(context).pushNamed(
+            AppRoutes.communityDiscussion,
+            arguments: {
+              'postId': posts[index].id,
+              'focusComposer': true,
+            },
+          ),
           onLike: () => onLike(posts[index].id),
           onBookmark: () => onBookmark(posts[index].id),
         ),
