@@ -6,6 +6,23 @@ import { randomUUID } from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 
+function formatUnknownError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.stack ?? error.message;
+  }
+  return String(error);
+}
+
+const bootstrapLogger = new Logger('Bootstrap');
+
+process.on('unhandledRejection', (reason) => {
+  bootstrapLogger.error(`Unhandled promise rejection: ${formatUnknownError(reason)}`);
+});
+
+process.on('uncaughtException', (error) => {
+  bootstrapLogger.error(`Uncaught exception: ${formatUnknownError(error)}`);
+});
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('RequestLogger');
@@ -70,12 +87,23 @@ async function bootstrap() {
   app.use((req: Request, res: Response, next: NextFunction) => {
     const startedAt = Date.now();
     const requestId = req.header('x-request-id') ?? randomUUID();
+    let finished = false;
 
     res.setHeader('x-request-id', requestId);
     res.on('finish', () => {
+      finished = true;
       const durationMs = Date.now() - startedAt;
       logger.log(
         `${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms requestId=${requestId}`,
+      );
+    });
+    res.on('close', () => {
+      if (finished) {
+        return;
+      }
+      const durationMs = Date.now() - startedAt;
+      logger.warn(
+        `${req.method} ${req.originalUrl} closed before response after ${durationMs}ms requestId=${requestId}`,
       );
     });
 
@@ -116,4 +144,7 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
 }
 
-void bootstrap();
+void bootstrap().catch((error) => {
+  bootstrapLogger.error(`Application bootstrap failed: ${formatUnknownError(error)}`);
+  process.exit(1);
+});

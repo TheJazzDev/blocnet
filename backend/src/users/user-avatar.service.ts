@@ -16,6 +16,7 @@ export type UploadedAvatarFile = {
 
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 const AVATAR_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365;
+const AVATAR_SIGNED_URL_TIMEOUT_MS = 4000;
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
   'image/jpeg',
   'image/jpg',
@@ -283,11 +284,45 @@ export class UserAvatarService {
       return null;
     }
 
-    const { data, error } = await this.supabaseStorageClient.storage
-      .from(this.supabaseAvatarsBucket)
-      .createSignedUrl(objectPath, AVATAR_SIGNED_URL_TTL_SECONDS);
+    let result:
+      | {
+          data: { signedUrl: string } | null;
+          error: { message: string } | null;
+        }
+      | null = null;
+    try {
+      result = await Promise.race([
+        this.supabaseStorageClient.storage
+          .from(this.supabaseAvatarsBucket)
+          .createSignedUrl(objectPath, AVATAR_SIGNED_URL_TTL_SECONDS),
+        new Promise<null>((resolve) =>
+          setTimeout(() => resolve(null), AVATAR_SIGNED_URL_TIMEOUT_MS),
+        ),
+      ]);
+    } catch (error) {
+      this.logger.warn(
+        `Avatar signed URL request failed for "${objectPath}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return null;
+    }
+
+    if (!result) {
+      this.logger.warn(
+        `Avatar signed URL request timed out after ${AVATAR_SIGNED_URL_TIMEOUT_MS}ms for "${objectPath}"`,
+      );
+      return null;
+    }
+
+    const { data, error } = result;
 
     if (error || !data?.signedUrl) {
+      if (error?.message) {
+        this.logger.warn(
+          `Avatar signed URL generation failed for "${objectPath}": ${error.message}`,
+        );
+      }
       return null;
     }
 

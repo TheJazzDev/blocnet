@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -19,8 +20,12 @@ type JwtPayload = {
   user_metadata?: Record<string, unknown>;
 };
 
+const JWKS_FETCH_TIMEOUT_MS = 8000;
+const JWT_VERIFY_TIMEOUT_MS = 8000;
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly jwks?: ReturnType<typeof createRemoteJWKSet>;
 
   constructor(
@@ -30,7 +35,9 @@ export class AuthService {
   ) {
     const jwksUrl = this.configService.get<string>('SUPABASE_JWKS_URL');
     if (jwksUrl) {
-      this.jwks = createRemoteJWKSet(new URL(jwksUrl));
+      this.jwks = createRemoteJWKSet(new URL(jwksUrl), {
+        timeoutDuration: JWKS_FETCH_TIMEOUT_MS,
+      });
     }
   }
 
@@ -115,8 +122,31 @@ export class AuthService {
       throw new UnauthorizedException('JWKS not configured');
     }
 
-    const { payload } = await jwtVerify(token, this.jwks);
-    return payload as JwtPayload;
+    try {
+      const verification = await Promise.race([
+        jwtVerify(token, this.jwks),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () =>
+              reject(
+                new UnauthorizedException('Token verification timed out'),
+              ),
+            JWT_VERIFY_TIMEOUT_MS,
+          ),
+        ),
+      ]);
+
+      return verification.payload as JwtPayload;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'unknown auth verification error';
+      this.logger.warn(`Token verification failed: ${message}`);
+
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 
   toRolePriority(roles: AppRole[]): number {
