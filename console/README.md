@@ -1,4 +1,4 @@
-# Blocnet Admin Shell
+# Blocnet Console Shell
 
 This is a lightweight Next.js shell for the future admin panel.
 
