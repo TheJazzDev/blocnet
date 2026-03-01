@@ -37,12 +37,19 @@ const TRANSFER_EVENT = parseAbiItem(
 );
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const TX_HASH_PATTERN = /^0x[a-fA-F0-9]{64}$/;
+const RATE_LIMIT_BACKOFF_BASE_MS = 30_000;
+const RATE_LIMIT_BACKOFF_MAX_MS = 10 * 60 * 1000;
 type WalletAddressRecord = {
   walletId: string;
   userId: string;
   address: string;
 };
 type WalletAddressMap = Map<string, WalletAddressRecord>;
+type NetworkRateLimitState = {
+  failures: number;
+  backoffUntilMs: number;
+  lastSkipLogAtMs: number;
+};
 
 type ManualReprocessNetworkResult = {
   asset: WalletAsset;
@@ -77,6 +84,10 @@ export class WalletDepositIndexerService
   private isTickRunning = false;
   private lastDbUnavailableLogAt = 0;
   private realtimeAutoDisableInProgress = false;
+  private readonly rateLimitStateByNetwork = new Map<
+    string,
+    NetworkRateLimitState
+  >();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -242,7 +253,26 @@ export class WalletDepositIndexerService
 
       this.initializeRealtimeSubscriptions(networks);
       for (const network of networks) {
-        await this.processNetwork(network);
+        const networkKey = this.scanCursorKey(network);
+        if (this.shouldSkipForRateLimitBackoff(networkKey)) {
+          continue;
+        }
+
+        try {
+          await this.processNetwork(network);
+          this.clearRateLimitBackoff(networkKey);
+        } catch (error) {
+          if (this.isRateLimitError(error)) {
+            this.applyRateLimitBackoff(networkKey, error);
+            continue;
+          }
+
+          this.logger.error(
+            `Deposit indexer network tick failed for ${networkKey}: ${this.errorMessage(
+              error,
+            )}`,
+          );
+        }
       }
     } catch (error) {
       this.logger.error(
@@ -1367,6 +1397,80 @@ export class WalletDepositIndexerService
       return error.message;
     }
     return String(error);
+  }
+
+  private shouldSkipForRateLimitBackoff(networkKey: string): boolean {
+    const state = this.rateLimitStateByNetwork.get(networkKey);
+    if (!state) {
+      return false;
+    }
+
+    const now = Date.now();
+    if (now >= state.backoffUntilMs) {
+      return false;
+    }
+
+    if (now - state.lastSkipLogAtMs >= 60_000) {
+      state.lastSkipLogAtMs = now;
+      const remainingMs = state.backoffUntilMs - now;
+      this.logger.warn(
+        `Skipping ${networkKey} deposit scan for ${Math.ceil(
+          remainingMs / 1000,
+        )}s due to RPC rate-limit backoff`,
+      );
+    }
+    return true;
+  }
+
+  private applyRateLimitBackoff(networkKey: string, error: unknown): void {
+    const now = Date.now();
+    const previous =
+      this.rateLimitStateByNetwork.get(networkKey) ??
+      ({
+        failures: 0,
+        backoffUntilMs: 0,
+        lastSkipLogAtMs: 0,
+      } satisfies NetworkRateLimitState);
+    const failures = Math.min(previous.failures + 1, 10);
+    const backoffMs = Math.min(
+      RATE_LIMIT_BACKOFF_BASE_MS * 2 ** (failures - 1),
+      RATE_LIMIT_BACKOFF_MAX_MS,
+    );
+
+    this.rateLimitStateByNetwork.set(networkKey, {
+      failures,
+      backoffUntilMs: now + backoffMs,
+      lastSkipLogAtMs: now,
+    });
+
+    this.logger.warn(
+      `Rate-limited while scanning ${networkKey}; backing off for ${Math.ceil(
+        backoffMs / 1000,
+      )}s (attempt=${failures}): ${this.errorMessage(error)}`,
+    );
+  }
+
+  private clearRateLimitBackoff(networkKey: string): void {
+    const state = this.rateLimitStateByNetwork.get(networkKey);
+    if (!state) {
+      return;
+    }
+
+    this.rateLimitStateByNetwork.delete(networkKey);
+    this.logger.log(`Recovered deposit scan rate limit state for ${networkKey}`);
+  }
+
+  private isRateLimitError(error: unknown): boolean {
+    const message = this.errorMessage(error).toLowerCase();
+    return (
+      message.includes('request exceeds defined limit') ||
+      message.includes('details: limit exceeded') ||
+      message.includes('limit exceeded') ||
+      message.includes('too many requests') ||
+      message.includes('rate limit') ||
+      message.includes('status: 429') ||
+      message.includes('http request failed')
+    );
   }
 
   private logDbUnavailableSkip() {

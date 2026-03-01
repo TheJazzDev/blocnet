@@ -6,7 +6,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Blocnet Admin',
+  title: 'Blocnet Console',
   description: 'Admin panel for Blocnet operations',
 };
 
