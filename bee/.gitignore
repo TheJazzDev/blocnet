@@ -43,8 +43,8 @@ htmlcov/
 # Logs
 *.log
 
-# Models (if downloading models locally)
-models/
+# Model artifacts (if downloading models locally)
+/models/
 *.bin
 *.onnx
 *.safetensors
