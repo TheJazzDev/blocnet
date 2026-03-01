@@ -12,14 +12,21 @@ class UpdateBookmarksStore {
       return cached;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final values = prefs.getStringList(_storageKey) ?? const <String>[];
-    final loaded = values
-        .map((value) => value.trim())
-        .where((value) => value.isNotEmpty)
-        .toSet();
-    _cachedIds = loaded;
-    return loaded;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final values = prefs.getStringList(_storageKey) ?? const <String>[];
+      final loaded = values
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toSet();
+      _cachedIds = loaded;
+      return loaded;
+    } catch (_) {
+      // Keep bookmarks functional in-memory if plugin storage is unavailable.
+      final loaded = <String>{};
+      _cachedIds = loaded;
+      return loaded;
+    }
   }
 
   static Future<bool> isBookmarked(String updateId) async {
@@ -48,8 +55,12 @@ class UpdateBookmarksStore {
       ids.remove(normalized);
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_storageKey, ids.toList(growable: false));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_storageKey, ids.toList(growable: false));
+    } catch (_) {
+      // Ignore persistence failures and keep current in-memory state.
+    }
     _cachedIds = ids;
     return shouldBookmark;
   }
@@ -62,8 +73,12 @@ class UpdateBookmarksStore {
     final wasRemoved = ids.remove(normalized);
     if (!wasRemoved) return false;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_storageKey, ids.toList(growable: false));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_storageKey, ids.toList(growable: false));
+    } catch (_) {
+      // Ignore persistence failures and keep current in-memory state.
+    }
     _cachedIds = ids;
     return true;
   }

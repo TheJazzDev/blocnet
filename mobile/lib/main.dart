@@ -27,7 +27,6 @@ import 'package:blocnet/services/mining_store.dart';
 import 'package:blocnet/services/user_profile_store.dart';
 import 'package:blocnet/services/wallet_store.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'constants/app_routes.dart';
 import 'package:blocnet/shared/pages/page_not_found.dart';
 import 'package:provider/provider.dart';
@@ -47,8 +46,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) =>
     firebaseMessagingBackgroundHandler(message);
 
 void main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -149,85 +147,20 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ProjectsStore()),
       ],
       child: Consumer<AuthStore>(
-        builder: (context, auth, _) => _StartupSplashOverlay(
-          child: MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: buildPrimaryTheme(
-              accent: AppColors.accentForSpace(auth.isInHunterSpace),
-            ),
-            navigatorKey: _navigatorKey,
-            onGenerateRoute: CustomAppRouter.generateRoute,
-            onGenerateInitialRoutes: CustomAppRouter.generateInitialRoutes,
-            initialRoute: initialRoute,
-            onUnknownRoute: (settings) => MaterialPageRoute(
-              builder: (context) => const PageNotFoundScreen(),
-            ),
+        builder: (context, auth, _) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: buildPrimaryTheme(
+            accent: AppColors.accentForSpace(auth.isInHunterSpace),
+          ),
+          navigatorKey: _navigatorKey,
+          onGenerateRoute: CustomAppRouter.generateRoute,
+          onGenerateInitialRoutes: CustomAppRouter.generateInitialRoutes,
+          initialRoute: initialRoute,
+          onUnknownRoute: (settings) => MaterialPageRoute(
+            builder: (context) => const PageNotFoundScreen(),
           ),
         ),
       ),
     ),
   );
-}
-
-class _StartupSplashOverlay extends StatefulWidget {
-  const _StartupSplashOverlay({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_StartupSplashOverlay> createState() => _StartupSplashOverlayState();
-}
-
-class _StartupSplashOverlayState extends State<_StartupSplashOverlay>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _spinController;
-  bool _showOverlay = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _spinController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      FlutterNativeSplash.remove();
-      Future<void>.delayed(const Duration(milliseconds: 950), () {
-        if (!mounted) return;
-        setState(() => _showOverlay = false);
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _spinController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        widget.child,
-        if (_showOverlay)
-          ColoredBox(
-            color: Colors.black,
-            child: Center(
-              child: RotationTransition(
-                turns: _spinController,
-                child: Image.asset(
-                  'assets/img/logo3.png',
-                  width: 96,
-                  height: 96,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
 }

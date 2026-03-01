@@ -11,35 +11,33 @@ class ConnectivityStore extends ChangeNotifier {
   }
 
   final Connectivity _connectivity;
-  StreamSubscription<List<ConnectivityResult>>? _subscription;
+  Timer? _pollTimer;
   bool _isOffline = false;
 
   bool get isOffline => _isOffline;
   bool get isOnline => !_isOffline;
 
   Future<void> _init() async {
+    await _refreshConnectivity();
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 6),
+      (_) => _refreshConnectivity(),
+    );
+  }
+
+  Future<void> _refreshConnectivity() async {
     try {
       final initial = await _connectivity.checkConnectivity();
       _setConnectivityValue(initial);
-    } catch (_) {
-      // Keep default until the next stream event.
-    }
-
-    try {
-      _subscription = _connectivity.onConnectivityChanged.handleError((_) {
-        // Ignore plugin stream errors (for example on hot-reload without
-        // full native re-registration).
-      }).listen(
-        _setConnectivityValue,
-        onError: (_) {
-          // Ignore stream errors to avoid breaking global app state.
-        },
-      );
     } on MissingPluginException {
-      // Plugin not registered in current runtime. Keep app usable and default
-      // to online until a full restart registers native plugins.
-      _isOffline = false;
-      notifyListeners();
+      // Plugin not registered in current runtime. Keep app usable and avoid
+      // repeated runtime channel exceptions.
+      _pollTimer?.cancel();
+      _pollTimer = null;
+      if (_isOffline) {
+        _isOffline = false;
+        notifyListeners();
+      }
     } catch (_) {
       // Any unexpected issue should not crash the app.
     }
@@ -82,7 +80,7 @@ class ConnectivityStore extends ChangeNotifier {
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    _pollTimer?.cancel();
     super.dispose();
   }
 }

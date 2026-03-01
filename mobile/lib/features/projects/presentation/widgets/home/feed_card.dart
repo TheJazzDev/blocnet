@@ -126,14 +126,19 @@ class _FeedCardState extends State<FeedCard>
   }
 
   Future<void> _handleLikeTap(BuildContext context) async {
-    HapticFeedback.selectionClick();
-    final next = await UpdateLikesStore.toggle(post.id);
-    if (!mounted) return;
-    setState(() => _isLiked = next);
-    _likePulseController
-      ..stop()
-      ..reset()
-      ..forward();
+    try {
+      HapticFeedback.selectionClick();
+      final next = await UpdateLikesStore.toggle(post.id);
+      if (!mounted) return;
+      setState(() => _isLiked = next);
+      _likePulseController
+        ..stop()
+        ..reset()
+        ..forward();
+    } catch (_) {
+      if (!context.mounted) return;
+      AppSnackbar.showError(context, 'Could not like update right now');
+    }
   }
 
   void _handleCommentTap(BuildContext context) {
@@ -267,14 +272,19 @@ class _FeedCardState extends State<FeedCard>
   }
 
   Future<void> _handleBookmarkTap() async {
-    HapticFeedback.selectionClick();
-    final next = await UpdateBookmarksStore.toggle(post.id);
-    if (!mounted) return;
-    setState(() => _isBookmarked = next);
-    AppSnackbar.showSuccess(
-      context,
-      next ? 'Update bookmarked' : 'Bookmark removed',
-    );
+    try {
+      HapticFeedback.selectionClick();
+      final next = await UpdateBookmarksStore.toggle(post.id);
+      if (!mounted) return;
+      setState(() => _isBookmarked = next);
+      AppSnackbar.showSuccess(
+        context,
+        next ? 'Update bookmarked' : 'Bookmark removed',
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      AppSnackbar.showError(context, 'Could not update bookmark');
+    }
   }
 
   @override

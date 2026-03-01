@@ -12,14 +12,21 @@ class UpdateLikesStore {
       return cached;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final values = prefs.getStringList(_storageKey) ?? const <String>[];
-    final loaded = values
-        .map((value) => value.trim())
-        .where((value) => value.isNotEmpty)
-        .toSet();
-    _cachedIds = loaded;
-    return loaded;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final values = prefs.getStringList(_storageKey) ?? const <String>[];
+      final loaded = values
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toSet();
+      _cachedIds = loaded;
+      return loaded;
+    } catch (_) {
+      // Keep likes functional in-memory even if plugin storage is unavailable.
+      final loaded = <String>{};
+      _cachedIds = loaded;
+      return loaded;
+    }
   }
 
   static Future<bool> isLiked(String updateId) async {
@@ -43,8 +50,12 @@ class UpdateLikesStore {
       ids.remove(normalized);
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_storageKey, ids.toList(growable: false));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_storageKey, ids.toList(growable: false));
+    } catch (_) {
+      // Ignore persistence failure to prevent UI crash on like action.
+    }
     _cachedIds = ids;
     return shouldLike;
   }
