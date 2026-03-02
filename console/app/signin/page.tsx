@@ -31,7 +31,7 @@ export default async function SignInPage() {
         <div className='mb-8 flex flex-col items-center gap-3'>
           <div className='flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl'>
             <Image
-              src='/logo2.png'
+              src='/public/logo2.png'
               alt='Blocnet'
               width={48}
               height={48}
