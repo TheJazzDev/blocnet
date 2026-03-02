@@ -15,6 +15,9 @@ class Update {
   final String description;
   final DateTime createdAt;
   final DateTime? lastEditedAt;
+  final int likesCount;
+  final int commentsCount;
+  final int bookmarksCount;
   final List<String> secondaryTagIds;
   final List<SecondaryTag> secondaryTags;
 
@@ -30,6 +33,9 @@ class Update {
     required this.createdAt,
     required this.projectId,
     required this.description,
+    this.likesCount = 0,
+    this.commentsCount = 0,
+    this.bookmarksCount = 0,
     required List<String> secondaryTagIds,
     required List<SecondaryTag> secondaryTags,
   })  : secondaryTagIds = secondaryTagIds.toSet().toList(),
@@ -46,6 +52,9 @@ class Update {
       createdAt: createdAt,
       description: description,
       lastEditedAt: lastEditedAt,
+      likesCount: likesCount,
+      commentsCount: commentsCount,
+      bookmarksCount: bookmarksCount,
       secondaryTagIds: secondaryTagIds,
       admin: admin ?? this.admin,
       secondaryTags: secondaryTags,
@@ -61,6 +70,9 @@ class Update {
       'content': content,
       'projectId': projectId,
       'description': description,
+      'likesCount': likesCount,
+      'commentsCount': commentsCount,
+      'bookmarksCount': bookmarksCount,
       'priority': priority.toJson(),
       'createdAt': createdAt.toIso8601String(),
       'lastEditedAt': lastEditedAt?.toIso8601String(),
@@ -120,6 +132,11 @@ class Update {
                   ? '${derivedDescription.substring(0, 140)}...'
                   : derivedDescription))
           .toString(),
+      likesCount: int.tryParse(json['likesCount']?.toString() ?? '') ?? 0,
+      commentsCount:
+          int.tryParse(json['commentsCount']?.toString() ?? '') ?? 0,
+      bookmarksCount:
+          int.tryParse(json['bookmarksCount']?.toString() ?? '') ?? 0,
       priority: Priority.fromJson(
           (json['priority'] ?? json['urgency'] ?? 'low').toString()),
       createdAt: DateTime.tryParse(createdAtValue ?? '') ?? DateTime.now(),

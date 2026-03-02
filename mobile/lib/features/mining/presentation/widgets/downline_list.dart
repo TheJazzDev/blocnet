@@ -160,9 +160,11 @@ class _DownlineTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.displayName?.trim().isNotEmpty == true
-                      ? item.displayName!
-                      : (item.email ?? 'User'),
+                  item.username?.trim().isNotEmpty == true
+                      ? '@${item.username!.trim().replaceAll('@', '')}'
+                      : (item.displayName?.trim().isNotEmpty == true
+                          ? item.displayName!
+                          : 'User'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.custom(
@@ -232,9 +234,11 @@ class _DownlineTile extends StatelessWidget {
   }
 
   String _initials(DownlineMember member) {
-    final source = (member.displayName?.trim().isNotEmpty ?? false)
-        ? member.displayName!
-        : (member.email ?? 'U');
+    final source = (member.username?.trim().isNotEmpty ?? false)
+        ? member.username!.replaceAll('@', '')
+        : ((member.displayName?.trim().isNotEmpty ?? false)
+            ? member.displayName!
+            : 'U');
     return source[0].toUpperCase();
   }
 }

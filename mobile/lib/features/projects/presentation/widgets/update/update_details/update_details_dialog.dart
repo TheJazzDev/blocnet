@@ -3,6 +3,7 @@ import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/comments/data/models/comment_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
@@ -13,6 +14,7 @@ import 'package:blocnet/features/mentions/data/repositories/mentions_repository.
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/comments_store.dart';
+import 'package:blocnet/services/feed_view_mode_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -27,11 +29,13 @@ class UpdateDetailsDialog extends StatefulWidget {
   const UpdateDetailsDialog({
     required this.id,
     this.focusCommentComposer = false,
+    this.commentsOnly = false,
     super.key,
   });
 
   final String id;
   final bool focusCommentComposer;
+  final bool commentsOnly;
 
   @override
   State<UpdateDetailsDialog> createState() => _PostDetailsDialogState();
@@ -84,8 +88,10 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
     if (post.project == null) {
       return Center(child: CircularProgressIndicator(color: AppColors.teal400));
     }
-
-    final moreFromProjectName = post.project?.posts ?? [];
+    final viewMode = context.watch<FeedViewModeStore>().mode;
+    final commentHeaderTitle = widget.commentsOnly
+        ? 'Comments · ${post.project?.name ?? 'Update'}'
+        : null;
 
     return SafeArea(
       child: Container(
@@ -103,59 +109,80 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
               UpdateDetailsHeader(
                 priority: post.priority,
                 updateId: post.id,
+                title: commentHeaderTitle,
+                showPriority: !widget.commentsOnly,
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      UpdateDetailsInfo(post: post),
-                      const SizedBox(height: 12),
-                      _buildTipHunterAction(post),
-                      const SizedBox(height: 16),
-                      _Divider(),
-                      const SizedBox(height: 12),
-                      UpdateDetailsTags(post),
-                      const SizedBox(height: 12),
-                      _Divider(),
-                      const SizedBox(height: 16),
-                      RenderMarkdownContent(content: post.content),
-                      const SizedBox(height: 24),
-                      _CommentsSection(
-                        key: _commentsSectionKey,
-                        updateId: widget.id,
-                        controller: _commentController,
-                        focusNode: _commentFocusNode,
-                        mentionsRepository: _mentionsRepository,
-                        isSubmitting: _isSubmittingComment,
-                        error: _commentError,
-                        onSubmit: _createComment,
+                child: widget.commentsOnly
+                    ? SingleChildScrollView(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        child: _CommentsSection(
+                          key: _commentsSectionKey,
+                          updateId: widget.id,
+                          controller: _commentController,
+                          focusNode: _commentFocusNode,
+                          mentionsRepository: _mentionsRepository,
+                          isSubmitting: _isSubmittingComment,
+                          error: _commentError,
+                          viewMode: viewMode,
+                          showHeading: false,
+                          onSubmit: _createComment,
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            UpdateDetailsInfo(post: post),
+                            const SizedBox(height: 12),
+                            _buildTipHunterAction(post),
+                            const SizedBox(height: 16),
+                            _Divider(),
+                            const SizedBox(height: 12),
+                            UpdateDetailsTags(post),
+                            const SizedBox(height: 12),
+                            _Divider(),
+                            const SizedBox(height: 16),
+                            RenderMarkdownContent(content: post.content),
+                            const SizedBox(height: 24),
+                            _CommentsSection(
+                              key: _commentsSectionKey,
+                              updateId: widget.id,
+                              controller: _commentController,
+                              focusNode: _commentFocusNode,
+                              mentionsRepository: _mentionsRepository,
+                              isSubmitting: _isSubmittingComment,
+                              error: _commentError,
+                              viewMode: viewMode,
+                              onSubmit: _createComment,
+                            ),
+                            const SizedBox(height: 32),
+                            _Divider(),
+                            const SizedBox(height: 20),
+                            MoreFromProjectName(
+                              label: 'More from',
+                              projectTitle: post.project?.name ?? '',
+                              posts: post.project?.posts ?? const [],
+                            ),
+                            const SizedBox(height: 16),
+                            _Divider(),
+                            const SizedBox(height: 16),
+                            MoreFromUpdatePrimaryTag(
+                              primaryTag:
+                                  post.project?.primaryTag ?? PrimaryTag.none,
+                            ),
+                            const SizedBox(height: 8),
+                            _Divider(),
+                            const SizedBox(height: 8),
+                            MoreFromUpdateSecondaryTags(post: post),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 32),
-                      _Divider(),
-                      const SizedBox(height: 20),
-                      MoreFromProjectName(
-                        label: 'More from',
-                        projectTitle: post.project?.name ?? '',
-                        posts: moreFromProjectName,
-                      ),
-                      const SizedBox(height: 16),
-                      _Divider(),
-                      const SizedBox(height: 16),
-                      MoreFromUpdatePrimaryTag(
-                        primaryTag: post.project?.primaryTag ?? PrimaryTag.none,
-                      ),
-                      const SizedBox(height: 8),
-                      _Divider(),
-                      const SizedBox(height: 8),
-                      MoreFromUpdateSecondaryTags(post: post),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
@@ -274,6 +301,8 @@ class _CommentsSection extends StatelessWidget {
     required this.mentionsRepository,
     required this.isSubmitting,
     required this.error,
+    required this.viewMode,
+    this.showHeading = true,
     required this.onSubmit,
   });
 
@@ -283,6 +312,8 @@ class _CommentsSection extends StatelessWidget {
   final MentionsRepository mentionsRepository;
   final bool isSubmitting;
   final String? error;
+  final FeedViewMode viewMode;
+  final bool showHeading;
   final VoidCallback onSubmit;
 
   @override
@@ -298,47 +329,49 @@ class _CommentsSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Text(
-                  'Comments',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary500.withValues(alpha: 0.15),
-                        AppColors.primary500.withValues(alpha: 0.08),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.primary500.withValues(alpha: 0.25),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Text(
-                    '${comments.length}',
+            if (showHeading) ...[
+              Row(
+                children: [
+                  Text(
+                    'Comments',
                     style: TextStyle(
-                      color: AppColors.primary400,
-                      fontSize: 11,
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary500.withValues(alpha: 0.15),
+                          AppColors.primary500.withValues(alpha: 0.08),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primary500.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Text(
+                      '${comments.length}',
+                      style: TextStyle(
+                        color: AppColors.primary400,
+                        fontSize: 11,
+                        fontFamily: 'Geist',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
             // Comment input
             Row(
               children: [
@@ -348,8 +381,8 @@ class _CommentsSection extends StatelessWidget {
                     focusNode: focusNode,
                     mentionsRepository: mentionsRepository,
                     hintText: 'Add a comment…',
-                    minLines: 1,
-                    maxLines: 4,
+                    minLines: 4,
+                    maxLines: 8,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -446,15 +479,26 @@ class _CommentsSection extends StatelessWidget {
               )
             else
               Column(
-                children: comments
-                    .map(
-                      (item) => _CommentTile(
+                children: comments.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  return Column(
+                    children: [
+                      _CommentTile(
                         comment: item,
                         canEdit: item.authorId == auth.userId,
                         updateId: updateId,
+                        viewMode: viewMode,
                       ),
-                    )
-                    .toList(),
+                      if (viewMode == FeedViewMode.list &&
+                          index != comments.length - 1)
+                        Divider(
+                          height: 1,
+                          color: AppColors.borderSubtle.withValues(alpha: 0.75),
+                        ),
+                    ],
+                  );
+                }).toList(),
               ),
           ],
         );
@@ -470,36 +514,46 @@ class _CommentTile extends StatelessWidget {
     required this.comment,
     required this.canEdit,
     required this.updateId,
+    required this.viewMode,
   });
 
   final CommentModel comment;
   final bool canEdit;
   final String updateId;
+  final FeedViewMode viewMode;
 
   @override
   Widget build(BuildContext context) {
     final roleLabel = comment.admin?.displayRoleLabel;
     final roleColor =
         roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
+    final isCardMode = viewMode == FeedViewMode.card;
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.bgElevated,
-            AppColors.bgElevated.withValues(alpha: 0.85),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.borderSubtle.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
+      margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
+      padding: EdgeInsets.fromLTRB(
+        isCardMode ? 14 : 0,
+        isCardMode ? 14 : 12,
+        isCardMode ? 14 : 0,
+        12,
       ),
+      decoration: isCardMode
+          ? BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.bgElevated,
+                  AppColors.bgElevated.withValues(alpha: 0.85),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.borderSubtle.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+            )
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

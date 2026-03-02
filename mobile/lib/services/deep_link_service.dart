@@ -113,6 +113,24 @@ class DeepLinkService {
     if (params.isEmpty) {
       if (isBlocnetHost) {
         _handleBlocnetPathNavigation(uri);
+      } else if (isAppScheme) {
+        _handleAppSchemePathNavigation(uri);
+      }
+      return;
+    }
+
+    final hasAuthPayload = params.containsKey('access_token') ||
+        params.containsKey('refresh_token') ||
+        params.containsKey('code') ||
+        params.containsKey('token_hash') ||
+        params.containsKey('token') ||
+        params.containsKey('type');
+
+    if (!hasAuthPayload) {
+      if (isBlocnetHost) {
+        _handleBlocnetPathNavigation(uri);
+      } else if (isAppScheme) {
+        _handleAppSchemePathNavigation(uri);
       }
       return;
     }
@@ -299,6 +317,44 @@ class DeepLinkService {
       return;
     }
 
+    if (path == '/open') {
+      final rawPath = uri.queryParameters['path']?.trim() ??
+          uri.queryParameters['deeplink']?.trim() ??
+          uri.queryParameters['target']?.trim();
+      if (rawPath == null || rawPath.isEmpty) {
+        navigatorKey.currentState?.pushNamed(AppRoutes.main);
+        return;
+      }
+
+      final normalizedExternal = rawPath
+          .replaceFirst(RegExp(r'^io\.blocnet\.app://', caseSensitive: false), '')
+          .replaceFirst(RegExp(r'^blocnet://', caseSensitive: false), '');
+      if (normalizedExternal.startsWith('http://') ||
+          normalizedExternal.startsWith('https://')) {
+        final nestedUri = Uri.tryParse(normalizedExternal);
+        if (nestedUri != null) {
+          _handleBlocnetPathNavigation(nestedUri);
+          return;
+        }
+      }
+
+      final normalizedPath = normalizedExternal.startsWith('/')
+          ? normalizedExternal
+          : '/$normalizedExternal';
+      if (normalizedPath == '/open' || normalizedPath.startsWith('/open?')) {
+        navigatorKey.currentState?.pushNamed(AppRoutes.main);
+        return;
+      }
+
+      final nestedUri = Uri.tryParse('https://blocnet.app$normalizedPath');
+      if (nestedUri != null) {
+        _handleBlocnetPathNavigation(nestedUri);
+      } else {
+        navigatorKey.currentState?.pushNamed(AppRoutes.main);
+      }
+      return;
+    }
+
     if (path == '/settings/notifications') {
       navigatorKey.currentState?.pushNamed(AppRoutes.settings);
       return;
@@ -326,6 +382,28 @@ class DeepLinkService {
       path,
       arguments: args.isEmpty ? null : args,
     );
+  }
+
+  void _handleAppSchemePathNavigation(Uri uri) {
+    final host = uri.host.trim();
+    final path = uri.path.trim();
+    var mergedPath = '/';
+    if (host.isNotEmpty && path.isNotEmpty) {
+      mergedPath = '/$host${path.startsWith('/') ? path : '/$path'}';
+    } else if (host.isNotEmpty) {
+      mergedPath = '/$host';
+    } else if (path.isNotEmpty) {
+      mergedPath = path.startsWith('/') ? path : '/$path';
+    }
+
+    final query = uri.hasQuery ? '?${uri.query}' : '';
+    final normalized = Uri.tryParse('https://blocnet.app$mergedPath$query');
+    if (normalized == null) {
+      navigatorKey.currentState?.pushNamed(AppRoutes.main);
+      return;
+    }
+
+    _handleBlocnetPathNavigation(normalized);
   }
 
   Future<void> handleUriForTesting(Uri uri) => _handleUri(uri);

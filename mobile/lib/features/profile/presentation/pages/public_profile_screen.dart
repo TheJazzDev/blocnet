@@ -52,7 +52,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   bool _isFollowing = false;
   bool _isSubmittingFollow = false;
   bool _isBlocked = false;
-  bool _isCheckingBlockStatus = false;
   bool _isSubmittingBlock = false;
   bool _isLoadingPublicProfile = true;
   PublicProfileModel? _publicProfile;
@@ -121,16 +120,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       return;
     }
 
-    setState(() => _isCheckingBlockStatus = true);
+    final blocksStore = context.read<BlocksStore>();
+    final cachedBlocked = blocksStore.isUserBlocked(widget.admin.id);
+    if (mounted && _isBlocked != cachedBlocked) {
+      setState(() => _isBlocked = cachedBlocked);
+    }
+
     try {
-      final blocked =
-          await context.read<BlocksStore>().isBlocked(widget.admin.id);
+      final blocked = await blocksStore.isBlocked(widget.admin.id);
       if (!mounted) return;
-      setState(() => _isBlocked = blocked);
-    } finally {
-      if (mounted) {
-        setState(() => _isCheckingBlockStatus = false);
+      if (_isBlocked != blocked) {
+        setState(() => _isBlocked = blocked);
       }
+    } catch (_) {
+      // Keep cached/default state and avoid blocking render.
     }
   }
 
@@ -547,8 +550,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             height: 40,
                             child: OutlinedButton.icon(
                               onPressed:
-                                  _isCheckingBlockStatus || _isSubmittingBlock
-                                      ? null : _toggleBlock,
+                                  _isSubmittingBlock ? null : _toggleBlock,
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
                                   color: _isBlocked
@@ -565,8 +567,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                         .withValues(alpha: 0.08)
                                     : AppColors.error500
                                         .withValues(alpha: 0.08),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                tapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
                               ),
-                              icon: _isCheckingBlockStatus || _isSubmittingBlock
+                              icon: _isSubmittingBlock
                                   ? SizedBox(
                                       width: 14,
                                       height: 14,

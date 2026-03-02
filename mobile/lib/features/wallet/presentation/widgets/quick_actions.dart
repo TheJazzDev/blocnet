@@ -53,7 +53,7 @@ class QuickActions extends StatelessWidget {
               ],
             ),
             onTap: () {
-              openSendFlow(context, assetCode: defaultAsset);
+              openSendFlow(context);
             },
           ),
         ),

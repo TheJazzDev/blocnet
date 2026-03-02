@@ -127,8 +127,8 @@ export class MiningService {
           where: { id: profile.referredById },
           select: {
             id: true,
+            username: true,
             displayName: true,
-            email: true,
             referralCode: true,
           },
         })
@@ -186,8 +186,8 @@ export class MiningService {
         referredBy: referrer
           ? {
               id: referrer.id,
+              username: referrer.username,
               displayName: referrer.displayName,
-              email: referrer.email,
               code: referrer.referralCode,
             }
           : null,

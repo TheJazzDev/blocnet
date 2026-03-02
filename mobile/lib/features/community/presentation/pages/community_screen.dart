@@ -10,6 +10,7 @@ import 'package:blocnet/features/community/presentation/widgets/community_feed_l
 import 'package:blocnet/features/community/presentation/widgets/community_tabs.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/community_posts_store.dart';
+import 'package:blocnet/services/feed_view_mode_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -178,6 +179,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
     final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final viewMode = context.watch<FeedViewModeStore>().mode;
     final accent = AppColors.accentForSpace(isHunterSpace);
     final onAccent = AppColors.onAccentForSpace(isHunterSpace);
 
@@ -220,6 +222,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                         CommunityFeedList(
                           posts: _filterPosts(posts, CommunityTopic.general),
                           bottomPad: bottomPad,
+                          mode: viewMode,
                           controller:
                               _scrollControllers[CommunityTopic.general]!,
                           accentColor: accent,
@@ -230,6 +233,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                         CommunityFeedList(
                           posts: _filterPosts(posts, CommunityTopic.marketTalk),
                           bottomPad: bottomPad,
+                          mode: viewMode,
                           controller:
                               _scrollControllers[CommunityTopic.marketTalk]!,
                           accentColor: accent,

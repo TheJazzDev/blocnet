@@ -202,6 +202,8 @@ void showWalletToast(
   }
 
   messenger.hideCurrentSnackBar();
+  final topInset = MediaQuery.paddingOf(context).top + kToolbarHeight + 8;
+  final bottomInset = MediaQuery.sizeOf(context).height - topInset - 72;
   messenger.showSnackBar(
     SnackBar(
       duration: const Duration(seconds: 6),
@@ -210,7 +212,12 @@ void showWalletToast(
       behavior: SnackBarBehavior.floating,
       backgroundColor: backgroundColor,
       elevation: 0,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      margin: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        bottomInset.clamp(16, 1200).toDouble(),
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: borderColor),
@@ -259,12 +266,20 @@ String walletNotReadyMessage(WalletStore store) {
 
 Future<void> openSendFlow(
   BuildContext context, {
-  required String assetCode,
+  String? assetCode,
 }) async {
   final walletStore = context.read<WalletStore>();
-  final selectedAsset = assetCode.trim().toUpperCase();
-  final canTransfer = walletStore.canTransferAsset(selectedAsset);
-  final canWithdraw = walletStore.canWithdrawAsset(selectedAsset);
+  String? selectedAsset = assetCode?.trim().toUpperCase();
+  if (selectedAsset == null || selectedAsset.isEmpty) {
+    selectedAsset = await _showAssetPicker(context, walletStore);
+    if (selectedAsset == null || selectedAsset.isEmpty) {
+      return;
+    }
+  }
+  if (!context.mounted) return;
+  final resolvedAsset = selectedAsset;
+  final canTransfer = walletStore.canTransferAsset(resolvedAsset);
+  final canWithdraw = walletStore.canWithdrawAsset(resolvedAsset);
 
   if (!isWalletReadyForAction(walletStore)) {
     showWalletToast(
@@ -278,16 +293,17 @@ Future<void> openSendFlow(
   if (!canTransfer && !canWithdraw) {
     showWalletToast(
       context,
-      message: '$selectedAsset send and withdrawal are currently disabled.',
+      message: '$resolvedAsset send and withdrawal are currently disabled.',
       type: WalletToastType.info,
     );
     return;
   }
 
+  if (!context.mounted) return;
   final resultMessage = await Navigator.of(context).push<String>(
     MaterialPageRoute(
       builder: (_) => SendTokenPage(
-        assetCode: selectedAsset,
+        assetCode: resolvedAsset,
         canTransfer: canTransfer,
         canWithdraw: canWithdraw,
       ),
@@ -302,5 +318,114 @@ Future<void> openSendFlow(
     context,
     message: resultMessage,
     type: WalletToastType.success,
+  );
+}
+
+Future<String?> _showAssetPicker(
+  BuildContext context,
+  WalletStore walletStore,
+) async {
+  final assets = walletStore.snapshot?.assets ?? const <WalletAssetBalance>[];
+  if (assets.isEmpty) {
+    showWalletToast(
+      context,
+      message: 'No wallet assets available to send right now.',
+      type: WalletToastType.info,
+    );
+    return null;
+  }
+
+  return showModalBottomSheet<String>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) {
+      return SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.bgSurface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(color: AppColors.borderSubtle),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderMuted,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Select Asset To Send',
+                style: AppTypography.custom(
+                  color: AppColors.textPrimary,
+                  size: 16,
+                  weight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...assets.map((asset) {
+                final accent = assetAccentColor(asset.asset);
+                return InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => Navigator.of(sheetContext).pop(asset.asset),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accent.withValues(alpha: 0.14),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            asset.symbol,
+                            style: AppTypography.custom(
+                              color: accent,
+                              size: 11,
+                              weight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${asset.name} (${asset.asset})',
+                            style: AppTypography.custom(
+                              color: AppColors.textPrimary,
+                              size: 13,
+                              weight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          formatTokenAmount(asset.available),
+                          style: AppTypography.custom(
+                            color: AppColors.textMuted,
+                            size: 12,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      );
+    },
   );
 }

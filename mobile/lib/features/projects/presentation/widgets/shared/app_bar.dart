@@ -73,7 +73,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     child: showBack
                         ? _AppBarIconButton(
                             icon: Icons.arrow_back_rounded,
-                            minimal: false,
+                            minimal: true,
                             onTap: () {
                               if (navigator.canPop()) {
                                 navigator.pop();

@@ -98,7 +98,7 @@ export class RolesGuard implements CanActivate {
 
         if (!sessionToken) {
           throw new ForbiddenException(
-            'Two-factor authentication is required for admin panel access',
+            'Two-factor authentication is required for admin console access',
           );
         }
 
@@ -110,7 +110,7 @@ export class RolesGuard implements CanActivate {
 
         if (!validation.valid) {
           throw new ForbiddenException(
-            'Two-factor authentication is required for admin panel access',
+            'Two-factor authentication is required for admin console access',
           );
         }
       }

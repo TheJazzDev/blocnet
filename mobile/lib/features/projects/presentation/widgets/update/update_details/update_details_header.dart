@@ -9,11 +9,15 @@ class UpdateDetailsHeader extends StatefulWidget {
   const UpdateDetailsHeader({
     required this.priority,
     required this.updateId,
+    this.title,
+    this.showPriority = true,
     super.key,
   });
 
   final Priority priority;
   final String updateId;
+  final String? title;
+  final bool showPriority;
 
   @override
   State<UpdateDetailsHeader> createState() => _UpdateDetailsHeaderState();
@@ -62,6 +66,7 @@ class _UpdateDetailsHeaderState extends State<UpdateDetailsHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final headerTitle = widget.title?.trim();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -70,9 +75,26 @@ class _UpdateDetailsHeaderState extends State<UpdateDetailsHeader> {
             icon: Icons.close,
             onTap: () => Navigator.of(context).pop(),
           ),
-          const Spacer(),
-          PriorityLabel(priority: widget.priority),
-          const Spacer(),
+          if (headerTitle != null && headerTitle.isNotEmpty) ...[
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                headerTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+          ] else ...[
+            const Spacer(),
+            if (widget.showPriority) PriorityLabel(priority: widget.priority),
+            const Spacer(),
+          ],
           _HeaderIconButton(
             icon: _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border,
             onTap: _toggleBookmark,

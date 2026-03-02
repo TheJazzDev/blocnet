@@ -68,7 +68,9 @@ export class UpdatesService {
     });
 
     const actorName =
-      update.author.displayName ?? update.author.email ?? 'Someone';
+      update.author.displayName ??
+      update.author.username ??
+      'Blocnet Member';
 
     const fanout = await this.notificationsService.createForProjectFollowers({
       projectId,

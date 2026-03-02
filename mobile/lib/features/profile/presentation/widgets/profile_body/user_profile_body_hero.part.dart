@@ -6,6 +6,7 @@ class _UserHero extends StatelessWidget {
     required this.avatarUrl,
     required this.email,
     required this.onEditTap,
+    this.badges = const [],
     this.primaryBadge,
   });
 
@@ -13,6 +14,7 @@ class _UserHero extends StatelessWidget {
   final String? avatarUrl;
   final String? email;
   final VoidCallback onEditTap;
+  final List<BadgeModel> badges;
   final BadgeModel? primaryBadge;
 
   @override
@@ -113,7 +115,7 @@ class _UserHero extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (primaryBadge != null) ...[
+                        if (primaryBadge != null && badges.isEmpty) ...[
                           const SizedBox(width: 6),
                           BadgeIcon(
                             badge: primaryBadge!,
@@ -136,6 +138,24 @@ class _UserHero extends StatelessWidget {
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (badges.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: badges
+                            .map(
+                              (badge) => BadgeIcon(
+                                badge: badge,
+                                size: BadgeSize.small,
+                                showTooltip: false,
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed(AppRoutes.badges),
+                              ),
+                            )
+                            .toList(),
                       ),
                     ],
                     const SizedBox(height: 8),

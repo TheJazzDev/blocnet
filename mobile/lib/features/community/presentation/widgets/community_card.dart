@@ -7,6 +7,7 @@ import 'package:blocnet/features/community/presentation/widgets/role_chip.dart';
 import 'package:blocnet/features/mentions/presentation/utils/mention_profile_navigator.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
@@ -19,6 +20,7 @@ class CommunityCard extends StatelessWidget {
   const CommunityCard({
     super.key,
     required this.post,
+    required this.mode,
     required this.onTap,
     required this.onLike,
     required this.onCommentTap,
@@ -26,6 +28,7 @@ class CommunityCard extends StatelessWidget {
   });
 
   final CommunityPost post;
+  final FeedViewMode mode;
   final VoidCallback onTap;
   final VoidCallback onLike;
   final VoidCallback onCommentTap;
@@ -38,8 +41,10 @@ class CommunityCard extends StatelessWidget {
   }
 
   Future<void> _openShareSheet(BuildContext context) async {
-    final webLink = 'https://blocnet.app/community/${post.id}';
-    final deepLink = 'blocnet://community/posts/${post.id}';
+    final deepPath = '/community/${post.id}';
+    final webLink =
+        'https://blocnet.app/open?path=${Uri.encodeComponent(deepPath)}';
+    final deepLink = 'io.blocnet.app://community/${post.id}';
     final shareText = '${post.content.trim()}\n$webLink';
 
     Future<void> copyLink() async {
@@ -159,6 +164,7 @@ class CommunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCardMode = mode == FeedViewMode.card;
     final admin = post.admin;
     final displayName =
         admin?.name.trim().isNotEmpty == true ? admin!.name : 'Blocnet User';
@@ -171,7 +177,7 @@ class CommunityCard extends StatelessWidget {
     final badge = admin?.primaryBadge;
     final content = post.content.trim();
 
-    return InkWell(
+    final cardBody = InkWell(
       onTap: onTap,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
@@ -325,6 +331,31 @@ class CommunityCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+
+    if (!isCardMode) {
+      return cardBody;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgSurface,
+            AppColors.bgSurface.withValues(alpha: 0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.borderSubtle.withValues(alpha: 0.75),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: cardBody,
       ),
     );
   }

@@ -31,7 +31,7 @@ export default async function SignInPage() {
         <div className='mb-8 flex flex-col items-center gap-3'>
           <div className='flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl'>
             <Image
-              src='/public/logo2.png'
+              src='/logo2.png'
               alt='Blocnet'
               width={48}
               height={48}
@@ -53,7 +53,7 @@ export default async function SignInPage() {
           <CardHeader>
             <CardTitle className='text-base'>Sign In</CardTitle>
             <CardDescription>
-              Use your credentials to access the admin panel.
+              Use your credentials to access the admin console.
             </CardDescription>
           </CardHeader>
           <CardContent>

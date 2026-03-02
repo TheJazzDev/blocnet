@@ -89,15 +89,18 @@ class Admin {
 
   factory Admin.fromApi(Map<String, dynamic> json) {
     final id = (json['id'] ?? json['authorId'] ?? '').toString();
-    final email = json['email']?.toString();
-    final fallbackName =
-        email != null && email.isNotEmpty ? email.split('@').first : 'Admin';
-    final name =
-        (json['name'] ?? json['displayName'] ?? fallbackName).toString();
-    final usernameSource =
-        (json['username'] ?? json['displayName'] ?? fallbackName).toString();
-    final username =
-        '@${usernameSource.replaceAll('@', '').toLowerCase().replaceAll(' ', '_')}';
+    final fallbackName = 'Blocnet Member';
+    final rawName =
+        (json['name'] ?? json['displayName'] ?? fallbackName).toString().trim();
+    final name = rawName.isEmpty ? fallbackName : rawName;
+    final usernameSource = (json['username'] ?? '').toString().trim();
+    final normalizedUsername = usernameSource
+        .replaceAll('@', '')
+        .toLowerCase()
+        .replaceAll(' ', '_');
+    final username = normalizedUsername.isEmpty
+        ? '@${id.isEmpty ? 'member' : id.substring(0, id.length > 6 ? 6 : id.length)}'
+        : '@$normalizedUsername';
     final imageUrl = (json['imageUrl'] ?? json['avatarUrl'] ?? '').toString();
     final followersRaw = json['followers'];
     final followers = followersRaw is int

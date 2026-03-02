@@ -106,23 +106,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildPrivacySection(BuildContext context) {
+    final viewMode = context.watch<FeedViewModeStore>().mode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _SectionLabel('Privacy & Security'),
         const SizedBox(height: 8),
         _SettingsNavigationTile(
+          mode: viewMode,
           icon: Icons.block_outlined,
           title: 'Blocked users',
           subtitle: 'Manage your blocked accounts',
+          showDivider: true,
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.blockedUsers);
           },
         ),
         _SettingsNavigationTile(
+          mode: viewMode,
           icon: Icons.no_accounts_outlined,
           title: 'Deactivate account',
           subtitle: 'Temporarily disable your account',
+          showDivider: false,
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.deactivateAccount);
           },
@@ -495,7 +500,7 @@ class _FeedViewSelector extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Feed layout',
+              'App layout',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
                 size: 14,
@@ -585,93 +590,123 @@ class _SettingsRetryCard extends StatelessWidget {
 
 class _SettingsNavigationTile extends StatelessWidget {
   const _SettingsNavigationTile({
+    required this.mode,
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.showDivider = true,
   });
 
+  final FeedViewMode mode;
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.bgSurface,
-              AppColors.bgSurface.withValues(alpha: 0.85),
+    final content = Row(
+      children: [
+        if (mode == FeedViewMode.card)
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.textMuted.withValues(alpha: 0.15),
+                  AppColors.textMuted.withValues(alpha: 0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.textMuted.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(icon, size: 20, color: AppColors.textMuted),
+          )
+        else
+          Icon(icon, size: 20, color: AppColors.textMuted),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppTypography.custom(
+                  color: AppColors.textPrimary,
+                  size: 14,
+                  weight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 12,
+                  weight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.borderSubtle,
-            width: 1.5,
-          ),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
+        const SizedBox(width: 8),
+        Icon(
+          Icons.chevron_right,
+          color: AppColors.textMuted,
+          size: 20,
+        ),
+      ],
+    );
+
+    final tile = GestureDetector(
+      onTap: onTap,
+      child: mode == FeedViewMode.card
+          ? Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [
-                    AppColors.textMuted.withValues(alpha: 0.15),
-                    AppColors.textMuted.withValues(alpha: 0.08),
+                    AppColors.bgSurface,
+                    AppColors.bgSurface.withValues(alpha: 0.85),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.textMuted.withValues(alpha: 0.2),
+                  color: AppColors.borderSubtle,
                   width: 1.5,
                 ),
               ),
-              child: Icon(icon, size: 20, color: AppColors.textMuted),
+              child: content,
+            )
+          : Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: content,
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: 14,
-                      weight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: AppTypography.custom(
-                      color: AppColors.textMuted,
-                      size: 12,
-                      weight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right,
-              color: AppColors.textMuted,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
+    );
+
+    if (mode == FeedViewMode.card) {
+      return tile;
+    }
+
+    return Column(
+      children: [
+        tile,
+        if (showDivider)
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColors.borderSubtle,
+          ),
+      ],
     );
   }
 }

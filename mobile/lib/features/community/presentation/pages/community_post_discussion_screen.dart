@@ -42,6 +42,7 @@ class _CommunityPostDiscussionScreenState
   bool _isSending = false;
   bool _isCommentsBaselineReady = false;
   VoidCallback? _storeListener;
+  CommunityPostsStore? _communityPostsStore;
 
   @override
   void initState() {
@@ -65,6 +66,7 @@ class _CommunityPostDiscussionScreenState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _communityPostsStore ??= context.read<CommunityPostsStore>();
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is String && args.isNotEmpty) {
       if (_postId == args) return;
@@ -72,7 +74,7 @@ class _CommunityPostDiscussionScreenState
       _focusComposerOnLoad = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final store = context.read<CommunityPostsStore>();
+        final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
         _attachStoreListener();
         store.fetchPostById(args);
         store.fetchComments(args);
@@ -90,7 +92,7 @@ class _CommunityPostDiscussionScreenState
       _focusComposerOnLoad = args['focusComposer'] == true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final store = context.read<CommunityPostsStore>();
+        final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
         _attachStoreListener();
         store.fetchPostById(postId);
         store.fetchComments(postId);
@@ -104,8 +106,10 @@ class _CommunityPostDiscussionScreenState
 
   void _attachStoreListener() {
     if (_storeListener != null) return;
+    final store = _communityPostsStore;
+    if (store == null) return;
     _storeListener = _onStoreChanged;
-    context.read<CommunityPostsStore>().addListener(_storeListener!);
+    store.addListener(_storeListener!);
     _threadScrollController.addListener(_handleThreadScroll);
     _onStoreChanged();
   }
@@ -115,8 +119,9 @@ class _CommunityPostDiscussionScreenState
     final postId = _postId;
     if (postId == null || postId.isEmpty) return;
 
-    final comments =
-        context.read<CommunityPostsStore>().commentsForPost(postId);
+    final store = _communityPostsStore;
+    if (store == null) return;
+    final comments = store.commentsForPost(postId);
     final currentIds = comments.map((comment) => comment.id).toSet();
 
     if (!_isCommentsBaselineReady) {
@@ -167,13 +172,14 @@ class _CommunityPostDiscussionScreenState
 
   @override
   void dispose() {
+    final store = _communityPostsStore;
     final postId = _postId;
-    if (postId != null && postId.isNotEmpty) {
-      context.read<CommunityPostsStore>().unwatchCommentsRealtime(postId);
+    if (store != null && postId != null && postId.isNotEmpty) {
+      store.unwatchCommentsRealtime(postId);
     }
     final listener = _storeListener;
-    if (listener != null) {
-      context.read<CommunityPostsStore>().removeListener(listener);
+    if (store != null && listener != null) {
+      store.removeListener(listener);
     }
     _threadScrollController
       ..removeListener(_handleThreadScroll)
@@ -204,7 +210,8 @@ class _CommunityPostDiscussionScreenState
 
     setState(() => _isSending = true);
     try {
-      final created = await context.read<CommunityPostsStore>().createComment(
+      final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
+      final created = await store.createComment(
             postId: postId,
             content: text,
           );
@@ -428,8 +435,10 @@ class _CommunityPostDiscussionScreenState
   }
 
   Future<void> _openShareSheet(CommunityPost post) async {
-    final webLink = 'https://blocnet.app/community/${post.id}';
-    final deepLink = 'blocnet://community/posts/${post.id}';
+    final deepPath = '/community/${post.id}';
+    final webLink =
+        'https://blocnet.app/open?path=${Uri.encodeComponent(deepPath)}';
+    final deepLink = 'io.blocnet.app://community/${post.id}';
     final shareText = '${post.content.trim()}\n$webLink';
 
     Future<void> copyLink() async {

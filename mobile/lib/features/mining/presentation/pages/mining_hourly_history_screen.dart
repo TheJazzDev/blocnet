@@ -46,7 +46,7 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
                 Text(
-                  'Track every hourly checkpoint from your mining sessions.',
+                  'Last 48 hourly checkpoints from your mining sessions.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: 12,
@@ -57,7 +57,7 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
                 MiningHourlyHistoryCard(
                   entries: entries,
                   isLoading: store.isLoadingSnapshot,
-                  maxEntries: null,
+                  maxEntries: 48,
                 ),
               ],
             ),

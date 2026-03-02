@@ -1,6 +1,6 @@
 # Blocnet Console Shell
 
-This is a lightweight Next.js shell for the future admin panel.
+This is a lightweight Next.js shell for the future admin console.
 
 ## What is included
 

@@ -39,6 +39,30 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   QuestStatus get _status => widget.userQuest?.status ?? QuestStatus.notStarted;
   bool get _isPending => _status == QuestStatus.pendingVerification;
   bool get _isCompleted => _status == QuestStatus.completed;
+  String? get _resolvedTargetUrl {
+    final raw = widget.quest.targetUrl?.trim();
+    if (raw != null && raw.isNotEmpty) {
+      return raw;
+    }
+
+    final slug = widget.quest.slug.toLowerCase();
+    final title = widget.quest.title.toLowerCase();
+    if (slug.contains('share-on-x') ||
+        slug.contains('follow-on-x') ||
+        title.contains(' on x')) {
+      return 'https://x.com/blocnet';
+    }
+
+    return null;
+  }
+
+  String get _targetButtonLabel {
+    final target = _resolvedTargetUrl?.toLowerCase() ?? '';
+    if (target.contains('x.com') || target.contains('twitter.com')) {
+      return 'Open X';
+    }
+    return 'Open Link';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +87,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                 const SizedBox(height: 24),
                 _buildRewardsSection(),
                 const SizedBox(height: 24),
-                if (widget.quest.targetUrl != null) ...[
+                if (_resolvedTargetUrl != null) ...[
                   _buildTargetSection(),
                   const SizedBox(height: 24),
                 ],
@@ -307,6 +331,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   }
 
   Widget _buildTargetSection() {
+    final targetUrl = _resolvedTargetUrl!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -348,7 +373,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    widget.quest.targetUrl!,
+                    targetUrl,
                     style: AppTypography.custom(
                       color: AppColors.primary500,
                       size: 12,
@@ -365,9 +390,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _launchUrl(widget.quest.targetUrl!),
+              onPressed: () => _launchUrl(targetUrl),
               icon: const Icon(Icons.open_in_new),
-              label: const Text('Open Link'),
+              label: Text(_targetButtonLabel),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary500,
                 foregroundColor: Colors.white,

@@ -126,7 +126,6 @@ class _MiningHeroCardState extends State<MiningHeroCard>
 
     final canStart = session == null || session.isIdle;
     final canClaim = session?.isClaimable ?? false;
-    final claimLocked = !canClaim;
     final statusLabel = canClaim
         ? 'Claim Ready'
         : session?.isRunning == true
@@ -357,14 +356,15 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                   onPressed: busy ? null : widget.onStart,
                   isLoading: widget.isStarting,
                 ),
-              if (canStart) const SizedBox(height: 10),
-              _MiningActionButton(
-                label: claimLocked ? 'Claim Rewards (Locked)' : 'Claim Rewards',
-                color: AppColors.successColor,
-                textColor: Colors.black,
-                onPressed: (claimLocked || busy) ? null : widget.onClaim,
-                isLoading: widget.isClaiming,
-              ),
+              if (canStart && canClaim) const SizedBox(height: 10),
+              if (canClaim)
+                _MiningActionButton(
+                  label: 'Claim Rewards',
+                  color: AppColors.successColor,
+                  textColor: Colors.black,
+                  onPressed: busy ? null : widget.onClaim,
+                  isLoading: widget.isClaiming,
+                ),
             ],
           ),
         ),

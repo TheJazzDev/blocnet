@@ -71,6 +71,7 @@ class AuthStore extends ChangeNotifier {
   static const String _spaceKeyPrefix = 'blocnet_active_space_';
   static const String _pendingReferralCodeKey = 'blocnet_pending_referral_code';
   static const String hunterOnboardedKeyPrefix = 'hunter_onboarded_v1_';
+  static final RegExp _usernamePattern = RegExp(r'^[a-z0-9_]{3,24}$');
 
   bool _isAuthenticated = false;
   bool _isSubmitting = false;
@@ -284,7 +285,10 @@ class AuthStore extends ChangeNotifier {
       final response = await Supabase.instance.client.auth.signUp(
         email: email.trim(),
         password: password,
-        data: {'username': username.trim()},
+        data: {
+          'username': username.trim(),
+          if (normalizedReferral != null) 'referralCode': normalizedReferral,
+        },
       ).timeout(_authTimeout);
 
       _email = email.trim();
@@ -312,7 +316,7 @@ class AuthStore extends ChangeNotifier {
     }
   }
 
-  Future<bool> signInWithGoogle() async {
+  Future<bool> signInWithGoogle({String? username}) async {
     if (_isSubmitting) return false;
     if (!isSupabaseConfigured) {
       _lastError = 'Supabase is not configured in app runtime defines';
@@ -325,6 +329,12 @@ class AuthStore extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final normalizedUsername = _normalizeUsername(username);
+      if (username != null && normalizedUsername == null) {
+        _lastError = 'Username must be 3-24 chars (lowercase letters, numbers, underscore)';
+        return false;
+      }
+
       // Initialize Google Sign-In with web client ID from Supabase
       final googleSignIn = GoogleSignIn(
         serverClientId: AppConfig.supabaseGoogleClientId,
@@ -362,8 +372,28 @@ class AuthStore extends ChangeNotifier {
         return false;
       }
 
+      var effectiveToken = session.accessToken;
+      if (normalizedUsername != null) {
+        try {
+          await Supabase.instance.client.auth.updateUser(
+            UserAttributes(
+              data: {'username': normalizedUsername},
+            ),
+          );
+          final refreshed = await Supabase.instance.client.auth
+              .refreshSession()
+              .timeout(_authTimeout);
+          final refreshedToken = refreshed.session?.accessToken;
+          if (refreshedToken != null && refreshedToken.trim().isNotEmpty) {
+            effectiveToken = refreshedToken;
+          }
+        } catch (_) {
+          // Backend fallback ensures username is still assigned if metadata sync fails.
+        }
+      }
+
       // Verify and sign in with the session token
-      return verifyAndSignIn(session.accessToken, setSubmitting: false);
+      return verifyAndSignIn(effectiveToken, setSubmitting: false);
     } on AuthException catch (error) {
       _lastError = error.message;
       return false;
@@ -917,6 +947,12 @@ class AuthStore extends ChangeNotifier {
     }
 
     return trimmed;
+  }
+
+  String? _normalizeUsername(String? value) {
+    final trimmed = value?.trim().toLowerCase();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return _usernamePattern.hasMatch(trimmed) ? trimmed : null;
   }
 
   Future<void> _restoreActiveSpacePreference() async {

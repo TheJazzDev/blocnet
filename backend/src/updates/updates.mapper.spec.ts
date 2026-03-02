@@ -15,6 +15,7 @@ describe('updates.mapper', () => {
       author: {
         id: 'user-1',
         email: 'hunter@blocnet.io',
+        username: 'hunter',
         displayName: 'Hunter',
         avatarUrl: 'https://example.com/h.png',
         roles: [{ role: 'hunter' }],
@@ -31,6 +32,9 @@ describe('updates.mapper', () => {
       secondaryTags: [
         { secondaryTag: { id: 'tag-2', name: 'DeFi', slug: 'defi' } },
       ],
+      _count: {
+        comments: 4,
+      },
     } as unknown as UpdateWithRelations;
 
     const result = toUpdateResponse(update);
@@ -38,5 +42,6 @@ describe('updates.mapper', () => {
     expect(result.project.primaryTag).toBe('Layer 1');
     expect(result.secondaryTagIds).toEqual(['tag-2']);
     expect(result.admin.username).toBe('@hunter');
+    expect(result.commentsCount).toBe(4);
   });
 });

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DigestComposerService } from './digest-composer.service';
 import { NotificationEmailService } from './email.service';
+import { EmailTemplateService } from './email-template.service';
 import { NotificationPreferencesService } from './notification-preferences.service';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
@@ -14,6 +15,7 @@ import { FcmService } from './fcm.service';
     NotificationEventsService,
     NotificationPreferencesService,
     NotificationEmailService,
+    EmailTemplateService,
     DigestComposerService,
     FcmService,
   ],
@@ -22,6 +24,7 @@ import { FcmService } from './fcm.service';
     NotificationEventsService,
     NotificationPreferencesService,
     NotificationEmailService,
+    EmailTemplateService,
     DigestComposerService,
     FcmService,
   ],

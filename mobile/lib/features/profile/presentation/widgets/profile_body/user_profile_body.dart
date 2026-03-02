@@ -5,9 +5,11 @@ import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/services/auth_store.dart';
 import 'package:blocnet/services/badges_store.dart';
+import 'package:blocnet/services/feed_view_mode_store.dart';
 import 'package:blocnet/services/tips_store.dart';
 import 'package:blocnet/services/update_bookmarks_store.dart';
 import 'package:blocnet/services/updates_store.dart';
@@ -68,6 +70,20 @@ class _UserProfileBodyState extends State<UserProfileBody> {
     final followingCount = profileStore.followingProfilesCount;
     final tipsSent = tipsStore.profileTipsSentValue;
     final auth = widget.auth;
+    final viewMode = context.watch<FeedViewModeStore>().mode;
+    final badgeById = <String, BadgeModel>{};
+    for (final earned in badgesStore.myBadges) {
+      final badge = earned.badge;
+      if (badge.id.trim().isEmpty) continue;
+      badgeById[badge.id] = badge;
+    }
+    final earnedBadges = badgeById.values.toList()
+      ..sort((left, right) {
+        final rarityDelta =
+            right.rarity.index.compareTo(left.rarity.index);
+        if (rarityDelta != 0) return rarityDelta;
+        return left.sortOrder.compareTo(right.sortOrder);
+      });
 
     final displayName = auth.displayName?.trim().isNotEmpty == true
         ? auth.displayName!.trim()
@@ -95,6 +111,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
               avatarUrl: auth.avatarUrl,
               email: auth.email,
               primaryBadge: badgesStore.displayBadge,
+              badges: earnedBadges,
               onEditTap: () =>
                   Navigator.of(context).pushNamed(AppRoutes.editProfile),
             ),
@@ -136,44 +153,56 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                   const _SectionLabel('More'),
                   const SizedBox(height: 8),
                   _ProfileTile(
+                    mode: viewMode,
                     icon: Icons.emoji_events_outlined,
                     title: 'Badges',
                     subtitle: 'View and manage your earned badges',
+                    showDivider: true,
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.badges),
                   ),
                   _ProfileTile(
+                    mode: viewMode,
                     icon: Icons.task_alt_outlined,
                     title: 'Quests',
                     subtitle: 'Complete quests to earn rewards',
+                    showDivider: true,
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.quests),
                   ),
                   _ProfileTile(
+                    mode: viewMode,
                     icon: Icons.volunteer_activism_outlined,
                     title: 'Tip History',
                     subtitle: 'See all tips you sent to hunters',
+                    showDivider: true,
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.tipsHistory),
                   ),
                   _ProfileTile(
+                    mode: viewMode,
                     icon: Icons.redeem_outlined,
                     title: 'Referral Code',
                     subtitle: 'View and manage your referral code',
+                    showDivider: true,
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.referralCode),
                   ),
                   _ProfileTile(
+                    mode: viewMode,
                     icon: Icons.settings_outlined,
                     title: 'Settings',
                     subtitle: 'Account preferences',
+                    showDivider: true,
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.settings),
                   ),
                   _ProfileTile(
+                    mode: viewMode,
                     icon: Icons.support_agent_outlined,
                     title: 'Help & Support',
                     subtitle: 'Get help with account and app issues',
+                    showDivider: false,
                     onTap: () =>
                         Navigator.of(context).pushNamed(AppRoutes.helpSupport),
                   ),
@@ -181,11 +210,13 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                   const _SectionLabel('Account'),
                   const SizedBox(height: 8),
                   _ProfileTile(
+                    mode: viewMode,
                     icon: Icons.logout_rounded,
                     title: 'Sign Out',
                     subtitle: 'Sign out of your account',
                     iconColor: AppColors.textMuted,
                     titleColor: AppColors.textSecondary,
+                    showDivider: false,
                     onTap: widget.onSignOut,
                   ),
                 ],

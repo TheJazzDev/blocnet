@@ -1,20 +1,27 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:flutter/material.dart';
 
 class AssetRow extends StatelessWidget {
-  const AssetRow({super.key, required this.asset});
+  const AssetRow({
+    super.key,
+    required this.asset,
+    required this.viewMode,
+  });
 
   final WalletAssetBalance asset;
+  final FeedViewMode viewMode;
 
   @override
   Widget build(BuildContext context) {
     final accent = assetAccentColor(asset.asset);
+    final isCardMode = viewMode == FeedViewMode.card;
     return InkWell(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(10),
       onTap: () {
         Navigator.of(context).pushNamed(
           AppRoutes.walletAssetDetail,
@@ -23,27 +30,30 @@ class AssetRow extends StatelessWidget {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.bgSurface,
-              AppColors.bgSurface.withValues(alpha: 0.5),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: accent.withValues(alpha: 0.15),
-            width: 1.5,
-          ),
-        ),
+        margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        decoration: isCardMode
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.bgSurface,
+                    AppColors.bgSurface.withValues(alpha: 0.82),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.borderSubtle.withValues(alpha: 0.75),
+                  width: 1.2,
+                ),
+              )
+            : null,
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -56,7 +66,7 @@ class AssetRow extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: accent.withValues(alpha: 0.4),
-                  width: 2,
+                  width: 1.5,
                 ),
               ),
               alignment: Alignment.center,
@@ -64,12 +74,12 @@ class AssetRow extends StatelessWidget {
                 asset.symbol,
                 style: AppTypography.custom(
                   color: accent,
-                  size: 13,
+                  size: 11,
                   weight: FontWeight.w800,
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +136,7 @@ class AssetRow extends StatelessWidget {
                   formatTokenAmount(asset.available),
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 16,
+                    size: 14,
                     weight: FontWeight.w700,
                   ),
                 ),
@@ -140,12 +150,6 @@ class AssetRow extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textFaint,
-              size: 18,
             ),
           ],
         ),

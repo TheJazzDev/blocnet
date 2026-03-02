@@ -1,18 +1,21 @@
 # Blocknet Monorepo
 
 This repository now contains:
+
 - `mobile/` Flutter client
 - `backend/` NestJS API (Prisma + Supabase Postgres)
-- `console/` Next.js admin panel
+- `console/` Next.js admin console
 - `homepage/` Next.js marketing site
 - `contracts/` Hardhat smart contracts
 
 Master plan and execution reference:
+
 - `BLOCKNET_PLAN.md`
 
 ## Quick Start
 
 ### Backend
+
 ```bash
 cd backend
 bun install
@@ -25,6 +28,7 @@ bun run start:dev
 ```
 
 ### Mobile
+
 ```bash
 cd mobile
 flutter pub get
@@ -43,10 +47,12 @@ Run the full pre-deploy quality gate:
 ```
 
 Reference:
+
 - `TESTING_STRATEGY.md`
 - `.github/BRANCH_PROTECTION.md`
 
 ## Notes
+
 - Use `bun`/`bunx` for backend workflows.
 - Prisma 7 CLI uses `backend/prisma.config.ts`.
 - Use `DATABASE_URL` for app runtime and `DIRECT_URL` for Prisma migrations.
@@ -54,4 +60,3 @@ Reference:
 - Health endpoint: `/api/health`.
 - Swagger UI: `http://localhost:3080/api/docs`.
 - For seed bootstrap, set `OWNER_USER_ID` and `OWNER_EMAIL` in `backend/.env.local`.
-

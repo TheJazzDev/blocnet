@@ -36,14 +36,14 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   }
 
   String _resolveDisplayName(AuthStore auth) {
-    final displayName = auth.displayName?.trim();
-    if (displayName != null && displayName.isNotEmpty) {
-      return displayName;
-    }
-
     final username = auth.username?.trim();
     if (username != null && username.isNotEmpty) {
       return '@$username';
+    }
+
+    final displayName = auth.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName;
     }
 
     final email = auth.email?.trim();
@@ -230,7 +230,6 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
         _normalizedCode(auth.referralCode) ?? _normalizedCode(referral?.code);
     final displayName = _resolveDisplayName(auth);
     final username = auth.username?.trim();
-    final email = auth.email?.trim();
     final referralLink = referralCode != null
         ? 'https://blocnet.app/ref/$referralCode'
         : 'https://blocnet.app';
@@ -251,7 +250,6 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
             _HeaderSection(
               displayName: displayName,
               username: username,
-              email: email,
             ),
             const SizedBox(height: 24),
             _ReferralCodeCard(
@@ -291,12 +289,10 @@ class _HeaderSection extends StatelessWidget {
   const _HeaderSection({
     required this.displayName,
     required this.username,
-    required this.email,
   });
 
   final String displayName;
   final String? username;
-  final String? email;
 
   @override
   Widget build(BuildContext context) {
@@ -344,17 +340,6 @@ class _HeaderSection extends StatelessWidget {
               ),
           ],
         ),
-        if (email != null && email!.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            email!,
-            style: AppTypography.custom(
-              color: AppColors.textFaint,
-              size: 12,
-              weight: FontWeight.w500,
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -611,16 +596,15 @@ class _ReferrerSection extends StatelessWidget {
     }
 
     if (referredBy != null) {
-      final referrerName = referredBy.displayName?.trim().isNotEmpty == true
-          ? referredBy.displayName!.trim()
-          : (referredBy.email?.trim().isNotEmpty == true
-              ? referredBy.email!.trim()
-              : 'Unknown');
+      final normalizedUsername = referredBy.username?.trim().replaceAll('@', '');
+      final referrerName =
+          (normalizedUsername != null && normalizedUsername.isNotEmpty)
+              ? '@$normalizedUsername'
+              : 'linked referrer';
       final referrerCode = referredBy.code?.trim().toUpperCase();
       return _ReferrerCard(
         title: 'Your Referrer',
         subtitle: referrerName,
-        email: referredBy.email?.trim(),
         code: referrerCode,
       );
     }
@@ -727,14 +711,12 @@ class _ReferrerCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.detail,
-    this.email,
     this.code,
   });
 
   final String title;
   final String subtitle;
   final String? detail;
-  final String? email;
   final String? code;
 
   @override
@@ -770,17 +752,6 @@ class _ReferrerCard extends StatelessWidget {
                   weight: FontWeight.w700,
                 ),
               ),
-              if (email != null && email!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  email!,
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: 12,
-                    weight: FontWeight.w500,
-                  ),
-                ),
-              ],
               if (code != null && code!.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Container(

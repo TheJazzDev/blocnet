@@ -121,10 +121,13 @@ class ReferralCodeCard extends StatelessWidget {
                   Builder(
                     builder: (context) {
                       final referrer = referral!.referredBy!;
-                      final referrerLabel = referrer.displayName ??
-                          referrer.email ??
-                          referrer.code ??
-                          'linked referrer';
+                      final normalizedUsername =
+                          referrer.username?.trim().replaceAll('@', '');
+                      final referrerLabel =
+                          (normalizedUsername != null &&
+                                  normalizedUsername.isNotEmpty)
+                              ? '@$normalizedUsername'
+                              : 'linked referrer';
                       return Text(
                         'You are under $referrerLabel.',
                         style: AppTypography.custom(

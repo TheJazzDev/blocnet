@@ -6,6 +6,7 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/repositories/updates_api_repository.dart';
 import 'package:blocnet/features/projects/data/repositories/projects_api_repository.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
+import 'package:blocnet/services/project_follows_store.dart';
 import 'package:flutter/material.dart';
 
 class ProjectsStore extends ChangeNotifier {
@@ -111,8 +112,21 @@ class ProjectsStore extends ChangeNotifier {
             ),
           );
         }
+        await ProjectFollowsStore.replaceAll(_followedProjectIds);
       } catch (_) {
-        // Ignore profile sync failures and keep local follow cache.
+        final cachedFollowed = await ProjectFollowsStore.followedIds();
+        _followedProjectIds
+          ..clear()
+          ..addAll(cachedFollowed);
+        for (final projectId in _followedProjectIds) {
+          _followPreferences.putIfAbsent(
+            projectId,
+            () => const FollowPreference(
+              alertLevel: FollowAlertLevel.all,
+              mutedUntil: null,
+            ),
+          );
+        }
       }
 
       _lastError = null;
@@ -329,6 +343,7 @@ class ProjectsStore extends ChangeNotifier {
       _followPreferences.remove(projectId);
       _updateProjectFollowerCount(projectId, -1);
     }
+    await ProjectFollowsStore.replaceAll(_followedProjectIds);
     notifyListeners();
 
     try {
@@ -353,6 +368,7 @@ class ProjectsStore extends ChangeNotifier {
         );
         _updateProjectFollowerCount(projectId, 1);
       }
+      await ProjectFollowsStore.replaceAll(_followedProjectIds);
       _lastError = error.toString();
     } finally {
       _isTogglingFollow = false;

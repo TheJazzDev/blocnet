@@ -51,34 +51,63 @@ export class AuthService {
 
     // Extract username from Supabase user_metadata (set at signup)
     const rawUsername = payload.user_metadata?.['username'];
-    const username =
+    const metadataUsername =
       typeof rawUsername === 'string' && rawUsername.trim().length > 0
         ? rawUsername.trim().toLowerCase()
         : undefined;
+    const usernameSeed =
+      this.normalizeUsernameCandidate(metadataUsername) ??
+      this.normalizeUsernameCandidate(payload.email?.split('@')[0]) ??
+      this.normalizeUsernameCandidate(userId);
+    const signupReferralCode = this.extractReferralCodeFromMetadata(
+      payload.user_metadata,
+    );
 
     const existingProfile = await this.prisma.profile.findUnique({
       where: { id: userId },
-      select: { id: true, isDeactivated: true, referralCode: true },
+      select: {
+        id: true,
+        isDeactivated: true,
+        referralCode: true,
+        username: true,
+      },
     });
     if (existingProfile?.isDeactivated) {
       throw new UnauthorizedException('Account is deactivated');
     }
 
     if (!existingProfile) {
+      const ensuredUsername = await this.generateUniqueUsername(usernameSeed);
+      const referrer = signupReferralCode
+        ? await this.prisma.profile.findUnique({
+            where: { referralCode: signupReferralCode },
+            select: { id: true },
+          })
+        : null;
+
       await this.prisma.profile.create({
         data: {
           id: userId,
           email: payload.email ?? `${userId}@unknown.local`,
           referralCode: await this.generateUniqueReferralCode(),
-          // Only set username on profile creation — it must not change after signup
-          ...(username ? { username } : {}),
+          username: ensuredUsername,
+          ...(referrer && referrer.id !== userId
+            ? {
+                referredById: referrer.id,
+                referredAt: new Date(),
+              }
+            : {}),
         },
       });
     } else {
+      const ensuredUsername = existingProfile.username
+        ? null
+        : await this.generateUniqueUsername(usernameSeed, userId);
       await this.prisma.profile.update({
         where: { id: userId },
         data: {
           email: payload.email ?? `${userId}@unknown.local`,
+          ...(ensuredUsername ? { username: ensuredUsername } : {}),
           ...(existingProfile.referralCode
             ? {}
             : { referralCode: await this.generateUniqueReferralCode() }),
@@ -182,5 +211,65 @@ export class AuthService {
     }
 
     return code;
+  }
+
+  private normalizeUsernameCandidate(value?: string | null): string | null {
+    if (!value) return null;
+
+    const cleaned = value
+      .trim()
+      .toLowerCase()
+      .replace(/^@+/, '')
+      .replace(/[^a-z0-9_]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '');
+
+    if (!cleaned) return null;
+
+    const bounded =
+      cleaned.length > 24 ? cleaned.slice(0, 24) : cleaned.padEnd(3, '0');
+    return bounded;
+  }
+
+  private async generateUniqueUsername(
+    seed: string | null,
+    excludeUserId?: string,
+  ): Promise<string> {
+    const baseSeed = seed ?? `user_${randomBytes(4).toString('hex')}`;
+    const normalizedBase = this.normalizeUsernameCandidate(baseSeed) ?? 'user000';
+    const roomForSuffix = 24 - 4;
+    const truncatedBase = normalizedBase.slice(0, Math.max(roomForSuffix, 3));
+
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      const suffix = attempt === 0 ? '' : `_${attempt + 1}`;
+      const candidate = `${truncatedBase}${suffix}`.slice(0, 24);
+      const existing = await this.prisma.profile.findUnique({
+        where: { username: candidate },
+        select: { id: true },
+      });
+      if (!existing || (excludeUserId && existing.id === excludeUserId)) {
+        return candidate;
+      }
+    }
+
+    throw new InternalServerErrorException('Unable to assign username');
+  }
+
+  private extractReferralCodeFromMetadata(
+    metadata?: Record<string, unknown>,
+  ): string | null {
+    if (!metadata) return null;
+
+    const candidate =
+      metadata['referralCode'] ??
+      metadata['referral_code'] ??
+      metadata['referrerCode'] ??
+      metadata['referrer_code'];
+
+    if (typeof candidate !== 'string') return null;
+
+    const normalized = candidate.trim().toUpperCase();
+    if (!normalized) return null;
+    return normalized;
   }
 }

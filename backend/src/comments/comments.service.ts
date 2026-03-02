@@ -23,6 +23,7 @@ const commentInclude = {
     select: {
       id: true,
       email: true,
+      username: true,
       displayName: true,
       avatarUrl: true,
       roles: {
@@ -293,25 +294,24 @@ export class CommentsService {
       include: typeof commentInclude;
     }>,
   ) {
-    const rawUsername =
-      comment.author.email?.split('@')[0] ?? comment.author.id;
-    const normalized = rawUsername
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]/g, '')
+    const rawUsername = (comment.author.username ?? '')
+      .replaceAll('@', '')
       .trim();
+    const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
     const username = `@${normalized || comment.author.id.slice(0, 6)}`;
+    const displayName = comment.author.displayName?.trim() || 'Blocnet Member';
 
     return {
       ...comment,
       author: {
         id: comment.author.id,
-        email: comment.author.email,
         displayName: comment.author.displayName,
+        username: comment.author.username,
         avatarUrl: comment.author.avatarUrl,
       },
       admin: {
         id: comment.author.id,
-        name: comment.author.displayName ?? comment.author.email ?? 'User',
+        name: displayName,
         username,
         imageUrl: comment.author.avatarUrl ?? '',
         followers: 0,

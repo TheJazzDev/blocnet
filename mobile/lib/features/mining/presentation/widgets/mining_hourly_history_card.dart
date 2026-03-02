@@ -21,98 +21,49 @@ class MiningHourlyHistoryCard extends StatelessWidget {
     final visibleEntries = maxEntries == null
         ? entries
         : entries.take(maxEntries!).toList(growable: false);
+    if (isLoading && visibleEntries.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.bgSurface,
-            AppColors.bgSurface.withValues(alpha: 0.9),
+    if (visibleEntries.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Text(
+          'No hourly checkpoints yet. Start mining to generate hourly records.',
+          style: AppTypography.custom(
+            size: 12,
+            weight: FontWeight.w500,
+            color: AppColors.textMuted,
+            height: 1.5,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: visibleEntries.asMap().entries.map((entry) {
+        final index = entry.key;
+        final row = entry.value;
+        return Column(
+          children: [
+            _HistoryRow(item: row),
+            if (index != visibleEntries.length - 1)
+              Divider(
+                height: 1,
+                color: AppColors.borderSubtle.withValues(alpha: 0.8),
+              ),
           ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.borderSubtle.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Hourly Mining History',
-            style: AppTypography.custom(
-              size: 16,
-              weight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Latest checkpoint earnings by hour',
-            style: AppTypography.custom(
-              size: 12,
-              weight: FontWeight.w500,
-              color: AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 14),
-          if (isLoading && visibleEntries.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.primary400,
-                  ),
-                ),
-              ),
-            )
-          else if (visibleEntries.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                'No hourly checkpoints yet. Start mining to generate hourly records.',
-                style: AppTypography.custom(
-                  size: 12,
-                  weight: FontWeight.w500,
-                  color: AppColors.textMuted,
-                  height: 1.5,
-                ),
-              ),
-            )
-          else
-            ...visibleEntries.asMap().entries.map((entry) {
-              final index = entry.key;
-              final row = entry.value;
-              return Column(
-                children: [
-                  _HistoryRow(item: row),
-                  if (index != visibleEntries.length - 1)
-                    Container(
-                      height: 1,
-                      margin: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.borderSubtle.withValues(alpha: 0.3),
-                            AppColors.borderSubtle,
-                            AppColors.borderSubtle.withValues(alpha: 0.3),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            }),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 }
@@ -139,16 +90,16 @@ class _HistoryRow extends StatelessWidget {
               Text(
                 rangeLabel,
                 style: AppTypography.custom(
-                  size: 12.5,
+                  size: 12,
                   weight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
-                'Hour ${item.hourIndex}  ·  Boost ${formatGroupedNumber(item.boostBpsSnapshot, maxDecimals: 0)} bps  ·  Ref ${formatGroupedNumber(item.activeReferralsSnapshot, maxDecimals: 0)}',
+                'Hour ${item.hourIndex} · Boost ${_formatBoost(item.boostBpsSnapshot)}%',
                 style: AppTypography.custom(
-                  size: 11.5,
+                  size: 11,
                   weight: FontWeight.w400,
                   color: AppColors.textMuted,
                 ),
@@ -161,33 +112,28 @@ class _HistoryRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '+${formatGroupedNumber(item.points, maxDecimals: 0)} BNP',
+              '+${formatGroupedNumber(item.points, maxDecimals: 2)} BNP',
               style: AppTypography.custom(
-                size: 14,
+                size: 13,
                 weight: FontWeight.w800,
                 color: AppColors.successColor,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    statusColor.withValues(alpha: 0.2),
-                    statusColor.withValues(alpha: 0.12),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(8),
+                color: statusColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(999),
                 border: Border.all(
-                  color: statusColor.withValues(alpha: 0.3),
+                  color: statusColor.withValues(alpha: 0.35),
                   width: 1,
                 ),
               ),
               child: Text(
                 statusLabel,
                 style: AppTypography.custom(
-                  size: 10,
+                  size: 9,
                   weight: FontWeight.w800,
                   color: statusColor,
                 ),
@@ -204,6 +150,11 @@ class _HistoryRow extends StatelessWidget {
     final start = _formatClock(startAt);
     final end = _formatClock(endAt);
     return '${_formatDate(startAt)}  ·  $start - $end';
+  }
+
+  String _formatBoost(num boostBps) {
+    final percent = boostBps / 100;
+    return formatGroupedNumber(percent, maxDecimals: 1, minDecimals: 0);
   }
 
   String _formatDate(DateTime date) {

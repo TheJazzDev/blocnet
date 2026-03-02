@@ -327,7 +327,7 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
   {
     key: 'system.settings.mutate',
     label: 'Mutate Settings',
-    description: 'Update global admin panel configuration settings.',
+    description: 'Update global admin console configuration settings.',
     section: 'system',
     roles: [AppRole.OWNER],
   },

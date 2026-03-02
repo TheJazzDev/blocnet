@@ -7,6 +7,7 @@ class AppSnackbar {
     _show(
       context,
       _build(
+        context: context,
         message: message,
         icon: Icons.error_outline_rounded,
         background: AppColors.error900,
@@ -20,6 +21,7 @@ class AppSnackbar {
     _show(
       context,
       _build(
+        context: context,
         message: message,
         icon: Icons.check_circle_outline_rounded,
         background: AppColors.bgSurface,
@@ -36,19 +38,27 @@ class AppSnackbar {
   }
 
   static SnackBar _build({
+    required BuildContext context,
     required String message,
     required IconData icon,
     required Color background,
     required Color border,
     required Color iconColor,
   }) {
+    final topInset = MediaQuery.paddingOf(context).top + kToolbarHeight + 8;
+    final bottomInset = MediaQuery.sizeOf(context).height - topInset - 72;
     return SnackBar(
       duration: const Duration(seconds: 6),
       behavior: SnackBarBehavior.floating,
       showCloseIcon: true,
       closeIconColor: AppColors.textMuted,
       backgroundColor: background,
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      margin: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        bottomInset.clamp(16, 1200).toDouble(),
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: border),

@@ -1,7 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/asset_row.dart';
+import 'package:blocnet/services/feed_view_mode_store.dart';
 import 'package:blocnet/services/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,36 +14,26 @@ class AssetsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
+    final viewMode = context.watch<FeedViewModeStore>().mode;
     final snapshot = walletStore.snapshot;
     final assets = snapshot?.assets ?? const <WalletAssetBalance>[];
 
     if (walletStore.isLoadingSummary && snapshot == null) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 28),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 22),
         child: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.teal400,
-            strokeWidth: 2.2,
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2.2),
           ),
         ),
       );
     }
 
     if (assets.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Text(
           'No assets available yet.',
           style: AppTypography.custom(
@@ -54,12 +46,18 @@ class AssetsSection extends StatelessWidget {
     }
 
     return Column(
-      children: assets
-          .map((asset) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: AssetRow(asset: asset),
-              ))
-          .toList(),
+      children: assets.asMap().entries.map((entry) {
+        return Column(
+          children: [
+            AssetRow(asset: entry.value, viewMode: viewMode),
+            if (viewMode == FeedViewMode.list && entry.key != assets.length - 1)
+              Divider(
+                height: 1,
+                color: AppColors.borderSubtle.withValues(alpha: 0.8),
+              ),
+          ],
+        );
+      }).toList(),
     );
   }
 }

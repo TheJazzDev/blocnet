@@ -44,7 +44,9 @@ export function SignInForm() {
   const [stage, setStage] = useState<Stage>('credentials');
   const [enrollment, setEnrollment] = useState<EnrollmentResponse | null>(null);
   const [enrollmentCode, setEnrollmentCode] = useState('');
-  const [generatedRecoveryCodes, setGeneratedRecoveryCodes] = useState<string[]>([]);
+  const [generatedRecoveryCodes, setGeneratedRecoveryCodes] = useState<
+    string[]
+  >([]);
   const [showManualSetup, setShowManualSetup] = useState(false);
   const [showAdvancedOtpUri, setShowAdvancedOtpUri] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
@@ -189,9 +191,7 @@ export function SignInForm() {
           tokenRes.data,
           'Could not initialize your session.',
         );
-        setError(
-          `Session setup failed: ${detail}`,
-        );
+        setError(`Session setup failed: ${detail}`);
         await supabase.auth.signOut();
         await clearServerSession();
         return;
@@ -423,7 +423,11 @@ export function SignInForm() {
     router.refresh();
   }
 
-  async function copyToClipboard(value: string, successMessage: string, code?: string) {
+  async function copyToClipboard(
+    value: string,
+    successMessage: string,
+    code?: string,
+  ) {
     try {
       if (!navigator.clipboard) {
         throw new Error('Clipboard API unavailable');
@@ -442,7 +446,10 @@ export function SignInForm() {
     if (generatedRecoveryCodes.length === 0) {
       return;
     }
-    await copyToClipboard(generatedRecoveryCodes.join('\n'), 'All recovery codes copied.');
+    await copyToClipboard(
+      generatedRecoveryCodes.join('\n'),
+      'All recovery codes copied.',
+    );
   }
 
   async function copyRecoveryCode(code: string) {
@@ -461,7 +468,8 @@ export function SignInForm() {
       {isTwoFactorRedirect && stage === 'credentials' && (
         <Alert>
           <AlertDescription>
-            Sign in with email and password first. Two-factor verification/setup comes next.
+            Sign in with email and password first. Two-factor verification/setup
+            comes next.
           </AlertDescription>
         </Alert>
       )}
@@ -505,7 +513,8 @@ export function SignInForm() {
         <div className='space-y-4'>
           <Alert>
             <AlertDescription>
-              Two-factor setup is required before you can access the admin panel.
+              Two-factor setup is required before you can access the admin
+              console.
             </AlertDescription>
           </Alert>
 
@@ -514,8 +523,7 @@ export function SignInForm() {
               type='button'
               className='w-full'
               onClick={() => void startTwoFactorEnrollment()}
-              disabled={loading}
-            >
+              disabled={loading}>
               {loading && <Loader2 className='h-4 w-4 animate-spin' />}
               Start 2FA Setup
             </Button>
@@ -553,9 +561,10 @@ export function SignInForm() {
                     return next;
                   })
                 }
-                disabled={loading}
-              >
-                {showManualSetup ? 'Hide Manual Setup' : 'Use Manual Setup Instead'}
+                disabled={loading}>
+                {showManualSetup
+                  ? 'Hide Manual Setup'
+                  : 'Use Manual Setup Instead'}
               </Button>
 
               {showManualSetup && (
@@ -570,9 +579,10 @@ export function SignInForm() {
                     variant='ghost'
                     className='w-full'
                     onClick={() => setShowAdvancedOtpUri((prev) => !prev)}
-                    disabled={loading}
-                  >
-                    {showAdvancedOtpUri ? 'Hide Advanced URI' : 'Show Advanced URI'}
+                    disabled={loading}>
+                    {showAdvancedOtpUri
+                      ? 'Hide Advanced URI'
+                      : 'Show Advanced URI'}
                   </Button>
 
                   {showAdvancedOtpUri && (
@@ -599,8 +609,7 @@ export function SignInForm() {
                 type='button'
                 className='w-full'
                 onClick={() => void confirmTwoFactorEnrollment()}
-                disabled={loading}
-              >
+                disabled={loading}>
                 {loading && <Loader2 className='h-4 w-4 animate-spin' />}
                 Confirm 2FA Setup
               </Button>
@@ -612,8 +621,7 @@ export function SignInForm() {
             variant='outline'
             className='w-full'
             onClick={() => void backToCredentials()}
-            disabled={loading}
-          >
+            disabled={loading}>
             Use a different account
           </Button>
         </div>
@@ -643,13 +651,13 @@ export function SignInForm() {
                 }
               }}
               disabled={loading}
-              className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm'
-            >
+              className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm'>
               <option value='totp'>Authenticator code</option>
               <option value='recovery'>Recovery code</option>
             </select>
             <p className='text-xs text-muted-foreground'>
-              Use Authenticator code for normal sign in. Recovery code is fallback.
+              Use Authenticator code for normal sign in. Recovery code is
+              fallback.
             </p>
           </div>
 
@@ -692,8 +700,7 @@ export function SignInForm() {
             variant='outline'
             className='w-full'
             onClick={() => void backToCredentials()}
-            disabled={loading}
-          >
+            disabled={loading}>
             Use a different account
           </Button>
 
@@ -702,8 +709,7 @@ export function SignInForm() {
             variant='ghost'
             className='w-full'
             onClick={() => setStage('setup2fa')}
-            disabled={loading}
-          >
+            disabled={loading}>
             I have not set up 2FA yet
           </Button>
         </form>
@@ -722,8 +728,7 @@ export function SignInForm() {
             variant='outline'
             className='w-full'
             onClick={() => void copyAllRecoveryCodes()}
-            disabled={loading || generatedRecoveryCodes.length === 0}
-          >
+            disabled={loading || generatedRecoveryCodes.length === 0}>
             <Copy className='h-4 w-4' />
             Copy All Codes
           </Button>
@@ -732,16 +737,14 @@ export function SignInForm() {
             {generatedRecoveryCodes.map((code) => (
               <div
                 key={code}
-                className='flex items-center justify-between rounded-md border border-border px-2 py-1'
-              >
+                className='flex items-center justify-between rounded-md border border-border px-2 py-1'>
                 <code className='text-xs'>{code}</code>
                 <Button
                   type='button'
                   variant='ghost'
                   size='sm'
                   onClick={() => void copyRecoveryCode(code)}
-                  disabled={loading}
-                >
+                  disabled={loading}>
                   {lastCopiedCode === code ? (
                     <Check className='h-4 w-4' />
                   ) : (
@@ -752,14 +755,15 @@ export function SignInForm() {
               </div>
             ))}
           </div>
-          {copyStatus ? <p className='text-xs text-muted-foreground'>{copyStatus}</p> : null}
+          {copyStatus ? (
+            <p className='text-xs text-muted-foreground'>{copyStatus}</p>
+          ) : null}
 
           <Button
             type='button'
             className='w-full'
             onClick={continueToDashboard}
-            disabled={loading}
-          >
+            disabled={loading}>
             Continue to Admin Panel
           </Button>
         </div>

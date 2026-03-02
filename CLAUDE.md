@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 blocnet/
 ├── backend/        # NestJS API (source of truth for all business logic)
 ├── mobile/         # Flutter app (user-facing)
-├── console/        # Next.js admin panel
+├── console/        # Next.js admin console
 └── homepage/       # Next.js marketing page
 ```
 
@@ -68,11 +68,13 @@ bun run lint
 ## Critical Rules
 
 ### Prisma Migrations
+
 - **ALWAYS** use `prisma migrate dev` — **NEVER** `prisma db push`
 - Workflow: edit `schema.prisma` → `bunx prisma migrate dev --name <name>` → this auto-generates and applies
 - Never manually edit migration SQL files after creation
 
 ### Tailwind CSS v4 (console / homepage)
+
 - `shrink-0` not `flex-shrink-0`
 - `bg-linear-to-br` not `bg-gradient-to-br`
 - Always mobile-first: start with base (mobile) values, scale up with `sm:`, `md:`, `lg:`
@@ -84,23 +86,27 @@ bun run lint
 ## Backend Architecture
 
 ### Module Structure
+
 Each feature module lives at `src/<feature>/` and contains a controller, service, and `dto/` folder. The `app.module.ts` imports all feature modules.
 
 **Active modules:** `auth`, `users`, `roles`, `projects`, `updates`, `comments`, `project-assignments`, `project-proposals`, `follows`, `notifications`, `device-tokens`, `admin-applications`, `tags`, `audit-log`, `health`, `prisma`, `config`
 
 ### Auth & Authorization
+
 - `AuthGuard` — validates Supabase JWT on each request
 - `RolesGuard` — checks `@Roles()` decorator against user roles
 - `@CurrentUser()` — injects the authenticated user into controller methods
 - RBAC roles: `owner`, `admin`, `poster`, `user` (users can hold multiple roles)
 
 ### API Conventions
+
 - Global prefix: `/api`
 - Swagger docs: `http://localhost:3080/api/docs`
 - Global `ValidationPipe` with `whitelist: true`, `forbidNonWhitelisted: true`
 - Standard HTTP exceptions: `BadRequestException`, `ForbiddenException`, `NotFoundException`, `ConflictException`
 
 ### Database (Prisma + Supabase Postgres)
+
 - Prisma 7 with `@prisma/adapter-pg` (connection pooling)
 - Config: `prisma.config.ts` (Prisma 7 syntax — not `schema.prisma` datasource block alone)
 - Content hierarchy (immutable invariants):
@@ -113,7 +119,9 @@ Each feature module lives at `src/<feature>/` and contains a controller, service
 ## Mobile Architecture
 
 ### State Management
+
 Provider (`ChangeNotifier`) stores in `lib/services/`:
+
 - `AuthStore` — auth state, user profile, roles
 - `ProjectsStore` — project list, follow state
 - `UpdatesStore` — updates feed, filters
@@ -122,7 +130,9 @@ Provider (`ChangeNotifier`) stores in `lib/services/`:
 All stores use `ApiClient` (`lib/services/api/api_client.dart`) which injects the Supabase Bearer token automatically.
 
 ### Feature Structure
+
 `lib/features/<feature>/`
+
 - `data/models/` — data models (e.g., `ProjectModel`, `UpdateModel`)
 - `data/repositories/` — API calls via `ApiClient`
 - `presentation/pages/` — full screens
@@ -130,6 +140,7 @@ All stores use `ApiClient` (`lib/services/api/api_client.dart`) which injects th
 - `presentation/viewmodels/` or controllers — UI state
 
 ### Routing
+
 - `lib/app/router.dart` — route generation
 - `lib/routes/protected_routes.dart` — role-based route definitions
 - `RouteAccessGate` — redirects unauthorized users

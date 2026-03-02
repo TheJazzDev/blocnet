@@ -1,15 +1,15 @@
-export type AdminEnvironment = "production" | "development";
+export type AdminEnvironment = 'production' | 'stage';
 
 const PRODUCTION_HOSTNAMES = new Set([
-  "console.blocnet.app",
-  "blocnet-console.vercel.app",
+  'console.blocnet.app',
+  'blocnet-console.vercel.app',
 ]);
 
 function normalizeHostname(host: string | null | undefined): string | null {
   if (!host) return null;
   const trimmed = host.trim().toLowerCase();
   if (!trimmed) return null;
-  const [hostnameOnly] = trimmed.split(":");
+  const [hostnameOnly] = trimmed.split(':');
   return hostnameOnly || null;
 }
 
@@ -18,13 +18,13 @@ export function resolveAdminEnvironmentFromHost(
 ): AdminEnvironment {
   const normalizedHost = normalizeHostname(host);
   if (!normalizedHost) {
-    return "development";
+    return 'stage';
   }
   return PRODUCTION_HOSTNAMES.has(normalizedHost)
-    ? "production"
-    : "development";
+    ? 'production'
+    : 'stage';
 }
 
 export function getAdminEnvironmentLabel(env: AdminEnvironment): string {
-  return env === "production" ? "Production" : "Development";
+  return env === 'production' ? 'Production' : 'Stage';
 }

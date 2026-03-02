@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { RichContentRenderer } from "@/components/rich-content-renderer";
 import { useAdminSession } from "@/components/admin-shell";
 import { clientApi, type AdminApplication, type ProjectProposal } from "@/lib/api-client";
 import {
@@ -195,7 +196,7 @@ export default function ApplicationsPage() {
                               <Badge variant="secondary">{app.targetRole === "admin" ? "Admin Role" : "Hunter Role"}</Badge>
                             </div>
                             <p className="mt-0.5 text-sm text-muted-foreground">{app.user.email}</p>
-                            <p className="mt-3 text-sm leading-relaxed">{app.reason}</p>
+                            <RichContentRenderer content={app.reason} className="mt-3" />
                             <div className="mt-3 flex flex-wrap gap-1.5">
                               {app.targetRole === "admin" ? (
                                 ADMIN_ROLE_PREVIEW.map((label) => (
@@ -255,13 +256,13 @@ export default function ApplicationsPage() {
                             {statusBadge(proposal.status)}
                             {proposal.primaryTag && <Badge variant="secondary">{proposal.primaryTag.name}</Badge>}
                           </div>
-                          <p className="mt-3 text-sm leading-relaxed">{proposal.description}</p>
+                          <RichContentRenderer content={proposal.description} className="mt-3" />
                           {proposal.reason && (
                             <>
                               <Separator className="my-3" />
                               <div className="flex items-start gap-2">
                                 <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                <p className="text-sm text-muted-foreground">{proposal.reason}</p>
+                                <RichContentRenderer content={proposal.reason} className="flex-1" />
                               </div>
                             </>
                           )}

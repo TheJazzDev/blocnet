@@ -239,7 +239,7 @@ function SidebarContent({
   return (
     <>
       <div className='flex items-center gap-2.5 px-4 py-5'>
-        <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-primary'>
+        <div className='flex h-8 w-8 items-center justify-center'>
           <Image
             src='/logo2.png'
             alt='Blocnet'
@@ -362,7 +362,7 @@ export function AdminShell({
     currentUser.actingAsRole ?? null,
   );
   const [environment, setEnvironment] = useState<AdminEnvironment>(
-    currentUser.environment ?? 'development',
+    currentUser.environment ?? 'stage',
   );
   const [hostName, setHostName] = useState<string>(
     (currentUser.hostName?.trim() || 'unknown-host').toLowerCase(),
@@ -451,7 +451,6 @@ export function AdminShell({
   return (
     <AdminSessionContext.Provider value={sessionValue}>
       <div className='relative flex h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_14%,rgba(99,102,241,0.16),transparent_34%),radial-gradient(circle_at_92%_8%,rgba(34,211,238,0.14),transparent_30%),var(--background)]'>
-        {/* <EnvironmentWatermark text={environmentLabel} /> */}
         <div className='pointer-events-none absolute -top-28 right-[-6rem] h-80 w-80 rounded-full bg-cyan-300/10 blur-3xl' />
         <div className='pointer-events-none absolute -bottom-36 left-[-8rem] h-96 w-96 rounded-full bg-violet-400/10 blur-3xl' />
 
@@ -477,7 +476,7 @@ export function AdminShell({
 
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-sidebar-border/70 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/92 transition-transform duration-200 lg:hidden',
+            'fixed inset-y-0 left-0 z-50 flex w-65 flex-col border-r border-sidebar-border/70 bg-linear-to-b from-sidebar via-sidebar to-sidebar/92 transition-transform duration-200 lg:hidden',
             mobileOpen ? 'translate-x-0' : '-translate-x-full',
           )}>
           <SidebarContent
@@ -504,8 +503,8 @@ export function AdminShell({
                 <Menu className='h-5 w-5' />
               )}
             </Button>
-            <div className='flex items-center gap-2'>
-              <div className='flex h-7 w-7 items-center justify-center rounded-md bg-primary'>
+          <div className='flex items-center gap-2'>
+              <div className='flex h-7 w-7 items-center justify-center'>
                 <Image
                   src='/logo2.png'
                   alt='Blocnet'
@@ -526,7 +525,7 @@ export function AdminShell({
                   ? 'border-teal-400/30 bg-teal-500/12 text-teal-200'
                   : 'border-amber-400/30 bg-amber-500/12 text-amber-200',
               )}>
-              {environmentLabel} · {hostName}
+              {environmentLabel}
             </div>
           </div>
 

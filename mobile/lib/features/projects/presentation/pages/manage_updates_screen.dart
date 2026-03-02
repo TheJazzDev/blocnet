@@ -1,9 +1,11 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/feed_view_mode_store.dart';
 import 'package:blocnet/services/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -28,6 +30,8 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
+    final mode = context.watch<FeedViewModeStore>().mode;
+    final isCardMode = mode == FeedViewMode.card;
 
     if (!auth.canCreateUpdate) {
       return Scaffold(
@@ -88,7 +92,14 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                           ),
                         )
                       else
-                        ...own.map((update) => _UpdateTile(update: update)),
+                        ...own.asMap().entries.map(
+                              (entry) => _UpdateTile(
+                                mode: mode,
+                                showDivider:
+                                    !isCardMode && entry.key != own.length - 1,
+                                update: entry.value,
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -127,9 +138,15 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
 // ─── Update Tile ──────────────────────────────────────────────────────────────
 
 class _UpdateTile extends StatelessWidget {
-  const _UpdateTile({required this.update});
+  const _UpdateTile({
+    required this.update,
+    required this.mode,
+    this.showDivider = false,
+  });
 
   final Update update;
+  final FeedViewMode mode;
+  final bool showDivider;
 
   void _openDetails(BuildContext context) {
     showGeneralDialog<void>(
@@ -158,59 +175,69 @@ class _UpdateTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCardMode = mode == FeedViewMode.card;
     final priorityColor = update.priority.color;
 
-    return GestureDetector(
+    final tile = GestureDetector(
       onTap: () => _openDetails(context),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: isCardMode ? 12 : 0),
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.bgSurface,
-              AppColors.bgSurface.withValues(alpha: 0.85),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: priorityColor.withValues(alpha: 0.25),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: priorityColor.withValues(alpha: 0.08),
-              blurRadius: 12,
-              spreadRadius: 0,
-            ),
-          ],
-        ),
+        decoration: isCardMode
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.bgSurface,
+                    AppColors.bgSurface.withValues(alpha: 0.85),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: priorityColor.withValues(alpha: 0.25),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: priorityColor.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    spreadRadius: 0,
+                  ),
+                ],
+              )
+            : null,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    priorityColor.withValues(alpha: 0.2),
-                    priorityColor.withValues(alpha: 0.1),
-                  ],
+            if (isCardMode)
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      priorityColor.withValues(alpha: 0.2),
+                      priorityColor.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: priorityColor.withValues(alpha: 0.35),
+                    width: 1.5,
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: priorityColor.withValues(alpha: 0.35),
-                  width: 1.5,
+                child: Icon(
+                  Icons.campaign_rounded,
+                  size: 20,
+                  color: priorityColor,
                 ),
-              ),
-              child: Icon(
+              )
+            else
+              Icon(
                 Icons.campaign_rounded,
-                size: 20,
+                size: 18,
                 color: priorityColor,
               ),
-            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -299,15 +326,30 @@ class _UpdateTile extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: AppColors.textFaint,
-            ),
+            if (isCardMode) ...[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: AppColors.textFaint,
+              ),
+            ],
           ],
         ),
       ),
+    );
+
+    if (isCardMode) return tile;
+
+    return Column(
+      children: [
+        tile,
+        if (showDivider)
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+      ],
     );
   }
 }
