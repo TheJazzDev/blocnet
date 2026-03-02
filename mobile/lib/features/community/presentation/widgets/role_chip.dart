@@ -1,4 +1,3 @@
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 

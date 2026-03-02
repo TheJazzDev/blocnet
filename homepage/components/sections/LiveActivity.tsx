@@ -193,7 +193,7 @@ export function LiveActivity() {
           </div>
 
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 sm:mb-3">
-            See What's <span className="text-teal-400">Happening Now</span>
+            See What&apos;s <span className="text-teal-400">Happening Now</span>
           </h2>
           <p className="text-xs sm:text-sm text-muted max-w-xl mx-auto">
             Real-time activity from the Blocnet community. Join thousands of users earning, sharing, and growing together.
@@ -203,7 +203,7 @@ export function LiveActivity() {
         {/* Activity Feed */}
         <div className="p-4 sm:p-6 bg-linear-to-br from-surface-2/80 to-surface-2/40 backdrop-blur-sm border border-teal-500/20 rounded-2xl">
           <div className="space-y-2 sm:space-y-3 max-h-96 sm:max-h-[500px] overflow-y-auto custom-scrollbar">
-            {activities.map((activity, index) => (
+            {activities.map((activity) => (
               <div
                 key={activity.id}
                 className={`activity-item flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-surface-2/50 backdrop-blur-sm border ${getTypeColor(activity.type)} rounded-xl`}

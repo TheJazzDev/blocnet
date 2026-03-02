@@ -23,6 +23,11 @@ class AuthStore extends ChangeNotifier {
       _authSubscription =
           Supabase.instance.client.auth.onAuthStateChange.listen(
         (event) {
+          final refreshPresent =
+              event.session?.refreshToken?.isNotEmpty == true ? 'yes' : 'no';
+          debugPrint(
+            'Auth state change: ${event.event.name}; refresh token present: $refreshPresent',
+          );
           final session = event.session;
           if (session?.accessToken != null) {
             _syncAccessToken(session!.accessToken);
@@ -31,7 +36,9 @@ class AuthStore extends ChangeNotifier {
           }
 
           if (event.event == AuthChangeEvent.tokenRefreshed) {
-            debugPrint('Token auto-refreshed by Supabase');
+            debugPrint(
+              'Token auto-refreshed by Supabase; refresh token present: $refreshPresent',
+            );
             if (session?.accessToken != null) {
               _syncAccessToken(session!.accessToken);
               notifyListeners();

@@ -1,5 +1,4 @@
 import {
-  Body,
   Controller,
   Get,
   Post,
@@ -10,9 +9,7 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
-import { ClaimMiningDto } from './dto/claim-mining.dto';
 import { ListMiningLeaderboardQuery } from './dto/list-mining-leaderboard.query';
-import { StartMiningDto } from './dto/start-mining.dto';
 import { MiningService } from './mining.service';
 import { MiningLeaderboardService } from './mining-leaderboard.service';
 
@@ -51,10 +48,7 @@ export class MiningController {
   }
 
   @Post('start')
-  async start(
-    @CurrentUser() user: AuthUser | undefined,
-    @Body() _dto: StartMiningDto,
-  ) {
+  async start(@CurrentUser() user: AuthUser | undefined) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
@@ -63,10 +57,7 @@ export class MiningController {
   }
 
   @Post('claim')
-  async claim(
-    @CurrentUser() user: AuthUser | undefined,
-    @Body() _dto: ClaimMiningDto,
-  ) {
+  async claim(@CurrentUser() user: AuthUser | undefined) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }

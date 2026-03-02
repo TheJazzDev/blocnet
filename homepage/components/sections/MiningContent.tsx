@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export function MiningContent() {
   const features = [
     {
@@ -208,12 +210,12 @@ export function MiningContent() {
             Download Blocnet and start your first mining session. Early miners get
             the biggest BNT airdrops when tokens launch.
           </p>
-          <a
+          <Link
             href="/#download"
             className="inline-block px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25 "
           >
             Download & Start Mining
-          </a>
+          </Link>
         </div>
       </div>
     </section>

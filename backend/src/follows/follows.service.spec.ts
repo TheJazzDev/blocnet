@@ -1,6 +1,7 @@
-import { ConfigService } from '@nestjs/config';
 import { UpdateUrgency } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { QuestsService } from '../quests/quests.service';
+import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import { FollowsService } from './follows.service';
 
 describe('FollowsService', () => {
@@ -14,19 +15,27 @@ describe('FollowsService', () => {
     },
   };
 
-  const configService = {
-    get: jest.fn().mockReturnValue(true),
-  } as unknown as ConfigService;
+  const runtimeFeatureFlagsService = {
+    isFollowPrefsEnabled: jest.fn().mockReturnValue(true),
+  } as unknown as RuntimeFeatureFlagsService;
 
   const auditLogService = {
     create: jest.fn(),
   } as unknown as AuditLogService;
+  const questsService = {
+    checkAndCompleteByAction: jest.fn(),
+  } as unknown as QuestsService;
 
   let service: FollowsService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new FollowsService(prisma as any, configService, auditLogService);
+    service = new FollowsService(
+      prisma as any,
+      runtimeFeatureFlagsService,
+      auditLogService,
+      questsService,
+    );
   });
 
   it('returns default preferences when follow record does not exist', async () => {

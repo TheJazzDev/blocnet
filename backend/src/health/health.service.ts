@@ -21,7 +21,9 @@ export class HealthService {
   }
 
   async getReadiness() {
-    const database = await this.databaseHealthService.getSnapshot({ force: true });
+    const database = await this.databaseHealthService.getSnapshot({
+      force: true,
+    });
     const checks = {
       database: {
         configured: Boolean(process.env.DATABASE_URL),

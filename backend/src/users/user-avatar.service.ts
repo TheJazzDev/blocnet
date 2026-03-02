@@ -284,12 +284,10 @@ export class UserAvatarService {
       return null;
     }
 
-    let result:
-      | {
-          data: { signedUrl: string } | null;
-          error: { message: string } | null;
-        }
-      | null = null;
+    let result: {
+      data: { signedUrl: string } | null;
+      error: { message: string } | null;
+    } | null = null;
     try {
       result = await Promise.race([
         this.supabaseStorageClient.storage

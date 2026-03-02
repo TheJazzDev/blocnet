@@ -62,8 +62,24 @@ class CommunityPostsApiRepository {
     return CommunityPost.fromApi(response);
   }
 
-  Future<List<CommunityPostComment>> fetchComments(String postId) async {
-    final response = await _apiClient.get('/community-posts/$postId/comments');
+  Future<List<CommunityPostComment>> fetchComments(
+    String postId, {
+    int limit = 40,
+    String? beforeCreatedAt,
+    String? beforeId,
+  }) async {
+    final query = <String, String>{
+      'limit': '$limit',
+    };
+    if (beforeCreatedAt != null && beforeCreatedAt.isNotEmpty) {
+      query['beforeCreatedAt'] = beforeCreatedAt;
+    }
+    if (beforeId != null && beforeId.isNotEmpty) {
+      query['beforeId'] = beforeId;
+    }
+
+    final response =
+        await _apiClient.get('/community-posts/$postId/comments', query: query);
     if (response is! List) {
       return [];
     }

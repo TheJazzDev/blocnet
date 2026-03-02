@@ -34,7 +34,10 @@ export class AdminTwoFactorController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.adminTwoFactorService.getPreflight(user.id, user.realRoles ?? user.roles);
+    return this.adminTwoFactorService.getPreflight(
+      user.id,
+      user.realRoles ?? user.roles,
+    );
   }
 
   @Get('policy')

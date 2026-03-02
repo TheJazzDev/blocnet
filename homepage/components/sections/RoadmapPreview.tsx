@@ -48,7 +48,7 @@ export function RoadmapPreview() {
             Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-primary">Roadmap</span>
           </h2>
           <p className="text-sm sm:text-base text-muted max-w-2xl mx-auto">
-            Track our progress from concept to global scale. See what we've built and what's coming next.
+            Track our progress from concept to global scale. See what we&apos;ve built and what&apos;s coming next.
           </p>
         </div>
 

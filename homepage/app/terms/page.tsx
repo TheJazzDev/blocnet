@@ -30,7 +30,7 @@ export default function TermsPage() {
             </h2>
             <div className="space-y-3 text-sm sm:text-base leading-relaxed">
               <p>
-                Welcome to Blocnet ("Platform", "we", "us", or "our"). By accessing or using the Blocnet platform, mobile application, website, or any associated services (collectively, the "Services"), you agree to be bound by these Terms and Conditions ("Terms").
+                Welcome to Blocnet (&quot;Platform&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). By accessing or using the Blocnet platform, mobile application, website, or any associated services (collectively, the &quot;Services&quot;), you agree to be bound by these Terms and Conditions (&quot;Terms&quot;).
               </p>
               <p>
                 Blocnet is a decentralized crypto intelligence platform that provides AI-powered recommendations, community-driven updates, mining rewards, and wallet services. These Terms govern your use of all features including but not limited to: the Blocnet Edge Engine (BEE), mining mechanisms, BNT token, wallet services, and community features.
@@ -144,7 +144,7 @@ export default function TermsPage() {
                 5.2 Community Content
               </p>
               <p>
-                User-generated content (updates, comments, tips) is provided by community members ("Hunters"). We do not endorse, verify, or guarantee the accuracy of community content. Always conduct your own research.
+                User-generated content (updates, comments, tips) is provided by community members (&quot;Hunters&quot;). We do not endorse, verify, or guarantee the accuracy of community content. Always conduct your own research.
               </p>
 
               <p className="font-semibold text-foreground mt-4">
@@ -203,7 +203,7 @@ export default function TermsPage() {
                 7.2 No Guarantees
               </p>
               <p>
-                Services are provided "AS IS" without warranties of any kind. We do not guarantee uptime, accuracy of information, transaction success, or specific outcomes.
+                Services are provided &quot;AS IS&quot; without warranties of any kind. We do not guarantee uptime, accuracy of information, transaction success, or specific outcomes.
               </p>
             </div>
           </section>

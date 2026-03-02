@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/unbound-method */
 import { ForbiddenException } from '@nestjs/common';
 import { AppRole } from '../common/enums/role.enum';
 import { NotificationEventsService } from '../notifications/notification-events.service';

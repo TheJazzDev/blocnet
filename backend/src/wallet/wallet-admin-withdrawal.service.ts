@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LedgerReason, Prisma, WithdrawalStatus } from '@prisma/client';
+import { LedgerReason, WithdrawalStatus } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
 import { normalizeIdempotencyKey } from '../common/utils/idempotency.util';

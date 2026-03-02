@@ -213,6 +213,10 @@ export const toFeedbackAction = (action: EdgeAction): EdgeFeedbackAction => {
 export const normalizeReasonCodes = (value: Prisma.JsonValue | null) => {
   if (!Array.isArray(value)) return [];
   return value
-    .map((entry) => String(entry))
+    .map((entry) =>
+      typeof entry === 'string' || typeof entry === 'number'
+        ? String(entry)
+        : '',
+    )
     .filter((entry) => entry.trim().length > 0);
 };

@@ -479,12 +479,7 @@ class _FeedCardState extends State<FeedCard>
                                 tween: Tween<double>(begin: 1.28, end: 1),
                                 weight: 55,
                               ),
-                            ]).animate(
-                              CurvedAnimation(
-                                parent: _likePulseController,
-                                curve: Curves.easeOutBack,
-                              ),
-                            ),
+                            ]).animate(_likePulseController),
                             child: Icon(
                               _isLiked
                                   ? Icons.favorite_rounded
@@ -757,12 +752,7 @@ class _FeedCardState extends State<FeedCard>
                           tween: Tween<double>(begin: 1.28, end: 1),
                           weight: 55,
                         ),
-                      ]).animate(
-                        CurvedAnimation(
-                          parent: _likePulseController,
-                          curve: Curves.easeOutBack,
-                        ),
-                      ),
+                      ]).animate(_likePulseController),
                       child: Icon(
                         _isLiked
                             ? Icons.favorite_rounded

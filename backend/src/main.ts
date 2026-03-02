@@ -6,6 +6,8 @@ import { randomUUID } from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 
+type CorsOriginCallback = (error: Error | null, allow?: boolean) => void;
+
 function formatUnknownError(error: unknown): string {
   if (error instanceof Error) {
     return error.stack ?? error.message;
@@ -16,7 +18,9 @@ function formatUnknownError(error: unknown): string {
 const bootstrapLogger = new Logger('Bootstrap');
 
 process.on('unhandledRejection', (reason) => {
-  bootstrapLogger.error(`Unhandled promise rejection: ${formatUnknownError(reason)}`);
+  bootstrapLogger.error(
+    `Unhandled promise rejection: ${formatUnknownError(reason)}`,
+  );
 });
 
 process.on('uncaughtException', (error) => {
@@ -52,7 +56,7 @@ async function bootstrap() {
   const allowedOrigins = [...allowedOriginSet];
 
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: CorsOriginCallback) => {
       // Allow non-browser callers (e.g. server-to-server) without an Origin header.
       if (!origin) {
         callback(null, true);
@@ -145,6 +149,8 @@ async function bootstrap() {
 }
 
 void bootstrap().catch((error) => {
-  bootstrapLogger.error(`Application bootstrap failed: ${formatUnknownError(error)}`);
+  bootstrapLogger.error(
+    `Application bootstrap failed: ${formatUnknownError(error)}`,
+  );
   process.exit(1);
 });

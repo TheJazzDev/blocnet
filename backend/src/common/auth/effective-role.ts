@@ -31,15 +31,16 @@ function normalizeGovernanceRole(
   }
 
   const normalized = value.trim().toLowerCase();
-  if (
-    normalized === AppRole.OWNER ||
-    normalized === AppRole.ADMIN ||
-    normalized === AppRole.MODERATOR
-  ) {
-    return normalized as AdminGovernanceRole;
+  switch (normalized) {
+    case 'owner':
+      return AppRole.OWNER;
+    case 'admin':
+      return AppRole.ADMIN;
+    case 'moderator':
+      return AppRole.MODERATOR;
+    default:
+      return null;
   }
-
-  return null;
 }
 
 export function getAdminGovernanceRole(

@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export function CommunityContent() {
   const socialPlatforms = [
     {
@@ -198,12 +200,12 @@ export function CommunityContent() {
             Download the app and become part of the fastest-growing crypto intelligence
             community. Start earning, learning, and connecting today.
           </p>
-          <a
+          <Link
             href="/#download"
             className="inline-block px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-teal-500 to-primary text-white rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-teal-500/25 "
           >
             Download Blocnet
-          </a>
+          </Link>
         </div>
       </div>
     </section>

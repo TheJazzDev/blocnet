@@ -5,8 +5,8 @@ export class ValidateReferralQuery {
   @IsString()
   @Length(8, 8)
   @Matches(/^[A-Z0-9]{8}$/)
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim().toUpperCase() : value,
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toUpperCase() : undefined,
   )
   code!: string;
 }

@@ -67,6 +67,13 @@ export class MLClientService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  private formatError(error: unknown): { message: string; stack?: string } {
+    if (error instanceof Error) {
+      return { message: error.message, stack: error.stack };
+    }
+    return { message: String(error) };
+  }
+
   /**
    * Get ML configuration from database.
    */
@@ -164,8 +171,12 @@ export class MLClientService {
       );
 
       return response.data.analysis;
-    } catch (error) {
-      this.logger.error(`BEE analysis failed: ${error.message}`, error.stack);
+    } catch (error: unknown) {
+      const formatted = this.formatError(error);
+      this.logger.error(
+        `BEE analysis failed: ${formatted.message}`,
+        formatted.stack,
+      );
       return null; // Fallback to default scoring
     }
   }
@@ -202,9 +213,14 @@ export class MLClientService {
         provider: config.mlProvider === 'auto' ? undefined : config.mlProvider,
       }));
 
-      const response = await client.post<BeeAnalysisResponse[]>('/analyze/batch', requests);
+      const response = await client.post<BeeAnalysisResponse[]>(
+        '/analyze/batch',
+        requests,
+      );
 
-      this.logger.debug(`Batch analysis complete: ${response.data.length} results`);
+      this.logger.debug(
+        `Batch analysis complete: ${response.data.length} results`,
+      );
 
       return response.data.map((item, index) => {
         if (item.provider_used === 'error') {
@@ -216,8 +232,12 @@ export class MLClientService {
 
         return item.analysis;
       });
-    } catch (error) {
-      this.logger.error(`BEE batch analysis failed: ${error.message}`, error.stack);
+    } catch (error: unknown) {
+      const formatted = this.formatError(error);
+      this.logger.error(
+        `BEE batch analysis failed: ${formatted.message}`,
+        formatted.stack,
+      );
       return contents.map(() => null); // Fallback to default scoring
     }
   }
@@ -252,8 +272,12 @@ export class MLClientService {
       );
 
       return response.data.embedding.embedding;
-    } catch (error) {
-      this.logger.error(`BEE embedding failed: ${error.message}`, error.stack);
+    } catch (error: unknown) {
+      const formatted = this.formatError(error);
+      this.logger.error(
+        `BEE embedding failed: ${formatted.message}`,
+        formatted.stack,
+      );
       return null;
     }
   }
@@ -272,10 +296,11 @@ export class MLClientService {
 
     try {
       const client = await this.createClient();
-      const response = await client.get('/health');
+      const response = await client.get<{ status?: string }>('/health');
       return response.data.status === 'healthy';
-    } catch (error) {
-      this.logger.error(`BEE health check failed: ${error.message}`);
+    } catch (error: unknown) {
+      const formatted = this.formatError(error);
+      this.logger.error(`BEE health check failed: ${formatted.message}`);
       return false;
     }
   }

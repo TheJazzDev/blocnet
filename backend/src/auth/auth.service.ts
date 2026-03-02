@@ -128,9 +128,7 @@ export class AuthService {
         new Promise<never>((_, reject) =>
           setTimeout(
             () =>
-              reject(
-                new UnauthorizedException('Token verification timed out'),
-              ),
+              reject(new UnauthorizedException('Token verification timed out')),
             JWT_VERIFY_TIMEOUT_MS,
           ),
         ),
@@ -139,7 +137,9 @@ export class AuthService {
       return verification.payload as JwtPayload;
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'unknown auth verification error';
+        error instanceof Error
+          ? error.message
+          : 'unknown auth verification error';
       this.logger.warn(`Token verification failed: ${message}`);
 
       if (error instanceof UnauthorizedException) {

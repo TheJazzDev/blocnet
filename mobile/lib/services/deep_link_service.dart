@@ -140,7 +140,8 @@ class DeepLinkService {
           (route) => false,
         );
         return;
-      } catch (_) {
+      } catch (error) {
+        debugPrint('PKCE code exchange failed: $error');
         // Ignore and try email OTP fallback.
       }
 

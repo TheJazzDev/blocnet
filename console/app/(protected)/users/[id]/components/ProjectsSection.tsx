@@ -12,6 +12,8 @@ type ProjectsSectionProps = {
  * TODO: Fetch owned, hunting, and followed projects
  */
 export function ProjectsSection({ userId }: ProjectsSectionProps) {
+  void userId;
+
   return (
     <Card>
       <CardHeader>

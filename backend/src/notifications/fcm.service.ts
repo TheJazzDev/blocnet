@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RoleName } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { App, cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
@@ -7,6 +8,12 @@ import type { BroadcastTarget } from './dto/broadcast-notification.dto';
 
 @Injectable()
 export class FcmService {
+  private static readonly ELEVATED_ROLE_TARGETS = [
+    RoleName.hunter,
+    RoleName.admin,
+    RoleName.owner,
+  ] as const;
+
   private readonly logger = new Logger(FcmService.name);
   private readonly app?: App;
   private disabledReason: string | null = null;
@@ -276,7 +283,7 @@ export class FcmService {
 
     if (target === 'hunters') {
       const roles = await this.prisma.userRole.findMany({
-        where: { role: { in: ['hunter', 'admin', 'owner'] as any } },
+        where: { role: { in: [...FcmService.ELEVATED_ROLE_TARGETS] } },
         select: { userId: true },
         distinct: ['userId'],
       });
@@ -285,13 +292,13 @@ export class FcmService {
 
     if (target === 'users') {
       const elevated = await this.prisma.userRole.findMany({
-        where: { role: { in: ['hunter', 'admin', 'owner'] as any } },
+        where: { role: { in: [...FcmService.ELEVATED_ROLE_TARGETS] } },
         select: { userId: true },
         distinct: ['userId'],
       });
       const elevatedIds = new Set(elevated.map((row) => row.userId));
       const all = await this.prisma.userRole.findMany({
-        where: { role: 'user' as any },
+        where: { role: RoleName.user },
         select: { userId: true },
         distinct: ['userId'],
       });

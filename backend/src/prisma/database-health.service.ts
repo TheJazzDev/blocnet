@@ -43,12 +43,17 @@ export class DatabaseHealthService {
     }
   }
 
-  async getSnapshot(options?: { force?: boolean }): Promise<DatabaseHealthSnapshot> {
+  async getSnapshot(options?: {
+    force?: boolean;
+  }): Promise<DatabaseHealthSnapshot> {
     const healthy = await this.isDatabaseHealthy({ force: options?.force });
 
     return {
       healthy,
-      checkedAt: this.lastCheckedAt > 0 ? new Date(this.lastCheckedAt).toISOString() : null,
+      checkedAt:
+        this.lastCheckedAt > 0
+          ? new Date(this.lastCheckedAt).toISOString()
+          : null,
       lastError: this.lastError,
     };
   }

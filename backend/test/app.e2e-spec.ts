@@ -1,14 +1,44 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { HealthModule } from './../src/health/health.module';
+import { HealthController } from './../src/health/health.controller';
+import { HealthService } from './../src/health/health.service';
 
 describe('Health (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
+    const healthServiceMock: Pick<
+      HealthService,
+      'getHealth' | 'getLiveness' | 'getReadiness'
+    > = {
+      getHealth: () => ({
+        status: 'ok',
+        service: 'blocnet-backend',
+      }),
+      getLiveness: () => ({
+        status: 'ok',
+        service: 'blocnet-backend',
+      }),
+      getReadiness: () =>
+        Promise.resolve({
+          status: 'ok',
+          service: 'blocnet-backend',
+          checks: {
+            database: { healthy: true },
+            supabaseAuthConfigured: true,
+          },
+        }),
+    };
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [HealthModule],
+      controllers: [HealthController],
+      providers: [
+        {
+          provide: HealthService,
+          useValue: healthServiceMock,
+        },
+      ],
     }).compile();
 
     app = moduleFixture.createNestApplication();

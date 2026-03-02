@@ -709,7 +709,6 @@ export class MiningService {
       },
     );
 
-    const completedHours = accruedAggregate._max.hourIndex ?? 0;
     const pointsMinedSoFar = accruedAggregate._sum.points ?? 0;
 
     const activeReferrals =

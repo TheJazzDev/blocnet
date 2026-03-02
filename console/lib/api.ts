@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import axios, { type AxiosRequestConfig, type Method } from "axios";
+import { extractApiErrorMessage } from "@/lib/api-error";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3080/api";
 
@@ -48,11 +49,11 @@ async function apiFetch<T>(
   const res = await axios.request<T>(requestConfig);
 
   if (res.status < 200 || res.status >= 300) {
-    const detail =
-      typeof res.data === "string"
-        ? res.data
-        : JSON.stringify(res.data ?? `HTTP ${res.status}`);
-    throw new Error(`API ${res.status}: ${detail}`);
+    const detail = extractApiErrorMessage(
+      res.data,
+      `Request failed with status ${res.status}`,
+    );
+    throw new Error(detail);
   }
 
   return res.data;

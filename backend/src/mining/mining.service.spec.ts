@@ -1,4 +1,5 @@
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { MiningCalculatorService } from './mining-calculator.service';
 import { MiningService } from './mining.service';
 
 function checkpointIndexes(count: number) {
@@ -45,9 +46,8 @@ describe('MiningService', () => {
     $transaction: jest.fn(),
   };
 
-  const runtimeFeatureFlagsService = {
-    isMiningEnabled: jest.fn(),
-    isReferralsEnabled: jest.fn(),
+  const miningConfigService = {
+    getEffectiveConfig: jest.fn(),
   };
 
   const auditLogService = {
@@ -59,19 +59,14 @@ describe('MiningService', () => {
   const questsService = {
     checkAndCompleteByAction: jest.fn(),
   };
+  const miningCalculator = new MiningCalculatorService();
 
   let service: MiningService;
 
   beforeEach(() => {
     jest.resetAllMocks();
 
-    runtimeFeatureFlagsService.isMiningEnabled.mockReturnValue(true);
-    runtimeFeatureFlagsService.isReferralsEnabled.mockReturnValue(true);
-    badgesService.checkMiningMilestones.mockResolvedValue(undefined);
-    questsService.checkAndCompleteByAction.mockResolvedValue(undefined);
-
-    prisma.miningConfig.upsert.mockResolvedValue({
-      id: 'default',
+    miningConfigService.getEffectiveConfig.mockResolvedValue({
       enabled: true,
       referralsEnabled: true,
       cycleHours: 24,
@@ -80,8 +75,9 @@ describe('MiningService', () => {
       maxBoostBps: 10000,
       activeReferralWindowHours: 168,
       referralBindWindowHours: 24,
-      updatedAt: new Date('2026-02-21T00:00:00.000Z'),
     });
+    badgesService.checkMiningMilestones.mockResolvedValue(undefined);
+    questsService.checkAndCompleteByAction.mockResolvedValue(undefined);
 
     prisma.profile.count.mockResolvedValue(0);
     prisma.miningSession.create.mockResolvedValue({
@@ -133,10 +129,11 @@ describe('MiningService', () => {
 
     service = new MiningService(
       prisma as any,
-      runtimeFeatureFlagsService as any,
       auditLogService,
       badgesService as any,
       questsService as any,
+      miningCalculator,
+      miningConfigService as any,
     );
   });
 

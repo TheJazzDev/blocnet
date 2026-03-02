@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import QRCode from 'qrcode';
 import { supabase } from '@/lib/supabase';
+import { extractApiErrorMessage } from '@/lib/api-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,38 +27,6 @@ type EnrollmentResponse = {
   accountName: string;
   expiresAt: string;
 };
-
-function extractApiErrorMessage(input: unknown): string {
-  if (typeof input === 'string') {
-    const trimmed = input.trim();
-    if (!trimmed) return 'Request failed';
-    try {
-      return extractApiErrorMessage(JSON.parse(trimmed));
-    } catch {
-      return trimmed;
-    }
-  }
-
-  if (input && typeof input === 'object') {
-    const record = input as Record<string, unknown>;
-
-    if (record.message !== undefined) {
-      return extractApiErrorMessage(record.message);
-    }
-
-    if (record.error !== undefined) {
-      return extractApiErrorMessage(record.error);
-    }
-
-    try {
-      return JSON.stringify(record);
-    } catch {
-      return 'Request failed';
-    }
-  }
-
-  return 'Request failed';
-}
 
 export function SignInForm() {
   const router = useRouter();
@@ -216,14 +185,12 @@ export function SignInForm() {
       );
 
       if (tokenRes.status < 200 || tokenRes.status >= 300) {
-        const bodyText =
-          typeof tokenRes.data === 'string'
-            ? tokenRes.data
-            : JSON.stringify(tokenRes.data ?? '');
+        const detail = extractApiErrorMessage(
+          tokenRes.data,
+          'Could not initialize your session.',
+        );
         setError(
-          bodyText
-            ? `Session setup failed [${tokenRes.status}]: ${String(bodyText)}`
-            : `Session setup failed [${tokenRes.status}]. Please try again.`,
+          `Session setup failed: ${detail}`,
         );
         await supabase.auth.signOut();
         await clearServerSession();
@@ -346,10 +313,10 @@ export function SignInForm() {
       );
 
       if (response.status < 200 || response.status >= 300) {
-        const detail =
-          typeof response.data === 'string'
-            ? response.data
-            : JSON.stringify(response.data ?? {});
+        const detail = extractApiErrorMessage(
+          response.data,
+          'Unable to start two-factor setup right now.',
+        );
         setError(`Unable to start 2FA setup: ${String(detail)}`);
         return;
       }
@@ -386,10 +353,10 @@ export function SignInForm() {
       );
 
       if (response.status < 200 || response.status >= 300) {
-        const detail =
-          typeof response.data === 'string'
-            ? response.data
-            : JSON.stringify(response.data ?? {});
+        const detail = extractApiErrorMessage(
+          response.data,
+          'Unable to confirm your two-factor setup.',
+        );
         setError(`Unable to confirm 2FA setup: ${String(detail)}`);
         return;
       }

@@ -77,7 +77,6 @@ export function UserDetailsHeader({
   onHardDelete,
 }: UserDetailsHeaderProps) {
   const sortedRoles = sortRolesTopToLowest(user.roles);
-  const highestRole = sortedRoles[0] ?? "user";
 
   return (
     <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b pb-4 sm:pb-6">

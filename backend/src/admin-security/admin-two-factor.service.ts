@@ -7,7 +7,12 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RoleName, type AdminTotpCredential } from '@prisma/client';
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+} from 'crypto';
 import { AppRole } from '../common/enums/role.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -57,7 +62,10 @@ export class AdminTwoFactorService {
     this.sessionTtlHours = this.resolveSessionTtlHours();
   }
 
-  async getPreflight(userId: string, roles: AppRole[]): Promise<AdminTwoFactorPreflight> {
+  async getPreflight(
+    userId: string,
+    roles: AppRole[],
+  ): Promise<AdminTwoFactorPreflight> {
     this.assertVaultAvailable();
 
     if (!this.isAdminPanelEligible(roles)) {
@@ -96,10 +104,10 @@ export class AdminTwoFactorService {
     };
   }
 
-  async shouldEnforceChallengeForAdminPanel(
+  shouldEnforceChallengeForAdminPanel(
     userId: string,
     roles: AppRole[],
-  ): Promise<boolean> {
+  ): boolean {
     this.assertVaultAvailable();
 
     if (!this.isAdminPanelEligible(roles)) {
@@ -123,10 +131,12 @@ export class AdminTwoFactorService {
     this.assertVaultAvailable();
     this.assertEligible(input.roles);
 
-    const existingCredential = await this.prisma.adminTotpCredential.findUnique({
-      where: { userId: input.userId },
-      select: { userId: true },
-    });
+    const existingCredential = await this.prisma.adminTotpCredential.findUnique(
+      {
+        where: { userId: input.userId },
+        select: { userId: true },
+      },
+    );
 
     if (existingCredential) {
       throw new BadRequestException('TOTP is already enabled for this account');
@@ -182,9 +192,11 @@ export class AdminTwoFactorService {
     this.assertVaultAvailable();
     this.assertEligible(input.roles);
 
-    const challenge = await this.prisma.adminTotpEnrollmentChallenge.findUnique({
-      where: { userId: input.userId },
-    });
+    const challenge = await this.prisma.adminTotpEnrollmentChallenge.findUnique(
+      {
+        where: { userId: input.userId },
+      },
+    );
 
     if (!challenge) {
       throw new BadRequestException('No active TOTP enrollment challenge');
@@ -290,7 +302,9 @@ export class AdminTwoFactorService {
 
     const preflight = await this.getPreflight(input.userId, input.roles);
     if (!preflight.challengeRequired) {
-      throw new BadRequestException('Two-factor challenge is not required for this account');
+      throw new BadRequestException(
+        'Two-factor challenge is not required for this account',
+      );
     }
 
     await this.assertValidFactor({
@@ -389,7 +403,7 @@ export class AdminTwoFactorService {
   }): Promise<{ valid: boolean; required: boolean; expiresAt: Date | null }> {
     this.assertVaultAvailable();
 
-    const required = await this.shouldEnforceChallengeForAdminPanel(
+    const required = this.shouldEnforceChallengeForAdminPanel(
       input.userId,
       input.roles,
     );
@@ -605,7 +619,9 @@ export class AdminTwoFactorService {
     );
 
     if (!normalizedCode && !normalizedRecovery) {
-      throw new BadRequestException('Provide either a TOTP code or a recovery code');
+      throw new BadRequestException(
+        'Provide either a TOTP code or a recovery code',
+      );
     }
 
     if (normalizedCode && normalizedRecovery) {
@@ -613,7 +629,8 @@ export class AdminTwoFactorService {
     }
 
     if (normalizedCode) {
-      const credential = input.credential ?? (await this.getCredentialOrThrow(input.userId));
+      const credential =
+        input.credential ?? (await this.getCredentialOrThrow(input.userId));
       const secret = this.decrypt({
         secretCipher: credential.secretCipher,
         secretIv: credential.secretIv,
@@ -670,7 +687,9 @@ export class AdminTwoFactorService {
     }
   }
 
-  private async getCredentialOrThrow(userId: string): Promise<AdminTotpCredential> {
+  private async getCredentialOrThrow(
+    userId: string,
+  ): Promise<AdminTotpCredential> {
     const credential = await this.prisma.adminTotpCredential.findUnique({
       where: { userId },
     });
@@ -682,7 +701,9 @@ export class AdminTwoFactorService {
     return credential;
   }
 
-  private async createSession(userId: string): Promise<AdminTwoFactorSessionResult> {
+  private async createSession(
+    userId: string,
+  ): Promise<AdminTwoFactorSessionResult> {
     const sessionToken = this.generateSessionToken();
     const tokenHash = this.hashSessionToken(sessionToken);
     const expiresAt = this.computeSessionExpiry();
@@ -723,7 +744,11 @@ export class AdminTwoFactorService {
       }
 
       const segments: string[] = [];
-      for (let index = 0; index < code.length; index += RECOVERY_CODE_SEGMENT_LENGTH) {
+      for (
+        let index = 0;
+        index < code.length;
+        index += RECOVERY_CODE_SEGMENT_LENGTH
+      ) {
         segments.push(code.slice(index, index + RECOVERY_CODE_SEGMENT_LENGTH));
       }
 
@@ -746,7 +771,9 @@ export class AdminTwoFactorService {
     return normalized.length > 0 ? normalized : null;
   }
 
-  private normalizeOptionalRecoveryCode(code: string | undefined): string | null {
+  private normalizeOptionalRecoveryCode(
+    code: string | undefined,
+  ): string | null {
     if (!code) return null;
 
     const normalized = code

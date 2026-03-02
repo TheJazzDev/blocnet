@@ -251,6 +251,8 @@ class _CommunityPostDiscussionScreenState
       builder: (context, store, _) {
         final post = store.postById(postId);
         final comments = store.commentsForPost(postId);
+        final isLoadingComments = store.isLoadingCommentsForPost(postId);
+        final hasMoreComments = store.hasMoreCommentsForPost(postId);
 
         return Scaffold(
           backgroundColor: AppColors.bgBase,
@@ -300,6 +302,24 @@ class _CommunityPostDiscussionScreenState
                                         letterSpacing: 0.8,
                                       ),
                                     ),
+                                    const Spacer(),
+                                    if (comments.isNotEmpty && hasMoreComments)
+                                      TextButton(
+                                        onPressed: isLoadingComments
+                                            ? null
+                                            : () =>
+                                                store.loadOlderComments(postId),
+                                        child: Text(
+                                          isLoadingComments
+                                              ? 'Loading…'
+                                              : 'Load older',
+                                          style: AppTypography.custom(
+                                            color: AppColors.primary400,
+                                            size: 12,
+                                            weight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                                 const SizedBox(height: 10),

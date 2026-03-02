@@ -125,25 +125,47 @@ export class CommentsService {
       throw new ForbiddenException('Comments are disabled for this update');
     }
 
-    const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
     const blockedUserIds = await this.blocksService.getBlockedUserIds(actor.id);
+    const beforeCreatedAt = query.beforeCreatedAt
+      ? new Date(query.beforeCreatedAt)
+      : null;
+
+    const where: Prisma.CommentWhereInput = {
+      updateId: updateId,
+      status: ContentModerationStatus.active,
+      ...(blockedUserIds.length > 0
+        ? { authorId: { notIn: blockedUserIds } }
+        : {}),
+      ...(beforeCreatedAt && !Number.isNaN(beforeCreatedAt.getTime())
+        ? query.beforeId
+          ? {
+              OR: [
+                { createdAt: { lt: beforeCreatedAt } },
+                {
+                  AND: [
+                    { createdAt: beforeCreatedAt },
+                    { id: { lt: query.beforeId } },
+                  ],
+                },
+              ],
+            }
+          : { createdAt: { lt: beforeCreatedAt } }
+        : {}),
+    };
 
     const comments = await this.prisma.comment.findMany({
-      where: {
-        updateId: updateId,
-        status: ContentModerationStatus.active,
-        ...(blockedUserIds.length > 0
-          ? { authorId: { notIn: blockedUserIds } }
-          : {}),
-      },
-      orderBy: { createdAt: 'asc' },
-      skip: offset,
+      where,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      skip:
+        !beforeCreatedAt || Number.isNaN(beforeCreatedAt.getTime())
+          ? (query.offset ?? 0)
+          : 0,
       take: limit,
       include: commentInclude,
     });
 
-    return comments.map((comment) => this.toCommentResponse(comment));
+    return comments.reverse().map((comment) => this.toCommentResponse(comment));
   }
 
   async updateComment(actor: AuthUser, id: string, dto: UpdateCommentDto) {

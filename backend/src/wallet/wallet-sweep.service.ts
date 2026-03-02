@@ -1,6 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
-  LedgerReason,
   OnchainDepositStatus,
   Prisma,
   SweepJobStatus,

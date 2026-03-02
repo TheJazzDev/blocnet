@@ -76,9 +76,9 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 sm:space-y-3">
               <li>
-                <a href="/#features" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                <Link href="/#features" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Features
-                </a>
+                </Link>
               </li>
               <li>
                 <Link href="/roadmap" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
@@ -86,19 +86,19 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="/#mining" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                <Link href="/#mining" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Mining
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/#wallet" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                <Link href="/#wallet" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Wallet
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/#community" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                <Link href="/#community" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Community
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -130,9 +130,9 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/#download" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                <Link href="/#download" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
                   Download App
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

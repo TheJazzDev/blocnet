@@ -74,7 +74,7 @@ export function EdgeEngine() {
           </h2>
 
           <p className="text-base sm:text-lg md:text-xl text-muted max-w-3xl mx-auto leading-relaxed">
-            The world's first AI-powered decision engine for crypto updates.
+            The world&apos;s first AI-powered decision engine for crypto updates.
             Smart recommendations, urgency scoring, and personalized insights.
           </p>
         </div>
