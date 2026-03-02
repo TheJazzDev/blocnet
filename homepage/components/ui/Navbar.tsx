@@ -47,9 +47,10 @@ export function Navbar() {
             <Image
               src="/logo.png"
               alt="Blocnet"
-              width={120}
-              height={30}
-              className="h-6 sm:h-7 md:h-8 w-auto"
+              width={96}
+              height={24}
+              priority
+              className="h-6 w-[96px] sm:h-7 sm:w-[112px] md:h-8 md:w-[128px]"
             />
           </Link>
 

@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8 pt-14 sm:pt-16 md:pt-0">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8 pt-24 sm:pt-24 md:pt-12 lg:pt-0 pb-10 sm:pb-12 lg:pb-0">
       {/* Background Grid */}
       <div className="absolute inset-0 bg-[#09090b]">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />

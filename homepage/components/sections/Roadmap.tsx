@@ -142,7 +142,7 @@ export function Roadmap() {
 
       <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
             Our{' '}
             <span className="text-transparent bg-clip-text bg-linear-to-r from-teal-400 to-primary">
@@ -155,31 +155,31 @@ export function Roadmap() {
         </div>
 
         {/* Roadmap Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {phases.map((phase) => (
             <div key={phase.phase} className="relative">
               {/* Phase Card */}
               <div
-                className={`relative p-8 bg-linear-to-br ${getStatusColor(phase.status)} backdrop-blur-sm border-2 rounded-2xl h-full transition-colors hover:border-opacity-70`}
+                className={`relative p-5 sm:p-8 bg-linear-to-br ${getStatusColor(phase.status)} backdrop-blur-sm border-2 rounded-2xl h-full transition-colors hover:border-opacity-70`}
               >
                 {/* Phase Number Badge */}
-                <div className="absolute -top-4 -left-4 w-14 h-14 bg-linear-to-br from-teal-500 to-primary rounded-full flex items-center justify-center border-4 border-[#09090b] shadow-lg shadow-teal-500/50">
-                  <span className="text-xl font-bold text-white">
+                <div className="absolute top-3 left-3 sm:-top-4 sm:-left-4 w-10 h-10 sm:w-14 sm:h-14 bg-linear-to-br from-teal-500 to-primary rounded-full flex items-center justify-center border-4 border-[#09090b] shadow-lg shadow-teal-500/50">
+                  <span className="text-sm sm:text-xl font-bold text-white">
                     {phase.phase}
                   </span>
                 </div>
 
                 {/* Icon */}
-                <div className="flex justify-center mb-5">
-                  <div className="w-24 h-24 bg-linear-to-br from-teal-500/20 to-primary/20 rounded-2xl flex items-center justify-center border border-teal-500/30">
-                    <span className="text-5xl">{phase.icon}</span>
+                <div className="flex justify-center mb-4 sm:mb-5 mt-6 sm:mt-0">
+                  <div className="w-16 h-16 sm:w-24 sm:h-24 bg-linear-to-br from-teal-500/20 to-primary/20 rounded-2xl flex items-center justify-center border border-teal-500/30">
+                    <span className="text-3xl sm:text-5xl">{phase.icon}</span>
                   </div>
                 </div>
 
                 {/* Header */}
-                <div className="text-center mb-5">
+                <div className="text-center mb-4 sm:mb-5">
                   <div
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border ${getStatusBadgeColor(phase.status)} mb-3`}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-semibold border ${getStatusBadgeColor(phase.status)} mb-3`}
                   >
                     {phase.status === 'completed' && '✓'}
                     {phase.status === 'active' && '⚡'}
@@ -187,10 +187,10 @@ export function Roadmap() {
                     {phase.status === 'future' && '🔮'}
                     <span className="capitalize">{phase.status}</span>
                   </div>
-                  <p className="text-base text-teal-400 font-semibold mb-2">
+                  <p className="text-sm sm:text-base text-teal-400 font-semibold mb-2">
                     {phase.quarter}
                   </p>
-                  <h3 className="text-xl font-bold text-foreground">
+                  <h3 className="text-lg sm:text-xl font-bold text-foreground">
                     {phase.title}
                   </h3>
                 </div>
@@ -214,11 +214,11 @@ export function Roadmap() {
                 )}
 
                 {/* Achievements */}
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   {phase.achievements.map((achievement, i) => (
                     <div
                       key={i}
-                      className="flex items-start gap-3 p-3 bg-surface-2/50 rounded-lg border border-border"
+                      className="flex items-start gap-3 p-2.5 sm:p-3 bg-surface-2/50 rounded-lg border border-border"
                     >
                       <div
                         className={`shrink-0 w-5 h-5 rounded-full mt-0.5 flex items-center justify-center ${

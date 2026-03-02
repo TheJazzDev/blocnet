@@ -22,25 +22,49 @@ function resolveReleaseChannel(): "dev" | "prod" {
   return "prod";
 }
 
-export async function GET(request: Request) {
+function resolveApkFilePath() {
   const channel = resolveReleaseChannel();
-  const apkFilePath = path.join(
+  return path.join(
     process.cwd(),
     "public",
     "apks",
     channel,
     "latest.apk",
   );
+}
 
+async function isApkAvailable(apkFilePath: string) {
   try {
     await access(apkFilePath, constants.R_OK);
+    return true;
   } catch {
+    return false;
+  }
+}
+
+export async function HEAD() {
+  const apkFilePath = resolveApkFilePath();
+  const available = await isApkAvailable(apkFilePath);
+
+  if (!available) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  return new NextResponse(null, { status: 204 });
+}
+
+export async function GET(request: Request) {
+  const apkFilePath = resolveApkFilePath();
+  const available = await isApkAvailable(apkFilePath);
+
+  if (!available) {
     return NextResponse.json(
       { message: "Android app is not available yet. Please check back soon." },
       { status: 404 },
     );
   }
 
+  const channel = resolveReleaseChannel();
   const apkUrl = new URL(`/apks/${channel}/latest.apk`, request.url);
   return NextResponse.redirect(apkUrl);
 }
