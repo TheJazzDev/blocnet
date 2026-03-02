@@ -1,6 +1,6 @@
-import { ConfigService } from '@nestjs/config';
 import { UpdateUrgency } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import { MeRadarService } from './me-radar.service';
 
 describe('MeRadarService', () => {
@@ -14,9 +14,9 @@ describe('MeRadarService', () => {
     },
   };
 
-  const configService = {
-    get: jest.fn().mockReturnValue(true),
-  } as unknown as ConfigService;
+  const runtimeFeatureFlagsService = {
+    isAlphaRadarEnabled: jest.fn().mockReturnValue(true),
+  } as unknown as RuntimeFeatureFlagsService;
 
   const auditLogService = {
     create: jest.fn(),
@@ -26,7 +26,11 @@ describe('MeRadarService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new MeRadarService(prisma as any, configService, auditLogService);
+    service = new MeRadarService(
+      prisma as any,
+      runtimeFeatureFlagsService,
+      auditLogService,
+    );
   });
 
   it('returns zero counts when there are no new followed updates', async () => {

@@ -120,9 +120,11 @@ export class CommunityPostsService {
   ) {
     await this.ensurePostIsActive(postId);
 
-    const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
     const blockedUserIds = await this.blocksService.getBlockedUserIds(actor.id);
+    const beforeCreatedAt = query.beforeCreatedAt
+      ? new Date(query.beforeCreatedAt)
+      : null;
     if (blockedUserIds.length > 0) {
       const visiblePost = await this.prisma.communityPost.findFirst({
         where: {
@@ -145,14 +147,34 @@ export class CommunityPostsService {
         ...(blockedUserIds.length > 0
           ? { authorId: { notIn: blockedUserIds } }
           : {}),
+        ...(beforeCreatedAt && !Number.isNaN(beforeCreatedAt.getTime())
+          ? query.beforeId
+            ? {
+                OR: [
+                  { createdAt: { lt: beforeCreatedAt } },
+                  {
+                    AND: [
+                      { createdAt: beforeCreatedAt },
+                      { id: { lt: query.beforeId } },
+                    ],
+                  },
+                ],
+              }
+            : { createdAt: { lt: beforeCreatedAt } }
+          : {}),
       },
-      orderBy: { createdAt: 'asc' },
-      skip: offset,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      skip:
+        !beforeCreatedAt || Number.isNaN(beforeCreatedAt.getTime())
+          ? (query.offset ?? 0)
+          : 0,
       take: limit,
       include: communityPostCommentInclude,
     });
 
-    return comments.map((comment) => toCommunityPostCommentResponse(comment));
+    return comments
+      .reverse()
+      .map((comment) => toCommunityPostCommentResponse(comment));
   }
 
   async createComment(

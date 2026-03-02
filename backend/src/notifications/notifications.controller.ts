@@ -55,7 +55,7 @@ export class NotificationsController {
   }
 
   @Get('preferences/catalog')
-  async getPreferenceCatalog(@CurrentUser() user: AuthUser | undefined) {
+  getPreferenceCatalog(@CurrentUser() user: AuthUser | undefined) {
     if (!user) throw new UnauthorizedException('User context missing');
     return this.notificationPreferencesService.getCatalog();
   }

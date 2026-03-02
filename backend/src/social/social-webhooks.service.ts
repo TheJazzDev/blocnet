@@ -20,8 +20,7 @@ export class SocialWebhooksService {
 
   isConfigured() {
     return (
-      (this.configService.get<string>('SOCIAL_WEBHOOK_SECRET') ?? '')
-        .trim()
+      (this.configService.get<string>('SOCIAL_WEBHOOK_SECRET') ?? '').trim()
         .length > 0
     );
   }
@@ -188,7 +187,10 @@ export class SocialWebhooksService {
 }
 
 function normalizeProvider(value: string) {
-  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '');
   if (normalized.length === 0) return 'unknown';
   return normalized.slice(0, 40);
 }
@@ -222,15 +224,12 @@ function pickMetricsObject(
   return payload;
 }
 
-function readFirst(
-  payload: Record<string, unknown>,
-  keys: string[],
-): unknown | null {
+function readFirst(payload: Record<string, unknown>, keys: string[]): unknown {
   for (const key of keys) {
     const value = payload[key];
     if (value !== undefined && value !== null) {
       return value;
     }
   }
-  return null;
+  return undefined;
 }

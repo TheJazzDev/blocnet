@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { KycStatus, Prisma } from '@prisma/client';
+import { KycStatus } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
 import { normalizePagination } from '../common/utils/pagination.util';

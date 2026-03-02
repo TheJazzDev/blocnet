@@ -76,15 +76,16 @@ export class RolesGuard implements CanActivate {
       ? adminPanelHeader[0] === '1'
       : adminPanelHeader === '1';
 
-    const includesGovernanceRole = requiredRoles.some((role) =>
-      role === AppRole.OWNER ||
-      role === AppRole.ADMIN ||
-      role === AppRole.MODERATOR,
+    const includesGovernanceRole = requiredRoles.some(
+      (role) =>
+        role === AppRole.OWNER ||
+        role === AppRole.ADMIN ||
+        role === AppRole.MODERATOR,
     );
 
     if (isAdminPanelRequest && includesGovernanceRole) {
       const shouldEnforce =
-        await this.adminTwoFactorService.shouldEnforceChallengeForAdminPanel(
+        this.adminTwoFactorService.shouldEnforceChallengeForAdminPanel(
           effectiveUser.id,
           effectiveUser.realRoles ?? effectiveUser.roles,
         );

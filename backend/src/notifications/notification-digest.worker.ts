@@ -77,7 +77,8 @@ export class NotificationDigestWorker implements OnModuleInit, OnModuleDestroy {
     const now = new Date();
 
     try {
-      const databaseHealthy = await this.databaseHealthService.isDatabaseHealthy();
+      const databaseHealthy =
+        await this.databaseHealthService.isDatabaseHealthy();
       if (!databaseHealthy) {
         this.logDbUnavailableSkip();
         return;

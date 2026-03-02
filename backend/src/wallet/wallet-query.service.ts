@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   KycStatus,
   LedgerAccountType,
@@ -10,7 +10,6 @@ import {
   type LedgerEntry,
   type UserWallet,
 } from '@prisma/client';
-import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizePagination } from '../common/utils/pagination.util';
 import { ListWalletTransactionsQuery } from './dto/list-wallet-transactions.query';
@@ -20,7 +19,6 @@ import { normalizeWalletAsset, WALLET_ASSETS } from './wallet-asset.util';
 import { WalletAssetPricingService } from './wallet-asset-pricing.service';
 import { WalletConfigService } from './wallet-config.service';
 import { WalletProvisioningService } from './wallet-provisioning.service';
-import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class WalletQueryService {

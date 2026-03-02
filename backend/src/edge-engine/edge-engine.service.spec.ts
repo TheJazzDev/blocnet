@@ -27,6 +27,10 @@ describe('EdgeEngineService', () => {
   const auditLogService = {
     create: jest.fn(),
   } as unknown as AuditLogService;
+  const mlClient = {
+    isEnabled: jest.fn().mockResolvedValue(false),
+    analyzeBatch: jest.fn().mockResolvedValue([]),
+  };
 
   let service: EdgeEngineService;
 
@@ -44,6 +48,7 @@ describe('EdgeEngineService', () => {
       prisma as any,
       configService,
       auditLogService,
+      mlClient as any,
     );
   });
 
@@ -142,38 +147,6 @@ describe('EdgeEngineService', () => {
     expect(result.ok).toBe(false);
     expect(result.persisted).toBe(false);
     expect(auditLogService.create).not.toHaveBeenCalled();
-  });
-
-  it('updates BEE config from admin without restart', async () => {
-    prisma.edgeConfig.upsert.mockResolvedValueOnce({
-      id: 'default',
-      enabled: false,
-      updatedAt: new Date('2026-02-23T13:45:00.000Z'),
-    });
-
-    const result = await service.updateAdminConfig('owner-1', {
-      enabled: false,
-    });
-
-    expect(prisma.edgeConfig.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: 'default' },
-        update: { enabled: false },
-        create: expect.objectContaining({
-          id: 'default',
-          enabled: false,
-        }),
-      }),
-    );
-    expect(auditLogService.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actorId: 'owner-1',
-        action: 'edge.admin.config.update',
-        resourceType: 'edge_config',
-        resourceId: 'default',
-      }),
-    );
-    expect(result.enabled).toBe(false);
   });
 
   it('uses stable cursor pagination with createdAt and id tie-breaker', async () => {

@@ -28,7 +28,8 @@
     "prisma:seed:dev": "tsx prisma/seed.dev.ts",
     "prisma:seed:wallets": "tsx prisma/seed.wallets.ts",
     "prisma:studio": "prisma studio",
-    "turnkey:resolve-api-key-id": "tsx scripts/turnkey/resolve-api-key-id.ts"
+    "turnkey:resolve-api-key-id": "tsx scripts/turnkey/resolve-api-key-id.ts",
+    "loadtest:comments": "k6 run load-tests/comments-hot-threads.k6.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

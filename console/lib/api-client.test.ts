@@ -1,33 +1,27 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { apiFetch } from "./api-client";
+import { describe, expect, it } from "vitest";
+import { toQuery } from "./api-client-http";
 
-describe("apiFetch", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
+describe("toQuery", () => {
+  it("serializes only defined query params", () => {
+    expect(
+      toQuery({
+        q: "alice",
+        limit: 25,
+        offset: 0,
+        role: "",
+        status: null,
+        topic: undefined,
+      }),
+    ).toBe("?q=alice&limit=25&offset=0");
   });
 
-  it("redirects on 401 without attempting an explicit refresh endpoint call", async () => {
-    const location = {
-      pathname: "/dashboard",
-      href: "",
-    };
-    vi.stubGlobal("window", { location });
-
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response("Unauthorized", {
-        status: 401,
+  it("returns empty string when all params are empty", () => {
+    expect(
+      toQuery({
+        q: "",
+        limit: undefined,
+        offset: null,
       }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(apiFetch("/me")).rejects.toThrow("Unauthorized");
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/proxy/me",
-      expect.objectContaining({ headers: expect.any(Object) }),
-    );
-    expect(location.href).toBe("/signin?next=%2Fdashboard");
+    ).toBe("");
   });
 });

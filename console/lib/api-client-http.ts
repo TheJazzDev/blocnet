@@ -1,4 +1,5 @@
 import axios, { type AxiosError, type AxiosRequestConfig, type Method } from "axios";
+import { extractApiErrorMessage } from "@/lib/api-error";
 
 // All client requests go through /api/proxy which reads the httpOnly cookie
 // server-side and forwards the Authorization header to the backend.
@@ -209,20 +210,16 @@ export async function apiFetch<T>(
     if (axios.isAxiosError(error)) {
       const status = error.response?.status ?? "ERR";
       const data = error.response?.data;
-      let detail = error.message;
-      if (typeof data === "string" && data.trim().length > 0) {
-        detail = data;
-      } else if (extractMessageFromPayload(data)) {
-        detail = extractMessageFromPayload(data)!;
-      } else if (data && typeof data === "object") {
-        detail = JSON.stringify(data);
-      }
-      const errorMessage = `API ${status}: ${detail}`;
+      const fallback =
+        status === "ERR"
+          ? "Network error. Please try again."
+          : "Request failed. Please try again.";
+      const detail = extractApiErrorMessage(data, fallback);
       toastMessage = detail;
       if (!options.suppressErrorToast) {
         void showToast("error", toastMessage);
       }
-      throw new Error(errorMessage);
+      throw new Error(detail);
     }
 
     if (!options.suppressErrorToast) {

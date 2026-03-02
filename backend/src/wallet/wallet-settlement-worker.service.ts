@@ -66,7 +66,8 @@ export class WalletSettlementWorkerService
         return;
       }
 
-      const databaseHealthy = await this.databaseHealthService.isDatabaseHealthy();
+      const databaseHealthy =
+        await this.databaseHealthService.isDatabaseHealthy();
       if (!databaseHealthy) {
         this.logDbUnavailableSkip();
         return;
@@ -134,6 +135,8 @@ export class WalletSettlementWorkerService
       return;
     }
     this.lastDbUnavailableLogAt = now;
-    this.logger.warn('Skipping settlement tick because database is unavailable.');
+    this.logger.warn(
+      'Skipping settlement tick because database is unavailable.',
+    );
   }
 }

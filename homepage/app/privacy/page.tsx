@@ -30,7 +30,7 @@ export default function PrivacyPage() {
             </h2>
             <div className="space-y-3 text-sm sm:text-base leading-relaxed">
               <p>
-                At Blocnet ("we", "us", "our"), we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and protect your information when you use our platform, mobile application, and services.
+                At Blocnet (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and protect your information when you use our platform, mobile application, and services.
               </p>
               <p>
                 As a Web3 platform, we prioritize data minimization, user sovereignty, and decentralization. We collect only what is necessary to provide our services and give you control over your data.
@@ -260,7 +260,7 @@ export default function PrivacyPage() {
           {/* Children's Privacy */}
           <section>
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
-              10. Children's Privacy
+              10. Children&apos;s Privacy
             </h2>
             <div className="space-y-3 text-sm sm:text-base leading-relaxed">
               <p>
@@ -316,7 +316,7 @@ export default function PrivacyPage() {
                 <li>Website banner or notice</li>
               </ul>
               <p className="mt-4">
-                Continued use of the Services after changes constitutes acceptance of the updated Privacy Policy. The "Last Updated" date at the top of this page indicates when changes were made.
+                Continued use of the Services after changes constitutes acceptance of the updated Privacy Policy. The &quot;Last Updated&quot; date at the top of this page indicates when changes were made.
               </p>
             </div>
           </section>

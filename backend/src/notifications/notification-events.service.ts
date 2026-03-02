@@ -438,7 +438,7 @@ export class NotificationEventsService {
       }));
   }
 
-  private async adminApplicationReviewedEvents(
+  private adminApplicationReviewedEvents(
     actorId: string | undefined,
     resourceId: string | undefined,
     metadata: Record<string, unknown>,
@@ -633,7 +633,7 @@ export class NotificationEventsService {
     ];
   }
 
-  private async userReactivatedEvents(
+  private userReactivatedEvents(
     actorId: string | undefined,
     resourceId: string | undefined,
     metadata: Record<string, unknown>,
@@ -660,7 +660,7 @@ export class NotificationEventsService {
     ];
   }
 
-  private async walletInternalTransferEvents(
+  private walletInternalTransferEvents(
     actorId: string | undefined,
     resourceId: string | undefined,
     metadata: Record<string, unknown>,
@@ -715,7 +715,7 @@ export class NotificationEventsService {
     return events;
   }
 
-  private async walletDepositCreditedEvents(
+  private walletDepositCreditedEvents(
     actorId: string | undefined,
     resourceId: string | undefined,
     metadata: Record<string, unknown>,
@@ -819,7 +819,7 @@ export class NotificationEventsService {
     ];
   }
 
-  private async walletKycReviewedEvents(
+  private walletKycReviewedEvents(
     actorId: string | undefined,
     resourceId: string | undefined,
     metadata: Record<string, unknown>,
@@ -851,7 +851,7 @@ export class NotificationEventsService {
     ];
   }
 
-  private async walletProvisioningEvents(
+  private walletProvisioningEvents(
     action: string,
     actorId: string | undefined,
     resourceId: string | undefined,
@@ -885,7 +885,7 @@ export class NotificationEventsService {
     ];
   }
 
-  private async miningClaimEvents(
+  private miningClaimEvents(
     actorId: string | undefined,
     resourceId: string | undefined,
     metadata: Record<string, unknown>,
@@ -912,7 +912,7 @@ export class NotificationEventsService {
     ];
   }
 
-  private async referralBoundEvents(
+  private referralBoundEvents(
     actorId: string | undefined,
     resourceId: string | undefined,
     metadata: Record<string, unknown>,
@@ -939,7 +939,7 @@ export class NotificationEventsService {
     ];
   }
 
-  private async referralAdminBoundEvents(
+  private referralAdminBoundEvents(
     actorId: string | undefined,
     resourceId: string | undefined,
     metadata: Record<string, unknown>,

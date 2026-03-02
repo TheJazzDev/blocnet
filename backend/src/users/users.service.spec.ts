@@ -1,18 +1,15 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { AppRole } from '../common/enums/role.enum';
-import { AuditLogService } from '../audit-log/audit-log.service';
+import { BadRequestException } from '@nestjs/common';
 import { UpdateUrgency } from '@prisma/client';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import { QuestsService } from '../quests/quests.service';
 import { UsersService } from './users.service';
+import { UserAvatarService } from './user-avatar.service';
 
 describe('UsersService', () => {
-  const txProfileUpdate = jest.fn();
-  const txUserRoleUpsert = jest.fn();
-
   const prisma = {
     profile: {
       findUnique: jest.fn(),
-      delete: jest.fn(),
+      update: jest.fn(),
     },
     auditLog: {
       findMany: jest.fn(),
@@ -20,41 +17,35 @@ describe('UsersService', () => {
     update: {
       findMany: jest.fn(),
     },
-    project: {
-      count: jest.fn(),
-    },
-    userRole: {
-      count: jest.fn(),
-      findFirst: jest.fn(),
-    },
-    $transaction: jest.fn(),
   };
-
-  const configService = {
-    get: jest.fn(),
-  } as unknown as ConfigService;
 
   const auditLogService = {
     create: jest.fn(),
   } as unknown as AuditLogService;
 
+  const questsService = {
+    checkAndCompleteByAction: jest.fn(),
+  } as unknown as QuestsService;
+
+  const userAvatarService = {
+    resolveAvatarAccessUrl: jest.fn((url: string | null) =>
+      Promise.resolve(url),
+    ),
+    uploadAvatar: jest.fn(),
+    deletePreviousAvatarIfManaged: jest.fn(),
+    isManagedPublicAvatarUrl: jest.fn().mockReturnValue(false),
+  } as unknown as UserAvatarService;
+
   let service: UsersService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    prisma.$transaction.mockImplementation(
-      async (
-        callback: (tx: {
-          profile: { update: jest.Mock };
-          userRole: { upsert: jest.Mock };
-        }) => Promise<unknown>,
-      ) =>
-        callback({
-          profile: { update: txProfileUpdate },
-          userRole: { upsert: txUserRoleUpsert },
-        }),
+    service = new UsersService(
+      prisma as any,
+      auditLogService,
+      questsService,
+      userAvatarService,
     );
-    service = new UsersService(prisma as any, configService, auditLogService);
   });
 
   afterEach(() => {
@@ -114,126 +105,91 @@ describe('UsersService', () => {
     });
   });
 
-  it('reactivates a deactivated user and ensures user role exists', async () => {
+  it('deactivates account and records an audit event', async () => {
     prisma.profile.findUnique.mockResolvedValue({
-      id: 'target-1',
+      id: 'user-1',
+      isDeactivated: false,
+      username: 'jazzdev',
+      displayName: 'Jazz',
+      avatarUrl: 'https://img.example/jazz.png',
+      bio: 'Bio',
+    });
+    prisma.profile.update.mockResolvedValue({
+      id: 'user-1',
       isDeactivated: true,
-      roles: [],
+      deactivatedAt: new Date('2026-02-20T13:00:00.000Z'),
     });
 
-    const result = await service.reactivateUserByOwner(
-      {
-        id: 'owner-1',
-        email: 'owner@blocnet.test',
-        roles: [AppRole.OWNER],
-      },
-      'target-1',
-      { reason: 'review complete' },
-    );
+    await service.deactivateAccount('user-1', 'manual review');
 
-    expect(txProfileUpdate).toHaveBeenCalledWith(
+    expect(prisma.profile.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'target-1' },
+        where: { id: 'user-1' },
         data: expect.objectContaining({
-          isDeactivated: false,
-          deactivatedAt: null,
-          deactivatedBy: null,
-          deactivationReason: null,
+          isDeactivated: true,
+          deactivatedBy: 'user-1',
+          deactivationReason: 'manual review',
+          previousUsername: 'jazzdev',
         }),
       }),
     );
-    expect(txUserRoleUpsert).toHaveBeenCalledWith(
+    expect(auditLogService.create as jest.Mock).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {
-          userId_role: {
-            userId: 'target-1',
-            role: 'user',
-          },
-        },
-      }),
-    );
-    expect(auditLogService.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actorId: 'owner-1',
-        action: 'admin.user.reactivate',
-      }),
-    );
-    expect(result).toEqual(
-      expect.objectContaining({
-        reactivated: true,
-        userId: 'target-1',
+        actorId: 'user-1',
+        action: 'account.deactivate',
       }),
     );
   });
 
-  it('rejects reactivation when actor is not owner', async () => {
-    await expect(
-      service.reactivateUserByOwner(
-        {
-          id: 'admin-1',
-          email: 'admin@blocnet.test',
-          roles: [AppRole.ADMIN],
-        },
-        'target-1',
-        {},
-      ),
-    ).rejects.toThrow(ForbiddenException);
-  });
-
-  it('hard deletes deactivated user for owner actor', async () => {
+  it('reactivates account and restores previous profile fields', async () => {
     prisma.profile.findUnique.mockResolvedValue({
-      id: 'target-1',
+      id: 'user-1',
       isDeactivated: true,
-      roles: [],
+      previousUsername: 'jazzdev',
+      previousDisplayName: 'Jazz',
+      previousAvatarUrl: 'https://img.example/jazz.png',
+      previousBio: 'Bio',
     });
-    prisma.project.count.mockResolvedValue(0);
-    prisma.profile.delete.mockResolvedValue({ id: 'target-1' });
-
-    const result = await service.hardDeleteUserByOwner(
-      {
-        id: 'owner-1',
-        email: 'owner@blocnet.test',
-        roles: [AppRole.OWNER],
-      },
-      'target-1',
-      { reason: 'gdpr request' },
-    );
-
-    expect(prisma.profile.delete).toHaveBeenCalledWith({
-      where: { id: 'target-1' },
+    prisma.profile.update.mockResolvedValue({
+      id: 'user-1',
+      isDeactivated: false,
+      username: 'jazzdev',
+      displayName: 'Jazz',
     });
-    expect(auditLogService.create).toHaveBeenCalledWith(
+
+    await service.reactivateAccount('user-1');
+
+    expect(prisma.profile.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorId: 'owner-1',
-        action: 'admin.user.hard_delete',
+        where: { id: 'user-1' },
+        data: expect.objectContaining({
+          isDeactivated: false,
+          username: 'jazzdev',
+          previousUsername: null,
+        }),
       }),
     );
-    expect(result).toEqual(
+    expect(auditLogService.create as jest.Mock).toHaveBeenCalledWith(
       expect.objectContaining({
-        hardDeleted: true,
-        userId: 'target-1',
+        actorId: 'user-1',
+        action: 'account.reactivate',
       }),
     );
   });
 
-  it('requires deactivation before hard delete', async () => {
+  it('rejects reactivation if account is not deactivated', async () => {
     prisma.profile.findUnique.mockResolvedValue({
-      id: 'target-1',
+      id: 'user-1',
       isDeactivated: false,
-      roles: [],
+      previousUsername: null,
+      previousDisplayName: null,
+      previousAvatarUrl: null,
+      previousBio: null,
     });
 
-    await expect(
-      service.hardDeleteUserByOwner(
-        {
-          id: 'owner-1',
-          email: 'owner@blocnet.test',
-          roles: [AppRole.OWNER],
-        },
-        'target-1',
-        {},
-      ),
-    ).rejects.toThrow(BadRequestException);
+    await expect(service.reactivateAccount('user-1')).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('returns only user-facing actions for profile activity feed', async () => {
@@ -248,7 +204,7 @@ describe('UsersService', () => {
       },
     ]);
 
-    const result = await service.listMyActivity('user-1', {
+    const activity = await service.listMyActivity('user-1', {
       limit: 20,
       offset: 0,
     });
@@ -269,7 +225,7 @@ describe('UsersService', () => {
       }),
     );
 
-    expect(result).toEqual([
+    expect(activity).toEqual([
       expect.objectContaining({
         id: 'log-1',
         action: 'project.follow',

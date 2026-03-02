@@ -288,188 +288,187 @@ export class UsersAdminService {
       recentQuestProgressRows,
       totalQuestsCount,
       activeQuestsCount,
-    ] =
-      await Promise.all([
-        this.prisma.tipTransaction.groupBy({
-          by: ['currencyCode'],
-          where: { senderUserId: userId },
-          _count: { _all: true },
-          _sum: {
-            amountAtomic: true,
-            feeAtomic: true,
-            totalDebitAtomic: true,
+    ] = await Promise.all([
+      this.prisma.tipTransaction.groupBy({
+        by: ['currencyCode'],
+        where: { senderUserId: userId },
+        _count: { _all: true },
+        _sum: {
+          amountAtomic: true,
+          feeAtomic: true,
+          totalDebitAtomic: true,
+        },
+      }),
+      this.prisma.tipTransaction.groupBy({
+        by: ['currencyCode'],
+        where: { recipientUserId: userId },
+        _count: { _all: true },
+        _sum: {
+          amountAtomic: true,
+        },
+      }),
+      this.prisma.tipConversion.groupBy({
+        by: ['fromCurrencyCode', 'toCurrencyCode'],
+        where: { userId },
+        _count: { _all: true },
+        _sum: {
+          amountInAtomic: true,
+          amountOutAtomic: true,
+        },
+      }),
+      this.prisma.miningConfig.findUnique({
+        where: { id: 'default' },
+        select: {
+          cycleHours: true,
+          activeReferralWindowHours: true,
+        },
+      }),
+      this.prisma.miningSession.findFirst({
+        where: {
+          userId,
+          claimedAt: null,
+        },
+        orderBy: {
+          startsAt: 'desc',
+        },
+        select: {
+          id: true,
+          startsAt: true,
+          endsAt: true,
+          claimedAt: true,
+          basePointsPerCycle: true,
+          effectivePointsPerCycle: true,
+          boostBpsSnapshot: true,
+          activeReferralsSnapshot: true,
+        },
+      }),
+      this.prisma.miningSession.findMany({
+        where: {
+          userId,
+        },
+        orderBy: {
+          startsAt: 'desc',
+        },
+        take: 10,
+        select: {
+          id: true,
+          startsAt: true,
+          endsAt: true,
+          claimedAt: true,
+          basePointsPerCycle: true,
+          effectivePointsPerCycle: true,
+          boostBpsSnapshot: true,
+          activeReferralsSnapshot: true,
+        },
+      }),
+      this.prisma.miningHourlyCheckpoint.aggregate({
+        where: {
+          userId,
+          claimedAt: null,
+          hourEndAt: {
+            lte: asOf,
           },
-        }),
-        this.prisma.tipTransaction.groupBy({
-          by: ['currencyCode'],
-          where: { recipientUserId: userId },
-          _count: { _all: true },
-          _sum: {
-            amountAtomic: true,
+        },
+        _sum: {
+          points: true,
+        },
+      }),
+      this.prisma.miningPointLedger.aggregate({
+        where: {
+          userId,
+        },
+        _sum: {
+          points: true,
+        },
+      }),
+      this.prisma.miningPointLedger.groupBy({
+        by: ['sessionId'],
+        where: {
+          userId,
+          source: MiningPointSource.cycle_claim,
+          sessionId: {
+            not: null,
           },
-        }),
-        this.prisma.tipConversion.groupBy({
-          by: ['fromCurrencyCode', 'toCurrencyCode'],
-          where: { userId },
-          _count: { _all: true },
-          _sum: {
-            amountInAtomic: true,
-            amountOutAtomic: true,
-          },
-        }),
-        this.prisma.miningConfig.findUnique({
-          where: { id: 'default' },
-          select: {
-            cycleHours: true,
-            activeReferralWindowHours: true,
-          },
-        }),
-        this.prisma.miningSession.findFirst({
-          where: {
-            userId,
-            claimedAt: null,
-          },
-          orderBy: {
-            startsAt: 'desc',
-          },
-          select: {
-            id: true,
-            startsAt: true,
-            endsAt: true,
-            claimedAt: true,
-            basePointsPerCycle: true,
-            effectivePointsPerCycle: true,
-            boostBpsSnapshot: true,
-            activeReferralsSnapshot: true,
-          },
-        }),
-        this.prisma.miningSession.findMany({
-          where: {
-            userId,
-          },
-          orderBy: {
-            startsAt: 'desc',
-          },
-          take: 10,
-          select: {
-            id: true,
-            startsAt: true,
-            endsAt: true,
-            claimedAt: true,
-            basePointsPerCycle: true,
-            effectivePointsPerCycle: true,
-            boostBpsSnapshot: true,
-            activeReferralsSnapshot: true,
-          },
-        }),
-        this.prisma.miningHourlyCheckpoint.aggregate({
-          where: {
-            userId,
-            claimedAt: null,
-            hourEndAt: {
-              lte: asOf,
+        },
+        _sum: {
+          points: true,
+        },
+      }),
+      this.prisma.userQuest.groupBy({
+        by: ['status'],
+        where: {
+          userId,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      this.prisma.questSubmission.groupBy({
+        by: ['verificationStatus'],
+        where: {
+          userId,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      this.prisma.miningPointLedger.aggregate({
+        where: {
+          userId,
+          source: MiningPointSource.quest_reward,
+        },
+        _sum: {
+          points: true,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      this.prisma.userQuest.findMany({
+        where: {
+          userId,
+        },
+        orderBy: [{ updatedAt: 'desc' }],
+        take: 12,
+        select: {
+          id: true,
+          status: true,
+          progress: true,
+          startedAt: true,
+          completedAt: true,
+          updatedAt: true,
+          quest: {
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              category: true,
+              rewardPoints: true,
+              verificationMethod: true,
+              isActive: true,
             },
           },
-          _sum: {
-            points: true,
-          },
-        }),
-        this.prisma.miningPointLedger.aggregate({
-          where: {
-            userId,
-          },
-          _sum: {
-            points: true,
-          },
-        }),
-        this.prisma.miningPointLedger.groupBy({
-          by: ['sessionId'],
-          where: {
-            userId,
-            source: MiningPointSource.cycle_claim,
-            sessionId: {
-              not: null,
+          submissions: {
+            orderBy: [{ submittedAt: 'desc' }],
+            take: 1,
+            select: {
+              verificationStatus: true,
+              submittedAt: true,
+              verifiedAt: true,
+              reviewNotes: true,
+              rejectionReason: true,
             },
           },
-          _sum: {
-            points: true,
-          },
-        }),
-        this.prisma.userQuest.groupBy({
-          by: ['status'],
-          where: {
-            userId,
-          },
-          _count: {
-            _all: true,
-          },
-        }),
-        this.prisma.questSubmission.groupBy({
-          by: ['verificationStatus'],
-          where: {
-            userId,
-          },
-          _count: {
-            _all: true,
-          },
-        }),
-        this.prisma.miningPointLedger.aggregate({
-          where: {
-            userId,
-            source: MiningPointSource.quest_reward,
-          },
-          _sum: {
-            points: true,
-          },
-          _count: {
-            _all: true,
-          },
-        }),
-        this.prisma.userQuest.findMany({
-          where: {
-            userId,
-          },
-          orderBy: [{ updatedAt: 'desc' }],
-          take: 12,
-          select: {
-            id: true,
-            status: true,
-            progress: true,
-            startedAt: true,
-            completedAt: true,
-            updatedAt: true,
-            quest: {
-              select: {
-                id: true,
-                slug: true,
-                title: true,
-                category: true,
-                rewardPoints: true,
-                verificationMethod: true,
-                isActive: true,
-              },
-            },
-            submissions: {
-              orderBy: [{ submittedAt: 'desc' }],
-              take: 1,
-              select: {
-                verificationStatus: true,
-                submittedAt: true,
-                verifiedAt: true,
-                reviewNotes: true,
-                rejectionReason: true,
-              },
-            },
-          },
-        }),
-        this.prisma.quest.count(),
-        this.prisma.quest.count({
-          where: {
-            isActive: true,
-            OR: [{ expiresAt: null }, { expiresAt: { gt: asOf } }],
-          },
-        }),
-      ]);
+        },
+      }),
+      this.prisma.quest.count(),
+      this.prisma.quest.count({
+        where: {
+          isActive: true,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: asOf } }],
+        },
+      }),
+    ]);
 
     const activeReferralWindowHours =
       miningConfig?.activeReferralWindowHours ?? 168;
@@ -507,9 +506,14 @@ export class UsersAdminService {
       );
       const elapsedMs = Math.max(
         0,
-        Math.min(asOf.getTime() - session.startsAt.getTime(), sessionDurationMs),
+        Math.min(
+          asOf.getTime() - session.startsAt.getTime(),
+          sessionDurationMs,
+        ),
       );
-      const progressPct = Number(((elapsedMs / sessionDurationMs) * 100).toFixed(2));
+      const progressPct = Number(
+        ((elapsedMs / sessionDurationMs) * 100).toFixed(2),
+      );
       const status = session.claimedAt
         ? 'claimed'
         : session.endsAt.getTime() <= asOf.getTime()
@@ -532,7 +536,8 @@ export class UsersAdminService {
     });
 
     const activeSession = latestUnclaimedSession
-      ? recentMining.find((entry) => entry.id === latestUnclaimedSession.id) ?? null
+      ? (recentMining.find((entry) => entry.id === latestUnclaimedSession.id) ??
+        null)
       : null;
     const activeSessionDurationHours = activeSession
       ? Math.max(
@@ -544,9 +549,9 @@ export class UsersAdminService {
       : Math.max(miningConfig?.cycleHours ?? 24, 1);
     const hourlyRateNow = activeSession
       ? Number(
-          (activeSession.effectivePointsPerCycle / activeSessionDurationHours).toFixed(
-            4,
-          ),
+          (
+            activeSession.effectivePointsPerCycle / activeSessionDurationHours
+          ).toFixed(4),
         )
       : 0;
 

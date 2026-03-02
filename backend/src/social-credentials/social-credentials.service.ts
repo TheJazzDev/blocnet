@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SocialCredential } from '@prisma/client';
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+} from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSocialCredentialDto } from './dto/create-social-credential.dto';
 import { UpdateSocialCredentialDto } from './dto/update-social-credential.dto';

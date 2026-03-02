@@ -40,7 +40,7 @@ type PreferenceSnapshot = {
 export class NotificationPreferencesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getCatalog() {
+  getCatalog() {
     return {
       categories: NOTIFICATION_CATEGORY_ORDER.map((category) => ({
         key: category,

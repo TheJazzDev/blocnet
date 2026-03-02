@@ -60,9 +60,8 @@ void main() async {
       url: AppConfig.supabaseUrl,
       anonKey: AppConfig.supabaseAnonKey,
       authOptions: const FlutterAuthClientOptions(
-        // Use implicit for mobile email-link reliability across in-app
-        // browsers/mail clients that do not preserve PKCE verifier context.
-        authFlowType: AuthFlowType.implicit,
+        authFlowType: AuthFlowType.pkce,
+        autoRefreshToken: true,
       ),
     );
   }

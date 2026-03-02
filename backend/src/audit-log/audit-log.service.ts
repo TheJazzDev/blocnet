@@ -360,7 +360,10 @@ export class AuditLogService {
       }
     }
 
-    if (action.startsWith('ops.email.resend.') || action.startsWith('notification.broadcast.email.')) {
+    if (
+      action.startsWith('ops.email.resend.') ||
+      action.startsWith('notification.broadcast.email.')
+    ) {
       return { source: 'email', provider: 'resend' };
     }
 
@@ -368,7 +371,10 @@ export class AuditLogService {
       if (action.startsWith('wallet.provision.')) {
         return { source: 'wallet', provider: 'turnkey' };
       }
-      if (action.startsWith('wallet.deposit.') || action.startsWith('wallet.withdrawal.')) {
+      if (
+        action.startsWith('wallet.deposit.') ||
+        action.startsWith('wallet.withdrawal.')
+      ) {
         return { source: 'wallet', provider: 'bsc' };
       }
       return { source: 'wallet', provider: 'internal' };
@@ -393,8 +399,11 @@ export class AuditLogService {
     return { source: 'system', provider: 'unknown' };
   }
 
-  private resolveStatus(action: string, metadata: Record<string, unknown>): OpsEventStatus {
-    const explicit = `${metadata.status ?? ''}`.trim().toLowerCase();
+  private resolveStatus(
+    action: string,
+    metadata: Record<string, unknown>,
+  ): OpsEventStatus {
+    const explicit = this.stringValue(metadata.status)?.toLowerCase() ?? '';
     if (explicit === 'success') return 'success';
     if (explicit === 'warning') return 'warning';
     if (explicit === 'error' || explicit === 'failed') return 'error';
@@ -448,11 +457,11 @@ export class AuditLogService {
     }
 
     if (action === 'ops.email.resend.sent') {
-      const to = `${metadata.to ?? ''}`.trim();
+      const to = this.stringValue(metadata.to) ?? '';
       return to ? `Email sent to ${to}` : 'Email sent via Resend';
     }
     if (action === 'ops.email.resend.failed') {
-      const to = `${metadata.to ?? ''}`.trim();
+      const to = this.stringValue(metadata.to) ?? '';
       return to ? `Email delivery failed for ${to}` : 'Email delivery failed';
     }
     if (action === 'notification.broadcast.email.send') {
@@ -461,20 +470,22 @@ export class AuditLogService {
       return `Broadcast email delivered=${delivered}, failed=${failed}`;
     }
     if (action === 'wallet.deposit.detected') {
-      const asset = `${metadata.asset ?? ''}`.trim();
-      const amount = `${metadata.amount ?? ''}`.trim();
+      const asset = this.stringValue(metadata.asset) ?? '';
+      const amount = this.stringValue(metadata.amount) ?? '';
       if (asset && amount) return `Detected ${amount} ${asset} deposit`;
     }
     if (action === 'wallet.deposit.credited') {
-      const asset = `${metadata.asset ?? ''}`.trim();
-      const amount = `${metadata.amount ?? ''}`.trim();
+      const asset = this.stringValue(metadata.asset) ?? '';
+      const amount = this.stringValue(metadata.amount) ?? '';
       if (asset && amount) return `Credited ${amount} ${asset} deposit`;
     }
     if (action.startsWith('ops.social.')) {
-      const provider = `${metadata.provider ?? ''}`.trim();
-      const accountHandle = `${metadata.accountHandle ?? ''}`.trim();
+      const provider = this.stringValue(metadata.provider) ?? '';
+      const accountHandle = this.stringValue(metadata.accountHandle) ?? '';
       const metrics =
-        metadata.metrics && typeof metadata.metrics === 'object' && !Array.isArray(metadata.metrics)
+        metadata.metrics &&
+        typeof metadata.metrics === 'object' &&
+        !Array.isArray(metadata.metrics)
           ? (metadata.metrics as Record<string, unknown>)
           : null;
       if (metrics) {
@@ -482,9 +493,13 @@ export class AuditLogService {
         const following = metrics.following;
         const posts = metrics.posts;
         const metricBits = [
-          followers !== undefined ? `followers=${String(followers)}` : null,
-          following !== undefined ? `following=${String(following)}` : null,
-          posts !== undefined ? `posts=${String(posts)}` : null,
+          this.stringValue(followers)
+            ? `followers=${this.stringValue(followers)}`
+            : null,
+          this.stringValue(following)
+            ? `following=${this.stringValue(following)}`
+            : null,
+          this.stringValue(posts) ? `posts=${this.stringValue(posts)}` : null,
         ].filter((entry): entry is string => !!entry);
         if (metricBits.length > 0) {
           return `${provider || 'social'} snapshot${
@@ -578,11 +593,29 @@ export class AuditLogService {
       case 'telegram':
         return ['ops.social.telegram.'];
       case 'internal':
-        return ['tip.', 'notification.broadcast.', 'ops.', 'wallet.', 'auth.', 'session.'];
+        return [
+          'tip.',
+          'notification.broadcast.',
+          'ops.',
+          'wallet.',
+          'auth.',
+          'session.',
+        ];
       case 'unknown':
         return null;
       default:
         return null;
     }
+  }
+
+  private stringValue(value: unknown): string | null {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    return null;
   }
 }

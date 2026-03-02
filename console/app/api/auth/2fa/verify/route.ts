@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import axios from "axios";
+import { extractApiErrorMessage } from "@/lib/api-error";
 import {
   ADMIN_ACCESS_COOKIE,
   ADMIN_REFRESH_COOKIE,
@@ -68,10 +69,10 @@ export async function POST(req: Request) {
   });
 
   if (response.status < 200 || response.status >= 300) {
-    const message =
-      typeof response.data === "string"
-        ? response.data
-        : JSON.stringify(response.data ?? {});
+    const message = extractApiErrorMessage(
+      response.data,
+      "Two-factor verification failed.",
+    );
 
     return NextResponse.json(
       { error: message || "2FA verification failed" },

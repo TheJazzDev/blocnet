@@ -85,7 +85,9 @@ export class SocialWebhooksController {
 
     const recent = rows.map((row) => {
       const metadata =
-        row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+        row.metadata &&
+        typeof row.metadata === 'object' &&
+        !Array.isArray(row.metadata)
           ? (row.metadata as Record<string, unknown>)
           : {};
 

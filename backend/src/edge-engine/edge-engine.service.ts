@@ -21,7 +21,6 @@ import {
   EDGE_CONFIG_ID,
   EDGE_DECISION_PREFIX,
   EDGE_WEIGHTS,
-  EdgeFeedCursor,
   FollowPreference,
   clamp01,
   normalizeReasonCodes,
@@ -248,7 +247,10 @@ export class EdgeEngineService {
     );
 
     // Enhance with ML analysis before limiting
-    const enhancedDecisions = await this.enhanceDecisionsWithML(decisions, updateContentMap);
+    const enhancedDecisions = await this.enhanceDecisionsWithML(
+      decisions,
+      updateContentMap,
+    );
 
     const items = enhancedDecisions.slice(0, limit);
     const nextCursor =
@@ -388,7 +390,10 @@ export class EdgeEngineService {
     const updateContentMap = new Map<string, string>(
       updates.map((u) => [u.id, u.contentMd]),
     );
-    const enhancedDecisions = await this.enhanceDecisionsWithML(decisions, updateContentMap);
+    const enhancedDecisions = await this.enhanceDecisionsWithML(
+      decisions,
+      updateContentMap,
+    );
 
     await this.persistDecisions(userId, enhancedDecisions);
 
@@ -751,7 +756,9 @@ export class EdgeEngineService {
       // Prepare content for batch analysis
       const contents = decisions.map((d) => {
         const updateContent = updateContentMap.get(d.update.id);
-        return updateContent ? `${d.update.title}\n\n${updateContent}` : d.update.title;
+        return updateContent
+          ? `${d.update.title}\n\n${updateContent}`
+          : d.update.title;
       });
 
       // Analyze in batch
@@ -776,8 +783,10 @@ export class EdgeEngineService {
           mlProvider: 'bee', // Indicates BEE ML service was used
         };
       });
-    } catch (error) {
-      this.logger.error(`ML enhancement failed: ${error.message}`, error.stack);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const stack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`ML enhancement failed: ${message}`, stack);
       // Return original decisions if ML fails
       return decisions;
     }
@@ -798,60 +807,63 @@ export class EdgeEngineService {
     }
 
     const generatedAt = new Date();
-    await Promise.all(
-      decisions.map((decision) =>
-        edgeDecisionModel.upsert?.({
-          where: {
-            userId_decisionId: {
-              userId,
-              decisionId: decision.decisionId,
-            },
-          },
-          update: {
-            updateId: decision.update.id,
-            projectId: decision.update.projectId,
-            edgeScore: decision.edgeScore,
-            recommendedAction: toPrismaEdgeAction(decision.recommendedAction),
-            reasonCodes: decision.reasonCodes as Prisma.InputJsonValue,
-            explanationPreview: decision.explanationPreview,
-            urgencyScore: decision.components.urgency,
-            recencyScore: decision.components.recency,
-            relevanceScore: decision.components.relevance,
-            noveltyScore: decision.components.novelty,
-            penaltyScore: decision.components.penalties,
-            // ML-enhanced fields
-            mlQuality: decision.mlQuality,
-            mlSentiment: decision.mlSentiment,
-            mlTopics: decision.mlTopics as Prisma.InputJsonValue,
-            mlActionability: decision.mlActionability,
-            mlInsights: decision.mlInsights as Prisma.InputJsonValue,
-            mlProvider: decision.mlProvider,
-            generatedAt,
-          },
-          create: {
+    const upserts = decisions.map((decision) =>
+      edgeDecisionModel.upsert?.({
+        where: {
+          userId_decisionId: {
             userId,
             decisionId: decision.decisionId,
-            updateId: decision.update.id,
-            projectId: decision.update.projectId,
-            edgeScore: decision.edgeScore,
-            recommendedAction: toPrismaEdgeAction(decision.recommendedAction),
-            reasonCodes: decision.reasonCodes as Prisma.InputJsonValue,
-            explanationPreview: decision.explanationPreview,
-            urgencyScore: decision.components.urgency,
-            recencyScore: decision.components.recency,
-            relevanceScore: decision.components.relevance,
-            noveltyScore: decision.components.novelty,
-            penaltyScore: decision.components.penalties,
-            // ML-enhanced fields
-            mlQuality: decision.mlQuality,
-            mlSentiment: decision.mlSentiment,
-            mlTopics: decision.mlTopics as Prisma.InputJsonValue,
-            mlActionability: decision.mlActionability,
-            mlInsights: decision.mlInsights as Prisma.InputJsonValue,
-            mlProvider: decision.mlProvider,
-            generatedAt,
           },
-        }),
+        },
+        update: {
+          updateId: decision.update.id,
+          projectId: decision.update.projectId,
+          edgeScore: decision.edgeScore,
+          recommendedAction: toPrismaEdgeAction(decision.recommendedAction),
+          reasonCodes: decision.reasonCodes as Prisma.InputJsonValue,
+          explanationPreview: decision.explanationPreview,
+          urgencyScore: decision.components.urgency,
+          recencyScore: decision.components.recency,
+          relevanceScore: decision.components.relevance,
+          noveltyScore: decision.components.novelty,
+          penaltyScore: decision.components.penalties,
+          // ML-enhanced fields
+          mlQuality: decision.mlQuality,
+          mlSentiment: decision.mlSentiment,
+          mlTopics: decision.mlTopics as Prisma.InputJsonValue,
+          mlActionability: decision.mlActionability,
+          mlInsights: decision.mlInsights as Prisma.InputJsonValue,
+          mlProvider: decision.mlProvider,
+          generatedAt,
+        },
+        create: {
+          userId,
+          decisionId: decision.decisionId,
+          updateId: decision.update.id,
+          projectId: decision.update.projectId,
+          edgeScore: decision.edgeScore,
+          recommendedAction: toPrismaEdgeAction(decision.recommendedAction),
+          reasonCodes: decision.reasonCodes as Prisma.InputJsonValue,
+          explanationPreview: decision.explanationPreview,
+          urgencyScore: decision.components.urgency,
+          recencyScore: decision.components.recency,
+          relevanceScore: decision.components.relevance,
+          noveltyScore: decision.components.novelty,
+          penaltyScore: decision.components.penalties,
+          // ML-enhanced fields
+          mlQuality: decision.mlQuality,
+          mlSentiment: decision.mlSentiment,
+          mlTopics: decision.mlTopics as Prisma.InputJsonValue,
+          mlActionability: decision.mlActionability,
+          mlInsights: decision.mlInsights as Prisma.InputJsonValue,
+          mlProvider: decision.mlProvider,
+          generatedAt,
+        },
+      }),
+    );
+    await Promise.all(
+      upserts.filter(
+        (promise): promise is Promise<unknown> => promise !== undefined,
       ),
     );
   }

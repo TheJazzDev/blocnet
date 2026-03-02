@@ -222,7 +222,7 @@ export function RoadmapContent() {
           <p className="text-sm sm:text-base text-muted leading-relaxed">
             <span className="text-teal-300 font-semibold">Note:</span> This
             roadmap is subject to change based on community feedback, market
-            conditions, and strategic priorities. We're building in public and
+            conditions, and strategic priorities. We&apos;re building in public and
             adapting as we grow.
           </p>
         </div>

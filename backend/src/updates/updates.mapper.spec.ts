@@ -17,6 +17,8 @@ describe('updates.mapper', () => {
         email: 'hunter@blocnet.io',
         displayName: 'Hunter',
         avatarUrl: 'https://example.com/h.png',
+        roles: [{ role: 'hunter' }],
+        primaryBadge: null,
       },
       project: {
         id: 'project-1',

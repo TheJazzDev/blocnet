@@ -238,7 +238,8 @@ export class WalletDepositIndexerService
         return;
       }
 
-      const databaseHealthy = await this.databaseHealthService.isDatabaseHealthy();
+      const databaseHealthy =
+        await this.databaseHealthService.isDatabaseHealthy();
       if (!databaseHealthy) {
         this.stopRealtimeSubscriptions();
         this.logDbUnavailableSkip();
@@ -1457,7 +1458,9 @@ export class WalletDepositIndexerService
     }
 
     this.rateLimitStateByNetwork.delete(networkKey);
-    this.logger.log(`Recovered deposit scan rate limit state for ${networkKey}`);
+    this.logger.log(
+      `Recovered deposit scan rate limit state for ${networkKey}`,
+    );
   }
 
   private isRateLimitError(error: unknown): boolean {

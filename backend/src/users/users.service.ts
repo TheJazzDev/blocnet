@@ -1,35 +1,25 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   ContentModerationStatus,
-  NotificationType,
   Prisma,
   ProjectStatus,
   RoleName,
   UpdateStatus,
   UpdateUrgency,
 } from '@prisma/client';
-import { randomUUID } from 'crypto';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import { AppRole } from '../common/enums/role.enum';
-import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import {
   buildCommunityPostInclude,
   toCommunityPostResponse,
 } from '../community-posts/community-posts.mapper';
 import { projectInclude, toProjectResponse } from '../projects/projects.mapper';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotificationsService } from '../notifications/notifications.service';
 import { QuestsService } from '../quests/quests.service';
-import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import { normalizePagination } from '../common/utils/pagination.util';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UserAvatarService, UploadedAvatarFile } from './user-avatar.service';
@@ -38,16 +28,6 @@ type PaginationInput = {
   limit?: number;
   offset?: number;
 };
-
-const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED_AVATAR_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-  'image/heic',
-  'image/heif',
-]);
 
 const PROFILE_ACTIVITY_ALLOWED_ACTIONS = [
   'comment.create',
@@ -81,11 +61,8 @@ export class UsersService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
     private readonly auditLogService: AuditLogService,
-    private readonly notificationsService: NotificationsService,
     private readonly questsService: QuestsService,
-    private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,
     private readonly userAvatarService: UserAvatarService,
   ) {}
 

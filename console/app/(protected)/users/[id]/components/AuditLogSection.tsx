@@ -12,6 +12,8 @@ type AuditLogSectionProps = {
  * TODO: Implement pagination and filtering
  */
 export function AuditLogSection({ userId }: AuditLogSectionProps) {
+  void userId;
+
   return (
     <Card>
       <CardHeader>

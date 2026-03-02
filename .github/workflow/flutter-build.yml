@@ -1,0 +1,149 @@
+name: Mobile Build
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'mobile-v*'
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish GitHub release assets'
+        required: false
+        type: boolean
+        default: false
+      release_tag:
+        description: 'Release tag (required when publish_release=true), e.g. mobile-v1.0.0'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mobile-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: mobile
+
+    outputs:
+      version_name: ${{ steps.app_meta.outputs.version_name }}
+      version_code: ${{ steps.app_meta.outputs.version_code }}
+      release_tag: ${{ steps.release_tag.outputs.tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Validate manual release input
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_release == true
+        run: |
+          if [ -z "${{ inputs.release_tag }}" ]; then
+            echo "release_tag is required when publish_release=true"
+            exit 1
+          fi
+
+      - name: Resolve app version
+        id: app_meta
+        run: |
+          VERSION_LINE="$(grep '^version:' pubspec.yaml | head -n1 | awk '{print $2}')"
+          VERSION_NAME="${VERSION_LINE%%+*}"
+          VERSION_CODE="${VERSION_LINE##*+}"
+          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          echo "App version: ${VERSION_NAME}+${VERSION_CODE}"
+
+      - name: Resolve release tag
+        id: release_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.publish_release }}" = "true" ]; then
+            echo "tag=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Build Android APK + AAB
+        run: |
+          BUILD_ARGS="--release"
+          if [ -f ".env.prod.json" ]; then
+            BUILD_ARGS="$BUILD_ARGS --dart-define-from-file=.env.prod.json"
+          fi
+
+          flutter build apk $BUILD_ARGS
+          flutter build appbundle $BUILD_ARGS
+
+      - name: Prepare distributables
+        run: |
+          mkdir -p ../dist
+          APK_NAME="blocnet-${{ steps.app_meta.outputs.version_name }}+${{ steps.app_meta.outputs.version_code }}-android.apk"
+          AAB_NAME="blocnet-${{ steps.app_meta.outputs.version_name }}+${{ steps.app_meta.outputs.version_code }}-android.aab"
+
+          cp build/app/outputs/flutter-apk/app-release.apk "../dist/${APK_NAME}"
+          cp build/app/outputs/bundle/release/app-release.aab "../dist/${AAB_NAME}"
+
+      - name: Upload CI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-release:
+    needs: build-android
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/mobile-v') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == true)
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mobile-android-${{ github.sha }}
+          path: release-assets
+
+      - name: Publish GitHub release
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build-android.outputs.release_tag }}
+          name: BlocNet Mobile ${{ needs.build-android.outputs.version_name }}+${{ needs.build-android.outputs.version_code }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          files: |
+            release-assets/*.apk
+            release-assets/*.aab
+
+      - name: Post release URL
+        run: |
+          {
+            echo "## Mobile Release Published"
+            echo ""
+            echo "Release URL: ${{ steps.release.outputs.url }}"
+          } >> "$GITHUB_STEP_SUMMARY"

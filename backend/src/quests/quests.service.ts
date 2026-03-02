@@ -861,9 +861,7 @@ export class QuestsService {
     }
 
     if (submission.verificationStatus !== QuestVerificationStatus.approved) {
-      throw new BadRequestException(
-        'Only approved submissions can be revoked',
-      );
+      throw new BadRequestException('Only approved submissions can be revoked');
     }
 
     const rewards = await this.prisma.$transaction(async (tx) => {
@@ -1124,7 +1122,7 @@ export class QuestsService {
       return false;
     }
 
-    const objectMetadata = metadata as Prisma.JsonObject;
+    const objectMetadata = metadata;
     return objectMetadata.questId === questId;
   }
 

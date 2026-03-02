@@ -18,26 +18,32 @@ export class ListTipHistoryQuery {
   direction?: 'all' | 'sent' | 'received';
 
   @IsOptional()
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim().toUpperCase() : value,
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toUpperCase() : undefined,
   )
   @IsString()
   @Matches(currencyCodePattern)
   currencyCode?: string;
 
   @IsOptional()
-  @Transform(({ value }) =>
-    value === undefined ? undefined : Number.parseInt(value, 10),
-  )
+  @Transform(({ value }: { value: unknown }) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'number') return Math.trunc(value);
+    if (typeof value === 'string') return Number.parseInt(value, 10);
+    return undefined;
+  })
   @IsInt()
   @Min(1)
   @Max(100)
   limit?: number;
 
   @IsOptional()
-  @Transform(({ value }) =>
-    value === undefined ? undefined : Number.parseInt(value, 10),
-  )
+  @Transform(({ value }: { value: unknown }) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'number') return Math.trunc(value);
+    if (typeof value === 'string') return Number.parseInt(value, 10);
+    return undefined;
+  })
   @IsInt()
   @Min(0)
   offset?: number;

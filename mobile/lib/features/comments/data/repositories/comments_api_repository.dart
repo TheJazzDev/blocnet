@@ -7,8 +7,24 @@ class CommentsApiRepository {
 
   final ApiClient _apiClient;
 
-  Future<List<CommentModel>> fetchComments(String updateId) async {
-    final response = await _apiClient.get('/updates/$updateId/comments');
+  Future<List<CommentModel>> fetchComments(
+    String updateId, {
+    int limit = 40,
+    String? beforeCreatedAt,
+    String? beforeId,
+  }) async {
+    final query = <String, String>{
+      'limit': '$limit',
+    };
+    if (beforeCreatedAt != null && beforeCreatedAt.isNotEmpty) {
+      query['beforeCreatedAt'] = beforeCreatedAt;
+    }
+    if (beforeId != null && beforeId.isNotEmpty) {
+      query['beforeId'] = beforeId;
+    }
+
+    final response =
+        await _apiClient.get('/updates/$updateId/comments', query: query);
 
     if (response is! List) return [];
 

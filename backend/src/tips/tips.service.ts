@@ -41,9 +41,6 @@ import {
   FEE_VAULT_OWNER_REF,
 } from './tip.constants';
 
-const DEFAULT_PAGE_SIZE = 30;
-const MAX_PAGE_SIZE = 100;
-
 type CurrencyWithFeeConfig = TipCurrency & {
   feeConfig: TipFeeConfig | null;
 };

@@ -73,7 +73,11 @@ type AdminTopDecisionRow = {
 function normalizeStringArray(value: Prisma.JsonValue | null) {
   if (!Array.isArray(value)) return [];
   return value
-    .map((entry) => String(entry).trim())
+    .map((entry) =>
+      typeof entry === 'string' || typeof entry === 'number'
+        ? String(entry).trim()
+        : '',
+    )
     .filter((entry) => entry.length > 0);
 }
 
@@ -113,22 +117,40 @@ export class EdgeAdminService {
       where: { id: EDGE_CONFIG_ID },
       update: {
         ...(patch.enabled === undefined ? {} : { enabled: patch.enabled }),
-        ...(patch.mlEnabled === undefined ? {} : { mlEnabled: patch.mlEnabled }),
+        ...(patch.mlEnabled === undefined
+          ? {}
+          : { mlEnabled: patch.mlEnabled }),
         ...(patch.mlUrl === undefined ? {} : { mlUrl: patch.mlUrl }),
-        ...(patch.mlTimeout === undefined ? {} : { mlTimeout: patch.mlTimeout }),
-        ...(patch.mlProvider === undefined ? {} : { mlProvider: patch.mlProvider }),
-        ...(patch.mlWebSearch === undefined ? {} : { mlWebSearch: patch.mlWebSearch }),
-        ...(patch.mlOllamaModel === undefined ? {} : { mlOllamaModel: patch.mlOllamaModel }),
+        ...(patch.mlTimeout === undefined
+          ? {}
+          : { mlTimeout: patch.mlTimeout }),
+        ...(patch.mlProvider === undefined
+          ? {}
+          : { mlProvider: patch.mlProvider }),
+        ...(patch.mlWebSearch === undefined
+          ? {}
+          : { mlWebSearch: patch.mlWebSearch }),
+        ...(patch.mlOllamaModel === undefined
+          ? {}
+          : { mlOllamaModel: patch.mlOllamaModel }),
         ...(patch.mlOllamaEmbeddingModel === undefined
           ? {}
           : { mlOllamaEmbeddingModel: patch.mlOllamaEmbeddingModel }),
-        ...(patch.mlOllamaTimeout === undefined ? {} : { mlOllamaTimeout: patch.mlOllamaTimeout }),
-        ...(patch.mlGroqModel === undefined ? {} : { mlGroqModel: patch.mlGroqModel }),
-        ...(patch.mlGeminiModel === undefined ? {} : { mlGeminiModel: patch.mlGeminiModel }),
+        ...(patch.mlOllamaTimeout === undefined
+          ? {}
+          : { mlOllamaTimeout: patch.mlOllamaTimeout }),
+        ...(patch.mlGroqModel === undefined
+          ? {}
+          : { mlGroqModel: patch.mlGroqModel }),
+        ...(patch.mlGeminiModel === undefined
+          ? {}
+          : { mlGeminiModel: patch.mlGeminiModel }),
         ...(patch.mlGeminiEmbeddingModel === undefined
           ? {}
           : { mlGeminiEmbeddingModel: patch.mlGeminiEmbeddingModel }),
-        ...(patch.mlCacheTtl === undefined ? {} : { mlCacheTtl: patch.mlCacheTtl }),
+        ...(patch.mlCacheTtl === undefined
+          ? {}
+          : { mlCacheTtl: patch.mlCacheTtl }),
         ...(patch.mlMaxContentLength === undefined
           ? {}
           : { mlMaxContentLength: patch.mlMaxContentLength }),
@@ -916,7 +938,9 @@ export class EdgeAdminService {
         enabled: mlEnabled,
         analyzedDecisions: mlAnalyzedDecisions,
         coverageRate:
-          decisionsCount > 0 ? roundScore(mlAnalyzedDecisions / decisionsCount) : 0,
+          decisionsCount > 0
+            ? roundScore(mlAnalyzedDecisions / decisionsCount)
+            : 0,
         avgQuality: roundScore(mlQualityAverage._avg.mlQuality ?? 0),
         avgActionability: roundScore(
           mlActionabilityAverage._avg.mlActionability ?? 0,

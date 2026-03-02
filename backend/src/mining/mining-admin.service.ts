@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  EffectiveMiningConfig,
-  MiningCalculatorService,
-} from './mining-calculator.service';
+import { EffectiveMiningConfig } from './mining-calculator.service';
 import { MiningConfigService } from './mining-config.service';
 
 @Injectable()

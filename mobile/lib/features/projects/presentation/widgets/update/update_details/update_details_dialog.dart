@@ -293,6 +293,7 @@ class _CommentsSection extends StatelessWidget {
       builder: (context, commentsStore, _) {
         final comments = commentsStore.commentsForUpdate(updateId);
         final isLoading = commentsStore.isLoadingForUpdate(updateId);
+        final hasMore = commentsStore.hasMoreCommentsForUpdate(updateId);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,6 +404,25 @@ class _CommentsSection extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 12),
+            if (comments.isNotEmpty && hasMore)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => commentsStore.loadOlderComments(updateId),
+                  child: Text(
+                    isLoading ? 'Loading…' : 'Load older comments',
+                    style: TextStyle(
+                      color: AppColors.primary400,
+                      fontSize: 12,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            if (comments.isNotEmpty && hasMore) const SizedBox(height: 8),
             if (isLoading && comments.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),

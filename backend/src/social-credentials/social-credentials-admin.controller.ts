@@ -99,7 +99,11 @@ export class SocialCredentialsAdminController {
       throw new UnauthorizedException('User context missing');
     }
 
-    const updated = await this.socialCredentialsService.update(id, user.id, dto);
+    const updated = await this.socialCredentialsService.update(
+      id,
+      user.id,
+      dto,
+    );
     await this.auditLogService.create({
       actorId: user.id,
       action: 'settings.social_credentials.update',

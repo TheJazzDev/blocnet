@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
 
 export class ListCommentsQuery {
   @IsOptional()
@@ -13,4 +13,12 @@ export class ListCommentsQuery {
   @IsInt()
   @Min(1)
   limit?: number;
+
+  @IsOptional()
+  @IsDateString()
+  beforeCreatedAt?: string;
+
+  @IsOptional()
+  @IsUUID()
+  beforeId?: string;
 }
