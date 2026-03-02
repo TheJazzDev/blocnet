@@ -57,6 +57,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
 // import { EnvironmentWatermark } from "@/components/environment-watermark";
 
 export interface AdminShellUser {
@@ -239,12 +240,16 @@ function SidebarContent({
     <>
       <div className='flex items-center gap-2.5 px-4 py-5'>
         <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-primary'>
-          <Hexagon className='h-6 w-6 text-primary-foreground' />
+          <Image
+            src='/logo2.png'
+            alt='Blocnet'
+            width={32}
+            height={32}
+            priority
+          />
         </div>
         <div>
-          <h1 className='text-sm font-bold tracking-tight'>
-            Blocnet Console {environmentLabel}
-          </h1>
+          <h1 className='text-sm font-bold tracking-tight'>Blocnet Console</h1>
         </div>
       </div>
       <Separator />
@@ -501,7 +506,13 @@ export function AdminShell({
             </Button>
             <div className='flex items-center gap-2'>
               <div className='flex h-7 w-7 items-center justify-center rounded-md bg-primary'>
-                <Hexagon className='h-6 w-6 text-primary-foreground' />
+                <Image
+                  src='/logo2.png'
+                  alt='Blocnet'
+                  width={32}
+                  height={32}
+                  priority
+                />
               </div>
               <span className='text-sm font-bold'>Blocnet Console</span>
             </div>

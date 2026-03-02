@@ -36,11 +36,10 @@ async function bootstrap() {
 
   const defaultAllowedOrigins = [
     'http://localhost:3081',
-    'http://localhost:3000',
-    'https://console.blocnet.app',
-    'https://dev-console.blocnet.app',
-    'https://blocnet-console.vercel.app',
-    'https://blocnet-dev-console.vercel.app',
+    'https://console.blocnet.app', // prod 1
+    'https://stage-console.blocnet.app', // stage 1
+    'https://blocnet-prod-console.vercel.app', // prod 2
+    'https://blocnet-stage-console.vercel.app', // stage 2
   ];
   const envAllowedOrigins = (process.env.CORS_ORIGINS ?? '')
     .split(/[,\n;\s]+/)
