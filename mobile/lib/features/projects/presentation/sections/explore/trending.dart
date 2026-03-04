@@ -4,7 +4,7 @@ import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

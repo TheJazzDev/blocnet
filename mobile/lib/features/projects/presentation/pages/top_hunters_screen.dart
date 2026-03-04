@@ -1,10 +1,12 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -169,11 +171,11 @@ class _HunterListTile extends StatelessWidget {
           ),
         ],
       ),
-      title: Text(
-        entry.admin.name,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppTypography.custom(
+      title: UserNameWithLevelIcon(
+        name: entry.admin.name,
+        currentLevel: entry.admin.currentLevel,
+        levelBadgeSize: LevelBadgeSize.tiny,
+        textStyle: AppTypography.custom(
           color: AppColors.textPrimary,
           size: 13,
           weight: FontWeight.w600,

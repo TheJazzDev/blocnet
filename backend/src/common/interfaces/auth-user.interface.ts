@@ -5,5 +5,10 @@ export interface AuthUser {
   email: string | null;
   roles: AppRole[];
   realRoles?: AppRole[];
-  actingAsRole?: AppRole.OWNER | AppRole.ADMIN | AppRole.MODERATOR | null;
+  actingAsRole?:
+    | AppRole.OWNER
+    | AppRole.DEV
+    | AppRole.ADMIN
+    | AppRole.MODERATOR
+    | null;
 }

@@ -4,7 +4,9 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
+import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AssetRow extends StatelessWidget {
   const AssetRow({
@@ -19,7 +21,13 @@ class AssetRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = assetAccentColor(asset.asset);
+    final isBalanceHidden =
+        context.watch<WalletVisibilityStore>().isBalanceHidden;
     final isCardMode = viewMode == FeedViewMode.card;
+    final amountText =
+        isBalanceHidden ? '••••••' : formatTokenAmount(asset.available);
+    final usdText =
+        isBalanceHidden ? '\$••••' : '\$${formatUsd(asset.usdValue)}';
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () {
@@ -133,7 +141,7 @@ class AssetRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  formatTokenAmount(asset.available),
+                  amountText,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
                     size: 14,
@@ -142,7 +150,7 @@ class AssetRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '\$${formatUsd(asset.usdValue)}',
+                  usdText,
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: 12,

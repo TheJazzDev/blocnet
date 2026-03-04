@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/comments/data/models/comment_model.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
@@ -12,10 +12,11 @@ import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart
 import 'package:blocnet/features/mentions/presentation/utils/mention_profile_navigator.dart';
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
 import 'package:blocnet/services/api/api_client.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/comments_store.dart';
-import 'package:blocnet/services/feed_view_mode_store.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/community/comments_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../more_from/more_from_primary_tag.dart';
@@ -329,9 +330,9 @@ class _CommentsSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (showHeading) ...[
-              Row(
-                children: [
+            Row(
+              children: [
+                if (showHeading) ...[
                   Text(
                     'Comments',
                     style: TextStyle(
@@ -369,23 +370,7 @@ class _CommentsSection extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 10),
-            ],
-            // Comment input
-            Row(
-              children: [
-                Expanded(
-                  child: MentionTextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    mentionsRepository: mentionsRepository,
-                    hintText: 'Add a comment…',
-                    minLines: 4,
-                    maxLines: 8,
-                  ),
-                ),
-                const SizedBox(width: 10),
+                const Spacer(),
                 GestureDetector(
                   onTap: isSubmitting ? null : onSubmit,
                   child: Container(
@@ -413,7 +398,7 @@ class _CommentsSection extends StatelessWidget {
                       ],
                     ),
                     child: Text(
-                      isSubmitting ? '…' : 'Send',
+                      isSubmitting ? 'Sending…' : 'Send',
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 13,
@@ -424,6 +409,15 @@ class _CommentsSection extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            MentionTextField(
+              controller: controller,
+              focusNode: focusNode,
+              mentionsRepository: mentionsRepository,
+              hintText: 'Add a comment…',
+              minLines: 4,
+              maxLines: 8,
             ),
             if (error != null && error!.isNotEmpty) ...[
               const SizedBox(height: 6),
@@ -527,6 +521,10 @@ class _CommentTile extends StatelessWidget {
     final roleLabel = comment.admin?.displayRoleLabel;
     final roleColor =
         roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
+    final displayUsername = _formatUsername(
+      comment.admin?.username,
+      comment.admin?.id,
+    );
     final isCardMode = viewMode == FeedViewMode.card;
     return Container(
       width: double.infinity,
@@ -559,68 +557,25 @@ class _CommentTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                comment.admin?.name ?? 'User',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 13,
-                  fontFamily: 'Geist',
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: UserNameWithLevelIcon(
+                        name: comment.admin?.name ?? 'User',
+                        currentLevel: comment.admin?.currentLevel,
+                        levelBadgeSize: LevelBadgeSize.small,
+                        textStyle: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                          fontFamily: 'Geist',
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (comment.admin?.primaryBadge != null) ...[
-                const SizedBox(width: 4),
-                BadgeIcon(
-                  badge: comment.admin!.primaryBadge!,
-                  size: BadgeSize.small,
-                ),
-              ],
-              if (roleLabel != null) ...[
-                const SizedBox(width: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: roleColor.withValues(alpha: 0.8),
-                      width: 0.8,
-                    ),
-                    color: roleColor.withValues(alpha: 0.12),
-                  ),
-                  child: Text(
-                    roleLabel,
-                    style: TextStyle(
-                      color: roleColor,
-                      fontSize: 9,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.primary500.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: AppColors.primary500.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  _relativeTime(comment.createdAt),
-                  style: TextStyle(
-                    color: AppColors.textFaint,
-                    fontSize: 10,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const Spacer(),
               if (canEdit) ...[
                 InkWell(
                   onTap: () => _showEditDialog(context),
@@ -669,7 +624,62 @@ class _CommentTile extends StatelessWidget {
                   ),
                 ),
               ],
+              if (roleLabel != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: roleColor.withValues(alpha: 0.8),
+                      width: 0.8,
+                    ),
+                    color: roleColor.withValues(alpha: 0.12),
+                  ),
+                  child: Text(
+                    roleLabel,
+                    style: TextStyle(
+                      color: roleColor,
+                      fontSize: 9,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.primary500.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  _relativeTime(comment.createdAt),
+                  style: TextStyle(
+                    color: AppColors.textFaint,
+                    fontSize: 10,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            displayUsername,
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 11,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 8),
           MentionText(
@@ -823,5 +833,15 @@ class _CommentTile extends StatelessWidget {
     if (diff.inMinutes < 60) return '${diff.inMinutes}m';
     if (diff.inHours < 24) return '${diff.inHours}h';
     return '${diff.inDays}d';
+  }
+
+  String _formatUsername(String? rawValue, String? fallbackId) {
+    final raw = rawValue?.trim() ?? '';
+    if (raw.isNotEmpty) {
+      return raw.startsWith('@') ? raw : '@$raw';
+    }
+    final id = fallbackId?.trim() ?? '';
+    if (id.isEmpty) return '@member';
+    return '@${id.substring(0, id.length > 6 ? 6 : id.length)}';
   }
 }

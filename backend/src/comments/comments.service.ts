@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { BlocksService } from '../blocks/blocks.service';
+import { LevelsService } from '../levels/levels.service';
 import { QuestsService } from '../quests/quests.service';
 import { MentionsService } from '../mentions/mentions.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -42,6 +43,25 @@ const commentInclude = {
           rarity: true,
         },
       },
+      currentLevel: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          description: true,
+          iconUrl: true,
+          level: true,
+          requiredBnp: true,
+          requiredComments: true,
+          requiredDaysActive: true,
+          requiredQuests: true,
+          requiredUpdates: true,
+          requiredProjects: true,
+          color: true,
+          isActive: true,
+          sortOrder: true,
+        },
+      },
     },
   },
 } satisfies Prisma.CommentInclude;
@@ -55,6 +75,7 @@ export class CommentsService {
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
     private readonly blocksService: BlocksService,
+    private readonly levelsService: LevelsService,
     private readonly questsService: QuestsService,
     private readonly mentionsService: MentionsService,
   ) {}
@@ -104,6 +125,15 @@ export class CommentsService {
       dto.content,
       actor.id,
     );
+
+    // Trigger level recalculation after comment posted
+    try {
+      await this.levelsService.updateUserLevel(actor.id);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to update user level after comment: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     return this.toCommentResponse(comment);
   }
@@ -202,7 +232,7 @@ export class CommentsService {
 
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
-      actor.roles.includes(AppRole.ADMIN) &&
+      (actor.roles.includes(AppRole.DEV) || actor.roles.includes(AppRole.ADMIN)) &&
       comment.update.project.ownerAdminId === actor.id;
     const isAuthor = comment.authorId === actor.id;
 
@@ -265,7 +295,7 @@ export class CommentsService {
 
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
-      actor.roles.includes(AppRole.ADMIN) &&
+      (actor.roles.includes(AppRole.DEV) || actor.roles.includes(AppRole.ADMIN)) &&
       comment.update.project.ownerAdminId === actor.id;
     const isAuthor = comment.authorId === actor.id;
 
@@ -317,6 +347,26 @@ export class CommentsService {
         followers: 0,
         roles: comment.author.roles.map((entry) => entry.role),
         primaryBadge: comment.author.primaryBadge ?? null,
+        currentLevel: comment.author.currentLevel
+          ? {
+              id: comment.author.currentLevel.id,
+              slug: comment.author.currentLevel.slug,
+              name: comment.author.currentLevel.name,
+              description: comment.author.currentLevel.description,
+              iconUrl: comment.author.currentLevel.iconUrl,
+              level: comment.author.currentLevel.level,
+              requiredBnp: comment.author.currentLevel.requiredBnp.toString(),
+              requiredComments: comment.author.currentLevel.requiredComments,
+              requiredDaysActive:
+                comment.author.currentLevel.requiredDaysActive,
+              requiredQuests: comment.author.currentLevel.requiredQuests,
+              requiredUpdates: comment.author.currentLevel.requiredUpdates,
+              requiredProjects: comment.author.currentLevel.requiredProjects,
+              color: comment.author.currentLevel.color,
+              isActive: comment.author.currentLevel.isActive,
+              sortOrder: comment.author.currentLevel.sortOrder,
+            }
+          : null,
       },
     };
   }

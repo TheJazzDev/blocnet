@@ -168,7 +168,7 @@ export class UpdatesService {
 
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
-      actor.roles.includes(AppRole.ADMIN) &&
+      (actor.roles.includes(AppRole.DEV) || actor.roles.includes(AppRole.ADMIN)) &&
       update.project.ownerAdminId === actor.id;
     const isAuthor = update.authorId === actor.id;
 
@@ -220,7 +220,10 @@ export class UpdatesService {
       return;
     }
 
-    if (actor.roles.includes(AppRole.ADMIN) && ownerAdminId === actor.id) {
+    if (
+      (actor.roles.includes(AppRole.DEV) || actor.roles.includes(AppRole.ADMIN)) &&
+      ownerAdminId === actor.id
+    ) {
       return;
     }
 
@@ -239,7 +242,7 @@ export class UpdatesService {
     }
 
     throw new ForbiddenException(
-      'Only assigned hunters or owning admins can create updates in this project',
+      'Only assigned hunters or owning admins/devs can create updates in this project',
     );
   }
 

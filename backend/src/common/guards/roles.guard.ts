@@ -14,6 +14,16 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
 import { AppRole } from '../enums/role.enum';
 import type { AuthUser } from '../interfaces/auth-user.interface';
 
+const GOVERNANCE_ROLE_IMPLICATIONS: Record<AppRole, AppRole[]> = {
+  [AppRole.OWNER]: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+  [AppRole.DEV]: [AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+  [AppRole.ADMIN]: [AppRole.ADMIN, AppRole.MODERATOR],
+  [AppRole.MODERATOR]: [AppRole.MODERATOR],
+  [AppRole.CORE_TEAM]: [AppRole.CORE_TEAM],
+  [AppRole.HUNTER]: [AppRole.HUNTER],
+  [AppRole.USER]: [AppRole.USER],
+};
+
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
@@ -63,8 +73,10 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User context is missing');
     }
 
-    const hasPermission = effectiveUser.roles.some((role) =>
-      requiredRoles.includes(role),
+    const hasPermission = requiredRoles.some((requiredRole) =>
+      effectiveUser.roles.some((role) =>
+        this.isRoleAllowedForRequirement(role, requiredRole),
+      ),
     );
 
     if (!hasPermission) {
@@ -79,6 +91,7 @@ export class RolesGuard implements CanActivate {
     const includesGovernanceRole = requiredRoles.some(
       (role) =>
         role === AppRole.OWNER ||
+        role === AppRole.DEV ||
         role === AppRole.ADMIN ||
         role === AppRole.MODERATOR,
     );
@@ -117,5 +130,14 @@ export class RolesGuard implements CanActivate {
     }
 
     return true;
+  }
+
+  private isRoleAllowedForRequirement(
+    userRole: AppRole,
+    requiredRole: AppRole,
+  ): boolean {
+    const impliedRoles =
+      GOVERNANCE_ROLE_IMPLICATIONS[userRole] ?? [userRole];
+    return impliedRoles.includes(requiredRole);
   }
 }

@@ -236,6 +236,8 @@ export class UsersService {
               role: true,
             },
           },
+          currentLevel: true,
+          levelProgress: true,
           _count: {
             select: {
               authoredUpdates: true,

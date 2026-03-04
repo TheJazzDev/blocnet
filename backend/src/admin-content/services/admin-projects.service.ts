@@ -141,7 +141,8 @@ export class AdminProjectsService {
 
   private isModeratorOnly(actor: AuthUser) {
     const isOwner = actor.roles.includes(AppRole.OWNER);
-    const isAdmin = actor.roles.includes(AppRole.ADMIN);
+    const isAdmin =
+      actor.roles.includes(AppRole.DEV) || actor.roles.includes(AppRole.ADMIN);
     const isModerator = actor.roles.includes(AppRole.MODERATOR);
     return !isOwner && !isAdmin && isModerator;
   }

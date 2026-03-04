@@ -87,10 +87,11 @@ export class TurnkeyCustodyAdapter implements CustodyAdapter {
       return this.createMockWallet(input);
     }
 
+    const walletName = this.createWalletName(input.userId);
+
     try {
       const organizationId = this.requireTurnkeyOrganizationId();
       const client = this.getTurnkeyClient();
-      const walletName = this.createWalletName(input.userId);
 
       const existingWallet = await this.findExistingWalletByName(walletName);
       if (existingWallet) {
@@ -140,6 +141,13 @@ export class TurnkeyCustodyAdapter implements CustodyAdapter {
         address,
       };
     } catch (error) {
+      if (this.isWalletLabelAlreadyExistsError(error)) {
+        const recovered = await this.retryFindExistingWalletByName(walletName);
+        if (recovered) {
+          return recovered;
+        }
+      }
+
       throw this.wrapTurnkeyError(
         error,
         `Turnkey wallet provisioning failed for userId=${input.userId}`,
@@ -515,6 +523,37 @@ export class TurnkeyCustodyAdapter implements CustodyAdapter {
       providerWalletId: existing.walletId,
       address,
     };
+  }
+
+  private async retryFindExistingWalletByName(
+    walletName: string,
+    attempts = 3,
+    delayMs = 300,
+  ): Promise<CustodyWalletRecord | null> {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      const existing = await this.findExistingWalletByName(walletName);
+      if (existing) {
+        return existing;
+      }
+
+      if (attempt < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+
+    return null;
+  }
+
+  private isWalletLabelAlreadyExistsError(error: unknown): boolean {
+    if (!(error instanceof TurnkeyRequestError)) {
+      return false;
+    }
+
+    const message = error.message.toLowerCase();
+    return (
+      String(error.code) === '3' ||
+      message.includes('wallet label must be unique')
+    );
   }
 
   private createWalletName(userId: string): string {

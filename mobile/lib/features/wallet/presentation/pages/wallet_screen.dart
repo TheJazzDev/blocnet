@@ -8,8 +8,8 @@ import 'package:blocnet/features/wallet/presentation/widgets/quick_actions.dart'
 import 'package:blocnet/features/wallet/presentation/widgets/section_header.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/transactions_list.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_onboarding_banner.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';

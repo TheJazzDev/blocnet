@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryProvider } from '@/components/shared/query-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -38,10 +39,12 @@ export default function RootLayout({
         <link rel='manifest' href='/site.webmanifest' />
       </head>
       <body>
-        <TooltipProvider>
-          {children}
-          <Toaster />
-        </TooltipProvider>
+        <QueryProvider>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
+        </QueryProvider>
       </body>
     </html>
   );

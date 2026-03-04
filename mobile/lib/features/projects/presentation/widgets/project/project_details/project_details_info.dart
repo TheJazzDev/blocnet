@@ -1,10 +1,13 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/follow_preference_bottom_sheet.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/shared/update_project_logo.dart';
-import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +20,7 @@ class ProjectDetailsInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     final postsCount = project.posts?.length ?? 0;
     final ownerName = project.admin?.name ?? 'Admin';
+    final ownerLevel = project.admin?.currentLevel;
     final humberCount = (project.posts ?? [])
         .map((post) => post.adminId)
         .where((id) => id.trim().isNotEmpty)
@@ -227,7 +231,11 @@ class ProjectDetailsInfo extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _DetailChip(label: 'Lead Humber', value: ownerName),
+            _DetailChip(
+              label: 'Lead Humber',
+              value: ownerName,
+              currentLevel: ownerLevel,
+            ),
             _DetailChip(
                 label: 'Category', value: project.primaryTag.toString()),
             _DetailChip(
@@ -311,10 +319,15 @@ class _StatCard extends StatelessWidget {
 }
 
 class _DetailChip extends StatelessWidget {
-  const _DetailChip({required this.label, required this.value});
+  const _DetailChip({
+    required this.label,
+    required this.value,
+    this.currentLevel,
+  });
 
   final String label;
   final String value;
+  final UserLevelModel? currentLevel;
 
   @override
   Widget build(BuildContext context) {
@@ -337,15 +350,29 @@ class _DetailChip extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 11,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w600,
+          if (currentLevel != null)
+            UserNameWithLevelIcon(
+              name: value,
+              currentLevel: currentLevel,
+              levelBadgeSize: LevelBadgeSize.tiny,
+              iconSpacing: 4,
+              textStyle: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else
+            Text(
+              value,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
         ],
       ),
     );

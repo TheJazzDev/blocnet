@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

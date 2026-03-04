@@ -12,25 +12,29 @@ import {
 } from './rbac';
 
 describe('rbac', () => {
-  it('allows owner/admin/moderator into admin console', () => {
+  it('allows owner/dev/admin/moderator into admin console', () => {
     expect(canAccessAdminPanel(['owner'])).toBe(true);
+    expect(canAccessAdminPanel(['dev'])).toBe(true);
     expect(canAccessAdminPanel(['admin'])).toBe(true);
     expect(canAccessAdminPanel(['moderator'])).toBe(true);
     expect(canAccessAdminPanel(['user'])).toBe(false);
   });
 
-  it('restricts admin management to owner', () => {
+  it('allows owner/dev to manage admins', () => {
     expect(canManageAdmins(['owner'])).toBe(true);
+    expect(canManageAdmins(['dev'])).toBe(true);
     expect(canManageAdmins(['admin'])).toBe(false);
     expect(canManageAdmins(['moderator'])).toBe(false);
   });
 
-  it('allows owner/admin to manage moderators and wallet mutation', () => {
+  it('allows owner/dev/admin to manage moderators and wallet mutation', () => {
     expect(canManageModerators(['owner'])).toBe(true);
+    expect(canManageModerators(['dev'])).toBe(true);
     expect(canManageModerators(['admin'])).toBe(true);
     expect(canManageModerators(['moderator'])).toBe(false);
 
     expect(canMutateWallet(['owner'])).toBe(true);
+    expect(canMutateWallet(['dev'])).toBe(true);
     expect(canMutateWallet(['admin'])).toBe(true);
     expect(canMutateWallet(['moderator'])).toBe(false);
   });
@@ -42,7 +46,15 @@ describe('rbac', () => {
   });
 
   it('resolves effective roles for view mode without allowing escalation', () => {
+    expect(resolveEffectiveRoles(['owner', 'hunter'], 'dev')).toEqual([
+      'hunter',
+      'dev',
+    ]);
     expect(resolveEffectiveRoles(['owner', 'hunter'], 'admin')).toEqual([
+      'hunter',
+      'admin',
+    ]);
+    expect(resolveEffectiveRoles(['dev', 'hunter'], 'admin')).toEqual([
       'hunter',
       'admin',
     ]);
@@ -59,9 +71,11 @@ describe('rbac', () => {
   it('returns correct role-view options', () => {
     expect(getRoleViewOptions(['owner'])).toEqual([
       'owner',
+      'dev',
       'admin',
       'moderator',
     ]);
+    expect(getRoleViewOptions(['dev'])).toEqual(['dev', 'admin', 'moderator']);
     expect(getRoleViewOptions(['admin'])).toEqual(['admin', 'moderator']);
     expect(getRoleViewOptions(['moderator'])).toEqual(['moderator']);
     expect(getRoleViewOptions(['hunter'])).toEqual([]);
@@ -79,6 +93,7 @@ describe('rbac', () => {
     const matrix = buildLocalRolesMatrix();
     expect(matrix.governanceRoles.map((entry) => entry.role)).toEqual([
       'owner',
+      'dev',
       'admin',
       'moderator',
     ]);

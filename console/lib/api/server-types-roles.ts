@@ -1,0 +1,38 @@
+export type AdminGovernanceRole = "owner" | "dev" | "admin" | "moderator";
+
+export interface GovernanceRoleDefinition {
+  role: AdminGovernanceRole;
+  label: string;
+  description: string;
+  order: number;
+}
+
+export interface RoleCapabilitySection {
+  id: "overview" | "content" | "wallet" | "engagement" | "access" | "system";
+  label: string;
+  description: string;
+}
+
+export interface RoleCapability {
+  key: string;
+  label: string;
+  description: string;
+  section: RoleCapabilitySection["id"];
+  roles: AdminGovernanceRole[];
+}
+
+export interface RoleMatrixSection extends RoleCapabilitySection {
+  capabilities: RoleCapability[];
+}
+
+export interface SpaceRoleDefinition {
+  role: "user" | "core_team" | "hunter";
+  label: string;
+  description: string;
+}
+
+export interface RolesMatrixResponse {
+  governanceRoles: GovernanceRoleDefinition[];
+  sections: RoleMatrixSection[];
+  spaceRoles: SpaceRoleDefinition[];
+}

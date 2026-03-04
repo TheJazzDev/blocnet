@@ -1,8 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/tags_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/projects/tags_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';

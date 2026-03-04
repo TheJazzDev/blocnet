@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
 import 'package:blocnet/features/profile/presentation/widgets/activity_card.dart';
 import 'package:blocnet/features/profile/presentation/widgets/empty_activity_card.dart';
@@ -12,12 +13,13 @@ import 'package:blocnet/features/profile/presentation/widgets/trust_chips.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/blocks_store.dart';
-import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/services/user_profile_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/users/blocks_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -319,16 +321,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Flexible(
-                              child: Text(
-                                (_publicProfile?.displayName
+                              child: UserNameWithLevelIcon(
+                                name: (_publicProfile?.displayName
                                             ?.trim()
                                             .isNotEmpty ??
                                         false)
                                     ? _publicProfile!.displayName!.trim()
                                     : admin.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.custom(
+                                currentLevel: admin.currentLevel,
+                                levelBadgeSize: LevelBadgeSize.small,
+                                textStyle: AppTypography.custom(
                                   color: AppColors.textPrimary,
                                   size: 22,
                                   weight: FontWeight.w700,
@@ -380,8 +382,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             const SizedBox(width: 8),
                             StatCard(value: '$postsCount', label: 'Posts'),
                             const SizedBox(width: 8),
-                            StatCard(
-                                value: '$projectCount', label: 'Projects'),
+                            StatCard(value: '$projectCount', label: 'Projects'),
                           ],
                         ),
                         if (_isLoadingPublicProfile) ...[
@@ -569,8 +570,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                         .withValues(alpha: 0.08),
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 12),
-                                tapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 visualDensity: VisualDensity.compact,
                               ),
                               icon: _isSubmittingBlock

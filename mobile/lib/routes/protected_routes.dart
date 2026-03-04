@@ -2,6 +2,7 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/badges/presentation/pages/badge_gallery_page.dart';
 import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
+import 'package:blocnet/features/levels/presentation/pages/levels_page.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_downline_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_hourly_history_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_leaderboard_screen.dart';
@@ -17,6 +18,7 @@ import 'package:blocnet/features/community/presentation/pages/community_post_dis
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/referral_code_screen.dart';
 import 'package:blocnet/features/notifications/presentation/pages/notifications_screen.dart';
+import 'package:blocnet/features/system_alerts/presentation/pages/system_alerts_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/blocked_users_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/deactivate_account_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/edit_profile_screen.dart';
@@ -43,7 +45,9 @@ class ProtectedRoutes {
   static const String miningHourlyHistory = AppRoutes.miningHourlyHistory;
   static const String miningDownline = AppRoutes.miningDownline;
   static const String notifications = AppRoutes.notifications;
+  static const String systemAlerts = AppRoutes.systemAlerts;
   static const String badges = AppRoutes.badges;
+  static const String levels = AppRoutes.levels;
   static const String quests = AppRoutes.quests;
   static const String referralCode = AppRoutes.referralCode;
   static const String helpSupport = AppRoutes.helpSupport;
@@ -110,7 +114,9 @@ class ProtectedRoutes {
       miningDownline: (context) => const MiningDownlineScreen(),
       // Notifications is now a push route (not a main tab)
       notifications: (context) => const NotificationsScreen(),
+      systemAlerts: (context) => const SystemAlertsScreen(),
       badges: (context) => const BadgeGalleryPage(),
+      levels: (context) => const LevelsPage(),
       quests: (context) => const QuestsPage(),
       referralCode: (context) => const ReferralCodeScreen(),
       helpSupport: (context) => const HelpSupportScreen(),
@@ -152,7 +158,9 @@ class ProtectedRoutes {
     miningHourlyHistory,
     miningDownline,
     notifications,
+    systemAlerts,
     badges,
+    levels,
     quests,
     referralCode,
     helpSupport,
@@ -178,8 +186,14 @@ class ProtectedRoutes {
 
   static const Set<String> _contributorRoles = {
     'owner',
+    'dev',
     'admin',
     'hunter',
+  };
+
+  static const Set<String> _opsRoles = {
+    'owner',
+    'dev',
   };
 
   static const Map<String, Set<String>> _routeRoleAccess = {
@@ -188,5 +202,6 @@ class ProtectedRoutes {
     manageProjects: _contributorRoles,
     manageUpdates: _contributorRoles,
     hunterHub: _contributorRoles,
+    systemAlerts: _opsRoles,
   };
 }

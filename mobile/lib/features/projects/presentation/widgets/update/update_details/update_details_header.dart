@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
-import 'package:blocnet/services/update_bookmarks_store.dart';
+import 'package:blocnet/services/projects/update_bookmarks_store.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';

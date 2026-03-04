@@ -4,9 +4,9 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/notifications/data/models/notification_preferences_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/feed_view_mode_store.dart';
-import 'package:blocnet/services/notification_settings_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/notifications/notification_settings_store.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +40,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final prefs = settingsStore.preferences;
         final catalog = settingsStore.catalog;
         final feedViewModeStore = context.watch<FeedViewModeStore>();
-
         final error = settingsStore.lastError;
         if (error != null &&
             error.isNotEmpty &&
@@ -203,17 +202,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             final index = entry.$1;
             final category = entry.$2;
             return _SettingSwitchTile(
-            icon: _iconForCategory(category.key),
-            title: category.label,
-            subtitle: _buildCategorySubtitle(category),
-            value: prefs.isCategoryEnabled(category.key),
-            showDivider: index != categories.length - 1,
-            onChanged: settingsStore.isSaving || !prefs.masterEnabled
-                ? null
-                : (value) {
-                    settingsStore.setCategoryEnabled(category.key, value);
-                  },
-          );
+              icon: _iconForCategory(category.key),
+              title: category.label,
+              subtitle: _buildCategorySubtitle(category),
+              value: prefs.isCategoryEnabled(category.key),
+              showDivider: index != categories.length - 1,
+              onChanged: settingsStore.isSaving || !prefs.masterEnabled
+                  ? null
+                  : (value) {
+                      settingsStore.setCategoryEnabled(category.key, value);
+                    },
+            );
           },
         ),
       ],

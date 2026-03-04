@@ -2,7 +2,8 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +20,8 @@ class AssetBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
+    final isBalanceHidden =
+        context.watch<WalletVisibilityStore>().isBalanceHidden;
     final asset = walletStore.findAsset(assetCode);
     final accent = assetAccentColor(assetCode);
     final isCardMode = mode == FeedViewMode.card;
@@ -72,10 +75,9 @@ class AssetBalanceCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (isCardMode
-                          ? AppColors.bgSurface
-                          : AppColors.bgElevated)
-                      .withValues(alpha: 0.7),
+                  color:
+                      (isCardMode ? AppColors.bgSurface : AppColors.bgElevated)
+                          .withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
@@ -92,7 +94,9 @@ class AssetBalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '${formatTokenAmount(asset.available)} ${asset.asset}',
+            isBalanceHidden
+                ? '•••••• ${asset.asset}'
+                : '${formatTokenAmount(asset.available)} ${asset.asset}',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
               size: 32,
@@ -102,7 +106,9 @@ class AssetBalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '\$${formatUsd(asset.usdValue)} • Price \$${formatUsd(asset.usdPrice, decimals: 4)}',
+            isBalanceHidden
+                ? '\$•••• • Price \$••••'
+                : '\$${formatUsd(asset.usdValue)} • Price \$${formatUsd(asset.usdPrice, decimals: 4)}',
             style: AppTypography.custom(
               color: AppColors.textMuted,
               size: 12,

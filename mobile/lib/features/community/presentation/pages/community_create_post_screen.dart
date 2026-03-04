@@ -4,8 +4,8 @@ import 'package:blocnet/features/mentions/presentation/widgets/mention_text_fiel
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/community_posts_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/community/community_posts_store.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';

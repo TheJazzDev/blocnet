@@ -31,6 +31,10 @@ import { UpdateMeDto } from './dto/update-me.dto';
 import { UsersService } from './users.service';
 import { UsersAdminService } from './users-admin.service';
 import { UserDigestService } from './user-digest.service';
+import { UpdatesService } from '../updates/updates.service';
+import { EdgeEngineService } from '../edge-engine/edge-engine.service';
+import { MeRadarService } from '../me-radar/me-radar.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 // Public endpoint — no AuthGuard, called before signup to check uniqueness
 @Controller('users')
@@ -60,6 +64,10 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly userDigestService: UserDigestService,
+    private readonly updatesService: UpdatesService,
+    private readonly edgeEngineService: EdgeEngineService,
+    private readonly meRadarService: MeRadarService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get()
@@ -135,6 +143,149 @@ export class UsersController {
         : undefined;
 
     return this.userDigestService.getDigestSummary(user.id, safeWindowDays);
+  }
+
+  @Get('home-bootstrap')
+  async getHomeBootstrap(
+    @CurrentUser() user: AuthUser | undefined,
+    @Query('feedLimit') feedLimit?: string,
+    @Query('windowDays') windowDays?: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    const parsedFeedLimit = Number(feedLimit);
+    const safeFeedLimit =
+      Number.isFinite(parsedFeedLimit) && parsedFeedLimit > 0
+        ? Math.min(Math.floor(parsedFeedLimit), 200)
+        : 80;
+
+    const parsedWindowDays = Number(windowDays);
+    const safeWindowDays =
+      Number.isFinite(parsedWindowDays) && parsedWindowDays > 0
+        ? Math.min(Math.floor(parsedWindowDays), 30)
+        : 7;
+
+    let partial = false;
+    const timingsMs: Record<string, number> = {};
+    const startedAt = Date.now();
+
+    const mePromise = (async () => {
+      const t = Date.now();
+      try {
+        return await this.usersService.getMe(user.id);
+      } finally {
+        timingsMs.me = Date.now() - t;
+      }
+    })();
+
+    const updatesPromise = (async () => {
+      const t = Date.now();
+      try {
+        return await this.updatesService.listUpdates(user, {
+          limit: safeFeedLimit,
+          offset: 0,
+        });
+      } finally {
+        timingsMs.feed = Date.now() - t;
+      }
+    })();
+
+    const edgeBriefPromise = (async () => {
+      const t = Date.now();
+      try {
+        return await this.edgeEngineService.getBrief(user.id, {
+          windowDays: safeWindowDays,
+        });
+      } catch (_) {
+        partial = true;
+        return null;
+      } finally {
+        timingsMs.edgeBrief = Date.now() - t;
+      }
+    })();
+
+    const radarPromise = (async () => {
+      const t = Date.now();
+      try {
+        return await this.meRadarService.getRadar(user.id);
+      } catch (_) {
+        partial = true;
+        return null;
+      } finally {
+        timingsMs.radar = Date.now() - t;
+      }
+    })();
+
+    const unreadCountPromise = (async () => {
+      const t = Date.now();
+      try {
+        return await this.prisma.notification.count({
+          where: {
+            userId: user.id,
+            isRead: false,
+          },
+        });
+      } finally {
+        timingsMs.notifications = Date.now() - t;
+      }
+    })();
+
+    const [
+      meSummaryResult,
+      feedItemsResult,
+      edgeBriefResult,
+      radarSummaryResult,
+      unreadCountResult,
+    ] = await Promise.allSettled([
+      mePromise,
+      updatesPromise,
+      edgeBriefPromise,
+      radarPromise,
+      unreadCountPromise,
+    ]);
+
+    if (meSummaryResult.status === 'rejected') {
+      throw meSummaryResult.reason;
+    }
+
+    if (feedItemsResult.status === 'rejected') {
+      partial = true;
+    }
+    if (unreadCountResult.status === 'rejected') {
+      partial = true;
+    }
+
+    const meSummary = meSummaryResult.value;
+    const feedItems =
+      feedItemsResult.status === 'fulfilled' ? feedItemsResult.value : [];
+    const edgeBrief =
+      edgeBriefResult.status === 'fulfilled' ? edgeBriefResult.value : null;
+    const radarSummary =
+      radarSummaryResult.status === 'fulfilled' ? radarSummaryResult.value : null;
+    const unreadCount =
+      unreadCountResult.status === 'fulfilled' ? unreadCountResult.value : 0;
+
+    timingsMs.total = Date.now() - startedAt;
+
+    return {
+      asOf: new Date().toISOString(),
+      cacheTtlSec: 45,
+      partial,
+      timingsMs,
+      meSummary,
+      feed: {
+        limit: safeFeedLimit,
+        offset: 0,
+        items: feedItems,
+      },
+      edgeBrief,
+      radar: radarSummary,
+      notifications: {
+        unreadCount,
+      },
+    };
   }
 
   @Patch()

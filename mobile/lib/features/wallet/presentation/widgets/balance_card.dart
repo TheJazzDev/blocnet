@@ -1,7 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,7 @@ class BalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
+    final visibilityStore = context.watch<WalletVisibilityStore>();
     final snapshot = walletStore.snapshot;
     final address = snapshot?.walletAddress;
     final status = snapshot?.walletStatus ?? 'provisioning';
@@ -24,22 +26,44 @@ class BalanceCard extends StatelessWidget {
                 : 'Provisioning wallet...');
 
     final totalUsd = snapshot?.totalUsdValue ?? '0';
+    final isBalanceHidden = visibilityStore.isBalanceHidden;
+    final balanceText =
+        isBalanceHidden ? '\$••••••' : '\$${formatUsd(totalUsd)}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'TOTAL BALANCE',
-          style: AppTypography.custom(
-            color: AppColors.textFaint,
-            size: 11,
-            weight: FontWeight.w700,
-            letterSpacing: 1.2,
-          ),
+        Row(
+          children: [
+            Text(
+              'TOTAL BALANCE',
+              style: AppTypography.custom(
+                color: AppColors.textFaint,
+                size: 11,
+                weight: FontWeight.w700,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(width: 6),
+            IconButton(
+              onPressed: visibilityStore.toggle,
+              splashRadius: 18,
+              iconSize: 18,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              icon: Icon(
+                isBalanceHidden
+                    ? Icons.visibility_off_rounded
+                    : Icons.visibility_rounded,
+                color: AppColors.textMuted,
+              ),
+              tooltip: isBalanceHidden ? 'Show balances' : 'Hide balances',
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Text(
-          '\$${formatUsd(totalUsd)}',
+          balanceText,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
             size: 44,

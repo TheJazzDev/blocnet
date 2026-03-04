@@ -2,18 +2,21 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/badges_store.dart';
-import 'package:blocnet/services/feed_view_mode_store.dart';
-import 'package:blocnet/services/tips_store.dart';
-import 'package:blocnet/services/update_bookmarks_store.dart';
-import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/services/user_profile_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/engagement/badges_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/engagement/levels_store.dart';
+import 'package:blocnet/services/engagement/tips_store.dart';
+import 'package:blocnet/services/projects/update_bookmarks_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -52,6 +55,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
       final tipsStore = context.read<TipsStore>();
       final badgesStore = context.read<BadgesStore>();
       final updatesStore = context.read<UpdatesStore>();
+      final levelsStore = context.read<LevelsStore>();
       profileStore.fetchInitialOnce(userId: userId);
       profileStore.refreshFollowingProfiles();
       tipsStore.ensureUserScope(userId);
@@ -59,6 +63,8 @@ class _UserProfileBodyState extends State<UserProfileBody> {
       tipsStore.loadSentHistory(force: true, limit: 100);
       badgesStore.loadMyBadges();
       updatesStore.fetchUpdatesOnce();
+      levelsStore.fetchMyProgress();
+      levelsStore.fetchAllLevels();
     });
   }
 
@@ -67,6 +73,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
     final profileStore = context.watch<UserProfileStore>();
     final tipsStore = context.watch<TipsStore>();
     final badgesStore = context.watch<BadgesStore>();
+    final levelsStore = context.watch<LevelsStore>();
     final followingCount = profileStore.followingProfilesCount;
     final tipsSent = tipsStore.profileTipsSentValue;
     final auth = widget.auth;
@@ -79,8 +86,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
     }
     final earnedBadges = badgeById.values.toList()
       ..sort((left, right) {
-        final rarityDelta =
-            right.rarity.index.compareTo(left.rarity.index);
+        final rarityDelta = right.rarity.index.compareTo(left.rarity.index);
         if (rarityDelta != 0) return rarityDelta;
         return left.sortOrder.compareTo(right.sortOrder);
       });
@@ -88,6 +94,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
     final displayName = auth.displayName?.trim().isNotEmpty == true
         ? auth.displayName!.trim()
         : (auth.email ?? '').split('@').first;
+    final currentLevel = levelsStore.myProgress?.currentLevel;
 
     return RefreshIndicator(
       color: AppColors.primary500,
@@ -99,6 +106,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
           context.read<TipsStore>().loadSentHistory(force: true, limit: 100),
           context.read<BadgesStore>().loadMyBadges(force: true),
           context.read<UpdatesStore>().refreshUpdates(),
+          context.read<LevelsStore>().fetchMyProgress(),
         ]);
       },
       child: SingleChildScrollView(
@@ -112,25 +120,59 @@ class _UserProfileBodyState extends State<UserProfileBody> {
               email: auth.email,
               primaryBadge: badgesStore.displayBadge,
               badges: earnedBadges,
+              currentLevel: currentLevel,
               onEditTap: () =>
                   Navigator.of(context).pushNamed(AppRoutes.editProfile),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _StatCard(
                       value: followingCount.toString(), label: 'Following'),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: AppColors.borderSubtle.withValues(alpha: 0.85),
+                  ),
+                  const SizedBox(width: 6),
                   _StatCard(value: tipsSent, label: 'Tips Sent'),
+                  const SizedBox(width: 6),
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: AppColors.borderSubtle.withValues(alpha: 0.85),
+                  ),
+                  const SizedBox(width: 6),
+                  _StatCard(
+                    value: earnedBadges.length.toString(),
+                    label: 'Badges',
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
             _ProfileTabBar(
-              tabs: const ['History', 'Watchlist', 'Bookmarks'],
+              tabs: const ['Activity', 'Following', 'Saved'],
               activeIndex: _tabIndex,
               onChanged: (i) => setState(() => _tabIndex = i),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text(
+                switch (_tabIndex) {
+                  0 => 'Your actions on Blocnet.',
+                  1 => 'Projects you follow are listed here for quick access.',
+                  _ => 'Items you bookmarked to revisit later.',
+                },
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 11,
+                  weight: FontWeight.w400,
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -138,7 +180,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: switch (_tabIndex) {
-                  0 => const _HistoryTab(),
+                  0 => const _ActivityTab(),
                   1 => const _WatchlistTab(),
                   _ => const _BookmarksTab(),
                 },
@@ -209,6 +251,16 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                   const SizedBox(height: 12),
                   const _SectionLabel('Account'),
                   const SizedBox(height: 8),
+                  if (auth.isOwner || auth.isDev)
+                    _ProfileTile(
+                      mode: viewMode,
+                      icon: Icons.warning_amber_rounded,
+                      title: 'System Alerts',
+                      subtitle: 'Operational warnings and error events',
+                      showDivider: true,
+                      onTap: () => Navigator.of(context)
+                          .pushNamed(AppRoutes.systemAlerts),
+                    ),
                   _ProfileTile(
                     mode: viewMode,
                     icon: Icons.logout_rounded,

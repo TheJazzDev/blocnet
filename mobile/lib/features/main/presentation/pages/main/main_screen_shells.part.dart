@@ -91,6 +91,7 @@ class _UserSpaceShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tab = _userTabs[currentIndex];
+
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: CustomAppBar(
@@ -103,15 +104,15 @@ class _UserSpaceShell extends StatelessWidget {
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
       ),
-      body: IndexedStack(
+      body: _LazyTabStack(
         index: currentIndex,
-        children: const [
-          HomeScreen(),
-          DiscoverScreen(),
-          CommunityScreen(),
-          MiningScreen(),
-          WalletScreen(),
-          ProfileScreen(embeddedInMainShell: true),
+        builders: const [
+          _homeBuilder,
+          _discoverBuilder,
+          _communityBuilder,
+          _miningBuilder,
+          _walletBuilder,
+          _profileBuilder,
         ],
       ),
       bottomNavigationBar: _UserNav(
@@ -152,15 +153,15 @@ class _HunterSpaceShell extends StatelessWidget {
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
       ),
-      body: IndexedStack(
+      body: _LazyTabStack(
         index: currentIndex,
-        children: const [
-          HomeScreen(),
-          DiscoverScreen(),
-          HunterHubScreen(),
-          MiningScreen(),
-          WalletScreen(),
-          ProfileScreen(embeddedInMainShell: true),
+        builders: const [
+          _homeBuilder,
+          _discoverBuilder,
+          _hunterHubBuilder,
+          _miningBuilder,
+          _walletBuilder,
+          _profileBuilder,
         ],
       ),
       bottomNavigationBar: _HunterNav(
@@ -170,6 +171,55 @@ class _HunterSpaceShell extends StatelessWidget {
       floatingActionButton:
           showComposerFab ? _FloatingComposerFab(onPressed: onFabTap) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+}
+
+Widget _homeBuilder(BuildContext _) => const HomeScreen();
+Widget _discoverBuilder(BuildContext _) => const DiscoverScreen();
+Widget _communityBuilder(BuildContext _) => const CommunityScreen();
+Widget _hunterHubBuilder(BuildContext _) => const HunterHubScreen();
+Widget _miningBuilder(BuildContext _) => const MiningScreen();
+Widget _walletBuilder(BuildContext _) => const WalletScreen();
+Widget _profileBuilder(BuildContext _) =>
+    const ProfileScreen(embeddedInMainShell: true);
+
+class _LazyTabStack extends StatefulWidget {
+  const _LazyTabStack({
+    required this.index,
+    required this.builders,
+  });
+
+  final int index;
+  final List<WidgetBuilder> builders;
+
+  @override
+  State<_LazyTabStack> createState() => _LazyTabStackState();
+}
+
+class _LazyTabStackState extends State<_LazyTabStack> {
+  late final List<Widget?> _builtChildren =
+      List<Widget?>.filled(widget.builders.length, null, growable: true);
+
+  @override
+  void didUpdateWidget(covariant _LazyTabStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.builders.length != widget.builders.length) {
+      _builtChildren
+        ..clear()
+        ..addAll(List<Widget?>.filled(widget.builders.length, null));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _builtChildren[widget.index] ??= widget.builders[widget.index](context);
+
+    return IndexedStack(
+      index: widget.index,
+      children: List<Widget>.generate(widget.builders.length, (index) {
+        return _builtChildren[index] ?? const SizedBox.shrink();
+      }),
     );
   }
 }

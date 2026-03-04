@@ -4,7 +4,7 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/routes.dart';
 import 'package:blocnet/app/route_access_gate.dart';
 import 'package:blocnet/routes/protected_routes.dart';
-import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 
 class CustomAppRouter {
   static Map<String, WidgetBuilder> getRoutes() {
@@ -32,10 +32,20 @@ class CustomAppRouter {
       return MaterialPageRoute(
         settings: settings,
         builder: (context) {
-          final isAuthenticated = context.watch<AuthStore>().isAuthenticated;
-          final roles = context.watch<AuthStore>().roles;
+          final auth = context.watch<AuthStore>();
+          final isAuthenticated = auth.isAuthenticated;
+          final roles = auth.roles;
+          final isBootstrapping = auth.isBootstrapping;
 
           if (ProtectedRoutes.isProtectedRoute(routeName)) {
+            if (isBootstrapping) {
+              return RouteAccessGate(
+                allowAccess: true,
+                redirectTo: AppRoutes.signIn,
+                childBuilder: builder,
+              );
+            }
+
             if (!isAuthenticated) {
               return RouteAccessGate(
                 allowAccess: false,
@@ -54,6 +64,11 @@ class CustomAppRouter {
           }
 
           if (AuthRoutes.isGuestOnlyRoute(routeName)) {
+            if (isBootstrapping) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
             return RouteAccessGate(
               allowAccess: !isAuthenticated,
               redirectTo: AppRoutes.main,

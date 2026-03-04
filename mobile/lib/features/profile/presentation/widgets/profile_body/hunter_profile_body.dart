@@ -3,11 +3,11 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/feed_view_mode_store.dart';
-import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/services/user_profile_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -18,7 +18,7 @@ part 'hunter_profile_body_content.part.dart';
 part 'hunter_profile_body_shared.part.dart';
 
 /// Profile body shown when the user is in Hunter space
-/// (owner, admin, or hunter who has toggled to Hunter space).
+/// (owner, dev, admin, or hunter who has toggled to Hunter space).
 class HunterProfileBody extends StatefulWidget {
   const HunterProfileBody({
     super.key,
@@ -278,6 +278,16 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
                   const SizedBox(height: 12),
                   const _HunterSectionLabel('Account'),
                   const SizedBox(height: 8),
+                  if (auth.isOwner || auth.isDev)
+                    _HunterTile(
+                      mode: viewMode,
+                      icon: Icons.warning_amber_rounded,
+                      title: 'System Alerts',
+                      subtitle: 'Operational warnings and error events',
+                      showDivider: true,
+                      onTap: () => Navigator.of(context)
+                          .pushNamed(AppRoutes.systemAlerts),
+                    ),
                   _HunterTile(
                     mode: viewMode,
                     icon: Icons.logout_rounded,

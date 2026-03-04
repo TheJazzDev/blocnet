@@ -5,10 +5,10 @@ import 'package:blocnet/features/projects/data/models/project_proposal_model.dar
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/feed_view_mode_store.dart';
-import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';

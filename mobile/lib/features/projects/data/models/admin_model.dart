@@ -1,4 +1,5 @@
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 
 class Admin {
   final String id;
@@ -8,6 +9,7 @@ class Admin {
   final int followers;
   final double totalTipsReceived;
   final BadgeModel? primaryBadge;
+  final UserLevelModel? currentLevel;
   final List<String> roles;
 
   Admin({
@@ -18,6 +20,7 @@ class Admin {
     required this.followers,
     this.totalTipsReceived = 0,
     this.primaryBadge,
+    this.currentLevel,
     List<String>? roles,
   }) : roles = List.unmodifiable(
           (roles ?? const [])
@@ -122,6 +125,16 @@ class Admin {
       }
     }
 
+    UserLevelModel? currentLevel;
+    final levelData = json['currentLevel'];
+    if (levelData != null && levelData is Map<String, dynamic>) {
+      try {
+        currentLevel = UserLevelModel.fromApi(levelData);
+      } catch (_) {
+        currentLevel = null;
+      }
+    }
+
     return Admin(
       id: id,
       name: name,
@@ -130,6 +143,7 @@ class Admin {
       followers: followers,
       totalTipsReceived: totalTipsReceived,
       primaryBadge: primaryBadge,
+      currentLevel: currentLevel,
       roles: roles,
     );
   }

@@ -126,6 +126,7 @@ type EdgeConfigRow = {
 @Injectable()
 export class EdgeEngineService {
   private readonly logger = new Logger(EdgeEngineService.name);
+  private static readonly STARTUP_ML_TIMEOUT_MS = 450;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -762,7 +763,11 @@ export class EdgeEngineService {
       });
 
       // Analyze in batch
-      const analyses = await this.mlClient.analyzeBatch(contents);
+      const analyses = await this.mlClient.analyzeBatch(
+        contents,
+        undefined,
+        EdgeEngineService.STARTUP_ML_TIMEOUT_MS,
+      );
 
       // Enhance decisions with ML results
       return decisions.map((decision, index) => {

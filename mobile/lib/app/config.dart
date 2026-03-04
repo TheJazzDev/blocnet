@@ -37,6 +37,11 @@ class AppConfig {
     defaultValue: 'https://blocnet.app/auth/callback',
   );
 
+  static const String adminConsoleBaseUrl = String.fromEnvironment(
+    'ADMIN_CONSOLE_BASE_URL',
+    defaultValue: 'https://console.blocnet.app',
+  );
+
   static bool get isSupabaseConfigured =>
       supabaseUrl.trim().isNotEmpty && supabaseAnonKey.trim().isNotEmpty;
 }

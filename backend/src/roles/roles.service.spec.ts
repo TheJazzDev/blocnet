@@ -9,6 +9,7 @@ describe('RolesService roles matrix', () => {
 
     expect(matrix.governanceRoles.map((entry) => entry.role)).toEqual([
       AppRole.OWNER,
+      AppRole.DEV,
       AppRole.ADMIN,
       AppRole.MODERATOR,
     ]);
@@ -21,13 +22,16 @@ describe('RolesService roles matrix', () => {
 
     expect(capabilityMap.get('access.roles.admin.manage')).toEqual([
       AppRole.OWNER,
+      AppRole.DEV,
     ]);
     expect(capabilityMap.get('wallet.withdrawals.review')).toEqual([
       AppRole.OWNER,
+      AppRole.DEV,
       AppRole.ADMIN,
     ]);
     expect(capabilityMap.get('access.applications.proposal.review')).toEqual([
       AppRole.OWNER,
+      AppRole.DEV,
       AppRole.ADMIN,
       AppRole.MODERATOR,
     ]);

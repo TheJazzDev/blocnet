@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:blocnet/app/config.dart';
+import 'package:blocnet/services/core/startup_metrics_service.dart';
 import 'package:http/http.dart' as http;
 
 class ApiException implements Exception {
@@ -99,6 +100,7 @@ class ApiClient {
     final uri = _buildUri(path);
 
     Future<http.StreamedResponse> send() async {
+      StartupMetricsService.recordApiCall();
       final request = http.MultipartRequest('POST', uri);
       request.headers['Accept'] = 'application/json';
 
@@ -171,6 +173,7 @@ class ApiClient {
 
   Future<http.Response> _request(Future<http.Response> Function() call) async {
     try {
+      StartupMetricsService.recordApiCall();
       final response = await call().timeout(_requestTimeout);
       if (response.statusCode == 401) {
         final refreshedToken = await _refreshAuthToken();

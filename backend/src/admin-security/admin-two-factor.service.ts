@@ -517,7 +517,7 @@ export class AdminTwoFactorService {
     const eligibleRows = await this.prisma.userRole.findMany({
       where: {
         role: {
-          in: [RoleName.owner, RoleName.admin, RoleName.moderator],
+          in: [RoleName.owner, RoleName.dev, RoleName.admin, RoleName.moderator],
         },
       },
       select: { userId: true },
@@ -555,7 +555,7 @@ export class AdminTwoFactorService {
     const eligibleRows = await this.prisma.userRole.findMany({
       where: {
         role: {
-          in: [RoleName.owner, RoleName.admin, RoleName.moderator],
+          in: [RoleName.owner, RoleName.dev, RoleName.admin, RoleName.moderator],
         },
       },
       select: { userId: true },
@@ -802,6 +802,7 @@ export class AdminTwoFactorService {
   private isGovernanceRole(role: AppRole): boolean {
     return (
       role === AppRole.OWNER ||
+      role === AppRole.DEV ||
       role === AppRole.ADMIN ||
       role === AppRole.MODERATOR
     );
@@ -810,7 +811,7 @@ export class AdminTwoFactorService {
   private assertEligible(roles: AppRole[]): void {
     if (!this.isAdminPanelEligible(roles)) {
       throw new ForbiddenException(
-        'Only owner/admin/moderator accounts can use admin console 2FA',
+        'Only owner/dev/admin/moderator accounts can use admin console 2FA',
       );
     }
   }

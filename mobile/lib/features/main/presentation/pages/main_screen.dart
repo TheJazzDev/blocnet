@@ -8,10 +8,10 @@ import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.da
 import 'package:blocnet/features/community/presentation/pages/community_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/profile_screen.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_screen.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/connectivity_store.dart';
-import 'package:blocnet/services/mining_store.dart';
-import 'package:blocnet/services/notifications_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/core/connectivity_store.dart';
+import 'package:blocnet/services/engagement/mining_store.dart';
+import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
@@ -21,6 +21,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 part 'main/main_screen_shells.part.dart';
 part 'main/main_screen_nav.part.dart';
 part 'main/main_screen_composer.part.dart';
+part 'main/main_screen_offline_banner.part.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key, this.initialIndex = 0});
@@ -32,12 +33,15 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
+  static final Set<String> _hunterOnboardingInFlightUserIds = <String>{};
+
   bool? _lastIsHunterSpace;
   bool _isSwitchingSpace = false;
   int _spaceSwitchToken = 0;
   bool _hasCheckedReferralPrompt = false;
   bool _isShowingHunterOnboarding = false;
   String? _checkedHunterOnboardingUserId;
+  bool _didRequestInitialNotifications = false;
 
   int _userIndex = 0;
   int _hunterIndex = 0;
@@ -50,7 +54,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     _hunterIndex = widget.initialIndex.clamp(0, 5);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<NotificationsStore>().fetchNotificationsOnce();
       _maybePromptReferralBind();
       _maybePromptHunterOnboarding();
     });
@@ -71,7 +74,17 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final authStore = context.watch<AuthStore>();
+    final isHunterSpace = authStore.isInHunterSpace;
+    if (!_didRequestInitialNotifications &&
+        authStore.isAuthenticated &&
+        !authStore.isBootstrapping) {
+      _didRequestInitialNotifications = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<NotificationsStore>().fetchNotificationsOnce();
+      });
+    }
     _maybePromptHunterOnboarding();
 
     if (_lastIsHunterSpace == null) {
@@ -281,106 +294,43 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         userId.isEmpty) {
       return;
     }
+    if (_hunterOnboardingInFlightUserIds.contains(userId)) {
+      return;
+    }
 
-    final prefs = await SharedPreferences.getInstance();
-    final key = auth.hunterOnboardedKeyFor(userId);
-    final alreadySeen = prefs.getBool(key) == true;
-    if (alreadySeen) {
+    _hunterOnboardingInFlightUserIds.add(userId);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = auth.hunterOnboardedKeyFor(userId);
+      final alreadySeen = prefs.getBool(key) == true;
+      if (alreadySeen) {
+        _checkedHunterOnboardingUserId = userId;
+        return;
+      }
+      if (_checkedHunterOnboardingUserId == userId) {
+        return;
+      }
+
+      _isShowingHunterOnboarding = true;
       _checkedHunterOnboardingUserId = userId;
-      return;
-    }
-    if (_checkedHunterOnboardingUserId == userId) {
-      return;
-    }
 
-    _isShowingHunterOnboarding = true;
-    _checkedHunterOnboardingUserId = userId;
+      // Reserve this onboarding key before showing UI so concurrent checks
+      // (or duplicate mounted screen instances) cannot stack duplicate prompts.
+      await prefs.setBool(key, true);
 
-    if (!mounted) {
+      if (!mounted) {
+        return;
+      }
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const _HunterOnboardingDialog(),
+      );
+    } finally {
       _isShowingHunterOnboarding = false;
-      return;
+      _hunterOnboardingInFlightUserIds.remove(userId);
     }
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Hunter space unlocked',
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: 18,
-                  weight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'You now have access to Hunter Hub, management tools, and hunter-specific rankings.',
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: 12,
-                  weight: FontWeight.w500,
-                  height: 1.45,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.borderSubtle),
-                        foregroundColor: AppColors.textSecondary,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Dismiss'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary500,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Got it'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    _isShowingHunterOnboarding = false;
-    await prefs.setBool(key, true);
   }
 }
 
@@ -426,46 +376,106 @@ class _TabMeta {
   final bool showNotificationBell;
 }
 
-class _OfflineStatusBanner extends StatelessWidget {
-  const _OfflineStatusBanner();
+class _HunterOnboardingDialog extends StatelessWidget {
+  const _HunterOnboardingDialog();
 
   @override
   Widget build(BuildContext context) {
-    final isOffline = context.watch<ConnectivityStore>().isOffline;
-    if (!isOffline) {
-      return const SizedBox.shrink();
-    }
-
-    return Positioned(
-      top: MediaQuery.paddingOf(context).top + 10,
-      left: 16,
-      right: 16,
-      child: IgnorePointer(
-        ignoring: true,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.warning500,
-              borderRadius: BorderRadius.circular(999),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.24),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
+    return Dialog(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.bgSurface,
+              AppColors.bgSurface.withValues(alpha: 0.96),
+            ],
+          ),
+          border: Border.all(
+            color: AppColors.primary500.withValues(alpha: 0.35),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.45),
+              blurRadius: 20,
+              spreadRadius: 1,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary400,
+                        AppColors.teal400,
+                      ],
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.workspace_premium_rounded,
+                    size: 22,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Hunter role unlocked',
+                    style: AppTypography.custom(
+                      color: AppColors.textPrimary,
+                      size: 17,
+                      weight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ],
             ),
-            child: Text(
-              'You are offline. Showing cached data.',
+            const SizedBox(height: 12),
+            Text(
+              'You now have access to Hunter Hub, management tools, and hunter rankings.',
               style: AppTypography.custom(
-                color: Colors.black,
+                color: AppColors.textMuted,
                 size: 12,
-                weight: FontWeight.w700,
+                weight: FontWeight.w500,
+                height: 1.45,
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary500,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Continue'),
+              ),
+            ),
+          ],
         ),
       ),
     );

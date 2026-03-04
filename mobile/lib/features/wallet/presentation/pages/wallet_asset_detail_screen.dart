@@ -5,8 +5,8 @@ import 'package:blocnet/features/wallet/presentation/widgets/action_row.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/asset_balance_card.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/section_header.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/transactions_list.dart';
-import 'package:blocnet/services/feed_view_mode_store.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

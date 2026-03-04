@@ -8,6 +8,7 @@ datasource db {
 
 enum RoleName {
   owner
+  dev
   admin
   moderator
   core_team
@@ -79,6 +80,7 @@ enum NotificationType {
   referral_bound
   referral_admin_bound
   badge_earned
+  level_up
   quest_completed
   quest_verified
   quest_rejected
@@ -290,6 +292,7 @@ model Profile {
   referredAt                      DateTime?
   miningClaimedPoints             BigInt                               @default(0)
   primaryBadgeId                  String?                              @db.Uuid
+  currentLevelId                  String?                              @db.Uuid
   createdAt                       DateTime                             @default(now())
   updatedAt                       DateTime                             @updatedAt
   roles                           UserRole[]
@@ -345,6 +348,8 @@ model Profile {
   miningPointLedgerEntries        MiningPointLedger[]
   miningHourlyCheckpoints         MiningHourlyCheckpoint[]
   primaryBadge                    Badge?                               @relation("ProfilePrimaryBadge", fields: [primaryBadgeId], references: [id], onDelete: SetNull)
+  currentLevel                    UserLevel?                           @relation("ProfileCurrentLevel", fields: [currentLevelId], references: [id], onDelete: SetNull)
+  levelProgress                   UserLevelProgress?                   @relation("UserLevelProgressRelation")
   earnedBadges                    UserBadge[]                          @relation("UserEarnedBadges")
   grantedBadges                   UserBadge[]                          @relation("BadgeGrantor")
   userQuests                      UserQuest[]
@@ -355,6 +360,7 @@ model Profile {
 
   @@index([referredById])
   @@index([primaryBadgeId])
+  @@index([currentLevelId])
 }
 
 model UserBlock {
@@ -1548,4 +1554,54 @@ model Mention {
   @@index([commentId])
   @@index([communityPostId])
   @@index([communityPostCommentId])
+}
+
+model UserLevel {
+  id                   String   @id @default(uuid()) @db.Uuid
+  slug                 String   @unique
+  name                 String
+  description          String
+  iconUrl              String
+  level                Int      @unique
+  requiredBnp          BigInt   @default(0)
+  requiredComments     Int      @default(0)
+  requiredDaysActive   Int      @default(0)
+  requiredQuests       Int      @default(0)
+  requiredUpdates      Int      @default(0)
+  requiredProjects     Int      @default(0)
+  color                String?
+  isActive             Boolean  @default(true)
+  sortOrder            Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  usersAtLevel UserLevelProgress[]
+  usersWithCurrentLevel Profile[] @relation("ProfileCurrentLevel")
+
+  @@index([level, isActive])
+  @@index([requiredBnp])
+  @@index([sortOrder])
+}
+
+model UserLevelProgress {
+  id                   String   @id @default(uuid()) @db.Uuid
+  userId               String   @unique @db.Uuid
+  currentLevelId       String   @db.Uuid
+  achievedAt           DateTime @default(now())
+  totalBnpEarned       BigInt   @default(0)
+  totalComments        Int      @default(0)
+  totalDaysActive      Int      @default(0)
+  totalQuestsCompleted Int      @default(0)
+  totalUpdates         Int      @default(0)
+  totalProjects        Int      @default(0)
+  lastRecalculatedAt   DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user         Profile   @relation("UserLevelProgressRelation", fields: [userId], references: [id], onDelete: Cascade)
+  currentLevel UserLevel @relation(fields: [currentLevelId], references: [id], onDelete: Restrict)
+
+  @@index([currentLevelId, achievedAt])
+  @@index([totalBnpEarned])
+  @@index([userId, lastRecalculatedAt])
 }

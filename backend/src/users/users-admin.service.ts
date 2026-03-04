@@ -1136,10 +1136,11 @@ export class UsersAdminService {
     targetRoles: RoleName[],
   ) {
     const isOwner = actor.roles.includes(AppRole.OWNER);
+    const isDev = actor.roles.includes(AppRole.DEV);
     const isAdmin = actor.roles.includes(AppRole.ADMIN);
 
-    if (!isOwner && !isAdmin) {
-      throw new ForbiddenException('Only owner/admin can manage users');
+    if (!isOwner && !isDev && !isAdmin) {
+      throw new ForbiddenException('Only owner/dev/admin can manage users');
     }
 
     if (isOwner) {
@@ -1147,10 +1148,17 @@ export class UsersAdminService {
     }
 
     const targetIsOwner = targetRoles.includes(RoleName.owner);
+    const targetIsDev = targetRoles.includes(RoleName.dev);
     const targetIsAdmin = targetRoles.includes(RoleName.admin);
-    if (targetIsOwner || targetIsAdmin) {
+    if (isDev && (targetIsOwner || targetIsDev)) {
       throw new ForbiddenException(
-        'Admin users cannot manage owner/admin accounts',
+        'Dev users cannot manage owner/dev accounts',
+      );
+    }
+
+    if (isAdmin && (targetIsOwner || targetIsDev || targetIsAdmin)) {
+      throw new ForbiddenException(
+        'Admin users cannot manage owner/dev/admin accounts',
       );
     }
 

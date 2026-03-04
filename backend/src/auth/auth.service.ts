@@ -5,12 +5,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RoleName } from '@prisma/client';
+import { NotificationType, RoleName } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { roleNameToAppRole } from '../common/types/role-map';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { WalletProvisioningService } from '../wallet/wallet-provisioning.service';
 
@@ -32,6 +33,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly walletProvisioningService: WalletProvisioningService,
+    private readonly notificationsService: NotificationsService,
   ) {
     const jwksUrl = this.configService.get<string>('SUPABASE_JWKS_URL');
     if (jwksUrl) {
@@ -76,6 +78,7 @@ export class AuthService {
       throw new UnauthorizedException('Account is deactivated');
     }
 
+    let createdProfile = false;
     if (!existingProfile) {
       const ensuredUsername = await this.generateUniqueUsername(usernameSeed);
       const referrer = signupReferralCode
@@ -99,6 +102,7 @@ export class AuthService {
             : {}),
         },
       });
+      createdProfile = true;
     } else {
       const ensuredUsername = existingProfile.username
         ? null
@@ -128,6 +132,31 @@ export class AuthService {
         },
       });
       roleRows = [{ role: RoleName.user }];
+    }
+
+    if (createdProfile) {
+      try {
+        await this.notificationsService.notifyMany(
+          [
+            {
+              userId,
+              type: NotificationType.system,
+              actorUserId: null,
+              title: 'Account created',
+              body: 'Your account has been created successfully.',
+              deeplink: '/profile',
+              dedupeKey: `auth.signup:${userId}`,
+            },
+          ],
+          { push: true },
+        );
+      } catch (error) {
+        this.logger.warn(
+          `Account-created notification failed for user ${userId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
     }
 
     // Wallet provisioning is best-effort to avoid blocking auth flows.
@@ -179,7 +208,8 @@ export class AuthService {
   }
 
   toRolePriority(roles: AppRole[]): number {
-    if (roles.includes(AppRole.OWNER)) return 4;
+    if (roles.includes(AppRole.OWNER)) return 5;
+    if (roles.includes(AppRole.DEV)) return 4;
     if (roles.includes(AppRole.ADMIN)) return 3;
     if (roles.includes(AppRole.MODERATOR)) return 2;
     if (roles.includes(AppRole.HUNTER)) return 1;
@@ -236,7 +266,8 @@ export class AuthService {
     excludeUserId?: string,
   ): Promise<string> {
     const baseSeed = seed ?? `user_${randomBytes(4).toString('hex')}`;
-    const normalizedBase = this.normalizeUsernameCandidate(baseSeed) ?? 'user000';
+    const normalizedBase =
+      this.normalizeUsernameCandidate(baseSeed) ?? 'user000';
     const roomForSuffix = 24 - 4;
     const truncatedBase = normalizedBase.slice(0, Math.max(roomForSuffix, 3));
 

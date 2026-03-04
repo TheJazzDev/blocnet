@@ -1,9 +1,12 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -79,6 +82,7 @@ class TopHuntersRow extends StatelessWidget {
                       child: _HunterAvatar(
                         imageUrl: admin.imageUrl,
                         name: admin.name,
+                        currentLevel: admin.currentLevel,
                         hasRing: true,
                         onTap: () =>
                             PublicProfileScreen.showSheet(context, admin),
@@ -99,6 +103,7 @@ class _HunterAvatar extends StatelessWidget {
   const _HunterAvatar({
     required this.imageUrl,
     required this.name,
+    this.currentLevel,
     this.hasRing = false,
     this.onTap,
   }) : isCreate = false;
@@ -106,12 +111,14 @@ class _HunterAvatar extends StatelessWidget {
   const _HunterAvatar.create()
       : imageUrl = '',
         name = 'My Updates',
+        currentLevel = null,
         hasRing = false,
         isCreate = true,
         onTap = null;
 
   final String imageUrl;
   final String name;
+  final UserLevelModel? currentLevel;
   final bool hasRing;
   final bool isCreate;
   final VoidCallback? onTap;
@@ -122,7 +129,7 @@ class _HunterAvatar extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 56,
+        width: isCreate ? 56 : 72,
         child: Column(
           children: [
             if (isCreate)
@@ -177,17 +184,30 @@ class _HunterAvatar extends StatelessWidget {
                 child: _buildAvatarCircle(),
               ),
             const SizedBox(height: 5),
-            Text(
-              isCreate ? 'My Updates' : name,
-              style: AppTypography.custom(
-                color: isCreate ? AppColors.teal400 : AppColors.textMuted,
-                size: 10,
-                weight: FontWeight.w500,
+            if (isCreate)
+              Text(
+                'My Updates',
+                style: AppTypography.custom(
+                  color: AppColors.teal400,
+                  size: 10,
+                  weight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              )
+            else
+              UserNameWithLevelIcon(
+                name: name,
+                currentLevel: currentLevel,
+                levelBadgeSize: LevelBadgeSize.tiny,
+                iconSpacing: 3,
+                textStyle: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 10,
+                  weight: FontWeight.w500,
+                ),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
           ],
         ),
       ),

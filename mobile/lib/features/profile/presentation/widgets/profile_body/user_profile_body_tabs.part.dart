@@ -106,8 +106,9 @@ class _BookmarksTabState extends State<_BookmarksTab> {
         .where((update) => _bookmarkedIds.contains(update.id))
         .toList(growable: false)
       ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    final bookmarksSnapshot = List<Update>.from(bookmarks);
 
-    if ((_isLoading || updatesStore.isFetching) && bookmarks.isEmpty) {
+    if ((_isLoading || updatesStore.isFetching) && bookmarksSnapshot.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
           color: AppColors.userAccent,
@@ -116,19 +117,19 @@ class _BookmarksTabState extends State<_BookmarksTab> {
       );
     }
 
-    if (bookmarks.isEmpty) {
+    if (bookmarksSnapshot.isEmpty) {
       return const _BookmarksEmptyState();
     }
 
     return ListView.builder(
       primary: false,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: bookmarks.length,
+      itemCount: bookmarksSnapshot.length,
       itemBuilder: (context, index) {
-        final update = bookmarks[index];
+        final update = bookmarksSnapshot[index];
         return _BookmarkedUpdateItem(
           mode: mode,
-          showDivider: !isCardMode && index != bookmarks.length - 1,
+          showDivider: !isCardMode && index != bookmarksSnapshot.length - 1,
           update: update,
           onRemove: () => _removeBookmark(update.id),
         );
@@ -352,7 +353,7 @@ class _WatchlistTab extends StatelessWidget {
     final profileStore = context.watch<UserProfileStore>();
     final mode = context.watch<FeedViewModeStore>().mode;
     final isCardMode = mode == FeedViewMode.card;
-    final watchlist = profileStore.watchlist;
+    final watchlist = List<Project>.from(profileStore.watchlist);
 
     if (profileStore.isLoadingWatchlist && watchlist.isEmpty) {
       return Center(
@@ -397,11 +398,21 @@ class _WatchlistEmptyState extends StatelessWidget {
                 size: 36, color: AppColors.textFaint),
             const SizedBox(height: 8),
             Text(
-              'No watchlist items yet',
+              'No followed projects yet',
               textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
                 size: 12,
+                weight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tap Follow on any project to add it here.',
+              textAlign: TextAlign.center,
+              style: AppTypography.custom(
+                color: AppColors.textFaint,
+                size: 11,
                 weight: FontWeight.w400,
               ),
             ),
@@ -518,15 +529,15 @@ class _WatchlistItem extends StatelessWidget {
   }
 }
 
-class _HistoryTab extends StatelessWidget {
-  const _HistoryTab();
+class _ActivityTab extends StatelessWidget {
+  const _ActivityTab();
 
   @override
   Widget build(BuildContext context) {
     final profileStore = context.watch<UserProfileStore>();
     final mode = context.watch<FeedViewModeStore>().mode;
     final isCardMode = mode == FeedViewMode.card;
-    final activityItems = profileStore.activity;
+    final activityItems = List<ActivityItem>.from(profileStore.activity);
 
     if (profileStore.isLoadingActivity && activityItems.isEmpty) {
       return Center(
@@ -538,41 +549,26 @@ class _HistoryTab extends StatelessWidget {
     }
 
     if (activityItems.isEmpty) {
-      return const _HistoryEmptyState();
+      return const _ActivityEmptyState();
     }
 
     return ListView.builder(
       primary: false,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: activityItems.length + 1,
+      itemCount: activityItems.length,
       itemBuilder: (context, index) {
-        if (index == 0) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              'Activity',
-              style: AppTypography.custom(
-                color: AppColors.textFaint,
-                size: 11,
-                weight: FontWeight.w600,
-                letterSpacing: 0.8,
-              ),
-            ),
-          );
-        }
-        return _HistoryItem(
+        return _ActivityItem(
           mode: mode,
-          showDivider:
-              !isCardMode && (index - 1) != activityItems.length - 1,
-          item: activityItems[index - 1],
+          showDivider: !isCardMode && index != activityItems.length - 1,
+          item: activityItems[index],
         );
       },
     );
   }
 }
 
-class _HistoryEmptyState extends StatelessWidget {
-  const _HistoryEmptyState();
+class _ActivityEmptyState extends StatelessWidget {
+  const _ActivityEmptyState();
 
   @override
   Widget build(BuildContext context) {
@@ -585,7 +581,7 @@ class _HistoryEmptyState extends StatelessWidget {
             Icon(Icons.history_rounded, size: 36, color: AppColors.textFaint),
             const SizedBox(height: 8),
             Text(
-              'No activity history yet',
+              'No activity yet',
               textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
@@ -600,8 +596,8 @@ class _HistoryEmptyState extends StatelessWidget {
   }
 }
 
-class _HistoryItem extends StatelessWidget {
-  const _HistoryItem({
+class _ActivityItem extends StatelessWidget {
+  const _ActivityItem({
     required this.item,
     required this.mode,
     this.showDivider = false,

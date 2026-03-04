@@ -8,6 +8,7 @@ class _UserHero extends StatelessWidget {
     required this.onEditTap,
     this.badges = const [],
     this.primaryBadge,
+    this.currentLevel,
   });
 
   final String displayName;
@@ -16,6 +17,7 @@ class _UserHero extends StatelessWidget {
   final VoidCallback onEditTap;
   final List<BadgeModel> badges;
   final BadgeModel? primaryBadge;
+  final UserLevelModel? currentLevel;
 
   @override
   Widget build(BuildContext context) {
@@ -206,6 +208,60 @@ class _UserHero extends StatelessWidget {
             ),
           ),
         ),
+        if (currentLevel != null)
+          Positioned(
+            right: 16,
+            top: 14,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed(AppRoutes.levels),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.bgSurface,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.borderSubtle),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LevelBadgeIcon(
+                      level: currentLevel!,
+                      size: LevelBadgeSize.small,
+                    ),
+                    const SizedBox(width: 4),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 130),
+                      child: Text(
+                        currentLevel!.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.custom(
+                          color: AppColors.textPrimary,
+                          size: 11,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 14,
+                      color: AppColors.textMuted,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -220,49 +276,31 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.bgSurface,
-              AppColors.bgSurface.withValues(alpha: 0.8),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.primary500.withValues(alpha: 0.2),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary500.withValues(alpha: 0.05),
-              blurRadius: 12,
-              spreadRadius: 0,
-            ),
-          ],
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: AppTypography.custom(
+                color: AppColors.primary400,
+                size: 15,
+                weight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
               label.toUpperCase(),
+              textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textFaint,
                 size: 8.5,
                 weight: FontWeight.w700,
                 letterSpacing: 0.7,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: AppTypography.custom(
-                color: AppColors.primary400,
-                size: 16,
-                weight: FontWeight.w800,
               ),
             ),
           ],

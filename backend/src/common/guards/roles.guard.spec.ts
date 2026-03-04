@@ -23,6 +23,29 @@ function createContext(request: {
 }
 
 describe('RolesGuard', () => {
+  it('treats dev as higher-than-admin for role checks', async () => {
+    const reflector = {
+      getAllAndOverride: jest.fn().mockReturnValue([AppRole.ADMIN]),
+    } as unknown as Reflector;
+    const adminTwoFactorService = {
+      shouldEnforceChallengeForAdminPanel: jest.fn().mockResolvedValue(false),
+      validateSession: jest.fn(),
+    } as unknown as AdminTwoFactorService;
+    const guard = new RolesGuard(reflector, adminTwoFactorService);
+
+    const request = {
+      user: {
+        id: 'u0',
+        email: 'dev@blocnet.io',
+        roles: [AppRole.DEV],
+      },
+      headers: {},
+    };
+
+    const result = await guard.canActivate(createContext(request));
+    expect(result).toBe(true);
+  });
+
   it('uses effective roles for authorization checks', async () => {
     const reflector = {
       getAllAndOverride: jest.fn().mockReturnValue([AppRole.MODERATOR]),

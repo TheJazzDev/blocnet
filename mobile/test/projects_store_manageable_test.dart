@@ -5,7 +5,7 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/repositories/projects_api_repository.dart';
 import 'package:blocnet/features/projects/data/repositories/updates_api_repository.dart';
-import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

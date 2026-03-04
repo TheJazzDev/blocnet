@@ -1,8 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';

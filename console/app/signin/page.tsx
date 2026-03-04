@@ -9,7 +9,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { SignInForm } from './sign-in-form';
+import { SignInForm } from '@/components/features/signin/SignInForm';
 import {
   getAdminEnvironmentLabel,
   resolveAdminEnvironmentFromHost,

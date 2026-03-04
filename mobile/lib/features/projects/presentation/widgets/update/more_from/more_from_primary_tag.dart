@@ -2,7 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

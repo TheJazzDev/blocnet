@@ -45,7 +45,9 @@ class _HunterTile extends StatelessWidget {
     final isCardMode = mode == FeedViewMode.card;
     final tile = GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
+        width: double.infinity,
         margin: EdgeInsets.only(bottom: isCardMode ? 8 : 0),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: isCardMode

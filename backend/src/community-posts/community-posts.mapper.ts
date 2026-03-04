@@ -26,6 +26,25 @@ const authorSelect = {
       createdAt: true,
     },
   },
+  currentLevel: {
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      description: true,
+      iconUrl: true,
+      level: true,
+      requiredBnp: true,
+      requiredComments: true,
+      requiredDaysActive: true,
+      requiredQuests: true,
+      requiredUpdates: true,
+      requiredProjects: true,
+      color: true,
+      isActive: true,
+      sortOrder: true,
+    },
+  },
 } satisfies Prisma.ProfileSelect;
 
 export const communityPostCommentInclude = {
@@ -96,6 +115,23 @@ function toActorPreview(actor: {
     sortOrder: number;
     createdAt: Date;
   } | null;
+  currentLevel: {
+    id: string;
+    slug: string;
+    name: string;
+    description: string;
+    iconUrl: string;
+    level: number;
+    requiredBnp: bigint;
+    requiredComments: number;
+    requiredDaysActive: number;
+    requiredQuests: number;
+    requiredUpdates: number;
+    requiredProjects: number;
+    color: string | null;
+    isActive: boolean;
+    sortOrder: number;
+  } | null;
 }) {
   const rawUsername = (actor.username ?? '')
     .replaceAll('@', '')
@@ -111,6 +147,25 @@ function toActorPreview(actor: {
     followers: 0,
     roles: actor.roles.map((entry) => entry.role),
     primaryBadge: actor.primaryBadge,
+    currentLevel: actor.currentLevel
+      ? {
+          id: actor.currentLevel.id,
+          slug: actor.currentLevel.slug,
+          name: actor.currentLevel.name,
+          description: actor.currentLevel.description,
+          iconUrl: actor.currentLevel.iconUrl,
+          level: actor.currentLevel.level,
+          requiredBnp: actor.currentLevel.requiredBnp.toString(),
+          requiredComments: actor.currentLevel.requiredComments,
+          requiredDaysActive: actor.currentLevel.requiredDaysActive,
+          requiredQuests: actor.currentLevel.requiredQuests,
+          requiredUpdates: actor.currentLevel.requiredUpdates,
+          requiredProjects: actor.currentLevel.requiredProjects,
+          color: actor.currentLevel.color,
+          isActive: actor.currentLevel.isActive,
+          sortOrder: actor.currentLevel.sortOrder,
+        }
+      : null,
   };
 }
 

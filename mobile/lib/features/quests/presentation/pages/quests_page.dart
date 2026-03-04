@@ -2,10 +2,12 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
 import 'package:blocnet/features/quests/presentation/pages/quest_detail_page.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/quests_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/engagement/quests_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -50,6 +52,7 @@ class _QuestsPageState extends State<QuestsPage>
 
   @override
   Widget build(BuildContext context) {
+    final viewMode = context.watch<FeedViewModeStore>().mode;
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       body: Column(
@@ -136,9 +139,9 @@ class _QuestsPageState extends State<QuestsPage>
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildAvailableTab(store),
-                      _buildInProgressTab(store),
-                      _buildCompletedTab(store),
+                      _buildAvailableTab(store, viewMode),
+                      _buildInProgressTab(store, viewMode),
+                      _buildCompletedTab(store, viewMode),
                     ],
                   ),
                 );
@@ -171,7 +174,7 @@ class _QuestsPageState extends State<QuestsPage>
     );
   }
 
-  Widget _buildAvailableTab(QuestsStore store) {
+  Widget _buildAvailableTab(QuestsStore store, FeedViewMode viewMode) {
     var quests = store.getAvailableQuests();
 
     // Apply filters
@@ -210,6 +213,7 @@ class _QuestsPageState extends State<QuestsPage>
       itemBuilder: (context, index) {
         final quest = quests[index];
         return _QuestCard(
+          mode: viewMode,
           quest: quest,
           status: QuestStatus.notStarted,
           onTap: () => _navigateToQuestDetail(quest),
@@ -218,7 +222,7 @@ class _QuestsPageState extends State<QuestsPage>
     );
   }
 
-  Widget _buildInProgressTab(QuestsStore store) {
+  Widget _buildInProgressTab(QuestsStore store, FeedViewMode viewMode) {
     var quests = store.getInProgressQuests();
     quests.addAll(store.getPendingQuests());
 
@@ -250,6 +254,7 @@ class _QuestsPageState extends State<QuestsPage>
       itemBuilder: (context, index) {
         final userQuest = quests[index];
         return _QuestCard(
+          mode: viewMode,
           quest: userQuest.quest,
           status: userQuest.status,
           progress: userQuest.progress,
@@ -259,7 +264,7 @@ class _QuestsPageState extends State<QuestsPage>
     );
   }
 
-  Widget _buildCompletedTab(QuestsStore store) {
+  Widget _buildCompletedTab(QuestsStore store, FeedViewMode viewMode) {
     final quests = store.getCompletedQuests();
 
     if (quests.isEmpty) {
@@ -291,6 +296,7 @@ class _QuestsPageState extends State<QuestsPage>
       itemBuilder: (context, index) {
         final userQuest = quests[index];
         return _QuestCard(
+          mode: viewMode,
           quest: userQuest.quest,
           status: userQuest.status,
           completedAt: userQuest.completedAt,
@@ -315,6 +321,7 @@ class _QuestsPageState extends State<QuestsPage>
 
 class _QuestCard extends StatelessWidget {
   const _QuestCard({
+    required this.mode,
     required this.quest,
     required this.status,
     this.progress,
@@ -322,6 +329,7 @@ class _QuestCard extends StatelessWidget {
     this.onTap,
   });
 
+  final FeedViewMode mode;
   final QuestModel quest;
   final QuestStatus status;
   final int? progress;
@@ -330,8 +338,114 @@ class _QuestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCardMode = mode == FeedViewMode.card;
     final hasFooterMeta =
         completedAt != null || status != QuestStatus.notStarted;
+
+    if (!isCardMode) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.borderSubtle.withValues(alpha: 0.8),
+                width: 1,
+              ),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Color(status.color).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Icon(
+                    quest.type.iconData,
+                    color: Color(status.color),
+                    size: 18,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            quest.title,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _QuestPointsPill(
+                          points: quest.rewardPoints,
+                          compact: true,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      quest.description,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        BadgeCategoryChip(
+                          category: quest.category,
+                          compact: true,
+                        ),
+                        const SizedBox(width: 6),
+                        _QuestStatusChip(status: status, compact: true),
+                        const Spacer(),
+                        if (completedAt != null)
+                          Text(
+                            _formatDate(completedAt!),
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: Colors.grey.shade500,
+                            ),
+                          )
+                        else
+                          Icon(
+                            Icons.chevron_right,
+                            size: 18,
+                            color: Colors.grey.shade600,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -449,14 +563,20 @@ class _QuestCard extends StatelessWidget {
 }
 
 class _QuestPointsPill extends StatelessWidget {
-  const _QuestPointsPill({required this.points});
+  const _QuestPointsPill({
+    required this.points,
+    this.compact = false,
+  });
 
   final int points;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: compact
+          ? const EdgeInsets.symmetric(horizontal: 6, vertical: 3)
+          : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.amber.shade400.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
@@ -469,14 +589,14 @@ class _QuestPointsPill extends StatelessWidget {
         children: [
           Icon(
             Icons.stars_rounded,
-            size: 12,
+            size: compact ? 11 : 12,
             color: Colors.amber.shade400,
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: compact ? 3 : 4),
           Text(
             '$points BNP',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: compact ? 9 : 10,
               color: Colors.amber.shade400,
               fontWeight: FontWeight.w700,
             ),

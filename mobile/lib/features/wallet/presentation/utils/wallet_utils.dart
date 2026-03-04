@@ -3,7 +3,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/pages/send_token_page.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';

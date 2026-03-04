@@ -13,6 +13,17 @@ export const rolesAndTagsApi = {
       method: "DELETE",
     }),
 
+  promoteToDev: (userId: string, note?: string) =>
+    apiFetch(`/roles/devs/${userId}/promote`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    }),
+
+  demoteDev: (userId: string) =>
+    apiFetch(`/roles/devs/${userId}`, {
+      method: "DELETE",
+    }),
+
   promoteToOwner: (userId: string, note?: string) =>
     apiFetch(`/roles/owners/${userId}/promote`, {
       method: "POST",

@@ -1,24 +1,18 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
-import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
-import 'package:blocnet/features/community/data/models/community_post_model.dart';
-import 'package:blocnet/features/mentions/presentation/utils/mention_profile_navigator.dart';
-import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
-import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart';
-import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
-import 'package:blocnet/services/api/api_client.dart';
-import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
-import 'package:blocnet/services/community_posts_store.dart';
-import 'package:blocnet/widgets/app_snackbar.dart';
-import 'package:blocnet/shared/utils/get_timestamp.dart';
-import 'package:blocnet/shared/widgets/app_avatar.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/community/data/models/community_post_model.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_discussion_comment_card.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_discussion_composer.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_discussion_no_post_view.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_discussion_post_details_card.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_post_share_sheet.dart';
+import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
+import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/community/community_posts_store.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 class CommunityPostDiscussionScreen extends StatefulWidget {
   const CommunityPostDiscussionScreen({super.key, this.postId});
 
@@ -70,16 +64,7 @@ class _CommunityPostDiscussionScreenState
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is String && args.isNotEmpty) {
       if (_postId == args) return;
-      _postId = args;
-      _focusComposerOnLoad = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
-        _attachStoreListener();
-        store.fetchPostById(args);
-        store.fetchComments(args);
-        store.watchCommentsRealtime(args);
-      });
+      _loadThread(postId: args, focusComposer: false);
       return;
     }
 
@@ -88,20 +73,27 @@ class _CommunityPostDiscussionScreenState
       if (postId == null || postId.isEmpty || _postId == postId) {
         return;
       }
-      _postId = postId;
-      _focusComposerOnLoad = args['focusComposer'] == true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
-        _attachStoreListener();
-        store.fetchPostById(postId);
-        store.fetchComments(postId);
-        store.watchCommentsRealtime(postId);
-        if (_focusComposerOnLoad) {
-          _focusComposerSoon();
-        }
-      });
+      _loadThread(postId: postId, focusComposer: args['focusComposer'] == true);
     }
+  }
+
+  void _loadThread({
+    required String postId,
+    required bool focusComposer,
+  }) {
+    _postId = postId;
+    _focusComposerOnLoad = focusComposer;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
+      _attachStoreListener();
+      store.fetchPostById(postId);
+      store.fetchComments(postId);
+      store.watchCommentsRealtime(postId);
+      if (_focusComposerOnLoad) {
+        _focusComposerSoon();
+      }
+    });
   }
 
   void _attachStoreListener() {
@@ -137,8 +129,7 @@ class _CommunityPostDiscussionScreenState
       ..clear()
       ..addAll(currentIds);
 
-    if (newIds.isEmpty) return;
-    if (_isNearLatest()) return;
+    if (newIds.isEmpty || _isNearLatest()) return;
 
     setState(() {
       _pendingNewCommentIds.addAll(newIds);
@@ -153,8 +144,9 @@ class _CommunityPostDiscussionScreenState
 
   bool _isNearLatest() {
     if (!_threadScrollController.hasClients) return true;
-    final distanceToBottom = _threadScrollController.position.maxScrollExtent -
-        _threadScrollController.offset;
+    final distanceToBottom =
+        _threadScrollController.position.maxScrollExtent -
+            _threadScrollController.offset;
     return distanceToBottom <= 80;
   }
 
@@ -212,9 +204,9 @@ class _CommunityPostDiscussionScreenState
     try {
       final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
       final created = await store.createComment(
-            postId: postId,
-            content: text,
-          );
+        postId: postId,
+        content: text,
+      );
 
       if (created != null) {
         _commentCtrl.clear();
@@ -233,25 +225,7 @@ class _CommunityPostDiscussionScreenState
   Widget build(BuildContext context) {
     final postId = _postId;
     if (postId == null || postId.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppColors.bgBase,
-        appBar: const CustomAppBar(
-          title: 'Post Discussion',
-          backButton: true,
-          showSearch: false,
-          showFilter: false,
-        ),
-        body: Center(
-          child: Text(
-            'No post selected.',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: 14,
-              weight: FontWeight.w400,
-            ),
-          ),
-        ),
-      );
+      return const CommunityDiscussionNoPostView();
     }
 
     return Consumer<CommunityPostsStore>(
@@ -286,57 +260,32 @@ class _CommunityPostDiscussionScreenState
                           children: [
                             ListView(
                               controller: _threadScrollController,
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                               children: [
-                                _PostDetailsCard(
+                                CommunityDiscussionPostDetailsCard(
                                   post: post,
                                   onLike: () => store.toggleLike(post.id),
                                   onCommentTap: _focusComposerSoon,
                                   onShareTap: () => _openShareSheet(post),
-                                  onBookmark: () =>
-                                      store.toggleBookmark(post.id),
+                                  onBookmark: () => store.toggleBookmark(post.id),
                                 ),
                                 const SizedBox(height: 14),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'DISCUSSION (${comments.length})',
-                                      style: AppTypography.custom(
-                                        color: AppColors.textFaint,
-                                        size: 11,
-                                        weight: FontWeight.w600,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    if (comments.isNotEmpty && hasMoreComments)
-                                      TextButton(
-                                        onPressed: isLoadingComments
-                                            ? null
-                                            : () =>
-                                                store.loadOlderComments(postId),
-                                        child: Text(
-                                          isLoadingComments
-                                              ? 'Loading…'
-                                              : 'Load older',
-                                          style: AppTypography.custom(
-                                            color: AppColors.primary400,
-                                            size: 12,
-                                            weight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+                                _DiscussionHeader(
+                                  commentsCount: comments.length,
+                                  isLoadingComments: isLoadingComments,
+                                  hasMoreComments: hasMoreComments,
+                                  onLoadOlder: () => store.loadOlderComments(postId),
                                 ),
                                 const SizedBox(height: 10),
                                 if (comments.isEmpty)
-                                  _EmptyDiscussion()
+                                  const CommunityDiscussionEmpty()
                                 else ...[
                                   for (var index = 0;
                                       index < comments.length;
                                       index++) ...[
-                                    _CommentCard(comment: comments[index]),
+                                    CommunityDiscussionCommentCard(
+                                      comment: comments[index],
+                                    ),
                                     if (index != comments.length - 1)
                                       Divider(
                                         height: 1,
@@ -382,49 +331,12 @@ class _CommunityPostDiscussionScreenState
                           ],
                         ),
                 ),
-                SafeArea(
-                  top: false,
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgSurface,
-                      border: Border(
-                        top: BorderSide(color: AppColors.borderSubtle),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: MentionTextField(
-                            controller: _commentCtrl,
-                            focusNode: _commentFocusNode,
-                            mentionsRepository: _mentionsRepository,
-                            hintText: 'Write a comment...',
-                            minLines: 1,
-                            maxLines: 4,
-                            maxLength: 300,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: _isSending ? null : () => _sendComment(postId),
-                          child: Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary500,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.send_rounded,
-                              color: Colors.black,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                CommunityDiscussionComposer(
+                  controller: _commentCtrl,
+                  focusNode: _commentFocusNode,
+                  mentionsRepository: _mentionsRepository,
+                  isSending: _isSending,
+                  onSendTap: () => _sendComment(postId),
                 ),
               ],
             ),
@@ -435,634 +347,54 @@ class _CommunityPostDiscussionScreenState
   }
 
   Future<void> _openShareSheet(CommunityPost post) async {
-    final deepPath = '/community/${post.id}';
-    final webLink =
-        'https://blocnet.app/open?path=${Uri.encodeComponent(deepPath)}';
-    final deepLink = 'io.blocnet.app://community/${post.id}';
-    final shareText = '${post.content.trim()}\n$webLink';
-
-    Future<void> copyLink() async {
-      await Clipboard.setData(ClipboardData(text: webLink));
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      AppSnackbar.showSuccess(context, 'Post link copied');
-    }
-
-    Future<void> openExternal(Uri uri, String platformName) async {
-      final launched =
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      if (!launched) {
-        await Clipboard.setData(ClipboardData(text: shareText));
-        if (!mounted) return;
-        AppSnackbar.showError(
-          context,
-          'Could not open $platformName. Link copied instead.',
-        );
-      }
-    }
-
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.borderMuted,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Share post',
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: 16,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  post.content.trim(),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: 12,
-                    weight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _ShareOptionTile(
-                  icon: Icons.copy_all_rounded,
-                  title: 'Copy link',
-                  subtitle: webLink,
-                  onTap: copyLink,
-                ),
-                _ShareOptionTile(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  title: 'Share to WhatsApp',
-                  subtitle: 'Open WhatsApp with post link',
-                  onTap: () => openExternal(
-                    Uri.parse(
-                      'https://wa.me/?text=${Uri.encodeComponent(shareText)}',
-                    ),
-                    'WhatsApp',
-                  ),
-                ),
-                _ShareOptionTile(
-                  icon: Icons.send_outlined,
-                  title: 'Share to Telegram',
-                  subtitle: 'Open Telegram with post link',
-                  onTap: () => openExternal(
-                    Uri.parse(
-                      'https://t.me/share/url?url=${Uri.encodeComponent(webLink)}&text=${Uri.encodeComponent(post.content.trim())}',
-                    ),
-                    'Telegram',
-                  ),
-                ),
-                _ShareOptionTile(
-                  icon: Icons.link_rounded,
-                  title: 'Copy deep link',
-                  subtitle: deepLink,
-                  onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: deepLink));
-                    if (!context.mounted) return;
-                    Navigator.of(context).pop();
-                    AppSnackbar.showSuccess(context, 'Deep link copied');
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    await showCommunityPostShareSheet(
+      context,
+      postId: post.id,
+      content: post.content,
     );
   }
 }
 
-class _PostDetailsCard extends StatelessWidget {
-  const _PostDetailsCard({
-    required this.post,
-    required this.onLike,
-    required this.onCommentTap,
-    required this.onShareTap,
-    required this.onBookmark,
+class _DiscussionHeader extends StatelessWidget {
+  const _DiscussionHeader({
+    required this.commentsCount,
+    required this.isLoadingComments,
+    required this.hasMoreComments,
+    required this.onLoadOlder,
   });
 
-  final CommunityPost post;
-  final VoidCallback onLike;
-  final VoidCallback onCommentTap;
-  final VoidCallback onShareTap;
-  final VoidCallback onBookmark;
-
-  void _openAuthorProfile(BuildContext context) {
-    final admin = post.admin;
-    if (admin == null) return;
-    PublicProfileScreen.showSheet(context, admin);
-  }
+  final int commentsCount;
+  final bool isLoadingComments;
+  final bool hasMoreComments;
+  final VoidCallback onLoadOlder;
 
   @override
   Widget build(BuildContext context) {
-    final admin = post.admin;
-    final adminName =
-        admin?.name.trim().isNotEmpty == true ? admin!.name : 'Blocnet User';
-    final username = _formatUsername(
-      admin?.username,
-      fallbackName: adminName,
-    );
-    final roleLabel = admin?.displayRoleLabel;
-    final roleColor =
-        roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: () => _openAuthorProfile(context),
-                behavior: HitTestBehavior.opaque,
-                child: AppAvatar(
-                  radius: 20,
-                  imageUrl: post.admin?.imageUrl,
-                  fallback: Text(
-                    adminName[0].toUpperCase(),
-                    style: AppTypography.custom(
-                      color: AppColors.primary400,
-                      size: 15,
-                      weight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () => _openAuthorProfile(context),
-                      behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              adminName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.custom(
-                                color: AppColors.textPrimary,
-                                size: 14,
-                                weight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          if (admin?.primaryBadge != null) ...[
-                            const SizedBox(width: 6),
-                            BadgeIcon(
-                              badge: admin!.primaryBadge!,
-                              size: BadgeSize.small,
-                              showTooltip: false,
-                            ),
-                          ],
-                          if (roleLabel != null) ...[
-                            const SizedBox(width: 6),
-                            _RolePill(
-                              label: roleLabel,
-                              color: roleColor,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      username,
-                      style: AppTypography.custom(
-                        color: AppColors.textMuted,
-                        size: 12,
-                        weight: FontWeight.w400,
-                      ),
-                    ),
-                    Text(
-                      getTimeStamp(post.createdAt),
-                      style: AppTypography.custom(
-                        color: AppColors.textFaint,
-                        size: 11,
-                        weight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    return Row(
+      children: [
+        Text(
+          'DISCUSSION ($commentsCount)',
+          style: AppTypography.custom(
+            color: AppColors.textFaint,
+            size: 11,
+            weight: FontWeight.w600,
+            letterSpacing: 0.8,
           ),
-          const SizedBox(height: 10),
-          MentionText(
-            text: post.content,
-            style: AppTypography.custom(
-              color: AppColors.textSecondary,
-              size: 14,
-              weight: FontWeight.w400,
-              height: 1.55,
-            ),
-            onMentionTap: (mentionUsername) async {
-              await MentionProfileNavigator.openFromUsername(
-                context,
-                mentionUsername,
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _DiscussionAction(
-                icon: post.isLiked
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                value: '${post.likesCount}',
-                color:
-                    post.isLiked ? AppColors.warning500 : AppColors.textMuted,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onLike();
-                },
-              ),
-              _DiscussionAction(
-                icon: Icons.mode_comment_outlined,
-                value: '${post.commentsCount}',
-                color: AppColors.textMuted,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onCommentTap();
-                },
-              ),
-              _DiscussionAction(
-                icon: Icons.share_outlined,
-                value: '',
-                color: AppColors.teal400,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onShareTap();
-                },
-              ),
-              _DiscussionAction(
-                icon: post.isBookmarked
-                    ? Icons.bookmark_rounded
-                    : Icons.bookmark_outline_rounded,
-                value: '',
-                color: post.isBookmarked
-                    ? AppColors.primary400
-                    : AppColors.textMuted,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onBookmark();
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Divider(
-            height: 1,
-            color: AppColors.borderSubtle.withValues(alpha: 0.8),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatUsername(String? value, {required String fallbackName}) {
-    final normalized = value?.trim() ?? '';
-    if (normalized.isNotEmpty) {
-      return normalized.startsWith('@') ? normalized : '@$normalized';
-    }
-
-    final fallback = fallbackName
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
-        .replaceAll(RegExp(r'_+'), '_')
-        .replaceAll(RegExp(r'^_|_$'), '');
-    if (fallback.isEmpty) return '@member';
-    return '@$fallback';
-  }
-}
-
-class _DiscussionAction extends StatelessWidget {
-  const _DiscussionAction({
-    required this.icon,
-    required this.value,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String value;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: color),
-            if (value.isNotEmpty) ...[
-              const SizedBox(width: 6),
-              Text(
-                value,
-                style: AppTypography.custom(
-                  color: color,
-                  size: 12,
-                  weight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ],
         ),
-      ),
-    );
-  }
-}
-
-class _ShareOptionTile extends StatelessWidget {
-  const _ShareOptionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        child: Icon(icon, color: AppColors.textSecondary, size: 18),
-      ),
-      title: Text(
-        title,
-        style: AppTypography.custom(
-          color: AppColors.textPrimary,
-          size: 13,
-          weight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppTypography.custom(
-          color: AppColors.textFaint,
-          size: 11,
-          weight: FontWeight.w400,
-        ),
-      ),
-      onTap: onTap,
-    );
-  }
-}
-
-class _EmptyDiscussion extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: Text(
-        'No comments yet. Start the discussion.',
-        style: AppTypography.custom(
-          color: AppColors.textMuted,
-          size: 13,
-          weight: FontWeight.w400,
-        ),
-      ),
-    );
-  }
-}
-
-class _CommentCard extends StatelessWidget {
-  const _CommentCard({required this.comment});
-
-  final CommunityPostComment comment;
-
-  void _openAuthorProfile(BuildContext context) {
-    final admin = comment.admin;
-    if (admin == null) return;
-    PublicProfileScreen.showSheet(context, admin);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final admin = comment.admin;
-    final name = admin?.name.trim().isNotEmpty == true ? admin!.name : 'User';
-    final username = _formatUsername(
-      admin?.username,
-      fallbackName: name,
-    );
-    final roleLabel = admin?.displayRoleLabel;
-    final roleColor =
-        roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: () => _openAuthorProfile(context),
-            behavior: HitTestBehavior.opaque,
-            child: AppAvatar(
-              radius: 18,
-              imageUrl: comment.admin?.imageUrl,
-              fallback: _avatarFallback(name),
+        const Spacer(),
+        if (commentsCount > 0 && hasMoreComments)
+          TextButton(
+            onPressed: isLoadingComments ? null : onLoadOlder,
+            child: Text(
+              isLoadingComments ? 'Loading…' : 'Load older',
+              style: AppTypography.custom(
+                color: AppColors.primary400,
+                size: 12,
+                weight: FontWeight.w600,
+              ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: GestureDetector(
-                        onTap: () => _openAuthorProfile(context),
-                        behavior: HitTestBehavior.opaque,
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.custom(
-                                  color: AppColors.textPrimary,
-                                  size: 14,
-                                  weight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            if (admin?.primaryBadge != null) ...[
-                              const SizedBox(width: 6),
-                              BadgeIcon(
-                                badge: admin!.primaryBadge!,
-                                size: BadgeSize.small,
-                                showTooltip: false,
-                              ),
-                            ],
-                            if (roleLabel != null) ...[
-                              const SizedBox(width: 6),
-                              _RolePill(
-                                label: roleLabel,
-                                color: roleColor,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      getTimeStamp(comment.createdAt),
-                      style: AppTypography.custom(
-                        color: AppColors.textFaint,
-                        size: 11,
-                        weight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  username,
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: 12,
-                    weight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                MentionText(
-                  text: comment.content,
-                  style: AppTypography.custom(
-                    color: AppColors.textSecondary,
-                    size: 13,
-                    weight: FontWeight.w400,
-                    height: 1.6,
-                  ),
-                  onMentionTap: (mentionUsername) async {
-                    await MentionProfileNavigator.openFromUsername(
-                      context,
-                      mentionUsername,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _avatarFallback(String name) {
-    final firstChar = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    return Text(
-      firstChar,
-      style: AppTypography.custom(
-        color: AppColors.primary400,
-        size: 15,
-        weight: FontWeight.w700,
-      ),
-    );
-  }
-
-  String _formatUsername(String? value, {required String fallbackName}) {
-    final normalized = value?.trim() ?? '';
-    if (normalized.isNotEmpty) {
-      return normalized.startsWith('@') ? normalized : '@$normalized';
-    }
-
-    final fallback = fallbackName
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
-        .replaceAll(RegExp(r'_+'), '_')
-        .replaceAll(RegExp(r'^_|_$'), '');
-    if (fallback.isEmpty) return '@member';
-    return '@$fallback';
-  }
-}
-
-class _RolePill extends StatelessWidget {
-  const _RolePill({
-    required this.label,
-    required this.color,
-  });
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.8), width: 0.8),
-        color: color.withValues(alpha: 0.12),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.custom(
-          color: color,
-          size: 9,
-          weight: FontWeight.w700,
-          letterSpacing: 0.2,
-        ),
-      ),
+      ],
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
-import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
 import 'package:blocnet/shared/widgets/app_secondary_button.dart';
 import 'package:flutter/material.dart';

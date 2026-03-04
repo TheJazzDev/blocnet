@@ -5,6 +5,8 @@ export function roleNameToAppRole(role: RoleName): AppRole {
   switch (role) {
     case RoleName.owner:
       return AppRole.OWNER;
+    case RoleName.dev:
+      return AppRole.DEV;
     case RoleName.admin:
       return AppRole.ADMIN;
     case RoleName.moderator:
@@ -24,6 +26,8 @@ export function appRoleToRoleName(role: AppRole): RoleName {
   switch (role) {
     case AppRole.OWNER:
       return RoleName.owner;
+    case AppRole.DEV:
+      return RoleName.dev;
     case AppRole.ADMIN:
       return RoleName.admin;
     case AppRole.MODERATOR:

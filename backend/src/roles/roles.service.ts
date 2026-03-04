@@ -45,6 +45,10 @@ export class RolesService {
     );
   }
 
+  async promoteToDev(actorId: string, userId: string, note?: string) {
+    return this.promoteRole(actorId, userId, RoleName.dev, 'role.promote.dev', note);
+  }
+
   async promoteToModerator(actorId: string, userId: string, note?: string) {
     return this.promoteRole(
       actorId,
@@ -92,6 +96,10 @@ export class RolesService {
       RoleName.admin,
       'role.demote.admin',
     );
+  }
+
+  async demoteDev(actorId: string, userId: string) {
+    return this.demoteRole(actorId, userId, RoleName.dev, 'role.demote.dev');
   }
 
   async demoteModerator(actorId: string, userId: string) {
@@ -228,6 +236,7 @@ export class RolesService {
   ) {
     const isGovernanceRole =
       role === RoleName.owner ||
+      role === RoleName.dev ||
       role === RoleName.admin ||
       role === RoleName.moderator;
 
@@ -255,7 +264,10 @@ export class RolesService {
       .filter((role) => role !== roleToRemove);
 
     const hasRemainingManagementRole = remaining.some(
-      (role) => role === RoleName.owner || role === RoleName.admin,
+      (role) =>
+        role === RoleName.owner ||
+        role === RoleName.dev ||
+        role === RoleName.admin,
     );
 
     if (!hasRemainingManagementRole) {

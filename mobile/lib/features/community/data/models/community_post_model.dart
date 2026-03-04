@@ -13,6 +13,7 @@ class CommunityPost {
     required this.commentsCount,
     required this.isLiked,
     required this.isBookmarked,
+    this.isCommented = false,
     this.admin,
   });
 
@@ -26,6 +27,7 @@ class CommunityPost {
   final int commentsCount;
   final bool isLiked;
   final bool isBookmarked;
+  final bool isCommented;
   final Admin? admin;
 
   CommunityPost copyWith({
@@ -37,6 +39,7 @@ class CommunityPost {
     int? commentsCount,
     bool? isLiked,
     bool? isBookmarked,
+    bool? isCommented,
     Admin? admin,
   }) {
     return CommunityPost(
@@ -50,6 +53,7 @@ class CommunityPost {
       commentsCount: commentsCount ?? this.commentsCount,
       isLiked: isLiked ?? this.isLiked,
       isBookmarked: isBookmarked ?? this.isBookmarked,
+      isCommented: isCommented ?? this.isCommented,
       admin: admin ?? this.admin,
     );
   }
@@ -72,6 +76,7 @@ class CommunityPost {
       commentsCount: _toInt(json['commentsCount']),
       isLiked: json['isLiked'] == true,
       isBookmarked: json['isBookmarked'] == true,
+      isCommented: json['isCommented'] == true,
       admin: admin,
     );
   }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { BadgesModule } from '../badges/badges.module';
+import { LevelsModule } from '../levels/levels.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { QuestsAdminController } from './quests-admin.controller';
@@ -9,7 +10,13 @@ import { QuestsService } from './quests.service';
 import { QuestStorageService } from './quest-storage.service';
 
 @Module({
-  imports: [PrismaModule, BadgesModule, NotificationsModule, AuditLogModule],
+  imports: [
+    PrismaModule,
+    BadgesModule,
+    LevelsModule,
+    NotificationsModule,
+    AuditLogModule,
+  ],
   controllers: [QuestsController, QuestsAdminController],
   providers: [QuestsService, QuestStorageService],
   exports: [QuestsService, QuestStorageService],

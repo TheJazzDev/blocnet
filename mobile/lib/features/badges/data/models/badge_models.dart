@@ -80,6 +80,21 @@ extension BadgeCategoryExtension on BadgeCategory {
         return 'Special';
     }
   }
+
+  int get color {
+    switch (this) {
+      case BadgeCategory.engagement:
+        return 0xFF22D3EE; // Cyan
+      case BadgeCategory.mining:
+        return 0xFF10B981; // Emerald
+      case BadgeCategory.social:
+        return 0xFF3B82F6; // Blue
+      case BadgeCategory.trust:
+        return 0xFFF59E0B; // Amber
+      case BadgeCategory.special:
+        return 0xFFA855F7; // Violet
+    }
+  }
 }
 
 enum BadgeRarity {
@@ -107,13 +122,13 @@ extension BadgeRarityExtension on BadgeRarity {
   int get color {
     switch (this) {
       case BadgeRarity.common:
-        return 0xFF9E9E9E; // Gray
+        return 0xFF06B6D4; // Cyan
       case BadgeRarity.rare:
-        return 0xFF2196F3; // Blue
+        return 0xFF3B82F6; // Blue
       case BadgeRarity.epic:
-        return 0xFF9C27B0; // Purple
+        return 0xFFA855F7; // Violet
       case BadgeRarity.legendary:
-        return 0xFFFFD700; // Gold
+        return 0xFFF59E0B; // Amber
     }
   }
 }

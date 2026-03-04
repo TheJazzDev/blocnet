@@ -1,5 +1,5 @@
 import 'package:blocnet/features/auth/presentation/pages/sign_in.dart';
-import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';

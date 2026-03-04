@@ -3,29 +3,32 @@ import 'dart:async';
 import 'package:blocnet/app/router.dart';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/services/admins_store.dart';
-import 'package:blocnet/services/app_store.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/badges_store.dart';
-import 'package:blocnet/services/blocks_store.dart';
+import 'package:blocnet/services/users/admins_store.dart';
+import 'package:blocnet/services/core/app_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/engagement/badges_store.dart';
+import 'package:blocnet/services/users/blocks_store.dart';
 import 'package:blocnet/services/api/api_client.dart';
-import 'package:blocnet/services/deep_link_service.dart';
-import 'package:blocnet/services/edge_engine_store.dart';
-import 'package:blocnet/services/feed_view_mode_store.dart';
-import 'package:blocnet/services/notifications_store.dart';
-import 'package:blocnet/services/notification_settings_store.dart';
-import 'package:blocnet/services/push_notification_service.dart';
-import 'package:blocnet/services/quests_store.dart';
-import 'package:blocnet/services/tips_store.dart';
-import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/services/tags_store.dart';
-import 'package:blocnet/services/comments_store.dart';
-import 'package:blocnet/services/community_posts_store.dart';
-import 'package:blocnet/services/connectivity_store.dart';
-import 'package:blocnet/services/mining_store.dart';
-import 'package:blocnet/services/user_profile_store.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/core/deep_link_service.dart';
+import 'package:blocnet/services/edge/edge_engine_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/engagement/levels_store.dart';
+import 'package:blocnet/services/notifications/notifications_store.dart';
+import 'package:blocnet/services/notifications/notification_settings_store.dart';
+import 'package:blocnet/services/notifications/push_notification_service.dart';
+import 'package:blocnet/services/engagement/quests_store.dart';
+import 'package:blocnet/services/engagement/tips_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/services/projects/tags_store.dart';
+import 'package:blocnet/services/community/comments_store.dart';
+import 'package:blocnet/services/community/community_posts_store.dart';
+import 'package:blocnet/services/core/connectivity_store.dart';
+import 'package:blocnet/services/engagement/mining_store.dart';
+import 'package:blocnet/services/core/startup_metrics_service.dart';
+import 'package:blocnet/services/users/user_profile_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
 import 'package:flutter/material.dart';
 import 'constants/app_routes.dart';
 import 'package:blocnet/shared/pages/page_not_found.dart';
@@ -47,6 +50,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) =>
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  StartupMetricsService.markProcessStart();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -67,11 +71,9 @@ void main() async {
   }
 
   final authStore = AuthStore();
-  await authStore.bootstrapFromSession();
   final notificationsStore = NotificationsStore();
   final notificationSettingsStore = NotificationSettingsStore();
-  final initialRoute =
-      authStore.isAuthenticated ? AppRoutes.main : AppRoutes.signIn;
+  final initialRoute = AppRoutes.main;
 
   // Initialise deep link handling (email verify, magic link, password reset)
   final deepLinkService = DeepLinkService(
@@ -130,10 +132,12 @@ void main() async {
         ChangeNotifierProvider(create: (_) => UserProfileStore()),
         ChangeNotifierProvider(create: (_) => TipsStore()),
         ChangeNotifierProvider(create: (_) => WalletStore()),
+        ChangeNotifierProvider(create: (_) => WalletVisibilityStore()),
         ChangeNotifierProvider(create: (_) => BlocksStore(ApiClient())),
         ChangeNotifierProvider(create: (_) => TagsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),
         ChangeNotifierProvider(create: (_) => BadgesStore()),
+        ChangeNotifierProvider(create: (_) => LevelsStore()),
         ChangeNotifierProxyProvider<AuthStore, QuestsStore>(
           create: (_) => QuestsStore(),
           update: (_, auth, questsStore) {
@@ -162,4 +166,10 @@ void main() async {
       ),
     ),
   );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    StartupMetricsService.markFirstFrame();
+    authStore.markShellReady();
+    authStore.startBackgroundBootstrap();
+  });
 }

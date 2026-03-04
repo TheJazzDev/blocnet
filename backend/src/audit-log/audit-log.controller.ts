@@ -36,7 +36,7 @@ export class AuditLogController {
   }
 
   @Get('ops-events')
-  @Roles(AppRole.OWNER)
+  @Roles(AppRole.OWNER, AppRole.DEV)
   async listOpsEvents(
     @CurrentUser() user: AuthUser | undefined,
     @Query() query: ListOpsEventsQuery,
@@ -46,5 +46,18 @@ export class AuditLogController {
     }
 
     return this.auditLogService.listOpsEvents(user, query);
+  }
+
+  @Get('system-alerts')
+  @Roles(AppRole.OWNER, AppRole.DEV)
+  async listSystemAlerts(
+    @CurrentUser() user: AuthUser | undefined,
+    @Query() query: ListOpsEventsQuery,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.auditLogService.listSystemAlerts(user, query);
   }
 }

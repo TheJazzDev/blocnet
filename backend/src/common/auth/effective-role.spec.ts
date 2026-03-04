@@ -6,15 +6,24 @@ import {
 
 describe('effective-role resolver', () => {
   it('resolves top governance role by priority', () => {
-    expect(getAdminGovernanceRole([AppRole.MODERATOR, AppRole.ADMIN])).toBe(
-      AppRole.ADMIN,
+    expect(getAdminGovernanceRole([AppRole.MODERATOR, AppRole.DEV])).toBe(
+      AppRole.DEV,
     );
     expect(
-      getAdminGovernanceRole([AppRole.MODERATOR, AppRole.OWNER, AppRole.ADMIN]),
+      getAdminGovernanceRole([
+        AppRole.MODERATOR,
+        AppRole.OWNER,
+        AppRole.DEV,
+        AppRole.ADMIN,
+      ]),
     ).toBe(AppRole.OWNER);
   });
 
-  it('allows owner to downscope to admin and moderator', () => {
+  it('allows owner to downscope to dev, admin and moderator', () => {
+    const ownerToDev = resolveEffectiveRoles([AppRole.OWNER], AppRole.DEV);
+    expect(ownerToDev.actingAsRole).toBe(AppRole.DEV);
+    expect(ownerToDev.effectiveRoles).toEqual([AppRole.DEV]);
+
     const ownerToAdmin = resolveEffectiveRoles(
       [AppRole.OWNER, AppRole.HUNTER],
       AppRole.ADMIN,
@@ -44,6 +53,19 @@ describe('effective-role resolver', () => {
       AppRole.HUNTER,
       AppRole.MODERATOR,
     ]);
+  });
+
+  it('allows dev to downscope to admin and moderator only', () => {
+    const devToAdmin = resolveEffectiveRoles(
+      [AppRole.DEV, AppRole.HUNTER],
+      AppRole.ADMIN,
+    );
+    expect(devToAdmin.actingAsRole).toBe(AppRole.ADMIN);
+    expect(devToAdmin.effectiveRoles).toEqual([AppRole.HUNTER, AppRole.ADMIN]);
+
+    const devToModerator = resolveEffectiveRoles([AppRole.DEV], AppRole.MODERATOR);
+    expect(devToModerator.actingAsRole).toBe(AppRole.MODERATOR);
+    expect(devToModerator.effectiveRoles).toEqual([AppRole.MODERATOR]);
   });
 
   it('blocks upward simulation and invalid role values', () => {

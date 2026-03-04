@@ -4,14 +4,14 @@ import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/feed_view_mode_store.dart';
-import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'discover_projects.dart';
 import 'your_projects.dart';
 
@@ -26,61 +26,29 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   Section _activeSection = Sections.discoverProjects;
   final ScrollController _scrollController = ScrollController();
   final Set<String> _pendingNewProjectIds = <String>{};
-  Timer? _newProjectsPollTimer;
-  RealtimeChannel? _newProjectsRealtimeChannel;
-  bool _isCheckingForNewProjects = false;
+  final FeedSyncController _feedSyncController =
+      FeedSyncController(debugLabel: 'Discover');
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
-    _startNewProjectsSync();
+    _feedSyncController.start(
+      realtimeEnabled: AppConfig.isSupabaseConfigured,
+      pollInterval: const Duration(seconds: 14),
+      channelName: 'discover-new-projects',
+      table: 'Project',
+      onSyncRequested: _checkForNewProjects,
+    );
   }
 
   @override
   void dispose() {
-    _newProjectsPollTimer?.cancel();
-    _stopNewProjectsRealtimeSubscription();
+    _feedSyncController.dispose();
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();
     super.dispose();
-  }
-
-  void _startNewProjectsSync() {
-    if (!AppConfig.isSupabaseConfigured) {
-      _newProjectsPollTimer = Timer.periodic(
-        const Duration(seconds: 14),
-        (_) => _checkForNewProjects(),
-      );
-      return;
-    }
-
-    _startNewProjectsRealtimeSubscription();
-  }
-
-  void _startNewProjectsRealtimeSubscription() {
-    _stopNewProjectsRealtimeSubscription();
-    _newProjectsRealtimeChannel = Supabase.instance.client
-        .channel('discover-new-projects')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'Project',
-          callback: (_) => unawaited(_checkForNewProjects()),
-        )
-        .subscribe((status, [error]) {
-      debugPrint(
-        '[RT][Discover] projects status=$status error=$error',
-      );
-    });
-  }
-
-  void _stopNewProjectsRealtimeSubscription() {
-    final channel = _newProjectsRealtimeChannel;
-    if (channel == null) return;
-    _newProjectsRealtimeChannel = null;
-    Supabase.instance.client.removeChannel(channel);
   }
 
   void _onTabChanged(Section section) {
@@ -101,21 +69,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Future<void> _checkForNewProjects() async {
-    if (!mounted ||
-        _activeSection != Sections.discoverProjects ||
-        _isCheckingForNewProjects) {
+    if (!mounted || _activeSection != Sections.discoverProjects) {
       return;
     }
 
     final projectsStore = context.read<ProjectsStore>();
     final existingIds = projectsStore.projects.map((p) => p.id).toSet();
 
-    _isCheckingForNewProjects = true;
-    try {
-      await projectsStore.refreshProjects();
-    } finally {
-      _isCheckingForNewProjects = false;
-    }
+    await projectsStore.refreshProjects();
 
     if (!mounted) return;
 
