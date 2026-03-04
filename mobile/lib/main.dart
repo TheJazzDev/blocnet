@@ -23,7 +23,7 @@ import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/tags_store.dart';
 import 'package:blocnet/services/community/comments_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
-import 'package:blocnet/services/core/connectivity_store.dart';
+// import 'package:blocnet/services/core/connectivity_store.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
 import 'package:blocnet/services/core/startup_metrics_service.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
@@ -116,7 +116,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider<AuthStore>.value(value: authStore),
         ChangeNotifierProvider(create: (_) => AppStore()),
-        ChangeNotifierProvider(create: (_) => ConnectivityStore()),
+        // ChangeNotifierProvider(create: (_) => ConnectivityStore()),
         ChangeNotifierProvider(create: (_) => UpdatesStore()),
         ChangeNotifierProvider(create: (_) => FeedViewModeStore()),
         ChangeNotifierProvider(create: (_) => CommunityPostsStore()),

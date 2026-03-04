@@ -9,7 +9,7 @@ import 'package:blocnet/features/community/presentation/pages/community_screen.d
 import 'package:blocnet/features/profile/presentation/pages/profile_screen.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_screen.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
-import 'package:blocnet/services/core/connectivity_store.dart';
+// import 'package:blocnet/services/core/connectivity_store.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +21,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 part 'main/main_screen_shells.part.dart';
 part 'main/main_screen_nav.part.dart';
 part 'main/main_screen_composer.part.dart';
-part 'main/main_screen_offline_banner.part.dart';
+// part 'main/main_screen_offline_banner.part.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key, this.initialIndex = 0});
@@ -209,7 +209,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   onNavTap: _onUserNavTap,
                 ),
         ),
-        const _OfflineStatusBanner(),
+        // const _OfflineStatusBanner(),
         if (_isSwitchingSpace) const _SpaceSwitchOverlay(),
       ],
     );

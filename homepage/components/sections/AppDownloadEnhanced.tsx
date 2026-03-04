@@ -11,7 +11,7 @@ const androidVersion = process.env.NEXT_PUBLIC_ANDROID_VERSION;
 
 export function AppDownloadEnhanced() {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [modalMessage, setModalMessage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
 
@@ -79,13 +79,26 @@ export function AppDownloadEnhanced() {
     });
   }, { scope: containerRef });
 
-  function handleDownload() {
+  async function handleDownload() {
     if (isDownloading) return;
 
     setIsDownloading(true);
-    setError(null);
+    setModalMessage(null);
 
     try {
+      const availability = await fetch('/api/download/apk', {
+        method: 'HEAD',
+        cache: 'no-store',
+      });
+
+      if (!availability.ok) {
+        setModalMessage(
+          'Android APK is not available right now. Please check back soon.'
+        );
+        setIsDownloading(false);
+        return;
+      }
+
       // Create a hidden anchor tag and trigger native browser download
       const anchor = document.createElement('a');
       anchor.href = '/api/download/apk';
@@ -99,12 +112,8 @@ export function AppDownloadEnhanced() {
         anchor.remove();
         setIsDownloading(false);
       }, 100);
-    } catch (downloadError) {
-      const message =
-        downloadError instanceof Error
-          ? downloadError.message
-          : 'Unable to download APK right now.';
-      setError(message);
+    } catch {
+      setModalMessage('Unable to start APK download right now. Please try again.');
       setIsDownloading(false);
     }
   }
@@ -276,12 +285,6 @@ export function AppDownloadEnhanced() {
                 <div className="absolute inset-0 bg-linear-to-r from-teal-400 to-purple-500 opacity-0" />
               </button>
 
-              {error && (
-                <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <p className="text-sm text-red-400">{error}</p>
-                </div>
-              )}
-
               <p className="mt-4 text-xs sm:text-sm text-muted text-center">
                 iOS version coming soon on App Store
               </p>
@@ -308,6 +311,26 @@ export function AppDownloadEnhanced() {
           </div>
         </div>
       </div>
+
+      {modalMessage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 sm:p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-foreground mb-2">
+              APK Not Available
+            </h3>
+            <p className="text-sm text-muted leading-relaxed">
+              {modalMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => setModalMessage(null)}
+              className="mt-5 w-full rounded-xl bg-linear-to-r from-teal-500 to-primary px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

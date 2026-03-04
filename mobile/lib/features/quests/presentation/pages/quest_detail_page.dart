@@ -6,10 +6,10 @@ import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
 import 'package:blocnet/services/engagement/quests_store.dart';
+import 'package:blocnet/shared/utils/external_url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class QuestDetailPage extends StatefulWidget {
   const QuestDetailPage({
@@ -50,7 +50,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
     if (slug.contains('share-on-x') ||
         slug.contains('follow-on-x') ||
         title.contains(' on x')) {
-      return 'https://x.com/blocnet';
+      return 'https://x.com/blocnet_app';
     }
 
     return null;
@@ -832,8 +832,8 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   }
 
   Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    final opened = await launchExternalUrlWithAppFallback(url);
+    if (!opened) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
