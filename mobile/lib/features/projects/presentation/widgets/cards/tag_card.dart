@@ -26,9 +26,9 @@ class TagCard extends StatelessWidget {
   // Map icon names to accent colors for identity
   static const Map<String, int> _accentMap = {
     'timeline': 0xFF00E5B8, // teal — Trending
-    'emergency': 0xFF00E5B8, // teal — High
-    'brightness': 0xFF339DFF, // blue — Medium
-    'calm': 0xFF737373, // muted — Low
+    'emergency': 0xFFEF4444, // red — High urgency
+    'brightness': 0xFFF97316, // orange — Medium urgency
+    'calm': 0xFF10B981, // green — Low urgency
   };
 
   @override
@@ -39,14 +39,31 @@ class TagCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 100,
-        height: 110,
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.all(12),
+        width: 120,
+        height: 105,
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.borderSubtle, width: 1),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              accentColor.withValues(alpha: 0.15),
+              accentColor.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: accentColor.withValues(alpha: 0.4),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,24 +71,37 @@ class TagCard extends StatelessWidget {
           children: [
             // Icon with tinted container
             Container(
-              width: 34,
-              height: 34,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    accentColor.withValues(alpha: 0.25),
+                    accentColor.withValues(alpha: 0.12),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: 0.35),
+                  width: 1,
+                ),
               ),
-              child: Icon(iconData, size: 17, color: accentColor),
+              child: Icon(iconData, size: 22, color: accentColor),
             ),
             // Label
             Text(
               label,
               style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 11,
+                color: AppColors.textPrimary,
+                fontSize: 13,
                 fontFamily: 'Geist',
-                fontWeight: FontWeight.w500,
-                height: 1.3,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
