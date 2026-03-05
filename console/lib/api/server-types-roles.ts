@@ -1,4 +1,4 @@
-export type AdminGovernanceRole = "owner" | "dev" | "admin" | "moderator";
+export type AdminGovernanceRole = "owner" | "dev" | "admin";
 
 export interface GovernanceRoleDefinition {
   role: AdminGovernanceRole;
@@ -26,7 +26,13 @@ export interface RoleMatrixSection extends RoleCapabilitySection {
 }
 
 export interface SpaceRoleDefinition {
-  role: "user" | "core_team" | "hunter";
+  role:
+    | "user"
+    | "core_team"
+    | "community_admin"
+    | "community_moderator"
+    | "hunter"
+    | "moderator";
   label: string;
   description: string;
 }

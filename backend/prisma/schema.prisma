@@ -10,6 +10,8 @@ enum RoleName {
   owner
   dev
   admin
+  community_admin
+  community_moderator
   moderator
   core_team
   hunter

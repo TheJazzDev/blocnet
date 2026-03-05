@@ -1,14 +1,22 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { canManageAdmins, canManageHunters, canManageModerators } from "@/lib/rbac";
+import {
+  canManageAdmins,
+  canManageCommunityAdmins,
+  canManageCommunityModerators,
+  canManageHunters,
+} from "@/lib/rbac";
 
 const ROLE_PRIORITY: Record<string, number> = {
-  owner: 6,
-  core_team: 5,
-  admin: 4,
-  moderator: 3,
-  hunter: 2,
+  owner: 9,
+  dev: 8,
+  admin: 7,
+  core_team: 6,
+  community_admin: 5,
+  community_moderator: 4,
+  moderator: 4,
+  hunter: 3,
   user: 1,
 };
 
@@ -33,8 +41,10 @@ type BuildRoleActionEntriesArgs = {
   onDemoteCoreTeam: () => Promise<void>;
   onPromoteToAdmin: () => Promise<void>;
   onDemoteAdmin: () => Promise<void>;
-  onPromoteToModerator: () => Promise<void>;
-  onDemoteModerator: () => Promise<void>;
+  onPromoteToCommunityAdmin: () => Promise<void>;
+  onDemoteCommunityAdmin: () => Promise<void>;
+  onPromoteToCommunityModerator: () => Promise<void>;
+  onDemoteCommunityModerator: () => Promise<void>;
   onPromoteToHunter: () => Promise<void>;
   onDemoteHunter: () => Promise<void>;
 };
@@ -67,10 +77,23 @@ export function roleBadge(role: string) {
           Admin
         </Badge>
       );
+    case "dev":
+      return (
+        <Badge className="border-cyan-500/35 bg-cyan-500/10 text-cyan-300 text-xs sm:text-sm">
+          Dev
+        </Badge>
+      );
+    case "community_admin":
+      return (
+        <Badge className="border-indigo-500/25 bg-indigo-500/10 text-indigo-300 text-xs sm:text-sm">
+          Community Admin
+        </Badge>
+      );
+    case "community_moderator":
     case "moderator":
       return (
         <Badge className="border-amber-500/20 bg-amber-500/10 text-amber-300 text-xs sm:text-sm">
-          Moderator
+          Community Moderator
         </Badge>
       );
     case "hunter":
@@ -105,13 +128,19 @@ export const ROLE_DESCRIPTIONS = [
     key: "admin",
     className: "text-teal-300",
     label: "Admin:",
-    copy: "Can manage users, content, and moderate the platform",
+    copy: "Console governance role with operational privileges.",
   },
   {
-    key: "moderator",
+    key: "community_admin",
+    className: "text-indigo-300",
+    label: "Community Admin:",
+    copy: "Public community identity role; does not grant console access.",
+  },
+  {
+    key: "community_moderator",
     className: "text-amber-300",
-    label: "Moderator:",
-    copy: "Can moderate content and manage community",
+    label: "Community Moderator:",
+    copy: "Public community moderation identity; no console governance access.",
   },
   {
     key: "hunter",
@@ -133,8 +162,10 @@ export function buildRoleActionEntries({
   onDemoteCoreTeam,
   onPromoteToAdmin,
   onDemoteAdmin,
-  onPromoteToModerator,
-  onDemoteModerator,
+  onPromoteToCommunityAdmin,
+  onDemoteCommunityAdmin,
+  onPromoteToCommunityModerator,
+  onDemoteCommunityModerator,
   onPromoteToHunter,
   onDemoteHunter,
 }: BuildRoleActionEntriesArgs): RoleActionEntry[] {
@@ -190,7 +221,7 @@ export function buildRoleActionEntries({
       destructive: true,
       onClick: onDemoteAdmin,
       hasPermission: canManageAdminRole,
-      requiredRole: "Owner",
+      requiredRole: "Owner or Dev",
     });
   } else {
     entries.push({
@@ -198,27 +229,53 @@ export function buildRoleActionEntries({
       label: "Grant Admin",
       onClick: onPromoteToAdmin,
       hasPermission: canManageAdminRole,
-      requiredRole: "Owner",
+      requiredRole: "Owner or Dev",
     });
   }
 
-  const canManageModeratorRole = canManageModerators(actorRoles) && !targetIsSelf;
-  if (userRoles.includes("moderator")) {
+  const hasCommunityAdminRole =
+    userRoles.includes("community_admin");
+  const canManageCommunityAdminRole =
+    canManageCommunityAdmins(actorRoles) && !targetIsSelf;
+  if (hasCommunityAdminRole) {
     entries.push({
-      key: "revoke-moderator",
-      label: "Revoke Moderator",
+      key: "revoke-community-admin",
+      label: "Revoke Community Admin",
       destructive: true,
-      onClick: onDemoteModerator,
-      hasPermission: canManageModeratorRole,
-      requiredRole: "Owner or Admin",
+      onClick: onDemoteCommunityAdmin,
+      hasPermission: canManageCommunityAdminRole,
+      requiredRole: "Owner, Dev, or Admin",
     });
   } else {
     entries.push({
-      key: "grant-moderator",
-      label: "Grant Moderator",
-      onClick: onPromoteToModerator,
-      hasPermission: canManageModeratorRole,
-      requiredRole: "Owner or Admin",
+      key: "grant-community-admin",
+      label: "Grant Community Admin",
+      onClick: onPromoteToCommunityAdmin,
+      hasPermission: canManageCommunityAdminRole,
+      requiredRole: "Owner, Dev, or Admin",
+    });
+  }
+
+  const hasCommunityModeratorRole =
+    userRoles.includes("community_moderator") || userRoles.includes("moderator");
+  const canManageCommunityModeratorRole =
+    canManageCommunityModerators(actorRoles) && !targetIsSelf;
+  if (hasCommunityModeratorRole) {
+    entries.push({
+      key: "revoke-community-moderator",
+      label: "Revoke Community Moderator",
+      destructive: true,
+      onClick: onDemoteCommunityModerator,
+      hasPermission: canManageCommunityModeratorRole,
+      requiredRole: "Owner, Dev, or Admin",
+    });
+  } else {
+    entries.push({
+      key: "grant-community-moderator",
+      label: "Grant Community Moderator",
+      onClick: onPromoteToCommunityModerator,
+      hasPermission: canManageCommunityModeratorRole,
+      requiredRole: "Owner, Dev, or Admin",
     });
   }
 

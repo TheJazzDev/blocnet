@@ -17,7 +17,6 @@ type AdminAccessFiltersProps = {
   owners: number;
   devs: number;
   admins: number;
-  moderators: number;
   searchInput: string;
   onSearchInputChange: (value: string) => void;
   role: GovernanceFilter;
@@ -33,7 +32,6 @@ export function AdminAccessFilters({
   owners,
   devs,
   admins,
-  moderators,
   searchInput,
   onSearchInputChange,
   role,
@@ -45,12 +43,11 @@ export function AdminAccessFilters({
 }: AdminAccessFiltersProps) {
   return (
     <>
-      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-5'>
+      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
         <MetricStat label='Total Results' value={total} />
         <MetricStat label='Owners (page)' value={owners} />
         <MetricStat label='Devs (page)' value={devs} />
         <MetricStat label='Admins (page)' value={admins} />
-        <MetricStat label='Moderators (page)' value={moderators} />
       </div>
 
       <Card>
@@ -73,11 +70,10 @@ export function AdminAccessFilters({
                 <SelectValue placeholder='Governance role' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>Owner/Dev/Admin/Moderator</SelectItem>
+                <SelectItem value='all'>Owner/Dev/Admin</SelectItem>
                 <SelectItem value='owner'>Owner only</SelectItem>
                 <SelectItem value='dev'>Dev only</SelectItem>
                 <SelectItem value='admin'>Admin only</SelectItem>
-                <SelectItem value='moderator'>Moderator only</SelectItem>
               </SelectContent>
             </Select>
             <Select

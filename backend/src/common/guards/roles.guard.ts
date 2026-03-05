@@ -15,14 +15,11 @@ import { AppRole } from '../enums/role.enum';
 import type { AuthUser } from '../interfaces/auth-user.interface';
 
 const GOVERNANCE_ROLE_IMPLICATIONS: Record<AppRole, AppRole[]> = {
-  [AppRole.OWNER]: [
-    AppRole.OWNER,
-    AppRole.DEV,
-    AppRole.ADMIN,
-    AppRole.MODERATOR,
-  ],
-  [AppRole.DEV]: [AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
-  [AppRole.ADMIN]: [AppRole.ADMIN, AppRole.MODERATOR],
+  [AppRole.OWNER]: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
+  [AppRole.DEV]: [AppRole.DEV, AppRole.ADMIN],
+  [AppRole.ADMIN]: [AppRole.ADMIN],
+  [AppRole.COMMUNITY_ADMIN]: [AppRole.COMMUNITY_ADMIN],
+  [AppRole.COMMUNITY_MODERATOR]: [AppRole.COMMUNITY_MODERATOR],
   [AppRole.MODERATOR]: [AppRole.MODERATOR],
   [AppRole.CORE_TEAM]: [AppRole.CORE_TEAM],
   [AppRole.HUNTER]: [AppRole.HUNTER],
@@ -97,8 +94,7 @@ export class RolesGuard implements CanActivate {
       (role) =>
         role === AppRole.OWNER ||
         role === AppRole.DEV ||
-        role === AppRole.ADMIN ||
-        role === AppRole.MODERATOR,
+        role === AppRole.ADMIN,
     );
 
     if (isAdminPanelRequest && includesGovernanceRole) {

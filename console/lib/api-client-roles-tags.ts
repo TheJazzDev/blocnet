@@ -35,6 +35,29 @@ export const rolesAndTagsApi = {
       method: "DELETE",
     }),
 
+  promoteToCommunityAdmin: (userId: string, note?: string) =>
+    apiFetch(`/roles/community-admins/${userId}/promote`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    }),
+
+  demoteCommunityAdmin: (userId: string) =>
+    apiFetch(`/roles/community-admins/${userId}`, {
+      method: "DELETE",
+    }),
+
+  promoteToCommunityModerator: (userId: string, note?: string) =>
+    apiFetch(`/roles/community-moderators/${userId}/promote`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    }),
+
+  demoteCommunityModerator: (userId: string) =>
+    apiFetch(`/roles/community-moderators/${userId}`, {
+      method: "DELETE",
+    }),
+
+  // Legacy aliases kept while UI and callers are being migrated.
   promoteToModerator: (userId: string, note?: string) =>
     apiFetch(`/roles/moderators/${userId}/promote`, {
       method: "POST",

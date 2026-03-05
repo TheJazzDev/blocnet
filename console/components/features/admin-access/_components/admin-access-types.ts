@@ -11,9 +11,7 @@ export type GovernanceAction =
   | "grant_dev"
   | "revoke_dev"
   | "grant_admin"
-  | "revoke_admin"
-  | "grant_moderator"
-  | "revoke_moderator";
+  | "revoke_admin";
 
 export type PendingGovernanceAction = {
   user: AdminUser;

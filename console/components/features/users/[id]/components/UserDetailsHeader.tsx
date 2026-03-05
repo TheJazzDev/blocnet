@@ -21,11 +21,14 @@ type UserDetailsHeaderProps = {
 };
 
 const ROLE_PRIORITY: Record<string, number> = {
-  owner: 6,
-  core_team: 5,
-  admin: 4,
-  moderator: 3,
-  hunter: 2,
+  owner: 9,
+  dev: 8,
+  admin: 7,
+  core_team: 6,
+  community_admin: 5,
+  community_moderator: 4,
+  moderator: 4,
+  hunter: 3,
   user: 1,
 };
 
@@ -45,8 +48,21 @@ function roleBadge(role: string) {
       return <Badge className="border-sky-500/25 bg-sky-500/10 text-sky-300 text-xs">Core Team</Badge>;
     case "admin":
       return <Badge className="border-teal-500/35 bg-teal-500/10 text-teal-300 text-xs">Admin</Badge>;
+    case "dev":
+      return <Badge className="border-cyan-500/35 bg-cyan-500/10 text-cyan-300 text-xs">Dev</Badge>;
+    case "community_admin":
+      return (
+        <Badge className="border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs">
+          Community Admin
+        </Badge>
+      );
+    case "community_moderator":
     case "moderator":
-      return <Badge className="border-amber-500/20 bg-amber-500/10 text-amber-300 text-xs">Moderator</Badge>;
+      return (
+        <Badge className="border-amber-500/20 bg-amber-500/10 text-amber-300 text-xs">
+          Community Moderator
+        </Badge>
+      );
     case "hunter":
       return <Badge className="border-emerald-500/20 bg-emerald-500/10 text-emerald-300 text-xs">Hunter</Badge>;
     default:

@@ -1,5 +1,11 @@
-export type AdminPanelRole = 'owner' | 'dev' | 'admin' | 'moderator';
-export type SpaceRole = 'user' | 'core_team' | 'hunter';
+export type AdminPanelRole = 'owner' | 'dev' | 'admin';
+export type SpaceRole =
+  | 'user'
+  | 'core_team'
+  | 'community_admin'
+  | 'community_moderator'
+  | 'hunter'
+  | 'moderator';
 export type RoleCapabilitySectionId =
   | 'overview'
   | 'content'

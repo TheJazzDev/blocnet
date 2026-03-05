@@ -11,7 +11,6 @@ describe('RolesService roles matrix', () => {
       AppRole.OWNER,
       AppRole.DEV,
       AppRole.ADMIN,
-      AppRole.MODERATOR,
     ]);
 
     const capabilityMap = new Map(
@@ -29,11 +28,15 @@ describe('RolesService roles matrix', () => {
       AppRole.DEV,
       AppRole.ADMIN,
     ]);
-    expect(capabilityMap.get('access.applications.proposal.review')).toEqual([
+    expect(capabilityMap.get('access.roles.community_admin.manage')).toEqual([
       AppRole.OWNER,
       AppRole.DEV,
       AppRole.ADMIN,
-      AppRole.MODERATOR,
+    ]);
+    expect(capabilityMap.get('access.roles.community_moderator.manage')).toEqual([
+      AppRole.OWNER,
+      AppRole.DEV,
+      AppRole.ADMIN,
     ]);
     expect(capabilityMap.get('system.settings.mutate')).toEqual([
       AppRole.OWNER,
@@ -43,6 +46,8 @@ describe('RolesService roles matrix', () => {
       expect.arrayContaining([
         expect.objectContaining({ role: AppRole.USER }),
         expect.objectContaining({ role: AppRole.CORE_TEAM }),
+        expect.objectContaining({ role: AppRole.COMMUNITY_ADMIN }),
+        expect.objectContaining({ role: AppRole.COMMUNITY_MODERATOR }),
         expect.objectContaining({ role: AppRole.HUNTER }),
       ]),
     );

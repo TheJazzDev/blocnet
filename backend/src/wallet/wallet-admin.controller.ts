@@ -33,7 +33,7 @@ import { WalletAdminConfigService } from './wallet-admin-config.service';
 
 @Controller('admin/wallet')
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+@Roles(AppRole.OWNER, AppRole.ADMIN)
 export class WalletAdminController {
   constructor(
     private readonly walletAdminService: WalletAdminService,

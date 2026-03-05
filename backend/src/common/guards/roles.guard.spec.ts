@@ -48,7 +48,7 @@ describe('RolesGuard', () => {
 
   it('uses effective roles for authorization checks', async () => {
     const reflector = {
-      getAllAndOverride: jest.fn().mockReturnValue([AppRole.MODERATOR]),
+      getAllAndOverride: jest.fn().mockReturnValue([AppRole.ADMIN]),
     } as unknown as Reflector;
     const adminTwoFactorService = {
       shouldEnforceChallengeForAdminPanel: jest.fn().mockResolvedValue(false),
@@ -63,20 +63,22 @@ describe('RolesGuard', () => {
         roles: [AppRole.OWNER, AppRole.HUNTER],
       },
       headers: {
-        'x-admin-view-as-role': AppRole.MODERATOR,
+        'x-admin-view-as-role': AppRole.ADMIN,
       },
     };
 
     const result = await guard.canActivate(createContext(request));
     expect(result).toBe(true);
     expect(request.user?.realRoles).toEqual([AppRole.OWNER, AppRole.HUNTER]);
-    expect(request.user?.roles).toEqual([AppRole.HUNTER, AppRole.MODERATOR]);
-    expect(request.user?.actingAsRole).toBe(AppRole.MODERATOR);
+    expect(request.user?.roles).toEqual([AppRole.HUNTER, AppRole.ADMIN]);
+    expect(request.user?.actingAsRole).toBe(AppRole.ADMIN);
   });
 
   it('ignores invalid or upward role requests', async () => {
     const reflector = {
-      getAllAndOverride: jest.fn().mockReturnValue([AppRole.MODERATOR]),
+      getAllAndOverride: jest
+        .fn()
+        .mockReturnValue([AppRole.COMMUNITY_MODERATOR]),
     } as unknown as Reflector;
     const adminTwoFactorService = {
       shouldEnforceChallengeForAdminPanel: jest.fn().mockResolvedValue(false),
@@ -88,7 +90,7 @@ describe('RolesGuard', () => {
       user: {
         id: 'u2',
         email: 'mod@blocnet.io',
-        roles: [AppRole.MODERATOR],
+        roles: [AppRole.COMMUNITY_MODERATOR],
       },
       headers: {
         'x-admin-view-as-role': AppRole.ADMIN,
@@ -97,7 +99,7 @@ describe('RolesGuard', () => {
 
     const result = await guard.canActivate(createContext(request));
     expect(result).toBe(true);
-    expect(request.user?.roles).toEqual([AppRole.MODERATOR]);
+    expect(request.user?.roles).toEqual([AppRole.COMMUNITY_MODERATOR]);
     expect(request.user?.actingAsRole).toBeNull();
   });
 });

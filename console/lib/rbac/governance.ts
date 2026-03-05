@@ -13,8 +13,7 @@ export function normalizeAdminPanelRole(
   if (
     normalized === 'owner' ||
     normalized === 'dev' ||
-    normalized === 'admin' ||
-    normalized === 'moderator'
+    normalized === 'admin'
   ) {
     return normalized;
   }
@@ -43,13 +42,11 @@ export function getRoleViewOptions(realRoles: string[]): AdminPanelRole[] {
   const topRole = getAdminGovernanceRole(realRoles);
   switch (topRole) {
     case 'owner':
-      return ['owner', 'dev', 'admin', 'moderator'];
+      return ['owner', 'dev', 'admin'];
     case 'dev':
-      return ['dev', 'admin', 'moderator'];
+      return ['dev', 'admin'];
     case 'admin':
-      return ['admin', 'moderator'];
-    case 'moderator':
-      return ['moderator'];
+      return ['admin'];
     default:
       return [];
   }
@@ -76,17 +73,12 @@ export function resolveEffectiveRoles(
 
 export function canAccessAdminPanel(roles: string[]): boolean {
   return roles.some(
-    (role) =>
-      role === 'owner' ||
-      role === 'dev' ||
-      role === 'admin' ||
-      role === 'moderator',
+    (role) => role === 'owner' || role === 'dev' || role === 'admin',
   );
 }
 
 export function formatRoleLabel(role: AdminPanelRole): string {
   if (role === 'owner') return 'Owner';
   if (role === 'dev') return 'Dev';
-  if (role === 'admin') return 'Admin';
-  return 'Moderator';
+  return 'Admin';
 }

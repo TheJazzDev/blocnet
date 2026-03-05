@@ -33,23 +33,29 @@ export function useUserManagementPage(userId: string, session: SessionInput) {
 
   const actorRoles = session.effectiveRoles;
   const actorIsOwner = actorRoles.includes("owner");
+  const actorIsDev = actorRoles.includes("dev");
   const actorIsAdmin = actorRoles.includes("admin");
   const canViewUsers =
-    actorIsOwner || actorIsAdmin || actorRoles.includes("moderator");
+    actorIsOwner || actorIsDev || actorIsAdmin;
 
   const targetRoles = user?.roles ?? [];
   const targetIsSelf = user?.id === session.id;
   const targetIsOwner = targetRoles.includes("owner");
+  const targetIsDev = targetRoles.includes("dev");
   const targetIsAdmin = targetRoles.includes("admin");
 
   const canManageAccount =
     Boolean(user) &&
-    (actorIsOwner || (actorIsAdmin && !targetIsOwner && !targetIsAdmin));
+    (actorIsOwner ||
+      (actorIsDev && !targetIsOwner && !targetIsDev) ||
+      (actorIsAdmin && !targetIsOwner && !targetIsDev && !targetIsAdmin));
   const canEditProfile = canManageAccount && !Boolean(user?.isDeactivated);
   const canManageRoles =
     Boolean(user) &&
     !Boolean(user?.isDeactivated) &&
-    (actorIsOwner || (actorIsAdmin && !targetIsOwner && !targetIsAdmin));
+    (actorIsOwner ||
+      (actorIsDev && !targetIsOwner && !targetIsDev) ||
+      (actorIsAdmin && !targetIsOwner && !targetIsDev && !targetIsAdmin));
 
   const load = useMemo(
     () => async () => {

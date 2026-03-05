@@ -332,7 +332,7 @@ export class UsersController {
 
 @Controller('admin/users')
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+@Roles(AppRole.OWNER, AppRole.ADMIN)
 export class AdminUsersController {
   constructor(
     private readonly usersService: UsersService,

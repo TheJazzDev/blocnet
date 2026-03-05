@@ -23,7 +23,7 @@ export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Get('matrix')
-  @Roles(AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR)
+  @Roles(AppRole.OWNER, AppRole.DEV, AppRole.ADMIN)
   getMatrix() {
     return this.rolesService.getRolesMatrix();
   }
@@ -83,7 +83,7 @@ export class RolesController {
   }
 
   @Post('moderators/:userId/promote')
-  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  @Roles(AppRole.OWNER, AppRole.DEV, AppRole.ADMIN)
   async promoteModerator(
     @CurrentUser() user: AuthUser | undefined,
     @Param('userId') userId: string,
@@ -93,7 +93,43 @@ export class RolesController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.rolesService.promoteToModerator(user.id, userId, dto.note);
+    return this.rolesService.promoteToCommunityModerator(
+      user.id,
+      userId,
+      dto.note,
+    );
+  }
+
+  @Post('community-moderators/:userId/promote')
+  @Roles(AppRole.OWNER, AppRole.DEV, AppRole.ADMIN)
+  async promoteCommunityModerator(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+    @Body() dto: PromoteUserDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.rolesService.promoteToCommunityModerator(
+      user.id,
+      userId,
+      dto.note,
+    );
+  }
+
+  @Post('community-admins/:userId/promote')
+  @Roles(AppRole.OWNER, AppRole.DEV, AppRole.ADMIN)
+  async promoteCommunityAdmin(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+    @Body() dto: PromoteUserDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.rolesService.promoteToCommunityAdmin(user.id, userId, dto.note);
   }
 
   @Post('core-teams/:userId/promote')
@@ -124,7 +160,7 @@ export class RolesController {
   }
 
   @Delete('moderators/:userId')
-  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  @Roles(AppRole.OWNER, AppRole.DEV, AppRole.ADMIN)
   async demoteModerator(
     @CurrentUser() user: AuthUser | undefined,
     @Param('userId') userId: string,
@@ -133,7 +169,33 @@ export class RolesController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.rolesService.demoteModerator(user.id, userId);
+    return this.rolesService.demoteCommunityModerator(user.id, userId);
+  }
+
+  @Delete('community-moderators/:userId')
+  @Roles(AppRole.OWNER, AppRole.DEV, AppRole.ADMIN)
+  async demoteCommunityModerator(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.rolesService.demoteCommunityModerator(user.id, userId);
+  }
+
+  @Delete('community-admins/:userId')
+  @Roles(AppRole.OWNER, AppRole.DEV, AppRole.ADMIN)
+  async demoteCommunityAdmin(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId') userId: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.rolesService.demoteCommunityAdmin(user.id, userId);
   }
 
   @Post('hunters/:userId/promote')

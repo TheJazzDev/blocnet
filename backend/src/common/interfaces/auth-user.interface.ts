@@ -9,6 +9,5 @@ export interface AuthUser {
     | AppRole.OWNER
     | AppRole.DEV
     | AppRole.ADMIN
-    | AppRole.MODERATOR
     | null;
 }

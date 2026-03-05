@@ -91,12 +91,12 @@ export function useSignInActions(params: SignInActionsParams) {
 
       const hasAccess =
         profileRes.data.roles.includes('owner') ||
-        profileRes.data.roles.includes('admin') ||
-        profileRes.data.roles.includes('moderator');
+        profileRes.data.roles.includes('dev') ||
+        profileRes.data.roles.includes('admin');
 
       if (!hasAccess) {
         params.setError(
-          'Access denied. Only owners, admins, and moderators can access this panel.',
+          'Access denied. Only owner, dev, and admin accounts can access this panel.',
         );
         await supabase.auth.signOut();
         await clearServerSession();

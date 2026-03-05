@@ -26,7 +26,6 @@ type AdminAccessTableCardProps = {
   actorIsOwner: boolean;
   actorCanManageDevs: boolean;
   actorCanManageAdmins: boolean;
-  actorCanManageModerators: boolean;
   pageStart: number;
   pageEnd: number;
   total: number;
@@ -46,7 +45,6 @@ export function AdminAccessTableCard({
   actorIsOwner,
   actorCanManageDevs,
   actorCanManageAdmins,
-  actorCanManageModerators,
   pageStart,
   pageEnd,
   total,
@@ -83,7 +81,6 @@ export function AdminAccessTableCard({
                 const hasOwner = user.roles.includes('owner');
                 const hasDev = user.roles.includes('dev');
                 const hasAdmin = user.roles.includes('admin');
-                const hasModerator = user.roles.includes('moderator');
                 const actionDisabled = actionUserId === user.id;
                 const disabled = targetIsSelf || user.isDeactivated || actionDisabled;
 
@@ -139,21 +136,6 @@ export function AdminAccessTableCard({
                             onClick={() => onAction(user, hasAdmin ? 'revoke_admin' : 'grant_admin')}
                             activeLabel='Revoke Admin'
                             inactiveLabel='Grant Admin'
-                          />
-                        )}
-                        {actorCanManageModerators && (
-                          <ActionButton
-                            active={hasModerator}
-                            disabled={disabled}
-                            actionDisabled={actionDisabled}
-                            onClick={() =>
-                              onAction(
-                                user,
-                                hasModerator ? 'revoke_moderator' : 'grant_moderator',
-                              )
-                            }
-                            activeLabel='Revoke Moderator'
-                            inactiveLabel='Grant Moderator'
                           />
                         )}
                       </div>

@@ -41,7 +41,7 @@ export class AdminTwoFactorController {
   }
 
   @Get('policy')
-  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
   async getPolicy(@CurrentUser() user: AuthUser | undefined) {
     if (!user) {
       throw new UnauthorizedException('User context missing');

@@ -20,7 +20,7 @@ import { MiningLeaderboardService } from './mining-leaderboard.service';
 
 @Controller('admin/mining')
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+@Roles(AppRole.OWNER, AppRole.ADMIN)
 export class MiningAdminController {
   constructor(
     private readonly miningAdminService: MiningAdminService,

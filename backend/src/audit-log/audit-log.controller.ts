@@ -20,7 +20,7 @@ export class AuditLogController {
   constructor(private readonly auditLogService: AuditLogService) {}
 
   @Get()
-  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
   async list(
     @CurrentUser() user: AuthUser | undefined,
     @Query('limit') limit?: string,

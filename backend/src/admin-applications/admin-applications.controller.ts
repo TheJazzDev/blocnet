@@ -38,7 +38,7 @@ export class AdminApplicationsController {
   }
 
   @Get()
-  @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
   async list() {
     return this.adminApplicationsService.list();
   }

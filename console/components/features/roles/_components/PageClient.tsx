@@ -26,9 +26,7 @@ function roleBadgeClass(role: AdminPanelRole) {
   if (role === 'owner') return 'border-primary/40 bg-primary/15 text-primary';
   if (role === 'dev')
     return 'border-cyan-400/40 bg-cyan-400/10 text-cyan-300';
-  if (role === 'admin')
-    return 'border-teal-400/40 bg-teal-400/10 text-teal-300';
-  return 'border-amber-500/40 bg-amber-500/10 text-amber-300';
+  return 'border-teal-400/40 bg-teal-400/10 text-teal-300';
 }
 
 function rolePill(role: AdminPanelRole) {
@@ -46,7 +44,7 @@ export default function RolesPage() {
   const { data: matrix = buildLocalRolesMatrix(), isLoading: loading } = useRolesQuery();
 
   const roleOrder = useMemo<AdminPanelRole[]>(() => {
-    if (!matrix) return ['owner', 'dev', 'admin', 'moderator'];
+    if (!matrix) return ['owner', 'dev', 'admin'];
     return matrix.governanceRoles
       .map((entry) => entry.role)
       .filter(Boolean) as AdminPanelRole[];
@@ -70,7 +68,7 @@ export default function RolesPage() {
     <div className='space-y-6'>
       <PageHeader
         title='Role Matrix'
-        description='Capability reference for owner, dev, admin, and moderator governance in the admin console.'
+        description='Capability reference for owner, dev, and admin governance in the admin console.'
       />
 
       <div className='grid gap-4 md:grid-cols-3'>
@@ -101,7 +99,7 @@ export default function RolesPage() {
             Space Roles
           </CardTitle>
           <CardDescription>
-            User, Core Team, and Hunter are space/capability roles, not admin
+            Community and space roles are identity/capability labels, not admin
             governance roles.
           </CardDescription>
         </CardHeader>

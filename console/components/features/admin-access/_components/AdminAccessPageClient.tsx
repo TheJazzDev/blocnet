@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmRoleDialog } from './ConfirmRoleDialog';
 import { useAdminSession } from '@/components/admin-shell';
 import { clientApi, type AdminUser } from '@/lib/api-client';
-import { canManageAdmins, canManageDevs, canManageModerators } from '@/lib/rbac';
+import { canManageAdmins, canManageDevs } from '@/lib/rbac';
 import { AdminAccessFilters } from './AdminAccessFilters';
 import { AdminAccessTableCard } from './AdminAccessTableCard';
 import { useAdminAccess } from '@/lib/hooks';
@@ -21,7 +21,6 @@ export default function AdminAccessPage() {
   const actorIsOwner = actorRoles.includes('owner');
   const actorCanManageDevs = canManageDevs(actorRoles);
   const actorCanManageAdmins = canManageAdmins(actorRoles);
-  const actorCanManageModerators = canManageModerators(actorRoles);
 
   const {
     users,
@@ -56,8 +55,7 @@ export default function AdminAccessPage() {
     const owners = users.filter((entry) => entry.roles.includes('owner')).length;
     const admins = users.filter((entry) => entry.roles.includes('admin')).length;
     const devs = users.filter((entry) => entry.roles.includes('dev')).length;
-    const moderators = users.filter((entry) => entry.roles.includes('moderator')).length;
-    return { owners, devs, admins, moderators };
+    return { owners, devs, admins };
   }, [users]);
 
   const pageStart = total === 0 ? 0 : offset + 1;
@@ -91,12 +89,6 @@ export default function AdminAccessPage() {
           break;
         case 'revoke_admin':
           await clientApi.demoteAdmin(user.id);
-          break;
-        case 'grant_moderator':
-          await clientApi.promoteToModerator(user.id, note || undefined);
-          break;
-        case 'revoke_moderator':
-          await clientApi.demoteModerator(user.id);
           break;
       }
       await loadUsers();
@@ -133,7 +125,7 @@ export default function AdminAccessPage() {
     <div className='space-y-6'>
       <PageHeader
         title='Admin Panel Access'
-        description='Manage governance roles for panel operators only: owner, dev, admin, and moderator.'>
+        description='Manage governance roles for panel operators only: owner, dev, and admin.'>
         <Button variant='outline' size='sm' asChild>
           <Link href='/users'>Open Members Directory</Link>
         </Button>
@@ -147,7 +139,6 @@ export default function AdminAccessPage() {
         owners={stats.owners}
         devs={stats.devs}
         admins={stats.admins}
-        moderators={stats.moderators}
         searchInput={searchInput}
         onSearchInputChange={setSearchInput}
         role={role}
@@ -167,7 +158,6 @@ export default function AdminAccessPage() {
         actorIsOwner={actorIsOwner}
         actorCanManageDevs={actorCanManageDevs}
         actorCanManageAdmins={actorCanManageAdmins}
-        actorCanManageModerators={actorCanManageModerators}
         pageStart={pageStart}
         pageEnd={pageEnd}
         total={total}

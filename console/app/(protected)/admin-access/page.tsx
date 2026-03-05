@@ -5,7 +5,7 @@ import AdminAccessPageClient from '@/components/features/admin-access/_component
 export const metadata: Metadata = {
   title: 'Admin Access | Blocnet Console',
   description:
-    'Manage owner, dev, admin, and moderator panel access and governance controls.',
+    'Manage owner, dev, and admin panel access and governance controls.',
 };
 
 export default function AdminAccessPage() {

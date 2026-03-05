@@ -21,7 +21,7 @@ import { EdgeAdminService } from './edge-admin.service';
 
 @Controller('admin/edge')
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+@Roles(AppRole.OWNER, AppRole.ADMIN)
 export class EdgeEngineAdminController {
   constructor(private readonly edgeAdminService: EdgeAdminService) {}
 

@@ -10,7 +10,11 @@ export function canManageDevs(roles: string[]): boolean {
   return hasRole(roles, 'owner');
 }
 
-export function canManageModerators(roles: string[]): boolean {
+export function canManageCommunityAdmins(roles: string[]): boolean {
+  return hasRole(roles, 'owner') || hasRole(roles, 'dev') || hasRole(roles, 'admin');
+}
+
+export function canManageCommunityModerators(roles: string[]): boolean {
   return hasRole(roles, 'owner') || hasRole(roles, 'dev') || hasRole(roles, 'admin');
 }
 
@@ -48,15 +52,6 @@ export function canViewOpsEvents(roles: string[]): boolean {
 
 export function canManageSocialCredentials(roles: string[]): boolean {
   return hasRole(roles, 'owner');
-}
-
-export function isModeratorOnly(roles: string[]): boolean {
-  return (
-    hasRole(roles, 'moderator') &&
-    !hasRole(roles, 'owner') &&
-    !hasRole(roles, 'dev') &&
-    !hasRole(roles, 'admin')
-  );
 }
 
 export function getRoleCapabilities(role: AdminPanelRole | null): RoleCapabilityDefinition[] {

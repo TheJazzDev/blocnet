@@ -10,7 +10,7 @@ Blocnet is building the execution layer between Web3 information and on-chain ac
 
 Today, high-value updates are scattered across Telegram, X, Discord, and project blogs. Users miss launches, claims, governance actions, and security-critical deadlines because the information flow is noisy and unstructured. Blocnet solves this by turning project updates into structured, ranked, and actionable intelligence, then connecting that intelligence to wallet-ready user workflows.
 
-Our MVP is already implemented end-to-end: Flutter mobile app, Next.js admin console, NestJS backend, and a BNB Chain settlement engine. The blockchain engine includes custodial wallet provisioning, double-entry ledger integrity, deposit indexing, confirmation-based crediting, treasury sweep automation, and withdrawal settlement with auditable state transitions.
+Our MVP is already implemented end-to-end: Flutter mobile app, Next.js admin console, NestJS backend, and a BNB Chain settlement engine. The blockchain engine includes custodial wallet provisioning, double-entry ledger integrity, deposit indexing, confirmation-based crediting, treasury sweep automation, and withdrawal settlement with auditable state transitions. The next phase includes BNT token launch and liquidity provisioning to power participation loops directly on BNB Chain.
 
 In short: Blocnet helps users act on time, helps projects distribute critical updates effectively, and helps BNB Chain convert attention into reliable ecosystem participation.
 
@@ -18,10 +18,12 @@ In short: Blocnet helps users act on time, helps projects distribute critical up
 AI + Infrastructure + Consumer dApp
 
 ## Link to technical docs or whitepaper
-- https://github.com/[org]/blocnet
-- https://github.com/[org]/blocnet/blob/main/ARCHITECTURE_INDEX.md
-- https://github.com/[org]/blocnet/blob/main/BLOCKCHAIN_ENGINE_DEEP_DIVE.md
-- https://github.com/[org]/blocnet/blob/main/FLOW_MAPS.md
+- https://blocnet.app/whitepaper
+- https://jazzdev.xyz
+
+Note:
+- Source code is private for security and operational reasons.
+- Additional technical architecture documentation and live walkthrough are available under NDA.
 
 ## Size of Grant ($)
 75000
@@ -29,11 +31,12 @@ AI + Infrastructure + Consumer dApp
 ## Grant Project Summary
 We are requesting funding to scale Blocnet from technically complete MVP to ecosystem-grade BNB Chain infrastructure and distribution.
 
-The grant will fund four outcomes:
+The grant will fund five outcomes:
 1. Production hardening of BNB Chain transaction operations (indexing, settlement, resilience, monitoring).
-2. Public integration surface for BNB Chain projects (structured updates API, event hooks, reference docs).
-3. Intelligence engine upgrade that improves user action quality (better relevance, urgency, explainability, and feedback loops).
-4. Ecosystem rollout with pilot partners and public performance reporting.
+2. BNT token launch and initial liquidity provisioning on BNB Chain DEX infrastructure.
+3. Public integration surface for BNB Chain projects (structured updates API, event hooks, reference docs).
+4. Intelligence engine upgrade that improves user action quality (better relevance, urgency, explainability, and feedback loops).
+5. Ecosystem rollout with pilot partners and public performance reporting.
 
 Deliverable at completion: a production-ready BNB Chain-native intelligence + execution platform that increases user participation quality and gives ecosystem teams reusable integration tooling.
 
@@ -48,7 +51,18 @@ Milestone 1 (Weeks 1-4): Mainnet Reliability + Risk Controls - $20,000
   - stable end-to-end settlement lifecycle in production
   - operational visibility for stuck/failed pipeline states
 
-Milestone 2 (Weeks 5-8): Project Integration APIs + Developer Docs - $15,000
+Milestone 2 (Weeks 5-8): BNT Token Launch + Initial Liquidity - $20,000
+- Deliverables:
+  - token launch execution plan and checklist
+  - TGE operations runbook
+  - BNB Chain DEX pool setup
+  - initial liquidity provisioning strategy and execution
+  - post-launch liquidity and market health monitoring
+- Success criteria:
+  - BNT publicly launched on BNB Chain
+  - initial liquidity live and tradable with transparent tracking
+
+Milestone 3 (Weeks 9-12): Project Integration APIs + Developer Docs - $15,000
 - Deliverables:
   - structured update ingestion endpoints
   - standardized event payloads/webhooks
@@ -57,7 +71,7 @@ Milestone 2 (Weeks 5-8): Project Integration APIs + Developer Docs - $15,000
 - Success criteria:
   - partner can integrate and publish actionable updates in <1 day
 
-Milestone 3 (Weeks 9-12): Intelligence Engine v2 - $20,000
+Milestone 4 (Weeks 13-16): Intelligence Engine v2 - $10,000
 - Deliverables:
   - ranking calibration for urgency/relevance/novelty
   - explainability payload improvements
@@ -66,7 +80,7 @@ Milestone 3 (Weeks 9-12): Intelligence Engine v2 - $20,000
 - Success criteria:
   - measurable increase in actionable feed precision and user follow-through
 
-Milestone 4 (Weeks 13-16): Ecosystem Deployment + Open Components - $20,000
+Milestone 5 (Weeks 17-20): Ecosystem Deployment + Open Components - $10,000
 - Deliverables:
   - onboarding of initial BNB Chain project partners
   - public ecosystem metrics dashboard
@@ -84,11 +98,15 @@ Blocnet delivers direct ecosystem value across users, projects, and developers:
 - Converts fragmented information into ranked, timely, actionable flows.
 - Reduces missed participation windows and improves on-chain execution reliability.
 
-2. Project distribution effectiveness:
+2. Token ecosystem depth:
+- Adds a BNB Chain-native tokenized participation layer.
+- Launches BNT with initial liquidity to support accessible market participation.
+
+3. Project distribution effectiveness:
 - Gives BNB Chain teams a structured path to distribute critical updates with higher trust and visibility.
 - Enables better conversion from announcement to on-chain action.
 
-3. Developer leverage:
+4. Developer leverage:
 - Introduces reusable APIs, schemas, and workflows for update intelligence + action routing.
 - Lowers build time for teams that would otherwise implement these systems from scratch.
 
@@ -103,8 +121,8 @@ Blocnet’s innovation is the integration of three layers that are usually built
 2. Optional AI enrichment:
 - ML analysis augments ranking quality while preserving deterministic fallback behavior when providers fail.
 
-3. BNB Chain settlement engine:
-- Ledger-backed wallet operations with idempotency keys, serializable transactions, and confirmation-gated finalization.
+3. BNB Chain settlement + token operations engine:
+- Ledger-backed wallet operations with idempotency keys, serializable transactions, confirmation-gated finalization, and launch/liquidity execution workflows.
 
 This architecture avoids black-box dependence and enables operational trust, which is critical for user-facing crypto products.
 
@@ -124,16 +142,15 @@ Blocnet’s advantage:
 Our position is the bridge between project communication and measurable user action.
 
 ## Background of your team
-Blocnet is built by a founder-led team with full-stack product and blockchain execution capability across mobile, backend systems, admin infrastructure, and smart contracts.
+Blocnet is built by a solo founder with strong product and blockchain execution capability.
 
-The team came together in [Month, Year] around one repeated market failure: users consistently miss high-value actions because crypto information systems optimize for noise, not execution.
+The project was started around one repeated market failure: users consistently miss high-value actions because crypto information systems optimize for noise, not execution.
 
-Since then, we have built Blocnet’s full MVP stack and deployed the core architecture required for scale. This grant funds the transition from MVP completeness to ecosystem impact and partner distribution.
+Since then, Blocnet’s full MVP has been built and core systems are operating for scale. As a single builder, this is proof of execution capability. This grant funds the transition from MVP completeness to ecosystem impact and partner distribution by adding focused operating capacity.
 
 ## Team members LinkedIns
-- [Founder Name] - [LinkedIn URL]
-- [Core Engineer Name] - [LinkedIn URL]
-- [Product/Operations Name] - [LinkedIn URL]
+- Founder / Core Engineer - https://jazzdev.xyz
+- LinkedIn, GitHub, and X profiles are publicly listed in the portfolio.
 
 ## Fundraising History (Size, Date, Funders)
 Bootstrapped to date. No institutional round closed yet.
@@ -146,7 +163,7 @@ If applicable, replace with:
 N
 
 If needed, add:
-BNT smart contract infrastructure is complete; no public token launch/TGE has been conducted yet.
+BNT smart contract infrastructure is complete; no public token launch/TGE has been conducted yet. This grant funds token launch execution and initial liquidity provisioning on BNB Chain.
 
 ## Name of legal entity
 [Legal Entity Name]

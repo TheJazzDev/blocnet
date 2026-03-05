@@ -164,6 +164,11 @@ export function Footer() {
                     Terms of Service
                   </Link>
                 </li>
+                <li>
+                  <Link href="/whitepaper" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Whitepaper
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -180,6 +185,9 @@ export function Footer() {
             </Link>
             <Link href="/terms" className="transition-colors hover:text-foreground">
               Terms of Service
+            </Link>
+            <Link href="/whitepaper" className="transition-colors hover:text-foreground">
+              Whitepaper
             </Link>
           </div>
         </div>

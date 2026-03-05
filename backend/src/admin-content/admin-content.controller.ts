@@ -30,7 +30,7 @@ import { AdminUpdatesService } from './services/admin-updates.service';
 
 @Controller('admin/content')
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+@Roles(AppRole.OWNER, AppRole.ADMIN)
 export class AdminContentController {
   constructor(
     private readonly adminProjectsService: AdminProjectsService,

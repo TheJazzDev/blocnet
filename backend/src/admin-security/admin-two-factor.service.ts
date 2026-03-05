@@ -521,7 +521,6 @@ export class AdminTwoFactorService {
             RoleName.owner,
             RoleName.dev,
             RoleName.admin,
-            RoleName.moderator,
           ],
         },
       },
@@ -564,7 +563,6 @@ export class AdminTwoFactorService {
             RoleName.owner,
             RoleName.dev,
             RoleName.admin,
-            RoleName.moderator,
           ],
         },
       },
@@ -813,15 +811,14 @@ export class AdminTwoFactorService {
     return (
       role === AppRole.OWNER ||
       role === AppRole.DEV ||
-      role === AppRole.ADMIN ||
-      role === AppRole.MODERATOR
+      role === AppRole.ADMIN
     );
   }
 
   private assertEligible(roles: AppRole[]): void {
     if (!this.isAdminPanelEligible(roles)) {
       throw new ForbiddenException(
-        'Only owner/dev/admin/moderator accounts can use admin console 2FA',
+        'Only owner/dev/admin accounts can use admin console 2FA',
       );
     }
   }

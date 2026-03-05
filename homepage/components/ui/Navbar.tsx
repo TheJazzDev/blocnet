@@ -24,6 +24,7 @@ export function Navbar() {
   const navLinks = [
     { label: 'Home', href: '/', type: 'page' },
     { label: 'About', href: '/about', type: 'page' },
+    { label: 'Whitepaper', href: '/whitepaper', type: 'page' },
     { label: 'Mining', href: '/mining', type: 'page' },
     { label: 'Community', href: '/community', type: 'page' },
     { label: 'Roadmap', href: '/roadmap', type: 'page' },

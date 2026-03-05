@@ -219,7 +219,12 @@ export class AuthService {
     if (roles.includes(AppRole.OWNER)) return 5;
     if (roles.includes(AppRole.DEV)) return 4;
     if (roles.includes(AppRole.ADMIN)) return 3;
-    if (roles.includes(AppRole.MODERATOR)) return 2;
+    if (
+      roles.includes(AppRole.COMMUNITY_ADMIN) ||
+      roles.includes(AppRole.COMMUNITY_MODERATOR) ||
+      roles.includes(AppRole.MODERATOR)
+    )
+      return 2;
     if (roles.includes(AppRole.HUNTER)) return 1;
     return 1;
   }

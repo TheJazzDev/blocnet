@@ -18,7 +18,7 @@ import { RuntimeFeatureFlagsService } from './runtime-feature-flags.service';
 
 @Controller('admin/settings/runtime-features')
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+@Roles(AppRole.OWNER, AppRole.ADMIN)
 export class RuntimeFeatureFlagsAdminController {
   constructor(
     private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,

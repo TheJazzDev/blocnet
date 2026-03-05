@@ -28,6 +28,7 @@
     "prisma:seed:dev": "tsx prisma/seed.dev.ts",
     "prisma:seed:wallets": "tsx prisma/seed.wallets.ts",
     "prisma:studio": "prisma studio",
+    "roles:backfill-community": "tsx scripts/backfill-community-roles.ts",
     "turnkey:resolve-api-key-id": "tsx scripts/turnkey/resolve-api-key-id.ts",
     "loadtest:comments": "k6 run load-tests/comments-hot-threads.k6.js",
     "levels:sync-icons": "tsx scripts/sync-level-badge-icons.ts"

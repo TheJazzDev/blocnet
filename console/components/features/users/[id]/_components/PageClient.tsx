@@ -178,18 +178,36 @@ export default function UserManagementPageClient() {
                 confirmText: `Revoke Admin role from ${user.email}?`,
               })
             }
-            onPromoteToModerator={() =>
+            onPromoteToCommunityAdmin={() =>
               state.runAction(
-                "grant-moderator",
-                () => clientApi.promoteToModerator(user.id),
-                { confirmText: `Grant Moderator role to ${user.email}?` },
+                "grant-community-admin",
+                () => clientApi.promoteToCommunityAdmin(user.id),
+                { confirmText: `Grant Community Admin role to ${user.email}?` },
               )
             }
-            onDemoteModerator={() =>
+            onDemoteCommunityAdmin={() =>
               state.runAction(
-                "revoke-moderator",
-                () => clientApi.demoteModerator(user.id),
-                { confirmText: `Revoke Moderator role from ${user.email}?` },
+                "revoke-community-admin",
+                () => clientApi.demoteCommunityAdmin(user.id),
+                { confirmText: `Revoke Community Admin role from ${user.email}?` },
+              )
+            }
+            onPromoteToCommunityModerator={() =>
+              state.runAction(
+                "grant-community-moderator",
+                () => clientApi.promoteToCommunityModerator(user.id),
+                {
+                  confirmText: `Grant Community Moderator role to ${user.email}?`,
+                },
+              )
+            }
+            onDemoteCommunityModerator={() =>
+              state.runAction(
+                "revoke-community-moderator",
+                () => clientApi.demoteCommunityModerator(user.id),
+                {
+                  confirmText: `Revoke Community Moderator role from ${user.email}?`,
+                },
               )
             }
             onPromoteToHunter={() =>

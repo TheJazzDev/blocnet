@@ -40,7 +40,7 @@ export function useAdminAccess(options: UseAdminAccessOptions = {}) {
     setError(null);
     try {
       if (role === "all") {
-        const governanceRoles: GovernanceRole[] = ["owner", "dev", "admin", "moderator"];
+        const governanceRoles: GovernanceRole[] = ["owner", "dev", "admin"];
         const governancePageSize = 100;
 
         const fetchAllForRole = async (targetRole: GovernanceRole) => {

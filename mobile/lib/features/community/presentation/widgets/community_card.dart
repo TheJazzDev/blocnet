@@ -9,7 +9,6 @@ import 'package:blocnet/features/mentions/presentation/utils/mention_profile_nav
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
-import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
@@ -50,7 +49,7 @@ class CommunityCard extends StatelessWidget {
       admin?.username,
       fallbackName: displayName,
     );
-    final role = _resolveRoleLabel(admin);
+    final role = admin?.displayRoleLabel;
     final roleColor = _resolveRoleColor(role);
     final content = post.content.trim();
 
@@ -262,16 +261,13 @@ class CommunityCard extends StatelessWidget {
     return '@$fallback';
   }
 
-  String? _resolveRoleLabel(Admin? admin) {
-    final roles = (admin?.roles ?? const <String>[])
-        .map((role) => role.toLowerCase())
-        .toSet();
-    if (roles.contains('owner') || roles.contains('admin')) return 'ADMIN';
-    if (roles.contains('hunter')) return 'HUNTER';
-    return null;
-  }
-
   Color _resolveRoleColor(String? role) {
+    if (role == 'CORE TEAM') {
+      return const Color(0xFF38BDF8);
+    }
+    if (role == 'MODERATOR') {
+      return const Color(0xFFF59E0B);
+    }
     if (role == 'HUNTER') {
       return const Color(0xFFC084FC);
     }

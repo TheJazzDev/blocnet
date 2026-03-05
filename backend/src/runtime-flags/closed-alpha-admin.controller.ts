@@ -24,7 +24,7 @@ import { UpdateClosedAlphaEmailDto } from './dto/update-closed-alpha-email.dto';
 
 @Controller('admin/settings/closed-alpha/emails')
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+@Roles(AppRole.OWNER, AppRole.DEV, AppRole.ADMIN)
 export class ClosedAlphaAdminController {
   constructor(
     private readonly closedAlphaAccessService: ClosedAlphaAccessService,

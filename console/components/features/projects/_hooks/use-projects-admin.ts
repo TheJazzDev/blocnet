@@ -4,11 +4,10 @@ import { useMemo, useState } from "react";
 import { type AdminProject, type ProjectStatus } from "@/lib/api-client";
 import { useProjectsQuery, useModerateProjectMutation } from "@/lib/hooks/queries";
 import { useDebounce } from "@/lib/hooks";
-import { isModeratorOnly } from "@/lib/rbac";
 import type { StatusFilter } from "../_lib/projects-admin";
 
 export function useProjectsAdmin(effectiveRoles: string[]) {
-  const moderatorOnly = isModeratorOnly(effectiveRoles);
+  const moderatorOnly = false;
 
   const [searchInput, setSearchInput] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -49,20 +48,13 @@ export function useProjectsAdmin(effectiveRoles: string[]) {
   }
 
   const statusOptions = useMemo(
-    () =>
-      moderatorOnly
-        ? [
-            { value: "active", label: "Active" },
-            { value: "hidden", label: "Hidden" },
-            { value: "archived", label: "Archived" },
-          ]
-        : [
-            { value: "active", label: "Active" },
-            { value: "paused", label: "Paused" },
-            { value: "hidden", label: "Hidden" },
-            { value: "archived", label: "Archived" },
-          ],
-    [moderatorOnly],
+    () => [
+      { value: "active", label: "Active" },
+      { value: "paused", label: "Paused" },
+      { value: "hidden", label: "Hidden" },
+      { value: "archived", label: "Archived" },
+    ],
+    [],
   );
 
   return {

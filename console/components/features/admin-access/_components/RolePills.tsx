@@ -1,14 +1,13 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { ShieldAlert, ShieldCheck, User } from 'lucide-react';
+import { ShieldCheck, User } from 'lucide-react';
 
 export function GovernanceRolePills({ roles }: { roles: string[] }) {
-  const items: ('owner' | 'dev' | 'admin' | 'moderator')[] = [];
+  const items: ('owner' | 'dev' | 'admin')[] = [];
   if (roles.includes('owner')) items.push('owner');
   if (roles.includes('dev')) items.push('dev');
   if (roles.includes('admin')) items.push('admin');
-  if (roles.includes('moderator')) items.push('moderator');
 
   if (items.length === 0) {
     return (
@@ -58,16 +57,6 @@ export function GovernanceRolePills({ roles }: { roles: string[] }) {
             </Badge>
           );
         }
-        return (
-          <Badge
-            key={role}
-            className="border-amber-500/20 bg-amber-500/10 text-amber-400"
-            variant="outline"
-          >
-            <ShieldAlert className="mr-1 h-3 w-3" />
-            Moderator
-          </Badge>
-        );
       })}
     </div>
   );

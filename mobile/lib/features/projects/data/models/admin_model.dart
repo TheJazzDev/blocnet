@@ -1,5 +1,6 @@
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/shared/utils/role_presentation.dart';
 
 class Admin {
   final String id;
@@ -34,14 +35,12 @@ class Admin {
     return roles.contains(role.trim().toLowerCase());
   }
 
-  String? get displayRoleLabel {
-    if (hasRole('owner') || hasRole('admin')) return 'ADMIN';
-    if (hasRole('hunter')) return 'HUNTER';
-    return null;
-  }
+  String? get primaryRoleKey => resolvePrimaryRoleKeyFromRoles(roles);
 
-  bool get isHunterRole => hasRole('hunter');
-  bool get isAdminRole => hasRole('owner') || hasRole('admin');
+  String? get displayRoleLabel => resolvePrimaryRoleLabelFromRoles(roles);
+
+  bool get isHunterRole => primaryRoleKey == 'hunter';
+  bool get isAdminRole => primaryRoleKey == 'community_admin';
 
   static List<String> _parseRoles(dynamic rawRoles) {
     if (rawRoles is! List) return const [];

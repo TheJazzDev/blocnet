@@ -26,8 +26,10 @@ type RolesSectionProps = {
   onDemoteCoreTeam: () => Promise<void>;
   onPromoteToAdmin: () => Promise<void>;
   onDemoteAdmin: () => Promise<void>;
-  onPromoteToModerator: () => Promise<void>;
-  onDemoteModerator: () => Promise<void>;
+  onPromoteToCommunityAdmin: () => Promise<void>;
+  onDemoteCommunityAdmin: () => Promise<void>;
+  onPromoteToCommunityModerator: () => Promise<void>;
+  onDemoteCommunityModerator: () => Promise<void>;
   onPromoteToHunter: () => Promise<void>;
   onDemoteHunter: () => Promise<void>;
 };
@@ -45,8 +47,10 @@ export function RolesSection({
   onDemoteCoreTeam,
   onPromoteToAdmin,
   onDemoteAdmin,
-  onPromoteToModerator,
-  onDemoteModerator,
+  onPromoteToCommunityAdmin,
+  onDemoteCommunityAdmin,
+  onPromoteToCommunityModerator,
+  onDemoteCommunityModerator,
   onPromoteToHunter,
   onDemoteHunter,
 }: RolesSectionProps) {
@@ -63,8 +67,10 @@ export function RolesSection({
       onDemoteCoreTeam,
       onPromoteToAdmin,
       onDemoteAdmin,
-      onPromoteToModerator,
-      onDemoteModerator,
+      onPromoteToCommunityAdmin,
+      onDemoteCommunityAdmin,
+      onPromoteToCommunityModerator,
+      onDemoteCommunityModerator,
       onPromoteToHunter,
       onDemoteHunter,
     });
@@ -80,8 +86,10 @@ export function RolesSection({
     onDemoteCoreTeam,
     onPromoteToAdmin,
     onDemoteAdmin,
-    onPromoteToModerator,
-    onDemoteModerator,
+    onPromoteToCommunityAdmin,
+    onDemoteCommunityAdmin,
+    onPromoteToCommunityModerator,
+    onDemoteCommunityModerator,
     onPromoteToHunter,
     onDemoteHunter,
   ]);

@@ -62,8 +62,8 @@ export default async function SignInPage() {
         </Card>
 
         <p className='mt-4 text-center text-xs text-muted-foreground'>
-          Only users with <strong>owner</strong>, <strong>admin</strong>, or{' '}
-          <strong>moderator</strong> roles can access this panel.
+          Only users with <strong>owner</strong>, <strong>dev</strong>, or{' '}
+          <strong>admin</strong> roles can access this panel.
         </p>
       </div>
     </div>

@@ -3,8 +3,7 @@ import { AppRole } from '../common/enums/role.enum';
 export type AdminGovernanceRole =
   | AppRole.OWNER
   | AppRole.DEV
-  | AppRole.ADMIN
-  | AppRole.MODERATOR;
+  | AppRole.ADMIN;
 
 export type RoleCapabilitySectionId =
   | 'overview'
@@ -56,13 +55,6 @@ export const GOVERNANCE_ROLES: GovernanceRoleDefinition[] = [
     description: 'Operational administrator with broad management privileges.',
     order: 3,
   },
-  {
-    role: AppRole.MODERATOR,
-    label: 'Moderator',
-    description:
-      'Content and operations reviewer with limited mutation permissions.',
-    order: 4,
-  },
 ];
 
 export const SPACE_ROLE_NOTES = [
@@ -75,13 +67,31 @@ export const SPACE_ROLE_NOTES = [
     role: AppRole.CORE_TEAM,
     label: 'Core Team',
     description:
-      'Board/team visibility role for ecosystem members; does not grant hunter capability.',
+      'Community identity role for official team members in the public app.',
+  },
+  {
+    role: AppRole.COMMUNITY_ADMIN,
+    label: 'Community Admin',
+    description:
+      'Community identity role for trusted staff; does not grant console governance access.',
+  },
+  {
+    role: AppRole.COMMUNITY_MODERATOR,
+    label: 'Community Moderator',
+    description:
+      'Community identity role for moderators; does not grant console governance access.',
   },
   {
     role: AppRole.HUNTER,
     label: 'Hunter',
     description:
       'Space/capability role used for user-hunter experiences, not admin governance.',
+  },
+  {
+    role: AppRole.MODERATOR,
+    label: 'Legacy Moderator',
+    description:
+      'Legacy compatibility role mapped into community moderator behavior during migration.',
   },
 ] as const;
 
@@ -125,14 +135,14 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     label: 'View Dashboard',
     description: 'Access dashboard statistics, activity, and health summaries.',
     section: 'overview',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'content.projects.moderate',
     label: 'Moderate Projects',
     description: 'Review and change project status for moderation workflows.',
     section: 'content',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'content.projects.pause',
@@ -147,21 +157,21 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     label: 'Moderate Updates',
     description: 'Review and update visibility status of project updates.',
     section: 'content',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'content.comments.moderate',
     label: 'Moderate Comments',
     description: 'Review and moderate update comments across the platform.',
     section: 'content',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'content.community.moderate',
     label: 'Moderate Community',
     description: 'Review and moderate community posts and community comments.',
     section: 'content',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'content.tags.manage',
@@ -175,14 +185,14 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     label: 'View Wallet Health',
     description: 'See wallet provider and settlement health indicators.',
     section: 'wallet',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'wallet.users.view',
     label: 'View Wallet Users',
     description: 'Browse wallet users, balances, and account risk context.',
     section: 'wallet',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'wallet.withdrawals.review',
@@ -210,7 +220,7 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     label: 'View Mining Config/Metrics',
     description: 'Read mining configuration and mining metrics.',
     section: 'engagement',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'engagement.mining.mutate',
@@ -231,7 +241,7 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     label: 'View Users',
     description: 'Search users and inspect profile/account status.',
     section: 'access',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'access.users.edit_profile',
@@ -283,9 +293,16 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     roles: [AppRole.OWNER],
   },
   {
-    key: 'access.roles.moderator.manage',
-    label: 'Manage Moderator Role',
-    description: 'Grant or revoke moderator role assignments.',
+    key: 'access.roles.community_admin.manage',
+    label: 'Manage Community Admin Role',
+    description: 'Grant or revoke community admin role assignments.',
+    section: 'access',
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
+  },
+  {
+    key: 'access.roles.community_moderator.manage',
+    label: 'Manage Community Moderator Role',
+    description: 'Grant or revoke community moderator role assignments.',
     section: 'access',
     roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
@@ -315,14 +332,14 @@ export const ROLE_CAPABILITIES: RoleCapabilityDefinition[] = [
     label: 'Review Project Proposals',
     description: 'Approve or reject project proposals.',
     section: 'access',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'system.audit_log.view',
     label: 'View Audit Log',
     description: 'Read audit events across admin operations.',
     section: 'system',
-    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+    roles: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
   },
   {
     key: 'system.notifications.send',

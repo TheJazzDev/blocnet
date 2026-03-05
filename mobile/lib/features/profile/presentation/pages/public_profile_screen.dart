@@ -18,6 +18,7 @@ import 'package:blocnet/services/users/blocks_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/shared/utils/role_presentation.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
@@ -227,14 +228,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final username = admin.username.trim().isNotEmpty
         ? admin.username
         : '@${admin.name.toLowerCase().replaceAll(' ', '_')}';
-    final displayRoleKeys = publicProfile != null
-        ? _resolveRoleKeysFromRoles(publicProfile.roles)
-        : _resolveRoleKeysFallback(admin);
+    final displayRoleKey = publicProfile != null
+        ? resolvePrimaryRoleKeyFromRoles(publicProfile.roles)
+        : admin.primaryRoleKey;
     final isHunterTarget = publicProfile != null
         ? publicProfile.roles
             .map((role) => role.trim().toLowerCase())
             .contains('hunter')
-        : displayRoleKeys.contains('hunter');
+        : admin.hasRole('hunter');
     final canTipHunter = isHunterTarget &&
         authStore.userId != null &&
         authStore.userId != admin.id &&
@@ -357,22 +358,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        if (displayRoleKeys.isNotEmpty)
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: displayRoleKeys
-                                .map(
-                                  (roleKey) => ProfileRoleChip(
-                                    label: _roleLabel(roleKey),
-                                    textColor: _roleTextColor(roleKey),
-                                    borderColor: _roleBorderColor(roleKey),
-                                    backgroundColor:
-                                        _roleBackgroundColor(roleKey),
-                                  ),
-                                )
-                                .toList(),
+                        if (displayRoleKey != null)
+                          ProfileRoleChip(
+                            label: _roleLabel(displayRoleKey),
+                            textColor: _roleTextColor(displayRoleKey),
+                            borderColor: _roleBorderColor(displayRoleKey),
+                            backgroundColor: _roleBackgroundColor(displayRoleKey),
                           ),
                         const SizedBox(height: 16),
                         Row(
@@ -634,29 +625,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     return Scaffold(backgroundColor: AppColors.bgBase, body: content);
   }
 
-  List<String> _resolveRoleKeysFallback(Admin admin) {
-    if (admin.isAdminRole) return ['admin'];
-    if (admin.isHunterRole) return ['hunter'];
-    return const [];
-  }
-
-  List<String> _resolveRoleKeysFromRoles(List<String> roles) {
-    final normalized = roles.map((role) => role.trim().toLowerCase()).toSet();
-    final resolved = <String>[];
-
-    if (normalized.contains('owner') || normalized.contains('admin')) {
-      resolved.add('admin');
-    }
-    if (normalized.contains('hunter')) {
-      resolved.add('hunter');
-    }
-    return resolved;
-  }
-
   String _roleLabel(String roleKey) {
     switch (roleKey) {
-      case 'admin':
+      case 'core_team':
+        return 'CORE TEAM';
+      case 'community_admin':
         return 'ADMIN';
+      case 'community_moderator':
+        return 'MODERATOR';
       case 'hunter':
         return 'HUNTER';
       default:
@@ -666,9 +642,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Color _roleTextColor(String roleKey) {
     switch (roleKey) {
+      case 'core_team':
+        return const Color(0xFF38BDF8);
       case 'hunter':
         return const Color(0xFFC084FC);
-      case 'admin':
+      case 'community_moderator':
+        return const Color(0xFFF59E0B);
+      case 'community_admin':
         return AppColors.primary400;
       default:
         return AppColors.textMuted;
