@@ -28,13 +28,16 @@
     "prisma:seed:dev": "tsx prisma/seed.dev.ts",
     "prisma:seed:wallets": "tsx prisma/seed.wallets.ts",
     "prisma:studio": "prisma studio",
+    "roles:backfill-community": "tsx scripts/backfill-community-roles.ts",
     "turnkey:resolve-api-key-id": "tsx scripts/turnkey/resolve-api-key-id.ts",
-    "loadtest:comments": "k6 run load-tests/comments-hot-threads.k6.js"
+    "loadtest:comments": "k6 run load-tests/comments-hot-threads.k6.js",
+    "levels:sync-icons": "tsx scripts/sync-level-badge-icons.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.6",
     "@nestjs/throttler": "^6.5.0",

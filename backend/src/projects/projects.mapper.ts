@@ -23,6 +23,7 @@ export const projectInclude = {
     select: {
       id: true,
       email: true,
+      username: true,
       displayName: true,
       avatarUrl: true,
     },
@@ -41,12 +42,10 @@ export type ProjectWithRelations = Prisma.ProjectGetPayload<{
 
 export function toProjectResponse(project: ProjectWithRelations) {
   const { _count, ownerAdmin, primaryTag, secondaryTags, ...rest } = project;
-  const rawUsername = ownerAdmin.email?.split('@')[0] ?? ownerAdmin.id;
-  const normalized = rawUsername
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, '')
-    .trim();
+  const rawUsername = (ownerAdmin.username ?? '').replaceAll('@', '').trim();
+  const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
   const username = `@${normalized || ownerAdmin.id.slice(0, 6)}`;
+  const displayName = ownerAdmin.displayName?.trim() || 'Blocnet Member';
 
   return {
     ...rest,
@@ -58,7 +57,7 @@ export function toProjectResponse(project: ProjectWithRelations) {
     updatesCount: _count.updates,
     admin: {
       id: ownerAdmin.id,
-      name: ownerAdmin.displayName ?? ownerAdmin.email ?? 'Admin',
+      name: displayName,
       username,
       imageUrl: ownerAdmin.avatarUrl ?? '',
       followers: _count.follows,

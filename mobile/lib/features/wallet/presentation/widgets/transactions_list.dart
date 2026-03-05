@@ -1,8 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -466,6 +468,8 @@ class TransactionsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
+    final viewMode = context.watch<FeedViewModeStore>().mode;
+    final isCardMode = viewMode == FeedViewMode.card;
     final rows = _buildRows(walletStore);
     final visibleRows = limit == null ? rows : rows.take(limit!).toList();
     final selectedAsset = assetCode?.toUpperCase();
@@ -475,17 +479,13 @@ class TransactionsList extends StatelessWidget {
             walletStore.isLoadingWithdrawalsForAsset(selectedAsset);
 
     if (isLoading && rows.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.teal400,
-            strokeWidth: 2.2,
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2.2),
           ),
         ),
       );
@@ -495,181 +495,180 @@ class TransactionsList extends StatelessWidget {
       final title = selectedAsset == null
           ? 'No transactions yet'
           : 'No $selectedAsset transactions yet';
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.bgElevated,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderSubtle),
-              ),
-              child: Icon(
-                Icons.receipt_long_outlined,
-                color: AppColors.textFaint,
-                size: 22,
-              ),
+      return Column(
+        children: [
+          Icon(
+            Icons.receipt_long_outlined,
+            color: AppColors.textFaint,
+            size: 22,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: AppTypography.custom(
+              color: AppColors.textSecondary,
+              size: 14,
+              weight: FontWeight.w600,
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: AppTypography.custom(
-                color: AppColors.textSecondary,
-                size: 14,
-                weight: FontWeight.w600,
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Your wallet activity will appear here after your first transaction.',
+            textAlign: TextAlign.center,
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
+              size: 12,
+              weight: FontWeight.w400,
+              height: 1.5,
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Your wallet activity will appear here after your first transaction.',
-              textAlign: TextAlign.center,
-              style: AppTypography.custom(
-                color: AppColors.textFaint,
-                size: 12,
-                weight: FontWeight.w400,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+        ],
       );
     }
 
     return Column(
-      children: visibleRows.map((row) {
+      children: visibleRows.asMap().entries.map((entry) {
+        final index = entry.key;
+        final row = entry.value;
         final badgeColor = row.badgeColor;
         final canOpenDetails =
             row.transaction != null || row.withdrawal != null;
 
-        return Padding(
+        return Column(
           key: ValueKey(row.id),
-          padding: const EdgeInsets.only(bottom: 8),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: canOpenDetails
-                ? () => _showTransactionDetails(context, row)
-                : null,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: AppColors.borderSubtle.withValues(alpha: 0.5),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: row.isIncoming
-                          ? AppColors.successColor.withValues(alpha: 0.12)
-                          : row.isOutgoing
-                              ? AppColors.primary500.withValues(alpha: 0.12)
-                              : AppColors.bgElevated,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      row.icon,
-                      size: 18,
-                      color: row.isIncoming
-                          ? AppColors.successColor
-                          : row.isOutgoing
-                              ? AppColors.primary500
-                              : AppColors.textMuted,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                row.title,
-                                style: AppTypography.custom(
-                                  color: AppColors.textPrimary,
-                                  size: 13,
-                                  weight: FontWeight.w600,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (row.badgeLabel != null &&
-                                badgeColor != null) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: badgeColor.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  row.badgeLabel!,
-                                  style: AppTypography.custom(
-                                    color: badgeColor,
-                                    size: 8,
-                                    weight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap:
+                  canOpenDetails ? () => _showTransactionDetails(context, row) : null,
+              child: Container(
+                width: double.infinity,
+                margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                decoration: isCardMode
+                    ? BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.bgSurface,
+                            AppColors.bgSurface.withValues(alpha: 0.82),
                           ],
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          row.subtitle,
-                          style: AppTypography.custom(
-                            color: AppColors.textFaint,
-                            size: 11,
-                            weight: FontWeight.w500,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.borderSubtle.withValues(alpha: 0.75),
+                          width: 1.2,
+                        ),
+                      )
+                    : null,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: row.isIncoming
+                            ? AppColors.successColor.withValues(alpha: 0.12)
+                            : row.isOutgoing
+                                ? AppColors.primary500.withValues(alpha: 0.12)
+                                : AppColors.bgElevated,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        row.icon,
+                        size: 16,
+                        color: row.isIncoming
+                            ? AppColors.successColor
+                            : row.isOutgoing
+                                ? AppColors.primary500
+                                : AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  row.title,
+                                  style: AppTypography.custom(
+                                    color: AppColors.textPrimary,
+                                    size: 12.5,
+                                    weight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (row.badgeLabel != null &&
+                                  badgeColor != null) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: badgeColor.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    row.badgeLabel!,
+                                    style: AppTypography.custom(
+                                      color: badgeColor,
+                                      size: 8,
+                                      weight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                          overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 3),
+                          Text(
+                            row.subtitle,
+                            style: AppTypography.custom(
+                              color: AppColors.textFaint,
+                              size: 11,
+                              weight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          row.amountLabel,
+                          style: AppTypography.custom(
+                            color: row.amountColor,
+                            size: 13,
+                            weight: FontWeight.w700,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        row.amountLabel,
-                        style: AppTypography.custom(
-                          color: row.amountColor,
-                          size: 14,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                      if (canOpenDetails) ...[
-                        const SizedBox(height: 2),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          size: 16,
-                          color: AppColors.textFaint,
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
+            if (!isCardMode && index != visibleRows.length - 1)
+              Divider(
+                height: 1,
+                color: AppColors.borderSubtle.withValues(alpha: 0.8),
+              ),
+          ],
         );
       }).toList(),
     );

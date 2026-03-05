@@ -133,21 +133,21 @@ class MiningSessionModel {
 class ReferrerSummary {
   const ReferrerSummary({
     required this.id,
+    required this.username,
     required this.displayName,
-    required this.email,
     required this.code,
   });
 
   final String id;
+  final String? username;
   final String? displayName;
-  final String? email;
   final String? code;
 
   factory ReferrerSummary.fromApi(Map<String, dynamic> json) {
     return ReferrerSummary(
       id: json['id']?.toString() ?? '',
+      username: json['username']?.toString(),
       displayName: json['displayName']?.toString(),
-      email: json['email']?.toString(),
       code: json['code']?.toString() ?? json['referralCode']?.toString(),
     );
   }
@@ -208,7 +208,7 @@ class MiningHourlyCheckpointModel {
   final int hourIndex;
   final DateTime? hourStartAt;
   final DateTime? hourEndAt;
-  final int points;
+  final double points;
   final int activeReferralsSnapshot;
   final int boostBpsSnapshot;
   final DateTime? claimedAt;
@@ -223,7 +223,7 @@ class MiningHourlyCheckpointModel {
       hourIndex: int.tryParse(json['hourIndex']?.toString() ?? '') ?? 0,
       hourStartAt: DateTime.tryParse(json['hourStartAt']?.toString() ?? ''),
       hourEndAt: DateTime.tryParse(json['hourEndAt']?.toString() ?? ''),
-      points: int.tryParse(json['points']?.toString() ?? '') ?? 0,
+      points: double.tryParse(json['points']?.toString() ?? '') ?? 0,
       activeReferralsSnapshot:
           int.tryParse(json['activeReferralsSnapshot']?.toString() ?? '') ?? 0,
       boostBpsSnapshot:
@@ -282,6 +282,7 @@ class DownlineMember {
   const DownlineMember({
     required this.id,
     required this.email,
+    required this.username,
     required this.displayName,
     required this.avatarUrl,
     required this.status,
@@ -294,6 +295,7 @@ class DownlineMember {
 
   final String id;
   final String? email;
+  final String? username;
   final String? displayName;
   final String? avatarUrl;
   final String status;
@@ -307,6 +309,7 @@ class DownlineMember {
     return DownlineMember(
       id: json['id']?.toString() ?? '',
       email: json['email']?.toString(),
+      username: json['username']?.toString(),
       displayName: json['displayName']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
       status: json['status']?.toString() ?? 'idle',
@@ -462,8 +465,7 @@ class ReferralValidation {
     return ReferralValidation(
       valid: json['valid'] == true,
       code: json['code']?.toString() ?? '',
-      referrerName: referrer?['displayName']?.toString() ??
-          referrer?['email']?.toString(),
+      referrerName: referrer?['displayName']?.toString(),
     );
   }
 }

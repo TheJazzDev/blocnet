@@ -14,8 +14,8 @@ export function Footer() {
               <Image
                 src="/logo.png"
                 alt="Blocnet"
-                width={120}
-                height={30}
+                width={512}
+                height={512}
                 className="h-6 sm:h-7 md:h-8 w-auto"
               />
             </Link>
@@ -69,101 +69,108 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Product */}
-          <div>
-            <h4 className="text-sm sm:text-base font-semibold text-foreground mb-3 sm:mb-4">
-              Product
-            </h4>
-            <ul className="space-y-2 sm:space-y-3">
-              <li>
-                <Link href="/#features" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link href="/roadmap" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Roadmap
-                </Link>
-              </li>
-              <li>
-                <Link href="/#mining" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Mining
-                </Link>
-              </li>
-              <li>
-                <Link href="/#wallet" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Wallet
-                </Link>
-              </li>
-              <li>
-                <Link href="/#community" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Community
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <div className="grid grid-cols-2 gap-6 sm:gap-8 md:col-span-3 md:grid-cols-3">
+            {/* Product */}
+            <div>
+              <h4 className="text-sm sm:text-base font-semibold text-foreground mb-3 sm:mb-4">
+                Product
+              </h4>
+              <ul className="space-y-2 sm:space-y-3">
+                <li>
+                  <Link href="/#features" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Features
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/roadmap" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Roadmap
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#mining" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Mining
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#wallet" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Wallet
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#community" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Community
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-          {/* Community */}
-          <div>
-            <h4 className="text-sm sm:text-base font-semibold text-foreground mb-3 sm:mb-4">
-              Community
-            </h4>
-            <ul className="space-y-2 sm:space-y-3">
-              <li>
-                <a href="https://x.com/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  X (Twitter)
-                </a>
-              </li>
-              <li>
-                <a href="https://t.me/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Telegram
-                </a>
-              </li>
-              <li>
-                <a href="https://instagram.com/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Instagram
-                </a>
-              </li>
-              <li>
-                <a href="https://tiktok.com/@blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  TikTok
-                </a>
-              </li>
-              <li>
-                <Link href="/#download" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Download App
-                </Link>
-              </li>
-            </ul>
-          </div>
+            {/* Community */}
+            <div>
+              <h4 className="text-sm sm:text-base font-semibold text-foreground mb-3 sm:mb-4">
+                Community
+              </h4>
+              <ul className="space-y-2 sm:space-y-3">
+                <li>
+                  <a href="https://x.com/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    X (Twitter)
+                  </a>
+                </li>
+                <li>
+                  <a href="https://t.me/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Telegram
+                  </a>
+                </li>
+                <li>
+                  <a href="https://instagram.com/blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Instagram
+                  </a>
+                </li>
+                <li>
+                  <a href="https://tiktok.com/@blocnet_app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    TikTok
+                  </a>
+                </li>
+                <li>
+                  <Link href="/#download" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Download App
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-          {/* Support */}
-          <div>
-            <h4 className="text-sm sm:text-base font-semibold text-foreground mb-3 sm:mb-4">
-              Support
-            </h4>
-            <ul className="space-y-2 sm:space-y-3">
-              <li>
-                <a href="https://blocnet.app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <Link href="/contact" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
+            {/* Support */}
+            <div className="col-span-2 md:col-span-1">
+              <h4 className="text-sm sm:text-base font-semibold text-foreground mb-3 sm:mb-4">
+                Support
+              </h4>
+              <ul className="space-y-2 sm:space-y-3">
+                <li>
+                  <a href="https://blocnet.app" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Help Center
+                  </a>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Contact Us
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/whitepaper" className="text-xs sm:text-sm text-muted transition-colors hover:text-foreground">
+                    Whitepaper
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -178,6 +185,9 @@ export function Footer() {
             </Link>
             <Link href="/terms" className="transition-colors hover:text-foreground">
               Terms of Service
+            </Link>
+            <Link href="/whitepaper" className="transition-colors hover:text-foreground">
+              Whitepaper
             </Link>
           </div>
         </div>

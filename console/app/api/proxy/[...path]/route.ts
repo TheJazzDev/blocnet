@@ -95,10 +95,11 @@ async function handler(
   const backendPath = path.join("/");
   const search = request.nextUrl.search;
   const url = `${API_BASE}/${backendPath}${search}`;
+  const incomingContentType = request.headers.get("content-type")?.trim();
 
   const body =
     request.method !== "GET" && request.method !== "HEAD"
-      ? await request.text()
+      ? Buffer.from(await request.arrayBuffer())
       : undefined;
 
   const runWithToken = async (accessToken: string) =>
@@ -106,7 +107,9 @@ async function handler(
       url,
       method: request.method as Method,
       headers: {
-        "Content-Type": "application/json",
+        ...(incomingContentType
+          ? { "Content-Type": incomingContentType }
+          : {}),
         Authorization: `Bearer ${accessToken}`,
         "x-admin-panel-request": "1",
         ...(viewAsRole ? { "x-admin-view-as-role": viewAsRole } : {}),

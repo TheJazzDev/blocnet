@@ -2,8 +2,8 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_hero_card.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
-import 'package:blocnet/services/mining_store.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/engagement/mining_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -55,6 +55,7 @@ class _MiningScreenState extends State<MiningScreen> {
                 onClaim: () => _onClaim(store),
                 isStarting: store.isStarting,
                 isClaiming: store.isClaiming,
+                isLoadingSnapshot: store.isLoadingSnapshot,
               ),
               const SizedBox(height: 12),
               _MiningSectionEntryCard(

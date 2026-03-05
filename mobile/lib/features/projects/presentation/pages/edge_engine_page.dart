@@ -2,7 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
 import 'package:blocnet/features/engagement/data/models/edge_explain_model.dart';
-import 'package:blocnet/services/edge_engine_store.dart';
+import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

@@ -1,5 +1,5 @@
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/deep_link_service.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/core/deep_link_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,6 +23,8 @@ class _DeepLinkAuthStore extends AuthStore {
   Future<bool> verifyAndSignIn(
     String accessToken, {
     bool setSubmitting = true,
+    bool hydrateProfile = true,
+    bool bindPendingReferral = true,
   }) async {
     verifiedAccessToken = accessToken;
     return true;

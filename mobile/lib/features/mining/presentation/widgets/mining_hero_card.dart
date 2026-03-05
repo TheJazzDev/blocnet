@@ -15,6 +15,7 @@ class MiningHeroCard extends StatefulWidget {
     required this.onClaim,
     required this.isStarting,
     required this.isClaiming,
+    required this.isLoadingSnapshot,
   });
 
   final MiningSnapshot? snapshot;
@@ -22,6 +23,7 @@ class MiningHeroCard extends StatefulWidget {
   final VoidCallback onClaim;
   final bool isStarting;
   final bool isClaiming;
+  final bool isLoadingSnapshot;
 
   @override
   State<MiningHeroCard> createState() => _MiningHeroCardState();
@@ -122,17 +124,31 @@ class _MiningHeroCardState extends State<MiningHeroCard>
     final progressPct = (session?.progressPct ?? 0).clamp(0, 1).toDouble();
     final thisHourMined = session?.currentHourEstimatedPoints ?? 0.0;
     final cycleMinedDisplay = (session?.pointsMinedSoFar ?? 0) + thisHourMined;
-    final miningPower = 10 + (activeDirectReferrals * 0.1);
+    final baselineHourly =
+        (config?.basePointsPerCycle ?? 120) / math.max(cycleHours, 1);
+    final miningPower =
+        baselineHourly <= 0 ? 10.0 : 10.0 * (hourlyReward / baselineHourly);
 
-    final canStart = session == null || session.isIdle;
-    final canClaim = session?.isClaimable ?? false;
-    final claimLocked = !canClaim;
+    final hasSession = session != null && !session.isIdle;
+    final isSessionReadyCheck = widget.isLoadingSnapshot && session == null;
+    final canStart = !isSessionReadyCheck && !hasSession;
+    final reachedEnd = session?.endsAt != null &&
+        !session!.endsAt!.toUtc().isAfter(_now.toUtc());
+    final canClaim = hasSession && (session.isClaimable || reachedEnd);
     final statusLabel = canClaim
         ? 'Claim Ready'
         : session?.isRunning == true
             ? 'Live'
             : 'Idle';
-    final statusSubtext = _statusSubtext(session, _now);
+    final statusSubtext = _statusSubtext(session, _now, cycleHours);
+    final actionState = _resolveActionState(
+      canStart: canStart,
+      canClaim: canClaim,
+      isSessionReadyCheck: isSessionReadyCheck,
+      session: session,
+      now: _now,
+      busy: busy,
+    );
 
     return Stack(
       clipBehavior: Clip.none,
@@ -290,7 +306,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${_formatDecimal(cycleMinedDisplay)} BNP earned • Claim after 24h',
+                      '${_formatDecimal(cycleMinedDisplay)} BNP earned • Claim after ${cycleHours}h',
                       style: AppTypography.custom(
                         size: 12,
                         weight: FontWeight.w600,
@@ -349,21 +365,13 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                 ],
               ),
               const SizedBox(height: 14),
-              if (canStart)
-                _MiningActionButton(
-                  label: 'Start Mining',
-                  color: AppColors.primary500,
-                  textColor: Colors.black,
-                  onPressed: busy ? null : widget.onStart,
-                  isLoading: widget.isStarting,
-                ),
-              if (canStart) const SizedBox(height: 10),
               _MiningActionButton(
-                label: claimLocked ? 'Claim Rewards (Locked)' : 'Claim Rewards',
-                color: AppColors.successColor,
-                textColor: Colors.black,
-                onPressed: (claimLocked || busy) ? null : widget.onClaim,
-                isLoading: widget.isClaiming,
+                label: actionState.label,
+                color: actionState.color,
+                textColor: actionState.textColor,
+                onPressed: actionState.onPressed,
+                isLoading: actionState.isLoading,
+                showLockIcon: actionState.showLockIcon,
               ),
             ],
           ),
@@ -372,35 +380,107 @@ class _MiningHeroCardState extends State<MiningHeroCard>
     );
   }
 
-  String _statusSubtext(MiningSessionModel? session, DateTime now) {
-    if (session == null || session.isIdle) {
-      return 'Start to begin your 24h cycle.';
+  _MiningActionState _resolveActionState({
+    required bool canStart,
+    required bool canClaim,
+    required bool isSessionReadyCheck,
+    required MiningSessionModel? session,
+    required DateTime now,
+    required bool busy,
+  }) {
+    if (isSessionReadyCheck) {
+      return _MiningActionState(
+        label: 'Checking mining status...',
+        color: AppColors.bgElevated,
+        textColor: AppColors.textMuted,
+        onPressed: null,
+        isLoading: true,
+      );
     }
-    if (session.isClaimable) {
-      return 'Cycle complete. You can claim now.';
+
+    if (canStart) {
+      return _MiningActionState(
+        label: 'Start Mining',
+        color: AppColors.primary500,
+        textColor: Colors.black,
+        onPressed: busy ? null : widget.onStart,
+        isLoading: widget.isStarting,
+      );
     }
-    final remainingLabel = _formatRemaining(session.endsAt, now);
-    return remainingLabel == null
-        ? 'Mining in progress'
-        : 'Claim unlocks in $remainingLabel';
+
+    if (canClaim) {
+      return _MiningActionState(
+        label: 'Claim Rewards',
+        color: AppColors.successColor,
+        textColor: Colors.black,
+        onPressed: busy ? null : widget.onClaim,
+        isLoading: widget.isClaiming,
+      );
+    }
+
+    final countdown = _formatCountdown(session?.endsAt, now);
+    return _MiningActionState(
+      label: countdown == null ? 'Claim Locked' : 'Claim in $countdown',
+      color: AppColors.bgElevated,
+      textColor: AppColors.textMuted,
+      onPressed: null,
+      isLoading: false,
+      showLockIcon: true,
+    );
   }
 
-  String? _formatRemaining(DateTime? endsAt, DateTime now) {
+  String _statusSubtext(
+      MiningSessionModel? session, DateTime now, int cycleHours) {
+    if (session == null || session.isIdle) {
+      return 'Start to begin your ${cycleHours}h cycle.';
+    }
+    if (session.isClaimable || _hasReachedSessionEnd(session.endsAt, now)) {
+      return 'Cycle complete. You can claim now.';
+    }
+    return 'Mining in progress';
+  }
+
+  bool _hasReachedSessionEnd(DateTime? endsAt, DateTime now) {
+    if (endsAt == null) return false;
+    return !endsAt.toUtc().isAfter(now.toUtc());
+  }
+
+  String? _formatCountdown(DateTime? endsAt, DateTime now) {
     if (endsAt == null) return null;
     final left = endsAt.toUtc().difference(now.toUtc());
-    if (left.isNegative) return '0m';
+    if (left.inSeconds <= 0) return '00:00';
 
-    final hours = left.inHours;
-    final minutes = left.inMinutes % 60;
+    final totalSeconds = left.inSeconds;
+    final hours = totalSeconds ~/ 3600;
+    final minutes = (totalSeconds % 3600) ~/ 60;
+    final seconds = totalSeconds % 60;
     if (hours > 0) {
-      return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
+      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
-    return '${math.max(minutes, 0)}m';
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   String _formatDecimal(num value) {
     return formatGroupedNumber(value, maxDecimals: 2);
   }
+}
+
+class _MiningActionState {
+  const _MiningActionState({
+    required this.label,
+    required this.color,
+    required this.textColor,
+    required this.onPressed,
+    required this.isLoading,
+    this.showLockIcon = false,
+  });
+
+  final String label;
+  final Color color;
+  final Color textColor;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+  final bool showLockIcon;
 }
 
 class _StatusTag extends StatelessWidget {
@@ -505,6 +585,7 @@ class _MiningActionButton extends StatelessWidget {
     required this.textColor,
     required this.onPressed,
     required this.isLoading,
+    this.showLockIcon = false,
   });
 
   final String label;
@@ -512,9 +593,11 @@ class _MiningActionButton extends StatelessWidget {
   final Color textColor;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final bool showLockIcon;
 
   @override
   Widget build(BuildContext context) {
+    final disabled = onPressed == null && !isLoading;
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -522,9 +605,15 @@ class _MiningActionButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: color,
-          disabledBackgroundColor: color.withValues(alpha: 0.35),
+          disabledBackgroundColor: color.withValues(alpha: 0.95),
           foregroundColor: textColor,
-          disabledForegroundColor: textColor.withValues(alpha: 0.65),
+          disabledForegroundColor: textColor.withValues(alpha: 0.9),
+          side: BorderSide(
+            color: disabled
+                ? AppColors.borderSubtle.withValues(alpha: 0.9)
+                : color.withValues(alpha: 0.2),
+            width: 1.1,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -539,14 +628,27 @@ class _MiningActionButton extends StatelessWidget {
                   strokeWidth: 2,
                 ),
               )
-            : Text(
-                label,
-                style: AppTypography.custom(
-                  size: 13,
-                  weight: FontWeight.w800,
-                  color: textColor,
-                  letterSpacing: 0.2,
-                ),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (showLockIcon) ...[
+                    Icon(
+                      Icons.lock_rounded,
+                      size: 15,
+                      color: textColor.withValues(alpha: 0.9),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    label,
+                    style: AppTypography.custom(
+                      size: 13,
+                      weight: FontWeight.w800,
+                      color: textColor,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
               ),
       ),
     );

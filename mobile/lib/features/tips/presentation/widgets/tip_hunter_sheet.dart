@@ -1,9 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/tips_store.dart';
-import 'package:blocnet/services/user_profile_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/engagement/tips_store.dart';
+import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

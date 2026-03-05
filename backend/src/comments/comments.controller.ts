@@ -76,4 +76,30 @@ export class CommentsController {
 
     return this.commentsService.deleteComment(user, id);
   }
+
+  @Post('comments/:id/reactions')
+  @UseGuards(AuthGuard)
+  async likeComment(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.commentsService.likeComment(user, id);
+  }
+
+  @Delete('comments/:id/reactions')
+  @UseGuards(AuthGuard)
+  async unlikeComment(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.commentsService.unlikeComment(user, id);
+  }
 }

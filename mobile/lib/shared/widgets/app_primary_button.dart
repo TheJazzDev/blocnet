@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:provider/provider.dart';
 
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
@@ -17,6 +19,13 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthStore?>(context, listen: true);
+    final isHunterSpace = auth?.isInHunterSpace ?? false;
+    final onAccent = AppColors.onAccentForSpace(isHunterSpace);
+    final startColor =
+        isHunterSpace ? AppColors.hunterAccent : AppColors.userAccent;
+    final endColor = isHunterSpace ? AppColors.primary500 : AppColors.primary700;
+
     return Expanded(
       child: GestureDetector(
         onTap: isEnabled && !isLoading ? onPressed : null,
@@ -30,8 +39,8 @@ class PrimaryButton extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.teal400,
-                      AppColors.primary500,
+                      startColor,
+                      endColor,
                     ],
                   )
                 : null,
@@ -39,20 +48,20 @@ class PrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isEnabled
-                  ? AppColors.teal400.withValues(alpha: 0.3)
+                  ? startColor.withValues(alpha: 0.3)
                   : AppColors.borderSubtle,
               width: 1.5,
             ),
             boxShadow: isEnabled
                 ? [
                     BoxShadow(
-                      color: AppColors.teal400.withValues(alpha: 0.3),
+                      color: startColor.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 6),
                       spreadRadius: 0,
                     ),
                     BoxShadow(
-                      color: AppColors.primary500.withValues(alpha: 0.2),
+                      color: endColor.withValues(alpha: 0.2),
                       blurRadius: 32,
                       offset: const Offset(0, 8),
                       spreadRadius: -2,
@@ -61,13 +70,13 @@ class PrimaryButton extends StatelessWidget {
                 : null,
           ),
           child: isLoading
-              ? const Center(
+              ? Center(
                   child: SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      color: Colors.black,
+                      color: onAccent,
                     ),
                   ),
                 )
@@ -75,7 +84,7 @@ class PrimaryButton extends StatelessWidget {
                   title,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: isEnabled ? Colors.white : AppColors.textMuted,
+                    color: isEnabled ? onAccent : AppColors.textMuted,
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Geist',

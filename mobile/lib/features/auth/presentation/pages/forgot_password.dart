@@ -1,7 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
-import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/shared/widgets/app_primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

@@ -366,7 +366,7 @@ export class AdminTwoFactorService {
     const policy = await this.getPolicy();
     if (policy.require2faForAdminPanel) {
       throw new ForbiddenException(
-        'Cannot disable TOTP while admin panel 2FA policy is enforced',
+        'Cannot disable TOTP while admin console 2FA policy is enforced',
       );
     }
 
@@ -517,7 +517,11 @@ export class AdminTwoFactorService {
     const eligibleRows = await this.prisma.userRole.findMany({
       where: {
         role: {
-          in: [RoleName.owner, RoleName.admin, RoleName.moderator],
+          in: [
+            RoleName.owner,
+            RoleName.dev,
+            RoleName.admin,
+          ],
         },
       },
       select: { userId: true },
@@ -555,7 +559,11 @@ export class AdminTwoFactorService {
     const eligibleRows = await this.prisma.userRole.findMany({
       where: {
         role: {
-          in: [RoleName.owner, RoleName.admin, RoleName.moderator],
+          in: [
+            RoleName.owner,
+            RoleName.dev,
+            RoleName.admin,
+          ],
         },
       },
       select: { userId: true },
@@ -601,8 +609,8 @@ export class AdminTwoFactorService {
     const sampleEmails = missingProfiles.map((entry) => entry.email).join(', ');
     throw new BadRequestException(
       sampleEmails.length > 0
-        ? `Cannot enforce admin panel 2FA yet. ${missingIds.length} eligible account(s) are missing TOTP (sample: ${sampleEmails}).`
-        : `Cannot enforce admin panel 2FA yet. ${missingIds.length} eligible account(s) are missing TOTP.`,
+        ? `Cannot enforce admin console 2FA yet. ${missingIds.length} eligible account(s) are missing TOTP (sample: ${sampleEmails}).`
+        : `Cannot enforce admin console 2FA yet. ${missingIds.length} eligible account(s) are missing TOTP.`,
     );
   }
 
@@ -802,15 +810,15 @@ export class AdminTwoFactorService {
   private isGovernanceRole(role: AppRole): boolean {
     return (
       role === AppRole.OWNER ||
-      role === AppRole.ADMIN ||
-      role === AppRole.MODERATOR
+      role === AppRole.DEV ||
+      role === AppRole.ADMIN
     );
   }
 
   private assertEligible(roles: AppRole[]): void {
     if (!this.isAdminPanelEligible(roles)) {
       throw new ForbiddenException(
-        'Only owner/admin/moderator accounts can use admin panel 2FA',
+        'Only owner/dev/admin accounts can use admin console 2FA',
       );
     }
   }

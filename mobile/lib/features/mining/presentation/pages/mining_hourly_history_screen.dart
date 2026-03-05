@@ -2,7 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_hourly_history_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/services/mining_store.dart';
+import 'package:blocnet/services/engagement/mining_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -36,7 +36,13 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
       ),
       body: Consumer<MiningStore>(
         builder: (context, store, _) {
-          final entries = store.snapshot?.hourlyHistory ?? const [];
+          final snapshot = store.snapshot;
+          final entries = snapshot?.hourlyHistory ?? const [];
+          final basePointsPerCycle = snapshot?.config.basePointsPerCycle ?? 120;
+          final cycleHours = (snapshot?.session.cycleHours ??
+                  snapshot?.config.cycleHours ??
+                  24)
+              .clamp(1, 168);
           return RefreshIndicator(
             color: AppColors.primary500,
             backgroundColor: AppColors.bgSurface,
@@ -46,7 +52,7 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
                 Text(
-                  'Track every hourly checkpoint from your mining sessions.',
+                  'Last 48 hourly checkpoints from your mining sessions.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: 12,
@@ -57,7 +63,9 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
                 MiningHourlyHistoryCard(
                   entries: entries,
                   isLoading: store.isLoadingSnapshot,
-                  maxEntries: null,
+                  basePointsPerCycle: basePointsPerCycle,
+                  cycleHours: cycleHours,
+                  maxEntries: 48,
                 ),
               ],
             ),

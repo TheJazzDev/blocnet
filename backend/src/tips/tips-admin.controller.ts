@@ -21,7 +21,7 @@ import { TipsService } from './tips.service';
 
 @Controller('admin/tips')
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR)
+@Roles(AppRole.OWNER, AppRole.ADMIN)
 export class TipsAdminController {
   constructor(private readonly tipsService: TipsService) {}
 

@@ -26,6 +26,7 @@ describe('projects.mapper', () => {
       ownerAdmin: {
         id: 'user-1',
         email: 'owner@blocnet.io',
+        username: 'owner',
         displayName: 'Owner',
         avatarUrl: 'https://example.com/a.png',
       },

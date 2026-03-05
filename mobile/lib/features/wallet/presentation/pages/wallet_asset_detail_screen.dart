@@ -1,10 +1,12 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/action_row.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/asset_balance_card.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/section_header.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/transactions_list.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -39,6 +41,8 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
+    final viewMode = context.watch<FeedViewModeStore>().mode;
+    final isCardMode = viewMode == FeedViewMode.card;
     final asset = walletStore.findAsset(_assetCode);
 
     return Scaffold(
@@ -68,7 +72,7 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                AssetBalanceCard(assetCode: _assetCode),
+                AssetBalanceCard(assetCode: _assetCode, mode: viewMode),
                 const SizedBox(height: 16),
                 ActionRow(assetCode: _assetCode),
                 const SizedBox(height: 24),
@@ -81,11 +85,13 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgSurface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.borderSubtle),
-                    ),
+                    decoration: isCardMode
+                        ? BoxDecoration(
+                            color: AppColors.bgSurface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.borderSubtle),
+                          )
+                        : null,
                     child: Text(
                       'Send and withdrawal are currently disabled for $_assetCode. '
                       'Receive/deposit is available.',
@@ -96,6 +102,13 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
                         height: 1.5,
                       ),
                     ),
+                  ),
+                if (!isCardMode &&
+                    (!walletStore.canTransferAsset(_assetCode) ||
+                        !walletStore.canWithdrawAsset(_assetCode)))
+                  Divider(
+                    height: 1,
+                    color: AppColors.borderSubtle.withValues(alpha: 0.8),
                   ),
                 const SizedBox(height: 20),
               ],

@@ -1,7 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
-import 'package:blocnet/services/wallet_store.dart';
+import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,7 @@ class BalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
+    final visibilityStore = context.watch<WalletVisibilityStore>();
     final snapshot = walletStore.snapshot;
     final address = snapshot?.walletAddress;
     final status = snapshot?.walletStatus ?? 'provisioning';
@@ -24,208 +26,103 @@ class BalanceCard extends StatelessWidget {
                 : 'Provisioning wallet...');
 
     final totalUsd = snapshot?.totalUsdValue ?? '0';
+    final isBalanceHidden = visibilityStore.isBalanceHidden;
+    final balanceText =
+        isBalanceHidden ? '\$••••••' : '\$${formatUsd(totalUsd)}';
 
-    return Stack(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Background glow effects
-        Positioned(
-          right: -40,
-          top: -30,
-          child: Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppColors.teal500.withValues(alpha: 0.15),
-                  Colors.transparent,
-                ],
+        Row(
+          children: [
+            Text(
+              'TOTAL BALANCE',
+              style: AppTypography.custom(
+                color: AppColors.textFaint,
+                size: 11,
+                weight: FontWeight.w700,
+                letterSpacing: 1.2,
               ),
             ),
-          ),
-        ),
-        Positioned(
-          left: -30,
-          bottom: -20,
-          child: Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppColors.primary500.withValues(alpha: 0.1),
-                  Colors.transparent,
-                ],
+            const SizedBox(width: 6),
+            IconButton(
+              onPressed: visibilityStore.toggle,
+              splashRadius: 18,
+              iconSize: 18,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              icon: Icon(
+                isBalanceHidden
+                    ? Icons.visibility_off_rounded
+                    : Icons.visibility_rounded,
+                color: AppColors.textMuted,
               ),
+              tooltip: isBalanceHidden ? 'Show balances' : 'Hide balances',
             ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          balanceText,
+          style: AppTypography.custom(
+            color: AppColors.textPrimary,
+            size: 44,
+            weight: FontWeight.w800,
+            height: 1.0,
           ),
         ),
-        // Main content
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF0F1419),
-                AppColors.bgSurface,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppColors.teal500.withValues(alpha: 0.2),
-              width: 1.5,
-            ),
+        const SizedBox(height: 4),
+        Text(
+          'BSC Network',
+          style: AppTypography.custom(
+            color: AppColors.textMuted,
+            size: 12,
+            weight: FontWeight.w500,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.teal400,
-                          AppColors.teal500,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.account_balance_wallet_rounded,
-                      color: Colors.black,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'My Wallet',
+        ),
+        const SizedBox(height: 14),
+        GestureDetector(
+          onTap: () {
+            if (address == null || address.isEmpty) {
+              showWalletToast(
+                context,
+                message: 'Wallet address is not ready yet.',
+                type: WalletToastType.error,
+              );
+              return;
+            }
+            Clipboard.setData(ClipboardData(text: address));
+            showWalletToast(
+              context,
+              message: 'Address copied.',
+              type: WalletToastType.success,
+            );
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    addressText,
                     style: AppTypography.custom(
-                      color: AppColors.textMuted,
-                      size: 13,
+                      color: AppColors.textSecondary,
+                      size: 12,
                       weight: FontWeight.w600,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Text(
-                'TOTAL BALANCE',
-                style: AppTypography.custom(
-                  color: AppColors.textFaint,
-                  size: 11,
-                  weight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '\$${formatUsd(totalUsd)}',
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: 44,
-                  weight: FontWeight.w800,
-                  height: 1.0,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'BSC Network',
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: 12,
-                  weight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Address section
-              GestureDetector(
-                onTap: () {
-                  if (address == null || address.isEmpty) {
-                    showWalletToast(
-                      context,
-                      message: 'Wallet address is not ready yet.',
-                      type: WalletToastType.error,
-                    );
-                    return;
-                  }
-                  Clipboard.setData(ClipboardData(text: address));
-                  showWalletToast(
-                    context,
-                    message: 'Address copied.',
-                    type: WalletToastType.success,
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppColors.borderSubtle.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.bgElevated,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.qr_code_rounded,
-                          size: 18,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              addressText,
-                              style: AppTypography.custom(
-                                color: AppColors.textSecondary,
-                                size: 12,
-                                weight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Tap to copy address',
-                              style: AppTypography.custom(
-                                color: AppColors.textFaint,
-                                size: 10,
-                                weight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.copy_rounded,
-                        size: 16,
-                        color: AppColors.teal400,
-                      ),
-                    ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.copy_rounded,
+                  size: 16,
+                  color: AppColors.teal400,
+                ),
+              ],
+            ),
           ),
         ),
       ],

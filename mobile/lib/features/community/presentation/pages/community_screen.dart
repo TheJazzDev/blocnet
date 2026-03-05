@@ -8,11 +8,12 @@ import 'package:blocnet/features/community/data/models/community_post_model.dart
 import 'package:blocnet/features/community/data/models/community_topic.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_feed_list.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_tabs.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/community_posts_store.dart';
+import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/community/community_posts_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -29,9 +30,8 @@ class _CommunityScreenState extends State<CommunityScreen>
     CommunityTopic.marketTalk: ScrollController(),
   };
   final Set<String> _pendingNewPostIds = <String>{};
-  Timer? _newPostsPollTimer;
-  RealtimeChannel? _newPostsRealtimeChannel;
-  bool _isCheckingForNewPosts = false;
+  final FeedSyncController _feedSyncController =
+      FeedSyncController(debugLabel: 'Community');
 
   @override
   void initState() {
@@ -52,13 +52,18 @@ class _CommunityScreenState extends State<CommunityScreen>
       if (!mounted) return;
       context.read<CommunityPostsStore>().fetchPostsOnce();
     });
-    _startNewPostsSync();
+    _feedSyncController.start(
+      realtimeEnabled: AppConfig.isSupabaseConfigured,
+      pollInterval: const Duration(seconds: 12),
+      channelName: 'community-new-posts',
+      table: 'CommunityPost',
+      onSyncRequested: _checkForNewPosts,
+    );
   }
 
   @override
   void dispose() {
-    _newPostsPollTimer?.cancel();
-    _stopNewPostsRealtimeSubscription();
+    _feedSyncController.dispose();
     for (final controller in _scrollControllers.values) {
       controller
         ..removeListener(_handleScroll)
@@ -66,42 +71,6 @@ class _CommunityScreenState extends State<CommunityScreen>
     }
     _tabController.dispose();
     super.dispose();
-  }
-
-  void _startNewPostsSync() {
-    if (!AppConfig.isSupabaseConfigured) {
-      _newPostsPollTimer = Timer.periodic(
-        const Duration(seconds: 12),
-        (_) => _checkForNewPosts(),
-      );
-      return;
-    }
-
-    _startNewPostsRealtimeSubscription();
-  }
-
-  void _startNewPostsRealtimeSubscription() {
-    _stopNewPostsRealtimeSubscription();
-    _newPostsRealtimeChannel = Supabase.instance.client
-        .channel('community-new-posts')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'CommunityPost',
-          callback: (_) => unawaited(_checkForNewPosts()),
-        )
-        .subscribe((status, [error]) {
-      debugPrint(
-        '[RT][Community] posts status=$status error=$error',
-      );
-    });
-  }
-
-  void _stopNewPostsRealtimeSubscription() {
-    final channel = _newPostsRealtimeChannel;
-    if (channel == null) return;
-    _newPostsRealtimeChannel = null;
-    Supabase.instance.client.removeChannel(channel);
   }
 
   void _handleScroll() {
@@ -126,17 +95,12 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   Future<void> _checkForNewPosts() async {
-    if (!mounted || _isCheckingForNewPosts) return;
+    if (!mounted) return;
 
     final store = context.read<CommunityPostsStore>();
     final existingIds = store.posts.map((post) => post.id).toSet();
 
-    _isCheckingForNewPosts = true;
-    try {
-      await store.refreshPosts();
-    } finally {
-      _isCheckingForNewPosts = false;
-    }
+    await store.refreshPosts();
 
     if (!mounted) return;
 
@@ -178,6 +142,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
     final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final viewMode = context.watch<FeedViewModeStore>().mode;
     final accent = AppColors.accentForSpace(isHunterSpace);
     final onAccent = AppColors.onAccentForSpace(isHunterSpace);
 
@@ -220,6 +185,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                         CommunityFeedList(
                           posts: _filterPosts(posts, CommunityTopic.general),
                           bottomPad: bottomPad,
+                          mode: viewMode,
                           controller:
                               _scrollControllers[CommunityTopic.general]!,
                           accentColor: accent,
@@ -230,6 +196,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                         CommunityFeedList(
                           posts: _filterPosts(posts, CommunityTopic.marketTalk),
                           bottomPad: bottomPad,
+                          mode: viewMode,
                           controller:
                               _scrollControllers[CommunityTopic.marketTalk]!,
                           accentColor: accent,

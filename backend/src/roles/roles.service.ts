@@ -45,12 +45,40 @@ export class RolesService {
     );
   }
 
-  async promoteToModerator(actorId: string, userId: string, note?: string) {
+  async promoteToDev(actorId: string, userId: string, note?: string) {
     return this.promoteRole(
       actorId,
       userId,
-      RoleName.moderator,
-      'role.promote.moderator',
+      RoleName.dev,
+      'role.promote.dev',
+      note,
+    );
+  }
+
+  async promoteToModerator(actorId: string, userId: string, note?: string) {
+    return this.promoteToCommunityModerator(actorId, userId, note);
+  }
+
+  async promoteToCommunityModerator(
+    actorId: string,
+    userId: string,
+    note?: string,
+  ) {
+    return this.promoteRole(
+      actorId,
+      userId,
+      RoleName.community_moderator,
+      'role.promote.community_moderator',
+      note,
+    );
+  }
+
+  async promoteToCommunityAdmin(actorId: string, userId: string, note?: string) {
+    return this.promoteRole(
+      actorId,
+      userId,
+      RoleName.community_admin,
+      'role.promote.community_admin',
       note,
     );
   }
@@ -94,12 +122,29 @@ export class RolesService {
     );
   }
 
+  async demoteDev(actorId: string, userId: string) {
+    return this.demoteRole(actorId, userId, RoleName.dev, 'role.demote.dev');
+  }
+
   async demoteModerator(actorId: string, userId: string) {
+    return this.demoteCommunityModerator(actorId, userId);
+  }
+
+  async demoteCommunityModerator(actorId: string, userId: string) {
     return this.demoteRole(
       actorId,
       userId,
-      RoleName.moderator,
-      'role.demote.moderator',
+      RoleName.community_moderator,
+      'role.demote.community_moderator',
+    );
+  }
+
+  async demoteCommunityAdmin(actorId: string, userId: string) {
+    return this.demoteRole(
+      actorId,
+      userId,
+      RoleName.community_admin,
+      'role.demote.community_admin',
     );
   }
 
@@ -228,8 +273,8 @@ export class RolesService {
   ) {
     const isGovernanceRole =
       role === RoleName.owner ||
-      role === RoleName.admin ||
-      role === RoleName.moderator;
+      role === RoleName.dev ||
+      role === RoleName.admin;
 
     if (actorId === userId && isGovernanceRole) {
       throw new ForbiddenException('Self-escalation is not allowed');
@@ -255,7 +300,10 @@ export class RolesService {
       .filter((role) => role !== roleToRemove);
 
     const hasRemainingManagementRole = remaining.some(
-      (role) => role === RoleName.owner || role === RoleName.admin,
+      (role) =>
+        role === RoleName.owner ||
+        role === RoleName.dev ||
+        role === RoleName.admin,
     );
 
     if (!hasRemainingManagementRole) {

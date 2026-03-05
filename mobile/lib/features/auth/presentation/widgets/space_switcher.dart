@@ -1,5 +1,5 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';

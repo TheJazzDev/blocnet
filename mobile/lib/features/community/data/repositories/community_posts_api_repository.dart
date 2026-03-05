@@ -93,10 +93,16 @@ class CommunityPostsApiRepository {
   Future<CommunityPostComment?> createComment({
     required String postId,
     required String content,
+    String? replyToId,
   }) async {
+    final body = <String, dynamic>{'content': content};
+    if (replyToId != null) {
+      body['replyToId'] = replyToId;
+    }
+
     final response = await _apiClient.post(
       '/community-posts/$postId/comments',
-      body: {'content': content},
+      body: body,
     );
 
     if (response is! Map<String, dynamic>) {
@@ -168,5 +174,30 @@ class CommunityPostsApiRepository {
         .whereType<Map<String, dynamic>>()
         .map(CommunityPost.fromApi)
         .toList();
+  }
+
+  Future<CommunityPostComment?> likeComment(String commentId) async {
+    final response = await _apiClient.post(
+      '/community-post-comments/$commentId/reactions',
+      body: {'kind': 'like'},
+    );
+
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return CommunityPostComment.fromApi(response);
+  }
+
+  Future<CommunityPostComment?> unlikeComment(String commentId) async {
+    final response = await _apiClient.delete(
+      '/community-post-comments/$commentId/reactions',
+    );
+
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return CommunityPostComment.fromApi(response);
   }
 }

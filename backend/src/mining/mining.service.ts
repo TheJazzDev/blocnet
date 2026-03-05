@@ -8,6 +8,7 @@ import {
 import { MiningPointSource, Prisma, TipAccountType } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
+import { LevelsService } from '../levels/levels.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
 import { BNP_CURRENCY_CODE } from '../tips/tip.constants';
@@ -43,6 +44,7 @@ export class MiningService {
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
     private readonly questsService: QuestsService,
+    private readonly levelsService: LevelsService,
     private readonly miningCalculator: MiningCalculatorService,
     private readonly miningConfigService: MiningConfigService,
   ) {}
@@ -127,8 +129,8 @@ export class MiningService {
           where: { id: profile.referredById },
           select: {
             id: true,
+            username: true,
             displayName: true,
-            email: true,
             referralCode: true,
           },
         })
@@ -186,8 +188,8 @@ export class MiningService {
         referredBy: referrer
           ? {
               id: referrer.id,
+              username: referrer.username,
               displayName: referrer.displayName,
-              email: referrer.email,
               code: referrer.referralCode,
             }
           : null,
@@ -462,6 +464,15 @@ export class MiningService {
         hourlyCheckpointCount: checkpointCount,
       },
     });
+
+    // Trigger level recalculation after BNP earned
+    try {
+      await this.levelsService.updateUserLevel(userId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to update user level after mining claim: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     let nextSessionState: Awaited<
       ReturnType<typeof this.toSessionState>

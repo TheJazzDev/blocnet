@@ -44,6 +44,7 @@ export const envValidationSchema = Joi.object({
   SUPABASE_SERVICE_ROLE_KEY: Joi.string().allow('').optional(),
   SUPABASE_AVATARS_BUCKET: Joi.string().default('avatars'),
   SUPABASE_QUEST_PROOFS_BUCKET: Joi.string().default('quest-proofs'),
+  SUPABASE_LEVEL_BADGES_BUCKET: Joi.string().default('level-badges'),
   PUBLISHABLE_KEY: Joi.string().allow('').optional(),
   SUPABASE_JWKS_URL: Joi.string().uri().allow('').empty('').optional(),
 
@@ -85,6 +86,7 @@ export const envValidationSchema = Joi.object({
     .optional(),
 
   ENABLE_ALPHA_RADAR: Joi.boolean().default(true),
+  ENABLE_CLOSED_ALPHA: Joi.boolean().default(false),
   ENABLE_BEE: Joi.boolean().default(true),
   ENABLE_FOLLOW_PREFS: Joi.boolean().default(true),
   ENABLE_EVENT_NOTIFICATIONS: Joi.boolean().default(true),

@@ -1,29 +1,35 @@
 # Blocknet Build + Learning Master Plan
 
 ## Product Premise and Mission
+
 Blocknet is a structured crypto update network for communities that miss critical opportunities because chat streams are noisy.
 
 Problem:
+
 - Important project actions (launch, KYC, claim windows, upgrades) get buried.
 - Users miss high-value deadlines because no one owns structured tracking.
 
 Mission:
+
 - Convert noisy chat updates into structured, followable project intelligence.
 - Assign clear ownership for each project and keep followers continuously updated.
 - Deliver urgency-based notifications and trust-based contributor reputation.
 
 Long-term vision (post-MVP):
+
 - contributor wallet and tokenized donations,
 - performance and trust scores for posters,
 - stronger moderation and safety controls.
 
 ## Monorepo Structure (Locked)
+
 - `mobile/` Flutter app (user-facing product)
 - `backend/` NestJS API (single source of business logic)
-- `console/` Next.js admin panel
+- `console/` Next.js admin console
 - `homepage/` Next.js marketing page
 
 ## Locked Architecture Decisions
+
 - Backend: NestJS (shared API for mobile now and admin web later).
 - Database: Supabase Postgres.
 - ORM: Prisma 7 (`prisma.config.ts` + `@prisma/adapter-pg`).
@@ -34,12 +40,15 @@ Long-term vision (post-MVP):
 - Notifications: Postgres in-app notifications + FCM push for device delivery.
 
 ## Canonical Content Hierarchy (Critical Product Context)
+
 Blocknet content structure is:
+
 1. `Project` (root entity)
 2. `Update` (entry under a project)
 3. `Comment` (discussion under an update)
 
 Core invariants:
+
 - An update MUST belong to exactly one project (`update.project_id` required).
 - A comment MUST belong to exactly one update (`comment.update_id` required).
 - A project is unique by canonical identity (slug/symbol/domain); duplicates are not allowed.
@@ -47,7 +56,9 @@ Core invariants:
 - The original project creator is the primary maintainer of that project.
 
 ## Project Ownership + Collaboration Model
+
 For each project:
+
 - Exactly one primary maintainer (creator/owner) exists.
 - Additional collaborators can be assigned to co-maintain updates.
 - Collaborators can create updates under the project if granted assignment.
@@ -55,21 +66,25 @@ For each project:
 - Primary maintainer can be an admin, or an approved poster granted project-publisher rights.
 
 This supports your intended flow:
+
 - `Codawoo` project is created once.
 - Updates are posted under `Codawoo` over time.
 - Followers receive notifications per new update.
 - Other approved posters/admins can collaborate on `Codawoo` when accepted.
 
 ## Role and Permission Matrix (Updated)
+
 Users can hold multiple roles simultaneously.
 
 ### `owner`
+
 - Global authority.
 - Promote/demote admins.
 - Override moderation decisions.
 - Access full audit logs.
 
 ### `admin`
+
 - High-trust operators under owner.
 - Create/manage projects.
 - Approve/promote posters.
@@ -77,23 +92,28 @@ Users can hold multiple roles simultaneously.
 - Moderate updates/comments and apply sanctions per policy.
 
 ### `poster`
+
 - Content contributor.
 - Create project updates where assigned (or where primary maintainer).
 - Can create a new project only when granted project-publisher permission by owner/admin.
 - Cannot modify system-wide roles/policies.
 
 ### `user`
+
 - Follow/unfollow projects.
 - Read feeds and notifications.
 - Comment under updates.
 - Apply for elevation (poster/admin workflow).
 
 ## Public Profile Model (Required for Trust)
+
 Each account has:
+
 - private account profile (auth/account settings),
 - public contributor profile (viewable by other users).
 
 Public profile should expose:
+
 - roles (multi-role badges),
 - projects created,
 - updates created,
@@ -101,7 +121,9 @@ Public profile should expose:
 - future: donations and wallet reputation.
 
 ## Backend Modules (Implemented + Planned)
+
 Implemented scaffold:
+
 - `auth`
 - `users`
 - `roles`
@@ -117,13 +139,16 @@ Implemented scaffold:
 - `prisma`
 
 Planned next modules:
+
 - `comments`
 - `project-collaborators` (if separated from current assignment semantics)
 - `moderation-actions`
 - `public-profiles`
 
 ## API Contract (MVP + Next Additions)
+
 Current scaffold routes:
+
 - `POST /api/auth/session/verify`
 - `GET /api/me`
 - `PATCH /api/me`
@@ -151,6 +176,7 @@ Current scaffold routes:
 - `GET /api/audit-log`
 
 Next required routes:
+
 - `POST /api/updates/:updateId/comments`
 - `GET /api/updates/:updateId/comments`
 - `PATCH /api/comments/:id`
@@ -160,10 +186,13 @@ Next required routes:
 - `DELETE /api/projects/:projectId/collaborators/:userId`
 
 ## Database Schema and Migration Order
+
 Current schema file:
+
 - `backend/prisma/schema.prisma`
 
 Current migration sequence (locked):
+
 1. `profiles`, `user_roles`
 2. `projects`, `project_posters`
 3. `updates`
@@ -173,14 +202,12 @@ Current migration sequence (locked):
 7. `admin_applications`
 8. `audit_logs`
 
-Next migration additions:
-9. `comments`
-10. `project_collaborators` (if distinct)
-11. `moderation_actions`
-12. `profile_metrics` (for public trust stats)
+Next migration additions: 9. `comments` 10. `project_collaborators` (if distinct) 11. `moderation_actions` 12. `profile_metrics` (for public trust stats)
 
 ## Notification Architecture
+
 On project update creation:
+
 1. Enforce creator permission (owner/admin/collaborator poster).
 2. Persist update under project.
 3. Resolve followers of that project.
@@ -189,12 +216,14 @@ On project update creation:
 6. Persist failures/retry metadata.
 
 Client behavior:
+
 - Notification center from `/api/notifications`.
 - Mark read with `/api/notifications/:id/read`.
 - Open linked update when available.
 - Refresh on app foreground and notification-open.
 
 ## Flutter Refactor Targets
+
 - All runtime data from NestJS API (no dummy production flow).
 - Role-aware UI behavior (owner/admin/poster/user).
 - Create-update flow always project-bound.
@@ -202,31 +231,40 @@ Client behavior:
 - Public profile route/screen for contributor transparency.
 
 ## Week-by-Week Execution Plan (Updated)
+
 ### Week 1
+
 - Stabilize auth/session, role hydration, API connectivity.
 - Lock project uniqueness and ownership semantics.
 
 ### Week 2
+
 - Finish role operations + audit trails.
 - Admin/poster assignment and collaborator lifecycle.
 
 ### Week 3
+
 - Harden project/update operations around canonical hierarchy.
 - Enforce: all updates must be attached to a project.
 
 ### Week 4
+
 - Implement comments under updates.
 - Add moderation actions for comments/updates.
 
 ### Week 5
+
 - Public profile and contributor metrics.
 - Follow-state accuracy and notification UX hardening.
 
 ### Week 6
+
 - Beta hardening, query tuning, release gates.
 
 ## Testing and Release Gates
+
 Release is blocked unless all are true:
+
 - duplicate project creation is prevented,
 - updates cannot exist without a parent project,
 - comments cannot exist without a parent update,
@@ -237,7 +275,9 @@ Release is blocked unless all are true:
 - no dummy data is used in production paths.
 
 ## Learning Track (Yardstick)
+
 ### NestJS milestones
+
 - Modules + dependency boundaries,
 - guards/decorators for RBAC,
 - DTO validation and contracts,
@@ -245,9 +285,11 @@ Release is blocked unless all are true:
 - queue/push patterns + failure handling.
 
 Weekly deliverable:
+
 - one ADR entry documenting one architecture decision and tradeoff.
 
 ### Flutter milestones
+
 - API repository boundaries,
 - Provider state composition for auth/content/notifications,
 - role-based UI paths,
@@ -255,9 +297,11 @@ Weekly deliverable:
 - widget tests for key user journeys.
 
 Weekly deliverable:
+
 - one before/after technical note.
 
 ## Operational Details to Keep Documented
+
 - environment variable ownership,
 - local setup order,
 - seed strategy for dev/staging,
@@ -267,7 +311,9 @@ Weekly deliverable:
 - Definition of Done checklist.
 
 ## Environment Variables
+
 Backend `.env.local`:
+
 - `DATABASE_URL`
 - `DIRECT_URL`
 - `SUPABASE_URL`
@@ -282,10 +328,13 @@ Backend `.env.local`:
 - `NODE_ENV`
 
 Reference file:
+
 - `backend/.env.example`
 
 ## Command Cheat Sheet
+
 ### Backend
+
 - `cd backend`
 - `bun install`
 - `bun run prisma:generate`
@@ -297,6 +346,7 @@ Reference file:
 - `bun run start:dev`
 
 ### Mobile
+
 - `cd mobile`
 - `flutter pub get`
 - `flutter analyze`
@@ -304,13 +354,16 @@ Reference file:
 - `flutter run`
 
 ## Assumptions and Deferred Scope
+
 - Android-first and iOS simulator support for MVP.
 - Wallet/token donation system remains post-MVP but planned in profile model.
-- Next.js admin panel will consume existing NestJS API.
+- Next.js admin console will consume existing NestJS API.
 - Policy details for sanctions and moderation thresholds will be finalized separately.
 
 ## Implementation Progress (Live)
+
 Completed in this pass:
+
 - Backend `comments` module scaffolded.
 - API endpoints added:
   - `POST /api/updates/:updateId/comments`

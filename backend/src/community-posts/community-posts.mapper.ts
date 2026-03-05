@@ -3,6 +3,7 @@ import { CommunityReactionKind, Prisma } from '@prisma/client';
 const authorSelect = {
   id: true,
   email: true,
+  username: true,
   displayName: true,
   avatarUrl: true,
   roles: {
@@ -25,11 +26,48 @@ const authorSelect = {
       createdAt: true,
     },
   },
+  currentLevel: {
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      description: true,
+      iconUrl: true,
+      level: true,
+      requiredBnp: true,
+      requiredComments: true,
+      requiredDaysActive: true,
+      requiredQuests: true,
+      requiredUpdates: true,
+      requiredProjects: true,
+      color: true,
+      isActive: true,
+      sortOrder: true,
+    },
+  },
 } satisfies Prisma.ProfileSelect;
 
 export const communityPostCommentInclude = {
   author: {
     select: authorSelect,
+  },
+  replyTo: {
+    select: {
+      id: true,
+      content: true,
+      author: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+        },
+      },
+    },
+  },
+  _count: {
+    select: {
+      reactions: true,
+    },
   },
 } satisfies Prisma.CommunityPostCommentInclude;
 
@@ -78,6 +116,7 @@ export type CommunityPostCommentWithAuthor =
 function toActorPreview(actor: {
   id: string;
   email: string;
+  username: string | null;
   displayName: string | null;
   avatarUrl: string | null;
   roles: Array<{ role: string }>;
@@ -94,21 +133,55 @@ function toActorPreview(actor: {
     sortOrder: number;
     createdAt: Date;
   } | null;
+  currentLevel: {
+    id: string;
+    slug: string;
+    name: string;
+    description: string;
+    iconUrl: string;
+    level: number;
+    requiredBnp: bigint;
+    requiredComments: number;
+    requiredDaysActive: number;
+    requiredQuests: number;
+    requiredUpdates: number;
+    requiredProjects: number;
+    color: string | null;
+    isActive: boolean;
+    sortOrder: number;
+  } | null;
 }) {
-  const rawUsername = actor.email?.split('@')[0] ?? actor.id;
-  const normalized = rawUsername
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, '')
-    .trim();
+  const rawUsername = (actor.username ?? '').replaceAll('@', '').trim();
+  const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+  const displayName = actor.displayName?.trim() || 'Blocnet Member';
 
   return {
     id: actor.id,
-    name: actor.displayName ?? actor.email ?? 'User',
+    name: displayName,
     username: `@${normalized || actor.id.slice(0, 6)}`,
     imageUrl: actor.avatarUrl ?? '',
     followers: 0,
     roles: actor.roles.map((entry) => entry.role),
     primaryBadge: actor.primaryBadge,
+    currentLevel: actor.currentLevel
+      ? {
+          id: actor.currentLevel.id,
+          slug: actor.currentLevel.slug,
+          name: actor.currentLevel.name,
+          description: actor.currentLevel.description,
+          iconUrl: actor.currentLevel.iconUrl,
+          level: actor.currentLevel.level,
+          requiredBnp: actor.currentLevel.requiredBnp.toString(),
+          requiredComments: actor.currentLevel.requiredComments,
+          requiredDaysActive: actor.currentLevel.requiredDaysActive,
+          requiredQuests: actor.currentLevel.requiredQuests,
+          requiredUpdates: actor.currentLevel.requiredUpdates,
+          requiredProjects: actor.currentLevel.requiredProjects,
+          color: actor.currentLevel.color,
+          isActive: actor.currentLevel.isActive,
+          sortOrder: actor.currentLevel.sortOrder,
+        }
+      : null,
   };
 }
 
@@ -124,7 +197,12 @@ export function toCommunityPostResponse(post: CommunityPostWithViewerState) {
     commentsCount: post._count.comments,
     isLiked: post.reactions.length > 0,
     isBookmarked: post.bookmarks.length > 0,
-    author: post.author,
+    author: {
+      id: post.author.id,
+      displayName: post.author.displayName,
+      username: post.author.username,
+      avatarUrl: post.author.avatarUrl,
+    },
     admin: toActorPreview(post.author),
   };
 }
@@ -139,7 +217,12 @@ export function toCommunityPostCommentResponse(
     content: comment.content,
     createdAt: comment.createdAt,
     updatedAt: comment.updatedAt,
-    author: comment.author,
+    author: {
+      id: comment.author.id,
+      displayName: comment.author.displayName,
+      username: comment.author.username,
+      avatarUrl: comment.author.avatarUrl,
+    },
     admin: toActorPreview(comment.author),
   };
 }

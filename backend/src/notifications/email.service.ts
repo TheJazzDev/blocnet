@@ -2,7 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { buildBlocnetLink } from './utils/blocnet-link.util';
+import { EmailTemplateService } from './email-template.service';
+import {
+  buildBlocnetLink,
+  buildBlocnetLinkFromDeeplink,
+} from './utils/blocnet-link.util';
 
 type AdminBroadcastEmailRecipient = {
   userId: string;
@@ -28,6 +32,7 @@ export class NotificationEmailService {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly emailTemplate: EmailTemplateService,
   ) {
     this.resendApiKey =
       this.configService.get<string>('RESEND_API_KEY')?.trim() ?? '';
@@ -147,24 +152,42 @@ export class NotificationEmailService {
       profile.email.split('@')[0] ||
       'there';
 
-    const target = input.deeplink?.trim()
-      ? `https://blocnet.app${input.deeplink.startsWith('/') ? '' : '/'}${input.deeplink}`
-      : buildBlocnetLink('notifications');
+    const target = buildBlocnetLinkFromDeeplink(input.deeplink);
 
     const subject = `Important Blocnet Notification: ${input.title}`;
-    const html = `
-<!doctype html>
-<html>
-  <body style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.5;">
-    <h2>Hi ${escapeHtml(name)},</h2>
-    <p><strong>${escapeHtml(input.title)}</strong></p>
-    <p>${escapeHtml(input.body)}</p>
-    <p><a href="${target}">Open Blocnet</a></p>
-  </body>
-</html>
-`.trim();
 
-    const text = `Hi ${name},\n\n${input.title}\n${input.body}\n\nOpen Blocnet: ${target}`;
+    const content = `
+      <h2 style="margin:0 0 16px 0;color:#0f172a;font-size:20px;font-weight:700;">
+        ${escapeHtml(input.title)}
+      </h2>
+      <p style="margin:0 0 16px 0;color:#334155;font-size:15px;line-height:1.7;">
+        ${escapeHtml(input.body)}
+      </p>
+    `;
+
+    const html = this.emailTemplate.wrapInTemplate({
+      subject,
+      content,
+      options: {
+        preheader: input.title,
+        showLogo: true,
+        showFooter: true,
+        showUnsubscribeLink: true,
+        ctaButtons: [
+          {
+            label: 'Open Blocnet',
+            url: target,
+            primary: true,
+          },
+        ],
+      },
+    });
+
+    const text = this.emailTemplate.createSimpleTextEmail({
+      greeting: `Hi ${name},`,
+      content: `${input.title}\n\n${input.body}`,
+      footerLinks: [{ label: 'Open Blocnet', url: target }],
+    });
 
     await this.sendEmail({
       to: profile.email,
@@ -207,8 +230,9 @@ export class NotificationEmailService {
     const fromName = this.resolveFromName(input.fromName ?? null);
     const replyTo = normalizeEmailAddress(input.replyTo ?? this.replyTo);
     const ctaLabel = input.ctaLabel?.trim() || 'Open Blocnet App';
-    const ctaUrl =
-      normalizeHttpUrl(input.ctaUrl) ?? buildBlocnetLink('notifications');
+    const ctaUrl = input.ctaUrl?.trim()
+      ? buildBlocnetLinkFromDeeplink(input.ctaUrl)
+      : buildBlocnetLink('notifications');
     const previewText = input.previewText?.trim() || input.subject;
 
     const recipients = uniqueRecipients(input.recipients);
@@ -441,60 +465,35 @@ export class NotificationEmailService {
       .filter(Boolean)
       .map(
         (chunk) =>
-          `<p style="margin:0 0 12px 0;color:#334155;font-size:15px;line-height:1.7;">${escapeHtml(chunk).replaceAll('\n', '<br/>')}</p>`,
+          `<p style="margin:0 0 16px 0;color:#334155;font-size:15px;line-height:1.7;">${escapeHtml(chunk).replaceAll('\n', '<br/>')}</p>`,
       )
       .join('');
 
-    return `
-<!doctype html>
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <body style="margin:0;padding:0;background:#0b1120;font-family:Inter,Arial,sans-serif;">
-    <p style="display:none;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;">${escapeHtml(input.previewText)}</p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b1120;padding:22px 8px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#f8fafc;border-radius:18px;overflow:hidden;border:1px solid #e2e8f0;">
-            <tr>
-              <td style="padding:20px;background:#0f172a;color:#e2e8f0;">
-                <table role="presentation" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="padding-right:10px;">
-                      <img src="${this.logoUrl}" alt="Blocnet" width="40" height="40" style="display:block;border-radius:10px;background:#fff;padding:4px;" />
-                    </td>
-                    <td style="font-size:16px;font-weight:700;letter-spacing:0.2px;">Blocnet</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:22px;">
-                <p style="margin:0 0 12px 0;color:#334155;font-size:15px;">Hi ${escapeHtml(input.greetingName)},</p>
-                <h2 style="margin:0 0 12px 0;color:#0f172a;font-size:22px;line-height:1.3;">${escapeHtml(input.subject)}</h2>
-                ${paragraphs}
-                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:10px 0 4px 0;">
-                  <tr>
-                    <td>
-                      <a href="${input.ctaUrl}" style="display:inline-block;background:#0f766e;color:#f8fafc;text-decoration:none;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:700;">${escapeHtml(input.ctaLabel)}</a>
-                    </td>
-                  </tr>
-                </table>
-                <p style="margin:18px 0 0 0;padding-top:14px;border-top:1px solid #e2e8f0;color:#64748b;font-size:12px;line-height:1.6;">
-                  You received this email because you have a Blocnet account.
-                  Manage notifications in-app: <a href="${buildBlocnetLink('settings_notifications')}" style="color:#0f766e;">${buildBlocnetLink('settings_notifications')}</a>
-                </p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>
-`.trim();
+    const content = `
+      <p style="margin:0 0 16px 0;color:#334155;font-size:15px;">Hi <strong>${escapeHtml(input.greetingName)}</strong>,</p>
+      <h2 style="margin:0 0 16px 0;color:#0f172a;font-size:22px;font-weight:700;line-height:1.3;">
+        ${escapeHtml(input.subject)}
+      </h2>
+      ${paragraphs}
+    `;
+
+    return this.emailTemplate.wrapInTemplate({
+      subject: input.subject,
+      content,
+      options: {
+        preheader: input.previewText,
+        showLogo: true,
+        showFooter: true,
+        showUnsubscribeLink: true,
+        ctaButtons: [
+          {
+            label: input.ctaLabel,
+            url: input.ctaUrl,
+            primary: true,
+          },
+        ],
+      },
+    });
   }
 
   private composeAdminBroadcastText(input: {
@@ -504,17 +503,17 @@ export class NotificationEmailService {
     ctaLabel: string;
     ctaUrl: string;
   }) {
-    return [
-      `Hi ${input.greetingName},`,
-      '',
-      input.subject,
-      '',
-      input.message.trim(),
-      '',
-      `${input.ctaLabel}: ${input.ctaUrl}`,
-      '',
-      `Manage notifications: ${buildBlocnetLink('settings_notifications')}`,
-    ].join('\n');
+    return this.emailTemplate.createSimpleTextEmail({
+      greeting: `Hi ${input.greetingName},`,
+      content: `${input.subject}\n\n${input.message.trim()}`,
+      footerLinks: [
+        { label: input.ctaLabel, url: input.ctaUrl },
+        {
+          label: 'Manage notifications',
+          url: buildBlocnetLink('settings_notifications'),
+        },
+      ],
+    });
   }
 }
 

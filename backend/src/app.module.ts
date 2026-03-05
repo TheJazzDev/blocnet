@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { BadgesModule } from './badges/badges.module';
 import { BlocksModule } from './blocks/blocks.module';
 import { CommentsModule } from './comments/comments.module';
+import { LevelsModule } from './levels/levels.module';
 import { CommunityPostsModule } from './community-posts/community-posts.module';
 import { MentionsModule } from './mentions/mentions.module';
 import { QuestsModule } from './quests/quests.module';
@@ -62,6 +63,7 @@ import { envValidationSchema } from './config/env.validation';
     AdminContentModule,
     BadgesModule,
     BlocksModule,
+    LevelsModule,
     QuestsModule,
     ProjectsModule,
     ProjectAssignmentsModule,

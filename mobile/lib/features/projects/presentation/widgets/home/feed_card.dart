@@ -1,19 +1,25 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
-import 'package:blocnet/services/update_bookmarks_store.dart';
-import 'package:blocnet/services/update_likes_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/community/comments_store.dart';
+import 'package:blocnet/services/engagement/levels_store.dart';
+import 'package:blocnet/services/projects/update_bookmarks_store.dart';
+import 'package:blocnet/services/projects/update_likes_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
+import 'package:provider/provider.dart';
 
 enum FeedCardLayout { card, list }
 
@@ -35,10 +41,32 @@ class FeedCard extends StatefulWidget {
 class _FeedCardState extends State<FeedCard>
     with SingleTickerProviderStateMixin {
   bool _isBookmarked = false;
+  bool _isCommented = false;
   bool _isLiked = false;
+  int _likeCount = 0;
+  int _commentCount = 0;
+  int _bookmarkCount = 0;
+  UserLevelModel? _resolvedAuthorLevel;
+  String? _resolvedAuthorId;
   late final AnimationController _likePulseController;
 
   Update get post => widget.post;
+
+  void _syncCountsFromPost({bool? likedOverride}) {
+    final liked = likedOverride ?? _isLiked;
+    final baseLikeCount = post.likesCount;
+    _likeCount = liked && baseLikeCount < 1 ? 1 : baseLikeCount;
+    _commentCount = post.commentsCount;
+    // Don't sync bookmark count from server if we have a local bookmark state
+    // because bookmarks are local-only and server always returns 0
+    final shouldPreserveLocalCount = _isBookmarked && _bookmarkCount > 0;
+    _bookmarkCount = shouldPreserveLocalCount
+        ? _bookmarkCount
+        : UpdateBookmarksStore.resolveBookmarkCount(
+            post.id,
+            post.bookmarksCount,
+          );
+  }
 
   @override
   void initState() {
@@ -47,27 +75,101 @@ class _FeedCardState extends State<FeedCard>
       vsync: this,
       duration: const Duration(milliseconds: 280),
     );
+    _syncCountsFromPost();
     _loadBookmarkState();
     _loadLikeState();
+    _syncCommentStateFromStore();
+    _ensureAuthorLevel();
+  }
+
+  @override
+  void didUpdateWidget(covariant FeedCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final postChanged = oldWidget.post.id != widget.post.id;
+    final countsChanged = oldWidget.post.likesCount != widget.post.likesCount ||
+        oldWidget.post.commentsCount != widget.post.commentsCount ||
+        oldWidget.post.bookmarksCount != widget.post.bookmarksCount;
+
+    if (postChanged) {
+      _isLiked = false;
+      _isCommented = false;
+      _likeCount = 0;
+      _commentCount = 0;
+      _bookmarkCount = 0;
+      _resolvedAuthorLevel = null;
+      _resolvedAuthorId = null;
+      _loadBookmarkState();
+      _loadLikeState();
+      _ensureAuthorLevel();
+    }
+
+    if (postChanged || countsChanged) {
+      _syncCountsFromPost();
+      _syncCommentStateFromStore();
+    }
+  }
+
+  Future<void> _ensureAuthorLevel() async {
+    final author = post.admin;
+    if (author == null) return;
+    if (author.currentLevel != null) return;
+
+    final authorId = author.id.trim();
+    if (authorId.isEmpty) return;
+
+    final levelsStore = context.read<LevelsStore>();
+    final cachedLevel = levelsStore.cachedLevelForUser(authorId);
+    if (cachedLevel != null) {
+      if (!mounted) return;
+      setState(() {
+        _resolvedAuthorId = authorId;
+        _resolvedAuthorLevel = cachedLevel;
+      });
+      return;
+    }
+
+    if (_resolvedAuthorId == authorId && _resolvedAuthorLevel != null) {
+      return;
+    }
+
+    final progress = await levelsStore.getUserLevel(authorId);
+    if (!mounted) return;
+    if (post.admin?.id.trim() != authorId) return;
+    if (progress?.currentLevel == null) return;
+
+    setState(() {
+      _resolvedAuthorId = authorId;
+      _resolvedAuthorLevel = progress!.currentLevel;
+    });
   }
 
   Future<void> _loadBookmarkState() async {
     final bookmarked = await UpdateBookmarksStore.isBookmarked(post.id);
     if (!mounted) return;
-    setState(() => _isBookmarked = bookmarked);
+    setState(() {
+      _isBookmarked = bookmarked;
+      // Bookmarks are local-only today; preserve a visible count after reload.
+      if (bookmarked && _bookmarkCount < 1) {
+        _bookmarkCount = 1;
+      }
+    });
   }
 
   Future<void> _loadLikeState() async {
     final liked = await UpdateLikesStore.isLiked(post.id);
     if (!mounted) return;
-    setState(() => _isLiked = liked);
+    setState(() {
+      _isLiked = liked;
+      _syncCountsFromPost(likedOverride: liked);
+    });
   }
 
-  void _openDetails(
+  Future<void> _openDetails(
     BuildContext context, {
     bool focusCommentComposer = false,
-  }) {
-    showGeneralDialog(
+    bool commentsOnly = false,
+  }) async {
+    await showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Dismiss',
@@ -75,6 +177,7 @@ class _FeedCardState extends State<FeedCard>
       pageBuilder: (context, _, __) => UpdateDetailsDialog(
         id: post.id,
         focusCommentComposer: focusCommentComposer,
+        commentsOnly: commentsOnly,
       ),
       transitionDuration: const Duration(milliseconds: 280),
       transitionBuilder: (context, animation, _, child) {
@@ -89,6 +192,8 @@ class _FeedCardState extends State<FeedCard>
         );
       },
     );
+    if (!mounted) return;
+    _syncCommentStateFromStore();
   }
 
   void _openAuthorProfile(BuildContext context) {
@@ -130,7 +235,11 @@ class _FeedCardState extends State<FeedCard>
       HapticFeedback.selectionClick();
       final next = await UpdateLikesStore.toggle(post.id);
       if (!mounted) return;
-      setState(() => _isLiked = next);
+      setState(() {
+        _isLiked = next;
+        _likeCount =
+            next ? _likeCount + 1 : (_likeCount > 0 ? _likeCount - 1 : 0);
+      });
       _likePulseController
         ..stop()
         ..reset()
@@ -141,9 +250,13 @@ class _FeedCardState extends State<FeedCard>
     }
   }
 
-  void _handleCommentTap(BuildContext context) {
+  Future<void> _handleCommentTap(BuildContext context) async {
     HapticFeedback.selectionClick();
-    _openDetails(context, focusCommentComposer: true);
+    await _openDetails(
+      context,
+      focusCommentComposer: true,
+      commentsOnly: true,
+    );
   }
 
   Future<void> _handleShareTap(BuildContext context) async {
@@ -152,123 +265,22 @@ class _FeedCardState extends State<FeedCard>
   }
 
   Future<void> _openShareSheet(BuildContext context) async {
-    final webLink = 'https://blocnet.app/updates/${post.id}';
-    final deepLink = 'blocnet://updates/${post.id}';
+    final deepPath = '/updates/${post.id}';
+    final webLink =
+        'https://blocnet.app/open?path=${Uri.encodeComponent(deepPath)}';
     final shareText = '${post.title}\n$webLink';
 
-    Future<void> copyLink() async {
-      await Clipboard.setData(ClipboardData(text: webLink));
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: shareText,
+          subject: post.title,
+        ),
+      );
+    } catch (_) {
       if (!context.mounted) return;
-      Navigator.of(context).pop();
-      AppSnackbar.showSuccess(context, 'Update link copied');
+      AppSnackbar.showError(context, 'Unable to open share options right now.');
     }
-
-    Future<void> openExternal(Uri uri, String platformName) async {
-      final launched =
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
-      if (!launched) {
-        await Clipboard.setData(ClipboardData(text: shareText));
-        if (!context.mounted) return;
-        AppSnackbar.showError(
-          context,
-          'Could not open $platformName. Link copied instead.',
-        );
-      }
-    }
-
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.borderMuted,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Share update',
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: 16,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  post.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: 12,
-                    weight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _ShareOptionTile(
-                  icon: Icons.copy_all_rounded,
-                  title: 'Copy link',
-                  subtitle: webLink,
-                  onTap: copyLink,
-                ),
-                _ShareOptionTile(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  title: 'Share to WhatsApp',
-                  subtitle: 'Open WhatsApp with update link',
-                  onTap: () => openExternal(
-                    Uri.parse(
-                      'https://wa.me/?text=${Uri.encodeComponent(shareText)}',
-                    ),
-                    'WhatsApp',
-                  ),
-                ),
-                _ShareOptionTile(
-                  icon: Icons.send_outlined,
-                  title: 'Share to Telegram',
-                  subtitle: 'Open Telegram with update link',
-                  onTap: () => openExternal(
-                    Uri.parse(
-                      'https://t.me/share/url?url=${Uri.encodeComponent(webLink)}&text=${Uri.encodeComponent(post.title)}',
-                    ),
-                    'Telegram',
-                  ),
-                ),
-                _ShareOptionTile(
-                  icon: Icons.link_rounded,
-                  title: 'Copy deep link',
-                  subtitle: deepLink,
-                  onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: deepLink));
-                    if (!context.mounted) return;
-                    Navigator.of(context).pop();
-                    AppSnackbar.showSuccess(context, 'Deep link copied');
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _handleBookmarkTap() async {
@@ -276,7 +288,14 @@ class _FeedCardState extends State<FeedCard>
       HapticFeedback.selectionClick();
       final next = await UpdateBookmarksStore.toggle(post.id);
       if (!mounted) return;
-      setState(() => _isBookmarked = next);
+      final nextCount = next
+          ? _bookmarkCount + 1
+          : (_bookmarkCount > 0 ? _bookmarkCount - 1 : 0);
+      UpdateBookmarksStore.setBookmarkCountOverride(post.id, nextCount);
+      setState(() {
+        _isBookmarked = next;
+        _bookmarkCount = nextCount;
+      });
       AppSnackbar.showSuccess(
         context,
         next ? 'Update bookmarked' : 'Bookmark removed',
@@ -284,6 +303,35 @@ class _FeedCardState extends State<FeedCard>
     } catch (_) {
       if (!context.mounted) return;
       AppSnackbar.showError(context, 'Could not update bookmark');
+    }
+  }
+
+  void _syncCommentStateFromStore() {
+    try {
+      final commentsStore = context.read<CommentsStore>();
+      final authStore = context.read<AuthStore>();
+      final comments = commentsStore.commentsForUpdate(post.id);
+      final userId = authStore.userId?.trim() ?? '';
+
+      var hasCommented = _isCommented;
+      if (userId.isNotEmpty) {
+        hasCommented = comments.any((comment) => comment.authorId == userId);
+      }
+
+      final nextCommentCount =
+          comments.length > _commentCount ? comments.length : _commentCount;
+
+      if (_isCommented == hasCommented && _commentCount == nextCommentCount) {
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _isCommented = hasCommented;
+        _commentCount = nextCommentCount;
+      });
+    } catch (_) {
+      // Ignore provider errors in previews/tests where stores are absent.
     }
   }
 
@@ -300,12 +348,10 @@ class _FeedCardState extends State<FeedCard>
     required String? roleLabel,
     required Color roleColor,
     required Color priorityColor,
+    required String displayUsername,
+    required UserLevelModel? authorLevel,
   }) {
     final author = post.admin!;
-    final rawUsername = author.username.trim();
-    final displayUsername = rawUsername.isEmpty
-        ? '@${author.name.toLowerCase().replaceAll(' ', '_')}'
-        : (rawUsername.startsWith('@') ? rawUsername : '@$rawUsername');
     return InkWell(
       onTap: () => _openDetails(context),
       splashColor: Colors.transparent,
@@ -338,36 +384,30 @@ class _FeedCardState extends State<FeedCard>
                     children: [
                       Row(
                         children: [
-                          Flexible(
+                          Expanded(
                             child: GestureDetector(
                               onTap: () => _openAuthorProfile(context),
                               behavior: HitTestBehavior.opaque,
-                              child: Text(
-                                author.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.custom(
-                                  color: AppColors.textPrimary,
-                                  size: 14,
-                                  weight: FontWeight.w700,
-                                ),
+                              child: Row(
+                                children: [
+                                  Flexible(
+                                    child: UserNameWithLevelIcon(
+                                      name: author.name,
+                                      currentLevel: authorLevel,
+                                      levelBadgeSize: LevelBadgeSize.small,
+                                      textStyle: AppTypography.custom(
+                                        color: AppColors.textPrimary,
+                                        size: 14,
+                                        weight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          if (author.primaryBadge != null) ...[
-                            const SizedBox(width: 6),
-                            GestureDetector(
-                              onTap: () => _openAuthorProfile(context),
-                              behavior: HitTestBehavior.opaque,
-                              child: BadgeIcon(
-                                badge: author.primaryBadge!,
-                                size: BadgeSize.small,
-                                showTooltip: false,
-                              ),
-                            ),
-                          ],
                           if (roleLabel != null) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             _FeedRoleChip(label: roleLabel, color: roleColor),
                           ],
                           const SizedBox(width: 8),
@@ -486,7 +526,7 @@ class _FeedCardState extends State<FeedCard>
                                   : Icons.favorite_border_rounded,
                               size: 21,
                               color: _isLiked
-                                  ? AppColors.error500
+                                  ? AppColors.primary400
                                   : AppColors.textMuted,
                             ),
                           ),
@@ -495,6 +535,10 @@ class _FeedCardState extends State<FeedCard>
                           onShareTap: () => _handleShareTap(context),
                           onBookmarkTap: _handleBookmarkTap,
                           isBookmarked: _isBookmarked,
+                          isCommented: _isCommented,
+                          likeCount: _likeCount,
+                          commentCount: _commentCount,
+                          bookmarkCount: _bookmarkCount,
                         ),
                       ),
                     ],
@@ -512,6 +556,8 @@ class _FeedCardState extends State<FeedCard>
   Widget build(BuildContext context) {
     final author = post.admin!;
     final project = post.project!;
+    final authorLevel = author.currentLevel ?? _resolvedAuthorLevel;
+    final displayUsername = _displayUsername(author.username, author.name);
     final priorityColor = post.priority.color;
     final roleLabel = author.displayRoleLabel;
     final roleColor =
@@ -528,6 +574,8 @@ class _FeedCardState extends State<FeedCard>
         roleLabel: roleLabel,
         roleColor: roleColor,
         priorityColor: priorityColor,
+        displayUsername: displayUsername,
+        authorLevel: authorLevel,
       );
     }
 
@@ -613,50 +661,55 @@ class _FeedCardState extends State<FeedCard>
                         children: [
                           Row(
                             children: [
-                              Flexible(
+                              Expanded(
                                 child: GestureDetector(
                                   onTap: () => _openAuthorProfile(context),
                                   behavior: HitTestBehavior.opaque,
-                                  child: Text(
-                                    author.name,
-                                    style: AppTypography.custom(
-                                      color: AppColors.textPrimary,
-                                      size: 14,
-                                      weight: FontWeight.w700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: UserNameWithLevelIcon(
+                                          name: author.name,
+                                          currentLevel: authorLevel,
+                                          levelBadgeSize: LevelBadgeSize.small,
+                                          textStyle: AppTypography.custom(
+                                            color: AppColors.textPrimary,
+                                            size: 14,
+                                            weight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              if (author.primaryBadge != null) ...[
-                                const SizedBox(width: 6),
-                                GestureDetector(
-                                  onTap: () => _openAuthorProfile(context),
-                                  behavior: HitTestBehavior.opaque,
-                                  child: BadgeIcon(
-                                    badge: author.primaryBadge!,
-                                    size: BadgeSize.small,
-                                    showTooltip: false,
-                                  ),
-                                ),
-                              ],
                               if (roleLabel != null) ...[
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 8),
                                 _FeedRoleChip(
                                   label: roleLabel,
                                   color: roleColor,
                                 ),
                               ],
+                              const SizedBox(width: 8),
+                              Text(
+                                getTimeStamp(post.createdAt),
+                                style: AppTypography.custom(
+                                  color: AppColors.textFaint,
+                                  size: 11,
+                                  weight: FontWeight.w400,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            getTimeStamp(post.createdAt),
+                            displayUsername,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: AppTypography.custom(
-                              color: AppColors.textFaint,
-                              size: 11,
-                              weight: FontWeight.w400,
+                              color: AppColors.textMuted,
+                              size: 12,
+                              weight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -758,8 +811,9 @@ class _FeedCardState extends State<FeedCard>
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
                         size: 21,
-                        color:
-                            _isLiked ? AppColors.error500 : AppColors.textMuted,
+                        color: _isLiked
+                            ? AppColors.primary400
+                            : AppColors.textMuted,
                       ),
                     ),
                     onLikeTap: () => _handleLikeTap(context),
@@ -767,6 +821,10 @@ class _FeedCardState extends State<FeedCard>
                     onShareTap: () => _handleShareTap(context),
                     onBookmarkTap: _handleBookmarkTap,
                     isBookmarked: _isBookmarked,
+                    isCommented: _isCommented,
+                    likeCount: _likeCount,
+                    commentCount: _commentCount,
+                    bookmarkCount: _bookmarkCount,
                   ),
                 ),
               ],
@@ -775,6 +833,14 @@ class _FeedCardState extends State<FeedCard>
         ],
       ),
     );
+  }
+
+  String _displayUsername(String raw, String fallbackName) {
+    final normalizedRaw = raw.trim();
+    if (normalizedRaw.isNotEmpty) {
+      return normalizedRaw.startsWith('@') ? normalizedRaw : '@$normalizedRaw';
+    }
+    return '@${fallbackName.toLowerCase().replaceAll(' ', '_')}';
   }
 }
 
@@ -995,6 +1061,10 @@ class _ActionRow extends StatelessWidget {
     required this.onShareTap,
     required this.onBookmarkTap,
     required this.isBookmarked,
+    required this.isCommented,
+    required this.likeCount,
+    required this.commentCount,
+    required this.bookmarkCount,
   });
 
   final Widget likeIcon;
@@ -1003,6 +1073,10 @@ class _ActionRow extends StatelessWidget {
   final VoidCallback onShareTap;
   final VoidCallback onBookmarkTap;
   final bool isBookmarked;
+  final bool isCommented;
+  final int likeCount;
+  final int commentCount;
+  final int bookmarkCount;
 
   @override
   Widget build(BuildContext context) {
@@ -1012,22 +1086,16 @@ class _ActionRow extends StatelessWidget {
         _ActionButton(
           icon: likeIcon,
           onTap: onLikeTap,
+          count: likeCount,
         ),
         _ActionButton(
           icon: Icon(
             Icons.chat_bubble_outline_rounded,
             size: 21,
-            color: AppColors.primary400,
+            color: isCommented ? AppColors.primary400 : AppColors.textMuted,
           ),
           onTap: onCommentTap,
-        ),
-        _ActionButton(
-          icon: Icon(
-            Icons.share_outlined,
-            size: 21,
-            color: AppColors.teal400,
-          ),
-          onTap: onShareTap,
+          count: commentCount,
         ),
         _ActionButton(
           icon: Icon(
@@ -1038,6 +1106,15 @@ class _ActionRow extends StatelessWidget {
             color: isBookmarked ? AppColors.primary400 : AppColors.textMuted,
           ),
           onTap: onBookmarkTap,
+          count: bookmarkCount > 0 ? bookmarkCount : null,
+        ),
+        _ActionButton(
+          icon: Icon(
+            Icons.share_outlined,
+            size: 21,
+            color: AppColors.teal400,
+          ),
+          onTap: onShareTap,
         ),
       ],
     );
@@ -1048,10 +1125,12 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.onTap,
+    this.count,
   });
 
   final Widget icon;
   final VoidCallback onTap;
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
@@ -1059,64 +1138,23 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 42,
+        width: 64,
         height: 26,
-        child: Center(child: icon),
-      ),
-    );
-  }
-}
-
-class _ShareOptionTile extends StatelessWidget {
-  const _ShareOptionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: AppColors.textSecondary, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: 13,
-                      weight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.custom(
-                      color: AppColors.textFaint,
-                      size: 11,
-                      weight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+            icon,
+            if (count != null) ...[
+              const SizedBox(width: 4),
+              Text(
+                '${count!}',
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 11,
+                  weight: FontWeight.w600,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

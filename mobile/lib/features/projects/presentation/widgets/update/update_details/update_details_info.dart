@@ -1,10 +1,11 @@
 import 'dart:math';
 
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -65,7 +66,7 @@ class UpdateDetailsInfo extends StatelessWidget {
             _MetaChip(
               icon: Symbols.person,
               label: post.admin?.name ?? 'Unknown',
-              badge: post.admin?.primaryBadge,
+              currentLevel: post.admin?.currentLevel,
               roleLabel: post.admin?.displayRoleLabel,
               onTap: () => _openAuthorProfile(context),
             ),
@@ -148,14 +149,14 @@ class _MetaChip extends StatelessWidget {
   const _MetaChip({
     required this.icon,
     required this.label,
-    this.badge,
+    this.currentLevel,
     this.roleLabel,
     this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final dynamic badge;
+  final dynamic currentLevel;
   final String? roleLabel;
   final VoidCallback? onTap;
 
@@ -169,22 +170,28 @@ class _MetaChip extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: AppColors.textFaint),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
-              fontFamily: 'Geist',
-              fontWeight: FontWeight.w400,
+          if (currentLevel != null)
+            UserNameWithLevelIcon(
+              name: label,
+              currentLevel: currentLevel,
+              levelBadgeSize: LevelBadgeSize.tiny,
+              textStyle: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 12,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w400,
+              ),
+            )
+          else
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 12,
+                fontFamily: 'Geist',
+                fontWeight: FontWeight.w400,
+              ),
             ),
-          ),
-          if (badge != null) ...[
-            const SizedBox(width: 4),
-            BadgeIcon(
-              badge: badge,
-              size: BadgeSize.tiny,
-            ),
-          ],
           if (roleLabel != null) ...[
             const SizedBox(width: 4),
             Container(

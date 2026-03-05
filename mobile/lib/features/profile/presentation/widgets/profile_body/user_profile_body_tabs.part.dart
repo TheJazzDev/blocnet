@@ -100,12 +100,15 @@ class _BookmarksTabState extends State<_BookmarksTab> {
   @override
   Widget build(BuildContext context) {
     final updatesStore = context.watch<UpdatesStore>();
+    final mode = context.watch<FeedViewModeStore>().mode;
+    final isCardMode = mode == FeedViewMode.card;
     final bookmarks = updatesStore.updates
         .where((update) => _bookmarkedIds.contains(update.id))
         .toList(growable: false)
       ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    final bookmarksSnapshot = List<Update>.from(bookmarks);
 
-    if ((_isLoading || updatesStore.isFetching) && bookmarks.isEmpty) {
+    if ((_isLoading || updatesStore.isFetching) && bookmarksSnapshot.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
           color: AppColors.userAccent,
@@ -114,17 +117,19 @@ class _BookmarksTabState extends State<_BookmarksTab> {
       );
     }
 
-    if (bookmarks.isEmpty) {
+    if (bookmarksSnapshot.isEmpty) {
       return const _BookmarksEmptyState();
     }
 
     return ListView.builder(
       primary: false,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: bookmarks.length,
+      itemCount: bookmarksSnapshot.length,
       itemBuilder: (context, index) {
-        final update = bookmarks[index];
+        final update = bookmarksSnapshot[index];
         return _BookmarkedUpdateItem(
+          mode: mode,
+          showDivider: !isCardMode && index != bookmarksSnapshot.length - 1,
           update: update,
           onRemove: () => _removeBookmark(update.id),
         );
@@ -167,10 +172,14 @@ class _BookmarkedUpdateItem extends StatelessWidget {
   const _BookmarkedUpdateItem({
     required this.update,
     required this.onRemove,
+    required this.mode,
+    this.showDivider = false,
   });
 
   final Update update;
   final VoidCallback onRemove;
+  final FeedViewMode mode;
+  final bool showDivider;
 
   void _openUpdate(BuildContext context) {
     showGeneralDialog(
@@ -198,21 +207,24 @@ class _BookmarkedUpdateItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCardMode = mode == FeedViewMode.card;
     final projectName = update.project?.name ?? 'Project';
     final preview = update.description.trim().isEmpty
         ? update.content.trim()
         : update.description.trim();
 
-    return GestureDetector(
+    final tile = GestureDetector(
       onTap: () => _openUpdate(context),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
+        decoration: isCardMode
+            ? BoxDecoration(
+                color: AppColors.bgSurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderSubtle),
+              )
+            : null,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -307,14 +319,28 @@ class _BookmarkedUpdateItem extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 18,
-              color: AppColors.textFaint,
-            ),
+            if (isCardMode)
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppColors.textFaint,
+              ),
           ],
         ),
       ),
+    );
+
+    if (isCardMode) return tile;
+
+    return Column(
+      children: [
+        tile,
+        if (showDivider)
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+      ],
     );
   }
 }
@@ -325,7 +351,9 @@ class _WatchlistTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profileStore = context.watch<UserProfileStore>();
-    final watchlist = profileStore.watchlist;
+    final mode = context.watch<FeedViewModeStore>().mode;
+    final isCardMode = mode == FeedViewMode.card;
+    final watchlist = List<Project>.from(profileStore.watchlist);
 
     if (profileStore.isLoadingWatchlist && watchlist.isEmpty) {
       return Center(
@@ -345,7 +373,11 @@ class _WatchlistTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       itemCount: watchlist.length,
       itemBuilder: (context, index) {
-        return _WatchlistItem(project: watchlist[index]);
+        return _WatchlistItem(
+          mode: mode,
+          showDivider: !isCardMode && index != watchlist.length - 1,
+          project: watchlist[index],
+        );
       },
     );
   }
@@ -366,11 +398,21 @@ class _WatchlistEmptyState extends StatelessWidget {
                 size: 36, color: AppColors.textFaint),
             const SizedBox(height: 8),
             Text(
-              'No watchlist items yet',
+              'No followed projects yet',
               textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
                 size: 12,
+                weight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tap Follow on any project to add it here.',
+              textAlign: TextAlign.center,
+              style: AppTypography.custom(
+                color: AppColors.textFaint,
+                size: 11,
                 weight: FontWeight.w400,
               ),
             ),
@@ -382,20 +424,29 @@ class _WatchlistEmptyState extends StatelessWidget {
 }
 
 class _WatchlistItem extends StatelessWidget {
-  const _WatchlistItem({required this.project});
+  const _WatchlistItem({
+    required this.project,
+    required this.mode,
+    this.showDivider = false,
+  });
 
   final Project project;
+  final FeedViewMode mode;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+    final isCardMode = mode == FeedViewMode.card;
+    final tile = Container(
+      margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
+      decoration: isCardMode
+          ? BoxDecoration(
+              color: AppColors.bgSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.borderSubtle),
+            )
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -416,7 +467,8 @@ class _WatchlistItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.bgElevated,
+                  color:
+                      isCardMode ? AppColors.bgElevated : AppColors.bgSurface,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
@@ -461,16 +513,31 @@ class _WatchlistItem extends StatelessWidget {
         ],
       ),
     );
+
+    if (isCardMode) return tile;
+
+    return Column(
+      children: [
+        tile,
+        if (showDivider)
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+      ],
+    );
   }
 }
 
-class _HistoryTab extends StatelessWidget {
-  const _HistoryTab();
+class _ActivityTab extends StatelessWidget {
+  const _ActivityTab();
 
   @override
   Widget build(BuildContext context) {
     final profileStore = context.watch<UserProfileStore>();
-    final activityItems = profileStore.activity;
+    final mode = context.watch<FeedViewModeStore>().mode;
+    final isCardMode = mode == FeedViewMode.card;
+    final activityItems = List<ActivityItem>.from(profileStore.activity);
 
     if (profileStore.isLoadingActivity && activityItems.isEmpty) {
       return Center(
@@ -482,36 +549,26 @@ class _HistoryTab extends StatelessWidget {
     }
 
     if (activityItems.isEmpty) {
-      return const _HistoryEmptyState();
+      return const _ActivityEmptyState();
     }
 
     return ListView.builder(
       primary: false,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: activityItems.length + 1,
+      itemCount: activityItems.length,
       itemBuilder: (context, index) {
-        if (index == 0) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              'Activity',
-              style: AppTypography.custom(
-                color: AppColors.textFaint,
-                size: 11,
-                weight: FontWeight.w600,
-                letterSpacing: 0.8,
-              ),
-            ),
-          );
-        }
-        return _HistoryItem(item: activityItems[index - 1]);
+        return _ActivityItem(
+          mode: mode,
+          showDivider: !isCardMode && index != activityItems.length - 1,
+          item: activityItems[index],
+        );
       },
     );
   }
 }
 
-class _HistoryEmptyState extends StatelessWidget {
-  const _HistoryEmptyState();
+class _ActivityEmptyState extends StatelessWidget {
+  const _ActivityEmptyState();
 
   @override
   Widget build(BuildContext context) {
@@ -524,7 +581,7 @@ class _HistoryEmptyState extends StatelessWidget {
             Icon(Icons.history_rounded, size: 36, color: AppColors.textFaint),
             const SizedBox(height: 8),
             Text(
-              'No activity history yet',
+              'No activity yet',
               textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
@@ -539,21 +596,30 @@ class _HistoryEmptyState extends StatelessWidget {
   }
 }
 
-class _HistoryItem extends StatelessWidget {
-  const _HistoryItem({required this.item});
+class _ActivityItem extends StatelessWidget {
+  const _ActivityItem({
+    required this.item,
+    required this.mode,
+    this.showDivider = false,
+  });
 
   final ActivityItem item;
+  final FeedViewMode mode;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+    final isCardMode = mode == FeedViewMode.card;
+    final tile = Container(
+      margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
+      decoration: isCardMode
+          ? BoxDecoration(
+              color: AppColors.bgSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.borderSubtle),
+            )
+          : null,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -585,6 +651,19 @@ class _HistoryItem extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    if (isCardMode) return tile;
+
+    return Column(
+      children: [
+        tile,
+        if (showDivider)
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+      ],
     );
   }
 }

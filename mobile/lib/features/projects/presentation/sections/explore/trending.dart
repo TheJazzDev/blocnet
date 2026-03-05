@@ -1,10 +1,12 @@
 import 'dart:math' as math;
 
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -38,8 +40,7 @@ class _TrendingScreenState extends State<TrendingScreen> {
 
             final trendingPosts = _getTrendingPosts(store.posts);
             if (trendingPosts.isEmpty) {
-              return const Center(
-                  child: Text('No trending updates available.'));
+              return _EmptyState();
             }
 
             return SingleChildScrollView(
@@ -91,5 +92,64 @@ class _TrendingScreenState extends State<TrendingScreen> {
         projectFollowers +
         adminFollowers +
         tagBoost;
+  }
+}
+
+// ─── Empty State ──────────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.teal400.withValues(alpha: 0.2),
+                    AppColors.teal400.withValues(alpha: 0.05),
+                  ],
+                ),
+              ),
+              child: Icon(
+                Icons.trending_up_rounded,
+                size: 40,
+                color: AppColors.teal400,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No Trending Updates',
+              style: AppTypography.custom(
+                color: AppColors.textPrimary,
+                size: 18,
+                weight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'There are no trending updates at the moment.\nCheck back later to see what\'s hot!',
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: 14,
+                weight: FontWeight.w400,
+                height: 1.6,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

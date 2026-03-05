@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { EDGE_CONFIG_ID } from './edge-engine.utils';
 
@@ -64,6 +64,13 @@ type EdgeMLConfig = {
 @Injectable()
 export class MLClientService {
   private readonly logger = new Logger(MLClientService.name);
+  private static readonly CONFIG_CACHE_TTL_MS = 30_000;
+  private static readonly CIRCUIT_FAIL_THRESHOLD = 3;
+  private static readonly CIRCUIT_OPEN_MS = 45_000;
+  private configCache: EdgeMLConfig | null = null;
+  private configCacheExpiresAt = 0;
+  private consecutiveMlFailures = 0;
+  private mlCircuitOpenUntil = 0;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -78,6 +85,11 @@ export class MLClientService {
    * Get ML configuration from database.
    */
   private async getMLConfig(): Promise<EdgeMLConfig> {
+    const now = Date.now();
+    if (this.configCache && now < this.configCacheExpiresAt) {
+      return this.configCache;
+    }
+
     const config = await this.prisma.edgeConfig.findUnique({
       where: { id: EDGE_CONFIG_ID },
       select: {
@@ -97,37 +109,81 @@ export class MLClientService {
       },
     });
 
-    return (
-      config ?? {
-        mlEnabled: false,
-        mlUrl: 'http://localhost:8083',
-        mlTimeout: 10000,
-        mlProvider: 'auto',
-        mlWebSearch: false,
-        mlOllamaModel: 'llama3.3:70b',
-        mlOllamaEmbeddingModel: 'nomic-embed-text',
-        mlOllamaTimeout: 120000,
-        mlGroqModel: 'llama-3.3-70b-versatile',
-        mlGeminiModel: 'gemini-2.0-flash-exp',
-        mlGeminiEmbeddingModel: 'models/text-embedding-004',
-        mlCacheTtl: 86400,
-        mlMaxContentLength: 10000,
-      }
-    );
+    const resolved = config ?? {
+      mlEnabled: false,
+      mlUrl: 'http://localhost:8083',
+      mlTimeout: 10000,
+      mlProvider: 'auto',
+      mlWebSearch: false,
+      mlOllamaModel: 'llama3.3:70b',
+      mlOllamaEmbeddingModel: 'nomic-embed-text',
+      mlOllamaTimeout: 120000,
+      mlGroqModel: 'llama-3.3-70b-versatile',
+      mlGeminiModel: 'gemini-2.0-flash-exp',
+      mlGeminiEmbeddingModel: 'models/text-embedding-004',
+      mlCacheTtl: 86400,
+      mlMaxContentLength: 10000,
+    };
+
+    this.configCache = resolved;
+    this.configCacheExpiresAt = now + MLClientService.CONFIG_CACHE_TTL_MS;
+    return resolved;
   }
 
   /**
    * Create axios client with current config.
    */
-  private async createClient(): Promise<AxiosInstance> {
+  private async createClient(
+    timeoutOverrideMs?: number,
+  ): Promise<AxiosInstance> {
     const config = await this.getMLConfig();
     return axios.create({
       baseURL: config.mlUrl,
-      timeout: config.mlTimeout,
+      timeout: timeoutOverrideMs ?? config.mlTimeout,
       headers: {
         'Content-Type': 'application/json',
       },
     });
+  }
+
+  private isCircuitOpen(): boolean {
+    return Date.now() < this.mlCircuitOpenUntil;
+  }
+
+  private registerMlSuccess(): void {
+    this.consecutiveMlFailures = 0;
+    this.mlCircuitOpenUntil = 0;
+  }
+
+  private registerMlFailure(error: unknown): void {
+    if (!this.isRecoverableMlNetworkError(error)) {
+      return;
+    }
+
+    this.consecutiveMlFailures += 1;
+    if (this.consecutiveMlFailures >= MLClientService.CIRCUIT_FAIL_THRESHOLD) {
+      this.mlCircuitOpenUntil = Date.now() + MLClientService.CIRCUIT_OPEN_MS;
+      this.logger.warn(
+        `ML circuit opened for ${MLClientService.CIRCUIT_OPEN_MS}ms after ${this.consecutiveMlFailures} recoverable failure(s)`,
+      );
+    }
+  }
+
+  private isRecoverableMlNetworkError(error: unknown): boolean {
+    const axiosError = error as AxiosError | undefined;
+    const code = axiosError?.code?.toUpperCase() ?? '';
+    const message = (axiosError?.message ?? String(error)).toUpperCase();
+
+    return (
+      code.includes('ENOTFOUND') ||
+      code.includes('ECONNREFUSED') ||
+      code.includes('ETIMEDOUT') ||
+      code.includes('EAI_AGAIN') ||
+      message.includes('ENOTFOUND') ||
+      message.includes('ECONNREFUSED') ||
+      message.includes('ETIMEDOUT') ||
+      message.includes('EAI_AGAIN')
+    );
   }
 
   /**
@@ -142,6 +198,7 @@ export class MLClientService {
     content: string,
     context?: Record<string, any>,
     requireWebSearch = false,
+    timeoutMs?: number,
   ): Promise<MLAnalysisResult | null> {
     const config = await this.getMLConfig();
 
@@ -155,9 +212,14 @@ export class MLClientService {
       return null;
     }
 
+    if (this.isCircuitOpen()) {
+      this.logger.warn('ML circuit is open, skipping content analysis');
+      return null;
+    }
+
     try {
       this.logger.debug(`Analyzing content (${content.length} chars)`);
-      const client = await this.createClient();
+      const client = await this.createClient(timeoutMs);
 
       const response = await client.post<BeeAnalysisResponse>('/analyze', {
         content,
@@ -169,9 +231,11 @@ export class MLClientService {
       this.logger.debug(
         `Analysis complete: provider=${response.data.provider_used}, quality=${response.data.analysis.quality}`,
       );
+      this.registerMlSuccess();
 
       return response.data.analysis;
     } catch (error: unknown) {
+      this.registerMlFailure(error);
       const formatted = this.formatError(error);
       this.logger.error(
         `BEE analysis failed: ${formatted.message}`,
@@ -191,6 +255,7 @@ export class MLClientService {
   async analyzeBatch(
     contents: string[],
     contexts?: Record<string, any>[],
+    timeoutMs?: number,
   ): Promise<(MLAnalysisResult | null)[]> {
     const config = await this.getMLConfig();
 
@@ -202,9 +267,14 @@ export class MLClientService {
       return [];
     }
 
+    if (this.isCircuitOpen()) {
+      this.logger.warn('ML circuit is open, skipping batch analysis');
+      return contents.map(() => null);
+    }
+
     try {
       this.logger.debug(`Analyzing batch of ${contents.length} items`);
-      const client = await this.createClient();
+      const client = await this.createClient(timeoutMs);
 
       const requests = contents.map((content, index) => ({
         content,
@@ -221,6 +291,7 @@ export class MLClientService {
       this.logger.debug(
         `Batch analysis complete: ${response.data.length} results`,
       );
+      this.registerMlSuccess();
 
       return response.data.map((item, index) => {
         if (item.provider_used === 'error') {
@@ -233,6 +304,7 @@ export class MLClientService {
         return item.analysis;
       });
     } catch (error: unknown) {
+      this.registerMlFailure(error);
       const formatted = this.formatError(error);
       this.logger.error(
         `BEE batch analysis failed: ${formatted.message}`,

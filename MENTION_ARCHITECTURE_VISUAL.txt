@@ -1,0 +1,264 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                     BLOCNET MENTION SYSTEM ARCHITECTURE                        ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ FRONTEND - FLUTTER MOBILE APP                                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │                    MENTION INPUT LAYERS                            │   │
+│  ├────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                    │   │
+│  │  ┌─────────────────────────────────────────────────────────┐    │   │
+│  │  │  MentionHighlightTextController                         │    │   │
+│  │  │  • Extends TextEditingController                        │    │   │
+│  │  │  • Colors mentions in blue                              │    │   │
+│  │  │  • Makes mentions bold                                  │    │   │
+│  │  │  • Real-time visual feedback                            │    │   │
+│  │  └─────────────────────────────────────────────────────────┘    │   │
+│  │           ▲                                                       │   │
+│  │           │ Used by                                              │   │
+│  │           │                                                      │   │
+│  │  ┌─────────────────────────────────────────────────────────┐    │   │
+│  │  │  MentionTextField                                       │    │   │
+│  │  │  • Wraps TextField                                      │    │   │
+│  │  │  • Shows overlay dropdown on @                          │    │   │
+│  │  │  • Debounced search (180ms)                             │    │   │
+│  │  │  • Manages overlay with CompositedTransformFollower     │    │   │
+│  │  │  • Inserts selected mention                             │    │   │
+│  │  └─────────────────────────────────────────────────────────┘    │   │
+│  │           ▲                                                       │   │
+│  │           │ Uses                                                 │   │
+│  │           │                                                      │   │
+│  │  ┌─────────────────────────────────────────────────────────┐    │   │
+│  │  │  MentionsRepository                                     │    │   │
+│  │  │  • Calls GET /mentions/search?q={query}&limit={limit}  │    │   │
+│  │  │  • Returns MentionUserModel[]                           │    │   │
+│  │  │  • Handles API errors gracefully                        │    │   │
+│  │  └─────────────────────────────────────────────────────────┘    │   │
+│  │                                                                    │   │
+│  └────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │                    MENTION DISPLAY LAYERS                         │   │
+│  ├────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                    │   │
+│  │  ┌─────────────────────────────────────────────────────────┐    │   │
+│  │  │  MentionText Widget                                     │    │   │
+│  │  │  • Renders text with styled mentions                    │    │   │
+│  │  │  • Detects @mentions via regex                          │    │   │
+│  │  │  • Makes mentions clickable (TapGestureRecognizer)      │    │   │
+│  │  │  • Callback: onMentionTap(username)                     │    │   │
+│  │  └─────────────────────────────────────────────────────────┘    │   │
+│  │           ▲                                                       │   │
+│  │           │ Uses on click                                         │   │
+│  │           │                                                      │   │
+│  │  ┌─────────────────────────────────────────────────────────┐    │   │
+│  │  │  MentionProfileNavigator                                │    │   │
+│  │  │  • Static utility class                                 │    │   │
+│  │  │  • Caches profiles (in-memory)                          │    │   │
+│  │  │  • Deduplicates in-flight requests                      │    │   │
+│  │  │  • Opens PublicProfileScreen modal sheet                │    │   │
+│  │  └─────────────────────────────────────────────────────────┘    │   │
+│  │                                                                    │   │
+│  └────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │              INTEGRATION POINTS (WHERE MENTIONS WORK)              │   │
+│  ├────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                    │   │
+│  │  ✅ Community Create Post Screen                                 │   │
+│  │     └─ MentionTextField in large text area (8-12 lines)         │   │
+│  │     └─ Max 300 characters                                        │   │
+│  │     └─ POST /community-posts                                    │   │
+│  │                                                                    │   │
+│  │  ✅ Community Discussion Screen (Comments)                       │   │
+│  │     └─ MentionTextField in CommunityDiscussionComposer          │   │
+│  │     └─ Max 300 characters, 1-4 lines                            │   │
+│  │     └─ POST /community-posts/{postId}/comments                  │   │
+│  │                                                                    │   │
+│  │  ✅ Update Details Dialog (Comments)                             │   │
+│  │     └─ MentionTextField embedded in scrollable dialog           │   │
+│  │     └─ POST /updates/{updateId}/comments                        │   │
+│  │                                                                    │   │
+│  │  ❌ Create Update Screen (not yet)                               │   │
+│  │     └─ Could add to title/content fields                        │   │
+│  │                                                                    │   │
+│  │  ❌ Submit Project Screen (not yet)                              │   │
+│  │     └─ Could add to description field                           │   │
+│  │                                                                    │   │
+│  └────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ API LAYER - REST ENDPOINTS                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  GET /mentions/search?q={query}&limit={limit}                              │
+│      └─ Returns: [{ id, username, displayName, avatarUrl }]               │
+│      └─ Used by: MentionsRepository.searchUsers()                          │
+│                                                                              │
+│  POST /community-posts                                                      │
+│      ├─ Body: { content: "text @mention text" }                           │
+│      └─ Backend: Calls MentionsService.createCommunityPostMentions()      │
+│                                                                              │
+│  POST /community-posts/{postId}/comments                                    │
+│      ├─ Body: { content: "text @mention text" }                           │
+│      └─ Backend: Calls MentionsService.createCommunityPostCommentMentions()│
+│                                                                              │
+│  POST /updates/{updateId}/comments                                          │
+│      ├─ Body: { content: "text @mention text" }                           │
+│      └─ Backend: Calls MentionsService.createCommentMentions()            │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ BACKEND - NESTJS MENTIONS MODULE                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  MentionsController                                                          │
+│  └─ @Get('search')                                                          │
+│     └─ MentionsService.searchUsers(query, limit)                           │
+│                                                                              │
+│  MentionsService                                                             │
+│  ├─ searchUsers(query, limit)                                              │
+│  │  └─ Fuzzy search users by username/email/displayName                   │
+│  │  └─ Returns up to 'limit' users (max 50)                               │
+│  │                                                                          │
+│  ├─ extractMentions(content)                                               │
+│  │  └─ Regex: @([a-zA-Z0-9._-]+)                                         │
+│  │  └─ Returns: string[] (unique usernames)                               │
+│  │                                                                          │
+│  ├─ createCommentMentions(commentId, content, authorId)                   │
+│  │  └─ Extract mentions from content                                      │
+│  │  └─ Lookup mentioned users                                             │
+│  │  └─ Create mention records                                             │
+│  │  └─ Send notifications (with deduplication)                            │
+│  │                                                                          │
+│  ├─ createCommunityPostMentions(postId, content, authorId)                │
+│  │  └─ Same flow as above                                                 │
+│  │                                                                          │
+│  └─ createCommunityPostCommentMentions(commentId, content, authorId)      │
+│     └─ Same flow as above                                                 │
+│                                                                              │
+│  Mention Records Created:                                                    │
+│  ├─ mentionedUserId (who was mentioned)                                    │
+│  ├─ mentionText (the actual @username text)                               │
+│  ├─ commentId (optional, if mention in update comment)                    │
+│  ├─ communityPostId (optional, if mention in community post)              │
+│  └─ communityPostCommentId (optional, if mention in post comment)         │
+│                                                                              │
+│  Notifications Sent:                                                         │
+│  ├─ Type: mention_received                                                 │
+│  ├─ Title: "You were mentioned"                                           │
+│  ├─ Body: "{Author} mentioned you in a {context}"                         │
+│  ├─ DeepLink: Opens relevant post/update/comment                          │
+│  └─ DedupeKey: mention_{contextType}_{contextId}_{userId}                 │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ DATA FLOW: USER MENTIONS SOMEONE IN A COMMENT                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  1. User opens UpdateDetailsDialog                                           │
+│     ↓                                                                         │
+│  2. User types "@john" in MentionTextField                                  │
+│     ↓                                                                         │
+│  3. Overlay shows user suggestions (retrieved from GET /mentions/search)     │
+│     ↓                                                                         │
+│  4. User taps "john.doe" in dropdown                                        │
+│     ↓                                                                         │
+│  5. "@john.doe " is inserted at cursor (MentionTextField handles this)     │
+│     ↓                                                                         │
+│  6. Text appears in blue and bold (MentionHighlightTextController)          │
+│     ↓                                                                         │
+│  7. User taps send button                                                   │
+│     ↓                                                                         │
+│  8. CommentsStore.createComment(updateId, content) is called                │
+│     ├─ Content: "Hey @john.doe great update!" (raw text sent)              │
+│     ↓                                                                         │
+│  9. Backend POST /updates/{updateId}/comments                               │
+│     ├─ MentionsService.createCommentMentions() is called                   │
+│     ├─ Extracts: ["john.doe"]                                              │
+│     ├─ Looks up user by username                                           │
+│     ├─ Creates Mention record in DB                                        │
+│     ├─ Sends notification to john.doe with deeplink                        │
+│     └─ Returns: { id, content, author, ... }                               │
+│     ↓                                                                         │
+│  10. Comment appears in UI (fetched via watchCommentsRealtime)              │
+│      ├─ Content stored: "Hey @john.doe great update!"                      │
+│      ├─ Rendered with MentionText widget                                   │
+│      ├─ "@john.doe" is styled (blue + bold)                                │
+│      └─ "@john.doe" is clickable → opens profile                           │
+│                                                                              │
+│  11. John.doe receives notification                                         │
+│      ├─ Type: mention_received                                             │
+│      ├─ Title: "You were mentioned"                                        │
+│      ├─ Body: "User mentioned you in a comment"                            │
+│      └─ DeepLink: /updates/{updateId}?commentId={commentId}               │
+│      ↓                                                                         │
+│  12. John taps notification → Opens comment with deeplink                   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+KEY REGEX PATTERN USED EVERYWHERE:
+  @([a-zA-Z0-9._-]+)
+  
+  Matches:
+  ✓ @john.doe
+  ✓ @jane-smith
+  ✓ @user_name
+  ✓ @user123
+  
+  Does not match:
+  ✗ @john@doe (no @ inside mention)
+  ✗ @-invalid (can't start with dash)
+  ✗ @user (with emoji) - emoji not allowed
+
+DATA MODELS:
+
+  MentionUserModel (Frontend)
+  {
+    id: string
+    username: string
+    displayName?: string
+    avatarUrl?: string
+  }
+
+  CommentModel (Frontend - Update Comments)
+  {
+    id: string
+    updateId: string
+    authorId: string
+    content: string (raw text with @mentions)
+    createdAt: DateTime
+    updatedAt: DateTime
+    admin?: Admin
+  }
+
+  CommunityPostComment (Frontend - Community Comments)
+  {
+    id: string
+    postId: string
+    authorId: string
+    content: string (raw text with @mentions)
+    createdAt: DateTime
+    updatedAt: DateTime
+    admin?: Admin
+  }
+
+  Mention (Backend Database)
+  {
+    id: CUID
+    mentionedUserId: string
+    mentionText: string (@username)
+    commentId?: string
+    communityPostId?: string
+    communityPostCommentId?: string
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+

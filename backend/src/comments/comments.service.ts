@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { BlocksService } from '../blocks/blocks.service';
+import { LevelsService } from '../levels/levels.service';
 import { QuestsService } from '../quests/quests.service';
 import { MentionsService } from '../mentions/mentions.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -23,6 +24,7 @@ const commentInclude = {
     select: {
       id: true,
       email: true,
+      username: true,
       displayName: true,
       avatarUrl: true,
       roles: {
@@ -41,6 +43,43 @@ const commentInclude = {
           rarity: true,
         },
       },
+      currentLevel: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          description: true,
+          iconUrl: true,
+          level: true,
+          requiredBnp: true,
+          requiredComments: true,
+          requiredDaysActive: true,
+          requiredQuests: true,
+          requiredUpdates: true,
+          requiredProjects: true,
+          color: true,
+          isActive: true,
+          sortOrder: true,
+        },
+      },
+    },
+  },
+  replyTo: {
+    select: {
+      id: true,
+      content: true,
+      author: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+        },
+      },
+    },
+  },
+  _count: {
+    select: {
+      reactions: true,
     },
   },
 } satisfies Prisma.CommentInclude;
@@ -54,6 +93,7 @@ export class CommentsService {
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
     private readonly blocksService: BlocksService,
+    private readonly levelsService: LevelsService,
     private readonly questsService: QuestsService,
     private readonly mentionsService: MentionsService,
   ) {}
@@ -81,6 +121,7 @@ export class CommentsService {
         updateId: updateId,
         authorId: actor.id,
         content: dto.content,
+        replyToId: dto.replyToId,
       },
       include: commentInclude,
     });
@@ -103,6 +144,15 @@ export class CommentsService {
       dto.content,
       actor.id,
     );
+
+    // Trigger level recalculation after comment posted
+    try {
+      await this.levelsService.updateUserLevel(actor.id);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to update user level after comment: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     return this.toCommentResponse(comment);
   }
@@ -201,7 +251,8 @@ export class CommentsService {
 
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
-      actor.roles.includes(AppRole.ADMIN) &&
+      (actor.roles.includes(AppRole.DEV) ||
+        actor.roles.includes(AppRole.ADMIN)) &&
       comment.update.project.ownerAdminId === actor.id;
     const isAuthor = comment.authorId === actor.id;
 
@@ -264,7 +315,8 @@ export class CommentsService {
 
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
-      actor.roles.includes(AppRole.ADMIN) &&
+      (actor.roles.includes(AppRole.DEV) ||
+        actor.roles.includes(AppRole.ADMIN)) &&
       comment.update.project.ownerAdminId === actor.id;
     const isAuthor = comment.authorId === actor.id;
 
@@ -293,32 +345,112 @@ export class CommentsService {
       include: typeof commentInclude;
     }>,
   ) {
-    const rawUsername =
-      comment.author.email?.split('@')[0] ?? comment.author.id;
-    const normalized = rawUsername
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]/g, '')
+    const rawUsername = (comment.author.username ?? '')
+      .replaceAll('@', '')
       .trim();
+    const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
     const username = `@${normalized || comment.author.id.slice(0, 6)}`;
+    const displayName = comment.author.displayName?.trim() || 'Blocnet Member';
 
     return {
       ...comment,
+      likesCount: comment._count.reactions,
       author: {
         id: comment.author.id,
-        email: comment.author.email,
         displayName: comment.author.displayName,
+        username: comment.author.username,
         avatarUrl: comment.author.avatarUrl,
       },
       admin: {
         id: comment.author.id,
-        name: comment.author.displayName ?? comment.author.email ?? 'User',
+        name: displayName,
         username,
         imageUrl: comment.author.avatarUrl ?? '',
         followers: 0,
         roles: comment.author.roles.map((entry) => entry.role),
         primaryBadge: comment.author.primaryBadge ?? null,
+        currentLevel: comment.author.currentLevel
+          ? {
+              id: comment.author.currentLevel.id,
+              slug: comment.author.currentLevel.slug,
+              name: comment.author.currentLevel.name,
+              description: comment.author.currentLevel.description,
+              iconUrl: comment.author.currentLevel.iconUrl,
+              level: comment.author.currentLevel.level,
+              requiredBnp: comment.author.currentLevel.requiredBnp.toString(),
+              requiredComments: comment.author.currentLevel.requiredComments,
+              requiredDaysActive:
+                comment.author.currentLevel.requiredDaysActive,
+              requiredQuests: comment.author.currentLevel.requiredQuests,
+              requiredUpdates: comment.author.currentLevel.requiredUpdates,
+              requiredProjects: comment.author.currentLevel.requiredProjects,
+              color: comment.author.currentLevel.color,
+              isActive: comment.author.currentLevel.isActive,
+              sortOrder: comment.author.currentLevel.sortOrder,
+            }
+          : null,
       },
     };
+  }
+
+  async likeComment(actor: AuthUser, commentId: string) {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { id: true, authorId: true },
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    await this.prisma.commentReaction.upsert({
+      where: {
+        commentId_userId_kind: {
+          commentId,
+          userId: actor.id,
+          kind: 'like',
+        },
+      },
+      create: {
+        commentId,
+        userId: actor.id,
+        kind: 'like',
+      },
+      update: {},
+    });
+
+    const updated = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      include: commentInclude,
+    });
+
+    return this.toCommentResponse(updated!);
+  }
+
+  async unlikeComment(actor: AuthUser, commentId: string) {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { id: true },
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    await this.prisma.commentReaction.deleteMany({
+      where: {
+        commentId,
+        userId: actor.id,
+        kind: 'like',
+      },
+    });
+
+    const updated = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      include: commentInclude,
+    });
+
+    return this.toCommentResponse(updated!);
   }
 
   private async triggerQuestAction(userId: string, action: string) {

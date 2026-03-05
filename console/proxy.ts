@@ -10,8 +10,9 @@ import {
 
 const PUBLIC_PATH_PREFIXES = ["/signin", "/signout"];
 const PUBLIC_PLATFORM_PREFIXES = ["/api", "/_next"];
-const PUBLIC_EXACT_PATHS = new Set(["/favicon.ico"]);
+const PUBLIC_EXACT_PATHS = new Set(["/favicon.ico", "/unsupported-device"]);
 const REFRESH_LEEWAY_SECONDS = 90;
+const MOBILE_BLOCK_REDIRECT_PATH = "/unsupported-device";
 
 function parseJwtExp(token: string): number | null {
   const parts = token.split(".");
@@ -58,6 +59,27 @@ export function isProtectedAdminPath(pathname: string): boolean {
   );
 }
 
+export function isBlockedMobileUserAgent(userAgent: string | null): boolean {
+  if (!userAgent) return false;
+  const agent = userAgent.toLowerCase();
+
+  if (agent.includes("ipad") || agent.includes("tablet")) {
+    return false;
+  }
+
+  if (
+    agent.includes("iphone") ||
+    agent.includes("ipod") ||
+    agent.includes("windows phone")
+  ) {
+    return true;
+  }
+
+  const isAndroid = agent.includes("android");
+  const isMobile = agent.includes("mobile");
+  return isAndroid && isMobile;
+}
+
 function redirectToSignIn(request: NextRequest): NextResponse {
   const url = request.nextUrl.clone();
   url.pathname = "/signin";
@@ -67,6 +89,16 @@ function redirectToSignIn(request: NextRequest): NextResponse {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const userAgent = request.headers.get("user-agent");
+  const shouldBlockMobile = isBlockedMobileUserAgent(userAgent);
+
+  if (shouldBlockMobile && pathname !== MOBILE_BLOCK_REDIRECT_PATH) {
+    const url = request.nextUrl.clone();
+    url.pathname = MOBILE_BLOCK_REDIRECT_PATH;
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   if (!isProtectedAdminPath(pathname)) {
     return NextResponse.next();
   }

@@ -1,8 +1,9 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/comments/data/models/comment_model.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
@@ -11,9 +12,11 @@ import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart
 import 'package:blocnet/features/mentions/presentation/utils/mention_profile_navigator.dart';
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
 import 'package:blocnet/services/api/api_client.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/comments_store.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/community/comments_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../more_from/more_from_primary_tag.dart';
@@ -27,11 +30,13 @@ class UpdateDetailsDialog extends StatefulWidget {
   const UpdateDetailsDialog({
     required this.id,
     this.focusCommentComposer = false,
+    this.commentsOnly = false,
     super.key,
   });
 
   final String id;
   final bool focusCommentComposer;
+  final bool commentsOnly;
 
   @override
   State<UpdateDetailsDialog> createState() => _PostDetailsDialogState();
@@ -42,7 +47,8 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
       MentionHighlightTextController();
   final FocusNode _commentFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey _commentsSectionKey = GlobalKey();
+  final GlobalKey<_CommentsSectionState> _commentsSectionKey =
+      GlobalKey<_CommentsSectionState>();
   late final CommentsStore _commentsStore;
   late final MentionsRepository _mentionsRepository;
   bool _isSubmittingComment = false;
@@ -84,8 +90,10 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
     if (post.project == null) {
       return Center(child: CircularProgressIndicator(color: AppColors.teal400));
     }
-
-    final moreFromProjectName = post.project?.posts ?? [];
+    final viewMode = context.watch<FeedViewModeStore>().mode;
+    final commentHeaderTitle = widget.commentsOnly
+        ? 'Comments · ${post.project?.name ?? 'Update'}'
+        : null;
 
     return SafeArea(
       child: Container(
@@ -102,60 +110,80 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
             children: [
               UpdateDetailsHeader(
                 priority: post.priority,
-                updateId: post.id,
+                title: commentHeaderTitle,
+                showPriority: !widget.commentsOnly,
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      UpdateDetailsInfo(post: post),
-                      const SizedBox(height: 12),
-                      _buildTipHunterAction(post),
-                      const SizedBox(height: 16),
-                      _Divider(),
-                      const SizedBox(height: 12),
-                      UpdateDetailsTags(post),
-                      const SizedBox(height: 12),
-                      _Divider(),
-                      const SizedBox(height: 16),
-                      RenderMarkdownContent(content: post.content),
-                      const SizedBox(height: 24),
-                      _CommentsSection(
-                        key: _commentsSectionKey,
-                        updateId: widget.id,
-                        controller: _commentController,
-                        focusNode: _commentFocusNode,
-                        mentionsRepository: _mentionsRepository,
-                        isSubmitting: _isSubmittingComment,
-                        error: _commentError,
-                        onSubmit: _createComment,
+                child: widget.commentsOnly
+                    ? SingleChildScrollView(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        child: _CommentsSection(
+                          key: _commentsSectionKey,
+                          updateId: widget.id,
+                          controller: _commentController,
+                          focusNode: _commentFocusNode,
+                          mentionsRepository: _mentionsRepository,
+                          isSubmitting: _isSubmittingComment,
+                          error: _commentError,
+                          viewMode: viewMode,
+                          showHeading: false,
+                          onSubmit: _createComment,
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            UpdateDetailsInfo(post: post),
+                            const SizedBox(height: 12),
+                            _buildTipHunterAction(post),
+                            const SizedBox(height: 16),
+                            _Divider(),
+                            const SizedBox(height: 12),
+                            UpdateDetailsTags(post),
+                            const SizedBox(height: 12),
+                            _Divider(),
+                            const SizedBox(height: 16),
+                            RenderMarkdownContent(content: post.content),
+                            const SizedBox(height: 24),
+                            _CommentsSection(
+                              key: _commentsSectionKey,
+                              updateId: widget.id,
+                              controller: _commentController,
+                              focusNode: _commentFocusNode,
+                              mentionsRepository: _mentionsRepository,
+                              isSubmitting: _isSubmittingComment,
+                              error: _commentError,
+                              viewMode: viewMode,
+                              onSubmit: _createComment,
+                            ),
+                            const SizedBox(height: 32),
+                            _Divider(),
+                            const SizedBox(height: 20),
+                            MoreFromProjectName(
+                              label: 'More from',
+                              projectTitle: post.project?.name ?? '',
+                              posts: post.project?.posts ?? const [],
+                            ),
+                            const SizedBox(height: 16),
+                            _Divider(),
+                            const SizedBox(height: 16),
+                            MoreFromUpdatePrimaryTag(
+                              primaryTag:
+                                  post.project?.primaryTag ?? PrimaryTag.none,
+                            ),
+                            const SizedBox(height: 8),
+                            _Divider(),
+                            const SizedBox(height: 8),
+                            MoreFromUpdateSecondaryTags(post: post),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 32),
-                      _Divider(),
-                      const SizedBox(height: 20),
-                      MoreFromProjectName(
-                        label: 'More from',
-                        projectTitle: post.project?.name ?? '',
-                        posts: moreFromProjectName,
-                      ),
-                      const SizedBox(height: 16),
-                      _Divider(),
-                      const SizedBox(height: 16),
-                      MoreFromUpdatePrimaryTag(
-                        primaryTag: post.project?.primaryTag ?? PrimaryTag.none,
-                      ),
-                      const SizedBox(height: 8),
-                      _Divider(),
-                      const SizedBox(height: 8),
-                      MoreFromUpdateSecondaryTags(post: post),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
@@ -168,13 +196,17 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
     final content = _commentController.text.trim();
     if (content.isEmpty || _isSubmittingComment) return;
 
+    final replyToId = _commentsSectionKey.currentState?._replyToCommentId;
+
     setState(() => _isSubmittingComment = true);
     try {
       await context.read<CommentsStore>().createComment(
             updateId: widget.id,
             content: content,
+            replyToId: replyToId,
           );
       _commentController.clear();
+      _commentsSectionKey.currentState?._cancelReply();
       setState(() => _commentError = null);
     } catch (error) {
       if (!mounted) return;
@@ -265,7 +297,7 @@ class _Divider extends StatelessWidget {
 
 // ─── Comments Section ─────────────────────────────────────────────────────────
 
-class _CommentsSection extends StatelessWidget {
+class _CommentsSection extends StatefulWidget {
   const _CommentsSection({
     super.key,
     required this.updateId,
@@ -274,6 +306,8 @@ class _CommentsSection extends StatelessWidget {
     required this.mentionsRepository,
     required this.isSubmitting,
     required this.error,
+    required this.viewMode,
+    this.showHeading = true,
     required this.onSubmit,
   });
 
@@ -283,7 +317,46 @@ class _CommentsSection extends StatelessWidget {
   final MentionsRepository mentionsRepository;
   final bool isSubmitting;
   final String? error;
+  final FeedViewMode viewMode;
+  final bool showHeading;
   final VoidCallback onSubmit;
+
+  @override
+  State<_CommentsSection> createState() => _CommentsSectionState();
+}
+
+class _CommentsSectionState extends State<_CommentsSection> {
+  String? _replyToCommentId;
+  String? _replyToUsername;
+
+  void _handleReply(String commentId, String? username) {
+    setState(() {
+      _replyToCommentId = commentId;
+      _replyToUsername = username;
+    });
+    widget.focusNode.requestFocus();
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyToCommentId = null;
+      _replyToUsername = null;
+    });
+  }
+
+  Future<void> _handleLike(CommentsStore commentsStore, String commentId) async {
+    try {
+      await commentsStore.likeComment(commentId);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to like comment: $error'),
+          backgroundColor: AppColors.error500,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -291,70 +364,56 @@ class _CommentsSection extends StatelessWidget {
 
     return Consumer<CommentsStore>(
       builder: (context, commentsStore, _) {
-        final comments = commentsStore.commentsForUpdate(updateId);
-        final isLoading = commentsStore.isLoadingForUpdate(updateId);
-        final hasMore = commentsStore.hasMoreCommentsForUpdate(updateId);
+        final comments = commentsStore.commentsForUpdate(widget.updateId);
+        final isLoading = commentsStore.isLoadingForUpdate(widget.updateId);
+        final hasMore = commentsStore.hasMoreCommentsForUpdate(widget.updateId);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text(
-                  'Comments',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary500.withValues(alpha: 0.15),
-                        AppColors.primary500.withValues(alpha: 0.08),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.primary500.withValues(alpha: 0.25),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Text(
-                    '${comments.length}',
+                if (widget.showHeading) ...[
+                  Text(
+                    'Comments',
                     style: TextStyle(
-                      color: AppColors.primary400,
-                      fontSize: 11,
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Comment input
-            Row(
-              children: [
-                Expanded(
-                  child: MentionTextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    mentionsRepository: mentionsRepository,
-                    hintText: 'Add a comment…',
-                    minLines: 1,
-                    maxLines: 4,
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary500.withValues(alpha: 0.15),
+                          AppColors.primary500.withValues(alpha: 0.08),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primary500.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Text(
+                      '${comments.length}',
+                      style: TextStyle(
+                        color: AppColors.primary400,
+                        fontSize: 11,
+                        fontFamily: 'Geist',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
+                ],
+                const Spacer(),
                 GestureDetector(
-                  onTap: isSubmitting ? null : onSubmit,
+                  onTap: widget.isSubmitting ? null : widget.onSubmit,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -380,7 +439,7 @@ class _CommentsSection extends StatelessWidget {
                       ],
                     ),
                     child: Text(
-                      isSubmitting ? '…' : 'Send',
+                      widget.isSubmitting ? 'Sending…' : 'Send',
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 13,
@@ -392,10 +451,58 @@ class _CommentsSection extends StatelessWidget {
                 ),
               ],
             ),
-            if (error != null && error!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            if (_replyToUsername != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.bgElevated,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.subdirectory_arrow_right,
+                      size: 14,
+                      color: AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Replying to @$_replyToUsername',
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                          fontFamily: 'Geist',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _cancelReply,
+                      child: Icon(
+                        Icons.close,
+                        size: 18,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            MentionTextField(
+              controller: widget.controller,
+              focusNode: widget.focusNode,
+              mentionsRepository: widget.mentionsRepository,
+              hintText: 'Add a comment…',
+              minLines: 4,
+              maxLines: 8,
+            ),
+            if (widget.error != null && widget.error!.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
-                error!,
+                widget.error!,
                 style: TextStyle(
                   color: AppColors.error500,
                   fontSize: 11,
@@ -410,7 +517,7 @@ class _CommentsSection extends StatelessWidget {
                 child: TextButton(
                   onPressed: isLoading
                       ? null
-                      : () => commentsStore.loadOlderComments(updateId),
+                      : () => commentsStore.loadOlderComments(widget.updateId),
                   child: Text(
                     isLoading ? 'Loading…' : 'Load older comments',
                     style: TextStyle(
@@ -446,15 +553,31 @@ class _CommentsSection extends StatelessWidget {
               )
             else
               Column(
-                children: comments
-                    .map(
-                      (item) => _CommentTile(
+                children: comments.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  return Column(
+                    children: [
+                      _CommentTile(
                         comment: item,
                         canEdit: item.authorId == auth.userId,
-                        updateId: updateId,
+                        updateId: widget.updateId,
+                        viewMode: widget.viewMode,
+                        onReply: () => _handleReply(
+                          item.id,
+                          item.admin?.username ?? item.admin?.name,
+                        ),
+                        onLike: () => _handleLike(commentsStore, item.id),
                       ),
-                    )
-                    .toList(),
+                      if (widget.viewMode == FeedViewMode.list &&
+                          index != comments.length - 1)
+                        Divider(
+                          height: 1,
+                          color: AppColors.borderSubtle.withValues(alpha: 0.75),
+                        ),
+                    ],
+                  );
+                }).toList(),
               ),
           ],
         );
@@ -470,103 +593,78 @@ class _CommentTile extends StatelessWidget {
     required this.comment,
     required this.canEdit,
     required this.updateId,
+    required this.viewMode,
+    this.onReply,
+    this.onLike,
   });
 
   final CommentModel comment;
   final bool canEdit;
   final String updateId;
+  final FeedViewMode viewMode;
+  final VoidCallback? onReply;
+  final VoidCallback? onLike;
 
   @override
   Widget build(BuildContext context) {
     final roleLabel = comment.admin?.displayRoleLabel;
     final roleColor =
         roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
+    final displayUsername = _formatUsername(
+      comment.admin?.username,
+      comment.admin?.id,
+    );
+    final isCardMode = viewMode == FeedViewMode.card;
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.bgElevated,
-            AppColors.bgElevated.withValues(alpha: 0.85),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.borderSubtle.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
+      margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
+      padding: EdgeInsets.fromLTRB(
+        isCardMode ? 14 : 0,
+        isCardMode ? 14 : 12,
+        isCardMode ? 14 : 0,
+        12,
       ),
+      decoration: isCardMode
+          ? BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.bgElevated,
+                  AppColors.bgElevated.withValues(alpha: 0.85),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.borderSubtle.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+            )
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                comment.admin?.name ?? 'User',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 13,
-                  fontFamily: 'Geist',
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: UserNameWithLevelIcon(
+                        name: comment.admin?.name ?? 'User',
+                        currentLevel: comment.admin?.currentLevel,
+                        levelBadgeSize: LevelBadgeSize.small,
+                        textStyle: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                          fontFamily: 'Geist',
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (comment.admin?.primaryBadge != null) ...[
-                const SizedBox(width: 4),
-                BadgeIcon(
-                  badge: comment.admin!.primaryBadge!,
-                  size: BadgeSize.small,
-                ),
-              ],
-              if (roleLabel != null) ...[
-                const SizedBox(width: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: roleColor.withValues(alpha: 0.8),
-                      width: 0.8,
-                    ),
-                    color: roleColor.withValues(alpha: 0.12),
-                  ),
-                  child: Text(
-                    roleLabel,
-                    style: TextStyle(
-                      color: roleColor,
-                      fontSize: 9,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.primary500.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: AppColors.primary500.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  _relativeTime(comment.createdAt),
-                  style: TextStyle(
-                    color: AppColors.textFaint,
-                    fontSize: 10,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const Spacer(),
               if (canEdit) ...[
                 InkWell(
                   onTap: () => _showEditDialog(context),
@@ -615,9 +713,129 @@ class _CommentTile extends StatelessWidget {
                   ),
                 ),
               ],
+              if (roleLabel != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: roleColor.withValues(alpha: 0.8),
+                      width: 0.8,
+                    ),
+                    color: roleColor.withValues(alpha: 0.12),
+                  ),
+                  child: Text(
+                    roleLabel,
+                    style: TextStyle(
+                      color: roleColor,
+                      fontSize: 9,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primary500.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.primary500.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  _relativeTime(comment.createdAt),
+                  style: TextStyle(
+                    color: AppColors.textFaint,
+                    fontSize: 10,
+                    fontFamily: 'Geist',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ],
           ),
+          const SizedBox(height: 4),
+          Text(
+            displayUsername,
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 11,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 8),
+          if (comment.replyToData != null) ...[
+            GestureDetector(
+              onTap: () {
+                // TODO: Scroll to original comment
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.bgBase,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.borderSubtle.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.subdirectory_arrow_right,
+                          size: 12,
+                          color: AppColors.textMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Replying to ',
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 11,
+                            fontFamily: 'Geist',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          '@${_formatReplyUsername(comment.replyToData!)}',
+                          style: TextStyle(
+                            color: AppColors.primary400,
+                            fontSize: 11,
+                            fontFamily: 'Geist',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _truncateContent(comment.replyToData!.content, 50),
+                      style: TextStyle(
+                        color: AppColors.textFaint,
+                        fontSize: 11,
+                        fontFamily: 'Geist',
+                        fontWeight: FontWeight.w400,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
           MentionText(
             text: comment.content,
             style: TextStyle(
@@ -634,9 +852,72 @@ class _CommentTile extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              if (onLike != null) ...[
+                GestureDetector(
+                  onTap: onLike,
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.favorite_border,
+                        size: 14,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        comment.likesCount.toString(),
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                          fontFamily: 'Geist',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ],
+              if (onReply != null)
+                GestureDetector(
+                  onTap: onReply,
+                  behavior: HitTestBehavior.opaque,
+                  child: Text(
+                    'Reply',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  String _formatReplyUsername(ReplyToData data) {
+    final username = data.username?.trim() ?? '';
+    if (username.isNotEmpty) {
+      return username.startsWith('@') ? username.substring(1) : username;
+    }
+    final displayName = data.displayName?.trim() ?? '';
+    if (displayName.isNotEmpty) {
+      return displayName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+    }
+    return data.id.substring(0, 6);
+  }
+
+  String _truncateContent(String content, int maxLength) {
+    if (content.length <= maxLength) return content;
+    return '${content.substring(0, maxLength)}...';
   }
 
   Future<void> _showEditDialog(BuildContext context) async {
@@ -769,5 +1050,15 @@ class _CommentTile extends StatelessWidget {
     if (diff.inMinutes < 60) return '${diff.inMinutes}m';
     if (diff.inHours < 24) return '${diff.inHours}h';
     return '${diff.inDays}d';
+  }
+
+  String _formatUsername(String? rawValue, String? fallbackId) {
+    final raw = rawValue?.trim() ?? '';
+    if (raw.isNotEmpty) {
+      return raw.startsWith('@') ? raw : '@$raw';
+    }
+    final id = fallbackId?.trim() ?? '';
+    if (id.isEmpty) return '@member';
+    return '@${id.substring(0, id.length > 6 ? 6 : id.length)}';
   }
 }

@@ -3,6 +3,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_card.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:flutter/material.dart';
 
 class CommunityFeedList extends StatelessWidget {
@@ -10,6 +11,7 @@ class CommunityFeedList extends StatelessWidget {
     super.key,
     required this.posts,
     required this.bottomPad,
+    required this.mode,
     required this.controller,
     required this.accentColor,
     required this.onRefresh,
@@ -19,6 +21,7 @@ class CommunityFeedList extends StatelessWidget {
 
   final List<CommunityPost> posts;
   final double bottomPad;
+  final FeedViewMode mode;
   final ScrollController controller;
   final Color accentColor;
   final Future<void> Function() onRefresh;
@@ -55,6 +58,7 @@ class CommunityFeedList extends StatelessWidget {
       );
     }
 
+    final isCardMode = mode == FeedViewMode.card;
     return RefreshIndicator(
       color: accentColor,
       backgroundColor: AppColors.bgSurface,
@@ -64,12 +68,15 @@ class CommunityFeedList extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPad),
         itemCount: posts.length,
-        separatorBuilder: (_, __) => Divider(
-          height: 1,
-          color: AppColors.borderSubtle.withValues(alpha: 0.8),
-        ),
+        separatorBuilder: (_, __) => isCardMode
+            ? const SizedBox(height: 10)
+            : Divider(
+                height: 1,
+                color: AppColors.borderSubtle.withValues(alpha: 0.8),
+              ),
         itemBuilder: (context, index) => CommunityCard(
           post: posts[index],
+          mode: mode,
           onTap: () => Navigator.of(context).pushNamed(
             AppRoutes.communityDiscussion,
             arguments: posts[index].id,

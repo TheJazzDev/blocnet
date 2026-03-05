@@ -5,9 +5,9 @@ import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/cards/stat_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_label/filter_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_card/your_project_card.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

@@ -3,6 +3,7 @@ import { Prisma, PrismaClient, RoleName } from '@prisma/client';
 import { Pool } from 'pg';
 import { config as loadEnv } from 'dotenv';
 import { seedBadgesAndQuests } from './seed.badges-quests';
+import { seedLevels } from './seed.levels';
 
 // Keep existing env vars (for CI/prod seeding) and only fallback to .env.local.
 loadEnv({ path: '.env.local', override: false, quiet: true });
@@ -283,6 +284,7 @@ async function main() {
     update: {},
     create: {
       id: 'default',
+      closedAlphaEnabled: false,
       alphaRadarEnabled: true,
       followPrefsEnabled: true,
       weeklyDigestEnabled: true,
@@ -463,6 +465,7 @@ async function main() {
   });
 
   await seedBadgesAndQuests(prisma);
+  await seedLevels(prisma);
 
   const [
     primaryCount,
@@ -470,16 +473,18 @@ async function main() {
     riskCount,
     miningConfigCount,
     tipCurrencyCount,
+    levelCount,
   ] = await Promise.all([
     prisma.primaryTag.count(),
     prisma.secondaryTag.count(),
     prisma.riskLimit.count(),
     prisma.miningConfig.count(),
     prisma.tipCurrency.count(),
+    prisma.userLevel.count(),
   ]);
 
   console.log(
-    `[seed] completed | ownerUserId=${ownerUserId} ownerEmail=${ownerEmail} primaryTags=${primaryCount} secondaryTags=${secondaryCount} riskLimits=${riskCount} miningConfigs=${miningConfigCount} tipCurrencies=${tipCurrencyCount}`,
+    `[seed] completed | ownerUserId=${ownerUserId} ownerEmail=${ownerEmail} primaryTags=${primaryCount} secondaryTags=${secondaryCount} riskLimits=${riskCount} miningConfigs=${miningConfigCount} tipCurrencies=${tipCurrencyCount} levels=${levelCount}`,
   );
 }
 

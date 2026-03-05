@@ -22,6 +22,16 @@ class RadarProjectActivity {
       lastUpdateAt: DateTime.tryParse(json['lastUpdateAt']?.toString() ?? ''),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'projectId': projectId,
+      'projectName': projectName,
+      'newCount': newCount,
+      'highCount': highCount,
+      'lastUpdateAt': lastUpdateAt?.toIso8601String(),
+    };
+  }
 }
 
 class RadarSummary {
@@ -57,5 +67,15 @@ class RadarSummary {
           int.tryParse(json['highUrgencyCount']?.toString() ?? '') ?? 0,
       activeProjects: activeProjects,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'asOf': asOf.toIso8601String(),
+      'lastSeenAt': lastSeenAt?.toIso8601String(),
+      'newUpdatesCount': newUpdatesCount,
+      'highUrgencyCount': highUrgencyCount,
+      'activeProjects': activeProjects.map((item) => item.toJson()).toList(),
+    };
   }
 }

@@ -54,7 +54,7 @@ export class UpdateQuestDto {
   @IsUUID()
   rewardBadgeId?: string | null;
 
-  @ApiPropertyOptional({ example: 'https://x.com/blocnet', nullable: true })
+  @ApiPropertyOptional({ example: 'https://x.com/blocnet_app', nullable: true })
   @IsOptional()
   @IsUrl()
   targetUrl?: string | null;

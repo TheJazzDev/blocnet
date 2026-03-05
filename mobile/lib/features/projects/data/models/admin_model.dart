@@ -1,4 +1,6 @@
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/shared/utils/role_presentation.dart';
 
 class Admin {
   final String id;
@@ -8,6 +10,7 @@ class Admin {
   final int followers;
   final double totalTipsReceived;
   final BadgeModel? primaryBadge;
+  final UserLevelModel? currentLevel;
   final List<String> roles;
 
   Admin({
@@ -18,6 +21,7 @@ class Admin {
     required this.followers,
     this.totalTipsReceived = 0,
     this.primaryBadge,
+    this.currentLevel,
     List<String>? roles,
   }) : roles = List.unmodifiable(
           (roles ?? const [])
@@ -31,14 +35,12 @@ class Admin {
     return roles.contains(role.trim().toLowerCase());
   }
 
-  String? get displayRoleLabel {
-    if (hasRole('owner') || hasRole('admin')) return 'ADMIN';
-    if (hasRole('hunter')) return 'HUNTER';
-    return null;
-  }
+  String? get primaryRoleKey => resolvePrimaryRoleKeyFromRoles(roles);
 
-  bool get isHunterRole => hasRole('hunter');
-  bool get isAdminRole => hasRole('owner') || hasRole('admin');
+  String? get displayRoleLabel => resolvePrimaryRoleLabelFromRoles(roles);
+
+  bool get isHunterRole => primaryRoleKey == 'hunter';
+  bool get isAdminRole => primaryRoleKey == 'community_admin';
 
   static List<String> _parseRoles(dynamic rawRoles) {
     if (rawRoles is! List) return const [];
@@ -89,15 +91,18 @@ class Admin {
 
   factory Admin.fromApi(Map<String, dynamic> json) {
     final id = (json['id'] ?? json['authorId'] ?? '').toString();
-    final email = json['email']?.toString();
-    final fallbackName =
-        email != null && email.isNotEmpty ? email.split('@').first : 'Admin';
-    final name =
-        (json['name'] ?? json['displayName'] ?? fallbackName).toString();
-    final usernameSource =
-        (json['username'] ?? json['displayName'] ?? fallbackName).toString();
-    final username =
-        '@${usernameSource.replaceAll('@', '').toLowerCase().replaceAll(' ', '_')}';
+    final fallbackName = 'Blocnet Member';
+    final rawName =
+        (json['name'] ?? json['displayName'] ?? fallbackName).toString().trim();
+    final name = rawName.isEmpty ? fallbackName : rawName;
+    final usernameSource = (json['username'] ?? '').toString().trim();
+    final normalizedUsername = usernameSource
+        .replaceAll('@', '')
+        .toLowerCase()
+        .replaceAll(' ', '_');
+    final username = normalizedUsername.isEmpty
+        ? '@${id.isEmpty ? 'member' : id.substring(0, id.length > 6 ? 6 : id.length)}'
+        : '@$normalizedUsername';
     final imageUrl = (json['imageUrl'] ?? json['avatarUrl'] ?? '').toString();
     final followersRaw = json['followers'];
     final followers = followersRaw is int
@@ -119,6 +124,16 @@ class Admin {
       }
     }
 
+    UserLevelModel? currentLevel;
+    final levelData = json['currentLevel'];
+    if (levelData != null && levelData is Map<String, dynamic>) {
+      try {
+        currentLevel = UserLevelModel.fromApi(levelData);
+      } catch (_) {
+        currentLevel = null;
+      }
+    }
+
     return Admin(
       id: id,
       name: name,
@@ -127,6 +142,7 @@ class Admin {
       followers: followers,
       totalTipsReceived: totalTipsReceived,
       primaryBadge: primaryBadge,
+      currentLevel: currentLevel,
       roles: roles,
     );
   }

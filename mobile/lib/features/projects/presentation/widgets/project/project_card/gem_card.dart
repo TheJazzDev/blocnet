@@ -1,8 +1,10 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
@@ -198,15 +200,29 @@ class GemCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
-                              'Hunted by ${admin.name}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.custom(
-                                color: AppColors.textMuted,
-                                size: 11,
-                                weight: FontWeight.w600,
-                              ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Hunted by ',
+                                  style: AppTypography.custom(
+                                    color: AppColors.textMuted,
+                                    size: 11,
+                                    weight: FontWeight.w600,
+                                  ),
+                                ),
+                                Flexible(
+                                  child: UserNameWithLevelIcon(
+                                    name: admin.name,
+                                    currentLevel: admin.currentLevel,
+                                    levelBadgeSize: LevelBadgeSize.tiny,
+                                    textStyle: AppTypography.custom(
+                                      color: AppColors.textMuted,
+                                      size: 11,
+                                      weight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -551,27 +567,29 @@ class GemCard extends StatelessWidget {
                           child: GestureDetector(
                             onTap: () => _openHunterProfile(context),
                             behavior: HitTestBehavior.opaque,
-                            child: Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: 'Hunted by ',
-                                    style: AppTypography.custom(
-                                      color: AppColors.textSecondary,
-                                      size: 12,
-                                      weight: FontWeight.w500,
-                                    ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Hunted by ',
+                                  style: AppTypography.custom(
+                                    color: AppColors.textSecondary,
+                                    size: 12,
+                                    weight: FontWeight.w500,
                                   ),
-                                  TextSpan(
-                                    text: admin?.name ?? 'Unknown',
-                                    style: AppTypography.custom(
+                                ),
+                                Flexible(
+                                  child: UserNameWithLevelIcon(
+                                    name: admin?.name ?? 'Unknown',
+                                    currentLevel: admin?.currentLevel,
+                                    levelBadgeSize: LevelBadgeSize.tiny,
+                                    textStyle: AppTypography.custom(
                                       color: AppColors.textPrimary,
                                       size: 12,
                                       weight: FontWeight.w700,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

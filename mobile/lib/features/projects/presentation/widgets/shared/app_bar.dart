@@ -7,10 +7,10 @@ import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/blocnet_search_delegate.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/notifications_store.dart';
-import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/notifications/notifications_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -73,7 +73,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     child: showBack
                         ? _AppBarIconButton(
                             icon: Icons.arrow_back_rounded,
-                            minimal: false,
+                            minimal: true,
                             onTap: () {
                               if (navigator.canPop()) {
                                 navigator.pop();

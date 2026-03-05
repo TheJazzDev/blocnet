@@ -3,6 +3,10 @@ import { IsBoolean, IsOptional } from 'class-validator';
 export class UpdateRuntimeFeatureFlagsDto {
   @IsOptional()
   @IsBoolean()
+  closedAlphaEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   alphaRadarEnabled?: boolean;
 
   @IsOptional()

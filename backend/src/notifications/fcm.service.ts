@@ -10,6 +10,7 @@ import type { BroadcastTarget } from './dto/broadcast-notification.dto';
 export class FcmService {
   private static readonly ELEVATED_ROLE_TARGETS = [
     RoleName.hunter,
+    RoleName.dev,
     RoleName.admin,
     RoleName.owner,
   ] as const;

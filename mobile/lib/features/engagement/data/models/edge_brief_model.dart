@@ -27,6 +27,17 @@ class EdgeBriefProject {
       lastUpdateAt: DateTime.tryParse((json['lastUpdateAt'] ?? '').toString()),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'projectId': projectId,
+      'projectName': projectName,
+      'count': count,
+      'highUrgencyCount': highUrgencyCount,
+      'avgEdgeScore': avgEdgeScore,
+      'lastUpdateAt': lastUpdateAt?.toIso8601String(),
+    };
+  }
 }
 
 class EdgeBriefDecision {
@@ -60,6 +71,18 @@ class EdgeBriefDecision {
           DateTime.tryParse((json['createdAt'] ?? '').toString()) ??
               DateTime.now(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'decisionId': decisionId,
+      'edgeScore': edgeScore,
+      'recommendedAction': recommendedAction,
+      'title': title,
+      'projectName': projectName,
+      'urgency': urgency,
+      'createdAt': createdAt.toIso8601String(),
+    };
   }
 }
 
@@ -114,5 +137,20 @@ class EdgeBriefResponse {
       topDecisions: topDecisions,
       headline: (json['headline'] ?? '').toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'asOf': asOf.toIso8601String(),
+      'enabled': enabled,
+      'windowDays': windowDays,
+      'totalSignals': totalSignals,
+      'highUrgencyCount': highUrgencyCount,
+      'recommendedNowCount': recommendedNowCount,
+      'watchCount': watchCount,
+      'topProjects': topProjects.map((item) => item.toJson()).toList(),
+      'topDecisions': topDecisions.map((item) => item.toJson()).toList(),
+      'headline': headline,
+    };
   }
 }

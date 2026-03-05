@@ -2,7 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/services/badges_store.dart';
+import 'package:blocnet/services/engagement/badges_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -211,9 +211,9 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
       padding: const EdgeInsets.all(12),
       children: [
         _buildStatsCard(store),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         _buildCategoryProgress(store),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         _buildRarityProgress(store),
       ],
     );
@@ -225,34 +225,44 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
             .toStringAsFixed(1)
         : '0.0';
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Badge Collection',
-              style: Theme.of(context).textTheme.titleLarge,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Badge Collection',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem('Earned', store.earnedBadgeCount.toString()),
-                _buildStatItem('Total', store.totalBadgeCount.toString()),
-                _buildStatItem('Progress', '$percentage%'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            LinearProgressIndicator(
-              value: store.totalBadgeCount > 0
-                  ? store.earnedBadgeCount / store.totalBadgeCount
-                  : 0,
-              minHeight: 8,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem('Earned', store.earnedBadgeCount.toString()),
+              _buildStatItem('Total', store.totalBadgeCount.toString()),
+              _buildStatItem('Progress', '$percentage%'),
+            ],
+          ),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(
+            value: store.totalBadgeCount > 0
+                ? store.earnedBadgeCount / store.totalBadgeCount
+                : 0,
+            minHeight: 7,
+            borderRadius: BorderRadius.circular(999),
+            backgroundColor: AppColors.bgElevated,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary400),
+          ),
+          const SizedBox(height: 8),
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+        ],
       ),
     );
   }
@@ -263,7 +273,7 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
         Text(
           value,
           style: const TextStyle(
-            fontSize: 24,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -271,8 +281,8 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade400,
+            fontSize: 11,
+            color: AppColors.textMuted,
           ),
         ),
       ],
@@ -280,69 +290,78 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
   }
 
   Widget _buildCategoryProgress(BadgesStore store) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Progress by Category',
-              style: Theme.of(context).textTheme.titleMedium,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Progress by Category',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 12),
-            ...BadgeCategory.values.map((category) {
-              final totalInCategory =
-                  store.getBadgesByCategory(category).length;
-              final earnedInCategory =
-                  store.getEarnedBadgesByCategory(category).length;
-              if (totalInCategory == 0) return const SizedBox.shrink();
+          ),
+          const SizedBox(height: 10),
+          ...BadgeCategory.values.map((category) {
+            final totalInCategory = store.getBadgesByCategory(category).length;
+            final earnedInCategory =
+                store.getEarnedBadgesByCategory(category).length;
+            if (totalInCategory == 0) return const SizedBox.shrink();
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildProgressBar(
-                  category.displayName,
-                  earnedInCategory,
-                  totalInCategory,
-                ),
-              );
-            }),
-          ],
-        ),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildProgressBar(
+                category.displayName,
+                earnedInCategory,
+                totalInCategory,
+                color: Color(category.color),
+              ),
+            );
+          }),
+          const SizedBox(height: 2),
+          Divider(
+            height: 1,
+            color: AppColors.borderSubtle.withValues(alpha: 0.8),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildRarityProgress(BadgesStore store) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Progress by Rarity',
-              style: Theme.of(context).textTheme.titleMedium,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Progress by Rarity',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 12),
-            ...BadgeRarity.values.map((rarity) {
-              final badgesOfRarity = store.getBadgesByRarity(rarity);
-              final earnedOfRarity =
-                  badgesOfRarity.where((b) => store.hasBadge(b.id)).length;
-              if (badgesOfRarity.isEmpty) return const SizedBox.shrink();
+          ),
+          const SizedBox(height: 10),
+          ...BadgeRarity.values.map((rarity) {
+            final badgesOfRarity = store.getBadgesByRarity(rarity);
+            final earnedOfRarity =
+                badgesOfRarity.where((b) => store.hasBadge(b.id)).length;
+            if (badgesOfRarity.isEmpty) return const SizedBox.shrink();
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildProgressBar(
-                  rarity.displayName,
-                  earnedOfRarity,
-                  badgesOfRarity.length,
-                  color: Color(rarity.color),
-                ),
-              );
-            }),
-          ],
-        ),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildProgressBar(
+                rarity.displayName,
+                earnedOfRarity,
+                badgesOfRarity.length,
+                color: Color(rarity.color),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
@@ -359,10 +378,17 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 14)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             Text(
               '$earned / $total',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -371,7 +397,7 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
           value: total > 0 ? earned / total : 0,
           minHeight: 6,
           borderRadius: BorderRadius.circular(3),
-          backgroundColor: Colors.grey.shade800,
+          backgroundColor: AppColors.bgElevated,
           valueColor: AlwaysStoppedAnimation<Color>(
             color ?? Theme.of(context).colorScheme.primary,
           ),
@@ -410,6 +436,10 @@ class _BadgeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rarityColor = Color(badge.rarity.color);
+    final categoryColor = Color(badge.category.color);
+    final unlockedBase =
+        Color.lerp(rarityColor, categoryColor, 0.38) ?? rarityColor;
+    final lockedOverlay = AppColors.bgBase.withValues(alpha: 0.45);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -419,15 +449,30 @@ class _BadgeCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.bgSurface,
-              AppColors.bgSurface.withValues(alpha: 0.86),
+              isEarned
+                  ? unlockedBase.withValues(alpha: 0.24)
+                  : AppColors.bgSurface.withValues(alpha: 0.95),
+              isEarned
+                  ? unlockedBase.withValues(alpha: 0.1)
+                  : AppColors.bgSurface.withValues(alpha: 0.82),
             ],
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: rarityColor.withValues(alpha: isEarned ? 0.28 : 0.14),
-            width: 1.4,
+            color: isEarned
+                ? unlockedBase.withValues(alpha: 0.56)
+                : AppColors.borderSubtle.withValues(alpha: 0.8),
+            width: isEarned ? 1.8 : 1.2,
           ),
+          boxShadow: isEarned
+              ? [
+                  BoxShadow(
+                    color: unlockedBase.withValues(alpha: 0.16),
+                    blurRadius: 14,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
         ),
         child: Stack(
           children: [
@@ -442,12 +487,12 @@ class _BadgeCard extends StatelessWidget {
                             horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: isEarned
-                              ? AppColors.primary500.withValues(alpha: 0.14)
+                              ? unlockedBase.withValues(alpha: 0.18)
                               : AppColors.bgElevated,
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(
                             color: isEarned
-                                ? AppColors.primary500.withValues(alpha: 0.25)
+                                ? unlockedBase.withValues(alpha: 0.52)
                                 : AppColors.borderSubtle,
                           ),
                         ),
@@ -456,9 +501,8 @@ class _BadgeCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
-                            color: isEarned
-                                ? AppColors.primary400
-                                : AppColors.textMuted,
+                            color:
+                                isEarned ? unlockedBase : AppColors.textMuted,
                           ),
                         ),
                       ),
@@ -538,6 +582,34 @@ class _BadgeCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (!isEarned)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: lockedOverlay,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            if (!isEarned)
+              Positioned(
+                right: 10,
+                bottom: 10,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: AppColors.bgElevated,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppColors.borderSubtle),
+                  ),
+                  child: Icon(
+                    Icons.lock_outline_rounded,
+                    size: 13,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

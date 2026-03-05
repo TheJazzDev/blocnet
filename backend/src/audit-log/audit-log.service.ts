@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { NotificationType, Prisma, RoleName } from '@prisma/client';
 import { NotificationEventsService } from '../notifications/notification-events.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
@@ -83,6 +84,7 @@ export class AuditLogService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationEventsService: NotificationEventsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(input: AuditInput) {
@@ -111,6 +113,16 @@ export class AuditLogService {
       );
     }
 
+    try {
+      await this.emitSystemAlertNotification(entry);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to emit system alert for audit entry ${entry.id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
     return entry;
   }
 
@@ -133,7 +145,10 @@ export class AuditLogService {
   }
 
   async listOpsEvents(user: AuthUser, query: ListOpsEventsQuery) {
-    if (!user.roles.includes(AppRole.OWNER)) {
+    if (
+      !user.roles.includes(AppRole.OWNER) &&
+      !user.roles.includes(AppRole.DEV)
+    ) {
       throw new ForbiddenException('Role is not allowed to view ops events');
     }
 
@@ -248,11 +263,126 @@ export class AuditLogService {
     return filtered.slice(offset, offset + limit);
   }
 
+  async listSystemAlerts(user: AuthUser, query: ListOpsEventsQuery) {
+    if (
+      !user.roles.includes(AppRole.OWNER) &&
+      !user.roles.includes(AppRole.DEV)
+    ) {
+      throw new ForbiddenException('Role is not allowed to view system alerts');
+    }
+
+    const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
+    const offset = Math.max(query.offset ?? 0, 0);
+    const q = query.q?.trim();
+    const from = query.from ? new Date(query.from) : null;
+    const to = query.to ? new Date(query.to) : null;
+
+    const sourcePrefixes = this.actionPrefixesForSource(query.source);
+    const providerPrefixes = this.actionPrefixesForProvider(query.provider);
+    const wantedStatus =
+      query.status && query.status !== 'all' ? query.status : null;
+
+    const where: Prisma.AuditLogWhereInput = {
+      AND: [
+        {
+          OR: OPS_ACTION_PREFIXES.map((prefix) => ({
+            action: { startsWith: prefix },
+          })),
+        },
+        ...(sourcePrefixes
+          ? [
+              {
+                OR: sourcePrefixes.map((prefix) => ({
+                  action: { startsWith: prefix },
+                })),
+              },
+            ]
+          : []),
+        ...(providerPrefixes
+          ? [
+              {
+                OR: providerPrefixes.map((prefix) => ({
+                  action: { startsWith: prefix },
+                })),
+              },
+            ]
+          : []),
+        ...(q && q.length > 0
+          ? [
+              {
+                OR: [
+                  { action: { contains: q } },
+                  { resourceType: { contains: q } },
+                  { resourceId: { contains: q } },
+                  {
+                    actor: {
+                      is: {
+                        OR: [
+                          { email: { contains: q } },
+                          { displayName: { contains: q } },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+        ...(from
+          ? [
+              {
+                createdAt: { gte: from },
+              },
+            ]
+          : []),
+        ...(to
+          ? [
+              {
+                createdAt: { lte: to },
+              },
+            ]
+          : []),
+      ],
+    };
+
+    const scanBatchSize = 200;
+    const targetCount = offset + limit;
+    const filtered: OpsEvent[] = [];
+    let scanOffset = 0;
+
+    while (filtered.length < targetCount) {
+      const rows = await this.prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: scanOffset,
+        take: scanBatchSize,
+        include: {
+          actor: {
+            select: { id: true, email: true, displayName: true },
+          },
+        },
+      });
+      if (rows.length === 0) {
+        break;
+      }
+
+      const normalized = rows
+        .map((row) => this.toOpsEvent(row))
+        .filter((row) => row.status === 'warning' || row.status === 'error')
+        .filter((row) => (wantedStatus ? row.status === wantedStatus : true));
+
+      filtered.push(...normalized);
+      scanOffset += rows.length;
+    }
+
+    return filtered.slice(offset, offset + limit);
+  }
+
   private buildVisibilityWhere(
     user: Pick<AuthUser, 'roles'>,
   ): Prisma.AuditLogWhereInput | undefined {
     const role = this.resolveAuditViewRole(user);
-    if (role === AppRole.OWNER) {
+    if (role === AppRole.OWNER || role === AppRole.DEV) {
       return undefined;
     }
 
@@ -287,6 +417,9 @@ export class AuditLogService {
   private resolveAuditViewRole(user: Pick<AuthUser, 'roles'>): AppRole {
     if (user.roles.includes(AppRole.OWNER)) {
       return AppRole.OWNER;
+    }
+    if (user.roles.includes(AppRole.DEV)) {
+      return AppRole.DEV;
     }
     if (user.roles.includes(AppRole.ADMIN)) {
       return AppRole.ADMIN;
@@ -606,6 +739,67 @@ export class AuditLogService {
       default:
         return null;
     }
+  }
+
+  private async emitSystemAlertNotification(
+    entry: Prisma.AuditLogGetPayload<Record<string, never>>,
+  ) {
+    const action = entry.action.toLowerCase();
+    if (!OPS_ACTION_PREFIXES.some((prefix) => action.startsWith(prefix))) {
+      return;
+    }
+
+    const metadata = this.toMetadataRecord(entry.metadata);
+    const status = this.resolveStatus(action, metadata);
+    if (status !== 'warning' && status !== 'error') {
+      return;
+    }
+
+    const { source, provider } = this.resolveSourceAndProvider(action);
+    const summary = this.resolveSummary(action, metadata, entry.resourceType);
+    const recipientIds = await this.systemAlertRecipientUserIds();
+    if (recipientIds.length === 0) {
+      return;
+    }
+
+    const title =
+      status === 'error' ? 'System alert (error)' : 'System alert (warning)';
+    const events = recipientIds.map((userId) => ({
+      userId,
+      type: NotificationType.system,
+      actorUserId: entry.actorId ?? null,
+      title,
+      body: summary,
+      payload: {
+        category: 'system_alert',
+        auditLogId: entry.id,
+        action: entry.action,
+        source,
+        provider,
+        status,
+        resourceType: entry.resourceType,
+        resourceId: entry.resourceId,
+        summary,
+        metadata,
+        createdAt: entry.createdAt.toISOString(),
+      } as Prisma.InputJsonValue,
+      deeplink: '/system-alerts',
+      dedupeKey: `system_alert:${entry.id}`,
+    }));
+
+    await this.notificationsService.notifyMany(events, { push: true });
+  }
+
+  private async systemAlertRecipientUserIds(): Promise<string[]> {
+    const rows = await this.prisma.userRole.findMany({
+      where: {
+        role: { in: [RoleName.owner, RoleName.dev] },
+        user: { isDeactivated: false },
+      },
+      select: { userId: true },
+      distinct: ['userId'],
+    });
+    return rows.map((row) => row.userId);
   }
 
   private stringValue(value: unknown): string | null {

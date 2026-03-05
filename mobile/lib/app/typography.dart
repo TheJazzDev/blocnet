@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTypography {
   static TextStyle _appFontFamily(
@@ -9,30 +8,15 @@ class AppTypography {
     double? height,
     double? letterSpacing,
   }) {
-    // Try to get system font family (respects user's accessibility settings)
-    final textStyle = TextStyle(
+    // Use system font to respect user's accessibility and font preferences
+    // Do NOT specify fontFamily - let Flutter use the system default
+    return TextStyle(
       fontSize: size,
       fontWeight: weight,
       color: color,
       height: height,
       letterSpacing: letterSpacing,
     );
-
-    // If user has custom system font, it will be used automatically
-    // Otherwise, fall back to Inter
-    try {
-      return GoogleFonts.inter(
-        textStyle: textStyle,
-        fontSize: size,
-        fontWeight: weight,
-        color: color,
-        height: height,
-        letterSpacing: letterSpacing,
-      );
-    } catch (e) {
-      // If GoogleFonts fails (offline, etc.), return base TextStyle
-      return textStyle;
-    }
   }
 
   // Display styles
@@ -106,7 +90,7 @@ class AppTypography {
 
   // Body styles
   static TextStyle bodyLarge(Color color) => _appFontFamily(
-        16,
+        17,
         FontWeight.w400,
         color,
         height: 1.5,
@@ -114,7 +98,7 @@ class AppTypography {
       );
 
   static TextStyle bodyMedium(Color color) => _appFontFamily(
-        14,
+        15,
         FontWeight.w400,
         color,
         height: 1.43,
@@ -122,7 +106,7 @@ class AppTypography {
       );
 
   static TextStyle bodySmall(Color color) => _appFontFamily(
-        12,
+        13,
         FontWeight.w400,
         color,
         height: 1.33,

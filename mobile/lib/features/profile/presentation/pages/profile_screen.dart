@@ -2,7 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/hunter_profile_body.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/user_profile_body.dart';
-import 'package:blocnet/services/auth_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';

@@ -5,27 +5,24 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
-import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
-import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/pages/edge_engine_page.dart';
-import 'package:blocnet/features/projects/presentation/sections/explore/explore.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/alpha_radar_card.dart';
-import 'package:blocnet/features/projects/presentation/widgets/home/catch_up_banner.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/edge_brief_teaser_card.dart';
-import 'package:blocnet/features/projects/presentation/widgets/home/empty_feed.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/home_feed_sliver.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_tab_bar.dart';
-import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/new_updates_pill.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/top_hunters_row.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/edge_engine_store.dart';
-import 'package:blocnet/services/feed_view_mode_store.dart';
-import 'package:blocnet/services/projects_store.dart';
-import 'package:blocnet/services/updates_store.dart';
+import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/edge/edge_engine_store.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/core/home_bootstrap_service.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/services/core/startup_metrics_service.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -36,13 +33,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Section _activeSection = Sections.forYou;
-  bool _isInitialLoading = true;
+  bool _isFeedReady = false;
+  bool _isEdgeReady = false;
+  bool _isBootstrapLoading = false;
   final ScrollController _scrollController = ScrollController();
   final Set<String> _pendingNewPostIds = <String>{};
   final UsersApiRepository _usersRepository = UsersApiRepository();
-  Timer? _newPostsPollTimer;
-  RealtimeChannel? _newPostsRealtimeChannel;
-  bool _isCheckingForNewPosts = false;
+  final HomeBootstrapService _homeBootstrapService = HomeBootstrapService();
+  final FeedSyncController _feedSyncController =
+      FeedSyncController(debugLabel: 'Home');
   RadarSummary? _radarSummary;
   bool _isLoadingRadar = true;
   bool _isAcknowledgingRadar = false;
@@ -52,65 +51,27 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
+    StartupMetricsService.markHomeShellReady();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      final projectsStore = context.read<ProjectsStore>();
-      final updatesStore = context.read<UpdatesStore>();
-      final edgeStore = context.read<EdgeEngineStore>();
-      await projectsStore.fetchProjectsOnce();
-      await updatesStore.fetchUpdatesOnce();
-      await edgeStore.fetchOnce();
-      await _loadRadar();
-      if (!mounted) return;
-      setState(() => _isInitialLoading = false);
+      await _hydrateHomeProgressively();
     });
-    _startNewPostsSync();
+    _feedSyncController.start(
+      realtimeEnabled: AppConfig.isSupabaseConfigured,
+      pollInterval: const Duration(seconds: 12),
+      channelName: 'home-new-updates',
+      table: 'Update',
+      onSyncRequested: _checkForNewPosts,
+    );
   }
 
   @override
   void dispose() {
-    _newPostsPollTimer?.cancel();
-    _stopNewPostsRealtimeSubscription();
+    _feedSyncController.dispose();
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();
     super.dispose();
-  }
-
-  void _startNewPostsSync() {
-    if (!AppConfig.isSupabaseConfigured) {
-      _newPostsPollTimer = Timer.periodic(
-        const Duration(seconds: 12),
-        (_) => _checkForNewPosts(),
-      );
-      return;
-    }
-
-    _startNewPostsRealtimeSubscription();
-  }
-
-  void _startNewPostsRealtimeSubscription() {
-    _stopNewPostsRealtimeSubscription();
-    _newPostsRealtimeChannel = Supabase.instance.client
-        .channel('home-new-updates')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'Update',
-          callback: (_) => unawaited(_checkForNewPosts()),
-        )
-        .subscribe((status, [error]) {
-      debugPrint(
-        '[RT][Home] updates status=$status error=$error',
-      );
-    });
-  }
-
-  void _stopNewPostsRealtimeSubscription() {
-    final channel = _newPostsRealtimeChannel;
-    if (channel == null) return;
-    _newPostsRealtimeChannel = null;
-    Supabase.instance.client.removeChannel(channel);
   }
 
   void _onTabChanged(Section section) {
@@ -135,21 +96,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkForNewPosts() async {
-    if (!mounted ||
-        _activeSection != Sections.forYou ||
-        _isCheckingForNewPosts) {
+    if (!mounted || _activeSection != Sections.forYou) {
       return;
     }
 
     final updatesStore = context.read<UpdatesStore>();
     final existingIds = updatesStore.posts.map((post) => post.id).toSet();
 
-    _isCheckingForNewPosts = true;
-    try {
-      await updatesStore.refreshUpdates();
-    } finally {
-      _isCheckingForNewPosts = false;
-    }
+    await updatesStore.refreshUpdates();
 
     if (!mounted) return;
 
@@ -257,32 +211,113 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _pendingNewPostIds.clear();
       _showCatchupFilter = false;
+      _isFeedReady = updatesStore.posts.isNotEmpty;
+      _isEdgeReady = edgeStore.brief != null;
     });
   }
 
-  List<Widget> _buildFeedRows(List<Update> posts, FeedViewMode viewMode) {
-    if (viewMode == FeedViewMode.card) {
-      return posts.map((post) => FeedCard(post: post)).toList();
-    }
+  Future<void> _hydrateHomeProgressively() async {
+    if (!mounted) return;
+    setState(() => _isBootstrapLoading = true);
 
-    final rows = <Widget>[];
-    for (var index = 0; index < posts.length; index++) {
-      rows.add(
-        FeedCard(
-          post: posts[index],
-          layout: FeedCardLayout.list,
-        ),
-      );
-      if (index < posts.length - 1) {
-        rows.add(
-          Divider(
-            height: 1,
-            color: AppColors.borderSubtle.withValues(alpha: 0.8),
-          ),
+    final updatesStore = context.read<UpdatesStore>();
+    final edgeStore = context.read<EdgeEngineStore>();
+    final projectsStore = context.read<ProjectsStore>();
+
+    try {
+      final cached = await _homeBootstrapService.loadCached();
+      if (cached != null && mounted) {
+        _applyBootstrapPayload(
+          cached,
+          updatesStore: updatesStore,
+          edgeStore: edgeStore,
+          projectsStore: projectsStore,
         );
       }
+    } catch (_) {
+      // Best effort cache restore.
     }
-    return rows;
+
+    HomeBootstrapPayload? remotePayload;
+    try {
+      remotePayload = await _homeBootstrapService.fetchHomeBootstrap(
+        feedLimit: 100,
+        windowDays: 7,
+      );
+      if (remotePayload != null && mounted) {
+        _applyBootstrapPayload(
+          remotePayload,
+          updatesStore: updatesStore,
+          edgeStore: edgeStore,
+          projectsStore: projectsStore,
+        );
+        await _homeBootstrapService.saveCached(remotePayload);
+      }
+    } catch (_) {
+      // Fallback to existing per-section loading below.
+    }
+
+    try {
+      final futures = <Future<void>>[
+        projectsStore.fetchProjectsOnce(),
+        remotePayload == null || remotePayload.feedItems.isEmpty
+            ? updatesStore.fetchUpdatesOnce()
+            : updatesStore.refreshUpdates(),
+        remotePayload == null || remotePayload.edgeBrief == null
+            ? edgeStore.fetchOnce()
+            : edgeStore.refresh(),
+        _loadRadar(),
+      ];
+
+      await Future.wait(futures);
+      if (!mounted) return;
+
+      setState(() {
+        _isFeedReady = updatesStore.posts.isNotEmpty;
+        _isEdgeReady = edgeStore.brief != null;
+      });
+
+      if (_isFeedReady) {
+        StartupMetricsService.markHomeFeedReady();
+      }
+      if (_isEdgeReady) {
+        StartupMetricsService.markEdgeReady();
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isBootstrapLoading = false);
+      }
+    }
+  }
+
+  void _applyBootstrapPayload(
+    HomeBootstrapPayload payload, {
+    required UpdatesStore updatesStore,
+    required EdgeEngineStore edgeStore,
+    required ProjectsStore projectsStore,
+  }) {
+    unawaited(
+      projectsStore.hydrateFollowStateFromMeSummary(
+        payload.meSummary,
+        notify: false,
+      ),
+    );
+    updatesStore.hydrateFromUpdates(payload.feedItems, notify: false);
+    edgeStore.hydrateBrief(payload.edgeBrief, notify: false);
+
+    setState(() {
+      _radarSummary = payload.radar ?? _radarSummary;
+      _isLoadingRadar = payload.radar == null;
+      _isFeedReady = payload.feedItems.isNotEmpty;
+      _isEdgeReady = payload.edgeBrief != null;
+    });
+
+    if (_isFeedReady) {
+      StartupMetricsService.markHomeFeedReady();
+    }
+    if (_isEdgeReady) {
+      StartupMetricsService.markEdgeReady();
+    }
   }
 
   Future<void> _sendEdgeFeedback(
@@ -395,8 +430,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     sliver: SliverToBoxAdapter(
                       child: EdgeBriefTeaserCard(
                         brief: edgeStore.brief,
-                        isLoading:
-                            edgeStore.isFetching && edgeStore.brief == null,
+                        isLoading: (edgeStore.isFetching || _isBootstrapLoading) &&
+                            edgeStore.brief == null,
                         onOpen: _openEdgeEnginePage,
                       ),
                     ),
@@ -410,86 +445,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
                 ],
-                Consumer2<UpdatesStore, EdgeEngineStore>(
-                  builder: (context, store, edgeStore, _) {
-                    final enrichedPosts = store.posts
-                        .where(
-                          (post) => post.project != null && post.admin != null,
-                        )
-                        .toList();
-                    final radarLastSeenAt = _radarSummary?.lastSeenAt;
-                    final feedPosts = _showCatchupFilter
-                        ? enrichedPosts.where((post) {
-                            final isUnseen = radarLastSeenAt == null
-                                ? true
-                                : post.createdAt.isAfter(radarLastSeenAt);
-                            final isHighPriority =
-                                post.priority.label.toLowerCase() == 'high';
-                            return isUnseen || isHighPriority;
-                          }).toList()
-                        : enrichedPosts;
-                    final rankedFeedPosts = [...feedPosts]..sort((a, b) {
-                        final scoreA = edgeStore.edgeScoreForUpdate(a.id);
-                        final scoreB = edgeStore.edgeScoreForUpdate(b.id);
-
-                        if (scoreA != null || scoreB != null) {
-                          if (scoreA == null) return 1;
-                          if (scoreB == null) return -1;
-                          final byScore = scoreB.compareTo(scoreA);
-                          if (byScore != 0) return byScore;
-                        }
-
-                        return b.createdAt.compareTo(a.createdAt);
-                      });
-
-                    if (_activeSection == Sections.forYou) {
-                      if (_isInitialLoading && enrichedPosts.isEmpty) {
-                        return const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 40),
-                            child: Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                        );
-                      }
-                      if (store.isFetching && store.posts.isEmpty) {
-                        return const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 40),
-                            child: Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                        );
-                      }
-                      if (rankedFeedPosts.isEmpty) {
-                        return const SliverPadding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          sliver: SliverToBoxAdapter(child: EmptyFeed()),
-                        );
-                      }
-                      return SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        sliver: SliverList(
-                          delegate: SliverChildListDelegate([
-                            if (_showCatchupFilter)
-                              CatchUpBanner(
-                                onClear: () =>
-                                    setState(() => _showCatchupFilter = false),
-                              ),
-                            ..._buildFeedRows(rankedFeedPosts, feedViewMode),
-                          ]),
-                        ),
-                      );
-                    }
-
-                    return SliverToBoxAdapter(
-                      child: ExploreSection(
-                        allPosts: store.posts,
-                        feedViewMode: feedViewMode,
-                      ),
-                    );
+                HomeFeedSliver(
+                  activeSection: _activeSection,
+                  isInitialLoading:
+                      !_isFeedReady && context.watch<UpdatesStore>().posts.isEmpty,
+                  showCatchupFilter: _showCatchupFilter,
+                  radarSummary: _radarSummary,
+                  feedViewMode: feedViewMode,
+                  onClearCatchup: () {
+                    setState(() => _showCatchupFilter = false);
                   },
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: bottomPad)),
@@ -498,34 +462,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           if (_activeSection == Sections.forYou &&
               _pendingNewPostIds.isNotEmpty)
-            Positioned(
-              top: 8,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: GestureDetector(
-                  onTap: _jumpToLatest,
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: accent,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      '${_pendingNewPostIds.length} new updates',
-                      style: AppTypography.custom(
-                        color: AppColors.onAccentForSpace(
-                          context.watch<AuthStore>().isInHunterSpace,
-                        ),
-                        size: 12,
-                        weight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
+            NewUpdatesPill(
+              count: _pendingNewPostIds.length,
+              backgroundColor: accent,
+              textColor: AppColors.onAccentForSpace(
+                context.watch<AuthStore>().isInHunterSpace,
               ),
+              onTap: _jumpToLatest,
             ),
         ],
       ),

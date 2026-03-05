@@ -1,11 +1,6 @@
 import { Prisma, ProjectStatus } from '@prisma/client';
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditLogService } from '../../audit-log/audit-log.service';
-import { AppRole } from '../../common/enums/role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { normalizePagination } from '../../common/utils/pagination.util';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -99,12 +94,6 @@ export class AdminProjectsService {
     projectId: string,
     dto: ModerateProjectStatusDto,
   ) {
-    if (dto.status === ProjectStatus.paused && this.isModeratorOnly(actor)) {
-      throw new ForbiddenException(
-        'Moderators can only set project status to active, hidden, or archived',
-      );
-    }
-
     const existing = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: { id: true, status: true },
@@ -137,12 +126,5 @@ export class AdminProjectsService {
     });
 
     return updated;
-  }
-
-  private isModeratorOnly(actor: AuthUser) {
-    const isOwner = actor.roles.includes(AppRole.OWNER);
-    const isAdmin = actor.roles.includes(AppRole.ADMIN);
-    const isModerator = actor.roles.includes(AppRole.MODERATOR);
-    return !isOwner && !isAdmin && isModerator;
   }
 }

@@ -236,6 +236,8 @@ export class UsersService {
               role: true,
             },
           },
+          currentLevel: true,
+          levelProgress: true,
           _count: {
             select: {
               authoredUpdates: true,
@@ -335,6 +337,47 @@ export class UsersService {
         lastActiveAt,
       },
       createdAt: profile.createdAt,
+    };
+  }
+
+  async getPublicPlatformStats() {
+    const now = new Date();
+    const startOfUtcDay = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+    );
+
+    const [activeUsers, projectsTracked, totalUpdates, totalCommunityPosts] =
+      await Promise.all([
+        this.prisma.profile.count({
+          where: {
+            isDeactivated: false,
+          },
+        }),
+        this.prisma.project.count({
+          where: {
+            status: {
+              in: [ProjectStatus.active, ProjectStatus.paused],
+            },
+          },
+        }),
+        this.prisma.update.count({
+          where: {
+            status: UpdateStatus.published,
+          },
+        }),
+        this.prisma.communityPost.count({
+          where: {
+            status: ContentModerationStatus.active,
+          },
+        }),
+      ]);
+
+    return {
+      activeUsers,
+      projectsTracked,
+      totalUpdates,
+      totalCommunityPosts,
+      asOf: now.toISOString(),
     };
   }
 

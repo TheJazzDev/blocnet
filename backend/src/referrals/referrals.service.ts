@@ -72,7 +72,7 @@ export class ReferralsService {
               select: {
                 id: true,
                 displayName: true,
-                email: true,
+                username: true,
                 referralCode: true,
               },
             })
@@ -105,7 +105,7 @@ export class ReferralsService {
       select: {
         id: true,
         displayName: true,
-        email: true,
+        username: true,
       },
     });
 
@@ -316,6 +316,7 @@ export class ReferralsService {
         select: {
           id: true,
           email: true,
+          username: true,
           displayName: true,
           avatarUrl: true,
           referredAt: true,
@@ -363,6 +364,7 @@ export class ReferralsService {
       return {
         id: row.id,
         email: row.email,
+        username: row.username,
         displayName: row.displayName,
         avatarUrl: row.avatarUrl,
         referredAt: row.referredAt,

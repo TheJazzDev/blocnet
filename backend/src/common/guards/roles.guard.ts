@@ -14,6 +14,18 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
 import { AppRole } from '../enums/role.enum';
 import type { AuthUser } from '../interfaces/auth-user.interface';
 
+const GOVERNANCE_ROLE_IMPLICATIONS: Record<AppRole, AppRole[]> = {
+  [AppRole.OWNER]: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN],
+  [AppRole.DEV]: [AppRole.DEV, AppRole.ADMIN],
+  [AppRole.ADMIN]: [AppRole.ADMIN],
+  [AppRole.COMMUNITY_ADMIN]: [AppRole.COMMUNITY_ADMIN],
+  [AppRole.COMMUNITY_MODERATOR]: [AppRole.COMMUNITY_MODERATOR],
+  [AppRole.MODERATOR]: [AppRole.MODERATOR],
+  [AppRole.CORE_TEAM]: [AppRole.CORE_TEAM],
+  [AppRole.HUNTER]: [AppRole.HUNTER],
+  [AppRole.USER]: [AppRole.USER],
+};
+
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
@@ -63,8 +75,10 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User context is missing');
     }
 
-    const hasPermission = effectiveUser.roles.some((role) =>
-      requiredRoles.includes(role),
+    const hasPermission = requiredRoles.some((requiredRole) =>
+      effectiveUser.roles.some((role) =>
+        this.isRoleAllowedForRequirement(role, requiredRole),
+      ),
     );
 
     if (!hasPermission) {
@@ -79,8 +93,8 @@ export class RolesGuard implements CanActivate {
     const includesGovernanceRole = requiredRoles.some(
       (role) =>
         role === AppRole.OWNER ||
-        role === AppRole.ADMIN ||
-        role === AppRole.MODERATOR,
+        role === AppRole.DEV ||
+        role === AppRole.ADMIN,
     );
 
     if (isAdminPanelRequest && includesGovernanceRole) {
@@ -98,7 +112,7 @@ export class RolesGuard implements CanActivate {
 
         if (!sessionToken) {
           throw new ForbiddenException(
-            'Two-factor authentication is required for admin panel access',
+            'Two-factor authentication is required for admin console access',
           );
         }
 
@@ -110,12 +124,20 @@ export class RolesGuard implements CanActivate {
 
         if (!validation.valid) {
           throw new ForbiddenException(
-            'Two-factor authentication is required for admin panel access',
+            'Two-factor authentication is required for admin console access',
           );
         }
       }
     }
 
     return true;
+  }
+
+  private isRoleAllowedForRequirement(
+    userRole: AppRole,
+    requiredRole: AppRole,
+  ): boolean {
+    const impliedRoles = GOVERNANCE_ROLE_IMPLICATIONS[userRole] ?? [userRole];
+    return impliedRoles.includes(requiredRole);
   }
 }

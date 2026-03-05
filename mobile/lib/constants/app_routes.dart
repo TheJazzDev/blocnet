@@ -12,7 +12,9 @@ class AppRoutes {
   static const String miningHourlyHistory = '/mining/hourly-history';
   static const String miningDownline = '/mining/downline';
   static const String notifications = '/notifications';
+  static const String systemAlerts = '/system-alerts';
   static const String badges = '/badges';
+  static const String levels = '/levels';
   static const String quests = '/quests';
   static const String referralCode = '/referral-code';
   static const String helpSupport = '/help-support';

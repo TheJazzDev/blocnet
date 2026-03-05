@@ -2,8 +2,8 @@ import { AppRole } from '../enums/role.enum';
 
 export type AdminGovernanceRole =
   | AppRole.OWNER
-  | AppRole.ADMIN
-  | AppRole.MODERATOR;
+  | AppRole.DEV
+  | AppRole.ADMIN;
 
 export interface EffectiveRoleResolution {
   effectiveRoles: AppRole[];
@@ -13,14 +13,14 @@ export interface EffectiveRoleResolution {
 
 const ADMIN_GOVERNANCE_ROLES: AdminGovernanceRole[] = [
   AppRole.OWNER,
+  AppRole.DEV,
   AppRole.ADMIN,
-  AppRole.MODERATOR,
 ];
 
 const ROLE_PRIORITY: Record<AdminGovernanceRole, number> = {
   [AppRole.OWNER]: 3,
-  [AppRole.ADMIN]: 2,
-  [AppRole.MODERATOR]: 1,
+  [AppRole.DEV]: 2,
+  [AppRole.ADMIN]: 1,
 };
 
 function normalizeGovernanceRole(
@@ -34,10 +34,10 @@ function normalizeGovernanceRole(
   switch (normalized) {
     case 'owner':
       return AppRole.OWNER;
+    case 'dev':
+      return AppRole.DEV;
     case 'admin':
       return AppRole.ADMIN;
-    case 'moderator':
-      return AppRole.MODERATOR;
     default:
       return null;
   }
@@ -67,11 +67,11 @@ function getAllowedViewAsTargets(
 ): AdminGovernanceRole[] {
   switch (governanceRole) {
     case AppRole.OWNER:
-      return [AppRole.OWNER, AppRole.ADMIN, AppRole.MODERATOR];
+      return [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN];
+    case AppRole.DEV:
+      return [AppRole.DEV, AppRole.ADMIN];
     case AppRole.ADMIN:
-      return [AppRole.ADMIN, AppRole.MODERATOR];
-    case AppRole.MODERATOR:
-      return [AppRole.MODERATOR];
+      return [AppRole.ADMIN];
     default:
       return [];
   }

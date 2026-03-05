@@ -23,10 +23,22 @@ class BadgeIcon extends StatelessWidget {
     final dimensions = size.dimensions;
     final hasValidImage = _isUsableImageUrl(badge.imageUrl);
     final rarityColor = Color(badge.rarity.color);
+    final categoryColor = Color(badge.category.color);
+    final shellColor =
+        Color.lerp(rarityColor, categoryColor, 0.35) ?? rarityColor;
 
     Widget fallbackIcon() {
       return Container(
-        color: Colors.grey.shade800,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              shellColor.withValues(alpha: 0.35),
+              shellColor.withValues(alpha: 0.12),
+            ],
+          ),
+        ),
         child: Icon(
           Icons.emoji_events,
           size: dimensions * 0.6,
@@ -60,7 +72,16 @@ class BadgeIcon extends StatelessWidget {
                   imageUrl: badge.imageUrl,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
-                    color: Colors.grey.shade800,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          shellColor.withValues(alpha: 0.3),
+                          shellColor.withValues(alpha: 0.1),
+                        ],
+                      ),
+                    ),
                     child: Center(
                       child: SizedBox(
                         width: dimensions * 0.5,
@@ -211,9 +232,9 @@ class BadgeList extends StatelessWidget {
               height: size.dimensions,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.grey.shade800,
+                color: const Color(0xFF111827),
                 border: Border.all(
-                  color: Colors.grey.shade600,
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.6),
                   width: 1,
                 ),
               ),
@@ -223,7 +244,7 @@ class BadgeList extends StatelessWidget {
                   style: TextStyle(
                     fontSize: size.dimensions * 0.4,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white70,
+                    color: const Color(0xFF93C5FD),
                   ),
                 ),
               ),
@@ -295,15 +316,16 @@ class BadgeCategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final categoryColor = Color(category.color);
     return Container(
       padding: compact
           ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
           : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: categoryColor.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.grey.shade600,
+          color: categoryColor.withValues(alpha: 0.55),
           width: 1,
         ),
       ),
@@ -312,7 +334,7 @@ class BadgeCategoryChip extends StatelessWidget {
         style: TextStyle(
           fontSize: compact ? 10 : 12,
           fontWeight: FontWeight.w500,
-          color: Colors.white70,
+          color: categoryColor,
         ),
       ),
     );

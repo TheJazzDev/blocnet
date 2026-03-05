@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
 import 'package:blocnet/features/profile/presentation/widgets/activity_card.dart';
 import 'package:blocnet/features/profile/presentation/widgets/empty_activity_card.dart';
@@ -12,12 +13,14 @@ import 'package:blocnet/features/profile/presentation/widgets/trust_chips.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
-import 'package:blocnet/services/auth_store.dart';
-import 'package:blocnet/services/blocks_store.dart';
-import 'package:blocnet/services/updates_store.dart';
-import 'package:blocnet/services/user_profile_store.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/users/blocks_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/shared/utils/role_presentation.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -52,7 +55,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   bool _isFollowing = false;
   bool _isSubmittingFollow = false;
   bool _isBlocked = false;
-  bool _isCheckingBlockStatus = false;
   bool _isSubmittingBlock = false;
   bool _isLoadingPublicProfile = true;
   PublicProfileModel? _publicProfile;
@@ -121,16 +123,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       return;
     }
 
-    setState(() => _isCheckingBlockStatus = true);
+    final blocksStore = context.read<BlocksStore>();
+    final cachedBlocked = blocksStore.isUserBlocked(widget.admin.id);
+    if (mounted && _isBlocked != cachedBlocked) {
+      setState(() => _isBlocked = cachedBlocked);
+    }
+
     try {
-      final blocked =
-          await context.read<BlocksStore>().isBlocked(widget.admin.id);
+      final blocked = await blocksStore.isBlocked(widget.admin.id);
       if (!mounted) return;
-      setState(() => _isBlocked = blocked);
-    } finally {
-      if (mounted) {
-        setState(() => _isCheckingBlockStatus = false);
+      if (_isBlocked != blocked) {
+        setState(() => _isBlocked = blocked);
       }
+    } catch (_) {
+      // Keep cached/default state and avoid blocking render.
     }
   }
 
@@ -222,14 +228,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final username = admin.username.trim().isNotEmpty
         ? admin.username
         : '@${admin.name.toLowerCase().replaceAll(' ', '_')}';
-    final displayRoleKeys = publicProfile != null
-        ? _resolveRoleKeysFromRoles(publicProfile.roles)
-        : _resolveRoleKeysFallback(admin);
+    final displayRoleKey = publicProfile != null
+        ? resolvePrimaryRoleKeyFromRoles(publicProfile.roles)
+        : admin.primaryRoleKey;
     final isHunterTarget = publicProfile != null
         ? publicProfile.roles
             .map((role) => role.trim().toLowerCase())
             .contains('hunter')
-        : displayRoleKeys.contains('hunter');
+        : admin.hasRole('hunter');
     final canTipHunter = isHunterTarget &&
         authStore.userId != null &&
         authStore.userId != admin.id &&
@@ -316,16 +322,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Flexible(
-                              child: Text(
-                                (_publicProfile?.displayName
+                              child: UserNameWithLevelIcon(
+                                name: (_publicProfile?.displayName
                                             ?.trim()
                                             .isNotEmpty ??
                                         false)
                                     ? _publicProfile!.displayName!.trim()
                                     : admin.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.custom(
+                                currentLevel: admin.currentLevel,
+                                levelBadgeSize: LevelBadgeSize.small,
+                                textStyle: AppTypography.custom(
                                   color: AppColors.textPrimary,
                                   size: 22,
                                   weight: FontWeight.w700,
@@ -352,22 +358,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        if (displayRoleKeys.isNotEmpty)
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: displayRoleKeys
-                                .map(
-                                  (roleKey) => ProfileRoleChip(
-                                    label: _roleLabel(roleKey),
-                                    textColor: _roleTextColor(roleKey),
-                                    borderColor: _roleBorderColor(roleKey),
-                                    backgroundColor:
-                                        _roleBackgroundColor(roleKey),
-                                  ),
-                                )
-                                .toList(),
+                        if (displayRoleKey != null)
+                          ProfileRoleChip(
+                            label: _roleLabel(displayRoleKey),
+                            textColor: _roleTextColor(displayRoleKey),
+                            borderColor: _roleBorderColor(displayRoleKey),
+                            backgroundColor: _roleBackgroundColor(displayRoleKey),
                           ),
                         const SizedBox(height: 16),
                         Row(
@@ -377,8 +373,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             const SizedBox(width: 8),
                             StatCard(value: '$postsCount', label: 'Posts'),
                             const SizedBox(width: 8),
-                            StatCard(
-                                value: '$projectCount', label: 'Projects'),
+                            StatCard(value: '$projectCount', label: 'Projects'),
                           ],
                         ),
                         if (_isLoadingPublicProfile) ...[
@@ -547,8 +542,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             height: 40,
                             child: OutlinedButton.icon(
                               onPressed:
-                                  _isCheckingBlockStatus || _isSubmittingBlock
-                                      ? null : _toggleBlock,
+                                  _isSubmittingBlock ? null : _toggleBlock,
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
                                   color: _isBlocked
@@ -565,8 +559,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                         .withValues(alpha: 0.08)
                                     : AppColors.error500
                                         .withValues(alpha: 0.08),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
                               ),
-                              icon: _isCheckingBlockStatus || _isSubmittingBlock
+                              icon: _isSubmittingBlock
                                   ? SizedBox(
                                       width: 14,
                                       height: 14,
@@ -627,29 +625,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     return Scaffold(backgroundColor: AppColors.bgBase, body: content);
   }
 
-  List<String> _resolveRoleKeysFallback(Admin admin) {
-    if (admin.isAdminRole) return ['admin'];
-    if (admin.isHunterRole) return ['hunter'];
-    return const [];
-  }
-
-  List<String> _resolveRoleKeysFromRoles(List<String> roles) {
-    final normalized = roles.map((role) => role.trim().toLowerCase()).toSet();
-    final resolved = <String>[];
-
-    if (normalized.contains('owner') || normalized.contains('admin')) {
-      resolved.add('admin');
-    }
-    if (normalized.contains('hunter')) {
-      resolved.add('hunter');
-    }
-    return resolved;
-  }
-
   String _roleLabel(String roleKey) {
     switch (roleKey) {
-      case 'admin':
+      case 'core_team':
+        return 'CORE TEAM';
+      case 'community_admin':
         return 'ADMIN';
+      case 'community_moderator':
+        return 'MODERATOR';
       case 'hunter':
         return 'HUNTER';
       default:
@@ -659,9 +642,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Color _roleTextColor(String roleKey) {
     switch (roleKey) {
+      case 'core_team':
+        return const Color(0xFF38BDF8);
       case 'hunter':
         return const Color(0xFFC084FC);
-      case 'admin':
+      case 'community_moderator':
+        return const Color(0xFFF59E0B);
+      case 'community_admin':
         return AppColors.primary400;
       default:
         return AppColors.textMuted;

@@ -154,7 +154,7 @@ export class NotificationsService {
       const roles = await this.prisma.userRole.findMany({
         where: {
           role: {
-            in: [RoleName.hunter, RoleName.admin, RoleName.owner],
+            in: [RoleName.hunter, RoleName.admin, RoleName.dev, RoleName.owner],
           },
         },
         select: { userId: true },
@@ -167,7 +167,7 @@ export class NotificationsService {
       const elevated = await this.prisma.userRole.findMany({
         where: {
           role: {
-            in: [RoleName.hunter, RoleName.admin, RoleName.owner],
+            in: [RoleName.hunter, RoleName.admin, RoleName.dev, RoleName.owner],
           },
         },
         select: { userId: true },

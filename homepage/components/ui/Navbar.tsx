@@ -24,6 +24,7 @@ export function Navbar() {
   const navLinks = [
     { label: 'Home', href: '/', type: 'page' },
     { label: 'About', href: '/about', type: 'page' },
+    { label: 'Whitepaper', href: '/whitepaper', type: 'page' },
     { label: 'Mining', href: '/mining', type: 'page' },
     { label: 'Community', href: '/community', type: 'page' },
     { label: 'Roadmap', href: '/roadmap', type: 'page' },
@@ -47,8 +48,9 @@ export function Navbar() {
             <Image
               src="/logo.png"
               alt="Blocnet"
-              width={120}
-              height={30}
+              width={512}
+              height={512}
+              priority
               className="h-6 sm:h-7 md:h-8 w-auto"
             />
           </Link>

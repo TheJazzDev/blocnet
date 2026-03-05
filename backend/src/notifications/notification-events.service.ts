@@ -862,22 +862,22 @@ export class NotificationEventsService {
     }
 
     const ready = action === FinancialAuditActions.WalletProvisionReady;
+    if (!ready) {
+      // Keep provisioning failures in ops/audit logs only; do not surface
+      // provider internals or transient setup noise to end users.
+      return [];
+    }
+
     return [
       {
         userId: actorId,
-        type: ready
-          ? NotificationType.wallet_provision_ready
-          : NotificationType.wallet_provision_failed,
+        type: NotificationType.wallet_provision_ready,
         actorUserId: null,
-        title: ready ? 'Wallet ready' : 'Wallet provisioning failed',
-        body: ready
-          ? 'Your wallet is ready to use.'
-          : (this.stringValue(metadata.reason) ??
-            'Wallet provisioning failed. Please retry.'),
+        title: 'Wallet ready',
+        body: 'Your wallet is ready to use.',
         payload: {
           walletId: resourceId,
           address: this.stringValue(metadata.address),
-          reason: this.stringValue(metadata.reason),
         } as Prisma.InputJsonValue,
         deeplink: '/wallet',
         dedupeKey: this.auditDedupeKey(action, resourceId),
@@ -1019,7 +1019,12 @@ export class NotificationEventsService {
     const rows = await this.prisma.userRole.findMany({
       where: {
         role: {
-          in: [RoleName.owner, RoleName.admin, RoleName.moderator],
+          in: [
+            RoleName.owner,
+            RoleName.dev,
+            RoleName.admin,
+            RoleName.moderator,
+          ],
         },
         user: {
           isDeactivated: false,

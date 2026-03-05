@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/follow_preference_model.dart';
-import 'package:blocnet/services/projects_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';

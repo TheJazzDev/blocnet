@@ -16,6 +16,7 @@ import {
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { generateUniqueSlug } from '../common/utils/slug.util';
+import { LevelsService } from '../levels/levels.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestDto } from './dto/create-quest.dto';
@@ -49,6 +50,7 @@ export class QuestsService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly badgesService: BadgesService,
+    private readonly levelsService: LevelsService,
     private readonly notificationsService: NotificationsService,
     private readonly questStorageService: QuestStorageService,
     private readonly auditLogService: AuditLogService,
@@ -1198,6 +1200,15 @@ export class QuestsService {
         },
       },
     ]);
+
+    // Trigger level recalculation after quest completion
+    try {
+      await this.levelsService.updateUserLevel(userId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to update user level after quest completion: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     return true;
   }

@@ -1,8 +1,11 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { randomUUID } from 'crypto';
+import { join } from 'path';
+import { existsSync } from 'fs';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 
@@ -28,8 +31,24 @@ process.on('uncaughtException', (error) => {
 });
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('RequestLogger');
+
+  const staticAssetCandidates = [
+    join(process.cwd(), 'public'),
+    join(process.cwd(), 'backend', 'public'),
+    join(__dirname, '..', 'public'),
+    join(__dirname, '..', '..', 'public'),
+  ];
+  const staticAssetsRoot =
+    staticAssetCandidates.find((path) => existsSync(path)) ??
+    staticAssetCandidates[0];
+
+  // Serve static files from the public directory
+  app.useStaticAssets(staticAssetsRoot, {
+    prefix: '/',
+  });
+  logger.log(`Static assets serving enabled from ${staticAssetsRoot}`);
 
   app.use(helmet());
   logger.log('Helmet middleware applied');
