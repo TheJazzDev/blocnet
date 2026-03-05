@@ -109,22 +109,21 @@ export class MLClientService {
       },
     });
 
-    const resolved =
-      config ?? {
-        mlEnabled: false,
-        mlUrl: 'http://localhost:8083',
-        mlTimeout: 10000,
-        mlProvider: 'auto',
-        mlWebSearch: false,
-        mlOllamaModel: 'llama3.3:70b',
-        mlOllamaEmbeddingModel: 'nomic-embed-text',
-        mlOllamaTimeout: 120000,
-        mlGroqModel: 'llama-3.3-70b-versatile',
-        mlGeminiModel: 'gemini-2.0-flash-exp',
-        mlGeminiEmbeddingModel: 'models/text-embedding-004',
-        mlCacheTtl: 86400,
-        mlMaxContentLength: 10000,
-      };
+    const resolved = config ?? {
+      mlEnabled: false,
+      mlUrl: 'http://localhost:8083',
+      mlTimeout: 10000,
+      mlProvider: 'auto',
+      mlWebSearch: false,
+      mlOllamaModel: 'llama3.3:70b',
+      mlOllamaEmbeddingModel: 'nomic-embed-text',
+      mlOllamaTimeout: 120000,
+      mlGroqModel: 'llama-3.3-70b-versatile',
+      mlGeminiModel: 'gemini-2.0-flash-exp',
+      mlGeminiEmbeddingModel: 'models/text-embedding-004',
+      mlCacheTtl: 86400,
+      mlMaxContentLength: 10000,
+    };
 
     this.configCache = resolved;
     this.configCacheExpiresAt = now + MLClientService.CONFIG_CACHE_TTL_MS;
@@ -134,7 +133,9 @@ export class MLClientService {
   /**
    * Create axios client with current config.
    */
-  private async createClient(timeoutOverrideMs?: number): Promise<AxiosInstance> {
+  private async createClient(
+    timeoutOverrideMs?: number,
+  ): Promise<AxiosInstance> {
     const config = await this.getMLConfig();
     return axios.create({
       baseURL: config.mlUrl,

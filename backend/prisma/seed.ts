@@ -284,6 +284,7 @@ async function main() {
     update: {},
     create: {
       id: 'default',
+      closedAlphaEnabled: false,
       alphaRadarEnabled: true,
       followPrefsEnabled: true,
       weeklyDigestEnabled: true,

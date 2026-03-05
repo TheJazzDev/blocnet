@@ -517,7 +517,12 @@ export class AdminTwoFactorService {
     const eligibleRows = await this.prisma.userRole.findMany({
       where: {
         role: {
-          in: [RoleName.owner, RoleName.dev, RoleName.admin, RoleName.moderator],
+          in: [
+            RoleName.owner,
+            RoleName.dev,
+            RoleName.admin,
+            RoleName.moderator,
+          ],
         },
       },
       select: { userId: true },
@@ -555,7 +560,12 @@ export class AdminTwoFactorService {
     const eligibleRows = await this.prisma.userRole.findMany({
       where: {
         role: {
-          in: [RoleName.owner, RoleName.dev, RoleName.admin, RoleName.moderator],
+          in: [
+            RoleName.owner,
+            RoleName.dev,
+            RoleName.admin,
+            RoleName.moderator,
+          ],
         },
       },
       select: { userId: true },

@@ -3,6 +3,8 @@ import type {
   AdminSocialCredential,
   AdminSocialCredentialRevealResponse,
   AdminSocialCredentialsResponse,
+  ClosedAlphaEmailRecord,
+  ClosedAlphaEmailsResponse,
   AdminWalletDepositReprocessResponse,
   AdminWalletHealth,
   AdminWalletKycRecord,
@@ -90,6 +92,7 @@ export const walletApi = {
 
   updateRuntimeFeatureFlags: (
     body: Partial<{
+      closedAlphaEnabled: boolean;
       alphaRadarEnabled: boolean;
       followPrefsEnabled: boolean;
       weeklyDigestEnabled: boolean;
@@ -101,6 +104,43 @@ export const walletApi = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+
+  listClosedAlphaEmails: (params?: {
+    q?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<ClosedAlphaEmailsResponse>(
+      `/admin/settings/closed-alpha/emails${toQuery({
+        q: params?.q,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  createClosedAlphaEmail: (body: {
+    email: string;
+    note?: string;
+    isActive?: boolean;
+  }) =>
+    apiFetch<ClosedAlphaEmailRecord>("/admin/settings/closed-alpha/emails", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateClosedAlphaEmailStatus: (id: string, body: { isActive: boolean }) =>
+    apiFetch<ClosedAlphaEmailRecord>(`/admin/settings/closed-alpha/emails/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteClosedAlphaEmail: (id: string) =>
+    apiFetch<{ id: string; deleted: true }>(
+      `/admin/settings/closed-alpha/emails/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
   listSocialCredentials: () =>
     apiFetch<AdminSocialCredentialsResponse>("/admin/settings/social-credentials"),

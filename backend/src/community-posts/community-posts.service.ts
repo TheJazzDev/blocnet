@@ -189,6 +189,7 @@ export class CommunityPostsService {
         postId,
         authorId: actor.id,
         content: dto.content,
+        replyToId: dto.replyToId,
       },
       include: communityPostCommentInclude,
     });
@@ -362,5 +363,65 @@ export class CommunityPostsService {
     if (!post) {
       throw new NotFoundException('Community post not found');
     }
+  }
+
+  async likeComment(actor: AuthUser, commentId: string) {
+    const comment = await this.prisma.communityPostComment.findUnique({
+      where: { id: commentId },
+      select: { id: true, authorId: true },
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    await this.prisma.communityPostCommentReaction.upsert({
+      where: {
+        commentId_userId_kind: {
+          commentId,
+          userId: actor.id,
+          kind: 'like',
+        },
+      },
+      create: {
+        commentId,
+        userId: actor.id,
+        kind: 'like',
+      },
+      update: {},
+    });
+
+    const updated = await this.prisma.communityPostComment.findUnique({
+      where: { id: commentId },
+      include: communityPostCommentInclude,
+    });
+
+    return toCommunityPostCommentResponse(updated!);
+  }
+
+  async unlikeComment(actor: AuthUser, commentId: string) {
+    const comment = await this.prisma.communityPostComment.findUnique({
+      where: { id: commentId },
+      select: { id: true },
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    await this.prisma.communityPostCommentReaction.deleteMany({
+      where: {
+        commentId,
+        userId: actor.id,
+        kind: 'like',
+      },
+    });
+
+    const updated = await this.prisma.communityPostComment.findUnique({
+      where: { id: commentId },
+      include: communityPostCommentInclude,
+    });
+
+    return toCommunityPostCommentResponse(updated!);
   }
 }

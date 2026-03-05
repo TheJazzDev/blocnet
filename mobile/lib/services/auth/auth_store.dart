@@ -307,6 +307,11 @@ class AuthStore extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final canAccess = await _checkClosedAlphaAccessByEmail(email);
+      if (!canAccess) {
+        return false;
+      }
+
       final response = await Supabase.instance.client.auth
           .signInWithPassword(
             email: email.trim(),
@@ -360,6 +365,11 @@ class AuthStore extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final canAccess = await _checkClosedAlphaAccessByEmail(email);
+      if (!canAccess) {
+        return false;
+      }
+
       final normalizedReferral = _normalizeReferralCode(referralCode);
       if (normalizedReferral != null) {
         await setPendingReferralCode(normalizedReferral);
@@ -428,6 +438,11 @@ class AuthStore extends ChangeNotifier {
       final googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         _lastError = 'Google sign-in was cancelled';
+        return false;
+      }
+
+      final canAccess = await _checkClosedAlphaAccessByEmail(googleUser.email);
+      if (!canAccess) {
         return false;
       }
 
@@ -919,6 +934,47 @@ class AuthStore extends ChangeNotifier {
     }
 
     return null;
+  }
+
+  Future<bool> _checkClosedAlphaAccessByEmail(String email) async {
+    final normalized = email.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      _lastError = 'Email is required';
+      return false;
+    }
+
+    try {
+      final response = await _apiClient.get(
+        '/public/closed-alpha/check',
+        query: {'email': normalized},
+      );
+      if (response is! Map<String, dynamic>) {
+        return true;
+      }
+
+      final enabled = response['enabled'] == true;
+      final allowed = response['allowed'] == true;
+      if (!enabled || allowed) {
+        return true;
+      }
+
+      _lastError =
+          'Closed alpha is active. This email is not on the tester allowlist.';
+      return false;
+    } on ApiException catch (error) {
+      final detail = describeApiError(
+        error,
+        fallback: 'Unable to validate closed alpha access right now.',
+      );
+      _lastError = detail;
+      return false;
+    } catch (error) {
+      _lastError = describeApiError(
+        error,
+        fallback: 'Unable to validate closed alpha access right now.',
+      );
+      return false;
+    }
   }
 
   Future<String?> refreshAccessTokenSilently() async {

@@ -115,7 +115,8 @@ export class LevelIconStorageService {
     }
 
     if (currentIconUrl) {
-      const currentPath = this.extractManagedLevelIconObjectPath(currentIconUrl);
+      const currentPath =
+        this.extractManagedLevelIconObjectPath(currentIconUrl);
       if (currentPath === previousPath) {
         return;
       }
@@ -175,12 +176,16 @@ export class LevelIconStorageService {
 
     const publicPrefix = `${this.supabaseUrl}/storage/v1/object/public/${this.supabaseLevelBadgesBucket}/`;
     if (iconUrl.startsWith(publicPrefix)) {
-      return decodeURIComponent(iconUrl.slice(publicPrefix.length).split('?')[0] ?? '');
+      return decodeURIComponent(
+        iconUrl.slice(publicPrefix.length).split('?')[0] ?? '',
+      );
     }
 
     const signedPrefix = `${this.supabaseUrl}/storage/v1/object/sign/${this.supabaseLevelBadgesBucket}/`;
     if (iconUrl.startsWith(signedPrefix)) {
-      return decodeURIComponent(iconUrl.slice(signedPrefix.length).split('?')[0] ?? '');
+      return decodeURIComponent(
+        iconUrl.slice(signedPrefix.length).split('?')[0] ?? '',
+      );
     }
 
     return null;

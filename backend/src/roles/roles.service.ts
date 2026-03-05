@@ -46,7 +46,13 @@ export class RolesService {
   }
 
   async promoteToDev(actorId: string, userId: string, note?: string) {
-    return this.promoteRole(actorId, userId, RoleName.dev, 'role.promote.dev', note);
+    return this.promoteRole(
+      actorId,
+      userId,
+      RoleName.dev,
+      'role.promote.dev',
+      note,
+    );
   }
 
   async promoteToModerator(actorId: string, userId: string, note?: string) {

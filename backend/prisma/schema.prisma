@@ -303,10 +303,12 @@ model Profile {
   moderatedProjects               Project[]                            @relation("ProjectModerator")
   moderatedUpdates                Update[]                             @relation("UpdateModerator")
   moderatedComments               Comment[]                            @relation("CommentModerator")
+  commentReactions                CommentReaction[]                    @relation("CommentReactionUser")
   communityPosts                  CommunityPost[]                      @relation("CommunityPostAuthor")
   moderatedCommunityPosts         CommunityPost[]                      @relation("CommunityPostModerator")
   communityPostComments           CommunityPostComment[]               @relation("CommunityPostCommentAuthor")
   moderatedCommunityPostComments  CommunityPostComment[]               @relation("CommunityPostCommentModerator")
+  communityPostCommentReactions   CommunityPostCommentReaction[]       @relation("CommunityPostCommentReactionUser")
   communityPostReactions          CommunityPostReaction[]              @relation("CommunityPostReactionUser")
   bookmarks                       Bookmark[]
   followerLinks                   UserFollow[]                         @relation("UserFollowFollowee")
@@ -573,17 +575,37 @@ model Comment {
   moderatedBy      String?                 @db.Uuid
   moderatedAt      DateTime?
   moderationReason String?
+  replyToId        String?                 @db.Uuid
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
 
-  update    Update    @relation(fields: [updateId], references: [id], onDelete: Cascade)
-  author    Profile   @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
-  moderator Profile?  @relation("CommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
-  mentions  Mention[] @relation("CommentMentions")
+  update       Update            @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  author       Profile           @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator    Profile?          @relation("CommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  mentions     Mention[]         @relation("CommentMentions")
+  replyTo      Comment?          @relation("CommentReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      Comment[]         @relation("CommentReplies")
+  reactions    CommentReaction[]
 
   @@index([updateId, status, createdAt])
   @@index([authorId])
   @@index([status, createdAt])
+  @@index([replyToId])
+}
+
+model CommentReaction {
+  id        String                @id @default(uuid()) @db.Uuid
+  commentId String                @db.Uuid
+  userId    String                @db.Uuid
+  kind      CommunityReactionKind @default(like)
+  createdAt DateTime              @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    Profile @relation("CommentReactionUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, kind])
+  @@index([userId, createdAt])
+  @@index([commentId, kind])
 }
 
 model ProjectFollow {
@@ -650,17 +672,37 @@ model CommunityPostComment {
   moderatedBy      String?                 @db.Uuid
   moderatedAt      DateTime?
   moderationReason String?
+  replyToId        String?                 @db.Uuid
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
 
-  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author    Profile       @relation("CommunityPostCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  moderator Profile?      @relation("CommunityPostCommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
-  mentions  Mention[]     @relation("CommunityPostCommentMentions")
+  post         CommunityPost                  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author       Profile                        @relation("CommunityPostCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  moderator    Profile?                       @relation("CommunityPostCommentModerator", fields: [moderatedBy], references: [id], onDelete: SetNull)
+  mentions     Mention[]                      @relation("CommunityPostCommentMentions")
+  replyTo      CommunityPostComment?          @relation("CommunityPostCommentReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      CommunityPostComment[]         @relation("CommunityPostCommentReplies")
+  reactions    CommunityPostCommentReaction[]
 
   @@index([postId, status, createdAt])
   @@index([authorId])
   @@index([status, createdAt])
+  @@index([replyToId])
+}
+
+model CommunityPostCommentReaction {
+  id        String                @id @default(uuid()) @db.Uuid
+  commentId String                @db.Uuid
+  userId    String                @db.Uuid
+  kind      CommunityReactionKind @default(like)
+  createdAt DateTime              @default(now())
+
+  comment CommunityPostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    Profile              @relation("CommunityPostCommentReactionUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, kind])
+  @@index([userId, createdAt])
+  @@index([commentId, kind])
 }
 
 model CommunityPostReaction {
@@ -1162,7 +1204,23 @@ model RuntimeFeatureConfig {
   weeklyDigestEnabled Boolean @default(true)
   miningEnabled      Boolean  @default(true)
   referralsEnabled   Boolean  @default(true)
+  closedAlphaEnabled Boolean  @default(false)
   updatedAt          DateTime @updatedAt
+}
+
+model ClosedAlphaAccessEmail {
+  id              String   @id @default(uuid()) @db.Uuid
+  email           String
+  emailNormalized String   @unique
+  isActive        Boolean  @default(true)
+  source          String   @default("landing")
+  note            String?
+  createdById     String?  @db.Uuid
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isActive, createdAt])
+  @@index([email])
 }
 
 model AdminSecurityPolicy {

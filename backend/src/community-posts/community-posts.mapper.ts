@@ -51,6 +51,24 @@ export const communityPostCommentInclude = {
   author: {
     select: authorSelect,
   },
+  replyTo: {
+    select: {
+      id: true,
+      content: true,
+      author: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+        },
+      },
+    },
+  },
+  _count: {
+    select: {
+      reactions: true,
+    },
+  },
 } satisfies Prisma.CommunityPostCommentInclude;
 
 export function buildCommunityPostInclude(viewerId: string) {
@@ -133,9 +151,7 @@ function toActorPreview(actor: {
     sortOrder: number;
   } | null;
 }) {
-  const rawUsername = (actor.username ?? '')
-    .replaceAll('@', '')
-    .trim();
+  const rawUsername = (actor.username ?? '').replaceAll('@', '').trim();
   const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
   const displayName = actor.displayName?.trim() || 'Blocnet Member';
 

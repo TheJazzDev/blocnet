@@ -1019,7 +1019,12 @@ export class NotificationEventsService {
     const rows = await this.prisma.userRole.findMany({
       where: {
         role: {
-          in: [RoleName.owner, RoleName.dev, RoleName.admin, RoleName.moderator],
+          in: [
+            RoleName.owner,
+            RoleName.dev,
+            RoleName.admin,
+            RoleName.moderator,
+          ],
         },
         user: {
           isDeactivated: false,

@@ -55,6 +55,7 @@ class _MiningScreenState extends State<MiningScreen> {
                 onClaim: () => _onClaim(store),
                 isStarting: store.isStarting,
                 isClaiming: store.isClaiming,
+                isLoadingSnapshot: store.isLoadingSnapshot,
               ),
               const SizedBox(height: 12),
               _MiningSectionEntryCard(

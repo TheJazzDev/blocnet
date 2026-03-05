@@ -190,6 +190,7 @@ export interface WalletRuntimeConfig {
 
 export interface RuntimeFeatureFlagsConfig {
   id: string;
+  closedAlphaEnabled: boolean;
   alphaRadarEnabled: boolean;
   followPrefsEnabled: boolean;
   weeklyDigestEnabled: boolean;
@@ -198,3 +199,21 @@ export interface RuntimeFeatureFlagsConfig {
   updatedAt: string;
 }
 
+export interface ClosedAlphaEmailRecord {
+  id: string;
+  email: string;
+  emailNormalized: string;
+  isActive: boolean;
+  source: string;
+  note: string | null;
+  createdById: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClosedAlphaEmailsResponse {
+  data: ClosedAlphaEmailRecord[];
+  total: number;
+  limit: number;
+  offset: number;
+}

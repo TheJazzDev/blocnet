@@ -42,9 +42,7 @@ export type ProjectWithRelations = Prisma.ProjectGetPayload<{
 
 export function toProjectResponse(project: ProjectWithRelations) {
   const { _count, ownerAdmin, primaryTag, secondaryTags, ...rest } = project;
-  const rawUsername = (ownerAdmin.username ?? '')
-    .replaceAll('@', '')
-    .trim();
+  const rawUsername = (ownerAdmin.username ?? '').replaceAll('@', '').trim();
   const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
   const username = `@${normalized || ownerAdmin.id.slice(0, 6)}`;
   const displayName = ownerAdmin.displayName?.trim() || 'Blocnet Member';

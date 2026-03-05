@@ -15,7 +15,12 @@ import { AppRole } from '../enums/role.enum';
 import type { AuthUser } from '../interfaces/auth-user.interface';
 
 const GOVERNANCE_ROLE_IMPLICATIONS: Record<AppRole, AppRole[]> = {
-  [AppRole.OWNER]: [AppRole.OWNER, AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
+  [AppRole.OWNER]: [
+    AppRole.OWNER,
+    AppRole.DEV,
+    AppRole.ADMIN,
+    AppRole.MODERATOR,
+  ],
   [AppRole.DEV]: [AppRole.DEV, AppRole.ADMIN, AppRole.MODERATOR],
   [AppRole.ADMIN]: [AppRole.ADMIN, AppRole.MODERATOR],
   [AppRole.MODERATOR]: [AppRole.MODERATOR],
@@ -136,8 +141,7 @@ export class RolesGuard implements CanActivate {
     userRole: AppRole,
     requiredRole: AppRole,
   ): boolean {
-    const impliedRoles =
-      GOVERNANCE_ROLE_IMPLICATIONS[userRole] ?? [userRole];
+    const impliedRoles = GOVERNANCE_ROLE_IMPLICATIONS[userRole] ?? [userRole];
     return impliedRoles.includes(requiredRole);
   }
 }

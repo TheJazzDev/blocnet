@@ -110,9 +110,13 @@ class CommentsStore extends ChangeNotifier {
   Future<void> createComment({
     required String updateId,
     required String content,
+    String? replyToId,
   }) async {
-    final created =
-        await _repository.createComment(updateId: updateId, content: content);
+    final created = await _repository.createComment(
+      updateId: updateId,
+      content: content,
+      replyToId: replyToId,
+    );
     if (created == null) return;
 
     _commentsByUpdateId[updateId] = _mergeCommentLists(
@@ -170,6 +174,24 @@ class CommentsStore extends ChangeNotifier {
       ...(_commentsByUpdateId[updateId] ?? const <CommentModel>[]),
     ]..removeWhere((item) => item.id == commentId);
     _commentsByUpdateId[updateId] = items;
+    notifyListeners();
+  }
+
+  Future<void> likeComment(String commentId) async {
+    final updated = await _repository.likeComment(commentId);
+    if (updated == null) return;
+
+    // Update comment in all update caches that might contain it
+    for (final updateId in _commentsByUpdateId.keys) {
+      final items = <CommentModel>[
+        ...(_commentsByUpdateId[updateId] ?? const <CommentModel>[]),
+      ];
+      final index = items.indexWhere((item) => item.id == commentId);
+      if (index != -1) {
+        items[index] = updated;
+        _commentsByUpdateId[updateId] = items;
+      }
+    }
     notifyListeners();
   }
 

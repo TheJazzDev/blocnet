@@ -86,6 +86,7 @@ export const envValidationSchema = Joi.object({
     .optional(),
 
   ENABLE_ALPHA_RADAR: Joi.boolean().default(true),
+  ENABLE_CLOSED_ALPHA: Joi.boolean().default(false),
   ENABLE_BEE: Joi.boolean().default(true),
   ENABLE_FOLLOW_PREFS: Joi.boolean().default(true),
   ENABLE_EVENT_NOTIFICATIONS: Joi.boolean().default(true),

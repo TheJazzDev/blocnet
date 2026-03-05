@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -13,6 +14,8 @@ import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { roleNameToAppRole } from '../common/types/role-map';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { ClosedAlphaAccessService } from '../runtime-flags/closed-alpha-access.service';
+import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import { WalletProvisioningService } from '../wallet/wallet-provisioning.service';
 
 type JwtPayload = {
@@ -34,6 +37,8 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly walletProvisioningService: WalletProvisioningService,
     private readonly notificationsService: NotificationsService,
+    private readonly runtimeFeatureFlagsService: RuntimeFeatureFlagsService,
+    private readonly closedAlphaAccessService: ClosedAlphaAccessService,
   ) {
     const jwksUrl = this.configService.get<string>('SUPABASE_JWKS_URL');
     if (jwksUrl) {
@@ -46,10 +51,13 @@ export class AuthService {
   async authenticateRequest(token: string): Promise<AuthUser> {
     const payload = await this.verifyToken(token);
     const userId = payload.sub;
+    const normalizedEmail = payload.email?.trim().toLowerCase() ?? null;
 
     if (!userId) {
       throw new UnauthorizedException('Invalid token payload');
     }
+
+    await this.assertClosedAlphaAccess(normalizedEmail);
 
     // Extract username from Supabase user_metadata (set at signup)
     const rawUsername = payload.user_metadata?.['username'];
@@ -59,7 +67,7 @@ export class AuthService {
         : undefined;
     const usernameSeed =
       this.normalizeUsernameCandidate(metadataUsername) ??
-      this.normalizeUsernameCandidate(payload.email?.split('@')[0]) ??
+      this.normalizeUsernameCandidate(normalizedEmail?.split('@')[0]) ??
       this.normalizeUsernameCandidate(userId);
     const signupReferralCode = this.extractReferralCodeFromMetadata(
       payload.user_metadata,
@@ -91,7 +99,7 @@ export class AuthService {
       await this.prisma.profile.create({
         data: {
           id: userId,
-          email: payload.email ?? `${userId}@unknown.local`,
+          email: normalizedEmail ?? `${userId}@unknown.local`,
           referralCode: await this.generateUniqueReferralCode(),
           username: ensuredUsername,
           ...(referrer && referrer.id !== userId
@@ -110,7 +118,7 @@ export class AuthService {
       await this.prisma.profile.update({
         where: { id: userId },
         data: {
-          email: payload.email ?? `${userId}@unknown.local`,
+          email: normalizedEmail ?? `${userId}@unknown.local`,
           ...(ensuredUsername ? { username: ensuredUsername } : {}),
           ...(existingProfile.referralCode
             ? {}
@@ -166,7 +174,7 @@ export class AuthService {
 
     return {
       id: userId,
-      email: payload.email ?? null,
+      email: normalizedEmail,
       roles: roleRows.map((row) => roleNameToAppRole(row.role)),
     };
   }
@@ -302,5 +310,27 @@ export class AuthService {
     const normalized = candidate.trim().toUpperCase();
     if (!normalized) return null;
     return normalized;
+  }
+
+  private async assertClosedAlphaAccess(email: string | null): Promise<void> {
+    const runtimeFlags = await this.runtimeFeatureFlagsService.getConfig();
+    if (!runtimeFlags.closedAlphaEnabled) {
+      return;
+    }
+
+    if (!email) {
+      throw new ForbiddenException(
+        'Closed alpha is active. Account email is required for allowlist access.',
+      );
+    }
+
+    const allowed = await this.closedAlphaAccessService.isEmailAllowed(email);
+    if (allowed) {
+      return;
+    }
+
+    throw new ForbiddenException(
+      'Closed alpha is active. This email is not on the tester allowlist.',
+    );
   }
 }

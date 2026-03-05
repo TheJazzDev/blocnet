@@ -45,6 +45,8 @@ export type {
   WalletAssetPriceConfig,
   WalletRuntimeConfig,
   RuntimeFeatureFlagsConfig,
+  ClosedAlphaEmailRecord,
+  ClosedAlphaEmailsResponse,
   AdminTwoFactorPreflight,
   AdminTwoFactorPolicy,
   AdminTwoFactorEnrollmentStartResponse,

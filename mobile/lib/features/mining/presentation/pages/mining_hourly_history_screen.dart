@@ -36,7 +36,13 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
       ),
       body: Consumer<MiningStore>(
         builder: (context, store, _) {
-          final entries = store.snapshot?.hourlyHistory ?? const [];
+          final snapshot = store.snapshot;
+          final entries = snapshot?.hourlyHistory ?? const [];
+          final basePointsPerCycle = snapshot?.config.basePointsPerCycle ?? 120;
+          final cycleHours = (snapshot?.session.cycleHours ??
+                  snapshot?.config.cycleHours ??
+                  24)
+              .clamp(1, 168);
           return RefreshIndicator(
             color: AppColors.primary500,
             backgroundColor: AppColors.bgSurface,
@@ -57,6 +63,8 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
                 MiningHourlyHistoryCard(
                   entries: entries,
                   isLoading: store.isLoadingSnapshot,
+                  basePointsPerCycle: basePointsPerCycle,
+                  cycleHours: cycleHours,
                   maxEntries: 48,
                 ),
               ],

@@ -37,10 +37,16 @@ class CommentsApiRepository {
   Future<CommentModel?> createComment({
     required String updateId,
     required String content,
+    String? replyToId,
   }) async {
+    final body = <String, dynamic>{'content': content};
+    if (replyToId != null) {
+      body['replyToId'] = replyToId;
+    }
+
     final response = await _apiClient.post(
       '/updates/$updateId/comments',
-      body: {'content': content},
+      body: body,
     );
 
     if (response is! Map<String, dynamic>) return null;
@@ -64,5 +70,17 @@ class CommentsApiRepository {
     final response = await _apiClient.delete('/comments/$commentId');
     if (response is! Map<String, dynamic>) return true;
     return response['deleted'] == true;
+  }
+
+  Future<CommentModel?> likeComment(String commentId) async {
+    final response = await _apiClient.post('/comments/$commentId/reactions');
+    if (response is! Map<String, dynamic>) return null;
+    return CommentModel.fromApi(response);
+  }
+
+  Future<CommentModel?> unlikeComment(String commentId) async {
+    final response = await _apiClient.delete('/comments/$commentId/reactions');
+    if (response is! Map<String, dynamic>) return null;
+    return CommentModel.fromApi(response);
   }
 }

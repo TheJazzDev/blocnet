@@ -37,6 +37,8 @@ class _CommunityPostDiscussionScreenState
   bool _isCommentsBaselineReady = false;
   VoidCallback? _storeListener;
   CommunityPostsStore? _communityPostsStore;
+  String? _replyToCommentId;
+  String? _replyToUsername;
 
   @override
   void initState() {
@@ -188,6 +190,36 @@ class _CommunityPostDiscussionScreenState
     });
   }
 
+  void _handleReply(String commentId, String? username) {
+    setState(() {
+      _replyToCommentId = commentId;
+      _replyToUsername = username;
+    });
+    _commentFocusNode.requestFocus();
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyToCommentId = null;
+      _replyToUsername = null;
+    });
+  }
+
+  Future<void> _handleLike(String commentId) async {
+    final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
+    try {
+      await store.likeCommunityPostComment(commentId);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to like comment: $error'),
+          backgroundColor: AppColors.error500,
+        ),
+      );
+    }
+  }
+
   Future<void> _sendComment(String postId) async {
     final text = _commentCtrl.text.trim();
     if (text.isEmpty || _isSending) return;
@@ -206,10 +238,12 @@ class _CommunityPostDiscussionScreenState
       final created = await store.createComment(
         postId: postId,
         content: text,
+        replyToId: _replyToCommentId,
       );
 
       if (created != null) {
         _commentCtrl.clear();
+        _cancelReply();
       }
     } catch (_) {
       if (!mounted) return;
@@ -285,6 +319,12 @@ class _CommunityPostDiscussionScreenState
                                       index++) ...[
                                     CommunityDiscussionCommentCard(
                                       comment: comments[index],
+                                      onReply: () => _handleReply(
+                                        comments[index].id,
+                                        comments[index].admin?.username ??
+                                            comments[index].admin?.name,
+                                      ),
+                                      onLike: () => _handleLike(comments[index].id),
                                     ),
                                     if (index != comments.length - 1)
                                       Divider(
@@ -337,6 +377,8 @@ class _CommunityPostDiscussionScreenState
                   mentionsRepository: _mentionsRepository,
                   isSending: _isSending,
                   onSendTap: () => _sendComment(postId),
+                  replyingToUsername: _replyToUsername,
+                  onCancelReply: _cancelReply,
                 ),
               ],
             ),

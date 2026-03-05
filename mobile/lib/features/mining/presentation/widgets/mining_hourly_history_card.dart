@@ -9,11 +9,15 @@ class MiningHourlyHistoryCard extends StatelessWidget {
     super.key,
     required this.entries,
     required this.isLoading,
+    required this.basePointsPerCycle,
+    required this.cycleHours,
     this.maxEntries = 12,
   });
 
   final List<MiningHourlyCheckpointModel> entries;
   final bool isLoading;
+  final int basePointsPerCycle;
+  final int cycleHours;
   final int? maxEntries;
 
   @override
@@ -55,7 +59,11 @@ class MiningHourlyHistoryCard extends StatelessWidget {
         final row = entry.value;
         return Column(
           children: [
-            _HistoryRow(item: row),
+            _HistoryRow(
+              item: row,
+              basePointsPerCycle: basePointsPerCycle,
+              cycleHours: cycleHours,
+            ),
             if (index != visibleEntries.length - 1)
               Divider(
                 height: 1,
@@ -69,9 +77,15 @@ class MiningHourlyHistoryCard extends StatelessWidget {
 }
 
 class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.item});
+  const _HistoryRow({
+    required this.item,
+    required this.basePointsPerCycle,
+    required this.cycleHours,
+  });
 
   final MiningHourlyCheckpointModel item;
+  final int basePointsPerCycle;
+  final int cycleHours;
 
   @override
   Widget build(BuildContext context) {
@@ -79,70 +93,90 @@ class _HistoryRow extends StatelessWidget {
     final statusColor =
         item.isClaimed ? AppColors.successColor : AppColors.primary500;
     final statusLabel = item.isClaimed ? 'Claimed' : 'Unclaimed';
+    final estimatedHourlyPoints = _estimateHourlyPoints();
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  rangeLabel,
+                  style: AppTypography.custom(
+                    size: 12,
+                    weight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Hour ${item.hourIndex} · Boost ${_formatBoost(item.boostBpsSnapshot)}% · ${item.activeReferralsSnapshot} refs',
+                  style: AppTypography.custom(
+                    size: 11,
+                    weight: FontWeight.w500,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                rangeLabel,
+                '+${formatGroupedNumber(estimatedHourlyPoints, maxDecimals: 2, minDecimals: 2)} BNP',
                 style: AppTypography.custom(
-                  size: 12,
-                  weight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  size: 13,
+                  weight: FontWeight.w800,
+                  color: AppColors.successColor,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
-                'Hour ${item.hourIndex} · Boost ${_formatBoost(item.boostBpsSnapshot)}%',
+                'settled ${formatGroupedNumber(item.points, maxDecimals: 0)}',
                 style: AppTypography.custom(
-                  size: 11,
-                  weight: FontWeight.w400,
-                  color: AppColors.textMuted,
+                  size: 10,
+                  weight: FontWeight.w500,
+                  color: AppColors.textFaint,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: AppTypography.custom(
+                    size: 9,
+                    weight: FontWeight.w800,
+                    color: statusColor,
+                  ),
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '+${formatGroupedNumber(item.points, maxDecimals: 2)} BNP',
-              style: AppTypography.custom(
-                size: 13,
-                weight: FontWeight.w800,
-                color: AppColors.successColor,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: statusColor.withValues(alpha: 0.35),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                statusLabel,
-                style: AppTypography.custom(
-                  size: 9,
-                  weight: FontWeight.w800,
-                  color: statusColor,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  double _estimateHourlyPoints() {
+    final safeCycleHours = cycleHours <= 0 ? 24 : cycleHours;
+    final base = basePointsPerCycle <= 0 ? 120 : basePointsPerCycle;
+    final boostedCyclePoints = (base * (10000 + item.boostBpsSnapshot)) / 10000;
+    return boostedCyclePoints / safeCycleHours;
   }
 
   String _formatRange(DateTime? startAt, DateTime? endAt) {

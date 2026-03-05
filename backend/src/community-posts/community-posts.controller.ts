@@ -135,4 +135,28 @@ export class CommunityPostsController {
 
     return this.communityPostsService.unbookmarkPost(user, postId);
   }
+
+  @Post('community-post-comments/:commentId/reactions')
+  async likeComment(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('commentId') commentId: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.communityPostsService.likeComment(user, commentId);
+  }
+
+  @Delete('community-post-comments/:commentId/reactions')
+  async unlikeComment(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('commentId') commentId: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.communityPostsService.unlikeComment(user, commentId);
+  }
 }

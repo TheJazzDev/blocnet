@@ -263,7 +263,9 @@ export class UsersController {
     const edgeBrief =
       edgeBriefResult.status === 'fulfilled' ? edgeBriefResult.value : null;
     const radarSummary =
-      radarSummaryResult.status === 'fulfilled' ? radarSummaryResult.value : null;
+      radarSummaryResult.status === 'fulfilled'
+        ? radarSummaryResult.value
+        : null;
     const unreadCount =
       unreadCountResult.status === 'fulfilled' ? unreadCountResult.value : 0;
 

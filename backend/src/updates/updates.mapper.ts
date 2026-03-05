@@ -84,9 +84,7 @@ export type UpdateWithRelations = Prisma.UpdateGetPayload<{
 }>;
 
 export function toUpdateResponse(update: UpdateWithRelations) {
-  const rawUsername = (update.author.username ?? '')
-    .replaceAll('@', '')
-    .trim();
+  const rawUsername = (update.author.username ?? '').replaceAll('@', '').trim();
   const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
   const fallbackUsername = update.author.id.slice(0, 6);
   const username = `@${normalized || fallbackUsername}`;

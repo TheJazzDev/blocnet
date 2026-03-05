@@ -29,9 +29,9 @@ describe('buildBlocnetLink', () => {
     expect(buildBlocnetLinkFromDeeplink('io.blocnet.app://updates/u1')).toBe(
       'https://blocnet.app/open?path=%2Fupdates%2Fu1',
     );
-    expect(buildBlocnetLinkFromDeeplink('https://blocnet.app/community/c1')).toBe(
-      'https://blocnet.app/open?path=%2Fcommunity%2Fc1',
-    );
+    expect(
+      buildBlocnetLinkFromDeeplink('https://blocnet.app/community/c1'),
+    ).toBe('https://blocnet.app/open?path=%2Fcommunity%2Fc1');
     expect(buildBlocnetLinkFromDeeplink('https://example.com/somewhere')).toBe(
       'https://example.com/somewhere',
     );

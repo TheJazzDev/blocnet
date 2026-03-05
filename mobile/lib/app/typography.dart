@@ -90,7 +90,7 @@ class AppTypography {
 
   // Body styles
   static TextStyle bodyLarge(Color color) => _appFontFamily(
-        16,
+        17,
         FontWeight.w400,
         color,
         height: 1.5,
@@ -98,7 +98,7 @@ class AppTypography {
       );
 
   static TextStyle bodyMedium(Color color) => _appFontFamily(
-        14,
+        15,
         FontWeight.w400,
         color,
         height: 1.43,
@@ -106,7 +106,7 @@ class AppTypography {
       );
 
   static TextStyle bodySmall(Color color) => _appFontFamily(
-        12,
+        13,
         FontWeight.w400,
         color,
         height: 1.33,

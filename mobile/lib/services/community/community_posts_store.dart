@@ -231,10 +231,12 @@ class CommunityPostsStore extends ChangeNotifier
   Future<CommunityPostComment?> createComment({
     required String postId,
     required String content,
+    String? replyToId,
   }) async {
     final created = await _repository.createComment(
       postId: postId,
       content: content,
+      replyToId: replyToId,
     );
 
     if (created == null) {

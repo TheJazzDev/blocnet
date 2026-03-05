@@ -26,12 +26,24 @@ describe('AuthService', () => {
   const walletProvisioningService = {
     ensureWalletForUser: jest.fn().mockResolvedValue(undefined),
   };
+  const notificationsService = {
+    notifyMany: jest.fn().mockResolvedValue(undefined),
+  };
+  const runtimeFeatureFlagsService = {
+    isClosedAlphaEnabled: jest.fn().mockReturnValue(false),
+  };
+  const closedAlphaAccessService = {
+    isEmailAllowed: jest.fn().mockResolvedValue(true),
+  };
 
   beforeEach(() => {
     jest.resetAllMocks();
     configService.get.mockReturnValue(undefined);
     prisma.userRole.findMany.mockResolvedValue([{ role: RoleName.user }]);
     walletProvisioningService.ensureWalletForUser.mockResolvedValue(undefined);
+    notificationsService.notifyMany.mockResolvedValue(undefined);
+    runtimeFeatureFlagsService.isClosedAlphaEnabled.mockReturnValue(false);
+    closedAlphaAccessService.isEmailAllowed.mockResolvedValue(true);
   });
 
   it('auto-binds referral from signup metadata on first profile creation', async () => {
@@ -52,6 +64,9 @@ describe('AuthService', () => {
       configService as any,
       prisma as any,
       walletProvisioningService as any,
+      notificationsService as any,
+      runtimeFeatureFlagsService as any,
+      closedAlphaAccessService as any,
     );
     jest.spyOn<any, any>(service as any, 'verifyToken').mockResolvedValue({
       sub: 'user-1',
@@ -90,6 +105,9 @@ describe('AuthService', () => {
       configService as any,
       prisma as any,
       walletProvisioningService as any,
+      notificationsService as any,
+      runtimeFeatureFlagsService as any,
+      closedAlphaAccessService as any,
     );
     jest.spyOn<any, any>(service as any, 'verifyToken').mockResolvedValue({
       sub: 'user-2',

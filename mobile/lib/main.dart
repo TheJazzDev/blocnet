@@ -16,6 +16,7 @@ import 'package:blocnet/services/engagement/levels_store.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:blocnet/services/notifications/notification_settings_store.dart';
 import 'package:blocnet/services/notifications/push_notification_service.dart';
+import 'package:blocnet/services/notifications/notification_navigator.dart';
 import 'package:blocnet/services/engagement/quests_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
@@ -88,6 +89,13 @@ void main() async {
   final pushNotificationService = PushNotificationService(
     onForegroundMessage: () {
       notificationsStore.refreshNotifications();
+    },
+    onNotificationTap: (message) {
+      // Navigate to appropriate screen based on notification data
+      final context = _navigatorKey.currentContext;
+      if (context != null) {
+        NotificationNavigator.handleNotificationTap(context, message);
+      }
     },
   );
   bool pushInitialised = false;

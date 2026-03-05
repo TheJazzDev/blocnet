@@ -63,7 +63,10 @@ describe('effective-role resolver', () => {
     expect(devToAdmin.actingAsRole).toBe(AppRole.ADMIN);
     expect(devToAdmin.effectiveRoles).toEqual([AppRole.HUNTER, AppRole.ADMIN]);
 
-    const devToModerator = resolveEffectiveRoles([AppRole.DEV], AppRole.MODERATOR);
+    const devToModerator = resolveEffectiveRoles(
+      [AppRole.DEV],
+      AppRole.MODERATOR,
+    );
     expect(devToModerator.actingAsRole).toBe(AppRole.MODERATOR);
     expect(devToModerator.effectiveRoles).toEqual([AppRole.MODERATOR]);
   });

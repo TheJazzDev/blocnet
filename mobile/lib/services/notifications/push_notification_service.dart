@@ -12,12 +12,15 @@ class PushNotificationService {
   PushNotificationService({
     ApiClient? apiClient,
     VoidCallback? onForegroundMessage,
+    Function(RemoteMessage)? onNotificationTap,
   })  : _apiClient = apiClient ?? ApiClient(),
-        _onForegroundMessageCallback = onForegroundMessage;
+        _onForegroundMessageCallback = onForegroundMessage,
+        _onNotificationTapCallback = onNotificationTap;
 
   final ApiClient _apiClient;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final VoidCallback? _onForegroundMessageCallback;
+  final Function(RemoteMessage)? _onNotificationTapCallback;
 
   StreamSubscription<RemoteMessage>? _foregroundSub;
   StreamSubscription<String>? _tokenRefreshSub;
@@ -69,6 +72,15 @@ class PushNotificationService {
       // Handle messages that arrive while the app is in the foreground.
       _foregroundSub ??=
           FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+      // Handle notification taps when app is in background or terminated
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+
+      // Handle notification that launched the app from terminated state
+      final initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        _handleNotificationTap(initialMessage);
+      }
     } catch (error) {
       // Push registration is best-effort and must never crash app startup.
       debugPrint('[PushNotificationService] init failed: $error');
@@ -176,6 +188,24 @@ class PushNotificationService {
     } catch (error) {
       debugPrint(
         '[PushNotificationService] Foreground refresh callback failed: $error',
+      );
+    }
+  }
+
+  void _handleNotificationTap(RemoteMessage message) {
+    // When user taps a notification from background or terminated state,
+    // this handler is called with the notification data. We pass it to the
+    // callback which will handle navigation.
+    debugPrint(
+      '[PushNotificationService] Notification tapped: '
+      '${message.notification?.title}',
+    );
+
+    try {
+      _onNotificationTapCallback?.call(message);
+    } catch (error) {
+      debugPrint(
+        '[PushNotificationService] Notification tap callback failed: $error',
       );
     }
   }

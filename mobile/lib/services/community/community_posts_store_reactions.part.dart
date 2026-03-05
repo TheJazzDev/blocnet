@@ -5,6 +5,7 @@ mixin _CommunityPostsReactionsMixin on ChangeNotifier {
   StoreErrorMapper get _errorMapper;
   Set<String> get _pendingLikePostIds;
   Set<String> get _pendingBookmarkPostIds;
+  Map<String, List<CommunityPostComment>> get _commentsByPostId;
 
   set _lastError(String? value);
 
@@ -79,5 +80,23 @@ mixin _CommunityPostsReactionsMixin on ChangeNotifier {
       _pendingBookmarkPostIds.remove(postId);
       notifyListeners();
     }
+  }
+
+  Future<void> likeCommunityPostComment(String commentId) async {
+    final updated = await _repository.likeComment(commentId);
+    if (updated == null) return;
+
+    // Update comment in all post caches that might contain it
+    for (final postId in _commentsByPostId.keys) {
+      final items = <CommunityPostComment>[
+        ...(_commentsByPostId[postId] ?? const <CommunityPostComment>[]),
+      ];
+      final index = items.indexWhere((item) => item.id == commentId);
+      if (index != -1) {
+        items[index] = updated;
+        _commentsByPostId[postId] = items;
+      }
+    }
+    notifyListeners();
   }
 }

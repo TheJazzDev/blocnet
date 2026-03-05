@@ -20,6 +20,10 @@ const ALLOWED_QUEST_PROOF_MIME_TYPES = new Set([
   'image/jpg',
   'image/png',
   'image/webp',
+  'image/heic',
+  'image/heif',
+  'image/heic-sequence',
+  'image/heif-sequence',
 ]);
 
 @Injectable()
@@ -62,7 +66,7 @@ export class QuestStorageService {
     const resolvedMimeType = this.resolveProofMimeType(file);
     if (!resolvedMimeType) {
       throw new BadRequestException(
-        'Unsupported proof format. Use JPEG, PNG, or WEBP.',
+        'Unsupported proof format. Use JPEG, PNG, WEBP, HEIC, or HEIF.',
       );
     }
     if (file.size > QUEST_PROOF_MAX_BYTES) {
@@ -117,6 +121,12 @@ export class QuestStorageService {
         return 'png';
       case 'image/webp':
         return 'webp';
+      case 'image/heic':
+      case 'image/heic-sequence':
+        return 'heic';
+      case 'image/heif':
+      case 'image/heif-sequence':
+        return 'heif';
       default:
         return 'bin';
     }
@@ -160,6 +170,22 @@ export class QuestStorageService {
       buffer.toString('ascii', 8, 12) === 'WEBP'
     ) {
       return 'image/webp';
+    }
+
+    // HEIC/HEIF are ISO BMFF containers with an `ftyp` box and brand markers.
+    if (buffer.length >= 12 && buffer.toString('ascii', 4, 8) === 'ftyp') {
+      const brand = buffer.toString('ascii', 8, 12).toLowerCase();
+      if (
+        brand == 'heic' ||
+        brand == 'heix' ||
+        brand == 'hevc' ||
+        brand == 'hevx'
+      ) {
+        return 'image/heic';
+      }
+      if (brand == 'mif1' || brand == 'msf1') {
+        return 'image/heif';
+      }
     }
 
     return null;

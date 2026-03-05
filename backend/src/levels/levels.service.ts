@@ -84,10 +84,7 @@ export class LevelsService {
   /**
    * Check if user qualifies for a specific level
    */
-  private qualifiesForLevel(
-    metrics: UserMetrics,
-    level: UserLevel,
-  ): boolean {
+  private qualifiesForLevel(metrics: UserMetrics, level: UserLevel): boolean {
     return (
       metrics.totalBnpEarned >= level.requiredBnp &&
       metrics.totalComments >= level.requiredComments &&
@@ -343,9 +340,7 @@ export class LevelsService {
    */
   async updateLevelConfig(
     id: string,
-    data: Partial<
-      Omit<UserLevel, 'id' | 'createdAt' | 'updatedAt'>
-    >,
+    data: Partial<Omit<UserLevel, 'id' | 'createdAt' | 'updatedAt'>>,
   ): Promise<UserLevel> {
     return this.prisma.userLevel.update({
       where: { id },

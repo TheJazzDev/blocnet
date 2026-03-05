@@ -64,6 +64,24 @@ const commentInclude = {
       },
     },
   },
+  replyTo: {
+    select: {
+      id: true,
+      content: true,
+      author: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+        },
+      },
+    },
+  },
+  _count: {
+    select: {
+      reactions: true,
+    },
+  },
 } satisfies Prisma.CommentInclude;
 
 @Injectable()
@@ -103,6 +121,7 @@ export class CommentsService {
         updateId: updateId,
         authorId: actor.id,
         content: dto.content,
+        replyToId: dto.replyToId,
       },
       include: commentInclude,
     });
@@ -232,7 +251,8 @@ export class CommentsService {
 
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
-      (actor.roles.includes(AppRole.DEV) || actor.roles.includes(AppRole.ADMIN)) &&
+      (actor.roles.includes(AppRole.DEV) ||
+        actor.roles.includes(AppRole.ADMIN)) &&
       comment.update.project.ownerAdminId === actor.id;
     const isAuthor = comment.authorId === actor.id;
 
@@ -295,7 +315,8 @@ export class CommentsService {
 
     const isOwner = actor.roles.includes(AppRole.OWNER);
     const isAdminOwner =
-      (actor.roles.includes(AppRole.DEV) || actor.roles.includes(AppRole.ADMIN)) &&
+      (actor.roles.includes(AppRole.DEV) ||
+        actor.roles.includes(AppRole.ADMIN)) &&
       comment.update.project.ownerAdminId === actor.id;
     const isAuthor = comment.authorId === actor.id;
 
@@ -333,6 +354,7 @@ export class CommentsService {
 
     return {
       ...comment,
+      likesCount: comment._count.reactions,
       author: {
         id: comment.author.id,
         displayName: comment.author.displayName,
@@ -369,6 +391,66 @@ export class CommentsService {
           : null,
       },
     };
+  }
+
+  async likeComment(actor: AuthUser, commentId: string) {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { id: true, authorId: true },
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    await this.prisma.commentReaction.upsert({
+      where: {
+        commentId_userId_kind: {
+          commentId,
+          userId: actor.id,
+          kind: 'like',
+        },
+      },
+      create: {
+        commentId,
+        userId: actor.id,
+        kind: 'like',
+      },
+      update: {},
+    });
+
+    const updated = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      include: commentInclude,
+    });
+
+    return this.toCommentResponse(updated!);
+  }
+
+  async unlikeComment(actor: AuthUser, commentId: string) {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { id: true },
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    await this.prisma.commentReaction.deleteMany({
+      where: {
+        commentId,
+        userId: actor.id,
+        kind: 'like',
+      },
+    });
+
+    const updated = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      include: commentInclude,
+    });
+
+    return this.toCommentResponse(updated!);
   }
 
   private async triggerQuestAction(userId: string, action: string) {

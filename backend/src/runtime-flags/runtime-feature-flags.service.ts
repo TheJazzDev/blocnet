@@ -13,6 +13,7 @@ const REFRESH_INTERVAL_MS = 15_000;
 
 type RuntimeFeatureConfigSnapshot = {
   id: string;
+  closedAlphaEnabled: boolean;
   alphaRadarEnabled: boolean;
   followPrefsEnabled: boolean;
   weeklyDigestEnabled: boolean;
@@ -60,6 +61,7 @@ export class RuntimeFeatureFlagsService
 
   async updateConfig(
     patch: Partial<{
+      closedAlphaEnabled: boolean;
       alphaRadarEnabled: boolean;
       followPrefsEnabled: boolean;
       weeklyDigestEnabled: boolean;
@@ -70,6 +72,9 @@ export class RuntimeFeatureFlagsService
     const row = await this.prisma.runtimeFeatureConfig.upsert({
       where: { id: RUNTIME_FEATURE_CONFIG_ID },
       update: {
+        ...(patch.closedAlphaEnabled === undefined
+          ? {}
+          : { closedAlphaEnabled: patch.closedAlphaEnabled }),
         ...(patch.alphaRadarEnabled === undefined
           ? {}
           : { alphaRadarEnabled: patch.alphaRadarEnabled }),
@@ -88,6 +93,8 @@ export class RuntimeFeatureFlagsService
       },
       create: {
         id: RUNTIME_FEATURE_CONFIG_ID,
+        closedAlphaEnabled:
+          patch.closedAlphaEnabled ?? this.runtimeConfig.closedAlphaEnabled,
         alphaRadarEnabled:
           patch.alphaRadarEnabled ?? this.runtimeConfig.alphaRadarEnabled,
         followPrefsEnabled:
@@ -107,6 +114,10 @@ export class RuntimeFeatureFlagsService
 
   isAlphaRadarEnabled(): boolean {
     return this.runtimeConfig.alphaRadarEnabled;
+  }
+
+  isClosedAlphaEnabled(): boolean {
+    return this.runtimeConfig.closedAlphaEnabled;
   }
 
   isFollowPrefsEnabled(): boolean {
@@ -132,6 +143,7 @@ export class RuntimeFeatureFlagsService
         update: {},
         create: {
           id: RUNTIME_FEATURE_CONFIG_ID,
+          closedAlphaEnabled: this.runtimeConfig.closedAlphaEnabled,
           alphaRadarEnabled: this.runtimeConfig.alphaRadarEnabled,
           followPrefsEnabled: this.runtimeConfig.followPrefsEnabled,
           weeklyDigestEnabled: this.runtimeConfig.weeklyDigestEnabled,
@@ -156,6 +168,7 @@ export class RuntimeFeatureFlagsService
   private toSnapshot(row: RuntimeFeatureConfig): RuntimeFeatureConfigSnapshot {
     return {
       id: row.id,
+      closedAlphaEnabled: row.closedAlphaEnabled,
       alphaRadarEnabled: row.alphaRadarEnabled,
       followPrefsEnabled: row.followPrefsEnabled,
       weeklyDigestEnabled: row.weeklyDigestEnabled,
@@ -168,6 +181,7 @@ export class RuntimeFeatureFlagsService
   private readEnvDefaults(): RuntimeFeatureConfigSnapshot {
     return {
       id: RUNTIME_FEATURE_CONFIG_ID,
+      closedAlphaEnabled: this.getBoolean('ENABLE_CLOSED_ALPHA', false),
       alphaRadarEnabled: this.getBoolean('ENABLE_ALPHA_RADAR', true),
       followPrefsEnabled: this.getBoolean('ENABLE_FOLLOW_PREFS', true),
       weeklyDigestEnabled: this.getBoolean('ENABLE_WEEKLY_DIGEST', true),

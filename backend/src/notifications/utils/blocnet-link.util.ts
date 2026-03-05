@@ -26,7 +26,10 @@ function convertSchemeToPath(raw: string): string | null {
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     try {
       const uri = new URL(trimmed);
-      if (uri.hostname === 'blocnet.app' || uri.hostname === 'www.blocnet.app') {
+      if (
+        uri.hostname === 'blocnet.app' ||
+        uri.hostname === 'www.blocnet.app'
+      ) {
         return normalizePath(`${uri.pathname}${uri.search}`);
       }
       return trimmed;

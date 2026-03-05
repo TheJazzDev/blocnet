@@ -237,16 +237,23 @@ export class LevelsController {
       throw new NotFoundException('Level not found');
     }
 
-    const iconUrl = await this.levelIconStorageService.uploadLevelIcon(id, file);
+    const iconUrl = await this.levelIconStorageService.uploadLevelIcon(
+      id,
+      file,
+    );
     try {
-      const updated = await this.levelsService.updateLevelConfig(id, { iconUrl });
+      const updated = await this.levelsService.updateLevelConfig(id, {
+        iconUrl,
+      });
       await this.levelIconStorageService.deletePreviousLevelIconIfManaged(
         existingLevel.iconUrl,
         iconUrl,
       );
       return LevelResponseDto.fromEntity(updated);
     } catch (error) {
-      await this.levelIconStorageService.deleteManagedLevelIconIfManaged(iconUrl);
+      await this.levelIconStorageService.deleteManagedLevelIconIfManaged(
+        iconUrl,
+      );
       throw error;
     }
   }

@@ -3,6 +3,7 @@ import { Navbar } from '@/components/ui/Navbar';
 import { Hero } from '@/components/sections/Hero';
 import { EdgeEngine } from '@/components/sections/EdgeEngine';
 import { FeaturesOverview } from '@/components/sections/FeaturesOverview';
+import { ClosedAlphaSignup } from '@/components/sections/ClosedAlphaSignup';
 import { Tokenomics } from '@/components/sections/Tokenomics';
 import { Roadmap } from '@/components/sections/Roadmap';
 import { AppDownload } from '@/components/sections/AppDownload';
@@ -40,6 +41,7 @@ export default function Home() {
       <Hero />
       <EdgeEngine />
       <FeaturesOverview />
+      <ClosedAlphaSignup />
       <Tokenomics />
       <Roadmap />
       <AppDownload />

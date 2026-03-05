@@ -49,8 +49,16 @@ export default function SettingsPageClient() {
         runtimeFlagsLoading={runtimeFlagsState.runtimeFlagsLoading}
         runtimeFlagsSaving={runtimeFlagsState.runtimeFlagsSaving}
         runtimeFlagsStatus={runtimeFlagsState.runtimeFlagsStatus}
+        closedAlphaEmails={runtimeFlagsState.closedAlphaEmails}
+        closedAlphaTotal={runtimeFlagsState.closedAlphaTotal}
+        closedAlphaLoading={runtimeFlagsState.closedAlphaLoading}
+        closedAlphaMutating={runtimeFlagsState.closedAlphaMutating}
+        closedAlphaStatus={runtimeFlagsState.closedAlphaStatus}
         onSave={runtimeFlagsState.saveRuntimeFlags}
         onSetFlag={runtimeFlagsState.setRuntimeFlag}
+        onAddEmail={runtimeFlagsState.addClosedAlphaEmail}
+        onToggleEmailActive={runtimeFlagsState.setClosedAlphaEmailActive}
+        onRemoveEmail={runtimeFlagsState.removeClosedAlphaEmail}
       />
 
       <AdminTwoFactorCard

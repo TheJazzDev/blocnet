@@ -67,6 +67,8 @@ type RoleCapabilitySection = ApiTypes.RoleCapabilitySection;
 type RoleMatrixSection = ApiTypes.RoleMatrixSection;
 type RolesMatrixResponse = ApiTypes.RolesMatrixResponse;
 type RuntimeFeatureFlagsConfig = ApiTypes.RuntimeFeatureFlagsConfig;
+type ClosedAlphaEmailRecord = ApiTypes.ClosedAlphaEmailRecord;
+type ClosedAlphaEmailsResponse = ApiTypes.ClosedAlphaEmailsResponse;
 type SpaceRoleDefinition = ApiTypes.SpaceRoleDefinition;
 type Tag = ApiTypes.Tag;
 type TipCurrencyKind = ApiTypes.TipCurrencyKind;
@@ -484,6 +486,7 @@ export const api = {
 
   updateRuntimeFeatureFlags: (
     body: Partial<{
+      closedAlphaEnabled: boolean;
       alphaRadarEnabled: boolean;
       followPrefsEnabled: boolean;
       weeklyDigestEnabled: boolean;
@@ -495,6 +498,43 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+
+  listClosedAlphaEmails: (params?: {
+    q?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<ClosedAlphaEmailsResponse>(
+      `/admin/settings/closed-alpha/emails${toQuery({
+        q: params?.q,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  createClosedAlphaEmail: (body: {
+    email: string;
+    note?: string;
+    isActive?: boolean;
+  }) =>
+    apiFetch<ClosedAlphaEmailRecord>("/admin/settings/closed-alpha/emails", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  updateClosedAlphaEmailStatus: (id: string, body: { isActive: boolean }) =>
+    apiFetch<ClosedAlphaEmailRecord>(`/admin/settings/closed-alpha/emails/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deleteClosedAlphaEmail: (id: string) =>
+    apiFetch<{ id: string; deleted: true }>(
+      `/admin/settings/closed-alpha/emails/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
   getAdminTwoFactorPreflight: () =>
     apiFetch<AdminTwoFactorPreflight>("/admin/security/2fa/preflight"),
