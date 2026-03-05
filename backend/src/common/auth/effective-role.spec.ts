@@ -39,7 +39,7 @@ describe('effective-role resolver', () => {
   it('does not allow admin to downscope below admin governance', () => {
     const adminToModerator = resolveEffectiveRoles(
       [AppRole.ADMIN, AppRole.HUNTER],
-      AppRole.MODERATOR,
+      AppRole.COMMUNITY_MODERATOR,
     );
     expect(adminToModerator.actingAsRole).toBeNull();
     expect(adminToModerator.effectiveRoles).toEqual([

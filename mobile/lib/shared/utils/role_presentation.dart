@@ -15,8 +15,7 @@ String? resolvePrimaryRoleKeyFromRoles(Iterable<String> roles) {
       normalized.contains('admin')) {
     return 'community_admin';
   }
-  if (normalized.contains('community_moderator') ||
-      normalized.contains('moderator')) {
+  if (normalized.contains('community_moderator')) {
     return 'community_moderator';
   }
   if (normalized.contains('hunter')) return 'hunter';

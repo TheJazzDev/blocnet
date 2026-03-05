@@ -31,8 +31,7 @@ export interface SpaceRoleDefinition {
     | "core_team"
     | "community_admin"
     | "community_moderator"
-    | "hunter"
-    | "moderator";
+    | "hunter";
   label: string;
   description: string;
 }

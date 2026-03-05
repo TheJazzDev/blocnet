@@ -4,8 +4,7 @@ export type SpaceRole =
   | 'core_team'
   | 'community_admin'
   | 'community_moderator'
-  | 'hunter'
-  | 'moderator';
+  | 'hunter';
 export type RoleCapabilitySectionId =
   | 'overview'
   | 'content'

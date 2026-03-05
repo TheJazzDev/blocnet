@@ -20,7 +20,6 @@ const GOVERNANCE_ROLE_IMPLICATIONS: Record<AppRole, AppRole[]> = {
   [AppRole.ADMIN]: [AppRole.ADMIN],
   [AppRole.COMMUNITY_ADMIN]: [AppRole.COMMUNITY_ADMIN],
   [AppRole.COMMUNITY_MODERATOR]: [AppRole.COMMUNITY_MODERATOR],
-  [AppRole.MODERATOR]: [AppRole.MODERATOR],
   [AppRole.CORE_TEAM]: [AppRole.CORE_TEAM],
   [AppRole.HUNTER]: [AppRole.HUNTER],
   [AppRole.USER]: [AppRole.USER],

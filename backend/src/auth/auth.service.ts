@@ -57,7 +57,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid token payload');
     }
 
-    await this.assertClosedAlphaAccess(normalizedEmail);
+    await this.assertClosedAlphaAccess(userId, normalizedEmail);
 
     // Extract username from Supabase user_metadata (set at signup)
     const rawUsername = payload.user_metadata?.['username'];
@@ -221,8 +221,7 @@ export class AuthService {
     if (roles.includes(AppRole.ADMIN)) return 3;
     if (
       roles.includes(AppRole.COMMUNITY_ADMIN) ||
-      roles.includes(AppRole.COMMUNITY_MODERATOR) ||
-      roles.includes(AppRole.MODERATOR)
+      roles.includes(AppRole.COMMUNITY_MODERATOR)
     )
       return 2;
     if (roles.includes(AppRole.HUNTER)) return 1;
@@ -317,9 +316,30 @@ export class AuthService {
     return normalized;
   }
 
-  private async assertClosedAlphaAccess(email: string | null): Promise<void> {
+  private async assertClosedAlphaAccess(
+    userId: string,
+    email: string | null,
+  ): Promise<void> {
     const runtimeFlags = await this.runtimeFeatureFlagsService.getConfig();
     if (!runtimeFlags.closedAlphaEnabled) {
+      return;
+    }
+
+    const managementRoleRows = await this.prisma.userRole.findMany({
+      where: {
+        userId,
+        role: {
+          in: [
+            RoleName.owner,
+            RoleName.dev,
+            RoleName.admin,
+          ],
+        },
+      },
+      select: { role: true },
+      take: 1,
+    });
+    if (managementRoleRows.length > 0) {
       return;
     }
 

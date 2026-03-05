@@ -87,12 +87,6 @@ export const SPACE_ROLE_NOTES = [
     description:
       'Space/capability role used for user-hunter experiences, not admin governance.',
   },
-  {
-    role: AppRole.MODERATOR,
-    label: 'Legacy Moderator',
-    description:
-      'Legacy compatibility role mapped into community moderator behavior during migration.',
-  },
 ] as const;
 
 export const CAPABILITY_SECTIONS: CapabilitySectionDefinition[] = [

@@ -57,18 +57,6 @@ export const rolesAndTagsApi = {
       method: "DELETE",
     }),
 
-  // Legacy aliases kept while UI and callers are being migrated.
-  promoteToModerator: (userId: string, note?: string) =>
-    apiFetch(`/roles/moderators/${userId}/promote`, {
-      method: "POST",
-      body: JSON.stringify({ note }),
-    }),
-
-  demoteModerator: (userId: string) =>
-    apiFetch(`/roles/moderators/${userId}`, {
-      method: "DELETE",
-    }),
-
   promoteToCoreTeam: (userId: string, note?: string) =>
     apiFetch(`/roles/core-teams/${userId}/promote`, {
       method: "POST",

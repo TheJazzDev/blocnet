@@ -98,13 +98,13 @@ describe('AuditLogService', () => {
     );
   });
 
-  it('restricts moderator view to moderation-focused actions', async () => {
+  it('restricts community moderator view to moderation-focused actions', async () => {
     prisma.auditLog.findMany.mockResolvedValue([]);
 
     await service.listForUser({
       id: 'mod-1',
       email: 'mod@test.dev',
-      roles: [AppRole.MODERATOR],
+      roles: [AppRole.COMMUNITY_MODERATOR],
     });
 
     expect(prisma.auditLog.findMany).toHaveBeenCalledWith(

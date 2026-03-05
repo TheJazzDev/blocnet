@@ -18,7 +18,6 @@ describe('rbac', () => {
     expect(canAccessAdminPanel(['admin'])).toBe(true);
     expect(canAccessAdminPanel(['community_admin'])).toBe(false);
     expect(canAccessAdminPanel(['community_moderator'])).toBe(false);
-    expect(canAccessAdminPanel(['moderator'])).toBe(false);
     expect(canAccessAdminPanel(['user'])).toBe(false);
   });
 
@@ -26,7 +25,6 @@ describe('rbac', () => {
     expect(canManageAdmins(['owner'])).toBe(true);
     expect(canManageAdmins(['dev'])).toBe(true);
     expect(canManageAdmins(['admin'])).toBe(false);
-    expect(canManageAdmins(['moderator'])).toBe(false);
   });
 
   it('allows owner/dev/admin to manage community roles and wallet mutation', () => {
@@ -43,7 +41,6 @@ describe('rbac', () => {
     expect(canMutateWallet(['owner'])).toBe(true);
     expect(canMutateWallet(['dev'])).toBe(true);
     expect(canMutateWallet(['admin'])).toBe(true);
-    expect(canMutateWallet(['moderator'])).toBe(false);
   });
 
   it('resolves effective roles for view mode without allowing escalation', () => {
@@ -59,7 +56,7 @@ describe('rbac', () => {
       'hunter',
       'admin',
     ]);
-    expect(resolveEffectiveRoles(['admin', 'hunter'], 'moderator')).toEqual([
+    expect(resolveEffectiveRoles(['admin', 'hunter'], 'community_moderator')).toEqual([
       'admin',
       'hunter',
     ]);
@@ -98,7 +95,6 @@ describe('rbac', () => {
       'community_admin',
       'community_moderator',
       'hunter',
-      'moderator',
     ]);
     expect(matrix.sections.some((entry) => entry.id === 'access')).toBe(true);
   });

@@ -59,12 +59,12 @@ const ADMIN_HIDDEN_ACTIONS = new Set<string>([
   'admin_application.review',
 ]);
 
-const MODERATOR_VISIBLE_ACTIONS = new Set<string>([
+const COMMUNITY_MODERATOR_VISIBLE_ACTIONS = new Set<string>([
   'settings.runtime_features.view',
   'edge.admin.config.view',
 ]);
 
-const MODERATOR_VISIBLE_ACTION_PREFIXES = [
+const COMMUNITY_MODERATOR_VISIBLE_ACTION_PREFIXES = [
   'project.moderate.',
   'update.moderate.',
   'comment.moderate.',
@@ -399,10 +399,10 @@ export class AuditLogService {
     const moderatorVisibility: Prisma.AuditLogWhereInput[] = [
       {
         action: {
-          in: [...MODERATOR_VISIBLE_ACTIONS],
+          in: [...COMMUNITY_MODERATOR_VISIBLE_ACTIONS],
         },
       },
-      ...MODERATOR_VISIBLE_ACTION_PREFIXES.map((prefix) => ({
+      ...COMMUNITY_MODERATOR_VISIBLE_ACTION_PREFIXES.map((prefix) => ({
         action: {
           startsWith: prefix,
         },
@@ -424,8 +424,8 @@ export class AuditLogService {
     if (user.roles.includes(AppRole.ADMIN)) {
       return AppRole.ADMIN;
     }
-    if (user.roles.includes(AppRole.MODERATOR)) {
-      return AppRole.MODERATOR;
+    if (user.roles.includes(AppRole.COMMUNITY_MODERATOR)) {
+      return AppRole.COMMUNITY_MODERATOR;
     }
     throw new ForbiddenException('Role is not allowed to view audit logs');
   }

@@ -27,7 +27,6 @@ const ROLE_PRIORITY: Record<string, number> = {
   core_team: 6,
   community_admin: 5,
   community_moderator: 4,
-  moderator: 4,
   hunter: 3,
   user: 1,
 };
@@ -57,7 +56,6 @@ function roleBadge(role: string) {
         </Badge>
       );
     case "community_moderator":
-    case "moderator":
       return (
         <Badge className="border-amber-500/20 bg-amber-500/10 text-amber-300 text-xs">
           Community Moderator

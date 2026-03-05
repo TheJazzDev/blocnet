@@ -1023,7 +1023,7 @@ export class NotificationEventsService {
             RoleName.owner,
             RoleName.dev,
             RoleName.admin,
-            RoleName.moderator,
+            RoleName.community_moderator,
           ],
         },
         user: {

@@ -63,10 +63,4 @@ export const SPACE_ROLES: SpaceRoleDefinition[] = [
     description:
       'Space/capability role for user-hunter flows, not admin governance.',
   },
-  {
-    role: 'moderator',
-    label: 'Legacy Moderator',
-    description:
-      'Legacy compatibility role mapped into community moderator behavior during migration.',
-  },
 ];

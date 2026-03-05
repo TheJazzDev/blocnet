@@ -39,9 +39,6 @@ export function appRoleToRoleName(role: AppRole): RoleName {
       return RoleName.community_admin;
     case AppRole.COMMUNITY_MODERATOR:
       return RoleName.community_moderator;
-    case AppRole.MODERATOR:
-      // Legacy only; new writes should use COMMUNITY_MODERATOR.
-      return RoleName.moderator;
     case AppRole.CORE_TEAM:
       return RoleName.core_team;
     case AppRole.HUNTER:
