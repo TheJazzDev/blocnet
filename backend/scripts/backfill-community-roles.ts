@@ -1,4 +1,17 @@
+import { config as loadEnv } from 'dotenv';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, RoleName } from '@prisma/client';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { Pool } from 'pg';
+
+loadEnv({ quiet: true });
+loadEnv({ path: '.env.local', override: true, quiet: true });
+
+const fallbackEnvPath = join(process.cwd(), 'backend/.env.local');
+if (existsSync(fallbackEnvPath)) {
+  loadEnv({ path: fallbackEnvPath, override: true, quiet: true });
+}
 
 type CliOptions = {
   apply: boolean;
@@ -59,7 +72,23 @@ function parseArgs(argv: string[]): CliOptions {
 }
 
 async function main() {
-  const prisma = new PrismaClient();
+  const connectionString =
+    process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim();
+
+  if (!connectionString) {
+    throw new Error('DIRECT_URL or DATABASE_URL is required');
+  }
+
+  const pool = new Pool({
+    connectionString,
+    max: 5,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+    allowExitOnIdle: true,
+  });
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg(pool),
+  });
   const options = parseArgs(process.argv.slice(2));
 
   try {
@@ -231,6 +260,7 @@ async function main() {
     }
   } finally {
     await prisma.$disconnect();
+    await pool.end();
   }
 }
 

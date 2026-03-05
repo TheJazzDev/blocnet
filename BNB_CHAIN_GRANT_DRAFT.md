@@ -8,7 +8,7 @@ Blocnet Labs
 ## Brief Company Description
 Blocnet is a BNB Chain focused crypto project intelligence and engagement platform. We turn noisy project updates into structured, actionable signals so users do not miss critical actions such as claims, launches, KYC windows, governance votes, and on-chain participation opportunities.
 
-Our stack is already live at MVP level: a Flutter mobile app, a Next.js admin console, a NestJS backend, and a BNB Chain transaction engine. The engine combines custody orchestration, double-entry ledger accounting, deposit indexing, sweep automation, and withdrawal settlement with confirmation-based reconciliation.
+The product is already live at MVP level with a BNB Chain transaction engine. The engine combines custody orchestration, ledger accounting, deposit indexing, sweep automation, and withdrawal settlement with confirmation-based reconciliation.
 
 The problem we solve is execution failure in Web3 discovery and participation. Most users miss value not because information is unavailable, but because it is fragmented, unstructured, and operationally hard to act on. Blocnet makes discovery and execution reliable for end users, gives project teams a measurable way to distribute high-signal updates, and includes a tokenized participation layer tied to BNB Chain liquidity.
 
@@ -22,7 +22,7 @@ Primary docs:
 
 Note:
 - Source code is private for security and operational reasons.
-- Additional technical architecture documentation and live walkthrough are available under NDA.
+- Additional technical documentation and live walkthrough are available under NDA.
 
 ## Size of Grant ($)
 75000

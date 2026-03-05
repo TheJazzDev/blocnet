@@ -10,7 +10,7 @@ Blocnet is building the execution layer between Web3 information and on-chain ac
 
 Today, high-value updates are scattered across Telegram, X, Discord, and project blogs. Users miss launches, claims, governance actions, and security-critical deadlines because the information flow is noisy and unstructured. Blocnet solves this by turning project updates into structured, ranked, and actionable intelligence, then connecting that intelligence to wallet-ready user workflows.
 
-Our MVP is already implemented end-to-end: Flutter mobile app, Next.js admin console, NestJS backend, and a BNB Chain settlement engine. The blockchain engine includes custodial wallet provisioning, double-entry ledger integrity, deposit indexing, confirmation-based crediting, treasury sweep automation, and withdrawal settlement with auditable state transitions. The next phase includes BNT token launch and liquidity provisioning to power participation loops directly on BNB Chain.
+Our MVP is already implemented end-to-end with a BNB Chain settlement engine. The blockchain engine includes custodial wallet provisioning, ledger integrity, deposit indexing, confirmation-based crediting, treasury sweep automation, and withdrawal settlement with auditable state transitions. The next phase includes BNT token launch and liquidity provisioning to power participation loops directly on BNB Chain.
 
 In short: Blocnet helps users act on time, helps projects distribute critical updates effectively, and helps BNB Chain convert attention into reliable ecosystem participation.
 
@@ -23,7 +23,7 @@ AI + Infrastructure + Consumer dApp
 
 Note:
 - Source code is private for security and operational reasons.
-- Additional technical architecture documentation and live walkthrough are available under NDA.
+- Additional technical documentation and live walkthrough are available under NDA.
 
 ## Size of Grant ($)
 75000
@@ -124,7 +124,7 @@ Blocnet’s innovation is the integration of three layers that are usually built
 3. BNB Chain settlement + token operations engine:
 - Ledger-backed wallet operations with idempotency keys, serializable transactions, confirmation-gated finalization, and launch/liquidity execution workflows.
 
-This architecture avoids black-box dependence and enables operational trust, which is critical for user-facing crypto products.
+This design avoids black-box dependence and enables operational trust, which is critical for user-facing crypto products.
 
 ## Grant Project Competitive Landscape
 Current landscape is fragmented:
@@ -178,4 +178,4 @@ BNT smart contract infrastructure is complete; no public token launch/TGE has be
 BNB Chain Grants / DappBay campaign
 
 ## Optional closing line (if there is an extra notes box)
-Blocnet is grant-ready: the MVP is built, the execution architecture is in place, and this funding directly converts technical readiness into measurable BNB Chain ecosystem growth.
+Blocnet is grant-ready: the MVP is built, the execution foundation is in place, and this funding directly converts technical readiness into measurable BNB Chain ecosystem growth.

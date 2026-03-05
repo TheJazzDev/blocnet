@@ -108,7 +108,7 @@ export default function WhitepaperPage() {
             </h2>
             <p className="text-sm sm:text-base text-muted">
               Source code remains private for security and operational reasons.
-              Additional architecture documentation, security notes, and live
+              Additional technical documentation, security notes, and live
               product walkthroughs are available under NDA for partners and
               grant reviewers.
             </p>
