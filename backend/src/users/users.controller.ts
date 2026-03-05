@@ -41,6 +41,11 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PublicUsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('public-stats')
+  async getPublicStats() {
+    return this.usersService.getPublicPlatformStats();
+  }
+
   @Get('check-username')
   async checkUsername(@Query('username') username?: string) {
     if (!username?.trim()) {

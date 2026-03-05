@@ -4,6 +4,7 @@ import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
@@ -18,6 +19,7 @@ class TopHuntersRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final posts = context.watch<UpdatesStore>().posts;
+    final canManageUpdates = context.watch<AuthStore>().canCreateUpdate;
 
     // Collect unique admins from posts (in order of appearance)
     final seen = <String>{};
@@ -74,7 +76,24 @@ class TopHuntersRow extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               children: [
                 // "My Updates" — create button
-                const _HunterAvatar.create(),
+                _HunterAvatar.create(
+                  onTap: () {
+                    if (canManageUpdates) {
+                      Navigator.of(context)
+                          .pushNamed(ProtectedRoutes.manageUpdates);
+                      return;
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Only hunters and admins can manage updates.',
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(width: 16),
                 // Real hunters
                 ...admins.map((admin) => Padding(
@@ -108,13 +127,14 @@ class _HunterAvatar extends StatelessWidget {
     this.onTap,
   }) : isCreate = false;
 
-  const _HunterAvatar.create()
+  const _HunterAvatar.create({
+    this.onTap,
+  })
       : imageUrl = '',
         name = 'My Updates',
         currentLevel = null,
         hasRing = false,
-        isCreate = true,
-        onTap = null;
+        isCreate = true;
 
   final String imageUrl;
   final String name;

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { buildBlocnetLink } from './utils/blocnet-link.util';
 
 export type EmailTemplateOptions = {
   preheader?: string;
@@ -45,6 +46,7 @@ export class EmailTemplateService {
     const preheader = opts.preheader || '';
     const ctaButtons = opts.ctaButtons || [];
     const showUnsubscribeLink = opts.showUnsubscribeLink !== false;
+    const manageNotificationsUrl = buildBlocnetLink('settings_notifications');
 
     return `
 <!doctype html>
@@ -375,7 +377,7 @@ export class EmailTemplateService {
                     showUnsubscribeLink
                       ? `
                   <span style="color:#cbd5e1;">·</span>
-                  <a href="${this.websiteUrl}/settings/notifications" class="footer-link">Manage Notifications</a>
+                  <a href="${manageNotificationsUrl}" class="footer-link">Manage Notifications</a>
                   `
                       : ''
                   }
@@ -383,7 +385,7 @@ export class EmailTemplateService {
 
                 <p class="footer-content" style="margin-top:16px;font-size:12px;">
                   You received this email because you have a ${this.brandName} account.
-                  ${showUnsubscribeLink ? `<a href="${this.websiteUrl}/settings/notifications" style="color:${this.brandColor};">Manage your preferences</a>` : ''}
+                  ${showUnsubscribeLink ? `<a href="${manageNotificationsUrl}" style="color:${this.brandColor};">Manage your preferences</a>` : ''}
                 </p>
 
                 <p class="footer-content" style="margin-top:8px;font-size:12px;color:#94a3b8;">

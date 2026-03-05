@@ -11,7 +11,12 @@ const OPEN_PATH = '/open';
 function normalizePath(path: string): string {
   const trimmed = path.trim();
   if (!trimmed) return '/';
-  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  if (normalized === '/notification') return '/notifications';
+  if (normalized === '/settings/notification') {
+    return '/settings/notifications';
+  }
+  return normalized;
 }
 
 function buildOpenLink(path: string): string {
@@ -28,7 +33,9 @@ function convertSchemeToPath(raw: string): string | null {
       const uri = new URL(trimmed);
       if (
         uri.hostname === 'blocnet.app' ||
-        uri.hostname === 'www.blocnet.app'
+        uri.hostname === 'www.blocnet.app' ||
+        uri.hostname === 'app.blocnet.app' ||
+        uri.hostname === 'app.blocknet.app'
       ) {
         return normalizePath(`${uri.pathname}${uri.search}`);
       }

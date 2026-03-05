@@ -69,6 +69,7 @@ type RolesMatrixResponse = ApiTypes.RolesMatrixResponse;
 type RuntimeFeatureFlagsConfig = ApiTypes.RuntimeFeatureFlagsConfig;
 type ClosedAlphaEmailRecord = ApiTypes.ClosedAlphaEmailRecord;
 type ClosedAlphaEmailsResponse = ApiTypes.ClosedAlphaEmailsResponse;
+type ClosedAlphaBulkUpsertResponse = ApiTypes.ClosedAlphaBulkUpsertResponse;
 type SpaceRoleDefinition = ApiTypes.SpaceRoleDefinition;
 type Tag = ApiTypes.Tag;
 type TipCurrencyKind = ApiTypes.TipCurrencyKind;
@@ -544,6 +545,19 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  createClosedAlphaEmailsBulk: (body: {
+    emails: string[];
+    note?: string;
+    isActive?: boolean;
+  }) =>
+    apiFetch<ClosedAlphaBulkUpsertResponse>(
+      "/admin/settings/closed-alpha/emails/bulk",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
   updateClosedAlphaEmailStatus: (id: string, body: { isActive: boolean }) =>
     apiFetch<ClosedAlphaEmailRecord>(`/admin/settings/closed-alpha/emails/${id}`, {

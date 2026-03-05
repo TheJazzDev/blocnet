@@ -217,3 +217,8 @@ export interface ClosedAlphaEmailsResponse {
   limit: number;
   offset: number;
 }
+
+export interface ClosedAlphaBulkUpsertResponse {
+  data: ClosedAlphaEmailRecord[];
+  totalProcessed: number;
+}

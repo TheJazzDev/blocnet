@@ -35,5 +35,11 @@ describe('buildBlocnetLink', () => {
     expect(buildBlocnetLinkFromDeeplink('https://example.com/somewhere')).toBe(
       'https://example.com/somewhere',
     );
+    expect(
+      buildBlocnetLinkFromDeeplink('https://app.blocnet.app/notification'),
+    ).toBe('https://blocnet.app/open?path=%2Fnotifications');
+    expect(
+      buildBlocnetLinkFromDeeplink('https://app.blocknet.app/notification'),
+    ).toBe('https://blocnet.app/open?path=%2Fnotifications');
   });
 });

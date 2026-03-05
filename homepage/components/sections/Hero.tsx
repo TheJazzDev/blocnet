@@ -1,8 +1,65 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+
+type HeroStats = {
+  activeUsers: number;
+  projectsTracked: number;
+  totalUpdates: number;
+  totalCommunityPosts: number;
+};
+
+const DEFAULT_STATS: HeroStats = {
+  activeUsers: 0,
+  projectsTracked: 0,
+  totalUpdates: 0,
+  totalCommunityPosts: 0,
+};
 
 export function Hero() {
+  const [stats, setStats] = useState<HeroStats>(DEFAULT_STATS);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/public/stats', {
+          method: 'GET',
+          cache: 'no-store',
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!active) return;
+        setStats({
+          activeUsers: Number(payload?.activeUsers ?? 0),
+          projectsTracked: Number(payload?.projectsTracked ?? 0),
+          totalUpdates: Number(payload?.totalUpdates ?? 0),
+          totalCommunityPosts: Number(payload?.totalCommunityPosts ?? 0),
+        });
+      } catch {
+        if (!active) return;
+        setStats(DEFAULT_STATS);
+      }
+    }
+
+    void loadStats();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const statsRows = useMemo(
+    () => [
+      { value: stats.activeUsers, label: 'Active Users' },
+      { value: stats.projectsTracked, label: 'Projects Tracked' },
+      { value: stats.totalUpdates, label: 'Total Updates' },
+      { value: stats.totalCommunityPosts, label: 'Total Community Posts' },
+    ],
+    [stats],
+  );
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8 pt-24 sm:pt-24 md:pt-12 lg:pt-0 pb-10 sm:pb-12 lg:pb-0">
       {/* Background Grid */}
@@ -54,18 +111,13 @@ export function Hero() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-          {[
-            { value: '0', label: 'Active Users' },
-            { value: '0', label: 'Projects Tracked' },
-            { value: '0', label: 'Daily Updates' },
-            { value: '0', label: 'Daily Community Posts' },
-          ].map((stat) => (
+          {statsRows.map((stat) => (
             <div
               key={stat.label}
               className="p-6 bg-surface-2/50 backdrop-blur-sm border border-border rounded-xl transition-colors hover:border-teal-500/20"
             >
               <div className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-teal-400 to-primary">
-                {stat.value}
+                {new Intl.NumberFormat('en-US').format(stat.value)}
               </div>
               <div className="text-sm sm:text-base text-muted mt-2">
                 {stat.label}

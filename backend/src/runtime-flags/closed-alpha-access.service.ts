@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RuntimeFeatureFlagsService } from './runtime-feature-flags.service';
 
@@ -23,10 +23,34 @@ export class ClosedAlphaAccessService {
   }
 
   async addLandingEmail(email: string) {
-    return this.upsertEmail({
-      email,
-      source: 'landing',
-      isActive: true,
+    const normalized = this.normalizeEmail(email);
+    if (!normalized) {
+      throw new ConflictException('Email is required');
+    }
+
+    const existing = await this.prisma.closedAlphaAccessEmail.findUnique({
+      where: { emailNormalized: normalized },
+      select: { id: true, isActive: true },
+    });
+
+    if (existing) {
+      if (existing.isActive) {
+        throw new ConflictException(
+          'This email is already on the closed alpha allowlist.',
+        );
+      }
+      throw new ConflictException(
+        'This email already exists but is currently inactive. Contact support.',
+      );
+    }
+
+    return this.prisma.closedAlphaAccessEmail.create({
+      data: {
+        email: normalized,
+        emailNormalized: normalized,
+        isActive: true,
+        source: 'landing',
+      },
     });
   }
 
@@ -80,6 +104,45 @@ export class ClosedAlphaAccessService {
       source: 'admin',
       createdById: input.createdById,
     });
+  }
+
+  async addAdminEmailsBulk(input: {
+    emails: string[];
+    note?: string | null;
+    isActive?: boolean;
+    createdById?: string;
+  }) {
+    const dedupedEmails = Array.from(
+      new Set(input.emails.map((email) => this.normalizeEmail(email))),
+    ).filter((email) => email.length > 0);
+
+    const data = await this.prisma.$transaction(
+      dedupedEmails.map((email) =>
+        this.prisma.closedAlphaAccessEmail.upsert({
+          where: { emailNormalized: email },
+          update: {
+            email,
+            isActive: input.isActive ?? true,
+            source: 'admin',
+            note: input.note?.trim() || null,
+            ...(input.createdById ? { createdById: input.createdById } : {}),
+          },
+          create: {
+            email,
+            emailNormalized: email,
+            isActive: input.isActive ?? true,
+            source: 'admin',
+            note: input.note?.trim() || null,
+            createdById: input.createdById ?? null,
+          },
+        }),
+      ),
+    );
+
+    return {
+      data,
+      totalProcessed: data.length,
+    };
   }
 
   async setActive(id: string, isActive: boolean) {

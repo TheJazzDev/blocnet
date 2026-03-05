@@ -47,6 +47,7 @@ export type {
   RuntimeFeatureFlagsConfig,
   ClosedAlphaEmailRecord,
   ClosedAlphaEmailsResponse,
+  ClosedAlphaBulkUpsertResponse,
   AdminTwoFactorPreflight,
   AdminTwoFactorPolicy,
   AdminTwoFactorEnrollmentStartResponse,

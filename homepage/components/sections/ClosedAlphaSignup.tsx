@@ -84,15 +84,15 @@ export function ClosedAlphaSignup() {
   }
 
   return (
-    <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto rounded-2xl border border-border bg-surface p-6 sm:p-8">
-        <p className="text-xs uppercase tracking-[0.18em] text-teal-400 mb-2">
+    <section className="py-10 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto rounded-2xl border border-teal-500/30 bg-linear-to-r from-teal-500/10 via-surface to-primary/10 p-6 sm:p-8 shadow-[0_0_0_1px_rgba(45,212,191,0.12)]">
+        <p className="text-xs uppercase tracking-[0.18em] text-teal-300 mb-2 font-semibold">
           Closed Alpha
         </p>
-        <h2 className="text-2xl sm:text-3xl font-semibold text-foreground">
-          Join the first external testing cohort
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
+          Closed alpha access is live
         </h2>
-        <p className="text-sm sm:text-base text-muted mt-3">
+        <p className="text-sm sm:text-base text-muted mt-3 max-w-3xl">
           Submit your email to request access. Only allowlisted testers can
           sign in during this phase.
         </p>
@@ -112,7 +112,7 @@ export function ClosedAlphaSignup() {
             <button
               type="submit"
               disabled={submitDisabled}
-              className="rounded-xl bg-teal-500 px-5 py-3 text-sm font-medium text-white disabled:opacity-60"
+              className="rounded-xl bg-teal-500 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
               {status === 'loading' ? 'Submitting...' : 'Join Closed Alpha'}
             </button>

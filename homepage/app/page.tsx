@@ -39,9 +39,9 @@ export default function Home() {
     <div className="min-h-screen bg-[#09090b] text-foreground">
       <Navbar />
       <Hero />
+      <ClosedAlphaSignup />
       <EdgeEngine />
       <FeaturesOverview />
-      <ClosedAlphaSignup />
       <Tokenomics />
       <Roadmap />
       <AppDownload />

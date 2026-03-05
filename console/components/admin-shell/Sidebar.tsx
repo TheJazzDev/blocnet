@@ -104,6 +104,7 @@ function buildNavItems(userRoles: string[]) {
 
   const accessItems: NavItem[] = [
     { href: '/users', label: 'Members', icon: Users },
+    { href: '/closed-alpha', label: 'Closed Alpha', icon: Shield },
     { href: '/admin-access', label: 'Admin Panel Access', icon: Shield },
     { href: '/roles', label: 'Role Matrix', icon: Shield },
   ];
@@ -224,8 +225,8 @@ export function SidebarContent({
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                       isActive
-                        ? 'bg-gradient-to-r from-primary/15 to-teal-400/10 text-primary'
-                        : 'text-muted-foreground hover:bg-gradient-to-r hover:from-primary/12 hover:to-cyan-400/12 hover:text-foreground',
+                        ? 'bg-linear-to-r from-primary/15 to-teal-400/10 text-primary'
+                        : 'text-muted-foreground hover:bg-linear-to-r hover:from-primary/12 hover:to-cyan-400/12 hover:text-foreground',
                     )}>
                     <item.icon className='h-4 w-4 shrink-0' />
                     {item.label}

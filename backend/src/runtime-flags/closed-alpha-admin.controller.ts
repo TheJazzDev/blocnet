@@ -19,6 +19,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ClosedAlphaAccessService } from './closed-alpha-access.service';
 import { CreateClosedAlphaEmailDto } from './dto/create-closed-alpha-email.dto';
+import { CreateClosedAlphaEmailsBulkDto } from './dto/create-closed-alpha-emails-bulk.dto';
 import { ListClosedAlphaEmailsQuery } from './dto/list-closed-alpha-emails.query';
 import { UpdateClosedAlphaEmailDto } from './dto/update-closed-alpha-email.dto';
 
@@ -92,6 +93,36 @@ export class ClosedAlphaAdminController {
     });
 
     return row;
+  }
+
+  @Post('bulk')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async createBulk(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: CreateClosedAlphaEmailsBulkDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    const result = await this.closedAlphaAccessService.addAdminEmailsBulk({
+      emails: dto.emails,
+      note: dto.note,
+      isActive: dto.isActive,
+      createdById: user.id,
+    });
+
+    await this.auditLogService.create({
+      actorId: user.id,
+      action: 'settings.closed_alpha.allowlist.bulk_add',
+      resourceType: 'closed_alpha_allowlist',
+      resourceId: 'default',
+      metadata: {
+        totalProcessed: result.totalProcessed,
+      },
+    });
+
+    return result;
   }
 
   @Patch(':id')

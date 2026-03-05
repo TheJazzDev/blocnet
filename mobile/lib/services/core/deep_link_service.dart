@@ -64,7 +64,10 @@ class DeepLinkService {
 
   Future<void> _handleUri(Uri uri) async {
     final host = uri.host.toLowerCase();
-    final isBlocnetHost = host == 'blocnet.app' || host == 'www.blocnet.app';
+    final isBlocnetHost = host == 'blocnet.app' ||
+        host == 'www.blocnet.app' ||
+        host == 'app.blocnet.app' ||
+        host == 'app.blocknet.app';
     final isAppScheme = uri.scheme == 'io.blocnet.app';
     final isSupabaseVerifyLink =
         (uri.scheme == 'https' || uri.scheme == 'http') &&
@@ -313,7 +316,8 @@ class DeepLinkService {
 
   void _handleBlocnetPathNavigation(Uri uri) {
     final segments = uri.pathSegments.where((segment) => segment.isNotEmpty);
-    final path = '/${segments.join('/')}';
+    final rawPath = '/${segments.join('/')}';
+    final path = _normalizePathAlias(rawPath);
     if (path == '/' || path.isEmpty) {
       return;
     }
@@ -370,6 +374,7 @@ class DeepLinkService {
     }
 
     if (!_supportedDirectRoutes.contains(path)) {
+      navigatorKey.currentState?.pushNamed(AppRoutes.main);
       return;
     }
 
@@ -383,6 +388,16 @@ class DeepLinkService {
       path,
       arguments: args.isEmpty ? null : args,
     );
+  }
+
+  String _normalizePathAlias(String path) {
+    if (path == '/notification') {
+      return '/notifications';
+    }
+    if (path == '/settings/notification') {
+      return '/settings/notifications';
+    }
+    return path;
   }
 
   void _handleAppSchemePathNavigation(Uri uri) {

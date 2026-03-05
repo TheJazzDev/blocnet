@@ -230,8 +230,9 @@ export class NotificationEmailService {
     const fromName = this.resolveFromName(input.fromName ?? null);
     const replyTo = normalizeEmailAddress(input.replyTo ?? this.replyTo);
     const ctaLabel = input.ctaLabel?.trim() || 'Open Blocnet App';
-    const ctaUrl =
-      normalizeHttpUrl(input.ctaUrl) ?? buildBlocnetLink('notifications');
+    const ctaUrl = input.ctaUrl?.trim()
+      ? buildBlocnetLinkFromDeeplink(input.ctaUrl)
+      : buildBlocnetLink('notifications');
     const previewText = input.previewText?.trim() || input.subject;
 
     const recipients = uniqueRecipients(input.recipients);

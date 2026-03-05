@@ -3,6 +3,7 @@ import type {
   AdminSocialCredential,
   AdminSocialCredentialRevealResponse,
   AdminSocialCredentialsResponse,
+  ClosedAlphaBulkUpsertResponse,
   ClosedAlphaEmailRecord,
   ClosedAlphaEmailsResponse,
   AdminWalletDepositReprocessResponse,
@@ -127,6 +128,19 @@ export const walletApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  createClosedAlphaEmailsBulk: (body: {
+    emails: string[];
+    note?: string;
+    isActive?: boolean;
+  }) =>
+    apiFetch<ClosedAlphaBulkUpsertResponse>(
+      "/admin/settings/closed-alpha/emails/bulk",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
 
   updateClosedAlphaEmailStatus: (id: string, body: { isActive: boolean }) =>
     apiFetch<ClosedAlphaEmailRecord>(`/admin/settings/closed-alpha/emails/${id}`, {

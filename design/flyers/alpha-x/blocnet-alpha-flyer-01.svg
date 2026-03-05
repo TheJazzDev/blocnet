@@ -1,0 +1,90 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#04070E"/>
+      <stop offset="0.55" stop-color="#0A1121"/>
+      <stop offset="1" stop-color="#0E0E18"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="160" y1="240" x2="920" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2EE6BE"/>
+      <stop offset="1" stop-color="#3D7BFF"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1210 200) rotate(149) scale(520 360)">
+      <stop stop-color="#2EE6BE" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#2EE6BE" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1300 720) rotate(-160) scale(640 420)">
+      <stop stop-color="#3D7BFF" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#3D7BFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glowA)"/>
+  <rect width="1600" height="900" fill="url(#glowB)"/>
+
+  <g opacity="0.13">
+    <path d="M0 112H1600" stroke="#8AA1C8"/>
+    <path d="M0 224H1600" stroke="#8AA1C8"/>
+    <path d="M0 336H1600" stroke="#8AA1C8"/>
+    <path d="M0 448H1600" stroke="#8AA1C8"/>
+    <path d="M0 560H1600" stroke="#8AA1C8"/>
+    <path d="M0 672H1600" stroke="#8AA1C8"/>
+    <path d="M0 784H1600" stroke="#8AA1C8"/>
+    <path d="M200 0V900" stroke="#8AA1C8"/>
+    <path d="M400 0V900" stroke="#8AA1C8"/>
+    <path d="M600 0V900" stroke="#8AA1C8"/>
+    <path d="M800 0V900" stroke="#8AA1C8"/>
+    <path d="M1000 0V900" stroke="#8AA1C8"/>
+    <path d="M1200 0V900" stroke="#8AA1C8"/>
+    <path d="M1400 0V900" stroke="#8AA1C8"/>
+  </g>
+
+  <rect x="86" y="78" width="1428" height="744" rx="34" fill="#0C1324" fill-opacity="0.82" stroke="#2A3552"/>
+
+  <image href="../../../homepage/public/logo2.png" x="146" y="132" width="66" height="66"/>
+  <text x="230" y="174" fill="#DDE8FF" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="34" font-weight="700">Blocnet</text>
+
+  <rect x="146" y="218" width="320" height="52" rx="26" fill="#142240" stroke="#34558A"/>
+  <text x="306" y="252" text-anchor="middle" fill="#94B0DD" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="22" font-weight="700" letter-spacing="2">CLOSED ALPHA</text>
+
+  <text x="146" y="348" fill="#F2F7FF" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="88" font-weight="900">JOIN THE</text>
+  <text x="146" y="434" fill="url(#brand)" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="88" font-weight="900">EARLY WAVE</text>
+
+  <text x="146" y="504" fill="#C5D3EE" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="35" font-weight="500">Be among elite testers shaping the next</text>
+  <text x="146" y="552" fill="#C5D3EE" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="35" font-weight="500">crypto intelligence network.</text>
+
+  <rect x="146" y="596" width="670" height="98" rx="22" fill="url(#brand)"/>
+  <text x="481" y="658" text-anchor="middle" fill="#050B17" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="48" font-weight="900">Apply now at blocnet.app</text>
+
+  <g>
+    <rect x="908" y="126" width="530" height="648" rx="34" fill="#091326" stroke="#2E4875"/>
+
+    <rect x="950" y="170" width="446" height="88" rx="18" fill="#112242"/>
+    <text x="1173" y="224" text-anchor="middle" fill="#E2ECFF" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="36" font-weight="800">Limited Allowlist Access</text>
+
+    <rect x="950" y="286" width="446" height="122" rx="20" fill="#0F1B34" stroke="#29466F"/>
+    <text x="986" y="336" fill="#A9BEE4" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="25" font-weight="600">1. Submit your email on blocnet.app</text>
+    <text x="986" y="376" fill="#A9BEE4" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="25" font-weight="600">2. Get selected for closed alpha</text>
+
+    <rect x="1042" y="154" width="302" height="606" rx="42" fill="#060B16" stroke="#355894" stroke-width="2"/>
+    <rect x="1164" y="173" width="58" height="8" rx="4" fill="#1E335A"/>
+    <rect x="1062" y="200" width="262" height="162" rx="20" fill="#101C35" stroke="#2C4A78"/>
+    <rect x="1084" y="228" width="218" height="16" rx="8" fill="#2F7EFF"/>
+    <rect x="1084" y="258" width="168" height="10" rx="5" fill="#7E95C0"/>
+    <rect x="1084" y="276" width="196" height="10" rx="5" fill="#7E95C0"/>
+    <rect x="1062" y="384" width="262" height="152" rx="20" fill="#0E1A32" stroke="#2B4673"/>
+    <circle cx="1120" cy="460" r="34" fill="#123367"/>
+    <path d="M1111 460L1119 468L1132 452" stroke="#2EE6BE" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="1172" y="434" width="130" height="14" rx="7" fill="#39E9C3"/>
+    <rect x="1172" y="458" width="104" height="10" rx="5" fill="#9CB2D8"/>
+    <rect x="1172" y="476" width="118" height="10" rx="5" fill="#9CB2D8"/>
+    <rect x="1062" y="558" width="262" height="172" rx="20" fill="#0D1830" stroke="#2A426D"/>
+    <rect x="1084" y="588" width="218" height="10" rx="5" fill="#A2B8DC"/>
+    <rect x="1084" y="612" width="146" height="10" rx="5" fill="#3B79FE"/>
+    <rect x="1084" y="636" width="190" height="10" rx="5" fill="#8CA3CB"/>
+    <rect x="1084" y="660" width="172" height="10" rx="5" fill="#8CA3CB"/>
+  </g>
+
+  <text x="1450" y="848" text-anchor="end" fill="#6882B4" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="22" font-weight="700">blocnet.app</text>
+</svg>
