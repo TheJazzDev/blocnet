@@ -41,7 +41,7 @@ class AppSnackbar {
     }
 
     final media = MediaQuery.maybeOf(context);
-    final topInset = (media?.padding.top ?? 0) + kToolbarHeight + 44;
+    final topInset = (media?.padding.top ?? 0) + kToolbarHeight + 12;
 
     final entry = OverlayEntry(
       builder: (_) => _OverlayToast(
@@ -53,7 +53,7 @@ class AppSnackbar {
 
     _activeEntry = entry;
     overlay.insert(entry);
-    _dismissTimer = Timer(const Duration(seconds: 4), _dismissActive);
+    _dismissTimer = Timer(const Duration(seconds: 3), _dismissActive);
   }
 
   static void _dismissActive() {

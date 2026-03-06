@@ -15,8 +15,11 @@ import 'package:blocnet/features/quests/presentation/pages/quests_page.dart';
 import 'package:blocnet/features/tips/presentation/pages/tip_history_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_create_post_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_post_discussion_screen.dart';
+import 'package:blocnet/features/community/presentation/pages/community_staff_tools_screen.dart';
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/referral_code_screen.dart';
+import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
+import 'package:blocnet/features/notifications/presentation/pages/notification_insights_screen.dart';
 import 'package:blocnet/features/notifications/presentation/pages/notifications_screen.dart';
 import 'package:blocnet/features/system_alerts/presentation/pages/system_alerts_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/blocked_users_screen.dart';
@@ -45,6 +48,7 @@ class ProtectedRoutes {
   static const String miningHourlyHistory = AppRoutes.miningHourlyHistory;
   static const String miningDownline = AppRoutes.miningDownline;
   static const String notifications = AppRoutes.notifications;
+  static const String notificationInsights = AppRoutes.notificationInsights;
   static const String systemAlerts = AppRoutes.systemAlerts;
   static const String badges = AppRoutes.badges;
   static const String levels = AppRoutes.levels;
@@ -59,6 +63,7 @@ class ProtectedRoutes {
   static const String manageUpdates = AppRoutes.manageUpdates;
   static const String communityCreatePost = AppRoutes.communityCreatePost;
   static const String communityDiscussion = AppRoutes.communityDiscussion;
+  static const String communityStaffTools = AppRoutes.communityStaffTools;
   static const String editProfile = AppRoutes.editProfile;
 
   // Hunter
@@ -113,7 +118,19 @@ class ProtectedRoutes {
       miningHourlyHistory: (context) => const MiningHourlyHistoryScreen(),
       miningDownline: (context) => const MiningDownlineScreen(),
       // Notifications is now a push route (not a main tab)
-      notifications: (context) => const NotificationsScreen(),
+      notifications: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        final category = args is Map ? args['category']?.toString() : null;
+        return NotificationsScreen(initialCategory: category);
+      },
+      notificationInsights: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        DigestSummary? digest;
+        if (args is Map && args['digest'] is DigestSummary) {
+          digest = args['digest'] as DigestSummary;
+        }
+        return NotificationInsightsScreen(digest: digest);
+      },
       systemAlerts: (context) => const SystemAlertsScreen(),
       badges: (context) => const BadgeGalleryPage(),
       levels: (context) => const LevelsPage(),
@@ -128,6 +145,7 @@ class ProtectedRoutes {
       manageUpdates: (context) => const ManageUpdatesScreen(),
       communityCreatePost: (context) => const CommunityCreatePostScreen(),
       communityDiscussion: (context) => const CommunityPostDiscussionScreen(),
+      communityStaffTools: (context) => const CommunityStaffToolsScreen(),
       editProfile: (context) => const EditProfileScreen(),
 
       // Hunter
@@ -158,6 +176,7 @@ class ProtectedRoutes {
     miningHourlyHistory,
     miningDownline,
     notifications,
+    notificationInsights,
     systemAlerts,
     badges,
     levels,
@@ -172,6 +191,7 @@ class ProtectedRoutes {
     manageUpdates,
     communityCreatePost,
     communityDiscussion,
+    communityStaffTools,
     editProfile,
     hunterHub,
     becomeHunter,
@@ -191,9 +211,19 @@ class ProtectedRoutes {
     'hunter',
   };
 
+  static const Set<String> _communityStaffRoles = {
+    'owner',
+    'dev',
+    'admin',
+    'community_admin',
+    'community_moderator',
+    'moderator',
+  };
+
   static const Set<String> _opsRoles = {
     'owner',
     'dev',
+    'admin',
   };
 
   static const Map<String, Set<String>> _routeRoleAccess = {
@@ -203,5 +233,6 @@ class ProtectedRoutes {
     manageUpdates: _contributorRoles,
     hunterHub: _contributorRoles,
     systemAlerts: _opsRoles,
+    communityStaffTools: _communityStaffRoles,
   };
 }

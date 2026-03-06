@@ -127,6 +127,13 @@ export const queryKeys = {
       all: ['community', 'comments'] as const,
       lists: () => [...queryKeys.community.comments.all, 'list'] as const,
     },
+    moderation: {
+      all: ['community', 'moderation'] as const,
+      reports: (filters: Record<string, unknown>) =>
+        [...queryKeys.community.moderation.all, 'reports', filters] as const,
+      userState: (userId: string) =>
+        [...queryKeys.community.moderation.all, 'user-state', userId] as const,
+    },
   },
 
   // Governance

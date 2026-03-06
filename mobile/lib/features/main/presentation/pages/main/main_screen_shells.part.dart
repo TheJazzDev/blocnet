@@ -91,6 +91,9 @@ class _UserSpaceShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tab = _userTabs[currentIndex];
+    final auth = context.watch<AuthStore>();
+    final showCommunityStaffToolsAction =
+        currentIndex == 2 && auth.canAccessCommunityStaffTools;
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -103,6 +106,15 @@ class _UserSpaceShell extends StatelessWidget {
         showNotificationBell: tab.showNotificationBell,
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
+        actions: [
+          if (showCommunityStaffToolsAction)
+            _MainShellActionIcon(
+              icon: Icons.gavel_rounded,
+              onTap: () {
+                Navigator.of(context).pushNamed(AppRoutes.communityStaffTools);
+              },
+            ),
+        ],
       ),
       body: _LazyTabStack(
         index: currentIndex,
@@ -118,6 +130,35 @@ class _UserSpaceShell extends StatelessWidget {
       bottomNavigationBar: _UserNav(
         currentIndex: currentIndex,
         onTap: onNavTap,
+      ),
+    );
+  }
+}
+
+class _MainShellActionIcon extends StatelessWidget {
+  const _MainShellActionIcon({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 34,
+        height: 34,
+        child: Center(
+          child: Icon(
+            icon,
+            color: AppColors.textSecondary,
+            size: 21,
+          ),
+        ),
       ),
     );
   }

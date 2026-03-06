@@ -140,7 +140,7 @@ export default function ApplicationsPage() {
     <div className="space-y-6">
       <PageHeader title="Applications" description="Review role applications and project proposals.">
         <Button variant="outline" size="sm" asChild>
-          <Link href="/admin-access">Manage Admin Panel Access</Link>
+          <Link href="/console-access">Manage Console Access</Link>
         </Button>
         {!loading && (
           <Badge variant="outline" className="border-yellow-500/20 bg-yellow-500/10 text-yellow-500">

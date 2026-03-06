@@ -105,7 +105,8 @@ function buildNavItems(userRoles: string[]) {
   const accessItems: NavItem[] = [
     { href: '/users', label: 'Members', icon: Users },
     { href: '/closed-alpha', label: 'Closed Alpha', icon: Shield },
-    { href: '/admin-access', label: 'Admin Panel Access', icon: Shield },
+    { href: '/console-access', label: 'Console Access', icon: Shield },
+    { href: '/community-access', label: 'Community Access', icon: Shield },
     { href: '/roles', label: 'Role Matrix', icon: Shield },
   ];
 

@@ -50,6 +50,7 @@ type CommunityPostsTabProps = {
   onPreviousPage: () => void;
   onNextPage: () => void;
   onModerate: (post: AdminCommunityPost, status: ContentStatus) => void;
+  canArchive: boolean;
 };
 
 export function CommunityPostsTab({
@@ -67,6 +68,7 @@ export function CommunityPostsTab({
   onPreviousPage,
   onNextPage,
   onModerate,
+  canArchive,
 }: CommunityPostsTabProps) {
   return (
     <Card>
@@ -157,15 +159,19 @@ export function CommunityPostsTab({
                             Set Hidden
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuSeparator />
-                        {post.status !== "archived" && (
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => onModerate(post, "archived")}
-                          >
-                            Set Archived
-                          </DropdownMenuItem>
-                        )}
+                        {canArchive ? (
+                          <>
+                            <DropdownMenuSeparator />
+                            {post.status !== "archived" && (
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => onModerate(post, "archived")}
+                              >
+                                Set Archived
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        ) : null}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

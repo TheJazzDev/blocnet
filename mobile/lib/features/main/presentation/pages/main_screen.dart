@@ -68,7 +68,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed || !mounted) return;
-    context.read<NotificationsStore>().refreshNotifications();
+    context.read<NotificationsStore>().refreshNotifications(category: 'all');
   }
 
   @override
@@ -82,7 +82,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       _didRequestInitialNotifications = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        context.read<NotificationsStore>().fetchNotificationsOnce();
+        context.read<NotificationsStore>().fetchNotificationsOnce(
+              category: 'all',
+            );
       });
     }
     _maybePromptHunterOnboarding();

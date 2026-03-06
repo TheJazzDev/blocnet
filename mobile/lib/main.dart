@@ -86,19 +86,44 @@ void main() async {
   // Initialise push notifications tied to auth state.
   // - If already authenticated on cold start: init immediately.
   // - If the user signs in later (or signs out): react via listener.
+  bool pushInitialised = false;
+  RemoteMessage? pendingNotificationTap;
+  String? lastHandledTapKey;
+
+  String notificationTapKey(RemoteMessage message) {
+    final messageId = message.messageId?.trim();
+    if (messageId != null && messageId.isNotEmpty) return messageId;
+    final sentMillis = message.sentTime?.millisecondsSinceEpoch ?? 0;
+    return '$sentMillis::${message.data.toString()}';
+  }
+
+  void handleNotificationTap(RemoteMessage message) {
+    final context = _navigatorKey.currentContext;
+    final authReady = authStore.isAuthenticated && !authStore.isBootstrapping;
+    if (context == null || !authReady) {
+      pendingNotificationTap = message;
+      return;
+    }
+
+    final tapKey = notificationTapKey(message);
+    if (lastHandledTapKey == tapKey) return;
+    lastHandledTapKey = tapKey;
+    unawaited(NotificationNavigator.handleNotificationTap(context, message));
+  }
+
+  void flushPendingNotificationTap() {
+    final pending = pendingNotificationTap;
+    if (pending == null) return;
+    pendingNotificationTap = null;
+    handleNotificationTap(pending);
+  }
+
   final pushNotificationService = PushNotificationService(
     onForegroundMessage: () {
-      notificationsStore.refreshNotifications();
+      notificationsStore.refreshNotifications(category: 'all');
     },
-    onNotificationTap: (message) {
-      // Navigate to appropriate screen based on notification data
-      final context = _navigatorKey.currentContext;
-      if (context != null) {
-        NotificationNavigator.handleNotificationTap(context, message);
-      }
-    },
+    onNotificationTap: handleNotificationTap,
   );
-  bool pushInitialised = false;
 
   void onAuthChanged() {
     if (authStore.isAuthenticated && !pushInitialised) {
@@ -108,7 +133,10 @@ void main() async {
       pushInitialised = false;
       pushNotificationService.dispose();
       notificationSettingsStore.clear();
+      pendingNotificationTap = null;
+      lastHandledTapKey = null;
     }
+    flushPendingNotificationTap();
   }
 
   authStore.addListener(onAuthChanged);
@@ -176,6 +204,7 @@ void main() async {
   );
 
   WidgetsBinding.instance.addPostFrameCallback((_) {
+    flushPendingNotificationTap();
     StartupMetricsService.markFirstFrame();
     authStore.markShellReady();
     authStore.startBackgroundBootstrap();

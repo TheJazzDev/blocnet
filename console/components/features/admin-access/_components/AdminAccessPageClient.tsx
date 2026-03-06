@@ -124,7 +124,7 @@ export default function AdminAccessPage() {
   return (
     <div className='space-y-6'>
       <PageHeader
-        title='Admin Panel Access'
+        title='Console Access'
         description='Manage governance roles for panel operators only: owner, dev, and admin.'>
         <Button variant='outline' size='sm' asChild>
           <Link href='/users'>Open Members Directory</Link>

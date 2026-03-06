@@ -12,12 +12,16 @@ class NotificationsApiRepository {
   Future<List<NotificationModel>> fetchNotifications({
     int limit = 50,
     int offset = 0,
+    String? category,
   }) async {
+    final normalizedCategory = category?.trim();
     final response = await _apiClient.get(
       '/notifications',
       query: {
         'limit': '$limit',
         'offset': '$offset',
+        if (normalizedCategory != null && normalizedCategory.isNotEmpty)
+          'category': normalizedCategory,
       },
     );
 

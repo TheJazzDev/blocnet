@@ -1,8 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/notifications/notification_target_resolver.dart';
 import 'package:provider/provider.dart';
 
 /// Handles navigation when push notifications are tapped
@@ -13,105 +13,39 @@ class NotificationNavigator {
     RemoteMessage message,
   ) async {
     final data = message.data;
-    final type = (data['type'] as String?)?.trim().toLowerCase() ?? '';
-    final updateId = (data['updateId'] as String?)?.trim() ?? '';
-    final communityPostId = (data['postId'] as String?)?.trim() ?? '';
-    final deeplink = (data['deeplink'] as String?)?.trim() ?? '';
+    await handleNotificationPayload(
+      context,
+      type: data['type']?.toString(),
+      updateId: data['updateId']?.toString(),
+      postId: data['postId']?.toString(),
+      deeplink: data['deeplink']?.toString(),
+    );
+  }
 
-    // Extract IDs from deeplink if not in data
-    final parsedDeeplink = _parseDeeplink(deeplink);
+  static Future<void> handleNotificationPayload(
+    BuildContext context, {
+    required String? type,
+    String? updateId,
+    String? postId,
+    String? deeplink,
+    Map<String, dynamic>? payload,
+  }) async {
+    final decision = NotificationTargetResolver.resolve(
+      type: type,
+      updateId: updateId,
+      postId: postId,
+      deeplink: deeplink,
+      payload: payload,
+    );
 
-    final finalUpdateId = updateId.isNotEmpty
-        ? updateId
-        : parsedDeeplink['updateId'] as String? ?? '';
-    final finalPostId = communityPostId.isNotEmpty
-        ? communityPostId
-        : parsedDeeplink['postId'] as String? ?? '';
-
-    // Handle different notification types
-    if (type == 'project_update' || type == 'comment_received') {
-      if (finalUpdateId.isNotEmpty) {
-        await _openUpdateDetails(context, finalUpdateId);
-        return;
-      }
-    }
-
-    if (type == 'mention_received') {
-      if (finalUpdateId.isNotEmpty) {
-        await _openUpdateDetails(context, finalUpdateId);
-        return;
-      }
-      if (finalPostId.isNotEmpty) {
-        _pushNamed(context, AppRoutes.communityDiscussion,
-            arguments: finalPostId);
-        return;
-      }
-    }
-
-    if (_isWalletType(type)) {
-      _pushNamed(context, AppRoutes.walletTransactions);
+    if (decision.opensUpdateDetails && decision.updateId != null) {
+      await _openUpdateDetails(context, decision.updateId!);
       return;
     }
 
-    if (type == 'badge_earned') {
-      _pushNamed(context, AppRoutes.badges);
-      return;
-    }
-
-    if (type == 'community_liked' || type == 'community_bookmarked') {
-      if (finalPostId.isNotEmpty) {
-        _pushNamed(context, AppRoutes.communityDiscussion,
-            arguments: finalPostId);
-      } else {
-        _pushNamed(context, AppRoutes.main);
-      }
-      return;
-    }
-
-    if (type == 'profile_followed' || type == 'profile_unfollowed') {
-      _pushNamed(context, AppRoutes.profile);
-      return;
-    }
-
-    if (_isGovernanceType(type)) {
-      if (type == 'project_invite_received' ||
-          type == 'project_invite_responded' ||
-          type == 'project_assignment_changed') {
-        _pushNamed(context, AppRoutes.manageProjects);
-      } else {
-        _pushNamed(context, AppRoutes.profile);
-      }
-      return;
-    }
-
-    // Fallback to deeplink path parsing
-    final deeplinkPath = parsedDeeplink['path'] as String? ?? '';
-    if (deeplinkPath.contains('profile/badges') ||
-        deeplinkPath.endsWith('/badges')) {
-      _pushNamed(context, AppRoutes.badges);
-      return;
-    }
-    if (deeplinkPath.startsWith('/wallet/transactions')) {
-      _pushNamed(context, AppRoutes.walletTransactions);
-      return;
-    }
-    if (deeplinkPath.startsWith('/wallet')) {
-      _pushNamed(context, AppRoutes.wallet);
-      return;
-    }
-    if (deeplinkPath.startsWith('/updates') && finalUpdateId.isNotEmpty) {
-      await _openUpdateDetails(context, finalUpdateId);
-      return;
-    }
-    if (deeplinkPath.startsWith('/community/posts') &&
-        finalPostId.isNotEmpty) {
-      _pushNamed(context, AppRoutes.communityDiscussion,
-          arguments: finalPostId);
-      return;
-    }
-
-    // Default fallback
-    _pushNamed(context, AppRoutes.main);
+    final route = decision.route;
+    if (route == null || route.trim().isEmpty) return;
+    _pushNamed(context, route, arguments: decision.arguments);
   }
 
   static Future<void> _openUpdateDetails(
@@ -165,69 +99,5 @@ class NotificationNavigator {
     Object? arguments,
   }) {
     Navigator.of(context).pushNamed(route, arguments: arguments);
-  }
-
-  static Map<String, dynamic> _parseDeeplink(String? rawDeeplink) {
-    final raw = rawDeeplink?.trim() ?? '';
-    if (raw.isEmpty) {
-      return {'path': '', 'updateId': null, 'postId': null};
-    }
-
-    Uri? uri;
-    try {
-      uri = Uri.parse(raw);
-    } catch (_) {
-      return {'path': raw.toLowerCase(), 'updateId': null, 'postId': null};
-    }
-
-    final segments = <String>[
-      if (uri.scheme.isNotEmpty && uri.host.isNotEmpty) uri.host,
-      ...uri.pathSegments.where((segment) => segment.trim().isNotEmpty),
-    ];
-    final normalizedSegments = segments.map((segment) => segment.toLowerCase());
-    final path =
-        normalizedSegments.isEmpty ? '' : '/${normalizedSegments.join('/')}';
-
-    String? updateId = uri.queryParameters['updateId']?.toString().trim();
-    String? postId = uri.queryParameters['postId']?.toString().trim();
-
-    // Parse from path segments
-    if (segments.length >= 2 &&
-        segments[0].toLowerCase() == 'updates' &&
-        segments[1].toLowerCase() != 'comment') {
-      updateId = segments[1].trim();
-    }
-
-    if (segments.length >= 3 &&
-        segments[0].toLowerCase() == 'community' &&
-        segments[1].toLowerCase() == 'posts' &&
-        segments[2].toLowerCase() != 'comment') {
-      postId = segments[2].trim();
-    }
-
-    return {
-      'path': path,
-      'updateId': updateId?.isNotEmpty == true ? updateId : null,
-      'postId': postId?.isNotEmpty == true ? postId : null,
-    };
-  }
-
-  static bool _isWalletType(String type) {
-    return type == 'wallet_deposit' ||
-        type == 'wallet_withdrawal' ||
-        type == 'wallet_transfer' ||
-        type == 'wallet_swap' ||
-        type == 'kyc_approved' ||
-        type == 'kyc_rejected' ||
-        type == 'kyc_pending';
-  }
-
-  static bool _isGovernanceType(String type) {
-    return type == 'project_invite_received' ||
-        type == 'project_invite_responded' ||
-        type == 'project_assignment_changed' ||
-        type == 'project_approved' ||
-        type == 'project_rejected' ||
-        type == 'project_flagged';
   }
 }

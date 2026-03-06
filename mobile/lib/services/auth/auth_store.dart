@@ -135,6 +135,13 @@ class AuthStore extends ChangeNotifier {
   bool get isOwner => _roles.contains('owner');
   bool get isDev => _roles.contains('dev');
   bool get isAdmin => _roles.contains('admin');
+  bool get isCommunityAdmin =>
+      isOwner || isDev || isAdmin || _roles.contains('community_admin');
+  bool get isCommunityModerator =>
+      isCommunityAdmin ||
+      _roles.contains('community_moderator') ||
+      _roles.contains('moderator');
+  bool get canAccessCommunityStaffTools => isCommunityModerator;
   bool get isHunter => _roles.contains('hunter');
   bool get isUser => _roles.contains('user');
   bool get canModerateRoles => isOwner || isDev || isAdmin;

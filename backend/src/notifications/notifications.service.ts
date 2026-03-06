@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  NotificationCategory,
   NotificationType,
   Prisma,
   RoleName,
@@ -12,7 +13,10 @@ import type { BroadcastTarget } from './dto/broadcast-notification.dto';
 import { ListNotificationsQuery } from './dto/list-notifications.query';
 import { NotificationEmailService } from './email.service';
 import { FcmService } from './fcm.service';
-import { isCriticalNotificationType } from './notification-preferences.constants';
+import {
+  isCriticalNotificationType,
+  NOTIFICATION_TYPES_BY_CATEGORY,
+} from './notification-preferences.constants';
 import { NotificationPreferencesService } from './notification-preferences.service';
 import type {
   NotificationEvent,
@@ -35,9 +39,13 @@ export class NotificationsService {
   async listForUser(userId: string, query: ListNotificationsQuery) {
     const offset = query.offset ?? 0;
     const limit = Math.min(query.limit ?? 30, 100);
+    const categoryTypes = this.typesForCategory(query.category);
 
     return this.prisma.notification.findMany({
-      where: { userId },
+      where: {
+        userId,
+        ...(categoryTypes.length > 0 ? { type: { in: categoryTypes } } : {}),
+      },
       orderBy: { createdAt: 'desc' },
       skip: offset,
       take: limit,
@@ -422,6 +430,13 @@ export class NotificationsService {
       .map(([key, value]) => `${key}:${String(value)}`)
       .join('|');
     return `${title}::${body}::${dataKey}`;
+  }
+
+  private typesForCategory(
+    category?: NotificationCategory,
+  ): NotificationType[] {
+    if (!category) return [];
+    return NOTIFICATION_TYPES_BY_CATEGORY[category] ?? [];
   }
 }
 

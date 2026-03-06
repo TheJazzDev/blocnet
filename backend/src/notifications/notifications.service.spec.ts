@@ -1,4 +1,8 @@
-import { UpdateUrgency } from '@prisma/client';
+import {
+  NotificationCategory,
+  NotificationType,
+  UpdateUrgency,
+} from '@prisma/client';
 import { NotificationsService } from './notifications.service';
 
 describe('NotificationsService', () => {
@@ -8,6 +12,7 @@ describe('NotificationsService', () => {
     },
     notification: {
       createMany: jest.fn(),
+      findMany: jest.fn(),
     },
   };
   const configService = {
@@ -120,5 +125,26 @@ describe('NotificationsService', () => {
       }),
     );
     expect(result).toEqual({ insertedCount: 1, userIds: ['u1'] });
+  });
+
+  it('filters list by category when provided', async () => {
+    prisma.notification.findMany.mockResolvedValue([]);
+
+    await service.listForUser('u1', {
+      category: NotificationCategory.system,
+      limit: 20,
+      offset: 0,
+    });
+
+    expect(prisma.notification.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'u1',
+          type: {
+            in: [NotificationType.system, NotificationType.role_changed],
+          },
+        }),
+      }),
+    );
   });
 });

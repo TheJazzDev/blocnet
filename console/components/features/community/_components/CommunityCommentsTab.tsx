@@ -48,6 +48,7 @@ type CommunityCommentsTabProps = {
   onPreviousPage: () => void;
   onNextPage: () => void;
   onModerate: (comment: AdminCommunityComment, status: ContentStatus) => void;
+  canArchive: boolean;
 };
 
 export function CommunityCommentsTab({
@@ -63,6 +64,7 @@ export function CommunityCommentsTab({
   onPreviousPage,
   onNextPage,
   onModerate,
+  canArchive,
 }: CommunityCommentsTabProps) {
   return (
     <Card>
@@ -145,15 +147,19 @@ export function CommunityCommentsTab({
                             Set Hidden
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuSeparator />
-                        {comment.status !== "archived" && (
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => onModerate(comment, "archived")}
-                          >
-                            Set Archived
-                          </DropdownMenuItem>
-                        )}
+                        {canArchive ? (
+                          <>
+                            <DropdownMenuSeparator />
+                            {comment.status !== "archived" && (
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => onModerate(comment, "archived")}
+                              >
+                                Set Archived
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        ) : null}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

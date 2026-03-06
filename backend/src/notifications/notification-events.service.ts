@@ -245,7 +245,10 @@ export class NotificationEventsService {
           postId: post.id,
           kind: this.stringValue(metadata.kind) ?? 'like',
         } as Prisma.InputJsonValue,
-        deeplink: '/community',
+        deeplink: `/community/posts/${post.id}`,
+        pushData: {
+          postId: post.id,
+        },
         dedupeKey: this.auditDedupeKey(
           'community_post.reaction.add',
           resourceId,
@@ -283,7 +286,10 @@ export class NotificationEventsService {
         payload: {
           postId: post.id,
         } as Prisma.InputJsonValue,
-        deeplink: '/community',
+        deeplink: `/community/posts/${post.id}`,
+        pushData: {
+          postId: post.id,
+        },
         dedupeKey: this.auditDedupeKey(
           'community_post.bookmark.add',
           resourceId,
@@ -325,7 +331,12 @@ export class NotificationEventsService {
           projectId: update.projectId,
           commentId: resourceId,
         } as Prisma.InputJsonValue,
-        deeplink: `/updates/${update.id}`,
+        deeplink: resourceId
+          ? `/updates/comment/${resourceId}?updateId=${update.id}`
+          : `/updates/${update.id}`,
+        pushData: {
+          commentId: resourceId,
+        },
         dedupeKey: this.auditDedupeKey('comment.create', resourceId),
       },
     ];
@@ -1023,6 +1034,7 @@ export class NotificationEventsService {
             RoleName.owner,
             RoleName.dev,
             RoleName.admin,
+            RoleName.community_admin,
             RoleName.community_moderator,
           ],
         },

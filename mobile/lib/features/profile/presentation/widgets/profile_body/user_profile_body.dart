@@ -251,7 +251,7 @@ class _UserProfileBodyState extends State<UserProfileBody> {
                   const SizedBox(height: 12),
                   const _SectionLabel('Account'),
                   const SizedBox(height: 8),
-                  if (auth.isOwner || auth.isDev)
+                  if (auth.isOwner || auth.isDev || auth.isAdmin)
                     _ProfileTile(
                       mode: viewMode,
                       icon: Icons.warning_amber_rounded,

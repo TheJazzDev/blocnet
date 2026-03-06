@@ -72,7 +72,8 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
     );
 
     if (_selectedProjectId != null &&
-        availableProjects.every((project) => project.id != _selectedProjectId)) {
+        availableProjects
+            .every((project) => project.id != _selectedProjectId)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() {
@@ -90,9 +91,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Your current role does not allow creating updates.',
-            style: AppTypography.custom(color: AppColors.textMuted,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
               size: 13,
-              weight: FontWeight.w400,),
+              weight: FontWeight.w400,
+            ),
           ),
         ),
       );
@@ -121,9 +124,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
             _isHunterRestricted(auth)
                 ? 'No projects are assigned to your hunter account yet.'
                 : 'No project is available for updates yet.',
-            style: AppTypography.custom(color: AppColors.textMuted,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
               size: 13,
-              weight: FontWeight.w400,),
+              weight: FontWeight.w400,
+            ),
           ),
         ),
       );
@@ -142,9 +147,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
               if (_submitError != null && _submitError!.isNotEmpty) ...[
                 Text(
                   _submitError!,
-                  style: AppTypography.custom(color: AppColors.error500,
+                  style: AppTypography.custom(
+                    color: AppColors.error500,
                     size: 12,
-                    weight: FontWeight.w400,),
+                    weight: FontWeight.w400,
+                  ),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -154,9 +161,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 value: _selectedProjectId,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: 13,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 items: availableProjects
                     .map(
                       (project) => DropdownMenuItem<String>(
@@ -189,9 +198,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 value: _selectedPriority,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: 13,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 items: Priority.getAll()
                     .map(
                       (priority) => DropdownMenuItem<Priority>(
@@ -218,9 +229,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
               if (tagsStore.secondaryTags.isEmpty)
                 Text(
                   'No secondary tags available',
-                  style: AppTypography.custom(color: AppColors.textFaint,
+                  style: AppTypography.custom(
+                    color: AppColors.textFaint,
                     size: 12,
-                    weight: FontWeight.w400,),
+                    weight: FontWeight.w400,
+                  ),
                 )
               else
                 Wrap(
@@ -242,11 +255,13 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                       },
                       label: Text(
                         tag.name,
-                        style: AppTypography.custom(color: isSelected
+                        style: AppTypography.custom(
+                          color: isSelected
                               ? AppColors.teal400
                               : AppColors.textMuted,
                           size: 12,
-                          weight: FontWeight.w400,),
+                          weight: FontWeight.w400,
+                        ),
                       ),
                       selectedColor: AppColors.teal500.withValues(alpha: 0.15),
                       backgroundColor: AppColors.bgElevated,
@@ -264,9 +279,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _titleController,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: 14,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 decoration: _fieldDecoration(hintText: 'Update title'),
                 validator: (value) {
                   final next = value?.trim() ?? '';
@@ -282,9 +299,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 controller: _contentController,
                 minLines: 7,
                 maxLines: 12,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: 14,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 decoration: _fieldDecoration(
                   hintText: 'Write your update (markdown supported)',
                 ),
@@ -354,9 +373,11 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
   InputDecoration _fieldDecoration({String? hintText}) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: AppTypography.custom(color: AppColors.textFaint,
+      hintStyle: AppTypography.custom(
+        color: AppColors.textFaint,
         size: 13,
-        weight: FontWeight.w400,),
+        weight: FontWeight.w400,
+      ),
       filled: true,
       fillColor: AppColors.bgElevated,
       border: OutlineInputBorder(
@@ -412,7 +433,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       await Future.wait([
         updatesStore.refreshUpdates(),
         projectsStore.refreshProjects(),
-        notificationsStore.refreshNotifications(),
+        notificationsStore.refreshNotifications(category: 'all'),
       ]);
 
       if (!mounted) return;
@@ -452,8 +473,10 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
         return true;
       }
 
-      final projectUsername = project.admin?.username ?? project.admin?.name ?? '';
-      return _normalizeIdentity(projectUsername) == _normalizeIdentity(username) &&
+      final projectUsername =
+          project.admin?.username ?? project.admin?.name ?? '';
+      return _normalizeIdentity(projectUsername) ==
+              _normalizeIdentity(username) &&
           _normalizeIdentity(username).isNotEmpty;
     }).toList(growable: false);
 
@@ -461,7 +484,8 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
   }
 
   bool _isHunterRestricted(AuthStore auth) {
-    return auth.isInHunterSpace || (auth.isHunter && !auth.isOwner && !auth.isAdmin);
+    return auth.isInHunterSpace ||
+        (auth.isHunter && !auth.isOwner && !auth.isAdmin);
   }
 
   String _normalizeIdentity(String value) {

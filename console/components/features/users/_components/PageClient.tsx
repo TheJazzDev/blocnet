@@ -100,7 +100,7 @@ export default function UsersPage() {
         description="Directory for all application users. Open Manage to edit full profile, roles, badges, referral, wallet, and activity details."
       >
         <Button variant="outline" size="sm" asChild>
-          <Link href="/admin-access">Manage Admin Panel Access</Link>
+          <Link href="/console-access">Manage Console Access</Link>
         </Button>
       </PageHeader>
 
