@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_discussion_comment_card.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_discussion_composer.dart';
@@ -13,6 +14,7 @@ import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 class CommunityPostDiscussionScreen extends StatefulWidget {
   const CommunityPostDiscussionScreen({super.key, this.postId});
 
@@ -146,9 +148,8 @@ class _CommunityPostDiscussionScreenState
 
   bool _isNearLatest() {
     if (!_threadScrollController.hasClients) return true;
-    final distanceToBottom =
-        _threadScrollController.position.maxScrollExtent -
-            _threadScrollController.offset;
+    final distanceToBottom = _threadScrollController.position.maxScrollExtent -
+        _threadScrollController.offset;
     return distanceToBottom <= 80;
   }
 
@@ -208,7 +209,7 @@ class _CommunityPostDiscussionScreenState
   Future<void> _handleLike(String commentId) async {
     final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
     try {
-      await store.likeCommunityPostComment(commentId);
+      await store.toggleLikeCommunityPostComment(commentId);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -266,6 +267,7 @@ class _CommunityPostDiscussionScreenState
       builder: (context, store, _) {
         final post = store.postById(postId);
         final comments = store.commentsForPost(postId);
+        final threadedComments = _buildThreadedComments(comments);
         final isLoadingComments = store.isLoadingCommentsForPost(postId);
         final hasMoreComments = store.hasMoreCommentsForPost(postId);
 
@@ -294,39 +296,51 @@ class _CommunityPostDiscussionScreenState
                           children: [
                             ListView(
                               controller: _threadScrollController,
-                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 12, 16, 12),
                               children: [
                                 CommunityDiscussionPostDetailsCard(
                                   post: post,
                                   onLike: () => store.toggleLike(post.id),
                                   onCommentTap: _focusComposerSoon,
                                   onShareTap: () => _openShareSheet(post),
-                                  onBookmark: () => store.toggleBookmark(post.id),
+                                  onBookmark: () =>
+                                      store.toggleBookmark(post.id),
                                 ),
                                 const SizedBox(height: 14),
                                 _DiscussionHeader(
                                   commentsCount: comments.length,
                                   isLoadingComments: isLoadingComments,
                                   hasMoreComments: hasMoreComments,
-                                  onLoadOlder: () => store.loadOlderComments(postId),
+                                  onLoadOlder: () =>
+                                      store.loadOlderComments(postId),
                                 ),
                                 const SizedBox(height: 10),
                                 if (comments.isEmpty)
                                   const CommunityDiscussionEmpty()
                                 else ...[
                                   for (var index = 0;
-                                      index < comments.length;
+                                      index < threadedComments.length;
                                       index++) ...[
                                     CommunityDiscussionCommentCard(
-                                      comment: comments[index],
+                                      comment: threadedComments[index].comment,
+                                      isNestedReply:
+                                          threadedComments[index].isNestedReply,
                                       onReply: () => _handleReply(
-                                        comments[index].id,
-                                        comments[index].admin?.username ??
-                                            comments[index].admin?.name,
+                                        threadedComments[index].comment.id,
+                                        threadedComments[index]
+                                                .comment
+                                                .admin
+                                                ?.username ??
+                                            threadedComments[index]
+                                                .comment
+                                                .admin
+                                                ?.name,
                                       ),
-                                      onLike: () => _handleLike(comments[index].id),
+                                      onLike: () => _handleLike(
+                                          threadedComments[index].comment.id),
                                     ),
-                                    if (index != comments.length - 1)
+                                    if (index != threadedComments.length - 1)
                                       Divider(
                                         height: 1,
                                         color: AppColors.borderSubtle
@@ -388,6 +402,50 @@ class _CommunityPostDiscussionScreenState
     );
   }
 
+  List<_ThreadedCommunityComment> _buildThreadedComments(
+    List<CommunityPostComment> comments,
+  ) {
+    if (comments.length < 2) {
+      return comments
+          .map((comment) => _ThreadedCommunityComment(comment: comment))
+          .toList(growable: false);
+    }
+
+    final byId = <String, CommunityPostComment>{
+      for (final comment in comments) comment.id: comment,
+    };
+    final repliesByParent = <String, List<CommunityPostComment>>{};
+    final roots = <CommunityPostComment>[];
+
+    for (final comment in comments) {
+      final parentId = comment.replyToId?.trim();
+      if (parentId == null || parentId.isEmpty || !byId.containsKey(parentId)) {
+        roots.add(comment);
+        continue;
+      }
+      final replies =
+          repliesByParent.putIfAbsent(parentId, () => <CommunityPostComment>[]);
+      replies.add(comment);
+    }
+
+    final flattened = <_ThreadedCommunityComment>[];
+    for (final root in roots) {
+      flattened.add(_ThreadedCommunityComment(comment: root));
+      final replies = repliesByParent[root.id];
+      if (replies == null) continue;
+      for (final reply in replies) {
+        flattened.add(
+          _ThreadedCommunityComment(
+            comment: reply,
+            isNestedReply: true,
+          ),
+        );
+      }
+    }
+
+    return flattened;
+  }
+
   Future<void> _openShareSheet(CommunityPost post) async {
     await showCommunityPostShareSheet(
       context,
@@ -395,6 +453,16 @@ class _CommunityPostDiscussionScreenState
       content: post.content,
     );
   }
+}
+
+class _ThreadedCommunityComment {
+  const _ThreadedCommunityComment({
+    required this.comment,
+    this.isNestedReply = false,
+  });
+
+  final CommunityPostComment comment;
+  final bool isNestedReply;
 }
 
 class _DiscussionHeader extends StatelessWidget {

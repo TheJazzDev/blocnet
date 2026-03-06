@@ -37,6 +37,8 @@ class CommunityPostsStore extends ChangeNotifier
   final Set<String> _pendingLikePostIds = <String>{};
   @override
   final Set<String> _pendingBookmarkPostIds = <String>{};
+  @override
+  final Set<String> _pendingLikeCommentIds = <String>{};
 
   bool _isFetchingPosts = false;
   bool _isSubmittingPost = false;

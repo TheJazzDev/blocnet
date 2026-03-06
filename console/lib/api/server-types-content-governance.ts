@@ -177,6 +177,19 @@ export type OpsEventProvider =
   | "unknown";
 export type OpsEventStatus = "success" | "warning" | "error" | "info";
 
+export type CommunityReportTargetType =
+  | "community_post"
+  | "community_comment"
+  | "user_profile";
+export type CommunityReportStatus = "open" | "resolved" | "dismissed";
+export type CommunityModerationActionType =
+  | "warning"
+  | "mute"
+  | "suspend"
+  | "restrict_posting"
+  | "restrict_commenting"
+  | "clear_restrictions";
+
 export interface OpsEvent {
   id: string;
   action: string;
@@ -193,6 +206,53 @@ export interface OpsEvent {
   } | null;
   metadata: Record<string, unknown>;
   createdAt: string;
+}
+
+export interface CommunityModerationReport {
+  id: string;
+  reporterId: string;
+  targetType: CommunityReportTargetType;
+  targetId: string;
+  targetUserId: string | null;
+  reason: string;
+  details: string | null;
+  status: CommunityReportStatus;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  resolutionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  reporter: ActorSummary;
+  reviewer: ActorSummary | null;
+  targetUser:
+    | {
+        id: string;
+        email: string;
+        username: string | null;
+        displayName: string | null;
+      }
+    | null;
+}
+
+export interface CommunityModerationReportsResponse {
+  data: CommunityModerationReport[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface CommunityModerationUserState {
+  id: string;
+  email: string;
+  username: string | null;
+  displayName: string | null;
+  communityWarnCount: number;
+  communityLastWarnedAt: string | null;
+  communityMutedUntil: string | null;
+  communitySuspendedUntil: string | null;
+  communityPostingRestrictedUntil: string | null;
+  communityCommentingRestrictedUntil: string | null;
+  roles: string[];
 }
 
 export interface Tag {

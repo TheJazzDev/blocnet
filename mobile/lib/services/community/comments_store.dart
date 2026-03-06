@@ -23,6 +23,7 @@ class CommentsStore extends ChangeNotifier {
   final Map<String, List<CommentModel>> _commentsByUpdateId = {};
   final Map<String, bool> _hasMoreByUpdateId = {};
   final Set<String> _loadingUpdateIds = <String>{};
+  final Set<String> _pendingLikeCommentIds = <String>{};
   String? _lastError;
 
   String? get lastError => _lastError;
@@ -48,8 +49,7 @@ class CommentsStore extends ChangeNotifier {
       await _fetchLatestPage(updateId, replaceExisting: true);
       _lastError = null;
     } catch (error) {
-      _lastError =
-          _errorMapper.map(error, fallback: 'Unable to load comments');
+      _lastError = _errorMapper.map(error, fallback: 'Unable to load comments');
     } finally {
       _loadingUpdateIds.remove(updateId);
       notifyListeners();
@@ -177,22 +177,87 @@ class CommentsStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> likeComment(String commentId) async {
-    final updated = await _repository.likeComment(commentId);
-    if (updated == null) return;
+  Future<void> toggleLikeComment(String commentId) async {
+    if (_pendingLikeCommentIds.contains(commentId)) return;
+    final current = _findCommentById(commentId);
+    if (current == null) return;
 
-    // Update comment in all update caches that might contain it
+    _pendingLikeCommentIds.add(commentId);
+    final optimisticLiked = !current.isLiked;
+    final optimisticLikes = optimisticLiked
+        ? current.likesCount + 1
+        : (current.likesCount > 0 ? current.likesCount - 1 : 0);
+    _replaceCommentInAllCaches(
+      commentId,
+      _copyWithReactionState(
+        current,
+        isLiked: optimisticLiked,
+        likesCount: optimisticLikes,
+      ),
+    );
+    notifyListeners();
+
+    try {
+      final updated = current.isLiked
+          ? await _repository.unlikeComment(commentId)
+          : await _repository.likeComment(commentId);
+      if (updated != null) {
+        _replaceCommentInAllCaches(commentId, updated);
+      }
+      _lastError = null;
+    } catch (error) {
+      _replaceCommentInAllCaches(commentId, current);
+      _lastError =
+          _errorMapper.map(error, fallback: 'Unable to update comment like');
+    } finally {
+      _pendingLikeCommentIds.remove(commentId);
+      notifyListeners();
+    }
+  }
+
+  Future<void> likeComment(String commentId) => toggleLikeComment(commentId);
+
+  CommentModel? _findCommentById(String commentId) {
+    for (final comments in _commentsByUpdateId.values) {
+      for (final comment in comments) {
+        if (comment.id == commentId) {
+          return comment;
+        }
+      }
+    }
+    return null;
+  }
+
+  void _replaceCommentInAllCaches(String commentId, CommentModel replacement) {
     for (final updateId in _commentsByUpdateId.keys) {
       final items = <CommentModel>[
         ...(_commentsByUpdateId[updateId] ?? const <CommentModel>[]),
       ];
       final index = items.indexWhere((item) => item.id == commentId);
-      if (index != -1) {
-        items[index] = updated;
-        _commentsByUpdateId[updateId] = items;
-      }
+      if (index == -1) continue;
+      items[index] = replacement;
+      _commentsByUpdateId[updateId] = items;
     }
-    notifyListeners();
+  }
+
+  CommentModel _copyWithReactionState(
+    CommentModel current, {
+    required bool isLiked,
+    required int likesCount,
+  }) {
+    return CommentModel(
+      id: current.id,
+      updateId: current.updateId,
+      authorId: current.authorId,
+      content: current.content,
+      createdAt: current.createdAt,
+      updatedAt: current.updatedAt,
+      likesCount: likesCount < 0 ? 0 : likesCount,
+      isLiked: isLiked,
+      admin: current.admin,
+      replyToId: current.replyToId,
+      replyToData: current.replyToData,
+    );
   }
 
   Future<void> _fetchLatestPage(
@@ -341,7 +406,18 @@ class CommentsStore extends ChangeNotifier {
       updatedAt: incoming.updatedAt.isAfter(existing.updatedAt)
           ? incoming.updatedAt
           : existing.updatedAt,
+      likesCount: incoming.likesCount > 0 ||
+              incoming.updatedAt.isAfter(existing.updatedAt)
+          ? incoming.likesCount
+          : existing.likesCount,
+      isLiked: incoming.isLiked != existing.isLiked ||
+              incoming.likesCount != existing.likesCount ||
+              incoming.updatedAt.isAfter(existing.updatedAt)
+          ? incoming.isLiked
+          : existing.isLiked,
       admin: incoming.admin ?? existing.admin,
+      replyToId: incoming.replyToId ?? existing.replyToId,
+      replyToData: incoming.replyToData ?? existing.replyToData,
     );
   }
 

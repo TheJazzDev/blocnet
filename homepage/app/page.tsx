@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Navbar } from '@/components/ui/Navbar';
 import { Hero } from '@/components/sections/Hero';
 import { EdgeEngine } from '@/components/sections/EdgeEngine';
+import { WhyBlocnet } from '@/components/sections/WhyBlocnet';
 import { FeaturesOverview } from '@/components/sections/FeaturesOverview';
 import { ClosedAlphaSignup } from '@/components/sections/ClosedAlphaSignup';
 import { Tokenomics } from '@/components/sections/Tokenomics';
@@ -41,6 +42,7 @@ export default function Home() {
       <Hero />
       <ClosedAlphaSignup />
       <EdgeEngine />
+      <WhyBlocnet />
       <FeaturesOverview />
       <Tokenomics />
       <Roadmap />

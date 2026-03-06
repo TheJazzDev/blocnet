@@ -53,6 +53,9 @@ type AdminWalletWithdrawal = ApiTypes.AdminWalletWithdrawal;
 type AdminWalletWithdrawalsResponse = ApiTypes.AdminWalletWithdrawalsResponse;
 type AuditLog = ApiTypes.AuditLog;
 type CommunityTopic = ApiTypes.CommunityTopic;
+type CommunityModerationReportsResponse =
+  ApiTypes.CommunityModerationReportsResponse;
+type CommunityModerationUserState = ApiTypes.CommunityModerationUserState;
 type ContentStatus = ApiTypes.ContentStatus;
 type GovernanceRoleDefinition = ApiTypes.GovernanceRoleDefinition;
 type ModerationInfo = ApiTypes.ModerationInfo;
@@ -333,6 +336,102 @@ export const api = {
         limit: params?.limit,
         offset: params?.offset,
       })}`,
+    ),
+
+  listCommunityReports: (params?: {
+    q?: string;
+    status?: "open" | "resolved" | "dismissed";
+    targetType?: "community_post" | "community_comment" | "user_profile";
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<CommunityModerationReportsResponse>(
+      `/admin/community-moderation/reports${toQuery({
+        q: params?.q,
+        status: params?.status,
+        targetType: params?.targetType,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
+
+  reviewCommunityReport: (
+    reportId: string,
+    body: { status: "resolved" | "dismissed"; note?: string },
+  ) =>
+    apiFetch(`/admin/community-moderation/reports/${reportId}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  getCommunityModerationUserState: (userId: string) =>
+    apiFetch<CommunityModerationUserState>(
+      `/admin/community-moderation/users/${userId}/state`,
+    ),
+
+  issueCommunityWarning: (
+    userId: string,
+    body: { reason: string; reportId?: string },
+  ) =>
+    apiFetch<CommunityModerationUserState>(
+      `/admin/community-moderation/users/${userId}/warnings`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  applyCommunityMute: (
+    userId: string,
+    body: { durationHours: number; reason: string; reportId?: string },
+  ) =>
+    apiFetch<CommunityModerationUserState>(
+      `/admin/community-moderation/users/${userId}/mutes`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  applyCommunitySuspension: (
+    userId: string,
+    body: { durationHours: number; reason: string; reportId?: string },
+  ) =>
+    apiFetch<CommunityModerationUserState>(
+      `/admin/community-moderation/users/${userId}/suspensions`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  applyCommunityRestrictions: (
+    userId: string,
+    body: {
+      postingHours?: number;
+      commentingHours?: number;
+      reason: string;
+      reportId?: string;
+    },
+  ) =>
+    apiFetch<CommunityModerationUserState>(
+      `/admin/community-moderation/users/${userId}/restrictions`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  clearCommunityRestrictions: (
+    userId: string,
+    body: { reason: string; reportId?: string },
+  ) =>
+    apiFetch<CommunityModerationUserState>(
+      `/admin/community-moderation/users/${userId}/restrictions/clear`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
     ),
 
   promoteToAdmin: (userId: string, note?: string) =>

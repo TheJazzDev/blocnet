@@ -83,7 +83,10 @@ export type UpdateWithRelations = Prisma.UpdateGetPayload<{
   include: typeof updateInclude;
 }>;
 
-export function toUpdateResponse(update: UpdateWithRelations) {
+export function toUpdateResponse(
+  update: UpdateWithRelations,
+  options?: { isCommented?: boolean },
+) {
   const rawUsername = (update.author.username ?? '').replaceAll('@', '').trim();
   const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
   const fallbackUsername = update.author.id.slice(0, 6);
@@ -140,5 +143,6 @@ export function toUpdateResponse(update: UpdateWithRelations) {
     secondaryTags: update.secondaryTags.map((row) => row.secondaryTag.name),
     commentsCount: update._count?.comments ?? 0,
     likesCount: 0,
+    isCommented: options?.isCommented === true,
   };
 }

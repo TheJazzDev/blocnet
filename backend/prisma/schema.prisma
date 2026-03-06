@@ -273,6 +273,27 @@ enum EdgeAction {
   ignore
 }
 
+enum CommunityModerationReportTargetType {
+  community_post
+  community_comment
+  user_profile
+}
+
+enum CommunityModerationReportStatus {
+  open
+  resolved
+  dismissed
+}
+
+enum CommunityModerationActionType {
+  warning
+  mute
+  suspend
+  restrict_posting
+  restrict_commenting
+  clear_restrictions
+}
+
 model Profile {
   id                              String                               @id @db.Uuid
   email                           String                               @unique
@@ -293,6 +314,12 @@ model Profile {
   referredById                    String?                              @db.Uuid
   referredAt                      DateTime?
   miningClaimedPoints             BigInt                               @default(0)
+  communityWarnCount              Int                                  @default(0)
+  communityLastWarnedAt           DateTime?
+  communityMutedUntil             DateTime?
+  communitySuspendedUntil         DateTime?
+  communityPostingRestrictedUntil DateTime?
+  communityCommentingRestrictedUntil DateTime?
   primaryBadgeId                  String?                              @db.Uuid
   currentLevelId                  String?                              @db.Uuid
   createdAt                       DateTime                             @default(now())
@@ -322,6 +349,11 @@ model Profile {
   reviewedProposals               ProjectProposal[]                    @relation("ProjectProposalReviewer")
   follows                         ProjectFollow[]
   notifications                   Notification[]
+  filedCommunityReports           CommunityModerationReport[]          @relation("CommunityReportReporter")
+  targetedCommunityReports        CommunityModerationReport[]          @relation("CommunityReportTargetUser")
+  reviewedCommunityReports        CommunityModerationReport[]          @relation("CommunityReportReviewer")
+  issuedCommunityModerationActions CommunityModerationAction[]         @relation("CommunityActionActor")
+  receivedCommunityModerationActions CommunityModerationAction[]       @relation("CommunityActionTarget")
   notificationSettings            UserNotificationSettings?
   notificationCategoryPreferences UserNotificationCategoryPreference[]
   notificationTypeOverrides       UserNotificationTypeOverride[]
@@ -734,6 +766,54 @@ model Bookmark {
   @@unique([userId, communityPostId])
   @@index([userId, createdAt])
   @@index([communityPostId])
+}
+
+model CommunityModerationReport {
+  id             String                               @id @default(uuid()) @db.Uuid
+  reporterId     String                               @db.Uuid
+  targetType     CommunityModerationReportTargetType
+  targetId       String                               @db.Uuid
+  targetUserId   String?                              @db.Uuid
+  reason         String
+  details        String?
+  status         CommunityModerationReportStatus      @default(open)
+  reviewedById   String?                              @db.Uuid
+  reviewedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime                             @default(now())
+  updatedAt      DateTime                             @updatedAt
+
+  reporter   Profile  @relation("CommunityReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetUser Profile? @relation("CommunityReportTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  reviewer   Profile? @relation("CommunityReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  actions    CommunityModerationAction[]
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId, status])
+  @@index([reporterId, createdAt])
+  @@index([targetUserId, createdAt])
+}
+
+model CommunityModerationAction {
+  id               String                        @id @default(uuid()) @db.Uuid
+  actionType       CommunityModerationActionType
+  actorId          String                        @db.Uuid
+  targetUserId     String                        @db.Uuid
+  reportId         String?                       @db.Uuid
+  reason           String?
+  previousValue    DateTime?
+  nextValue        DateTime?
+  metadata         Json?
+  createdAt        DateTime                      @default(now())
+
+  actor      Profile                    @relation("CommunityActionActor", fields: [actorId], references: [id], onDelete: Cascade)
+  targetUser Profile                    @relation("CommunityActionTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  report     CommunityModerationReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+
+  @@index([targetUserId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([actionType, createdAt])
+  @@index([reportId])
 }
 
 model Notification {

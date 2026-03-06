@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { UpdateStatus } from '@prisma/client';
+import { ContentModerationStatus, UpdateStatus } from '@prisma/client';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { BlocksService } from '../blocks/blocks.service';
@@ -101,7 +101,7 @@ export class UpdatesService {
     await this.badgesService.checkEngagementMilestones(actor.id);
     await this.triggerQuestAction(actor.id, 'first_update');
 
-    return toUpdateResponse(update);
+    return toUpdateResponse(update, { isCommented: false });
   }
 
   async listUpdates(actor: AuthUser, query: ListUpdatesQuery) {
@@ -124,7 +124,14 @@ export class UpdatesService {
       include: updateInclude,
     });
 
-    return updates.map((update) => toUpdateResponse(update));
+    const commentedUpdateIds = await this.listCommentedUpdateIds(
+      actor.id,
+      updates.map((update) => update.id),
+    );
+
+    return updates.map((update) =>
+      toUpdateResponse(update, { isCommented: commentedUpdateIds.has(update.id) }),
+    );
   }
 
   async getUpdate(actor: AuthUser, id: string) {
@@ -145,7 +152,13 @@ export class UpdatesService {
       throw new NotFoundException('Update not found');
     }
 
-    return toUpdateResponse(update);
+    const commentedUpdateIds = await this.listCommentedUpdateIds(actor.id, [
+      update.id,
+    ]);
+
+    return toUpdateResponse(update, {
+      isCommented: commentedUpdateIds.has(update.id),
+    });
   }
 
   async updateUpdate(actor: AuthUser, id: string, dto: UpdateUpdateDto) {
@@ -207,7 +220,7 @@ export class UpdatesService {
       metadata: { projectId: updated.projectId },
     });
 
-    return toUpdateResponse(updated);
+    return toUpdateResponse(updated, { isCommented: false });
   }
 
   private async assertCanCreateUpdate(
@@ -257,6 +270,31 @@ export class UpdatesService {
     if (count !== ids.length) {
       throw new BadRequestException('One or more secondaryTagIds are invalid');
     }
+  }
+
+  private async listCommentedUpdateIds(
+    actorId: string,
+    updateIds: string[],
+  ): Promise<Set<string>> {
+    if (updateIds.length === 0) {
+      return new Set<string>();
+    }
+
+    const rows = await this.prisma.comment.findMany({
+      where: {
+        authorId: actorId,
+        updateId: {
+          in: updateIds,
+        },
+        status: ContentModerationStatus.active,
+      },
+      select: {
+        updateId: true,
+      },
+      distinct: ['updateId'],
+    });
+
+    return new Set(rows.map((row) => row.updateId));
   }
 
   private async triggerQuestAction(userId: string, action: string) {

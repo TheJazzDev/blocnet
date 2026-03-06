@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { BlocksService } from '../blocks/blocks.service';
+import { CommunityModerationEnforcementService } from '../community-moderation/community-moderation-enforcement.service';
 import { LevelsService } from '../levels/levels.service';
 import { QuestsService } from '../quests/quests.service';
 import { MentionsService } from '../mentions/mentions.service';
@@ -19,70 +20,85 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { ListCommentsQuery } from './dto/list-comments.query';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 
-const commentInclude = {
-  author: {
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      displayName: true,
-      avatarUrl: true,
-      roles: {
-        select: {
-          role: true,
+const buildCommentInclude = (viewerId: string) =>
+  ({
+    author: {
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        displayName: true,
+        avatarUrl: true,
+        roles: {
+          select: {
+            role: true,
+          },
         },
-      },
-      primaryBadge: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          description: true,
-          imageUrl: true,
-          category: true,
-          rarity: true,
+        primaryBadge: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            description: true,
+            imageUrl: true,
+            category: true,
+            rarity: true,
+          },
         },
-      },
-      currentLevel: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          description: true,
-          iconUrl: true,
-          level: true,
-          requiredBnp: true,
-          requiredComments: true,
-          requiredDaysActive: true,
-          requiredQuests: true,
-          requiredUpdates: true,
-          requiredProjects: true,
-          color: true,
-          isActive: true,
-          sortOrder: true,
-        },
-      },
-    },
-  },
-  replyTo: {
-    select: {
-      id: true,
-      content: true,
-      author: {
-        select: {
-          id: true,
-          username: true,
-          displayName: true,
+        currentLevel: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            description: true,
+            iconUrl: true,
+            level: true,
+            requiredBnp: true,
+            requiredComments: true,
+            requiredDaysActive: true,
+            requiredQuests: true,
+            requiredUpdates: true,
+            requiredProjects: true,
+            color: true,
+            isActive: true,
+            sortOrder: true,
+          },
         },
       },
     },
-  },
-  _count: {
-    select: {
-      reactions: true,
+    replyTo: {
+      select: {
+        id: true,
+        content: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+          },
+        },
+      },
     },
-  },
-} satisfies Prisma.CommentInclude;
+    reactions: {
+      where: {
+        userId: viewerId,
+        kind: 'like',
+      },
+      select: {
+        id: true,
+      },
+      take: 1,
+    },
+    _count: {
+      select: {
+        reactions: true,
+      },
+    },
+  }) satisfies Prisma.CommentInclude;
+
+type CommentWithRelations = Prisma.CommentGetPayload<{
+  include: ReturnType<typeof buildCommentInclude>;
+}>;
 
 @Injectable()
 export class CommentsService {
@@ -93,6 +109,7 @@ export class CommentsService {
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
     private readonly blocksService: BlocksService,
+    private readonly communityModerationEnforcementService: CommunityModerationEnforcementService,
     private readonly levelsService: LevelsService,
     private readonly questsService: QuestsService,
     private readonly mentionsService: MentionsService,
@@ -103,6 +120,10 @@ export class CommentsService {
     updateId: string,
     dto: CreateCommentDto,
   ) {
+    await this.communityModerationEnforcementService.assertCanCreateComment(
+      actor.id,
+    );
+
     const update = await this.prisma.update.findUnique({
       where: { id: updateId },
       select: { id: true, projectId: true, status: true },
@@ -123,7 +144,7 @@ export class CommentsService {
         content: dto.content,
         replyToId: dto.replyToId,
       },
-      include: commentInclude,
+      include: buildCommentInclude(actor.id),
     });
 
     await this.auditLogService.create({
@@ -212,7 +233,7 @@ export class CommentsService {
           ? (query.offset ?? 0)
           : 0,
       take: limit,
-      include: commentInclude,
+      include: buildCommentInclude(actor.id),
     });
 
     return comments.reverse().map((comment) => this.toCommentResponse(comment));
@@ -265,7 +286,7 @@ export class CommentsService {
       data: {
         content: dto.content,
       },
-      include: commentInclude,
+      include: buildCommentInclude(actor.id),
     });
 
     await this.auditLogService.create({
@@ -341,9 +362,7 @@ export class CommentsService {
   }
 
   private toCommentResponse(
-    comment: Prisma.CommentGetPayload<{
-      include: typeof commentInclude;
-    }>,
+    comment: CommentWithRelations,
   ) {
     const rawUsername = (comment.author.username ?? '')
       .replaceAll('@', '')
@@ -355,6 +374,7 @@ export class CommentsService {
     return {
       ...comment,
       likesCount: comment._count.reactions,
+      isLiked: comment.reactions.length > 0,
       author: {
         id: comment.author.id,
         displayName: comment.author.displayName,
@@ -421,7 +441,7 @@ export class CommentsService {
 
     const updated = await this.prisma.comment.findUnique({
       where: { id: commentId },
-      include: commentInclude,
+      include: buildCommentInclude(actor.id),
     });
 
     return this.toCommentResponse(updated!);
@@ -447,7 +467,7 @@ export class CommentsService {
 
     const updated = await this.prisma.comment.findUnique({
       where: { id: commentId },
-      include: commentInclude,
+      include: buildCommentInclude(actor.id),
     });
 
     return this.toCommentResponse(updated!);

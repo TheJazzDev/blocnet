@@ -57,6 +57,7 @@ class _FeedCardState extends State<FeedCard>
     final baseLikeCount = post.likesCount;
     _likeCount = liked && baseLikeCount < 1 ? 1 : baseLikeCount;
     _commentCount = post.commentsCount;
+    _isCommented = _isCommented || post.isCommented;
     // Don't sync bookmark count from server if we have a local bookmark state
     // because bookmarks are local-only and server always returns 0
     final shouldPreserveLocalCount = _isBookmarked && _bookmarkCount > 0;

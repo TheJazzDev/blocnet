@@ -1,4 +1,8 @@
-import { CommunityReactionKind, Prisma } from '@prisma/client';
+import {
+  CommunityReactionKind,
+  ContentModerationStatus,
+  Prisma,
+} from '@prisma/client';
 
 const authorSelect = {
   id: true,
@@ -47,29 +51,41 @@ const authorSelect = {
   },
 } satisfies Prisma.ProfileSelect;
 
-export const communityPostCommentInclude = {
-  author: {
-    select: authorSelect,
-  },
-  replyTo: {
-    select: {
-      id: true,
-      content: true,
-      author: {
-        select: {
-          id: true,
-          username: true,
-          displayName: true,
+export function buildCommunityPostCommentInclude(viewerId: string) {
+  return {
+    author: {
+      select: authorSelect,
+    },
+    replyTo: {
+      select: {
+        id: true,
+        content: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+          },
         },
       },
     },
-  },
-  _count: {
-    select: {
-      reactions: true,
+    reactions: {
+      where: {
+        userId: viewerId,
+        kind: CommunityReactionKind.like,
+      },
+      select: {
+        id: true,
+      },
+      take: 1,
     },
-  },
-} satisfies Prisma.CommunityPostCommentInclude;
+    _count: {
+      select: {
+        reactions: true,
+      },
+    },
+  } satisfies Prisma.CommunityPostCommentInclude;
+}
 
 export function buildCommunityPostInclude(viewerId: string) {
   return {
@@ -101,6 +117,16 @@ export function buildCommunityPostInclude(viewerId: string) {
       },
       take: 1,
     },
+    comments: {
+      where: {
+        authorId: viewerId,
+        status: ContentModerationStatus.active,
+      },
+      select: {
+        id: true,
+      },
+      take: 1,
+    },
   } satisfies Prisma.CommunityPostInclude;
 }
 
@@ -110,7 +136,7 @@ export type CommunityPostWithViewerState = Prisma.CommunityPostGetPayload<{
 
 export type CommunityPostCommentWithAuthor =
   Prisma.CommunityPostCommentGetPayload<{
-    include: typeof communityPostCommentInclude;
+    include: ReturnType<typeof buildCommunityPostCommentInclude>;
   }>;
 
 function toActorPreview(actor: {
@@ -197,6 +223,7 @@ export function toCommunityPostResponse(post: CommunityPostWithViewerState) {
     commentsCount: post._count.comments,
     isLiked: post.reactions.length > 0,
     isBookmarked: post.bookmarks.length > 0,
+    isCommented: post.comments.length > 0,
     author: {
       id: post.author.id,
       displayName: post.author.displayName,
@@ -217,6 +244,20 @@ export function toCommunityPostCommentResponse(
     content: comment.content,
     createdAt: comment.createdAt,
     updatedAt: comment.updatedAt,
+    replyToId: comment.replyToId,
+    replyTo: comment.replyTo
+      ? {
+          id: comment.replyTo.id,
+          content: comment.replyTo.content,
+          author: {
+            id: comment.replyTo.author.id,
+            username: comment.replyTo.author.username,
+            displayName: comment.replyTo.author.displayName,
+          },
+        }
+      : null,
+    likesCount: comment._count.reactions,
+    isLiked: comment.reactions.length > 0,
     author: {
       id: comment.author.id,
       displayName: comment.author.displayName,

@@ -11,6 +11,7 @@ import { BlocksModule } from './blocks/blocks.module';
 import { CommentsModule } from './comments/comments.module';
 import { LevelsModule } from './levels/levels.module';
 import { CommunityPostsModule } from './community-posts/community-posts.module';
+import { CommunityModerationModule } from './community-moderation/community-moderation.module';
 import { MentionsModule } from './mentions/mentions.module';
 import { QuestsModule } from './quests/quests.module';
 import { DeviceTokensModule } from './device-tokens/device-tokens.module';
@@ -64,6 +65,7 @@ import { envValidationSchema } from './config/env.validation';
     BadgesModule,
     BlocksModule,
     LevelsModule,
+    CommunityModerationModule,
     QuestsModule,
     ProjectsModule,
     ProjectAssignmentsModule,

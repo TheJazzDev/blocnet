@@ -77,7 +77,18 @@ class CommunityCommentSyncHelper {
       updatedAt: incoming.updatedAt.isAfter(existing.updatedAt)
           ? incoming.updatedAt
           : existing.updatedAt,
+      likesCount: incoming.likesCount > 0 ||
+              incoming.updatedAt.isAfter(existing.updatedAt)
+          ? incoming.likesCount
+          : existing.likesCount,
+      isLiked: incoming.isLiked != existing.isLiked ||
+              incoming.likesCount != existing.likesCount ||
+              incoming.updatedAt.isAfter(existing.updatedAt)
+          ? incoming.isLiked
+          : existing.isLiked,
       admin: incoming.admin ?? existing.admin,
+      replyToId: incoming.replyToId ?? existing.replyToId,
+      replyToData: incoming.replyToData ?? existing.replyToData,
     );
   }
 }

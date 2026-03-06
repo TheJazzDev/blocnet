@@ -20,6 +20,7 @@ describe('community-posts.mapper', () => {
       },
       reactions: [],
       bookmarks: [],
+      comments: [],
       author: {
         id: 'abc123def456',
         email: 'person@example.com',
@@ -47,6 +48,12 @@ describe('community-posts.mapper', () => {
       content: 'comment',
       createdAt: new Date(),
       updatedAt: new Date(),
+      replyToId: null,
+      replyTo: null,
+      reactions: [],
+      _count: {
+        reactions: 0,
+      },
       author: {
         id: 'def456abc123',
         email: 'commenter@example.com',

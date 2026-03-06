@@ -344,9 +344,10 @@ class _CommentsSectionState extends State<_CommentsSection> {
     });
   }
 
-  Future<void> _handleLike(CommentsStore commentsStore, String commentId) async {
+  Future<void> _handleLike(
+      CommentsStore commentsStore, String commentId) async {
     try {
-      await commentsStore.likeComment(commentId);
+      await commentsStore.toggleLikeComment(commentId);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -365,6 +366,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
     return Consumer<CommentsStore>(
       builder: (context, commentsStore, _) {
         final comments = commentsStore.commentsForUpdate(widget.updateId);
+        final threadedComments = _buildThreadedComments(comments);
         final isLoading = commentsStore.isLoadingForUpdate(widget.updateId);
         final hasMore = commentsStore.hasMoreCommentsForUpdate(widget.updateId);
 
@@ -454,7 +456,8 @@ class _CommentsSectionState extends State<_CommentsSection> {
             const SizedBox(height: 10),
             if (_replyToUsername != null) ...[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
@@ -553,24 +556,27 @@ class _CommentsSectionState extends State<_CommentsSection> {
               )
             else
               Column(
-                children: comments.asMap().entries.map((entry) {
+                children: threadedComments.asMap().entries.map((entry) {
                   final index = entry.key;
                   final item = entry.value;
                   return Column(
                     children: [
                       _CommentTile(
-                        comment: item,
-                        canEdit: item.authorId == auth.userId,
+                        comment: item.comment,
+                        canEdit: item.comment.authorId == auth.userId,
                         updateId: widget.updateId,
                         viewMode: widget.viewMode,
+                        isNestedReply: item.isNestedReply,
                         onReply: () => _handleReply(
-                          item.id,
-                          item.admin?.username ?? item.admin?.name,
+                          item.comment.id,
+                          item.comment.admin?.username ??
+                              item.comment.admin?.name,
                         ),
-                        onLike: () => _handleLike(commentsStore, item.id),
+                        onLike: () =>
+                            _handleLike(commentsStore, item.comment.id),
                       ),
                       if (widget.viewMode == FeedViewMode.list &&
-                          index != comments.length - 1)
+                          index != threadedComments.length - 1)
                         Divider(
                           height: 1,
                           color: AppColors.borderSubtle.withValues(alpha: 0.75),
@@ -584,6 +590,50 @@ class _CommentsSectionState extends State<_CommentsSection> {
       },
     );
   }
+
+  List<_ThreadedUpdateComment> _buildThreadedComments(
+    List<CommentModel> comments,
+  ) {
+    if (comments.length < 2) {
+      return comments
+          .map((comment) => _ThreadedUpdateComment(comment: comment))
+          .toList(growable: false);
+    }
+
+    final byId = <String, CommentModel>{
+      for (final comment in comments) comment.id: comment,
+    };
+    final repliesByParent = <String, List<CommentModel>>{};
+    final roots = <CommentModel>[];
+
+    for (final comment in comments) {
+      final parentId = comment.replyToId?.trim();
+      if (parentId == null || parentId.isEmpty || !byId.containsKey(parentId)) {
+        roots.add(comment);
+        continue;
+      }
+      final replies =
+          repliesByParent.putIfAbsent(parentId, () => <CommentModel>[]);
+      replies.add(comment);
+    }
+
+    final flattened = <_ThreadedUpdateComment>[];
+    for (final root in roots) {
+      flattened.add(_ThreadedUpdateComment(comment: root));
+      final replies = repliesByParent[root.id];
+      if (replies == null) continue;
+      for (final reply in replies) {
+        flattened.add(
+          _ThreadedUpdateComment(
+            comment: reply,
+            isNestedReply: true,
+          ),
+        );
+      }
+    }
+
+    return flattened;
+  }
 }
 
 // ─── Comment Tile ─────────────────────────────────────────────────────────────
@@ -594,6 +644,7 @@ class _CommentTile extends StatelessWidget {
     required this.canEdit,
     required this.updateId,
     required this.viewMode,
+    this.isNestedReply = false,
     this.onReply,
     this.onLike,
   });
@@ -602,6 +653,7 @@ class _CommentTile extends StatelessWidget {
   final bool canEdit;
   final String updateId;
   final FeedViewMode viewMode;
+  final bool isNestedReply;
   final VoidCallback? onReply;
   final VoidCallback? onLike;
 
@@ -615,7 +667,7 @@ class _CommentTile extends StatelessWidget {
       comment.admin?.id,
     );
     final isCardMode = viewMode == FeedViewMode.card;
-    return Container(
+    final tile = Container(
       width: double.infinity,
       margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
       padding: EdgeInsets.fromLTRB(
@@ -665,54 +717,6 @@ class _CommentTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (canEdit) ...[
-                InkWell(
-                  onTap: () => _showEditDialog(context),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary500.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Edit',
-                      style: TextStyle(
-                        color: AppColors.primary400,
-                        fontSize: 11,
-                        fontFamily: 'Geist',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                InkWell(
-                  onTap: () async {
-                    await context.read<CommentsStore>().deleteComment(
-                          updateId: updateId,
-                          commentId: comment.id,
-                        );
-                  },
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.error500.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Delete',
-                      style: TextStyle(
-                        color: AppColors.error500,
-                        fontSize: 11,
-                        fontFamily: 'Geist',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
               if (roleLabel != null) ...[
                 const SizedBox(width: 8),
                 Container(
@@ -758,6 +762,73 @@ class _CommentTile extends StatelessWidget {
                   ),
                 ),
               ),
+              if (canEdit) ...[
+                const SizedBox(width: 4),
+                PopupMenuButton<_CommentAction>(
+                  tooltip: 'Comment actions',
+                  position: PopupMenuPosition.under,
+                  icon: Icon(
+                    Icons.more_vert,
+                    size: 18,
+                    color: AppColors.textMuted,
+                  ),
+                  color: AppColors.bgSurface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(
+                      color: AppColors.borderSubtle.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
+                  ),
+                  onSelected: (action) => _handleCommentAction(context, action),
+                  itemBuilder: (context) => [
+                    PopupMenuItem<_CommentAction>(
+                      value: _CommentAction.edit,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 16,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Edit',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              fontFamily: 'Geist',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<_CommentAction>(
+                      value: _CommentAction.delete,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_outline,
+                            size: 16,
+                            color: AppColors.error500,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Delete',
+                            style: TextStyle(
+                              color: AppColors.error500,
+                              fontSize: 12,
+                              fontFamily: 'Geist',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 4),
@@ -771,7 +842,7 @@ class _CommentTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          if (comment.replyToData != null) ...[
+          if (!isNestedReply && comment.replyToData != null) ...[
             GestureDetector(
               onTap: () {
                 // TODO: Scroll to original comment
@@ -863,15 +934,21 @@ class _CommentTile extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.favorite_border,
+                        comment.isLiked
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border,
                         size: 14,
-                        color: AppColors.textMuted,
+                        color: comment.isLiked
+                            ? AppColors.primary400
+                            : AppColors.textMuted,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         comment.likesCount.toString(),
                         style: TextStyle(
-                          color: AppColors.textMuted,
+                          color: comment.isLiked
+                              ? AppColors.primary400
+                              : AppColors.textMuted,
                           fontSize: 12,
                           fontFamily: 'Geist',
                           fontWeight: FontWeight.w600,
@@ -899,6 +976,26 @@ class _CommentTile extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+
+    if (!isNestedReply) {
+      return tile;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 20),
+      child: Container(
+        padding: const EdgeInsets.only(left: 10),
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              color: AppColors.borderSubtle.withValues(alpha: 0.75),
+              width: 2,
+            ),
+          ),
+        ),
+        child: tile,
       ),
     );
   }
@@ -1061,4 +1158,96 @@ class _CommentTile extends StatelessWidget {
     if (id.isEmpty) return '@member';
     return '@${id.substring(0, id.length > 6 ? 6 : id.length)}';
   }
+
+  Future<void> _handleCommentAction(
+    BuildContext context,
+    _CommentAction action,
+  ) async {
+    if (action == _CommentAction.edit) {
+      await _showEditDialog(context);
+      return;
+    }
+
+    final confirmed = await _confirmDelete(context);
+    if (!confirmed || !context.mounted) return;
+    await context.read<CommentsStore>().deleteComment(
+          updateId: updateId,
+          commentId: comment.id,
+        );
+  }
+
+  Future<bool> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.bgSurface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: AppColors.borderSubtle.withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+          title: Text(
+            'Delete comment?',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 16,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(
+            'This action cannot be undone.',
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              fontFamily: 'Geist',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 12,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                'Delete',
+                style: TextStyle(
+                  color: AppColors.error500,
+                  fontSize: 12,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return confirmed == true;
+  }
 }
+
+class _ThreadedUpdateComment {
+  const _ThreadedUpdateComment({
+    required this.comment,
+    this.isNestedReply = false,
+  });
+
+  final CommentModel comment;
+  final bool isNestedReply;
+}
+
+enum _CommentAction { edit, delete }

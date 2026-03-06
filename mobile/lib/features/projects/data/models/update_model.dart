@@ -18,6 +18,7 @@ class Update {
   final int likesCount;
   final int commentsCount;
   final int bookmarksCount;
+  final bool isCommented;
   final List<String> secondaryTagIds;
   final List<SecondaryTag> secondaryTags;
 
@@ -36,6 +37,7 @@ class Update {
     this.likesCount = 0,
     this.commentsCount = 0,
     this.bookmarksCount = 0,
+    this.isCommented = false,
     required List<String> secondaryTagIds,
     required List<SecondaryTag> secondaryTags,
   })  : secondaryTagIds = secondaryTagIds.toSet().toList(),
@@ -55,6 +57,7 @@ class Update {
       likesCount: likesCount,
       commentsCount: commentsCount,
       bookmarksCount: bookmarksCount,
+      isCommented: isCommented,
       secondaryTagIds: secondaryTagIds,
       admin: admin ?? this.admin,
       secondaryTags: secondaryTags,
@@ -73,6 +76,7 @@ class Update {
       'likesCount': likesCount,
       'commentsCount': commentsCount,
       'bookmarksCount': bookmarksCount,
+      'isCommented': isCommented,
       'priority': priority.toJson(),
       'createdAt': createdAt.toIso8601String(),
       'lastEditedAt': lastEditedAt?.toIso8601String(),
@@ -137,6 +141,7 @@ class Update {
           int.tryParse(json['commentsCount']?.toString() ?? '') ?? 0,
       bookmarksCount:
           int.tryParse(json['bookmarksCount']?.toString() ?? '') ?? 0,
+      isCommented: json['isCommented'] == true,
       priority: Priority.fromJson(
           (json['priority'] ?? json['urgency'] ?? 'low').toString()),
       createdAt: DateTime.tryParse(createdAtValue ?? '') ?? DateTime.now(),

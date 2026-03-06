@@ -8,11 +8,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { BlocksService } from '../blocks/blocks.service';
+import { CommunityModerationEnforcementService } from '../community-moderation/community-moderation-enforcement.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MentionsService } from '../mentions/mentions.service';
 import {
   buildCommunityPostInclude,
-  communityPostCommentInclude,
+  buildCommunityPostCommentInclude,
   toCommunityPostCommentResponse,
   toCommunityPostResponse,
 } from './community-posts.mapper';
@@ -28,6 +29,7 @@ export class CommunityPostsService {
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
     private readonly blocksService: BlocksService,
+    private readonly communityModerationEnforcementService: CommunityModerationEnforcementService,
     private readonly mentionsService: MentionsService,
   ) {}
 
@@ -86,6 +88,10 @@ export class CommunityPostsService {
   }
 
   async createPost(actor: AuthUser, dto: CreateCommunityPostDto) {
+    await this.communityModerationEnforcementService.assertCanCreateCommunityPost(
+      actor.id,
+    );
+
     const post = await this.prisma.communityPost.create({
       data: {
         authorId: actor.id,
@@ -169,7 +175,7 @@ export class CommunityPostsService {
           ? (query.offset ?? 0)
           : 0,
       take: limit,
-      include: communityPostCommentInclude,
+      include: buildCommunityPostCommentInclude(actor.id),
     });
 
     return comments
@@ -182,6 +188,9 @@ export class CommunityPostsService {
     postId: string,
     dto: CreateCommunityPostCommentDto,
   ) {
+    await this.communityModerationEnforcementService.assertCanCreateComment(
+      actor.id,
+    );
     await this.ensurePostIsActive(postId);
 
     const comment = await this.prisma.communityPostComment.create({
@@ -191,7 +200,7 @@ export class CommunityPostsService {
         content: dto.content,
         replyToId: dto.replyToId,
       },
-      include: communityPostCommentInclude,
+      include: buildCommunityPostCommentInclude(actor.id),
     });
 
     await this.auditLogService.create({
@@ -393,7 +402,7 @@ export class CommunityPostsService {
 
     const updated = await this.prisma.communityPostComment.findUnique({
       where: { id: commentId },
-      include: communityPostCommentInclude,
+      include: buildCommunityPostCommentInclude(actor.id),
     });
 
     return toCommunityPostCommentResponse(updated!);
@@ -419,7 +428,7 @@ export class CommunityPostsService {
 
     const updated = await this.prisma.communityPostComment.findUnique({
       where: { id: commentId },
-      include: communityPostCommentInclude,
+      include: buildCommunityPostCommentInclude(actor.id),
     });
 
     return toCommunityPostCommentResponse(updated!);

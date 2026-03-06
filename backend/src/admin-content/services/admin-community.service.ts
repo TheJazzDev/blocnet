@@ -1,6 +1,11 @@
-import { Prisma } from '@prisma/client';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ContentModerationStatus, Prisma } from '@prisma/client';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuditLogService } from '../../audit-log/audit-log.service';
+import { AppRole } from '../../common/enums/role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { normalizePagination } from '../../common/utils/pagination.util';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -88,6 +93,8 @@ export class AdminCommunityService {
     postId: string,
     dto: ModerateCommunityPostStatusDto,
   ) {
+    this.assertCanSetCommunityStatus(actor, dto.status);
+
     const existing = await this.prisma.communityPost.findUnique({
       where: { id: postId },
       select: { id: true, status: true },
@@ -196,6 +203,8 @@ export class AdminCommunityService {
     commentId: string,
     dto: ModerateCommunityCommentStatusDto,
   ) {
+    this.assertCanSetCommunityStatus(actor, dto.status);
+
     const existing = await this.prisma.communityPostComment.findUnique({
       where: { id: commentId },
       select: { id: true, status: true },
@@ -228,5 +237,30 @@ export class AdminCommunityService {
     });
 
     return updated;
+  }
+
+  private assertCanSetCommunityStatus(
+    actor: AuthUser,
+    status: ContentModerationStatus,
+  ) {
+    const hasGovernance =
+      actor.roles.includes(AppRole.OWNER) ||
+      actor.roles.includes(AppRole.DEV) ||
+      actor.roles.includes(AppRole.ADMIN);
+    const hasCommunityAdmin =
+      hasGovernance || actor.roles.includes(AppRole.COMMUNITY_ADMIN);
+    const hasCommunityModerator =
+      hasCommunityAdmin || actor.roles.includes(AppRole.COMMUNITY_MODERATOR);
+
+    if (!hasCommunityModerator) {
+      throw new ForbiddenException('Role is not allowed to moderate community');
+    }
+
+    const isFrontlineOnly = !hasCommunityAdmin;
+    if (isFrontlineOnly && status === ContentModerationStatus.archived) {
+      throw new ForbiddenException(
+        'Community moderators can only set status to active or hidden',
+      );
+    }
   }
 }

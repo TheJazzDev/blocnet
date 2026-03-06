@@ -33,6 +33,7 @@ class CommentModel {
     required this.createdAt,
     required this.updatedAt,
     this.likesCount = 0,
+    this.isLiked = false,
     this.admin,
     this.replyToId,
     this.replyToData,
@@ -45,15 +46,15 @@ class CommentModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final int likesCount;
+  final bool isLiked;
   final Admin? admin;
   final String? replyToId;
   final ReplyToData? replyToData;
 
   factory CommentModel.fromApi(Map<String, dynamic> json) {
     final rawAdmin = json['admin'] ?? json['author'];
-    final admin = rawAdmin is Map<String, dynamic>
-        ? Admin.fromApi(rawAdmin)
-        : null;
+    final admin =
+        rawAdmin is Map<String, dynamic> ? Admin.fromApi(rawAdmin) : null;
 
     final rawReplyTo = json['replyTo'];
     final replyToData = rawReplyTo is Map<String, dynamic>
@@ -65,14 +66,22 @@ class CommentModel {
       updateId: (json['updateId'] ?? json['updateId'] ?? '').toString(),
       authorId: (json['authorId'] ?? admin?.id ?? '').toString(),
       content: (json['content'] ?? '').toString(),
-      createdAt:
-          DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt:
-          DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
-      likesCount: (json['likesCount'] ?? 0) as int,
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ??
+          DateTime.now(),
+      likesCount: _toInt(json['likesCount']),
+      isLiked: json['isLiked'] == true,
       admin: admin,
       replyToId: json['replyToId']?.toString(),
       replyToData: replyToData,
     );
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
   }
 }

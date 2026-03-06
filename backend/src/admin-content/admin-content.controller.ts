@@ -93,11 +93,25 @@ export class AdminContentController {
   }
 
   @Get('community-posts')
+  @Roles(
+    AppRole.OWNER,
+    AppRole.DEV,
+    AppRole.ADMIN,
+    AppRole.COMMUNITY_ADMIN,
+    AppRole.COMMUNITY_MODERATOR,
+  )
   async listCommunityPosts(@Query() query: ListAdminCommunityPostsQuery) {
     return this.adminCommunityService.listCommunityPosts(query);
   }
 
   @Patch('community-posts/:id/status')
+  @Roles(
+    AppRole.OWNER,
+    AppRole.DEV,
+    AppRole.ADMIN,
+    AppRole.COMMUNITY_ADMIN,
+    AppRole.COMMUNITY_MODERATOR,
+  )
   async moderateCommunityPostStatus(
     @CurrentUser() user: AuthUser | undefined,
     @Param('id') id: string,
@@ -115,11 +129,25 @@ export class AdminContentController {
   }
 
   @Get('community-comments')
+  @Roles(
+    AppRole.OWNER,
+    AppRole.DEV,
+    AppRole.ADMIN,
+    AppRole.COMMUNITY_ADMIN,
+    AppRole.COMMUNITY_MODERATOR,
+  )
   async listCommunityComments(@Query() query: ListAdminCommunityCommentsQuery) {
     return this.adminCommunityService.listCommunityComments(query);
   }
 
   @Patch('community-comments/:id/status')
+  @Roles(
+    AppRole.OWNER,
+    AppRole.DEV,
+    AppRole.ADMIN,
+    AppRole.COMMUNITY_ADMIN,
+    AppRole.COMMUNITY_MODERATOR,
+  )
   async moderateCommunityCommentStatus(
     @CurrentUser() user: AuthUser | undefined,
     @Param('id') id: string,

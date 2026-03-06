@@ -39,11 +39,13 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
   const CommunityDiscussionCommentCard({
     super.key,
     required this.comment,
+    this.isNestedReply = false,
     this.onReply,
     this.onLike,
   });
 
   final CommunityPostComment comment;
+  final bool isNestedReply;
   final VoidCallback? onReply;
   final VoidCallback? onLike;
 
@@ -65,200 +67,225 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
     final roleColor =
         roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: () => _openAuthorProfile(context),
-            behavior: HitTestBehavior.opaque,
-            child: AppAvatar(
-              radius: 18,
-              imageUrl: comment.admin?.imageUrl,
-              fallback: _avatarFallback(name),
-            ),
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () => _openAuthorProfile(context),
+          behavior: HitTestBehavior.opaque,
+          child: AppAvatar(
+            radius: 18,
+            imageUrl: comment.admin?.imageUrl,
+            fallback: _avatarFallback(name),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: GestureDetector(
-                        onTap: () => _openAuthorProfile(context),
-                        behavior: HitTestBehavior.opaque,
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: UserNameWithLevelIcon(
-                                name: name,
-                                currentLevel: admin?.currentLevel,
-                                levelBadgeSize: LevelBadgeSize.small,
-                                textStyle: AppTypography.custom(
-                                  color: AppColors.textPrimary,
-                                  size: 14,
-                                  weight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (roleLabel != null) ...[
-                      const SizedBox(width: 8),
-                      RoleChip(label: roleLabel, color: roleColor),
-                    ],
-                    const SizedBox(width: 8),
-                    Text(
-                      getTimeStamp(comment.createdAt),
-                      style: AppTypography.custom(
-                        color: AppColors.textFaint,
-                        size: 11,
-                        weight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  username,
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: 12,
-                    weight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (comment.replyToData != null) ...[
-                  GestureDetector(
-                    onTap: () {
-                      // TODO: Scroll to original comment
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgBase,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: AppColors.borderSubtle.withValues(alpha: 0.5),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: () => _openAuthorProfile(context),
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.subdirectory_arrow_right,
-                                size: 12,
-                                color: AppColors.textMuted,
+                          Flexible(
+                            child: UserNameWithLevelIcon(
+                              name: name,
+                              currentLevel: admin?.currentLevel,
+                              levelBadgeSize: LevelBadgeSize.small,
+                              textStyle: AppTypography.custom(
+                                color: AppColors.textPrimary,
+                                size: 14,
+                                weight: FontWeight.w700,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Replying to ',
-                                style: AppTypography.custom(
-                                  color: AppColors.textMuted,
-                                  size: 11,
-                                  weight: FontWeight.w400,
-                                ),
-                              ),
-                              Text(
-                                '@${_formatReplyUsername(comment.replyToData!)}',
-                                style: AppTypography.custom(
-                                  color: AppColors.primary400,
-                                  size: 11,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _truncateContent(comment.replyToData!.content, 50),
-                            style: AppTypography.custom(
-                              color: AppColors.textFaint,
-                              size: 11,
-                              weight: FontWeight.w400,
-                              height: 1.4,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                ],
-                MentionText(
-                  text: comment.content,
-                  style: AppTypography.custom(
-                    color: AppColors.textSecondary,
-                    size: 13,
-                    weight: FontWeight.w400,
-                    height: 1.6,
+                  if (roleLabel != null) ...[
+                    const SizedBox(width: 8),
+                    RoleChip(label: roleLabel, color: roleColor),
+                  ],
+                  const SizedBox(width: 8),
+                  Text(
+                    getTimeStamp(comment.createdAt),
+                    style: AppTypography.custom(
+                      color: AppColors.textFaint,
+                      size: 11,
+                      weight: FontWeight.w500,
+                    ),
                   ),
-                  onMentionTap: (mentionUsername) async {
-                    await MentionProfileNavigator.openFromUsername(
-                      context,
-                      mentionUsername,
-                    );
-                  },
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                username,
+                style: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 12,
+                  weight: FontWeight.w400,
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    if (onLike != null) ...[
-                      GestureDetector(
-                        onTap: onLike,
-                        behavior: HitTestBehavior.opaque,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+              ),
+              const SizedBox(height: 8),
+              if (!isNestedReply && comment.replyToData != null) ...[
+                GestureDetector(
+                  onTap: () {
+                    // TODO: Scroll to original comment
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgBase,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: AppColors.borderSubtle.withValues(alpha: 0.5),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
                             Icon(
-                              Icons.favorite_border,
-                              size: 14,
+                              Icons.subdirectory_arrow_right,
+                              size: 12,
                               color: AppColors.textMuted,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              comment.likesCount.toString(),
+                              'Replying to ',
                               style: AppTypography.custom(
                                 color: AppColors.textMuted,
-                                size: 12,
+                                size: 11,
+                                weight: FontWeight.w400,
+                              ),
+                            ),
+                            Text(
+                              '@${_formatReplyUsername(comment.replyToData!)}',
+                              style: AppTypography.custom(
+                                color: AppColors.primary400,
+                                size: 11,
                                 weight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                    ],
-                    if (onReply != null)
-                      GestureDetector(
-                        onTap: onReply,
-                        behavior: HitTestBehavior.opaque,
-                        child: Text(
-                          'Reply',
+                        const SizedBox(height: 4),
+                        Text(
+                          _truncateContent(comment.replyToData!.content, 50),
                           style: AppTypography.custom(
-                            color: AppColors.textMuted,
-                            size: 12,
-                            weight: FontWeight.w600,
+                            color: AppColors.textFaint,
+                            size: 11,
+                            weight: FontWeight.w400,
+                            height: 1.4,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
+              MentionText(
+                text: comment.content,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
+                  size: 13,
+                  weight: FontWeight.w400,
+                  height: 1.6,
+                ),
+                onMentionTap: (mentionUsername) async {
+                  await MentionProfileNavigator.openFromUsername(
+                    context,
+                    mentionUsername,
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  if (onLike != null) ...[
+                    GestureDetector(
+                      onTap: onLike,
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            comment.isLiked
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border,
+                            size: 14,
+                            color: comment.isLiked
+                                ? AppColors.primary400
+                                : AppColors.textMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            comment.likesCount.toString(),
+                            style: AppTypography.custom(
+                              color: comment.isLiked
+                                  ? AppColors.primary400
+                                  : AppColors.textMuted,
+                              size: 12,
+                              weight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                  if (onReply != null)
+                    GestureDetector(
+                      onTap: onReply,
+                      behavior: HitTestBehavior.opaque,
+                      child: Text(
+                        'Reply',
+                        style: AppTypography.custom(
+                          color: AppColors.textMuted,
+                          size: 12,
+                          weight: FontWeight.w600,
                         ),
                       ),
-                  ],
-                ),
-              ],
-            ),
+                    ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
+      ],
+    );
+
+    return Padding(
+      padding: EdgeInsets.only(
+        top: 12,
+        bottom: 12,
+        left: isNestedReply ? 20 : 0,
       ),
+      child: isNestedReply
+          ? Container(
+              padding: const EdgeInsets.only(left: 10),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: AppColors.borderSubtle.withValues(alpha: 0.75),
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: content,
+            )
+          : content,
     );
   }
 
