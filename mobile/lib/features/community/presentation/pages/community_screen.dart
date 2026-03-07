@@ -4,14 +4,18 @@ import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
+import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/data/models/community_topic.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_feed_list.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_tabs.dart';
 import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -32,6 +36,8 @@ class _CommunityScreenState extends State<CommunityScreen>
   final Set<String> _pendingNewPostIds = <String>{};
   final FeedSyncController _feedSyncController =
       FeedSyncController(debugLabel: 'Community');
+  final CommunityModerationApiRepository _moderationRepository =
+      CommunityModerationApiRepository();
 
   @override
   void initState() {
@@ -138,13 +144,43 @@ class _CommunityScreenState extends State<CommunityScreen>
     setState(() => _pendingNewPostIds.clear());
   }
 
+  Future<void> _moderatePost(
+    String postId,
+    CommunityContentModerationDecision decision,
+  ) async {
+    try {
+      await _moderationRepository.moderateCommunityPostStatus(
+        postId: postId,
+        status: decision.status,
+        reason: decision.reason,
+      );
+      if (!mounted) return;
+      await context.read<CommunityPostsStore>().refreshPosts();
+      if (!mounted) return;
+      AppSnackbar.showSuccess(
+        context,
+        switch (decision.status) {
+          CommunityContentModerationStatus.active => 'Post restored',
+          CommunityContentModerationStatus.hidden => 'Post hidden',
+          CommunityContentModerationStatus.archived => 'Post archived',
+        },
+      );
+    } catch (error) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, error.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
-    final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final auth = context.watch<AuthStore>();
+    final isHunterSpace = auth.isInHunterSpace;
     final viewMode = context.watch<FeedViewModeStore>().mode;
     final accent = AppColors.accentForSpace(isHunterSpace);
     final onAccent = AppColors.onAccentForSpace(isHunterSpace);
+    final canArchiveModeration = auth.isCommunityAdmin;
+    final canModerateContent = auth.canAccessCommunityStaffTools;
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -192,6 +228,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                           onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
+                          onModeratePost: canModerateContent ? _moderatePost : null,
+                          canArchiveModeration: canArchiveModeration,
                         ),
                         CommunityFeedList(
                           posts: _filterPosts(posts, CommunityTopic.marketTalk),
@@ -203,6 +241,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                           onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
+                          onModeratePost: canModerateContent ? _moderatePost : null,
+                          canArchiveModeration: canArchiveModeration,
                         ),
                       ],
                     ),

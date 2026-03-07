@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/api/api_client.dart';
@@ -168,8 +169,72 @@ class _CommunityStaffToolsScreenState extends State<CommunityStaffToolsScreen> {
     );
   }
 
+  Future<void> _moderateReportTarget(
+    CommunityModerationReport report,
+  ) async {
+    final auth = context.read<AuthStore>();
+    final decision = await showCommunityContentModerationSheet(
+      context,
+      targetLabel: report.targetType == CommunityReportTargetType.communityComment
+          ? 'comment'
+          : 'post',
+      canArchive: auth.isCommunityAdmin,
+    );
+    if (decision == null) return;
+
+    setState(() => _isReviewing = true);
+    try {
+      if (report.targetType == CommunityReportTargetType.communityComment) {
+        await _repository.moderateCommunityCommentStatus(
+          commentId: report.targetId,
+          status: decision.status,
+          reason: decision.reason,
+        );
+      } else if (report.targetType == CommunityReportTargetType.communityPost) {
+        await _repository.moderateCommunityPostStatus(
+          postId: report.targetId,
+          status: decision.status,
+          reason: decision.reason,
+        );
+      } else {
+        if (!mounted) return;
+        AppSnackbar.showError(
+          context,
+          'Content actions are only available for posts and comments.',
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      AppSnackbar.showSuccess(
+        context,
+        switch (decision.status) {
+          CommunityContentModerationStatus.active => 'Content restored',
+          CommunityContentModerationStatus.hidden => 'Content hidden',
+          CommunityContentModerationStatus.archived => 'Content archived',
+        },
+      );
+      await _loadReports();
+    } catch (error) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, _friendlyError(error));
+    } finally {
+      if (mounted) {
+        setState(() => _isReviewing = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final openCount = _reports.where((report) => report.isOpen).length;
+    final contentCount = _reports
+        .where(
+          (report) =>
+              report.targetType == CommunityReportTargetType.communityPost ||
+              report.targetType == CommunityReportTargetType.communityComment,
+        )
+        .length;
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: const CustomAppBar(
@@ -196,6 +261,14 @@ class _CommunityStaffToolsScreenState extends State<CommunityStaffToolsScreen> {
             },
             onRefresh: () => _loadReports(),
             isRefreshing: _isLoading,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 2),
+            child: _StaffOverviewCard(
+              openCount: openCount,
+              contentCount: contentCount,
+              total: _total,
+            ),
           ),
           Expanded(
             child: _isLoading && _reports.isEmpty
@@ -245,6 +318,15 @@ class _CommunityStaffToolsScreenState extends State<CommunityStaffToolsScreen> {
                                           CommunityReportStatus.dismissed,
                                         )
                                     : null,
+                                onContentActions:
+                                    report.targetType ==
+                                                CommunityReportTargetType
+                                                    .communityPost ||
+                                            report.targetType ==
+                                                CommunityReportTargetType
+                                                    .communityComment
+                                        ? () => _moderateReportTarget(report)
+                                        : null,
                                 onUserActions: () => _openUserActions(report),
                               );
                             },
@@ -442,6 +524,7 @@ class _ReportCard extends StatelessWidget {
     required this.reviewing,
     required this.onResolve,
     required this.onDismiss,
+    required this.onContentActions,
     required this.onUserActions,
   });
 
@@ -449,6 +532,7 @@ class _ReportCard extends StatelessWidget {
   final bool reviewing;
   final VoidCallback? onResolve;
   final VoidCallback? onDismiss;
+  final VoidCallback? onContentActions;
   final VoidCallback onUserActions;
 
   Color _statusColor(CommunityReportStatus status) {
@@ -548,6 +632,16 @@ class _ReportCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
+              if (onContentActions != null)
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: reviewing ? null : onContentActions,
+                    child: const Text('Content Actions'),
+                  ),
+                ),
+              if (onContentActions != null &&
+                  (onResolve != null || onDismiss != null || report.targetUserId != null))
+                const SizedBox(width: 8),
               if (onResolve != null)
                 Expanded(
                   child: OutlinedButton(
@@ -574,6 +668,159 @@ class _ReportCard extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StaffOverviewCard extends StatelessWidget {
+  const _StaffOverviewCard({
+    required this.openCount,
+    required this.contentCount,
+    required this.total,
+  });
+
+  final int openCount;
+  final int contentCount;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgSurface,
+            AppColors.bgSurface.withValues(alpha: 0.82),
+          ],
+        ),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primary400.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.gavel_rounded,
+                  size: 18,
+                  color: AppColors.primary400,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Community moderation queue',
+                      style: AppTypography.custom(
+                        color: AppColors.textPrimary,
+                        size: 14,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Review reports, hide content, and take action against repeat offenders.',
+                      style: AppTypography.custom(
+                        color: AppColors.textMuted,
+                        size: 11,
+                        weight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _OverviewStat(
+                  label: 'Open',
+                  value: '$openCount',
+                  color: const Color(0xFF60A5FA),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _OverviewStat(
+                  label: 'Content',
+                  value: '$contentCount',
+                  color: const Color(0xFFF59E0B),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _OverviewStat(
+                  label: 'Total',
+                  value: '$total',
+                  color: const Color(0xFF34D399),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OverviewStat extends StatelessWidget {
+  const _OverviewStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 18,
+              weight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
+              size: 11,
+              weight: FontWeight.w600,
+            ),
           ),
         ],
       ),

@@ -176,14 +176,22 @@ export class QuestStorageService {
     if (buffer.length >= 12 && buffer.toString('ascii', 4, 8) === 'ftyp') {
       const brand = buffer.toString('ascii', 8, 12).toLowerCase();
       if (
-        brand == 'heic' ||
-        brand == 'heix' ||
-        brand == 'hevc' ||
-        brand == 'hevx'
+        brand.startsWith('heic') ||
+        brand.startsWith('heix') ||
+        brand.startsWith('hevc') ||
+        brand.startsWith('hevx') ||
+        brand.startsWith('heim') ||
+        brand.startsWith('heis') ||
+        brand.startsWith('hevm') ||
+        brand.startsWith('hevs')
       ) {
         return 'image/heic';
       }
-      if (brand == 'mif1' || brand == 'msf1') {
+      if (
+        brand.startsWith('heif') ||
+        brand == 'mif1' ||
+        brand == 'msf1'
+      ) {
         return 'image/heif';
       }
     }

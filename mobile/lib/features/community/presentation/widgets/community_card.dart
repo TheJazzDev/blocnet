@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_action.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_post_share_sheet.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
@@ -24,6 +25,8 @@ class CommunityCard extends StatelessWidget {
     required this.onLike,
     required this.onCommentTap,
     required this.onBookmark,
+    this.onModerate,
+    this.canArchiveModeration = false,
   });
 
   final CommunityPost post;
@@ -32,11 +35,25 @@ class CommunityCard extends StatelessWidget {
   final VoidCallback onLike;
   final VoidCallback onCommentTap;
   final VoidCallback onBookmark;
+  final Future<void> Function(CommunityContentModerationDecision decision)?
+  onModerate;
+  final bool canArchiveModeration;
 
   void _openAuthorProfile(BuildContext context) {
     final admin = post.admin;
     if (admin == null) return;
     PublicProfileScreen.showSheet(context, admin);
+  }
+
+  Future<void> _openModerationActions(BuildContext context) async {
+    if (onModerate == null) return;
+    final decision = await showCommunityContentModerationSheet(
+      context,
+      targetLabel: 'post',
+      canArchive: canArchiveModeration,
+    );
+    if (decision == null) return;
+    await onModerate!(decision);
   }
 
   @override
@@ -116,6 +133,21 @@ class CommunityCard extends StatelessWidget {
                               weight: FontWeight.w400,
                             ),
                           ),
+                          if (onModerate != null) ...[
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () => _openModerationActions(context),
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: Icon(
+                                  Icons.more_horiz_rounded,
+                                  size: 18,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 2),

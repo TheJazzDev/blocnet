@@ -54,6 +54,11 @@ type PendingRoleAction = {
   action: CommunityRoleAction;
 } | null;
 
+const COMMUNITY_ROLES: CommunityRoleFilter[] = [
+  'community_admin',
+  'community_moderator',
+];
+
 export default function CommunityAccessPageClient() {
   const session = useAdminSession();
   const actorRoles = session.effectiveRoles;
@@ -83,21 +88,63 @@ export default function CommunityAccessPageClient() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await clientApi.listUsers({
-        limit,
-        offset,
-        role: role === 'all' ? undefined : role,
-        status,
-        q: q || undefined,
-      });
+      if (role === 'all') {
+        const pageSize = 100;
+        const fetchAllForRole = async (targetRole: CommunityRoleFilter) => {
+          const rows: AdminUser[] = [];
+          let nextOffset = 0;
+          while (nextOffset <= 5000) {
+            const response = await clientApi.listUsers({
+              limit: pageSize,
+              offset: nextOffset,
+              role: targetRole,
+              status,
+              q: q || undefined,
+            });
+            rows.push(...response.data);
+            if (response.data.length < pageSize) break;
+            nextOffset += pageSize;
+          }
+          return rows;
+        };
 
-      const data =
-        role === 'all'
-          ? response.data
-          : response.data.filter((entry) => entry.roles.includes(role));
+        const batches = await Promise.all(
+          COMMUNITY_ROLES.map((entry) => fetchAllForRole(entry)),
+        );
+        const byUserId = new Map<string, AdminUser>();
+        for (const batch of batches) {
+          for (const row of batch) {
+            const existing = byUserId.get(row.id);
+            if (!existing) {
+              byUserId.set(row.id, row);
+              continue;
+            }
+            byUserId.set(row.id, {
+              ...row,
+              roles: Array.from(new Set([...existing.roles, ...row.roles])),
+            });
+          }
+        }
 
-      setUsers(data);
-      setTotal(response.total);
+        const merged = Array.from(byUserId.values()).sort((a, b) =>
+          a.email.localeCompare(b.email),
+        );
+        setTotal(merged.length);
+        setUsers(merged.slice(offset, offset + limit));
+      } else {
+        const response = await clientApi.listUsers({
+          limit,
+          offset,
+          role,
+          status,
+          q: q || undefined,
+        });
+        const filtered = response.data.filter((entry) =>
+          entry.roles.includes(role),
+        );
+        setUsers(filtered);
+        setTotal(response.total);
+      }
     } catch (e: unknown) {
       setUsers([]);
       setTotal(0);
@@ -223,7 +270,7 @@ export default function CommunityAccessPageClient() {
                 <SelectValue placeholder='Community role' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All users</SelectItem>
+                <SelectItem value='all'>All community operators</SelectItem>
                 <SelectItem value='community_admin'>Community admins only</SelectItem>
                 <SelectItem value='community_moderator'>
                   Community moderators only

@@ -38,6 +38,34 @@ enum CommunityReportStatus {
   }
 }
 
+enum CommunityContentModerationStatus {
+  active,
+  hidden,
+  archived;
+
+  String get apiValue {
+    switch (this) {
+      case CommunityContentModerationStatus.active:
+        return 'active';
+      case CommunityContentModerationStatus.hidden:
+        return 'hidden';
+      case CommunityContentModerationStatus.archived:
+        return 'archived';
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case CommunityContentModerationStatus.active:
+        return 'Restore';
+      case CommunityContentModerationStatus.hidden:
+        return 'Hide';
+      case CommunityContentModerationStatus.archived:
+        return 'Archive';
+    }
+  }
+}
+
 enum CommunityReportTargetType {
   communityPost,
   communityComment,

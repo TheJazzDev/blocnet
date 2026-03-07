@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/community/presentation/widgets/role_chip.dart';
 import 'package:blocnet/features/mentions/presentation/utils/mention_profile_navigator.dart';
@@ -42,17 +43,33 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
     this.isNestedReply = false,
     this.onReply,
     this.onLike,
+    this.onModerate,
+    this.canArchiveModeration = false,
   });
 
   final CommunityPostComment comment;
   final bool isNestedReply;
   final VoidCallback? onReply;
   final VoidCallback? onLike;
+  final Future<void> Function(CommunityContentModerationDecision decision)?
+  onModerate;
+  final bool canArchiveModeration;
 
   void _openAuthorProfile(BuildContext context) {
     final admin = comment.admin;
     if (admin == null) return;
     PublicProfileScreen.showSheet(context, admin);
+  }
+
+  Future<void> _openModerationActions(BuildContext context) async {
+    if (onModerate == null) return;
+    final decision = await showCommunityContentModerationSheet(
+      context,
+      targetLabel: 'comment',
+      canArchive: canArchiveModeration,
+    );
+    if (decision == null) return;
+    await onModerate!(decision);
   }
 
   @override
@@ -121,6 +138,21 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                       weight: FontWeight.w500,
                     ),
                   ),
+                  if (onModerate != null) ...[
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () => _openModerationActions(context),
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(2),
+                        child: Icon(
+                          Icons.more_horiz_rounded,
+                          size: 18,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 2),

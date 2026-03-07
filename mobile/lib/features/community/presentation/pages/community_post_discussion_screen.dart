@@ -1,8 +1,11 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
+import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
+import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_discussion_comment_card.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_discussion_composer.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_discussion_no_post_view.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_discussion_post_details_card.dart';
@@ -11,7 +14,9 @@ import 'package:blocnet/features/mentions/data/repositories/mentions_repository.
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -33,6 +38,8 @@ class _CommunityPostDiscussionScreenState
   final Set<String> _knownCommentIds = <String>{};
   final Set<String> _pendingNewCommentIds = <String>{};
   late final MentionsRepository _mentionsRepository;
+  final CommunityModerationApiRepository _moderationRepository =
+      CommunityModerationApiRepository();
   String? _postId;
   bool _focusComposerOnLoad = false;
   bool _isSending = false;
@@ -256,6 +263,71 @@ class _CommunityPostDiscussionScreenState
     }
   }
 
+  Future<void> _moderatePost(
+    CommunityContentModerationDecision decision,
+  ) async {
+    final postId = _postId;
+    if (postId == null || postId.isEmpty) return;
+
+    try {
+      await _moderationRepository.moderateCommunityPostStatus(
+        postId: postId,
+        status: decision.status,
+        reason: decision.reason,
+      );
+      if (!mounted) return;
+      await context.read<CommunityPostsStore>().refreshPosts();
+      if (!mounted) return;
+      AppSnackbar.showSuccess(
+        context,
+        _contentActionSuccessMessage(decision.status, 'Post'),
+      );
+      if (decision.status != CommunityContentModerationStatus.active &&
+          mounted &&
+          Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    } catch (error) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, error.toString());
+    }
+  }
+
+  Future<void> _moderateComment(
+    String commentId,
+    CommunityContentModerationDecision decision,
+  ) async {
+    final postId = _postId;
+    if (postId == null || postId.isEmpty) return;
+
+    try {
+      await _moderationRepository.moderateCommunityCommentStatus(
+        commentId: commentId,
+        status: decision.status,
+        reason: decision.reason,
+      );
+      if (!mounted) return;
+      await context.read<CommunityPostsStore>().fetchComments(postId, force: true);
+      if (!mounted) return;
+      AppSnackbar.showSuccess(
+        context,
+        _contentActionSuccessMessage(decision.status, 'Comment'),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, error.toString());
+    }
+  }
+
+  String _contentActionSuccessMessage(
+    CommunityContentModerationStatus status,
+    String target,
+  ) => switch (status) {
+    CommunityContentModerationStatus.active => '$target restored',
+    CommunityContentModerationStatus.hidden => '$target hidden',
+    CommunityContentModerationStatus.archived => '$target archived',
+  };
+
   @override
   Widget build(BuildContext context) {
     final postId = _postId;
@@ -270,6 +342,9 @@ class _CommunityPostDiscussionScreenState
         final threadedComments = _buildThreadedComments(comments);
         final isLoadingComments = store.isLoadingCommentsForPost(postId);
         final hasMoreComments = store.hasMoreCommentsForPost(postId);
+        final auth = context.watch<AuthStore>();
+        final canModerateContent = auth.canAccessCommunityStaffTools;
+        final canArchiveModeration = auth.isCommunityAdmin;
 
         return Scaffold(
           backgroundColor: AppColors.bgBase,
@@ -306,6 +381,9 @@ class _CommunityPostDiscussionScreenState
                                   onShareTap: () => _openShareSheet(post),
                                   onBookmark: () =>
                                       store.toggleBookmark(post.id),
+                                  onModerate:
+                                      canModerateContent ? _moderatePost : null,
+                                  canArchiveModeration: canArchiveModeration,
                                 ),
                                 const SizedBox(height: 14),
                                 _DiscussionHeader(
@@ -339,6 +417,16 @@ class _CommunityPostDiscussionScreenState
                                       ),
                                       onLike: () => _handleLike(
                                           threadedComments[index].comment.id),
+                                      onModerate: canModerateContent
+                                          ? (decision) => _moderateComment(
+                                                threadedComments[index]
+                                                    .comment
+                                                    .id,
+                                                decision,
+                                              )
+                                          : null,
+                                      canArchiveModeration:
+                                          canArchiveModeration,
                                     ),
                                     if (index != threadedComments.length - 1)
                                       Divider(

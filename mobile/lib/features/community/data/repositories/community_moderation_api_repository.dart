@@ -64,6 +64,34 @@ class CommunityModerationApiRepository {
     );
   }
 
+  Future<void> moderateCommunityPostStatus({
+    required String postId,
+    required CommunityContentModerationStatus status,
+    required String reason,
+  }) async {
+    await _apiClient.patch(
+      '/admin/content/community-posts/$postId/status',
+      body: {
+        'status': status.apiValue,
+        'reason': reason.trim(),
+      },
+    );
+  }
+
+  Future<void> moderateCommunityCommentStatus({
+    required String commentId,
+    required CommunityContentModerationStatus status,
+    required String reason,
+  }) async {
+    await _apiClient.patch(
+      '/admin/content/community-comments/$commentId/status',
+      body: {
+        'status': status.apiValue,
+        'reason': reason.trim(),
+      },
+    );
+  }
+
   Future<CommunityModerationUserState> getUserState(String userId) async {
     final response =
         await _apiClient.get('/community/moderation/users/$userId/state');

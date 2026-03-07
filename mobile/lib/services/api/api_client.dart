@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/services/core/startup_metrics_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class ApiException implements Exception {
   ApiException(this.message, {this.statusCode, this.responseBody});
@@ -113,8 +114,17 @@ class ApiClient {
         request.fields.addAll(fields);
       }
 
-      request.files
-          .add(await http.MultipartFile.fromPath(fieldName, file.path));
+      final contentType = _inferMediaTypeForFile(file.path);
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          fieldName,
+          await file.readAsBytes(),
+          filename: file.uri.pathSegments.isNotEmpty
+              ? file.uri.pathSegments.last
+              : 'upload.bin',
+          contentType: contentType,
+        ),
+      );
       return request.send().timeout(_requestTimeout);
     }
 
@@ -274,5 +284,25 @@ class ApiClient {
     }
     if (statusCode >= 500) return 'Server error. Please try again shortly.';
     return 'Request failed. Please try again.';
+  }
+
+  MediaType? _inferMediaTypeForFile(String path) {
+    final normalizedPath = path.toLowerCase();
+    if (normalizedPath.endsWith('.jpg') || normalizedPath.endsWith('.jpeg')) {
+      return MediaType('image', 'jpeg');
+    }
+    if (normalizedPath.endsWith('.png')) {
+      return MediaType('image', 'png');
+    }
+    if (normalizedPath.endsWith('.webp')) {
+      return MediaType('image', 'webp');
+    }
+    if (normalizedPath.endsWith('.heic')) {
+      return MediaType('image', 'heic');
+    }
+    if (normalizedPath.endsWith('.heif')) {
+      return MediaType('image', 'heif');
+    }
+    return null;
   }
 }

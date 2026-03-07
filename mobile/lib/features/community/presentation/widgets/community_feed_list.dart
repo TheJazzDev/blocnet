@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_card.dart';
@@ -17,6 +18,8 @@ class CommunityFeedList extends StatelessWidget {
     required this.onRefresh,
     required this.onLike,
     required this.onBookmark,
+    this.onModeratePost,
+    this.canArchiveModeration = false,
   });
 
   final List<CommunityPost> posts;
@@ -27,6 +30,11 @@ class CommunityFeedList extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final Future<void> Function(String postId) onLike;
   final Future<void> Function(String postId) onBookmark;
+  final Future<void> Function(
+    String postId,
+    CommunityContentModerationDecision decision,
+  )? onModeratePost;
+  final bool canArchiveModeration;
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +98,10 @@ class CommunityFeedList extends StatelessWidget {
           ),
           onLike: () => onLike(posts[index].id),
           onBookmark: () => onBookmark(posts[index].id),
+          onModerate: onModeratePost == null
+              ? null
+              : (decision) => onModeratePost!(posts[index].id, decision),
+          canArchiveModeration: canArchiveModeration,
         ),
       ),
     );

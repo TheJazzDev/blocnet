@@ -3,6 +3,10 @@ import 'dart:io';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/community/community_posts_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -75,8 +79,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
+    await _refreshDependentViews();
+    if (!mounted) return;
+
     AppSnackbar.showSuccess(context, 'Profile updated successfully');
     Navigator.of(context).pop(true);
+  }
+
+  Future<void> _refreshDependentViews() async {
+    final futures = <Future<void>>[
+      context.read<UserProfileStore>().refreshAll(),
+      context.read<UpdatesStore>().refreshUpdates(),
+      context.read<ProjectsStore>().refreshProjects(),
+      context.read<CommunityPostsStore>().refreshPosts(),
+    ];
+
+    await Future.wait(
+      futures.map((future) async {
+        try {
+          await future;
+        } catch (_) {
+          // Keep profile update successful even if downstream refresh fails.
+        }
+      }),
+    );
   }
 
   Future<void> _pickAvatar() async {
