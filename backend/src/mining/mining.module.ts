@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { BadgesModule } from '../badges/badges.module';
 import { LevelsModule } from '../levels/levels.module';
@@ -12,7 +12,12 @@ import { MiningAdminService } from './mining-admin.service';
 import { MiningLeaderboardService } from './mining-leaderboard.service';
 
 @Module({
-  imports: [AuditLogModule, BadgesModule, LevelsModule, QuestsModule],
+  imports: [
+    AuditLogModule,
+    BadgesModule,
+    LevelsModule,
+    forwardRef(() => QuestsModule),
+  ],
   controllers: [MiningController, MiningAdminController],
   providers: [
     MiningService,

@@ -40,26 +40,26 @@ export function ReferralMetricsCard({
 
   const stats = [
     {
-      label: "Total Users",
-      value: metrics.totalUsers.toLocaleString(),
+      label: "Total Miners",
+      value: metrics.totalMiners.toLocaleString(),
       icon: Users,
       color: "text-blue-400",
     },
     {
-      label: "Users with Referrals",
-      value: metrics.usersWithReferrals.toLocaleString(),
+      label: "Total Referrals",
+      value: metrics.totalDirectReferrals.toLocaleString(),
       icon: UserPlus,
       color: "text-emerald-400",
     },
     {
-      label: "Active Referrers",
-      value: metrics.activeReferrers.toLocaleString(),
+      label: "Active Referrals",
+      value: metrics.activeDirectReferrals.toLocaleString(),
       icon: Award,
       color: "text-amber-400",
     },
     {
-      label: "Referral Rate",
-      value: `${((metrics.usersWithReferrals / metrics.totalUsers) * 100).toFixed(1)}%`,
+      label: "Referral Bind Rate",
+      value: `${(metrics.referralBindRate * 100).toFixed(1)}%`,
       icon: TrendingUp,
       color: "text-purple-400",
     },
@@ -85,31 +85,6 @@ export function ReferralMetricsCard({
             </div>
           ))}
         </div>
-
-        {metrics.topReferrerIds && metrics.topReferrerIds.length > 0 && (
-          <div className="mt-6 pt-6 border-t">
-            <h4 className="text-xs sm:text-sm font-semibold mb-3">
-              Top Referrers (by direct referrals)
-            </h4>
-            <div className="space-y-2">
-              {metrics.topReferrerIds.slice(0, 5).map((referrerId, index) => (
-                <div
-                  key={referrerId}
-                  className="flex items-center justify-between rounded-md border p-2 sm:p-3 bg-muted/30 text-xs sm:text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-xs font-bold">
-                      {index + 1}
-                    </span>
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {referrerId}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

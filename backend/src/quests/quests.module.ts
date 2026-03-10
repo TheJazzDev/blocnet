@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { BadgesModule } from '../badges/badges.module';
 import { LevelsModule } from '../levels/levels.module';
@@ -15,7 +15,7 @@ import { QuestStorageService } from './quest-storage.service';
     PrismaModule,
     BadgesModule,
     LevelsModule,
-    MiningModule,
+    forwardRef(() => MiningModule),
     NotificationsModule,
     AuditLogModule,
   ],
