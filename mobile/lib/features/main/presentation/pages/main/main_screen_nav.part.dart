@@ -138,6 +138,75 @@ class _HunterNav extends StatelessWidget {
   }
 }
 
+class _ModerationNav extends StatelessWidget {
+  const _ModerationNav({
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const activeColor = AppColors.moderationAccent;
+    return _NavContainer(
+      child: Row(
+        children: [
+          _NavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            activeColor: activeColor,
+            navSpace: _NavSpace.moderation,
+            isActive: currentIndex == 0,
+            onTap: () => onTap(0),
+          ),
+          _NavItem(
+            icon: Icons.explore_outlined,
+            activeIcon: Icons.explore_rounded,
+            activeColor: activeColor,
+            navSpace: _NavSpace.moderation,
+            isActive: currentIndex == 1,
+            onTap: () => onTap(1),
+          ),
+          _NavItem(
+            icon: Icons.shield_outlined,
+            activeIcon: Icons.shield_rounded,
+            activeColor: activeColor,
+            navSpace: _NavSpace.moderation,
+            isActive: currentIndex == 2,
+            onTap: () => onTap(2),
+          ),
+          _NavItem(
+            icon: Icons.bolt_outlined,
+            activeIcon: Icons.bolt_rounded,
+            activeColor: activeColor,
+            navSpace: _NavSpace.moderation,
+            isActive: currentIndex == 3,
+            onTap: () => onTap(3),
+          ),
+          _NavItem(
+            icon: Icons.account_balance_wallet_outlined,
+            activeIcon: Icons.account_balance_wallet_rounded,
+            activeColor: activeColor,
+            navSpace: _NavSpace.moderation,
+            isActive: currentIndex == 4,
+            onTap: () => onTap(4),
+          ),
+          _NavItem(
+            icon: Icons.person_outlined,
+            activeIcon: Icons.person_rounded,
+            activeColor: activeColor,
+            navSpace: _NavSpace.moderation,
+            isActive: currentIndex == 5,
+            onTap: () => onTap(5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FloatingComposerFab extends StatelessWidget {
   const _FloatingComposerFab({required this.onPressed});
 
@@ -259,4 +328,5 @@ class _NavItem extends StatelessWidget {
 enum _NavSpace {
   user,
   hunter,
+  moderation,
 }

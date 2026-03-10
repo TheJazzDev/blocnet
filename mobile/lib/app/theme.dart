@@ -23,6 +23,7 @@ class AppColors {
   static const Color secondary500 = Color(0xFF2563EB);
   static const Color userAccent = secondary500;
   static Color hunterAccent = const Color(0xFF0deef2);
+  static const Color moderationAccent = Color(0xFFEF4444); // Red for moderation theme
 
   // ── Teal aliases (mapped to cyan primary) ─────────────────────────────────
   static Color teal300 = const Color(0xFF67E8F9);

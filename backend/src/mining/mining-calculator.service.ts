@@ -9,6 +9,7 @@ export type EffectiveMiningConfig = {
   maxBoostBps: number;
   activeReferralWindowHours: number;
   referralBindWindowHours: number;
+  claimWindowHours: number;
 };
 
 @Injectable()

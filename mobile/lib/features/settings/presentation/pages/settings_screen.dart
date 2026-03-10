@@ -113,6 +113,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 8),
         _SettingsNavigationTile(
           mode: viewMode,
+          icon: Icons.flag_outlined,
+          title: 'My Reports',
+          subtitle: 'View your submitted community reports',
+          showDivider: true,
+          onTap: () {
+            Navigator.pushNamed(context, AppRoutes.myReports);
+          },
+        ),
+        _SettingsNavigationTile(
+          mode: viewMode,
           icon: Icons.block_outlined,
           title: 'Blocked users',
           subtitle: 'Manage your blocked accounts',

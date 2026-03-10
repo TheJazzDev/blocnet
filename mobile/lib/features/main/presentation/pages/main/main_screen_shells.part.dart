@@ -78,6 +78,45 @@ const _hunterTabs = [
   ),
 ];
 
+const _moderationTabs = [
+  _TabMeta(
+    title: 'Home',
+    showSearch: true,
+    showFilter: false,
+    showNotificationBell: true,
+  ),
+  _TabMeta(
+    title: 'Discover',
+    showSearch: true,
+    showFilter: true,
+    showNotificationBell: true,
+  ),
+  _TabMeta(
+    title: 'Moderation',
+    showSearch: false,
+    showFilter: false,
+    showNotificationBell: true,
+  ),
+  _TabMeta(
+    title: 'Mining',
+    showSearch: true,
+    showFilter: false,
+    showNotificationBell: true,
+  ),
+  _TabMeta(
+    title: 'Wallet',
+    showSearch: true,
+    showFilter: false,
+    showNotificationBell: true,
+  ),
+  _TabMeta(
+    title: 'Profile',
+    showSearch: false,
+    showFilter: false,
+    showNotificationBell: true,
+  ),
+];
+
 class _UserSpaceShell extends StatelessWidget {
   const _UserSpaceShell({
     super.key,
@@ -91,9 +130,6 @@ class _UserSpaceShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tab = _userTabs[currentIndex];
-    final auth = context.watch<AuthStore>();
-    final showCommunityStaffToolsAction =
-        currentIndex == 2 && auth.canAccessCommunityStaffTools;
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -106,15 +142,6 @@ class _UserSpaceShell extends StatelessWidget {
         showNotificationBell: tab.showNotificationBell,
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
-        actions: [
-          if (showCommunityStaffToolsAction)
-            _MainShellActionIcon(
-              icon: Icons.gavel_rounded,
-              onTap: () {
-                Navigator.of(context).pushNamed(AppRoutes.communityStaffTools);
-              },
-            ),
-        ],
       ),
       body: _LazyTabStack(
         index: currentIndex,
@@ -130,35 +157,6 @@ class _UserSpaceShell extends StatelessWidget {
       bottomNavigationBar: _UserNav(
         currentIndex: currentIndex,
         onTap: onNavTap,
-      ),
-    );
-  }
-}
-
-class _MainShellActionIcon extends StatelessWidget {
-  const _MainShellActionIcon({
-    required this.icon,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 34,
-        height: 34,
-        child: Center(
-          child: Icon(
-            icon,
-            color: AppColors.textSecondary,
-            size: 21,
-          ),
-        ),
       ),
     );
   }
@@ -216,10 +214,56 @@ class _HunterSpaceShell extends StatelessWidget {
   }
 }
 
+class _ModerationSpaceShell extends StatelessWidget {
+  const _ModerationSpaceShell({
+    super.key,
+    required this.currentIndex,
+    required this.onNavTap,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onNavTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tab = _moderationTabs[currentIndex];
+
+    return Scaffold(
+      backgroundColor: AppColors.bgBase,
+      appBar: CustomAppBar(
+        title: tab.title,
+        backButton: false,
+        showSearch: tab.showSearch,
+        showFilter: tab.showFilter,
+        showSpaceSwitcher: true,
+        showNotificationBell: tab.showNotificationBell,
+        showProfileShortcut: false,
+        showProfileAvatarLeading: false,
+      ),
+      body: _LazyTabStack(
+        index: currentIndex,
+        builders: const [
+          _homeBuilder,
+          _discoverBuilder,
+          _moderationHubBuilder,
+          _miningBuilder,
+          _walletBuilder,
+          _profileBuilder,
+        ],
+      ),
+      bottomNavigationBar: _ModerationNav(
+        currentIndex: currentIndex,
+        onTap: onNavTap,
+      ),
+    );
+  }
+}
+
 Widget _homeBuilder(BuildContext _) => const HomeScreen();
 Widget _discoverBuilder(BuildContext _) => const DiscoverScreen();
 Widget _communityBuilder(BuildContext _) => const CommunityScreen();
 Widget _hunterHubBuilder(BuildContext _) => const HunterHubScreen();
+Widget _moderationHubBuilder(BuildContext _) => const ModerationHubScreen();
 Widget _miningBuilder(BuildContext _) => const MiningScreen();
 Widget _walletBuilder(BuildContext _) => const WalletScreen();
 Widget _profileBuilder(BuildContext _) =>

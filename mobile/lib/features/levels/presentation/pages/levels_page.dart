@@ -24,12 +24,12 @@ class _LevelsPageState extends State<LevelsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final levelsStore = context.read<LevelsStore>();
+      // Always fetch levels if empty
       if (levelsStore.allLevels.isEmpty) {
         levelsStore.fetchAllLevels();
       }
-      if (levelsStore.myProgress == null) {
-        levelsStore.fetchMyProgress();
-      }
+      // Always fetch progress to ensure latest points are displayed
+      levelsStore.fetchMyProgress();
     });
   }
 

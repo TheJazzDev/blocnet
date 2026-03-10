@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_screen.dart';
+import 'package:blocnet/features/moderation/presentation/pages/moderation_hub_screen.dart';
 import 'package:blocnet/features/projects/presentation/sections/home.dart';
 import 'package:blocnet/features/projects/presentation/sections/projects/discover.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -35,7 +36,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   static final Set<String> _hunterOnboardingInFlightUserIds = <String>{};
 
-  bool? _lastIsHunterSpace;
+  String? _lastActiveSpace;
   bool _isSwitchingSpace = false;
   int _spaceSwitchToken = 0;
   bool _hasCheckedReferralPrompt = false;
@@ -45,6 +46,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   int _userIndex = 0;
   int _hunterIndex = 0;
+  int _moderationIndex = 0;
 
   @override
   void initState() {
@@ -52,6 +54,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _userIndex = widget.initialIndex.clamp(0, 5);
     _hunterIndex = widget.initialIndex.clamp(0, 5);
+    _moderationIndex = widget.initialIndex.clamp(0, 5);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _maybePromptReferralBind();
@@ -75,7 +78,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final authStore = context.watch<AuthStore>();
-    final isHunterSpace = authStore.isInHunterSpace;
+    final activeSpace = authStore.activeSpace;
+
     if (!_didRequestInitialNotifications &&
         authStore.isAuthenticated &&
         !authStore.isBootstrapping) {
@@ -89,13 +93,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
     _maybePromptHunterOnboarding();
 
-    if (_lastIsHunterSpace == null) {
-      _lastIsHunterSpace = isHunterSpace;
+    if (_lastActiveSpace == null) {
+      _lastActiveSpace = activeSpace;
       return;
     }
 
-    if (_lastIsHunterSpace == isHunterSpace) return;
-    final wasHunterSpace = _lastIsHunterSpace!;
+    if (_lastActiveSpace == activeSpace) return;
+    final previousSpace = _lastActiveSpace!;
 
     final token = ++_spaceSwitchToken;
 
@@ -105,20 +109,16 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
       setState(() {
         _isSwitchingSpace = true;
-        if (isHunterSpace) {
-          _hunterIndex = targetTab ??
-              (wasHunterSpace
-                  ? _hunterIndex
-                  : _mapUserToHunterIndex(_userIndex));
+        if (activeSpace == 'hunter') {
+          _hunterIndex = targetTab ?? _mapToHunterIndex(previousSpace, _userIndex, _moderationIndex);
+        } else if (activeSpace == 'moderation') {
+          _moderationIndex = targetTab ?? _mapToModerationIndex(previousSpace, _userIndex, _hunterIndex);
         } else {
-          _userIndex = targetTab ??
-              (wasHunterSpace
-                  ? _mapHunterToUserIndex(_hunterIndex)
-                  : _userIndex);
+          _userIndex = targetTab ?? _mapToUserIndex(previousSpace, _hunterIndex, _moderationIndex);
         }
       });
 
-      _lastIsHunterSpace = isHunterSpace;
+      _lastActiveSpace = activeSpace;
 
       Future<void>.delayed(const Duration(milliseconds: 300), () {
         if (!mounted || token != _spaceSwitchToken) return;
@@ -137,20 +137,37 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     return null;
   }
 
-  int _mapUserToHunterIndex(int userIndex) {
-    if (userIndex == 2) {
-      // Community in User space maps to Hunter Hub in Hunter space.
-      return 2;
+  int _mapToHunterIndex(String previousSpace, int userIndex, int moderationIndex) {
+    if (previousSpace == 'user') {
+      // Community in User space maps to Hunter Hub in Hunter space
+      return userIndex == 2 ? 2 : userIndex.clamp(0, 5);
+    } else if (previousSpace == 'moderation') {
+      // Moderation in Moderation space maps to Hunter Hub in Hunter space
+      return moderationIndex == 2 ? 2 : moderationIndex.clamp(0, 5);
     }
-    return userIndex.clamp(0, 5);
+    return 2; // Default to Hunter Hub
   }
 
-  int _mapHunterToUserIndex(int hunterIndex) {
-    if (hunterIndex == 2) {
-      // Hunter Hub in Hunter space maps to Community in User space.
-      return 2;
+  int _mapToModerationIndex(String previousSpace, int userIndex, int hunterIndex) {
+    if (previousSpace == 'user') {
+      // Community in User space maps to Moderation Hub in Moderation space
+      return userIndex == 2 ? 2 : userIndex.clamp(0, 5);
+    } else if (previousSpace == 'hunter') {
+      // Hunter Hub in Hunter space maps to Moderation Hub in Moderation space
+      return hunterIndex == 2 ? 2 : hunterIndex.clamp(0, 5);
     }
-    return hunterIndex.clamp(0, 5);
+    return 2; // Default to Moderation Hub
+  }
+
+  int _mapToUserIndex(String previousSpace, int hunterIndex, int moderationIndex) {
+    if (previousSpace == 'hunter') {
+      // Hunter Hub in Hunter space maps to Community in User space
+      return hunterIndex == 2 ? 2 : hunterIndex.clamp(0, 5);
+    } else if (previousSpace == 'moderation') {
+      // Moderation Hub in Moderation space maps to Community in User space
+      return moderationIndex == 2 ? 2 : moderationIndex.clamp(0, 5);
+    }
+    return 2; // Default to Community
   }
 
   void _onUserNavTap(int pageIndex) {
@@ -163,6 +180,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     setState(() => _hunterIndex = pageIndex);
   }
 
+  void _onModerationNavTap(int pageIndex) {
+    if (_moderationIndex == pageIndex) return;
+    setState(() => _moderationIndex = pageIndex);
+  }
+
   void _onFabTap(BuildContext context) {
     HapticFeedback.mediumImpact();
     _openComposerSheet(context);
@@ -170,7 +192,30 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final isHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final authStore = context.watch<AuthStore>();
+    final activeSpace = authStore.activeSpace;
+
+    Widget shell;
+    if (activeSpace == 'hunter') {
+      shell = _HunterSpaceShell(
+        key: const ValueKey('hunter'),
+        currentIndex: _hunterIndex,
+        onNavTap: _onHunterNavTap,
+        onFabTap: () => _onFabTap(context),
+      );
+    } else if (activeSpace == 'moderation') {
+      shell = _ModerationSpaceShell(
+        key: const ValueKey('moderation'),
+        currentIndex: _moderationIndex,
+        onNavTap: _onModerationNavTap,
+      );
+    } else {
+      shell = _UserSpaceShell(
+        key: const ValueKey('user'),
+        currentIndex: _userIndex,
+        onNavTap: _onUserNavTap,
+      );
+    }
 
     return Stack(
       children: [
@@ -179,10 +224,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           switchInCurve: Curves.easeOutCubic,
           switchOutCurve: Curves.easeInCubic,
           transitionBuilder: (child, animation) {
-            final isHunterChild =
-                (child.key as ValueKey?)?.value?.toString() == 'hunter';
+            final spaceKey = (child.key as ValueKey?)?.value?.toString();
+            final slideX = spaceKey == 'hunter' ? 0.08 :
+                          spaceKey == 'moderation' ? -0.08 :
+                          spaceKey == 'user' ? -0.08 : 0.0;
             final slide = Tween<Offset>(
-              begin: Offset(isHunterChild ? 0.08 : -0.08, 0),
+              begin: Offset(slideX, 0),
               end: Offset.zero,
             ).animate(animation);
             final scale =
@@ -198,18 +245,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               ),
             );
           },
-          child: isHunterSpace
-              ? _HunterSpaceShell(
-                  key: const ValueKey('hunter'),
-                  currentIndex: _hunterIndex,
-                  onNavTap: _onHunterNavTap,
-                  onFabTap: () => _onFabTap(context),
-                )
-              : _UserSpaceShell(
-                  key: const ValueKey('user'),
-                  currentIndex: _userIndex,
-                  onNavTap: _onUserNavTap,
-                ),
+          child: shell,
         ),
         // const _OfflineStatusBanner(),
         if (_isSwitchingSpace) const _SpaceSwitchOverlay(),

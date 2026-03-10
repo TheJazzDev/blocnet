@@ -323,6 +323,8 @@ export class MiningService {
       take: 10,
     });
 
+    const claimWindowMs = config.claimWindowHours * 60 * 60 * 1000;
+
     const claimable = unclaimedSessions.find(
       (session) => session.endsAt.getTime() <= asOf.getTime(),
     );
@@ -331,6 +333,15 @@ export class MiningService {
       throw new ConflictException({
         code: 'not_claimable',
         message: 'No completed mining cycle is available to claim',
+      });
+    }
+
+    // Check if claim window has expired
+    const claimDeadline = new Date(claimable.endsAt.getTime() + claimWindowMs);
+    if (asOf.getTime() > claimDeadline.getTime()) {
+      throw new ConflictException({
+        code: 'claim_window_expired',
+        message: `Claim window expired. You must claim within ${config.claimWindowHours} hours of cycle completion.`,
       });
     }
 
@@ -890,43 +901,74 @@ export class MiningService {
     }
   }
 
+  /**
+   * Calculate streak based on consecutive claimed sessions, not UTC days.
+   * A streak is maintained if sessions are claimed in sequence without gaps.
+   *
+   * Algorithm:
+   * 1. Get all claimed sessions ordered by endsAt DESC
+   * 2. Check if each session was claimed before its claim window expired
+   * 3. Count consecutive sessions working backwards from most recent
+   * 4. A gap occurs when: next session endsAt + claimWindow < current session startsAt
+   */
   private async getClaimStreakUtcDays(userId: string): Promise<number> {
-    const rows = await this.prisma.miningPointLedger.findMany({
+    const config = await this.miningConfigService.getEffectiveConfig();
+    const claimWindowMs = config.claimWindowHours * 60 * 60 * 1000;
+
+    // Get claimed sessions ordered by endsAt (most recent first)
+    const sessions = await this.prisma.miningSession.findMany({
       where: {
         userId,
-        source: MiningPointSource.cycle_claim,
+        claimedAt: { not: null },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { endsAt: 'desc' },
       take: 30,
-      select: { createdAt: true },
+      select: {
+        id: true,
+        startsAt: true,
+        endsAt: true,
+        claimedAt: true,
+      },
     });
 
-    if (rows.length === 0) {
+    if (sessions.length === 0) {
       return 0;
     }
 
-    const uniqueDays: number[] = [];
-    for (const row of rows) {
-      const day = this.toUtcDayNumber(row.createdAt);
-      if (
-        uniqueDays.length === 0 ||
-        uniqueDays[uniqueDays.length - 1] !== day
-      ) {
-        uniqueDays.push(day);
-      }
-    }
+    // Filter out sessions where claim window expired before claiming
+    const validSessions = sessions.filter((session) => {
+      if (!session.claimedAt) return false;
+      const claimDeadline = new Date(session.endsAt.getTime() + claimWindowMs);
+      return session.claimedAt.getTime() <= claimDeadline.getTime();
+    });
 
-    if (uniqueDays.length === 0) {
+    if (validSessions.length === 0) {
       return 0;
     }
 
+    // Count consecutive sessions working backwards from most recent
     let streak = 1;
-    for (let i = 1; i < uniqueDays.length; i += 1) {
-      if (uniqueDays[i - 1] - 1 === uniqueDays[i]) {
+    for (let i = 1; i < validSessions.length; i += 1) {
+      const currentSession = validSessions[i - 1];
+      const previousSession = validSessions[i];
+
+      // Check if previous session connects to current session
+      // Previous session should end before or around when current session started
+      // We allow a grace period equal to the claim window to account for:
+      // - User claiming late but within window
+      // - Timezone differences
+      // - Small gaps between session starts
+      const gracePeriodMs = claimWindowMs;
+      const previousEndWithGrace = previousSession.endsAt.getTime() + gracePeriodMs;
+      const currentStart = currentSession.startsAt.getTime();
+
+      // If previous session (with grace) ends before current session starts, it's consecutive
+      if (previousEndWithGrace >= currentStart) {
         streak += 1;
-        continue;
+      } else {
+        // Gap detected - streak broken
+        break;
       }
-      break;
     }
 
     return streak;

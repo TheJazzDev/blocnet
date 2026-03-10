@@ -16,6 +16,7 @@ import 'package:blocnet/features/tips/presentation/pages/tip_history_screen.dart
 import 'package:blocnet/features/community/presentation/pages/community_create_post_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_post_discussion_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_staff_tools_screen.dart';
+import 'package:blocnet/features/community/presentation/pages/my_reports_screen.dart';
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/referral_code_screen.dart';
 import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
@@ -64,6 +65,7 @@ class ProtectedRoutes {
   static const String communityCreatePost = AppRoutes.communityCreatePost;
   static const String communityDiscussion = AppRoutes.communityDiscussion;
   static const String communityStaffTools = AppRoutes.communityStaffTools;
+  static const String myReports = AppRoutes.myReports;
   static const String editProfile = AppRoutes.editProfile;
 
   // Hunter
@@ -146,6 +148,7 @@ class ProtectedRoutes {
       communityCreatePost: (context) => const CommunityCreatePostScreen(),
       communityDiscussion: (context) => const CommunityPostDiscussionScreen(),
       communityStaffTools: (context) => const CommunityStaffToolsScreen(),
+      myReports: (context) => const MyReportsScreen(),
       editProfile: (context) => const EditProfileScreen(),
 
       // Hunter
@@ -192,6 +195,7 @@ class ProtectedRoutes {
     communityCreatePost,
     communityDiscussion,
     communityStaffTools,
+    myReports,
     editProfile,
     hunterHub,
     becomeHunter,

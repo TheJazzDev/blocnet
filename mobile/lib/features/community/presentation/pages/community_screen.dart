@@ -185,8 +185,18 @@ class _CommunityScreenState extends State<CommunityScreen>
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            Navigator.of(context).pushNamed(AppRoutes.communityCreatePost),
+        onPressed: () async {
+          final result = await Navigator.of(context).pushNamed(
+            AppRoutes.communityCreatePost,
+          );
+          // If a topic was returned, switch to that tab
+          if (result is CommunityTopic && mounted) {
+            final targetIndex = result == CommunityTopic.marketTalk ? 1 : 0;
+            if (_tabController.index != targetIndex) {
+              _tabController.animateTo(targetIndex);
+            }
+          }
+        },
         backgroundColor: accent,
         elevation: 0,
         child: Icon(Icons.add_rounded, color: onAccent),

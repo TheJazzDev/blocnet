@@ -7,6 +7,21 @@ class CommunityModerationApiRepository {
 
   final ApiClient _apiClient;
 
+  Future<CommunityModerationReport> createReport(
+    CreateCommunityReportRequest request,
+  ) async {
+    final response = await _apiClient.post(
+      '/community/reports',
+      body: request.toJson(),
+    );
+
+    if (response is! Map<String, dynamic>) {
+      throw ApiException('Invalid report creation response.');
+    }
+
+    return CommunityModerationReport.fromApi(response);
+  }
+
   Future<CommunityModerationReportsPage> fetchReports({
     int limit = 20,
     int offset = 0,

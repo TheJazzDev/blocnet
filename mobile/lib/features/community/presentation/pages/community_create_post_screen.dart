@@ -65,7 +65,8 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
         return;
       }
 
-      Navigator.of(context).pop();
+      // Pass the selected topic back to navigate to the correct tab
+      Navigator.of(context).pop(_selectedTopic);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

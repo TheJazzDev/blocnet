@@ -28,6 +28,7 @@ import {
   Award,
   Target,
   TrendingUp,
+  UserPlus,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -96,6 +97,7 @@ function buildNavItems(userRoles: string[]) {
   const gamificationItems: NavItem[] = [
     { href: '/mining', label: 'Mining', icon: Zap },
     { href: '/mining/leaderboard', label: 'Leaderboard', icon: CheckCircle2 },
+    { href: '/referrals', label: 'Referrals', icon: UserPlus },
     { href: '/levels', label: 'Levels', icon: TrendingUp },
     { href: '/badges', label: 'Badges', icon: Award },
     { href: '/quests', label: 'Quests', icon: Target },

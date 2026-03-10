@@ -48,5 +48,6 @@ class AppRoutes {
   static const String communityCreatePost = '/community-create-post';
   static const String communityDiscussion = '/community-discussion';
   static const String communityStaffTools = '/community-staff-tools';
+  static const String myReports = '/my-reports';
   static const String editProfile = '/edit-profile';
 }

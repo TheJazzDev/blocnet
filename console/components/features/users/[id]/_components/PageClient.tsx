@@ -27,6 +27,7 @@ import { ProjectsSection } from "../components/ProjectsSection";
 import { SocialSection } from "../components/SocialSection";
 import { LifecycleSection } from "../components/LifecycleSection";
 import { AuditLogSection } from "../components/AuditLogSection";
+import { ReferralSupportSection } from "../components/ReferralSupportSection";
 import { useUserManagementPage } from "../_hooks/use-user-management-page";
 
 export default function UserManagementPageClient() {
@@ -237,6 +238,11 @@ export default function UserManagementPageClient() {
 
         <TabsContent value="mining-quests" className="mt-4 space-y-4 sm:mt-6 sm:space-y-6">
           <MiningSection user={user} />
+          <ReferralSupportSection
+            user={user}
+            canManage={state.canManageAccount}
+            onBound={state.refresh}
+          />
           <QuestsSection user={user} />
         </TabsContent>
 

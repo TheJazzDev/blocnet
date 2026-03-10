@@ -22,8 +22,11 @@ import { ApplyCommunityRestrictionsDto } from './dto/apply-community-restriction
 import { ApplyCommunitySuspensionDto } from './dto/apply-community-suspension.dto';
 import { ClearCommunityRestrictionsDto } from './dto/clear-community-restrictions.dto';
 import { CreateCommunityReportDto } from './dto/create-community-report.dto';
+import { CreateCommunityAppealDto } from './dto/create-community-appeal.dto';
 import { IssueCommunityWarningDto } from './dto/issue-community-warning.dto';
+import { ListCommunityAppealsQuery } from './dto/list-community-appeals.query';
 import { ListCommunityReportsQuery } from './dto/list-community-reports.query';
+import { ReviewCommunityAppealDto } from './dto/review-community-appeal.dto';
 import { ReviewCommunityReportDto } from './dto/review-community-report.dto';
 
 const MODERATOR_MAX_MUTE_HOURS = 72;
@@ -670,5 +673,303 @@ export class CommunityModerationService {
     }
 
     return target;
+  }
+
+  async getModerationStats() {
+    const [pendingReports, activeRestrictions] = await Promise.all([
+      // Count pending reports
+      this.prisma.communityModerationReport.count({
+        where: {
+          status: 'open',
+        },
+      }),
+      // Count users with active restrictions (suspended or restricted)
+      this.prisma.profile.count({
+        where: {
+          OR: [
+            { communitySuspendedUntil: { gt: new Date() } },
+            { communityPostingRestrictedUntil: { gt: new Date() } },
+            { communityCommentingRestrictedUntil: { gt: new Date() } },
+          ],
+        },
+      }),
+    ]);
+
+    // Count pending appeals
+    const pendingAppeals = await this.prisma.communityReportAppeal.count({
+      where: {
+        status: { in: ['pending', 'under_review'] },
+      },
+    });
+
+    return {
+      pendingReports,
+      pendingAppeals,
+      activeRestrictions,
+    };
+  }
+
+  /**
+   * Create an appeal for a moderation report
+   */
+  async createAppeal(actor: AuthUser, dto: CreateCommunityAppealDto) {
+    // Verify report exists and belongs to the actor
+    const report = await this.prisma.communityModerationReport.findUnique({
+      where: { id: dto.reportId },
+      include: {
+        appeals: {
+          where: {
+            status: { in: ['pending', 'under_review'] },
+          },
+        },
+      },
+    });
+
+    if (!report) {
+      throw new NotFoundException('Report not found');
+    }
+
+    // Only the target user can appeal
+    if (report.targetUserId !== actor.id) {
+      throw new ForbiddenException(
+        'You can only appeal reports against your own content',
+      );
+    }
+
+    // Can only appeal dismissed reports
+    if (report.status !== 'dismissed') {
+      throw new BadRequestException('Can only appeal dismissed reports');
+    }
+
+    // Check if there's already a pending appeal
+    if (report.appeals.length > 0) {
+      throw new BadRequestException(
+        'There is already a pending appeal for this report',
+      );
+    }
+
+    const appeal = await this.prisma.communityReportAppeal.create({
+      data: {
+        reportId: dto.reportId,
+        appealerId: actor.id,
+        reason: dto.reason,
+        status: 'pending',
+      },
+      include: {
+        report: {
+          include: {
+            reporter: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        appealer: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    return appeal;
+  }
+
+  /**
+   * List appeals (moderators can see all, users only see their own)
+   */
+  async listAppeals(actor: AuthUser, query: ListCommunityAppealsQuery) {
+    const { limit, offset } = normalizePagination(query.limit, query.offset);
+
+    const where: Prisma.CommunityReportAppealWhereInput = {};
+
+    // If myAppeals=true or user is not a moderator, show only their appeals
+    const isModerator = actor.roles.some((r) =>
+      [
+        AppRole.OWNER,
+        AppRole.DEV,
+        AppRole.ADMIN,
+        AppRole.COMMUNITY_ADMIN,
+        AppRole.COMMUNITY_MODERATOR,
+      ].includes(r as AppRole),
+    );
+
+    if (query.myAppeals || !isModerator) {
+      where.appealerId = actor.id;
+    }
+
+    if (query.status) {
+      where.status = query.status;
+    }
+
+    const [appeals, total] = await Promise.all([
+      this.prisma.communityReportAppeal.findMany({
+        where,
+        include: {
+          report: {
+            include: {
+              reporter: {
+                select: {
+                  id: true,
+                  username: true,
+                  displayName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+          appealer: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatarUrl: true,
+            },
+          },
+          reviewedBy: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatarUrl: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.communityReportAppeal.count({ where }),
+    ]);
+
+    return {
+      appeals,
+      total,
+      limit,
+      offset,
+    };
+  }
+
+  /**
+   * Review an appeal (moderators only)
+   */
+  async reviewAppeal(
+    actor: AuthUser,
+    appealId: string,
+    dto: ReviewCommunityAppealDto,
+  ) {
+    const appeal = await this.prisma.communityReportAppeal.findUnique({
+      where: { id: appealId },
+      include: {
+        report: true,
+      },
+    });
+
+    if (!appeal) {
+      throw new NotFoundException('Appeal not found');
+    }
+
+    if (appeal.status !== 'pending' && appeal.status !== 'under_review') {
+      throw new BadRequestException('Appeal has already been reviewed');
+    }
+
+    // Update appeal with decision
+    const updatedAppeal = await this.prisma.communityReportAppeal.update({
+      where: { id: appealId },
+      data: {
+        status: dto.decision === 'overturn' ? 'approved' : 'rejected',
+        decision: dto.decision,
+        reviewedById: actor.id,
+        reviewedAt: new Date(),
+        reviewNotes: dto.reviewNotes,
+      },
+      include: {
+        report: {
+          include: {
+            reporter: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        appealer: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        },
+        reviewedBy: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    // If decision is to overturn, update the original report
+    if (dto.decision === 'overturn') {
+      await this.prisma.communityModerationReport.update({
+        where: { id: appeal.reportId },
+        data: {
+          status: 'resolved', // Overturn the rejection
+          reviewedById: actor.id,
+          reviewedAt: new Date(),
+          resolutionNote: `Appeal overturned: ${dto.reviewNotes || 'No notes provided'}`,
+        },
+      });
+
+      // If the content was hidden/archived, restore it
+      const targetType = appeal.report.targetType.toLowerCase();
+      if (targetType === 'community_post') {
+        await this.prisma.communityPost.updateMany({
+          where: { id: appeal.report.targetId },
+          data: { status: 'active' },
+        });
+      } else if (targetType === 'community_comment') {
+        await this.prisma.communityPostComment.updateMany({
+          where: { id: appeal.report.targetId },
+          data: { status: 'active' },
+        });
+      }
+    } else if (dto.decision === 'partial') {
+      // Partial decision might reduce the severity but not fully overturn
+      await this.prisma.communityModerationReport.update({
+        where: { id: appeal.reportId },
+        data: {
+          resolutionNote: `Appeal partially accepted: ${dto.reviewNotes || 'No notes provided'}`,
+        },
+      });
+    }
+
+    // Log the action
+    await this.auditLogService.create({
+      actorId: actor.id,
+      action: 'community_appeal_reviewed',
+      resourceType: 'community_appeal',
+      resourceId: appealId,
+      metadata: {
+        decision: dto.decision,
+        reportId: appeal.reportId,
+        appealerId: appeal.appealerId,
+      },
+    });
+
+    return updatedAppeal;
   }
 }

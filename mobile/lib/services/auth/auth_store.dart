@@ -158,21 +158,32 @@ class AuthStore extends ChangeNotifier {
   /// Whether the user has any elevated role that grants hunter space access.
   bool get hasHunterSpace => isOwner || isDev || isAdmin || isHunter;
 
-  /// The currently active space: 'user' or 'hunter'.
+  /// Whether the user has moderation role that grants moderation space access.
+  bool get hasModerationSpace => isCommunityModerator;
+
+  /// The currently active space: 'user', 'hunter', or 'moderation'.
   String get activeSpace => _activeSpace;
 
   /// True when the user is viewing/interacting from the hunter perspective.
   bool get isInHunterSpace => _activeSpace == 'hunter' && hasHunterSpace;
+
+  /// True when the user is viewing/interacting from the moderation perspective.
+  bool get isInModerationSpace => _activeSpace == 'moderation' && hasModerationSpace;
+
   bool get isSwitchingSpace => _isSwitchingSpace;
 
   String hunterOnboardedKeyFor(String userId) {
     return '$hunterOnboardedKeyPrefix$userId';
   }
 
-  /// Toggle or set the active space. Silently ignores if the user has no
-  /// hunter role — they stay in user space.
+  /// Toggle or set the active space. Validates access based on user roles.
   void setActiveSpace(String space) {
-    final target = (space == 'hunter' && hasHunterSpace) ? 'hunter' : 'user';
+    String target = 'user';
+    if (space == 'hunter' && hasHunterSpace) {
+      target = 'hunter';
+    } else if (space == 'moderation' && hasModerationSpace) {
+      target = 'moderation';
+    }
     if (_activeSpace == target) return;
     _activeSpace = target;
     unawaited(_persistActiveSpacePreference());
@@ -180,15 +191,27 @@ class AuthStore extends ChangeNotifier {
   }
 
   void toggleSpace() {
-    unawaited(
-      switchSpaceWithTransition(
-        _activeSpace == 'user' ? 'hunter' : 'user',
-      ),
-    );
+    // Cycle through available spaces: user -> hunter (if available) -> moderation (if available) -> user
+    String nextSpace = 'user';
+    if (_activeSpace == 'user' && hasHunterSpace) {
+      nextSpace = 'hunter';
+    } else if (_activeSpace == 'hunter' && hasModerationSpace) {
+      nextSpace = 'moderation';
+    } else if (_activeSpace == 'moderation') {
+      nextSpace = 'user';
+    } else if (_activeSpace == 'user' && hasModerationSpace) {
+      nextSpace = 'moderation';
+    }
+    unawaited(switchSpaceWithTransition(nextSpace));
   }
 
   Future<void> switchSpaceWithTransition(String space) async {
-    final target = (space == 'hunter' && hasHunterSpace) ? 'hunter' : 'user';
+    String target = 'user';
+    if (space == 'hunter' && hasHunterSpace) {
+      target = 'hunter';
+    } else if (space == 'moderation' && hasModerationSpace) {
+      target = 'moderation';
+    }
     if (_activeSpace == target || _isSwitchingSpace) return;
 
     _isSwitchingSpace = true;
@@ -811,7 +834,10 @@ class AuthStore extends ChangeNotifier {
         await _attemptPendingReferralBind();
       }
       await _restoreActiveSpacePreference();
-      if (!hasHunterSpace) {
+      // Reset to user space if current space is not available
+      if (_activeSpace == 'hunter' && !hasHunterSpace) {
+        _activeSpace = 'user';
+      } else if (_activeSpace == 'moderation' && !hasModerationSpace) {
         _activeSpace = 'user';
       }
       _isAuthenticated = true;
@@ -899,7 +925,10 @@ class AuthStore extends ChangeNotifier {
       await _hydrateProfileFromMe();
       await _attemptPendingReferralBind();
       await _restoreActiveSpacePreference();
-      if (!hasHunterSpace) {
+      // Reset to user space if current space is not available
+      if (_activeSpace == 'hunter' && !hasHunterSpace) {
+        _activeSpace = 'user';
+      } else if (_activeSpace == 'moderation' && !hasModerationSpace) {
         _activeSpace = 'user';
       }
     } catch (_) {

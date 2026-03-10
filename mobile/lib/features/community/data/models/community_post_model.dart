@@ -1,3 +1,4 @@
+import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/models/community_topic.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 
@@ -13,6 +14,7 @@ class CommunityPost {
     required this.commentsCount,
     required this.isLiked,
     required this.isBookmarked,
+    this.status = CommunityContentModerationStatus.active,
     this.isCommented = false,
     this.admin,
   });
@@ -27,6 +29,7 @@ class CommunityPost {
   final int commentsCount;
   final bool isLiked;
   final bool isBookmarked;
+  final CommunityContentModerationStatus status;
   final bool isCommented;
   final Admin? admin;
 
@@ -39,6 +42,7 @@ class CommunityPost {
     int? commentsCount,
     bool? isLiked,
     bool? isBookmarked,
+    CommunityContentModerationStatus? status,
     bool? isCommented,
     Admin? admin,
   }) {
@@ -53,6 +57,7 @@ class CommunityPost {
       commentsCount: commentsCount ?? this.commentsCount,
       isLiked: isLiked ?? this.isLiked,
       isBookmarked: isBookmarked ?? this.isBookmarked,
+      status: status ?? this.status,
       isCommented: isCommented ?? this.isCommented,
       admin: admin ?? this.admin,
     );
@@ -76,9 +81,21 @@ class CommunityPost {
       commentsCount: _toInt(json['commentsCount']),
       isLiked: json['isLiked'] == true,
       isBookmarked: json['isBookmarked'] == true,
+      status: _parseStatus(json['status']?.toString()),
       isCommented: json['isCommented'] == true,
       admin: admin,
     );
+  }
+
+  static CommunityContentModerationStatus _parseStatus(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'hidden':
+        return CommunityContentModerationStatus.hidden;
+      case 'archived':
+        return CommunityContentModerationStatus.archived;
+      default:
+        return CommunityContentModerationStatus.active;
+    }
   }
 
   static int _toInt(dynamic value) {

@@ -1,3 +1,4 @@
+import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 
 class ReplyToData {
@@ -34,6 +35,7 @@ class CommunityPostComment {
     required this.updatedAt,
     this.likesCount = 0,
     this.isLiked = false,
+    this.status = CommunityContentModerationStatus.active,
     this.admin,
     this.replyToId,
     this.replyToData,
@@ -47,6 +49,7 @@ class CommunityPostComment {
   final DateTime updatedAt;
   final int likesCount;
   final bool isLiked;
+  final CommunityContentModerationStatus status;
   final Admin? admin;
   final String? replyToId;
   final ReplyToData? replyToData;
@@ -72,10 +75,22 @@ class CommunityPostComment {
           DateTime.now(),
       likesCount: _toInt(json['likesCount']),
       isLiked: json['isLiked'] == true,
+      status: _parseStatus(json['status']?.toString()),
       admin: admin,
       replyToId: json['replyToId']?.toString(),
       replyToData: replyToData,
     );
+  }
+
+  static CommunityContentModerationStatus _parseStatus(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'hidden':
+        return CommunityContentModerationStatus.hidden;
+      case 'archived':
+        return CommunityContentModerationStatus.archived;
+      default:
+        return CommunityContentModerationStatus.active;
+    }
   }
 
   static int _toInt(dynamic value) {

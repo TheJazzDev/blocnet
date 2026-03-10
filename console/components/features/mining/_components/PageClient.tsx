@@ -11,7 +11,6 @@ import { canMutateWallet } from "@/lib/rbac";
 import { useMiningAdmin } from "../_hooks/use-mining-admin";
 import { MiningConfigCard } from "./MiningConfigCard";
 import { MiningMetricsCard } from "./MiningMetricsCard";
-import { ReferralSupportCard } from "./ReferralSupportCard";
 
 export default function MiningPageClient() {
   const session = useAdminSession();
@@ -22,7 +21,7 @@ export default function MiningPageClient() {
     <div className="space-y-6">
       <PageHeader
         title="Mining"
-        description="Tune cycle economics and review referral engagement metrics."
+        description="Tune cycle economics and review mining engagement metrics."
       >
         <Button variant="outline" asChild>
           <Link href="/mining/leaderboard">
@@ -74,18 +73,6 @@ export default function MiningPageClient() {
             onSave={state.save}
           />
           <MiningMetricsCard metrics={state.metrics} />
-          <ReferralSupportCard
-            canMutate={canMutate}
-            supportUserIdOrEmail={state.supportUserIdOrEmail}
-            setSupportUserIdOrEmail={state.setSupportUserIdOrEmail}
-            supportReferralCode={state.supportReferralCode}
-            setSupportReferralCode={state.setSupportReferralCode}
-            supportSaving={state.supportSaving}
-            supportError={state.supportError}
-            supportSuccess={state.supportSuccess}
-            supportReferralLookup={state.supportReferralLookup}
-            onBind={state.bindReferralBySupport}
-          />
         </>
       )}
     </div>

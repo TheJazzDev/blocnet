@@ -32,6 +32,7 @@ export class QuestStorageService {
   private readonly supabaseUrl: string;
   private readonly supabaseQuestProofsBucket: string;
   private readonly supabaseStorageClient: SupabaseClient | null;
+  private ensureBucketPromise: Promise<void> | null = null;
 
   constructor(private readonly configService: ConfigService) {
     this.supabaseUrl = this.configService.get<string>('SUPABASE_URL') ?? '';
@@ -74,6 +75,7 @@ export class QuestStorageService {
     }
 
     const storageClient = this.requireSupabaseStorageClient();
+    await this.ensureQuestProofsBucket(storageClient);
     const extension = this.fileExtensionForMimeType(resolvedMimeType);
     const objectPath = `${userId}/${questId}/${Date.now()}-${randomUUID()}.${extension}`;
     const bucket = storageClient.storage.from(this.supabaseQuestProofsBucket);
@@ -92,7 +94,9 @@ export class QuestStorageService {
         `Failed to upload quest proof: ${uploadError.message}`,
         uploadError,
       );
-      throw new BadRequestException('Failed to upload proof image');
+      throw new BadRequestException(
+        `Failed to upload proof image: ${uploadError.message}`,
+      );
     }
 
     const {
@@ -100,6 +104,61 @@ export class QuestStorageService {
     } = bucket.getPublicUrl(objectPath);
 
     return publicUrl;
+  }
+
+  private async ensureQuestProofsBucket(
+    storageClient: SupabaseClient,
+  ): Promise<void> {
+    if (!this.ensureBucketPromise) {
+      this.ensureBucketPromise = this.ensurePublicBucket(storageClient).catch(
+        (error: unknown) => {
+          this.ensureBucketPromise = null;
+          throw error;
+        },
+      );
+    }
+
+    return this.ensureBucketPromise;
+  }
+
+  private async ensurePublicBucket(storageClient: SupabaseClient) {
+    const { data: buckets, error: listError } =
+      await storageClient.storage.listBuckets();
+
+    if (listError) {
+      this.logger.error(
+        `Failed to list storage buckets for quest proofs: ${listError.message}`,
+      );
+      throw new InternalServerErrorException(
+        'Quest proof storage is unavailable. Please try again later.',
+      );
+    }
+
+    const bucketExists =
+      buckets?.some((bucket) => bucket.name === this.supabaseQuestProofsBucket) ??
+      false;
+    if (bucketExists) {
+      return;
+    }
+
+    const { error: createError } = await storageClient.storage.createBucket(
+      this.supabaseQuestProofsBucket,
+      {
+        public: true,
+      },
+    );
+
+    if (
+      createError &&
+      !createError.message.toLowerCase().includes('already exists')
+    ) {
+      this.logger.error(
+        `Failed to create quest proofs bucket "${this.supabaseQuestProofsBucket}": ${createError.message}`,
+      );
+      throw new InternalServerErrorException(
+        'Quest proof storage bucket is not ready. Please try again later.',
+      );
+    }
   }
 
   private requireSupabaseStorageClient(): SupabaseClient {

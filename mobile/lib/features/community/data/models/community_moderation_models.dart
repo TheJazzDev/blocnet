@@ -106,6 +106,82 @@ enum CommunityReportTargetType {
   }
 }
 
+enum CommunityReportReason {
+  spam,
+  harassment,
+  hateSpeech,
+  misinformation,
+  inappropriateContent,
+  scamOrFraud,
+  violatesRules,
+  other;
+
+  String get label {
+    switch (this) {
+      case CommunityReportReason.spam:
+        return 'Spam or promotional content';
+      case CommunityReportReason.harassment:
+        return 'Harassment or bullying';
+      case CommunityReportReason.hateSpeech:
+        return 'Hate speech or discrimination';
+      case CommunityReportReason.misinformation:
+        return 'False or misleading information';
+      case CommunityReportReason.inappropriateContent:
+        return 'Inappropriate or offensive content';
+      case CommunityReportReason.scamOrFraud:
+        return 'Scam or fraudulent activity';
+      case CommunityReportReason.violatesRules:
+        return 'Violates community rules';
+      case CommunityReportReason.other:
+        return 'Other (please specify)';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case CommunityReportReason.spam:
+        return 'Unsolicited promotional content or repetitive posts';
+      case CommunityReportReason.harassment:
+        return 'Targeting or threatening specific individuals';
+      case CommunityReportReason.hateSpeech:
+        return 'Content that attacks people based on protected characteristics';
+      case CommunityReportReason.misinformation:
+        return 'Deliberately false or misleading information';
+      case CommunityReportReason.inappropriateContent:
+        return 'Content that is offensive, explicit, or not suitable';
+      case CommunityReportReason.scamOrFraud:
+        return 'Fraudulent schemes or attempts to deceive users';
+      case CommunityReportReason.violatesRules:
+        return 'Breaks community guidelines or platform rules';
+      case CommunityReportReason.other:
+        return 'A reason not listed above';
+    }
+  }
+}
+
+class CreateCommunityReportRequest {
+  const CreateCommunityReportRequest({
+    required this.targetType,
+    required this.targetId,
+    required this.reason,
+    this.details,
+  });
+
+  final CommunityReportTargetType targetType;
+  final String targetId;
+  final String reason;
+  final String? details;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'targetType': targetType.apiValue,
+      'targetId': targetId,
+      'reason': reason,
+      if (details != null && details!.trim().isNotEmpty) 'details': details,
+    };
+  }
+}
+
 class CommunityActorSummary {
   const CommunityActorSummary({
     required this.id,

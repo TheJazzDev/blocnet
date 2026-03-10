@@ -272,7 +272,12 @@ class _CommunityStaffToolsScreenState extends State<CommunityStaffToolsScreen> {
           ),
           Expanded(
             child: _isLoading && _reports.isEmpty
-                ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                ? Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary500,
+                    ),
+                  )
                 : _error != null && _reports.isEmpty
                     ? Center(
                         child: Padding(
@@ -380,44 +385,72 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.bgSurface,
+            AppColors.bgSurface.withValues(alpha: 0.88),
+          ],
+        ),
         border: Border(
           bottom: BorderSide(color: AppColors.borderSubtle, width: 1),
         ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
-            controller: searchController,
+          Text(
+            'Queue Filters',
             style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: 13,
-              weight: FontWeight.w500,
+              color: AppColors.textMuted,
+              size: 11,
+              weight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
-            decoration: InputDecoration(
-              hintText: 'Search reports',
-              hintStyle: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: 12,
-                weight: FontWeight.w400,
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 46,
+            child: TextField(
+              controller: searchController,
+              style: AppTypography.custom(
+                color: AppColors.textPrimary,
+                size: 13,
+                weight: FontWeight.w500,
               ),
-              prefixIcon: const Icon(Icons.search_rounded),
-              suffixIcon: isRefreshing
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : null,
+              decoration: InputDecoration(
+                hintText: 'Search reports',
+                hintStyle: AppTypography.custom(
+                  color: AppColors.textMuted,
+                  size: 12,
+                  weight: FontWeight.w400,
+                ),
+                prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppColors.textMuted),
+                prefixIconConstraints: const BoxConstraints(minWidth: 40),
+                suffixIcon: isRefreshing
+                    ? Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary500,
+                          ),
+                        ),
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                isDense: true,
+              ),
             ),
           ),
           const SizedBox(height: 8),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: _DropdownField<CommunityReportStatus?>(
@@ -441,7 +474,7 @@ class _FilterBar extends StatelessWidget {
                   onChanged: onStatusChanged,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(
                 child: _DropdownField<CommunityReportTargetType?>(
                   value: targetTypeFilter,
@@ -464,12 +497,27 @@ class _FilterBar extends StatelessWidget {
                   onChanged: onTargetTypeChanged,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               SizedBox(
-                height: 44,
-                child: OutlinedButton(
-                  onPressed: isRefreshing ? null : onRefresh,
-                  child: const Icon(Icons.refresh_rounded, size: 18),
+                height: 40,
+                width: 40,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.bgElevated,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.borderSubtle.withValues(alpha: 0.75),
+                    ),
+                  ),
+                  child: IconButton(
+                    onPressed: isRefreshing ? null : onRefresh,
+                    padding: EdgeInsets.zero,
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -495,25 +543,48 @@ class _DropdownField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: AppTypography.custom(
-          color: AppColors.textMuted,
-          size: 11,
-          weight: FontWeight.w500,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 4),
+          child: Text(
+            label,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
+              size: 10,
+              weight: FontWeight.w700,
+              letterSpacing: 0.3,
+            ),
+          ),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isExpanded: true,
-          dropdownColor: AppColors.bgSurface,
-          items: items,
-          onChanged: onChanged,
+        Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: AppColors.bgElevated,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: AppColors.borderSubtle.withValues(alpha: 0.8),
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              value: value,
+              isExpanded: true,
+              dropdownColor: AppColors.bgSurface,
+              items: items,
+              onChanged: onChanged,
+              style: AppTypography.custom(
+                color: AppColors.textPrimary,
+                size: 12,
+                weight: FontWeight.w600,
+              ),
+              iconSize: 18,
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -538,9 +609,9 @@ class _ReportCard extends StatelessWidget {
   Color _statusColor(CommunityReportStatus status) {
     switch (status) {
       case CommunityReportStatus.open:
-        return const Color(0xFF60A5FA);
+        return AppColors.warning500;
       case CommunityReportStatus.resolved:
-        return const Color(0xFF34D399);
+        return Colors.green;
       case CommunityReportStatus.dismissed:
         return AppColors.textMuted;
     }
@@ -552,14 +623,54 @@ class _ReportCard extends StatelessWidget {
         report.targetUserId ??
         report.targetType.label;
     final statusColor = _statusColor(report.status);
+    final actions = <Widget>[
+      if (onContentActions != null)
+        _ReportActionButton(
+          label: 'Content Actions',
+          icon: Icons.visibility_outlined,
+          variant: _ReportActionButtonVariant.outline,
+          onPressed: reviewing ? null : onContentActions,
+        ),
+      if (onResolve != null)
+        _ReportActionButton(
+          label: 'Resolve',
+          icon: Icons.check_circle_outline,
+          variant: _ReportActionButtonVariant.success,
+          onPressed: reviewing ? null : onResolve,
+        ),
+      if (onDismiss != null)
+        _ReportActionButton(
+          label: 'Dismiss',
+          icon: Icons.close_rounded,
+          variant: _ReportActionButtonVariant.outline,
+          onPressed: reviewing ? null : onDismiss,
+        ),
+      if (report.targetUserId != null)
+        _ReportActionButton(
+          label: 'User Actions',
+          icon: Icons.person_outline_rounded,
+          variant: _ReportActionButtonVariant.primary,
+          onPressed: reviewing ? null : onUserActions,
+        ),
+    ];
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderSubtle, width: 1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.borderSubtle.withValues(alpha: 0.75),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -577,6 +688,7 @@ class _ReportCard extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -598,76 +710,60 @@ class _ReportCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Target: ${report.targetType.label} · $targetLabel',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: 11,
-              weight: FontWeight.w500,
-            ),
-          ),
-          Text(
-            'Reporter: ${report.reporter.bestLabel}',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: 11,
-              weight: FontWeight.w500,
-            ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _MetaPill(
+                icon: Icons.flag_outlined,
+                label: report.targetType.label,
+                value: targetLabel,
+              ),
+              _MetaPill(
+                icon: Icons.person_outline_rounded,
+                label: 'Reporter',
+                value: report.reporter.bestLabel,
+              ),
+            ],
           ),
           if ((report.details ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              report.details!,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.custom(
-                color: AppColors.textSecondary,
-                size: 11,
-                weight: FontWeight.w400,
-                height: 1.3,
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.borderSubtle.withValues(alpha: 0.65),
+                ),
+              ),
+              child: Text(
+                report.details!,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
+                  size: 11,
+                  weight: FontWeight.w500,
+                  height: 1.4,
+                ),
               ),
             ),
           ],
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              if (onContentActions != null)
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: reviewing ? null : onContentActions,
-                    child: const Text('Content Actions'),
-                  ),
-                ),
-              if (onContentActions != null &&
-                  (onResolve != null || onDismiss != null || report.targetUserId != null))
-                const SizedBox(width: 8),
-              if (onResolve != null)
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: reviewing ? null : onResolve,
-                    child: const Text('Resolve'),
-                  ),
-                ),
-              if (onResolve != null) const SizedBox(width: 8),
-              if (onDismiss != null)
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: reviewing ? null : onDismiss,
-                    child: const Text('Dismiss'),
-                  ),
-                ),
-              if (report.targetUserId != null) ...[
-                if (onResolve != null || onDismiss != null)
-                  const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onUserActions,
-                    child: const Text('User Actions'),
-                  ),
-                ),
-              ],
-            ],
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = (constraints.maxWidth - 8) / 2;
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: actions
+                    .map((action) => SizedBox(width: width, child: action))
+                    .toList(growable: false),
+              );
+            },
           ),
         ],
       ),
@@ -689,18 +785,18 @@ class _StaffOverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             AppColors.bgSurface,
-            AppColors.bgSurface.withValues(alpha: 0.82),
+            AppColors.bgSurface.withValues(alpha: 0.85),
           ],
         ),
-        border: Border.all(color: AppColors.borderSubtle),
+        border: Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.75)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -708,16 +804,18 @@ class _StaffOverviewCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: AppColors.primary400.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  Icons.gavel_rounded,
-                  size: 18,
-                  color: AppColors.primary400,
+                child: Center(
+                  child: Icon(
+                    Icons.gavel_rounded,
+                    size: 16,
+                    color: AppColors.primary400,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -729,18 +827,18 @@ class _StaffOverviewCard extends StatelessWidget {
                       'Community moderation queue',
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 14,
+                        size: 13,
                         weight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Review reports, hide content, and take action against repeat offenders.',
+                      'Review reports, hide content, and take action.',
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
                         size: 11,
-                        weight: FontWeight.w500,
-                        height: 1.4,
+                        weight: FontWeight.w400,
+                        height: 1.3,
                       ),
                     ),
                   ],
@@ -748,14 +846,14 @@ class _StaffOverviewCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: _OverviewStat(
                   label: 'Open',
                   value: '$openCount',
-                  color: const Color(0xFF60A5FA),
+                  color: AppColors.warning500,
                 ),
               ),
               const SizedBox(width: 10),
@@ -763,7 +861,7 @@ class _StaffOverviewCard extends StatelessWidget {
                 child: _OverviewStat(
                   label: 'Content',
                   value: '$contentCount',
-                  color: const Color(0xFFF59E0B),
+                  color: AppColors.primary400,
                 ),
               ),
               const SizedBox(width: 10),
@@ -771,7 +869,7 @@ class _StaffOverviewCard extends StatelessWidget {
                 child: _OverviewStat(
                   label: 'Total',
                   value: '$total',
-                  color: const Color(0xFF34D399),
+                  color: Colors.green,
                 ),
               ),
             ],
@@ -796,10 +894,10 @@ class _OverviewStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -809,13 +907,54 @@ class _OverviewStat extends StatelessWidget {
             value,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 18,
-              weight: FontWeight.w800,
+              size: 16,
+              weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Text(
             label,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
+              size: 10,
+              weight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaPill extends StatelessWidget {
+  const _MetaPill({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.bgElevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.borderSubtle.withValues(alpha: 0.65),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.textMuted),
+          const SizedBox(width: 6),
+          Text(
+            '$label: $value',
             style: AppTypography.custom(
               color: AppColors.textMuted,
               size: 11,
@@ -823,6 +962,82 @@ class _OverviewStat extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+enum _ReportActionButtonVariant { outline, primary, success }
+
+class _ReportActionButton extends StatelessWidget {
+  const _ReportActionButton({
+    required this.label,
+    required this.icon,
+    required this.variant,
+    required this.onPressed,
+  });
+
+  final String label;
+  final IconData icon;
+  final _ReportActionButtonVariant variant;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color borderColor;
+    final Color fillColor;
+    final Color textColor;
+
+    switch (variant) {
+      case _ReportActionButtonVariant.primary:
+        borderColor = AppColors.primary400.withValues(alpha: 0.24);
+        fillColor = AppColors.primary400.withValues(alpha: 0.14);
+        textColor = const Color(0xFFB9C6FF);
+        break;
+      case _ReportActionButtonVariant.success:
+        borderColor = const Color(0xFF34D399).withValues(alpha: 0.24);
+        fillColor = const Color(0xFF34D399).withValues(alpha: 0.12);
+        textColor = const Color(0xFF86EFAC);
+        break;
+      case _ReportActionButtonVariant.outline:
+        borderColor = AppColors.borderMuted;
+        fillColor = AppColors.bgElevated;
+        textColor = AppColors.textPrimary;
+        break;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          height: 48,
+          decoration: BoxDecoration(
+            color: fillColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: textColor),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.custom(
+                    color: textColor,
+                    size: 12,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1098,10 +1313,13 @@ class _CommunityUserActionsSheetState
             ),
             const SizedBox(height: 8),
             if (_loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary500,
+                  ),
                 ),
               )
             else if (_error != null)

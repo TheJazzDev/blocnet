@@ -13,6 +13,7 @@ export const DEFAULT_MINING_CONFIG: EffectiveMiningConfig = {
   maxBoostBps: 10000,
   activeReferralWindowHours: 168,
   referralBindWindowHours: 24,
+  claimWindowHours: 48,
 };
 
 @Injectable()
@@ -56,6 +57,7 @@ export class MiningConfigService {
       maxBoostBps: config.maxBoostBps,
       activeReferralWindowHours: config.activeReferralWindowHours,
       referralBindWindowHours: config.referralBindWindowHours,
+      claimWindowHours: config.claimWindowHours,
     };
   }
 }
