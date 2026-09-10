@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+  <linearGradient id="g-legend" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ea737d"/><stop offset=".55" stop-color="#E23D4A"/><stop offset="1" stop-color="#b0303a"/></linearGradient>
+  <linearGradient id="s-legend" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <clipPath id="c-legend"><g><polygon points="32.0,3.0 39.6,8.7 49.0,8.5 51.8,17.6 59.6,23.0 56.5,32.0 59.6,41.0 51.8,46.4 49.0,55.5 39.6,55.3 32.0,61.0 24.4,55.3 15.0,55.5 12.2,46.4 4.4,41.0 7.5,32.0 4.4,23.0 12.2,17.6 15.0,8.5 24.4,8.7" stroke-linejoin="round"/></g></clipPath>
+</defs>
+<g fill="#000" opacity=".28" transform="translate(0 1.6)"><polygon points="32.0,3.0 39.6,8.7 49.0,8.5 51.8,17.6 59.6,23.0 56.5,32.0 59.6,41.0 51.8,46.4 49.0,55.5 39.6,55.3 32.0,61.0 24.4,55.3 15.0,55.5 12.2,46.4 4.4,41.0 7.5,32.0 4.4,23.0 12.2,17.6 15.0,8.5 24.4,8.7" stroke-linejoin="round"/></g>
+<g fill="url(#g-legend)" stroke="#7c2229" stroke-width="2.4"><polygon points="32.0,3.0 39.6,8.7 49.0,8.5 51.8,17.6 59.6,23.0 56.5,32.0 59.6,41.0 51.8,46.4 49.0,55.5 39.6,55.3 32.0,61.0 24.4,55.3 15.0,55.5 12.2,46.4 4.4,41.0 7.5,32.0 4.4,23.0 12.2,17.6 15.0,8.5 24.4,8.7" stroke-linejoin="round"/></g>
+<g clip-path="url(#c-legend)"><ellipse cx="32" cy="14" rx="30" ry="16" fill="url(#s-legend)"/></g>
+<g fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.4" transform="translate(32 32) scale(.86) translate(-32 -32)"><polygon points="32.0,3.0 39.6,8.7 49.0,8.5 51.8,17.6 59.6,23.0 56.5,32.0 59.6,41.0 51.8,46.4 49.0,55.5 39.6,55.3 32.0,61.0 24.4,55.3 15.0,55.5 12.2,46.4 4.4,41.0 7.5,32.0 4.4,23.0 12.2,17.6 15.0,8.5 24.4,8.7" stroke-linejoin="round"/></g>
+<g transform="translate(17.84 16.24) scale(1.18)" fill="#b0303a" opacity=".55"><path d="M12.6 1.6c.6 4.2 5.6 6.2 5.6 11.6a6.2 6.2 0 0 1-12.4 0c0-2.4 1-4.2 2.4-5.6.2 2.2 1.2 3.4 2.4 3.4-.4-3.2.4-6.6 2-9.4z"/></g>
+<g transform="translate(17.84 15.34) scale(1.18)" fill="#fff"><path d="M12.6 1.6c.6 4.2 5.6 6.2 5.6 11.6a6.2 6.2 0 0 1-12.4 0c0-2.4 1-4.2 2.4-5.6.2 2.2 1.2 3.4 2.4 3.4-.4-3.2.4-6.6 2-9.4z"/></g>
+<g transform="translate(17.84 15.34) scale(1.18)" fill="#7c2229" stroke="#7c2229"><path d="M12 12.4c1.4 1.6 2.6 2.8 2.6 4.6a2.6 2.6 0 0 1-5.2 0c0-1.2.6-2.2 1.2-2.8.2 1 .6 1.4 1 1.4-.2-1.2 0-2.2.4-3.2z"/></g>
+<g transform="translate(17.84 15.34) scale(1.18)"></g>
+<circle cx="32.0" cy="48" r="1.9" fill="#fff" opacity=".9"/>
+</svg>

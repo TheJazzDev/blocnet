@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+  <linearGradient id="g-advocate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#66c09c"/><stop offset=".55" stop-color="#2AA876"/><stop offset="1" stop-color="#21835c"/></linearGradient>
+  <linearGradient id="s-advocate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <clipPath id="c-advocate"><g><polygon points="32.0,3.5 56.7,17.8 56.7,46.2 32.0,60.5 7.3,46.2 7.3,17.7" stroke-linejoin="round"/></g></clipPath>
+</defs>
+<g fill="#000" opacity=".28" transform="translate(0 1.6)"><polygon points="32.0,3.5 56.7,17.8 56.7,46.2 32.0,60.5 7.3,46.2 7.3,17.7" stroke-linejoin="round"/></g>
+<g fill="url(#g-advocate)" stroke="#175c41" stroke-width="2.4"><polygon points="32.0,3.5 56.7,17.8 56.7,46.2 32.0,60.5 7.3,46.2 7.3,17.7" stroke-linejoin="round"/></g>
+<g clip-path="url(#c-advocate)"><ellipse cx="32" cy="14" rx="30" ry="16" fill="url(#s-advocate)"/></g>
+<g fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.4" transform="translate(32 32) scale(.86) translate(-32 -32)"><polygon points="32.0,3.5 56.7,17.8 56.7,46.2 32.0,60.5 7.3,46.2 7.3,17.7" stroke-linejoin="round"/></g>
+<g transform="translate(17.84 16.24) scale(1.18)" fill="#21835c" opacity=".55"><path d="M2.5 9.8v4.4a1.2 1.2 0 0 0 1.2 1.2h2.6L13 20V4L6.3 8.6H3.7a1.2 1.2 0 0 0-1.2 1.2z"/><path d="M15.6 8.4a5.2 5.2 0 0 1 0 7.2M18.6 5.6a9.4 9.4 0 0 1 0 12.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></g>
+<g transform="translate(17.84 15.34) scale(1.18)" fill="#fff"><path d="M2.5 9.8v4.4a1.2 1.2 0 0 0 1.2 1.2h2.6L13 20V4L6.3 8.6H3.7a1.2 1.2 0 0 0-1.2 1.2z"/><path d="M15.6 8.4a5.2 5.2 0 0 1 0 7.2M18.6 5.6a9.4 9.4 0 0 1 0 12.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></g>
+<g transform="translate(17.84 15.34) scale(1.18)" fill="#175c41" stroke="#175c41"></g>
+<g transform="translate(17.84 15.34) scale(1.18)"></g>
+<circle cx="26.0" cy="49" r="1.9" fill="#fff" opacity=".9"/><circle cx="32.0" cy="49" r="1.9" fill="#fff" opacity=".9"/><circle cx="38.0" cy="49" r="1.9" fill="#fff" opacity=".9"/>
+</svg>

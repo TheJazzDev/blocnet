@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+  <linearGradient id="g-guardian" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4c965"/><stop offset=".55" stop-color="#F0B429"/><stop offset="1" stop-color="#bb8c20"/></linearGradient>
+  <linearGradient id="s-guardian" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <clipPath id="c-guardian"><g><polygon points="42.9,5.7 58.3,21.1 58.3,42.9 42.9,58.3 21.1,58.3 5.7,42.9 5.7,21.1 21.1,5.7" stroke-linejoin="round"/></g></clipPath>
+</defs>
+<g fill="#000" opacity=".28" transform="translate(0 1.6)"><polygon points="42.9,5.7 58.3,21.1 58.3,42.9 42.9,58.3 21.1,58.3 5.7,42.9 5.7,21.1 21.1,5.7" stroke-linejoin="round"/></g>
+<g fill="url(#g-guardian)" stroke="#846317" stroke-width="2.4"><polygon points="42.9,5.7 58.3,21.1 58.3,42.9 42.9,58.3 21.1,58.3 5.7,42.9 5.7,21.1 21.1,5.7" stroke-linejoin="round"/></g>
+<g clip-path="url(#c-guardian)"><ellipse cx="32" cy="14" rx="30" ry="16" fill="url(#s-guardian)"/></g>
+<g fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.4" transform="translate(32 32) scale(.86) translate(-32 -32)"><polygon points="42.9,5.7 58.3,21.1 58.3,42.9 42.9,58.3 21.1,58.3 5.7,42.9 5.7,21.1 21.1,5.7" stroke-linejoin="round"/></g>
+<g transform="translate(17.84 16.24) scale(1.18)" fill="#bb8c20" opacity=".55"><path d="M12 1.8 20.5 5v6.4c0 5.6-3.6 9.7-8.5 11.2C7.1 21.1 3.5 17 3.5 11.4V5z"/></g>
+<g transform="translate(17.84 15.34) scale(1.18)" fill="#fff"><path d="M12 1.8 20.5 5v6.4c0 5.6-3.6 9.7-8.5 11.2C7.1 21.1 3.5 17 3.5 11.4V5z"/></g>
+<g transform="translate(17.84 15.34) scale(1.18)" fill="#846317" stroke="#846317"><path d="M12 6.2 16.8 8v4c0 3.2-2 5.6-4.8 6.6C9.2 17.6 7.2 15.2 7.2 12V8z"/></g>
+<g transform="translate(17.84 15.34) scale(1.18)"></g>
+<circle cx="29.0" cy="49" r="1.9" fill="#fff" opacity=".9"/><circle cx="35.0" cy="49" r="1.9" fill="#fff" opacity=".9"/>
+</svg>
