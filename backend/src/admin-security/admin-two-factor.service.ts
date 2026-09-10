@@ -104,17 +104,22 @@ export class AdminTwoFactorService {
     };
   }
 
-  shouldEnforceChallengeForAdminPanel(
+  async shouldEnforceChallengeForAdminPanel(
     userId: string,
     roles: AppRole[],
-  ): boolean {
+  ): Promise<boolean> {
     this.assertVaultAvailable();
 
     if (!this.isAdminPanelEligible(roles)) {
       return false;
     }
 
-    return true;
+    const credential = await this.prisma.adminTotpCredential.findUnique({
+      where: { userId },
+      select: { userId: true },
+    });
+
+    return Boolean(credential);
   }
 
   async startEnrollment(input: {
@@ -403,7 +408,7 @@ export class AdminTwoFactorService {
   }): Promise<{ valid: boolean; required: boolean; expiresAt: Date | null }> {
     this.assertVaultAvailable();
 
-    const required = this.shouldEnforceChallengeForAdminPanel(
+    const required = await this.shouldEnforceChallengeForAdminPanel(
       input.userId,
       input.roles,
     );
