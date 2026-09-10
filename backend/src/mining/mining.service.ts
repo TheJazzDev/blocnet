@@ -139,7 +139,10 @@ export class MiningService {
         })
       : null;
 
-    const claimedTotalPoints = this.bigIntToNumber(profile.miningClaimedPoints);
+    // Keep BigInt arithmetic in BigInt space and serialize to string at the
+    // response boundary (never as a JS number) to avoid precision loss once
+    // mining points scale past Number.MAX_SAFE_INTEGER.
+    const claimedTotalPointsBigInt = profile.miningClaimedPoints;
     const maturedUnclaimedPoints = maturedUnclaimedAggregate._sum.points ?? 0;
 
     const session = latestUnclaimedSession
@@ -181,9 +184,11 @@ export class MiningService {
       asOf,
       config,
       balance: {
-        claimedTotalPoints,
+        claimedTotalPoints: claimedTotalPointsBigInt.toString(),
         maturedUnclaimedPoints,
-        lifetimeEarnedPoints: claimedTotalPoints + maturedUnclaimedPoints,
+        lifetimeEarnedPoints: (
+          claimedTotalPointsBigInt + BigInt(maturedUnclaimedPoints)
+        ).toString(),
       },
       session,
       referral: {
@@ -571,13 +576,16 @@ export class MiningService {
       }),
     ]);
 
-    const claimedTotalPoints = this.bigIntToNumber(
-      profile?.miningClaimedPoints ?? 0n,
-    );
+    const claimedTotalPointsBigInt = profile?.miningClaimedPoints ?? 0n;
     const maturedUnclaimedPoints = maturedUnclaimedAggregate._sum.points ?? 0;
 
-    // Check and award mining milestone badges
-    await this.badgesService.checkMiningMilestones(userId, claimedTotalPoints);
+    // Badge milestone thresholds are small Ints, so Number() is safe for
+    // this specific comparison — but the response below still serializes
+    // the real BigInt value as a string, per the documented pattern.
+    await this.badgesService.checkMiningMilestones(
+      userId,
+      Number(claimedTotalPointsBigInt),
+    );
     await this.triggerSevenDayStreakQuestIfEligible(userId);
 
     return {
@@ -586,9 +594,11 @@ export class MiningService {
       claimedAt: asOf,
       claimedPoints: claimPoints,
       balance: {
-        claimedTotalPoints,
+        claimedTotalPoints: claimedTotalPointsBigInt.toString(),
         maturedUnclaimedPoints,
-        lifetimeEarnedPoints: claimedTotalPoints + maturedUnclaimedPoints,
+        lifetimeEarnedPoints: (
+          claimedTotalPointsBigInt + BigInt(maturedUnclaimedPoints)
+        ).toString(),
       },
       nextSession: nextSessionState,
     };
@@ -984,10 +994,6 @@ export class MiningService {
       date.getUTCDate(),
     );
     return Math.floor(dayStartUtcMs / 86_400_000);
-  }
-
-  private bigIntToNumber(value: bigint | number): number {
-    return typeof value === 'bigint' ? Number(value) : Number(value);
   }
 }
 

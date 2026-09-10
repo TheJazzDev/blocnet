@@ -208,8 +208,9 @@ export default function MiningLeaderboardPage() {
   );
 }
 
-function formatNumber(value: number) {
-  return new Intl.NumberFormat("en-US").format(value);
+function formatNumber(value: number | string) {
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) ? new Intl.NumberFormat("en-US").format(num) : String(value);
 }
 
 function formatDateTime(value: string) {

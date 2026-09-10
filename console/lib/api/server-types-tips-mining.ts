@@ -106,9 +106,9 @@ export interface AdminMiningLeaderboardEntry {
   username: string | null;
   displayName: string | null;
   avatarUrl: string | null;
-  claimedTotalPoints: number;
+  claimedTotalPoints: string;
   maturedUnclaimedPoints: number;
-  lifetimeEarnedPoints: number;
+  lifetimeEarnedPoints: string;
   sessionStatus: "idle" | "running" | "claimable";
   sessionProgressPct: number;
   sessionEndsAt: string | null;

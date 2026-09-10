@@ -700,9 +700,15 @@ export class QuestsService {
     if (approved) {
       // Approve submission and award rewards
       const result = await this.prisma.$transaction(async (tx) => {
-        // Update submission
-        await tx.questSubmission.update({
-          where: { id: submission.id },
+        // Atomically claim the submission. The `verificationStatus !==
+        // 'pending'` check above runs before this transaction starts, so it
+        // can't stop two near-simultaneous approve calls (an admin
+        // double-click, or a client retry) from both reading 'pending' and
+        // both proceeding — that race was the actual cause of duplicate
+        // "Quest Completed!" notifications. This conditional update is the
+        // real guard: only one caller can ever affect a row here.
+        const claimed = await tx.questSubmission.updateMany({
+          where: { id: submission.id, verificationStatus: 'pending' },
           data: {
             verificationStatus: 'approved',
             verifiedBy,
@@ -710,6 +716,9 @@ export class QuestsService {
             reviewNotes: dto.reviewNotes,
           },
         });
+        if (claimed.count === 0) {
+          throw new BadRequestException('Submission already processed');
+        }
 
         // Mark quest as completed
         await tx.userQuest.update({
@@ -773,25 +782,32 @@ export class QuestsService {
       const rejectionReason =
         dto.rejectionReason?.trim() || dto.reviewNotes?.trim() || null;
 
-      // Reject submission
-      await this.prisma.questSubmission.update({
-        where: { id: submission.id },
-        data: {
-          verificationStatus: 'rejected',
-          verifiedBy,
-          verifiedAt: new Date(),
-          reviewNotes: dto.reviewNotes,
-          rejectionReason,
-        },
-      });
+      // Same atomic-claim pattern as the approve branch above — see comment
+      // there for why the pre-transaction pending check alone isn't
+      // race-safe.
+      await this.prisma.$transaction(async (tx) => {
+        const claimed = await tx.questSubmission.updateMany({
+          where: { id: submission.id, verificationStatus: 'pending' },
+          data: {
+            verificationStatus: 'rejected',
+            verifiedBy,
+            verifiedAt: new Date(),
+            reviewNotes: dto.reviewNotes,
+            rejectionReason,
+          },
+        });
+        if (claimed.count === 0) {
+          throw new BadRequestException('Submission already processed');
+        }
 
-      // Update user quest back to in_progress
-      await this.prisma.userQuest.update({
-        where: { id: submission.userQuestId },
-        data: {
-          status: 'in_progress',
-          progress: 0,
-        },
+        // Update user quest back to in_progress
+        await tx.userQuest.update({
+          where: { id: submission.userQuestId },
+          data: {
+            status: 'in_progress',
+            progress: 0,
+          },
+        });
       });
 
       // Send notification

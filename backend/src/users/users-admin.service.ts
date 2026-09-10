@@ -484,10 +484,13 @@ export class UsersAdminService {
       },
     });
 
-    const claimedTotalPoints =
+    // Keep BigInt arithmetic in BigInt space and serialize to string at the
+    // response boundary (never as a JS number) to avoid precision loss once
+    // mining points scale past Number.MAX_SAFE_INTEGER.
+    const claimedTotalPointsBigInt =
       typeof profile.miningClaimedPoints === 'bigint'
-        ? Number(profile.miningClaimedPoints)
-        : Number(profile.miningClaimedPoints ?? 0);
+        ? profile.miningClaimedPoints
+        : BigInt(profile.miningClaimedPoints ?? 0);
     const maturedUnclaimedPoints = maturedUnclaimedAggregate._sum.points ?? 0;
     const totalLedgerPoints = miningPointsAggregate._sum.points ?? 0;
 
@@ -742,9 +745,11 @@ export class UsersAdminService {
         tipConversions: profile._count.tipConversions,
       },
       mining: {
-        claimedTotalPoints,
+        claimedTotalPoints: claimedTotalPointsBigInt.toString(),
         maturedUnclaimedPoints,
-        lifetimeEarnedPoints: claimedTotalPoints + maturedUnclaimedPoints,
+        lifetimeEarnedPoints: (
+          claimedTotalPointsBigInt + BigInt(maturedUnclaimedPoints)
+        ).toString(),
         totalLedgerPoints,
         activeDirectReferrals,
         activeSession,

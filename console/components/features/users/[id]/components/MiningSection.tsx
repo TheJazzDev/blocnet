@@ -18,6 +18,15 @@ function fmtDate(value: string | null) {
   }
 }
 
+// claimedTotalPoints / lifetimeEarnedPoints arrive as strings (BigInt
+// serialized per CLAUDE.md's documented pattern) — format via Intl rather
+// than calling .toLocaleString() directly on the value, which on a string
+// just returns the string unchanged with no thousands-separator.
+function fmtPoints(value: string | number) {
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) ? num.toLocaleString() : String(value);
+}
+
 function sessionStatusBadge(status: "running" | "claimable" | "claimed") {
   if (status === "running") {
     return <Badge className="bg-sky-500/15 text-sky-300 text-xs">Running</Badge>;
@@ -48,10 +57,10 @@ export function MiningSection({ user }: MiningSectionProps) {
               <p className="text-xs text-muted-foreground">Total Points</p>
             </div>
             <p className="text-xl sm:text-2xl font-bold">
-              {mining.lifetimeEarnedPoints.toLocaleString()}
+              {fmtPoints(mining.lifetimeEarnedPoints)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Claimed {mining.claimedTotalPoints.toLocaleString()} · Unclaimed{" "}
+              Claimed {fmtPoints(mining.claimedTotalPoints)} · Unclaimed{" "}
               {mining.maturedUnclaimedPoints.toLocaleString()}
             </p>
           </div>

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   UnauthorizedException,
@@ -41,7 +42,7 @@ export class ProjectsController {
   }
 
   @Get(':id')
-  async getById(@Param('id') id: string) {
+  async getById(@Param('id', ParseUUIDPipe) id: string) {
     return this.projectsService.getProject(id);
   }
 
@@ -50,7 +51,7 @@ export class ProjectsController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async update(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProjectDto,
   ) {
     if (!user) throw new UnauthorizedException('User context missing');

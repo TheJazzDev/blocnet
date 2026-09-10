@@ -182,9 +182,9 @@ export interface AdminUserDetail {
     tipConversions: number;
   };
   mining: {
-    claimedTotalPoints: number;
+    claimedTotalPoints: string;
     maturedUnclaimedPoints: number;
-    lifetimeEarnedPoints: number;
+    lifetimeEarnedPoints: string;
     totalLedgerPoints: number;
     activeDirectReferrals: number;
     hourlyRateNow: number;
