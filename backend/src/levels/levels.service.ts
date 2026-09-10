@@ -27,7 +27,8 @@ export class LevelsService {
   async getUserMetrics(userId: string): Promise<UserMetrics> {
     const [
       bnpTotal,
-      commentsCount,
+      updateCommentsCount,
+      communityCommentsCount,
       questsCompleted,
       updatesCount,
       projectsCount,
@@ -38,8 +39,12 @@ export class LevelsService {
         where: { userId },
         _sum: { points: true },
       }),
-      // Total comments
+      // Total comments on updates (1 point each)
       this.prisma.comment.count({
+        where: { authorId: userId },
+      }),
+      // Total community post comments (0.5 points each)
+      this.prisma.communityPostComment.count({
         where: { authorId: userId },
       }),
       // Total quests completed
@@ -63,6 +68,13 @@ export class LevelsService {
         select: { createdAt: true },
       }),
     ]);
+
+    // Calculate weighted comment score:
+    // - Update comments: 1 point each
+    // - Community comments: 0.5 points each
+    const commentsCount = Math.floor(
+      updateCommentsCount + communityCommentsCount * 0.5,
+    );
 
     // Calculate days active (days since account creation)
     const daysActive = profile

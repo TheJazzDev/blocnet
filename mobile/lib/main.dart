@@ -74,6 +74,10 @@ void main() async {
   final authStore = AuthStore();
   final notificationsStore = NotificationsStore();
   final notificationSettingsStore = NotificationSettingsStore();
+  final levelsStore = LevelsStore();
+  final badgesStore = BadgesStore();
+  final miningStore = MiningStore();
+  final walletStore = WalletStore();
   final initialRoute = AppRoutes.main;
 
   // Initialise deep link handling (email verify, magic link, password reset)
@@ -118,10 +122,52 @@ void main() async {
     handleNotificationTap(pending);
   }
 
+  void handleForegroundNotificationData(RemoteMessage message) {
+    final notificationType = message.data['type']?.toString();
+    if (notificationType == null) return;
+
+    // Refresh appropriate stores based on notification type
+    switch (notificationType) {
+      case 'level_up':
+        levelsStore.fetchMyProgress();
+        break;
+      case 'badge_earned':
+        badgesStore.loadMyBadges(force: true);
+        break;
+      case 'mining_claimed':
+      case 'referral_bound':
+      case 'referral_admin_bound':
+        miningStore.loadSnapshot(force: true);
+        break;
+      case 'quest_completed':
+      case 'quest_verified':
+      case 'quest_rejected':
+        // QuestsStore will be refreshed via context in the UI
+        // since it's a ProxyProvider that depends on AuthStore
+        break;
+      case 'wallet_transfer_sent':
+      case 'wallet_transfer_received':
+      case 'wallet_deposit_credited':
+      case 'wallet_withdrawal_requested':
+      case 'wallet_withdrawal_approved':
+      case 'wallet_withdrawal_rejected':
+      case 'wallet_withdrawal_broadcasted':
+      case 'wallet_withdrawal_confirmed':
+      case 'wallet_withdrawal_reverted':
+      case 'wallet_kyc_reviewed':
+      case 'wallet_provision_ready':
+      case 'wallet_provision_failed':
+        walletStore.loadWalletSummary(force: true);
+        walletStore.loadTransactions(force: true);
+        break;
+    }
+  }
+
   final pushNotificationService = PushNotificationService(
     onForegroundMessage: () {
       notificationsStore.refreshNotifications(category: 'all');
     },
+    onForegroundMessageWithData: handleForegroundNotificationData,
     onNotificationTap: handleNotificationTap,
   );
 
@@ -164,16 +210,16 @@ void main() async {
           value: notificationSettingsStore,
         ),
         ChangeNotifierProvider(create: (_) => CommentsStore()),
-        ChangeNotifierProvider(create: (_) => MiningStore()),
+        ChangeNotifierProvider<MiningStore>.value(value: miningStore),
         ChangeNotifierProvider(create: (_) => UserProfileStore()),
         ChangeNotifierProvider(create: (_) => TipsStore()),
-        ChangeNotifierProvider(create: (_) => WalletStore()),
+        ChangeNotifierProvider<WalletStore>.value(value: walletStore),
         ChangeNotifierProvider(create: (_) => WalletVisibilityStore()),
         ChangeNotifierProvider(create: (_) => BlocksStore(ApiClient())),
         ChangeNotifierProvider(create: (_) => TagsStore()),
         ChangeNotifierProvider(create: (_) => AdminsStore()),
-        ChangeNotifierProvider(create: (_) => BadgesStore()),
-        ChangeNotifierProvider(create: (_) => LevelsStore()),
+        ChangeNotifierProvider<BadgesStore>.value(value: badgesStore),
+        ChangeNotifierProvider<LevelsStore>.value(value: levelsStore),
         ChangeNotifierProxyProvider<AuthStore, QuestsStore>(
           create: (_) => QuestsStore(),
           update: (_, auth, questsStore) {

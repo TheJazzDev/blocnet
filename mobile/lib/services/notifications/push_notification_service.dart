@@ -12,14 +12,17 @@ class PushNotificationService {
   PushNotificationService({
     ApiClient? apiClient,
     VoidCallback? onForegroundMessage,
+    Function(RemoteMessage)? onForegroundMessageWithData,
     Function(RemoteMessage)? onNotificationTap,
   })  : _apiClient = apiClient ?? ApiClient(),
         _onForegroundMessageCallback = onForegroundMessage,
+        _onForegroundMessageWithDataCallback = onForegroundMessageWithData,
         _onNotificationTapCallback = onNotificationTap;
 
   final ApiClient _apiClient;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final VoidCallback? _onForegroundMessageCallback;
+  final Function(RemoteMessage)? _onForegroundMessageWithDataCallback;
   final Function(RemoteMessage)? _onNotificationTapCallback;
 
   StreamSubscription<RemoteMessage>? _foregroundSub;
@@ -185,6 +188,7 @@ class PushNotificationService {
 
     try {
       _onForegroundMessageCallback?.call();
+      _onForegroundMessageWithDataCallback?.call(message);
     } catch (error) {
       debugPrint(
         '[PushNotificationService] Foreground refresh callback failed: $error',

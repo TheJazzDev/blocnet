@@ -186,10 +186,12 @@ class LevelDetailSheet extends StatelessWidget {
               label: 'BNP',
               required: _formatBnp(level.requiredBnp),
               current: _formatBnp(myProgress?.metrics.totalBnpEarned ?? '0'),
+              rawRequired: level.requiredBnp,
+              rawCurrent: myProgress?.metrics.totalBnpEarned ?? '0',
             ),
             _buildRequirement(
               icon: Icons.chat_bubble_outline,
-              label: 'Comments',
+              label: 'Comments on Updates',
               required: level.requiredComments.toString(),
               current: myProgress?.metrics.totalComments.toString() ?? '0',
             ),
@@ -247,75 +249,122 @@ class LevelDetailSheet extends StatelessWidget {
     required String label,
     required String required,
     required String current,
+    String? rawRequired,
+    String? rawCurrent,
   }) {
-    final currentNum = int.tryParse(current.replaceAll(',', '')) ?? 0;
-    final requiredNum = int.tryParse(required.replaceAll(',', '')) ?? 0;
+    // Use raw values for comparison if provided (for BNP), otherwise use formatted
+    final compareRequired = rawRequired ?? required;
+    final compareCurrent = rawCurrent ?? current;
+
+    final currentNum = int.tryParse(compareCurrent.replaceAll(',', '')) ?? 0;
+    final requiredNum = int.tryParse(compareRequired.replaceAll(',', '')) ?? 0;
     final isComplete = currentNum >= requiredNum;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: isComplete
-                  ? AppColors.primary500.withValues(alpha: 0.15)
-                  : AppColors.bgBase,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              isComplete ? Icons.check_circle : icon,
-              size: 16,
-              color: isComplete ? AppColors.primary500 : AppColors.textMuted,
-            ),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isComplete
+              ? AppColors.primary500.withValues(alpha: 0.08)
+              : AppColors.bgBase,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isComplete
+                ? AppColors.primary500.withValues(alpha: 0.3)
+                : AppColors.borderSubtle,
+            width: isComplete ? 1.5 : 1,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: 12,
-                    weight: FontWeight.w600,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: isComplete
+                    ? AppColors.primary500.withValues(alpha: 0.15)
+                    : AppColors.bgSurface,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                isComplete ? Icons.check_circle : icon,
+                size: 18,
+                color: isComplete ? AppColors.primary500 : AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        label,
+                        style: AppTypography.custom(
+                          color: AppColors.textPrimary,
+                          size: 13,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                      if (isComplete)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary500,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'DONE',
+                              style: AppTypography.custom(
+                                color: Colors.white,
+                                size: 8,
+                                weight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
+                  const SizedBox(height: 3),
+                  Text(
+                    isLocked
+                        ? 'You have $current / $required${isComplete ? ' ✓' : ''}'
+                        : 'Required: $required',
+                    style: AppTypography.custom(
+                      color: isComplete
+                          ? AppColors.primary500
+                          : AppColors.textMuted,
+                      size: 11,
+                      weight: isComplete ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isLocked && !isComplete)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.bgSurface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.borderSubtle),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  isLocked
-                      ? 'You have $current / $required'
-                      : 'Required: $required',
+                child: Text(
+                  '+${_formatDiff(requiredNum - currentNum)}',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: 11,
-                    weight: FontWeight.w400,
+                    weight: FontWeight.w700,
                   ),
                 ),
-              ],
-            ),
-          ),
-          if (isLocked && !isComplete)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.bgBase,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.borderSubtle),
               ),
-              child: Text(
-                '+${_formatDiff(requiredNum - currentNum)}',
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: 10,
-                  weight: FontWeight.w600,
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

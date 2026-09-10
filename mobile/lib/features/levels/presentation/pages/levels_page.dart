@@ -52,6 +52,16 @@ class _LevelsPageState extends State<LevelsPage> {
             weight: FontWeight.w700,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh, color: AppColors.textPrimary),
+            onPressed: () {
+              final levelsStore = context.read<LevelsStore>();
+              levelsStore.recalculateMyLevel();
+            },
+            tooltip: 'Refresh Progress',
+          ),
+        ],
       ),
       body: Consumer<LevelsStore>(
         builder: (context, levelsStore, _) {
