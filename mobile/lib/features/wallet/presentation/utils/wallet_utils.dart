@@ -30,6 +30,13 @@ String formatUsd(String value, {int decimals = 2}) {
   );
 }
 
+/// A `priceSource` of `'fallback'` means the backend has no live market
+/// price for this asset (either no provider is configured yet, or pricing
+/// is deliberately hidden outside mainnet) — showing a dollar figure in
+/// that case would be inventing a number, so callers should show honest
+/// "no market value yet" copy instead.
+bool isUsdPriceLive(String priceSource) => priceSource == 'live';
+
 String formatTokenAmount(
   String value, {
   int maxDecimals = 6,

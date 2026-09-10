@@ -26,8 +26,11 @@ class AssetRow extends StatelessWidget {
     final isCardMode = viewMode == FeedViewMode.card;
     final amountText =
         isBalanceHidden ? '••••••' : formatTokenAmount(asset.available);
-    final usdText =
-        isBalanceHidden ? '\$••••' : '\$${formatUsd(asset.usdValue)}';
+    final usdText = isBalanceHidden
+        ? '\$••••'
+        : (isUsdPriceLive(asset.priceSource)
+            ? '\$${formatUsd(asset.usdValue)}'
+            : 'Pre-launch');
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () {

@@ -108,7 +108,9 @@ class AssetBalanceCard extends StatelessWidget {
           Text(
             isBalanceHidden
                 ? '\$•••• • Price \$••••'
-                : '\$${formatUsd(asset.usdValue)} • Price \$${formatUsd(asset.usdPrice, decimals: 4)}',
+                : (isUsdPriceLive(asset.priceSource)
+                    ? '\$${formatUsd(asset.usdValue)} • Price \$${formatUsd(asset.usdPrice, decimals: 4)}'
+                    : 'Pre-launch · no market value yet'),
             style: AppTypography.custom(
               color: AppColors.textMuted,
               size: 12,
