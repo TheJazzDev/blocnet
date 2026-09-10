@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -43,6 +45,7 @@ export class MiningService {
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
     private readonly badgesService: BadgesService,
+    @Inject(forwardRef(() => QuestsService))
     private readonly questsService: QuestsService,
     private readonly levelsService: LevelsService,
     private readonly miningCalculator: MiningCalculatorService,
