@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { BlocksModule } from '../blocks/blocks.module';
 import { CommunityModerationModule } from '../community-moderation/community-moderation.module';
+import { LevelsModule } from '../levels/levels.module';
 import { MentionsModule } from '../mentions/mentions.module';
 import { CommunityPostsController } from './community-posts.controller';
 import { CommunityPostsService } from './community-posts.service';
@@ -11,6 +12,7 @@ import { CommunityPostsService } from './community-posts.service';
     AuditLogModule,
     BlocksModule,
     CommunityModerationModule,
+    LevelsModule,
     MentionsModule,
   ],
   controllers: [CommunityPostsController],
