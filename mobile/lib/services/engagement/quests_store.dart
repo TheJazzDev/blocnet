@@ -46,7 +46,16 @@ class QuestsStore extends ChangeNotifier {
   int get pendingVerificationCount => _myQuests
       .where((q) => q.status == QuestStatus.pendingVerification)
       .length;
-  int get notStartedCount => _allQuests.length - _myQuests.length;
+  // `_allQuests` and `_myQuests` load independently (see loadAllQuests /
+  // loadMyQuests, kicked off concurrently via Future.wait). If `_myQuests`
+  // resolves first, `_allQuests` is still empty (length 0), which would
+  // otherwise make this go negative (e.g. "Available (-8)") until
+  // `_allQuests` finishes loading. Clamp to 0 so it never renders a
+  // negative, not-yet-meaningful count.
+  int get notStartedCount {
+    final diff = _allQuests.length - _myQuests.length;
+    return diff > 0 ? diff : 0;
+  }
 
   void ensureUserScope(String? userId) {
     final normalized = (userId ?? '').trim();

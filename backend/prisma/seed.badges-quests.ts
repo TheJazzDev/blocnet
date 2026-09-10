@@ -97,7 +97,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.engagement,
       rarity: BadgeRarity.common,
-      pointsRequirement: 0,
+      pointsRequirement: 1,
       sortOrder: 20,
     },
     {
@@ -107,7 +107,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.engagement,
       rarity: BadgeRarity.rare,
-      pointsRequirement: 0,
+      pointsRequirement: 10,
       sortOrder: 21,
     },
     {
@@ -117,7 +117,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.engagement,
       rarity: BadgeRarity.epic,
-      pointsRequirement: 0,
+      pointsRequirement: 50,
       sortOrder: 22,
     },
     {
@@ -127,7 +127,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.engagement,
       rarity: BadgeRarity.common,
-      pointsRequirement: 0,
+      pointsRequirement: 1,
       sortOrder: 23,
     },
     {
@@ -137,7 +137,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.engagement,
       rarity: BadgeRarity.rare,
-      pointsRequirement: 0,
+      pointsRequirement: 50,
       sortOrder: 24,
     },
     {
@@ -147,7 +147,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.engagement,
       rarity: BadgeRarity.epic,
-      pointsRequirement: 0,
+      pointsRequirement: 100,
       sortOrder: 25,
     },
 
@@ -159,7 +159,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.social,
       rarity: BadgeRarity.common,
-      pointsRequirement: 0,
+      pointsRequirement: 10,
       sortOrder: 30,
     },
     {
@@ -169,7 +169,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.social,
       rarity: BadgeRarity.rare,
-      pointsRequirement: 0,
+      pointsRequirement: 100,
       sortOrder: 31,
     },
     {
@@ -179,7 +179,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.social,
       rarity: BadgeRarity.epic,
-      pointsRequirement: 0,
+      pointsRequirement: 500,
       sortOrder: 32,
     },
     {
@@ -189,7 +189,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.social,
       rarity: BadgeRarity.common,
-      pointsRequirement: 0,
+      pointsRequirement: 1,
       sortOrder: 33,
     },
     {
@@ -199,7 +199,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.social,
       rarity: BadgeRarity.rare,
-      pointsRequirement: 0,
+      pointsRequirement: 5,
       sortOrder: 34,
     },
     {
@@ -209,7 +209,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.social,
       rarity: BadgeRarity.epic,
-      pointsRequirement: 0,
+      pointsRequirement: 25,
       sortOrder: 35,
     },
     {
@@ -219,7 +219,7 @@ export async function seedBadgesAndQuests(prisma: PrismaClient) {
       imageUrl: '',
       category: BadgeCategory.social,
       rarity: BadgeRarity.legendary,
-      pointsRequirement: 0,
+      pointsRequirement: 100,
       sortOrder: 36,
     },
   ];

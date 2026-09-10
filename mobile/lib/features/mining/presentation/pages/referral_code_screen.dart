@@ -35,12 +35,13 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     return _referralCodePattern.hasMatch(normalized) ? normalized : null;
   }
 
+  // Matches the display-name resolution used elsewhere in the app (see
+  // user_profile_body.dart / hunter_profile_body.dart): the real display
+  // name takes priority, with the username shown separately as "@handle"
+  // alongside it. Previously this prioritized username first, which made
+  // the header row show "@jazzdev" twice — once as the "display name" and
+  // once as the explicit username badge next to it.
   String _resolveDisplayName(AuthStore auth) {
-    final username = auth.username?.trim();
-    if (username != null && username.isNotEmpty) {
-      return '@$username';
-    }
-
     final displayName = auth.displayName?.trim();
     if (displayName != null && displayName.isNotEmpty) {
       return displayName;
@@ -49,6 +50,11 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     final email = auth.email?.trim();
     if (email != null && email.isNotEmpty) {
       return email.split('@').first;
+    }
+
+    final username = auth.username?.trim();
+    if (username != null && username.isNotEmpty) {
+      return '@$username';
     }
 
     return 'Blocnet User';

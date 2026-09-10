@@ -178,12 +178,13 @@ export class MiningLeaderboardService {
       offset,
       data: profiles.map((profile, index) => {
         const currentSession = profile.miningSessions[0] ?? null;
-        const claimedTotalPoints = this.bigIntToNumber(
-          profile.miningClaimedPoints,
-        );
+        // Keep BigInt arithmetic in BigInt space and serialize to string at
+        // the response boundary (never as a JS number) to avoid precision
+        // loss once mining points scale past Number.MAX_SAFE_INTEGER.
+        const claimedTotalPointsBigInt = profile.miningClaimedPoints;
         const maturedUnclaimedPoints = maturedByUserId.get(profile.id) ?? 0;
-        const lifetimeEarnedPoints =
-          claimedTotalPoints + maturedUnclaimedPoints;
+        const lifetimeEarnedPointsBigInt =
+          claimedTotalPointsBigInt + BigInt(maturedUnclaimedPoints);
         const sessionStatus: MiningSessionStatus = !currentSession
           ? ('idle' as MiningSessionStatus)
           : currentSession.endsAt.getTime() <= asOf.getTime()
@@ -198,9 +199,9 @@ export class MiningLeaderboardService {
           displayName: profile.displayName,
           avatarUrl: profile.avatarUrl,
           primaryBadge: profile.primaryBadge ?? null,
-          claimedTotalPoints,
+          claimedTotalPoints: claimedTotalPointsBigInt.toString(),
           maturedUnclaimedPoints,
-          lifetimeEarnedPoints,
+          lifetimeEarnedPoints: lifetimeEarnedPointsBigInt.toString(),
           sessionStatus,
           sessionProgressPct: currentSession
             ? this.miningCalculator.computeProgressPct(
@@ -215,9 +216,5 @@ export class MiningLeaderboardService {
         };
       }),
     };
-  }
-
-  private bigIntToNumber(value: bigint | number): number {
-    return typeof value === 'bigint' ? Number(value) : Number(value);
   }
 }

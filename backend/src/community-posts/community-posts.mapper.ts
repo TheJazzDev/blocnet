@@ -94,7 +94,11 @@ export function buildCommunityPostInclude(viewerId: string) {
     },
     _count: {
       select: {
-        comments: true,
+        comments: {
+          where: {
+            status: ContentModerationStatus.active,
+          },
+        },
         reactions: true,
       },
     },

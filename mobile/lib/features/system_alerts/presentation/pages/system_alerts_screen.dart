@@ -30,6 +30,7 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
   bool _isLoading = true;
   bool _isRefreshing = false;
   String? _error;
+  bool _isSessionExpired = false;
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
 
     setState(() {
       _error = null;
+      _isSessionExpired = false;
       if (refreshing) {
         _isRefreshing = true;
       } else {
@@ -65,8 +67,11 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
       });
     } on ApiException catch (error) {
       if (!mounted) return;
-      final nextError = error.message;
-      setState(() => _error = nextError);
+      final nextError = _friendlyErrorMessage(error);
+      setState(() {
+        _error = nextError;
+        _isSessionExpired = error.statusCode == 401;
+      });
       AppSnackbar.showError(context, nextError);
     } catch (_) {
       if (!mounted) return;
@@ -81,6 +86,26 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
         });
       }
     }
+  }
+
+  // The backend surfaces raw exception text (e.g. NestJS's
+  // `UnauthorizedException('Invalid or expired token')`) as the API error
+  // message with no structured code to branch on. Pattern-match the one
+  // known-bad case here so end users don't see a raw auth/backend string.
+  // A more general fix belongs on the backend (structured error codes
+  // instead of opaque messages) — out of scope for this mobile-only patch.
+  String _friendlyErrorMessage(ApiException error) {
+    final raw = error.message.trim();
+    final isSessionExpired = error.statusCode == 401 ||
+        raw.toLowerCase().contains('invalid or expired token');
+    if (isSessionExpired) {
+      return 'Your session has expired. Please sign in again.';
+    }
+    return raw.isEmpty ? 'Unable to load system alerts right now.' : raw;
+  }
+
+  Future<void> _signInAgain() async {
+    await context.read<AuthStore>().signOut();
   }
 
   String _formatTimestamp(DateTime value) {
@@ -369,15 +394,29 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
                           children: [
                             const SizedBox(height: 120),
                             Center(
-                              child: Text(
-                                _error ?? 'No system alerts yet.',
-                                style: AppTypography.custom(
-                                  color: AppColors.textMuted,
-                                  size: 13,
-                                  weight: FontWeight.w500,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24),
+                                child: Text(
+                                  _error ?? 'No system alerts yet.',
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.custom(
+                                    color: AppColors.textMuted,
+                                    size: 13,
+                                    weight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ),
+                            if (_isSessionExpired) ...[
+                              const SizedBox(height: 16),
+                              Center(
+                                child: OutlinedButton(
+                                  onPressed: _signInAgain,
+                                  child: const Text('Sign In Again'),
+                                ),
+                              ),
+                            ],
                           ],
                         )
                       : ListView.separated(

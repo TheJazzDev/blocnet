@@ -44,6 +44,22 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   String? _checkedHunterOnboardingUserId;
   bool _didRequestInitialNotifications = false;
 
+  // Serializes post-login prompts (e.g. hunter onboarding dialog, referral
+  // bind sheet) so only one is ever shown at a time. Without this, prompts
+  // triggered from independent sources (initState vs. didChangeDependencies)
+  // can show near-simultaneously and one modal's barrier can block the
+  // other, even when it's visually drawn underneath.
+  Future<void> _postLoginPromptQueue = Future<void>.value();
+
+  Future<void> _queuePostLoginPrompt(Future<void> Function() action) {
+    final next = _postLoginPromptQueue.then((_) {
+      if (!mounted) return Future<void>.value();
+      return action();
+    });
+    _postLoginPromptQueue = next;
+    return next;
+  }
+
   int _userIndex = 0;
   int _hunterIndex = 0;
   int _moderationIndex = 0;
@@ -57,8 +73,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     _moderationIndex = widget.initialIndex.clamp(0, 5);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _maybePromptReferralBind();
-      _maybePromptHunterOnboarding();
+      // Show the hunter onboarding dialog first (it's non-dismissible and
+      // tied directly to the role grant), then the referral bind sheet once
+      // it's been dismissed — never both at once.
+      _queuePostLoginPrompt(_maybePromptHunterOnboarding);
+      _queuePostLoginPrompt(_maybePromptReferralBind);
     });
   }
 
@@ -91,7 +110,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             );
       });
     }
-    _maybePromptHunterOnboarding();
+    _queuePostLoginPrompt(_maybePromptHunterOnboarding);
 
     if (_lastActiveSpace == null) {
       _lastActiveSpace = activeSpace;

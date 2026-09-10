@@ -136,7 +136,7 @@ export function CommunityPostsTab({
                   <TableCell>{statusBadge(post.status)}</TableCell>
                   <TableCell>{topicBadge(post.topic)}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {post.author.displayName ?? post.author.email}
+                    {post.author.displayName ?? post.author.email.split("@")[0]}
                   </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
                     {formatDate(post.createdAt)}

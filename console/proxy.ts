@@ -10,7 +10,11 @@ import {
 
 const PUBLIC_PATH_PREFIXES = ["/signin", "/signout"];
 const PUBLIC_PLATFORM_PREFIXES = ["/api", "/_next"];
-const PUBLIC_EXACT_PATHS = new Set(["/favicon.ico", "/unsupported-device"]);
+const PUBLIC_EXACT_PATHS = new Set([
+  "/favicon.ico",
+  "/unsupported-device",
+  "/logo2.png",
+]);
 const REFRESH_LEEWAY_SECONDS = 90;
 const MOBILE_BLOCK_REDIRECT_PATH = "/unsupported-device";
 

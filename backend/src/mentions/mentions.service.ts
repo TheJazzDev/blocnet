@@ -207,47 +207,53 @@ export class MentionsService {
       authorName,
     );
 
-    // Create mention records and notifications for each mentioned user
-    for (const user of users) {
-      // Don't mention yourself
-      if (user.id === authorId) {
-        continue;
-      }
+    // Don't mention yourself
+    const recipients = users.filter((user) => user.id !== authorId);
 
-      try {
-        // Create mention record
-        await this.prisma.mention.create({
-          data: {
-            mentionedUserId: user.id,
-            mentionText: `@${user.username || user.email?.split('@')[0] || user.id}`,
-            ...context,
-          },
-        });
-
-        await this.notificationsService.notifyMany([
-          {
-            userId: user.id,
-            type: NotificationType.mention_received,
-            actorUserId: authorId,
-            title: notification.title,
-            body: notification.body,
-            payload: notification.payload,
-            updateId: notification.updateId,
-            deeplink: notification.deeplink,
-            dedupeKey: `mention_${contextType}_${Object.values(context)[0]}_${user.id}`,
-          },
-        ]);
-      } catch (error) {
-        this.logger.warn(
-          `Failed to create mention for user ${user.id}`,
-          JSON.stringify({
-            error: error instanceof Error ? error.message : String(error),
-            contextType,
-            context,
-          }),
-        );
-      }
+    if (recipients.length === 0) {
+      return;
     }
+
+    // Create mention records for all recipients in a single batched write
+    // instead of one `create` call per user. The created rows aren't used
+    // afterwards (no per-row id/field is read below), so `createMany` is
+    // sufficient here — no need for `Promise.all` with individual `create`s.
+    try {
+      await this.prisma.mention.createMany({
+        data: recipients.map((user) => ({
+          mentionedUserId: user.id,
+          mentionText: `@${user.username || user.email?.split('@')[0] || user.id}`,
+          ...context,
+        })),
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to create mentions`,
+        JSON.stringify({
+          error: error instanceof Error ? error.message : String(error),
+          contextType,
+          context,
+          recipientIds: recipients.map((user) => user.id),
+        }),
+      );
+      return;
+    }
+
+    // Dispatch all mention notifications in a single batched call instead of
+    // one `notifyMany` call per user.
+    await this.notificationsService.notifyMany(
+      recipients.map((user) => ({
+        userId: user.id,
+        type: NotificationType.mention_received,
+        actorUserId: authorId,
+        title: notification.title,
+        body: notification.body,
+        payload: notification.payload,
+        updateId: notification.updateId,
+        deeplink: notification.deeplink,
+        dedupeKey: `mention_${contextType}_${Object.values(context)[0]}_${user.id}`,
+      })),
+    );
   }
 
   private async resolveNotificationContext(

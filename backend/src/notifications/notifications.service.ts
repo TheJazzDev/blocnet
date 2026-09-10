@@ -268,14 +268,27 @@ export class NotificationsService {
       }
     }
 
-    for (const event of withDedupe) {
-      const result = await this.prisma.notification.createMany({
-        data: [this.toCreateManyInput(event)],
+    if (withDedupe.length > 0) {
+      // Use createManyAndReturn (not createMany) because skipDuplicates
+      // silently drops rows that collide with the @@unique([userId, dedupeKey])
+      // constraint, and we need to know exactly which events were actually
+      // inserted (vs deduped away) to avoid double-sending critical emails
+      // and push notifications for events that were skipped.
+      const createdRows = await this.prisma.notification.createManyAndReturn({
+        data: withDedupe.map((event) => this.toCreateManyInput(event)),
         skipDuplicates: true,
+        select: { userId: true, dedupeKey: true },
       });
-      if (result.count > 0) {
-        inserted.push(event);
-      }
+
+      const insertedKeys = new Set(
+        createdRows.map((row) => `${row.userId}::${row.dedupeKey ?? ''}`),
+      );
+
+      inserted.push(
+        ...withDedupe.filter((event) =>
+          insertedKeys.has(`${event.userId}::${event.dedupeKey ?? ''}`),
+        ),
+      );
     }
 
     const criticalInserted = inserted.filter((event) =>

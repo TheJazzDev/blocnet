@@ -380,7 +380,7 @@ export class ReferralsService {
               effectivePointsPerCycle: latestSession.effectivePointsPerCycle,
             }
           : null,
-        claimedTotalPoints: this.bigIntToNumber(row.miningClaimedPoints),
+        claimedTotalPoints: row.miningClaimedPoints.toString(),
         lastActiveAt,
       };
     });
@@ -565,9 +565,5 @@ export class ReferralsService {
     if (elapsedMs >= durationMs) return 1;
 
     return elapsedMs / durationMs;
-  }
-
-  private bigIntToNumber(value: bigint): number {
-    return Number(value);
   }
 }
