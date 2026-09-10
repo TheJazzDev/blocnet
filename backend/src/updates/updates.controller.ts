@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -29,7 +30,7 @@ export class UpdatesController {
   @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.HUNTER)
   async createUpdate(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('projectId') projectId: string,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
     @Body() dto: CreateUpdateDto,
   ) {
     if (!user) {
@@ -56,7 +57,7 @@ export class UpdatesController {
   @UseGuards(AuthGuard)
   async getUpdate(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -70,7 +71,7 @@ export class UpdatesController {
   @Roles(AppRole.OWNER, AppRole.ADMIN, AppRole.HUNTER)
   async updateUpdate(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUpdateDto,
   ) {
     if (!user) {

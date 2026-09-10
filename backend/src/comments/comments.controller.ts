@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -26,7 +27,7 @@ export class CommentsController {
   @UseGuards(AuthGuard)
   async createComment(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('updateId') updateId: string,
+    @Param('updateId', ParseUUIDPipe) updateId: string,
     @Body() dto: CreateCommentDto,
   ) {
     if (!user) {
@@ -40,7 +41,7 @@ export class CommentsController {
   @UseGuards(AuthGuard)
   async listComments(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('updateId') updateId: string,
+    @Param('updateId', ParseUUIDPipe) updateId: string,
     @Query() query: ListCommentsQuery,
   ) {
     if (!user) {
@@ -54,7 +55,7 @@ export class CommentsController {
   @UseGuards(AuthGuard)
   async updateComment(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateCommentDto,
   ) {
     if (!user) {
@@ -68,7 +69,7 @@ export class CommentsController {
   @UseGuards(AuthGuard)
   async deleteComment(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -81,7 +82,7 @@ export class CommentsController {
   @UseGuards(AuthGuard)
   async likeComment(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -94,7 +95,7 @@ export class CommentsController {
   @UseGuards(AuthGuard)
   async unlikeComment(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');

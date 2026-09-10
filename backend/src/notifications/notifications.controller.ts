@@ -5,6 +5,7 @@ import {
   Patch,
   Post,
   Param,
+  ParseUUIDPipe,
   Query,
   UnauthorizedException,
   UseGuards,
@@ -48,7 +49,7 @@ export class NotificationsController {
   @Patch(':id/read')
   async markRead(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) throw new UnauthorizedException('User context missing');
     return this.notificationsService.markAsRead(user.id, id);

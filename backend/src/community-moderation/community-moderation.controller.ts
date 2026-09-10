@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -75,7 +76,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
   async reviewReport(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewCommunityReportDto,
   ) {
     if (!user) {
@@ -92,7 +93,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
   async getUserState(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -108,7 +109,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
   async issueWarning(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: IssueCommunityWarningDto,
   ) {
     if (!user) {
@@ -125,7 +126,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
   async applyMute(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ApplyCommunityMuteDto,
   ) {
     if (!user) {
@@ -142,7 +143,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_ESCALATED_ROLES)
   async applySuspension(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ApplyCommunitySuspensionDto,
   ) {
     if (!user) {
@@ -159,7 +160,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_ESCALATED_ROLES)
   async applyRestrictions(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ApplyCommunityRestrictionsDto,
   ) {
     if (!user) {
@@ -176,7 +177,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_ESCALATED_ROLES)
   async clearRestrictions(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ClearCommunityRestrictionsDto,
   ) {
     if (!user) {
@@ -243,7 +244,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_ESCALATED_ROLES)
   async reviewAppeal(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewCommunityAppealDto,
   ) {
     if (!user) {

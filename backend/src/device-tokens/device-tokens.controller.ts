@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Param,
+  ParseUUIDPipe,
   Post,
   UnauthorizedException,
   UseGuards,
@@ -33,7 +34,7 @@ export class DeviceTokensController {
   @Delete(':id')
   async remove(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');

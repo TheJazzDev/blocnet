@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Query,
   UnauthorizedException,
@@ -46,7 +47,7 @@ export class AdminContentController {
   @Patch('projects/:id/status')
   async moderateProjectStatus(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ModerateProjectStatusDto,
   ) {
     if (!user) {
@@ -64,7 +65,7 @@ export class AdminContentController {
   @Patch('updates/:id/status')
   async moderateUpdateStatus(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ModerateUpdateStatusDto,
   ) {
     if (!user) {
@@ -82,7 +83,7 @@ export class AdminContentController {
   @Patch('comments/:id/status')
   async moderateCommentStatus(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ModerateCommentStatusDto,
   ) {
     if (!user) {
@@ -114,7 +115,7 @@ export class AdminContentController {
   )
   async moderateCommunityPostStatus(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ModerateCommunityPostStatusDto,
   ) {
     if (!user) {
@@ -150,7 +151,7 @@ export class AdminContentController {
   )
   async moderateCommunityCommentStatus(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ModerateCommunityCommentStatusDto,
   ) {
     if (!user) {

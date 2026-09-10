@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -56,7 +57,7 @@ export class WalletAdminController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async updateWalletUserStatus(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('userId') userId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
     @Body() dto: UpdateWalletUserStatusDto,
   ) {
     if (!user) {
@@ -90,7 +91,7 @@ export class WalletAdminController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async reviewWithdrawal(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewWithdrawalDto,
   ) {
     if (!user) {
@@ -108,7 +109,7 @@ export class WalletAdminController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async reviewKyc(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('userId') userId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
     @Body() dto: ReviewKycDto,
   ) {
     if (!user) {

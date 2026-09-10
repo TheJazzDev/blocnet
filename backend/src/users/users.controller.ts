@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -368,7 +369,7 @@ export class AdminUsersController {
   }
 
   @Get(':id')
-  async getUser(@Param('id') id: string) {
+  async getUser(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersAdminService.getAdminUserById(id);
   }
 
@@ -376,7 +377,7 @@ export class AdminUsersController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async bindReferralForUser(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AdminBindUserReferralDto,
   ) {
     if (!user) {
@@ -390,7 +391,7 @@ export class AdminUsersController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async updateUser(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AdminUpdateUserDto,
   ) {
     if (!user) {
@@ -404,7 +405,7 @@ export class AdminUsersController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async deleteUser(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AdminDeleteUserDto,
   ) {
     if (!user) {
@@ -418,7 +419,7 @@ export class AdminUsersController {
   @Roles(AppRole.OWNER)
   async reactivateUser(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AdminReactivateUserDto,
   ) {
     if (!user) {
@@ -432,7 +433,7 @@ export class AdminUsersController {
   @Roles(AppRole.OWNER)
   async hardDeleteUser(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AdminHardDeleteUserDto,
   ) {
     if (!user) {

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -129,7 +130,7 @@ export class ClosedAlphaAdminController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async updateStatus(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateClosedAlphaEmailDto,
   ) {
     if (!user) {
@@ -155,7 +156,7 @@ export class ClosedAlphaAdminController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async remove(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');

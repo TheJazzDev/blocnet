@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
   UnauthorizedException,
@@ -39,7 +40,7 @@ export class CommunityPostsController {
   @Get('community-posts/:id')
   async getPost(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -63,7 +64,7 @@ export class CommunityPostsController {
   @Get('community-posts/:postId/comments')
   async listComments(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Query() query: ListCommunityCommentsQuery,
   ) {
     if (!user) {
@@ -76,7 +77,7 @@ export class CommunityPostsController {
   @Post('community-posts/:postId/comments')
   async createComment(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Body() dto: CreateCommunityPostCommentDto,
   ) {
     if (!user) {
@@ -89,7 +90,7 @@ export class CommunityPostsController {
   @Post('community-posts/:postId/reactions')
   async reactToPost(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Body() dto: ReactCommunityPostDto,
   ) {
     if (!user) {
@@ -102,7 +103,7 @@ export class CommunityPostsController {
   @Delete('community-posts/:postId/reactions')
   async removeReaction(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Query() query: ReactCommunityPostDto,
   ) {
     if (!user) {
@@ -115,7 +116,7 @@ export class CommunityPostsController {
   @Post('community-posts/:postId/bookmark')
   async bookmarkPost(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -127,7 +128,7 @@ export class CommunityPostsController {
   @Delete('community-posts/:postId/bookmark')
   async unbookmarkPost(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -139,7 +140,7 @@ export class CommunityPostsController {
   @Post('community-post-comments/:commentId/reactions')
   async likeComment(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('commentId') commentId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -151,7 +152,7 @@ export class CommunityPostsController {
   @Delete('community-post-comments/:commentId/reactions')
   async unlikeComment(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('commentId') commentId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');

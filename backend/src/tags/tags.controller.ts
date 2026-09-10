@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   UnauthorizedException,
@@ -65,7 +66,7 @@ export class TagsController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async updatePrimaryTag(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdatePrimaryTagDto,
   ) {
     if (!user) {
@@ -79,7 +80,7 @@ export class TagsController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async updateSecondaryTag(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSecondaryTagDto,
   ) {
     if (!user) {

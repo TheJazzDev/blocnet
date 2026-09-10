@@ -5,6 +5,7 @@ import {
   NotFoundException,
   Patch,
   Param,
+  ParseUUIDPipe,
   Body,
   UseGuards,
   Query,
@@ -93,7 +94,7 @@ export class LevelsController {
    */
   @Get('user/:userId')
   async getUserLevelProgress(
-    @Param('userId') userId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
   ): Promise<UserLevelProgressDto> {
     const result = await this.levelsService.getUserLevelWithProgress(userId);
 
@@ -175,7 +176,7 @@ export class LevelsController {
   @Roles(AppRole.ADMIN, AppRole.OWNER)
   @Patch(':id')
   async updateLevelConfig(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: UpdateLevelDto,
   ): Promise<LevelResponseDto> {
     const existingLevel = await this.levelsService.getLevelById(id);
@@ -220,7 +221,7 @@ export class LevelsController {
     }),
   )
   async uploadLevelIcon(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile()
     file?: {
       buffer: Buffer;
@@ -263,7 +264,7 @@ export class LevelsController {
    * GET /api/levels/:id
    */
   @Get(':id')
-  async getLevelById(@Param('id') id: string): Promise<LevelResponseDto> {
+  async getLevelById(@Param('id', ParseUUIDPipe) id: string): Promise<LevelResponseDto> {
     const level = await this.levelsService.getLevelById(id);
     if (!level) {
       throw new NotFoundException('Level not found');

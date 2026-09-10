@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -62,7 +63,7 @@ export class ProjectProposalsController {
   @Roles(AppRole.OWNER, AppRole.ADMIN)
   async review(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewProjectProposalDto,
   ) {
     if (!user) {

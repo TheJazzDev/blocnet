@@ -4,6 +4,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
   UnauthorizedException,
@@ -38,7 +39,7 @@ export class ProfilesController {
   }
 
   @Get(':id/public')
-  async getPublicProfile(@Param('id') id: string) {
+  async getPublicProfile(@Param('id', ParseUUIDPipe) id: string) {
     const profile = await this.usersService.getPublicProfile(id);
 
     if (!profile) {
@@ -52,7 +53,7 @@ export class ProfilesController {
   @UseGuards(AuthGuard)
   async followProfile(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -65,7 +66,7 @@ export class ProfilesController {
   @UseGuards(AuthGuard)
   async unfollowProfile(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');

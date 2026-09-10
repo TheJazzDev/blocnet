@@ -5,6 +5,7 @@ import {
   Patch,
   Post,
   Param,
+  ParseUUIDPipe,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -47,7 +48,7 @@ export class AdminApplicationsController {
   @Roles(AppRole.OWNER)
   async review(
     @CurrentUser() user: AuthUser | undefined,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewAdminApplicationDto,
   ) {
     if (!user) {
