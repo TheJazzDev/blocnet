@@ -78,10 +78,13 @@ export function useSignInState() {
     if (!preflight.eligible) {
       return 'credentials';
     }
-    if (!preflight.totpEnabled) {
+    if (preflight.totpEnabled) {
+      return 'twoFactor';
+    }
+    if (preflight.policyRequired) {
       return 'setup2fa';
     }
-    return 'twoFactor';
+    return 'credentials';
   }
 
   useEffect(() => {

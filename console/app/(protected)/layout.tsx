@@ -27,7 +27,11 @@ export default async function ProtectedLayout({
     .getAdminTwoFactorPreflight()
     .catch(() => null);
 
-  if (twoFactorPreflight?.eligible && !twoFactorPreflight.totpEnabled) {
+  if (
+    twoFactorPreflight?.eligible &&
+    !twoFactorPreflight.totpEnabled &&
+    twoFactorPreflight.policyRequired
+  ) {
     redirect("/signin?reason=2fa_setup_required");
   }
 

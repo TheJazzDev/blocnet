@@ -7,6 +7,7 @@ export type SignInStage =
 export type TwoFactorPreflight = {
   eligible: boolean;
   totpEnabled: boolean;
+  policyRequired: boolean;
   challengeRequired: boolean;
 };
 
