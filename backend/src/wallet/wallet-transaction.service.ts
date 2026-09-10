@@ -16,11 +16,11 @@ import {
   type LedgerEntry,
   type UserWallet,
 } from '@prisma/client';
-import { randomUUID } from 'crypto';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
 import {
   createDeterministicIdempotencyKey,
+  idempotencyTimeBucket,
   normalizeIdempotencyKey,
 } from '../common/utils/idempotency.util';
 import { PrismaService } from '../prisma/prisma.service';
@@ -121,7 +121,7 @@ export class WalletTransactionService {
         recipientWallet.userId,
         asset,
         amount.toString(),
-        randomUUID(),
+        idempotencyTimeBucket(),
       );
 
     const result = await this.prisma.$transaction(
@@ -439,7 +439,7 @@ export class WalletTransactionService {
         asset,
         dto.toAddress.trim().toLowerCase(),
         amount.toString(),
-        randomUUID(),
+        idempotencyTimeBucket(),
       );
 
     const created = await this.prisma.$transaction(

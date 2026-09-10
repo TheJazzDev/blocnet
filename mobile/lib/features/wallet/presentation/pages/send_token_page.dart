@@ -35,6 +35,10 @@ class _SendTokenPageState extends State<SendTokenPage> {
   late SendFlowAction _action;
   bool _submitting = false;
   String? _error;
+  late final String _transferIdempotencyKey =
+      'itr-${DateTime.now().microsecondsSinceEpoch}';
+  late final String _withdrawalIdempotencyKey =
+      'wdr-${DateTime.now().microsecondsSinceEpoch}';
 
   bool get _isInternal => _action == SendFlowAction.internalTransfer;
 
@@ -124,9 +128,6 @@ class _SendTokenPageState extends State<SendTokenPage> {
     return trimmed.replaceFirst(RegExp('^@'), '').toLowerCase();
   }
 
-  String _idempotencyKey(String prefix) =>
-      '$prefix-${DateTime.now().microsecondsSinceEpoch.toString()}';
-
   Future<void> _submit() async {
     final validationError = _validate();
     if (validationError != null) {
@@ -152,7 +153,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
           note: _noteController.text.trim().isEmpty
               ? null
               : _noteController.text.trim(),
-          idempotencyKey: _idempotencyKey('itr'),
+          idempotencyKey: _transferIdempotencyKey,
         );
         if (!mounted) return;
         Navigator.of(context).pop('${widget.assetCode} transfer submitted.');
@@ -164,7 +165,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
         amount: _amountController.text.trim(),
         reason: _reasonController.text.trim(),
         asset: widget.assetCode,
-        idempotencyKey: _idempotencyKey('wdr'),
+        idempotencyKey: _withdrawalIdempotencyKey,
       );
       if (!mounted) return;
       final status = created?.status ?? 'pending_review';

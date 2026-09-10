@@ -26,3 +26,14 @@ export function createDeterministicIdempotencyKey(
 
   return createHash('sha256').update(payload).digest('hex');
 }
+
+/**
+ * Coarse time bucket for idempotency-key fallbacks. Two requests with
+ * identical action/actor/amount fields that land in the same window are
+ * treated as the same logical attempt (a retry), not two random UUIDs
+ * that could never collide. Do not use randomUUID() here — it defeats
+ * the entire point of a deterministic fallback key.
+ */
+export function idempotencyTimeBucket(windowMs = 2 * 60 * 1000): number {
+  return Math.floor(Date.now() / windowMs);
+}

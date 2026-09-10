@@ -50,6 +50,8 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   String? _error;
+  late final String _idempotencyKey =
+      'tip-${DateTime.now().microsecondsSinceEpoch}';
 
   @override
   void initState() {
@@ -112,7 +114,7 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
         note: note.isEmpty ? null : note,
         contextType: widget.contextType,
         contextId: widget.contextId,
-        idempotencyKey: 'tip-${DateTime.now().microsecondsSinceEpoch}',
+        idempotencyKey: _idempotencyKey,
       );
       await userProfileStore.refreshAll();
       if (!mounted) return;

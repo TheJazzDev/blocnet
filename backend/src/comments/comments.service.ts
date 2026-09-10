@@ -137,6 +137,18 @@ export class CommentsService {
       throw new ForbiddenException('Comments are disabled for this update');
     }
 
+    if (dto.replyToId) {
+      const parentComment = await this.prisma.comment.findUnique({
+        where: { id: dto.replyToId },
+        select: { id: true, updateId: true },
+      });
+      if (!parentComment || parentComment.updateId !== updateId) {
+        throw new BadRequestException(
+          'Reply target comment was not found on this update',
+        );
+      }
+    }
+
     const comment = await this.prisma.comment.create({
       data: {
         updateId: updateId,

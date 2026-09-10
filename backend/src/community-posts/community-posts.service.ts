@@ -4,11 +4,17 @@ import {
   ContentModerationStatus,
   Prisma,
 } from '@prisma/client';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { BlocksService } from '../blocks/blocks.service';
 import { CommunityModerationEnforcementService } from '../community-moderation/community-moderation-enforcement.service';
+import { LevelsService } from '../levels/levels.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MentionsService } from '../mentions/mentions.service';
 import {
@@ -25,11 +31,14 @@ import { ReactCommunityPostDto } from './dto/react-community-post.dto';
 
 @Injectable()
 export class CommunityPostsService {
+  private readonly logger = new Logger(CommunityPostsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
     private readonly blocksService: BlocksService,
     private readonly communityModerationEnforcementService: CommunityModerationEnforcementService,
+    private readonly levelsService: LevelsService,
     private readonly mentionsService: MentionsService,
   ) {}
 
@@ -193,6 +202,20 @@ export class CommunityPostsService {
     );
     await this.ensurePostIsActive(postId);
 
+    if (dto.replyToId) {
+      const parentComment = await this.prisma.communityPostComment.findUnique(
+        {
+          where: { id: dto.replyToId },
+          select: { id: true, postId: true },
+        },
+      );
+      if (!parentComment || parentComment.postId !== postId) {
+        throw new BadRequestException(
+          'Reply target comment was not found on this post',
+        );
+      }
+    }
+
     const comment = await this.prisma.communityPostComment.create({
       data: {
         postId,
@@ -217,6 +240,15 @@ export class CommunityPostsService {
       dto.content,
       actor.id,
     );
+
+    // Trigger level recalculation (community comments count with 0.5 weight)
+    try {
+      await this.levelsService.updateUserLevel(actor.id);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to update user level after community comment: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     return toCommunityPostCommentResponse(comment);
   }

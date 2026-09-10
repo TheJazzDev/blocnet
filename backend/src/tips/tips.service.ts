@@ -15,11 +15,11 @@ import {
   type TipFeeConfig,
   type TipTransaction,
 } from '@prisma/client';
-import { randomUUID } from 'crypto';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
 import {
   createDeterministicIdempotencyKey,
+  idempotencyTimeBucket,
   normalizeIdempotencyKey,
 } from '../common/utils/idempotency.util';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -268,7 +268,7 @@ export class TipsService {
         recipient.id,
         activeCurrency.code,
         amountAtomic.toString(),
-        randomUUID(),
+        idempotencyTimeBucket(),
       );
 
     const created = await this.prisma.$transaction(
