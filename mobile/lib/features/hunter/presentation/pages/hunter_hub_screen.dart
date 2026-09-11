@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/elite_hunter_banner.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hunter_stats_grid.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/managed_projects_row.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/project_invites_section.dart';
@@ -102,7 +103,7 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
       final label = update.priority.label.toLowerCase();
       return label == 'high' || label == 'mid' || label == 'medium';
     }).length;
-    final successRate = hunterUpdates.isEmpty
+    final qualityRate = hunterUpdates.isEmpty
         ? 0
         : ((qualitySignals / hunterUpdates.length) * 100).round();
 
@@ -166,7 +167,10 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
                         Navigator.of(context).pushNamed(AppRoutes.topHunters),
                   ),
                   const SizedBox(height: AppSpace.xl),
-                  _EliteHunterBanner(successRate: successRate),
+                  EliteHunterBanner(
+                    qualityRate: qualityRate,
+                    hasSignals: hunterUpdates.isNotEmpty,
+                  ),
                   const SizedBox(height: AppSpace.xl),
                   const _CommunityBridgeLink(),
                   const SizedBox(height: 120),
@@ -346,94 +350,6 @@ class _SectionHeader extends StatelessWidget {
         color: AppColors.textPrimary,
         size: AppText.bodySize,
         weight: FontWeight.w700,
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Elite hunter promotional banner
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _EliteHunterBanner extends StatelessWidget {
-  const _EliteHunterBanner({required this.successRate});
-
-  final int successRate;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary500.withValues(alpha: 0.12),
-            AppColors.primary500.withValues(alpha: 0.04),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: AppColors.primary500.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.primary500.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppRadius.mdValue),
-            ),
-            child: Icon(
-              Icons.verified_rounded,
-              color: AppColors.primary400,
-              size: AppIcon.md,
-            ),
-          ),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Elite Hunter Status',
-                  style: AppTypography.custom(
-                    color: AppColors.primary400,
-                    size: AppText.labelSize,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.hair),
-                Text(
-                  'Maintain 85%+ success rate to keep Elite status',
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w400,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.hair),
-                Text(
-                  'Current quality rate: $successRate%',
-                  style: AppTypography.custom(
-                    color: AppColors.textFaint,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            size: AppIcon.md,
-            color: AppColors.primary400.withValues(alpha: 0.6),
-          ),
-        ],
       ),
     );
   }
