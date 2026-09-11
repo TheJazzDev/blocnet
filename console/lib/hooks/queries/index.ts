@@ -4,6 +4,7 @@ export * from "./use-users-query";
 export * from "./use-stats-query";
 export * from "./use-roles-query";
 export * from "./use-projects-query";
+export * from "./use-project-hunters-query";
 export * from "./use-updates-query";
 export * from "./use-comments-query";
 export * from "./use-community-query";

@@ -61,12 +61,19 @@ export function AdminApplicationCard({ app, canReview, onReview }: AdminApplicat
               </p>
             </div>
           </div>
-          {canReview && app.status === "pending" && (
-            <ReviewButtons
-              onApprove={() => onReview("approved")}
-              onReject={() => onReview("rejected")}
-            />
-          )}
+          {app.status === "pending" &&
+            (canReview ? (
+              <ReviewButtons
+                onApprove={() => onReview("approved")}
+                onReject={() => onReview("rejected")}
+              />
+            ) : (
+              <p
+                className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200"
+                title="The backend only lets the owner approve or reject role applications; admins can review the details here.">
+                Owner review required
+              </p>
+            ))}
         </div>
       </CardContent>
     </Card>

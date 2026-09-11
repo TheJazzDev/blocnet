@@ -12,7 +12,12 @@ interface ProjectsState {
   searchQuery: string;
   statusFilter: ProjectStatus | "all" | null;
 
+  // UI State: "Manage hunters" sheet
+  hunterSheetProject: AdminProject | null;
+
   // Actions
+  openHunterSheet: (project: AdminProject) => void;
+  closeHunterSheet: () => void;
   setProjects: (projects: AdminProject[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -31,12 +36,17 @@ const initialState = {
   error: null,
   searchQuery: "",
   statusFilter: null,
+  hunterSheetProject: null,
 };
 
 export const useProjectsStore = create<ProjectsState>()(
   devtools(
     (set, get) => ({
       ...initialState,
+
+      openHunterSheet: (hunterSheetProject) => set({ hunterSheetProject }),
+
+      closeHunterSheet: () => set({ hunterSheetProject: null }),
 
       setProjects: (projects) =>
         set({ projects, error: null, isLoading: false }),
