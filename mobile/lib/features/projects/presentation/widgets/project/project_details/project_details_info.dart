@@ -21,7 +21,7 @@ class ProjectDetailsInfo extends StatelessWidget {
     final postsCount = project.posts?.length ?? 0;
     final ownerName = project.admin?.name ?? 'Admin';
     final ownerLevel = project.admin?.currentLevel;
-    final humberCount = (project.posts ?? [])
+    final hunterCount = (project.posts ?? [])
         .map((post) => post.adminId)
         .where((id) => id.trim().isNotEmpty)
         .toSet()
@@ -134,7 +134,7 @@ class ProjectDetailsInfo extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child:
-                            _StatCard(label: 'Humbers', value: '$humberCount'),
+                            _StatCard(label: 'Hunters', value: '$hunterCount'),
                       ),
                     ],
                   ),
@@ -232,7 +232,7 @@ class ProjectDetailsInfo extends StatelessWidget {
           runSpacing: 8,
           children: [
             _DetailChip(
-              label: 'Lead Humber',
+              label: 'Lead Hunter',
               value: ownerName,
               currentLevel: ownerLevel,
             ),
