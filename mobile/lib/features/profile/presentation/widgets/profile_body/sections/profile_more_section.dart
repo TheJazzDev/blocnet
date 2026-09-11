@@ -26,8 +26,24 @@ class ProfileMoreSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final navigator = Navigator.of(context);
     final isHunter = auth.hasHunterSpace;
-    final applicationPending =
-        context.watch<HunterApplicationStore>().isPending;
+    final applicationStatus = context.watch<HunterApplicationStore>().status;
+    final becomeHunterSubtitle = switch (applicationStatus) {
+      HunterApplicationStatus.pending => 'Application pending review',
+      HunterApplicationStatus.approved => 'Approved. Hunter tools on the way',
+      HunterApplicationStatus.rejected => 'Not approved. You can apply again',
+      HunterApplicationStatus.none => 'Post updates for gems and earn tips',
+    };
+    final becomeHunterPill = switch (applicationStatus) {
+      HunterApplicationStatus.pending => ProfileTilePill(
+          label: 'PENDING',
+          color: AppColors.warning500,
+        ),
+      HunterApplicationStatus.approved => ProfileTilePill(
+          label: 'APPROVED',
+          color: AppColors.successColor,
+        ),
+      _ => null,
+    };
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
@@ -41,15 +57,8 @@ class ProfileMoreSection extends StatelessWidget {
               icon: Icons.radar_rounded,
               iconColor: AppColors.primary400,
               title: 'Become a Hunter',
-              subtitle: applicationPending
-                  ? 'Application pending review'
-                  : 'Post updates for gems and earn tips',
-              trailing: applicationPending
-                  ? ProfileTilePill(
-                      label: 'PENDING',
-                      color: AppColors.warning500,
-                    )
-                  : null,
+              subtitle: becomeHunterSubtitle,
+              trailing: becomeHunterPill,
               onTap: () => navigator.pushNamed(AppRoutes.becomeHunter),
             ),
           ProfileTile(

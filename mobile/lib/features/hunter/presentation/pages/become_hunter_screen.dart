@@ -10,29 +10,54 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 /// Explains what a Hunter does and lets a user apply for the role
-/// (`POST /admin-applications`, `targetRole: hunter`). Shows the pending
-/// state once an application is on file and a shortcut to Hunter space
-/// once the role has been granted.
-class BecomeHunterScreen extends StatelessWidget {
+/// (`POST /admin-applications`, `targetRole: hunter`). The body follows
+/// the newest application's server state: pending, approved (until the
+/// role lands), not approved (form shown again), or already a hunter.
+class BecomeHunterScreen extends StatefulWidget {
   const BecomeHunterScreen({super.key});
+
+  @override
+  State<BecomeHunterScreen> createState() => _BecomeHunterScreenState();
+}
+
+class _BecomeHunterScreenState extends State<BecomeHunterScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // A decision may have landed since the app booted.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<HunterApplicationStore>().refreshFromServer();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
     final applicationStore = context.watch<HunterApplicationStore>();
 
-    final Widget body;
+    final List<Widget> body;
     if (auth.hasHunterSpace) {
-      body = BecomeHunterStatusCard.alreadyHunter(
-        onOpenHunterSpace: () {
-          Navigator.of(context).pop();
-          auth.switchSpaceWithTransition('hunter');
-        },
-      );
+      body = [
+        BecomeHunterStatusCard.alreadyHunter(
+          onOpenHunterSpace: () {
+            Navigator.of(context).pop();
+            auth.switchSpaceWithTransition('hunter');
+          },
+        ),
+      ];
     } else if (applicationStore.isPending) {
-      body = const BecomeHunterStatusCard.pending();
+      body = const [BecomeHunterStatusCard.pending()];
+    } else if (applicationStore.isApproved) {
+      body = const [BecomeHunterStatusCard.approved()];
+    } else if (applicationStore.isRejected) {
+      body = const [
+        BecomeHunterStatusCard.rejected(),
+        AppSpace.gapXl,
+        BecomeHunterForm(),
+      ];
     } else {
-      body = const BecomeHunterForm();
+      body = const [BecomeHunterForm()];
     }
 
     return Scaffold(
@@ -45,13 +70,18 @@ class BecomeHunterScreen extends StatelessWidget {
         showSpaceSwitcher: false,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.xl, AppSpace.lg, 40),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg,
+          AppSpace.xl,
+          AppSpace.lg,
+          AppSpace.xxl,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const BecomeHunterHero(),
-            const SizedBox(height: AppSpace.xl),
-            body,
+            AppSpace.gapXl,
+            ...body,
           ],
         ),
       ),

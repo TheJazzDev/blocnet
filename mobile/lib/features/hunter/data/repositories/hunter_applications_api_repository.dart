@@ -21,8 +21,27 @@ class HunterApplicationsApiRepository {
       },
     );
     if (response is! Map) return null;
-    return HunterApplicationModel.fromApi(
-      response.map((key, value) => MapEntry(key.toString(), value)),
-    );
+    return HunterApplicationModel.fromApi(_asStringMap(response));
   }
+
+  /// `GET /admin-applications/mine?targetRole=hunter`: every application
+  /// the current user filed for the role, newest first. Throws an
+  /// [ApiException] with status 404 on deployments that predate the
+  /// endpoint; callers fall back to local state in that case.
+  Future<List<HunterApplicationModel>> fetchMine({
+    String targetRole = 'hunter',
+  }) async {
+    final response = await _apiClient.get(
+      '/admin-applications/mine',
+      query: {'targetRole': targetRole},
+    );
+    if (response is! List) return const [];
+    return response
+        .whereType<Map>()
+        .map((row) => HunterApplicationModel.fromApi(_asStringMap(row)))
+        .toList(growable: false);
+  }
+
+  static Map<String, dynamic> _asStringMap(Map raw) =>
+      raw.map((key, value) => MapEntry(key.toString(), value));
 }
