@@ -162,8 +162,8 @@ class _DeepBackground extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.secondary500.withValues(alpha: 0.24),
-                  AppColors.secondary500.withValues(alpha: 0.08),
+                  AppColors.primary700.withValues(alpha: 0.24),
+                  AppColors.primary700.withValues(alpha: 0.08),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.4, 1.0],
@@ -255,7 +255,7 @@ class _LogoMark extends StatelessWidget {
               gradient: RadialGradient(
                 colors: [
                   AppColors.primary400.withValues(alpha: 0.22),
-                  AppColors.secondary500.withValues(alpha: 0.14),
+                  AppColors.primary700.withValues(alpha: 0.14),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.55, 1.0],
@@ -280,7 +280,7 @@ class _LogoMark extends StatelessWidget {
                   spreadRadius: 0,
                 ),
                 BoxShadow(
-                  color: AppColors.secondary500.withValues(alpha: 0.15),
+                  color: AppColors.primary700.withValues(alpha: 0.15),
                   blurRadius: 32,
                   spreadRadius: 4,
                 ),
@@ -383,7 +383,7 @@ class _FormCard extends StatelessWidget {
                   colors: [
                     Colors.transparent,
                     AppColors.primary500.withValues(alpha: 0.5),
-                    AppColors.secondary500.withValues(alpha: 0.32),
+                    AppColors.primary700.withValues(alpha: 0.32),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 0.3, 0.7, 1.0],

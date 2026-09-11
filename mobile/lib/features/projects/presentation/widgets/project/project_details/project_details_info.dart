@@ -48,7 +48,7 @@ class ProjectDetailsInfo extends StatelessWidget {
               Positioned(
                 bottom: -40,
                 left: -30,
-                child: _GlowBubble(color: AppColors.secondary500),
+                child: _GlowBubble(color: AppColors.primary700),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -61,7 +61,7 @@ class ProjectDetailsInfo extends StatelessWidget {
                         gradient: LinearGradient(
                           colors: [
                             AppColors.primary500,
-                            AppColors.secondary500
+                            AppColors.primary700
                           ],
                         ),
                         borderRadius: BorderRadius.circular(24),

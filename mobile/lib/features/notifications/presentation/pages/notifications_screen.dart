@@ -265,7 +265,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _NotificationCategoryFilter(
         key: 'mining_referrals',
         label: 'Mining & Referrals',
-        color: AppColors.secondary500,
+        color: AppColors.tagInfo,
       ),
       _NotificationCategoryFilter(
         key: 'rewards',
@@ -509,7 +509,7 @@ _NotificationVisualStyle _styleForNotificationType(String? type) {
     case 'mining_referrals':
       return _NotificationVisualStyle(
         icon: Icons.bolt_rounded,
-        color: AppColors.secondary500,
+        color: AppColors.tagInfo,
         label: 'Mining & Referrals',
         categoryKey: categoryKey,
       );

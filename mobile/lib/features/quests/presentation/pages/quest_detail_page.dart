@@ -298,7 +298,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                 Icon(
                   Icons.emoji_events,
                   size: 32,
-                  color: AppColors.secondary500,
+                  color: AppColors.tagAirdrop,
                 ),
                 const SizedBox(width: 12),
                 Column(
@@ -307,7 +307,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                     Text(
                       'Exclusive Badge',
                       style: AppTypography.custom(
-                        color: AppColors.secondary500,
+                        color: AppColors.tagAirdrop,
                         size: 16,
                         weight: FontWeight.w700,
                       ),

@@ -19,8 +19,7 @@ class AppColors {
   // ── Cyan glow (for shadows / glows) ──────────────────────────────────────
   static Color cyanGlow = const Color(0xFF22D3EE).withValues(alpha: 0.25);
 
-  // ── Secondary accent ─────────────────────────────────────────────────────
-  static const Color secondary500 = Color(0xFF2563EB);
+  // ── Space accents ────────────────────────────────────────────────────────
   /// User space — deep cyan. Same hue as the brand, one step calmer.
   static const Color userAccent = Color(0xFF0891B2);
   static Color hunterAccent = const Color(0xFF22D3EE);
@@ -109,7 +108,13 @@ class AppColors {
   static const Color tagGeneralBg = Color(0x1A94A3B8);
   static const Color tagGeneralBorder = Color(0x3394A3B8);
 
-  /// AIRDROP — orange
+  /// INFO / MINING — blue. The categorical sixth hue; not a brand colour.
+  /// 5.4:1 on bgBase, unlike the #2563EB it replaced (3.85:1).
+  static const Color tagInfo = Color(0xFF3B82F6);
+  static const Color tagInfoBg = Color(0x1A3B82F6);
+  static const Color tagInfoBorder = Color(0x333B82F6);
+
+  /// AIRDROP / REWARD — orange
   static const Color tagAirdrop = Color(0xFFF97316);
   static const Color tagAirdropBg = Color(0x1AF97316);
   static const Color tagAirdropBorder = Color(0x33F97316);
