@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserLevel, UserLevelProgress } from '@prisma/client';
+import { Prisma, UserLevel, UserLevelProgress } from '@prisma/client';
 import { LevelEventsService } from './level-events.service';
+import { normalizePagination } from '../common/utils/pagination.util';
 
 export interface UserMetrics {
   totalBnpEarned: bigint;
@@ -10,6 +11,36 @@ export interface UserMetrics {
   totalQuestsCompleted: number;
   totalUpdates: number;
   totalProjects: number;
+}
+
+export interface LevelsLeaderboardOptions {
+  limit?: number;
+  offset?: number;
+}
+
+export interface LevelsLeaderboardEntry {
+  rank: number;
+  user: {
+    id: string;
+    username: string | null;
+    displayName: string | null;
+    avatarUrl: string | null;
+  };
+  level: UserLevel;
+  metrics: {
+    totalBnpEarned: string;
+    totalComments: number;
+    totalDaysActive: number;
+    totalQuestsCompleted: number;
+  };
+  achievedAt: Date;
+}
+
+export interface LevelsLeaderboardResult {
+  total: number;
+  limit: number;
+  offset: number;
+  data: LevelsLeaderboardEntry[];
 }
 
 @Injectable()
@@ -364,39 +395,76 @@ export class LevelsService {
   }
 
   /**
-   * Get leaderboard (top users by level)
+   * Public level leaderboard.
+   *
+   * Paginated and deterministic:
+   * - `limit`/`offset` arrive already validated from
+   *   `ListLevelsLeaderboardQuery` and are clamped by `normalizePagination`,
+   *   so no caller can ask for an unbounded scan or a negative `take`.
+   * - `rank` is offset-relative, so page two continues where page one ended
+   *   instead of restarting at 1.
+   * - `userId asc` is the final sort key. Level and BNP alone leave ties free
+   *   to reorder between requests, which would duplicate or skip rows across
+   *   page boundaries.
+   * - Deactivated profiles are excluded, matching
+   *   `MiningLeaderboardService.getLeaderboard`.
+   *
+   * One `findMany` plus one `count` — the level and user are pulled through
+   * `include`, so there is no per-row follow-up query.
    */
-  async getLeaderboard(limit: number = 100): Promise<any[]> {
-    const topUsers = await this.prisma.userLevelProgress.findMany({
-      take: limit,
-      orderBy: [
-        { currentLevel: { level: 'desc' } },
-        { totalBnpEarned: 'desc' },
-      ],
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
-        currentLevel: true,
-      },
-    });
+  async getLeaderboard(
+    options: LevelsLeaderboardOptions = {},
+  ): Promise<LevelsLeaderboardResult> {
+    const { limit, offset } = normalizePagination(
+      options.offset,
+      options.limit,
+    );
 
-    return topUsers.map((entry, index) => ({
-      rank: index + 1,
-      user: entry.user,
-      level: entry.currentLevel,
-      metrics: {
-        totalBnpEarned: entry.totalBnpEarned.toString(),
-        totalComments: entry.totalComments,
-        totalDaysActive: entry.totalDaysActive,
-        totalQuestsCompleted: entry.totalQuestsCompleted,
-      },
-      achievedAt: entry.achievedAt,
-    }));
+    const where: Prisma.UserLevelProgressWhereInput = {
+      user: { isDeactivated: false },
+    };
+
+    const [topUsers, total] = await Promise.all([
+      this.prisma.userLevelProgress.findMany({
+        where,
+        skip: offset,
+        take: limit,
+        orderBy: [
+          { currentLevel: { level: 'desc' } },
+          { totalBnpEarned: 'desc' },
+          { userId: 'asc' },
+        ],
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatarUrl: true,
+            },
+          },
+          currentLevel: true,
+        },
+      }),
+      this.prisma.userLevelProgress.count({ where }),
+    ]);
+
+    return {
+      total,
+      limit,
+      offset,
+      data: topUsers.map((entry, index) => ({
+        rank: offset + index + 1,
+        user: entry.user,
+        level: entry.currentLevel,
+        metrics: {
+          totalBnpEarned: entry.totalBnpEarned.toString(),
+          totalComments: entry.totalComments,
+          totalDaysActive: entry.totalDaysActive,
+          totalQuestsCompleted: entry.totalQuestsCompleted,
+        },
+        achievedAt: entry.achievedAt,
+      })),
+    };
   }
 }
