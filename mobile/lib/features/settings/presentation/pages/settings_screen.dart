@@ -4,6 +4,8 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/notifications/data/models/notification_preferences_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/features/settings/presentation/widgets/category_switch_tile.dart';
+import 'package:blocnet/features/settings/presentation/widgets/setting_switch_tile.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/notifications/notification_settings_store.dart';
@@ -155,7 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         const _SectionLabel('Notifications'),
         const SizedBox(height: 8),
-        _SettingSwitchTile(
+        SettingSwitchTile(
           icon: Icons.notifications_outlined,
           title: 'Push notifications',
           subtitle: 'Get in-app and device alerts',
@@ -167,7 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   settingsStore.setMasterEnabled(value);
                 },
         ),
-        _SettingSwitchTile(
+        SettingSwitchTile(
           icon: Icons.mail_outline,
           title: 'Email digest',
           subtitle:
@@ -211,10 +213,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           (entry) {
             final index = entry.$1;
             final category = entry.$2;
-            return _SettingSwitchTile(
+            return CategorySwitchTile(
               icon: _iconForCategory(category.key),
-              title: category.label,
-              subtitle: _buildCategorySubtitle(category),
+              category: category,
               value: prefs.isCategoryEnabled(category.key),
               showDivider: index != categories.length - 1,
               onChanged: settingsStore.isSaving || !prefs.masterEnabled
@@ -243,30 +244,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     );
-  }
-
-  String _buildCategorySubtitle(
-      NotificationPreferenceCategoryCatalog category) {
-    if (category.types.isEmpty) {
-      return 'No linked events';
-    }
-
-    if (category.types.length == 1) {
-      return _humanizeType(category.types.first);
-    }
-
-    return '${_humanizeType(category.types.first)} + ${category.types.length - 1} more';
-  }
-
-  String _humanizeType(String raw) {
-    final words = raw.split('_');
-    return words
-        .map(
-          (word) => word.isEmpty
-              ? word
-              : '${word[0].toUpperCase()}${word.substring(1)}',
-        )
-        .join(' ');
   }
 
   IconData _iconForCategory(String key) {
@@ -306,7 +283,7 @@ class _SettingsHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Control how you receive Blocnet updates.',
+          'Notifications, display and account preferences.',
           style: TextStyle(
             color: AppColors.textMuted,
             fontSize: 13,
@@ -342,87 +319,6 @@ class _SectionLabel extends StatelessWidget {
 }
 
 // ─── Switch Tile ──────────────────────────────────────────────────────────────
-
-class _SettingSwitchTile extends StatelessWidget {
-  const _SettingSwitchTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-    this.showDivider = true,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-  final bool showDivider;
-
-  @override
-  Widget build(BuildContext context) {
-    final isEnabled = onChanged != null;
-    final iconColor = value ? AppColors.teal400 : AppColors.textMuted;
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: iconColor),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.custom(
-                        color: isEnabled
-                            ? AppColors.textPrimary
-                            : AppColors.textPrimary.withValues(alpha: 0.7),
-                        size: 14,
-                        weight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: AppTypography.custom(
-                        color: isEnabled
-                            ? AppColors.textMuted
-                            : AppColors.textMuted.withValues(alpha: 0.7),
-                        size: 12,
-                        weight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Switch(
-                value: value,
-                onChanged: onChanged,
-                activeColor: AppColors.teal400,
-                activeTrackColor: AppColors.teal500.withValues(alpha: 0.35),
-                inactiveThumbColor: AppColors.textFaint,
-                inactiveTrackColor: AppColors.bgElevated,
-              ),
-            ],
-          ),
-        ),
-        if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: AppColors.borderSubtle,
-          ),
-      ],
-    );
-  }
-}
 
 class _CadenceSelector extends StatelessWidget {
   const _CadenceSelector({
