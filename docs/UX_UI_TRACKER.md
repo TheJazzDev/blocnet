@@ -25,6 +25,8 @@ Parallel-safe splits. Each touches one surface so they can run as separate sessi
 | J | Mobile: cold-start cache | `mobile/` | F-08 | in-session prompt |
 | K | Backend: orphan table + unconsumed routes | `backend/` | F-31, F-32 | in-session prompt |
 | L | Mobile: dedupe GET /me on boot | `mobile/` | F-33 | in-session prompt |
+| M | Backend: wallet payload + levels leaderboard | `backend/` | F-34, F-35 | in-session prompt |
+| N | Mobile: push unregister + hunter hero copy | `mobile/` | F-36, F-23 | in-session prompt |
 | H | Backend: MCR retirement, BNP/BNT naming | `backend/` (after B merges) | F-07 (MCR data migration, `*Mcr` → `*Bnp` DTO rename) | [session-templates.md#ws-h](session-templates.md#ws-h--backend-mcr-retirement) |
 
 Deferred to the Claude Design system phase (do not spend effort now): F-14 typography scale, F-23 hunter hero copy density, visual-language alignment between console and mobile.
@@ -57,7 +59,7 @@ Deferred to the Claude Design system phase (do not spend effort now): F-14 typog
 | F-20 | P2 | cross | Hunter path has no beginning (Become Hunter dead, no assignment client) | F + G | done | mobile: WS-F branch `worktree-agent-a4eab73085000e67b` | decided: wire Become Hunter (mobile), assign/invite UI (console), invite acceptance (mobile) |
 | F-21 | P3 | mobile | System back on tab root quits app instantly | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | `PopScope` + double-back or confirm |
 | F-22 | P3 | mobile | Settings subtitle only describes notifications; "+11 more" unexpandable | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | |
-| F-23 | P3 | mobile | Hunter profile hero jargon for new hunters | — | deferred | | design system |
+| F-23 | P3 | mobile | Hunter profile hero jargon for new hunters | N | in-progress | | unblocked: design system landed. More visible since WS-F merged the profile bodies, so hunter stats now render in User space too |
 | F-24 | P3 | mobile | Discover hype score is an unlabeled decimal | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | |
 | F-25 | P3 | console | 11× `bg-gradient-to-*` (Tailwind v3) in shared UI | C | done | WS-C branch `worktree-agent-a88c135bc63ee32a2` | rename to `bg-linear-to-*` |
 | F-26 | P3 | console | "Stage" badge clipped under Next devtools | C | done | WS-C branch `worktree-agent-a88c135bc63ee32a2` | move to header |
@@ -68,9 +70,9 @@ Deferred to the Claude Design system phase (do not spend effort now): F-14 typog
 | F-31 | P3 | backend | `EdgeEngagement` table is an orphan: never written or read | K | done | `4d99e7a` | owner gave go-ahead 2026-09-11 to drop via migration, conditional on the table being empty |
 | F-32 | P3 | backend | Five routes still have no client | K | done (2 follow-ups raised) | `4d99e7a` | triage: delete-device-token is a real gap (push keeps arriving after sign-out); user wallet health checked for operational leakage; KYC is a product decision |
 | F-33 | P3 | mobile | `GET /me` fetched twice on cold start; three consumers each pull the whole document for one slice | L | done | `fb943af` | callers: `_hydrateProfileFromMe`, `projects_store` (followedProjectIds), `user_profile_store` (followingCount). Prefer feeding stores from the existing home-bootstrap payload over a second cache |
-| F-34 | P1 | backend | `GET /wallet/me` still returns `provider`, `providerWalletId` and raw `failureReason` to the wallet owner | — | open | | found while narrowing `/wallet/health`; mobile consumes this payload so narrowing needs a mobile-side check first |
-| F-35 | P2 | backend | `GET /levels/leaderboard` has an unvalidated `limit` (`?limit=abc` → 500), no pagination, no deterministic tiebreaker, and does not exclude deactivated profiles | — | open | | copy the `ListMiningLeaderboardQuery` validation pattern; fix before any client uses it |
-| F-36 | P2 | mobile | Sign-out never unregisters the FCM device token, so a signed-out phone keeps receiving push for that account | — | open | | backend `DELETE /device-tokens?token=` now exists (WS-K). Mobile blocker: `ApiClient.delete` takes no `query` param |
+| F-34 | P1 | backend | `GET /wallet/me` still returns `provider`, `providerWalletId` and raw `failureReason` to the wallet owner | M | in-progress | | verified safe to remove: mobile `WalletSnapshot` reads none of the three; the `failureReason` mobile shows belongs to `WalletWithdrawalRequest`, a different object, and stays | found while narrowing `/wallet/health`; mobile consumes this payload so narrowing needs a mobile-side check first |
+| F-35 | P2 | backend | `GET /levels/leaderboard` has an unvalidated `limit` (`?limit=abc` → 500), no pagination, no deterministic tiebreaker, and does not exclude deactivated profiles | M | in-progress | | copy the `ListMiningLeaderboardQuery` validation pattern; fix before any client uses it |
+| F-36 | P2 | mobile | Sign-out never unregisters the FCM device token, so a signed-out phone keeps receiving push for that account | N | in-progress | | backend `DELETE /device-tokens?token=` now exists (WS-K). Mobile blocker: `ApiClient.delete` takes no `query` param |
 | F-DEACT | P1 | mobile+backend | Self-deactivate calls a path that does not exist | B (+A) | done | WS-B `worktree-agent-a1cf1647e0b009938` + WS-A `worktree-agent-ad7eabf5d8e1c872f` | backend done: `POST /me/deactivate`, `POST /me/reactivate` (new `@AllowDeactivated()` so a deactivated session can reactivate). Mobile side (switch to `/me/deactivate`) in WS-A |
 
 ---
