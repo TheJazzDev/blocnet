@@ -32,34 +32,34 @@ Deferred to the Claude Design system phase (do not spend effort now): F-14 typog
 | ID | P | Surface | Finding | WS | Status | Session / PR | Notes |
 |---|---|---|---|---|---|---|---|
 | F-01 | P1 | mobile | "Space" concept invisible; switcher is an unlabeled logo icon; Hunter profile hides Badges/Quests/Levels | F | open | | decided 2026-09-11: keep spaces, make explicit |
-| F-02 | P1 | mobile | Raw exception strings shown (Hunter Hub tip sync, System Alerts role banner) | A + B | in-progress | WS-B branch `worktree-agent-a1cf1647e0b009938` | backend done: roles stay owner/dev; 403 body now `"Only owner or dev can view system alerts"` via `@RolesDeniedMessage()`. Mobile copy + menu gating in WS-A |
-| F-03 | P1 | mobile | Referral totals "…" forever — `/referrals/me` never called | A | open | | `referral_code_screen.dart`, `mining_store.dart` |
+| F-02 | P1 | mobile | Raw exception strings shown (Hunter Hub tip sync, System Alerts role banner) | A + B | done | WS-B `worktree-agent-a1cf1647e0b009938` + WS-A `worktree-agent-ad7eabf5d8e1c872f` | backend done: roles stay owner/dev; 403 body now `"Only owner or dev can view system alerts"` via `@RolesDeniedMessage()`. Mobile copy + menu gating in WS-A |
+| F-03 | P1 | mobile | Referral totals "…" forever — `/referrals/me` never called | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | `referral_code_screen.dart`, `mining_store.dart` |
 | F-04 | P1 | console | Layout scrolls sideways when a dropdown/tab opens | C | open | | `admin-shell/index.tsx`, users/[id] tabs |
 | F-05 | P1 | console | Member detail half placeholder; "Unnamed User" header | C | open | | fallback to username; hide stub tabs or ship them |
-| F-06 | P1 | mobile | Wallet Receive opens asset detail; Swap is a stub; "Pre-launch" unexplained | A | open | | `quick_actions.dart`, `swap_flow_screen.dart` |
+| F-06 | P1 | mobile | Wallet Receive opens asset detail; Swap is a stub; "Pre-launch" unexplained | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | `quick_actions.dart`, `swap_flow_screen.dart` |
 | F-07 | P2 | cross | Vocabulary drift: Gems/Projects, Members/Users, BNP/BNT/MCR | F + G + H | open | | decided: reconcile Gems/Projects/Updates; glossary; MCR removed everywhere (legacy "Mine Credits" row in dev DB, 2 empty accounts, 0 tx; `*Mcr` fields in mining-admin/wallet-admin services + console types) |
 | F-08 | P2 | mobile | Cold start ~7 s with no skeletons | A (stretch) | open | | use `/me/home-bootstrap` cache |
-| F-09 | P2 | mobile | "Humber" typo on project detail | A | open | | `project_details_info.dart` |
+| F-09 | P2 | mobile | "Humber" typo on project detail | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | `project_details_info.dart` |
 | F-10 | P2 | mobile | Dead-end "coming soon" entries (Help & Support ×5, Moderation ×2) | F | open | | decided: hide until real; ship static FAQ + Getting Started |
 | F-11 | P2 | console | Sidebar needs scrolling to reach half the nav | C | open | | collapsible groups or move role switcher |
 | F-12 | P2 | console | Role gating disagrees with nav and copy (dev on quests/badges/levels; ops-events copy; social-creds silent redirect) | C | open | | one rule: hide what the role cannot open |
 | F-13 | P2 | console | Recent activity / audit log dominated by page-view events; Export disabled | B + C | in-progress | WS-B branch `worktree-agent-a1cf1647e0b009938` | backend done: `GET /audit-log?includeViews=false` (default true). Schema idea for later: `AuditLogKind` enum column. Console half in WS-C |
 | F-14 | P2 | mobile | Body text small (49× fontSize 9–10); user comment "kinda tiny" | D | deferred | | design system defines the type scale |
-| F-15 | P2 | mobile | Update detail "Comments 0" above real comments; Tip CTA above body | A | open | | `update_details_dialog.dart` |
+| F-15 | P2 | mobile | Update detail "Comments 0" above real comments; Tip CTA above body | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | `update_details_dialog.dart` |
 | F-16 | P2 | mobile | Levels page shows no requirements/progress | F | open | | `/levels/me` already has progress |
-| F-17 | P2 | mobile | High/Med/Low chips open the same `PriorityScreens()` | A | open | | pass level as route arg |
+| F-17 | P2 | mobile | High/Med/Low chips open the same `PriorityScreens()` | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | pass level as route arg |
 | F-18 | P2 | console | Project proposals render full markdown inline | C | open | | truncate + drawer |
-| F-19 | P2 | mobile | Empty states with no next step (Edge page, Create Update, Hunter Hub zeros) | A | open | | |
+| F-19 | P2 | mobile | Empty states with no next step (Edge page, Create Update, Hunter Hub zeros) | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | |
 | F-20 | P2 | cross | Hunter path has no beginning (Become Hunter dead, no assignment client) | F + G | open | | decided: wire Become Hunter (mobile), assign/invite UI (console), invite acceptance (mobile) |
-| F-21 | P3 | mobile | System back on tab root quits app instantly | A | open | | `PopScope` + double-back or confirm |
-| F-22 | P3 | mobile | Settings subtitle only describes notifications; "+11 more" unexpandable | A | open | | |
+| F-21 | P3 | mobile | System back on tab root quits app instantly | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | `PopScope` + double-back or confirm |
+| F-22 | P3 | mobile | Settings subtitle only describes notifications; "+11 more" unexpandable | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | |
 | F-23 | P3 | mobile | Hunter profile hero jargon for new hunters | — | deferred | | design system |
-| F-24 | P3 | mobile | Discover hype score is an unlabeled decimal | A | open | | |
+| F-24 | P3 | mobile | Discover hype score is an unlabeled decimal | A | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | |
 | F-25 | P3 | console | 11× `bg-gradient-to-*` (Tailwind v3) in shared UI | C | open | | rename to `bg-linear-to-*` |
 | F-26 | P3 | console | "Stage" badge clipped under Next devtools | C | open | | move to header |
-| F-27 | P3 | mobile | Count flashes and bare spinners | A (stretch) | open | | shared skeleton |
+| F-27 | P3 | mobile | Count flashes and bare spinners | A (stretch) | done | WS-A branch `worktree-agent-ad7eabf5d8e1c872f` | shared skeleton |
 | F-28 | P3 | console | KYC review page is a queue that cannot fill | C | open | | empty state until a client can submit |
-| F-DEACT | P1 | mobile+backend | Self-deactivate calls a path that does not exist | B (+A) | in-progress | WS-B branch `worktree-agent-a1cf1647e0b009938` | backend done: `POST /me/deactivate`, `POST /me/reactivate` (new `@AllowDeactivated()` so a deactivated session can reactivate). Mobile side (switch to `/me/deactivate`) in WS-A |
+| F-DEACT | P1 | mobile+backend | Self-deactivate calls a path that does not exist | B (+A) | done | WS-B `worktree-agent-a1cf1647e0b009938` + WS-A `worktree-agent-ad7eabf5d8e1c872f` | backend done: `POST /me/deactivate`, `POST /me/reactivate` (new `@AllowDeactivated()` so a deactivated session can reactivate). Mobile side (switch to `/me/deactivate`) in WS-A |
 
 ---
 
@@ -82,3 +82,4 @@ Deferred to the Claude Design system phase (do not spend effort now): F-14 typog
 |---|---|---|---|
 | 2026-09-11 | Audit | — | Feature atlas + 28 findings produced. No code changed. Artifact: https://claude.ai/code/artifact/0279da3b-3cb9-475b-a237-330e98e02614 |
 | 2026-09-11 | WS-B agent | B | 4 commits on branch `worktree-agent-a1cf1647e0b009938` (rebased onto stage @ ad49a4a): F-DEACT, F-13 includeViews, F-02 403 message, quests-admin UUID validation + route order. `bun run build` green after `prisma generate`; 5 pre-existing test failures in `mining.service.spec` and `digest-composer.service.spec` untouched. Pending review/merge. |
+| 2026-09-11 | WS-A agent | A | 12 commits on branch `worktree-agent-ad7eabf5d8e1c872f` (rebased onto stage @ 91863f7): F-09, F-03, F-15, F-17, F-06 (new `qr_flutter` dep, `WalletReceiveScreen`), F-02 mobile half, F-DEACT mobile half (`/me/deactivate`), F-19, F-21 (PopScope double-back), F-22, F-24, F-27 (shared `app_skeleton.dart`). `flutter analyze` clean, 52/52 tests. Not yet verified on the emulator. Pending review/merge. |
