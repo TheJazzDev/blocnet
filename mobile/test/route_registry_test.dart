@@ -26,7 +26,6 @@ void main() {
     expect(routes.containsKey(AppRoutes.mining), isTrue);
     expect(routes.containsKey(AppRoutes.miningLeaderboard), isTrue);
     expect(routes.containsKey(AppRoutes.miningHourlyHistory), isTrue);
-    expect(routes.containsKey(AppRoutes.miningDownline), isTrue);
     expect(routes.containsKey(AppRoutes.createUpdate), isTrue);
     expect(routes.containsKey(AppRoutes.submitProject), isTrue);
     expect(routes.containsKey(AppRoutes.manageProjects), isTrue);

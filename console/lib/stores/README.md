@@ -214,4 +214,4 @@ Zustand integrates with Redux DevTools. Install the browser extension:
 
 ## Examples
 
-See `use-dashboard-data-v2.ts` for an example of refactoring from useState to Zustand.
+See `components/features/levels/_hooks/use-levels-page.ts` for an example of a page hook that combines a Zustand store with TanStack Query.
