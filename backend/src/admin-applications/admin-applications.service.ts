@@ -8,6 +8,7 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RolesService } from '../roles/roles.service';
 import { CreateAdminApplicationDto } from './dto/create-admin-application.dto';
+import { ListMyApplicationsQueryDto } from './dto/list-my-applications-query.dto';
 import { ReviewAdminApplicationDto } from './dto/review-admin-application.dto';
 
 @Injectable()
@@ -59,6 +60,25 @@ export class AdminApplicationsService {
         user: {
           select: { id: true, email: true, displayName: true, avatarUrl: true },
         },
+      },
+    });
+  }
+
+  /** The caller's own applications, newest first. Never exposes reviewer identity. */
+  async listMine(userId: string, query: ListMyApplicationsQueryDto = {}) {
+    return this.prisma.adminApplication.findMany({
+      where: {
+        userId,
+        ...(query.targetRole ? { targetRole: query.targetRole } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        targetRole: true,
+        status: true,
+        reason: true,
+        createdAt: true,
+        reviewedAt: true,
       },
     });
   }
