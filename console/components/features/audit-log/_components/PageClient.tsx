@@ -1,59 +1,26 @@
 "use client";
 
-import { Download, Filter, Clock, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Download, Filter, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/page-header";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { type AuditLog } from "@/lib/api-client";
+import { ViewEventsToggle } from "@/components/shared/ViewEventsToggle";
+import { filterViewAuditEvents } from "@/lib/audit-events";
 import { useAuditLogQuery } from "@/lib/hooks/queries";
+import { AuditLogTable } from "./AuditLogTable";
 
-function actionBadge(action: string) {
-  const parts = action.split(".");
-  const verb = parts[parts.length - 1] ?? "";
-  let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
-  if (verb === "create" || verb === "promote" || verb === "assign")
-    variant = "default";
-  if (verb === "update" || verb === "review") variant = "secondary";
-  if (verb === "delete" || verb === "archive") variant = "destructive";
-
-  return (
-    <Badge variant={variant} className="font-mono text-[10px]">
-      {action}
-    </Badge>
-  );
-}
-
-function resourceTypeBadge(type: string) {
-  return (
-    <Badge variant="secondary" className="text-[10px]">
-      {type.replace(/_/g, " ")}
-    </Badge>
-  );
-}
-
-function formatTimestamp(dateStr: string) {
-  const d = new Date(dateStr);
-  return d.toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const PAGE_LIMIT = 100;
 
 export default function AuditLogPage() {
-  const { data: logs = [], isLoading: loading } = useAuditLogQuery({ limit: 100 });
+  const { data: logs = [], isLoading: loading } = useAuditLogQuery({ limit: PAGE_LIMIT });
+  const [showViewEvents, setShowViewEvents] = useState(false);
+  const { visible, hiddenViewCount } = useMemo(
+    () => filterViewAuditEvents(logs, showViewEvents),
+    [logs, showViewEvents],
+  );
 
   return (
     <div className="space-y-6">
@@ -61,25 +28,40 @@ export default function AuditLogPage() {
         title="Audit Log"
         description="Complete history of all admin actions on the platform."
       >
-        <Button variant="outline" disabled>
-          <Download className="h-4 w-4" />
-          Export
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {/* Disabled buttons swallow pointer events; the span carries the tooltip. */}
+            <span tabIndex={0} className="inline-flex">
+              <Button variant="outline" disabled aria-describedby="audit-export-hint">
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent id="audit-export-hint">CSV export coming soon</TooltipContent>
+        </Tooltip>
       </PageHeader>
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Filter className="h-4 w-4" />
-            Event Log
-            <span className="text-sm font-normal text-muted-foreground">
-              {loading ? (
-                <Loader2 className="inline h-3 w-3 animate-spin" />
-              ) : (
-                `(showing latest ${logs.length} events)`
-              )}
-            </span>
-          </CardTitle>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+              <Filter className="h-4 w-4" />
+              Event Log
+              <span className="text-sm font-normal text-muted-foreground">
+                {loading ? (
+                  <Loader2 className="inline h-3 w-3 animate-spin" />
+                ) : (
+                  `(showing ${visible.length} of the latest ${logs.length} events)`
+                )}
+              </span>
+            </CardTitle>
+            <ViewEventsToggle
+              checked={showViewEvents}
+              onCheckedChange={setShowViewEvents}
+              hiddenCount={hiddenViewCount}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -88,42 +70,13 @@ export default function AuditLogPage() {
             <p className="py-8 text-center text-sm text-muted-foreground">
               No audit events found. Make sure the backend is running.
             </p>
+          ) : visible.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              All {logs.length} recent events are view events. Turn on &ldquo;Show view
+              events&rdquo; to see them.
+            </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Resource</TableHead>
-                  <TableHead>Resource ID</TableHead>
-                  <TableHead>Actor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {formatTimestamp(log.createdAt)}
-                      </div>
-                    </TableCell>
-                    <TableCell>{actionBadge(log.action)}</TableCell>
-                    <TableCell>{resourceTypeBadge(log.resourceType)}</TableCell>
-                    <TableCell>
-                      <p className="max-w-[180px] truncate font-mono text-xs text-muted-foreground">
-                        {log.resourceId ?? "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {log.actor?.email ?? log.actor?.displayName ?? "System"}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <AuditLogTable logs={visible} />
           )}
         </CardContent>
       </Card>
