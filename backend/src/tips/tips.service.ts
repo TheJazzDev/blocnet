@@ -44,6 +44,8 @@ import {
   BNP_CURRENCY_CODE,
   BNP_DECIMALS,
   FEE_VAULT_OWNER_REF,
+  RETIRED_TIP_CURRENCY_CODES,
+  isRetiredTipCurrencyCode,
 } from './tip.constants';
 
 type CurrencyWithFeeConfig = TipCurrency & {
@@ -538,7 +540,8 @@ export class TipsService {
   async getAdminSettings() {
     await this.ensureBootstrap();
 
-    const currencies = await this.prisma.tipCurrency.findMany({
+    const rows = await this.prisma.tipCurrency.findMany({
+      where: { code: { notIn: [...RETIRED_TIP_CURRENCY_CODES] } },
       include: {
         feeConfig: true,
         accounts: {
@@ -551,6 +554,11 @@ export class TipsService {
       },
       orderBy: [{ isActiveTippingCurrency: 'desc' }, { code: 'asc' }],
     });
+    // Defensive second pass: a retired code must never reach the console even
+    // if a stray row slips past the query filter.
+    const currencies = rows.filter(
+      (row) => !isRetiredTipCurrencyCode(row.code),
+    );
 
     return {
       activeCurrencyCode:
@@ -575,6 +583,10 @@ export class TipsService {
   ) {
     await this.ensureBootstrap();
     const code = currencyCode.trim().toUpperCase();
+    this.assertNotRetiredCurrency(code);
+    if (dto.code !== undefined) {
+      this.assertNotRetiredCurrency(dto.code);
+    }
 
     const currency = await this.prisma.tipCurrency.findUnique({
       where: { code },
@@ -699,6 +711,7 @@ export class TipsService {
   async setActiveCurrency(actorId: string, currencyCode: string) {
     await this.ensureBootstrap();
     const targetCode = currencyCode.trim().toUpperCase();
+    this.assertNotRetiredCurrency(targetCode);
 
     const target = await this.prisma.tipCurrency.findUnique({
       where: { code: targetCode },
@@ -1212,6 +1225,19 @@ export class TipsService {
         });
       }
     });
+  }
+
+  /**
+   * Retired codes (F-07: MCR) can never be created, enabled or activated
+   * through the admin surface, regardless of the row's current DB state.
+   */
+  private assertNotRetiredCurrency(code: string) {
+    const normalized = code.trim().toUpperCase();
+    if (isRetiredTipCurrencyCode(normalized)) {
+      throw new BadRequestException(
+        `Tip currency ${normalized} is retired and cannot be created, enabled or activated`,
+      );
+    }
   }
 
   private parseOptionalAtomic(
