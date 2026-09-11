@@ -7,7 +7,7 @@ import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
-import 'package:blocnet/shared/widgets/app_primary_button.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -450,15 +450,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
               validator: _validateReferral,
             ),
             const SizedBox(height: AppSpace.xl),
-            Row(
-              children: [
-                PrimaryButton(
-                  title: 'Create account',
-                  isEnabled: canSubmit,
-                  isLoading: isBusy,
-                  onPressed: _submit,
-                ),
-              ],
+            AppButton(
+              label: 'Create account',
+              onPressed: canSubmit ? _submit : null,
+              isLoading: isBusy,
+              fullWidth: true,
             ),
             const SizedBox(height: AppSpace.xl),
             Center(

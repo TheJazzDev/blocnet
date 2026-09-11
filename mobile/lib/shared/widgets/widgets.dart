@@ -18,8 +18,4 @@ export 'app_stat_tile.dart';
 export 'app_surface.dart';
 export 'app_text_field.dart';
 export 'user_name_with_level_icon.dart';
-
-// Superseded by AppButton, kept while their 9 call sites migrate.
-export 'app_primary_button.dart';
-export 'app_secondary_button.dart';
 export 'app_skeleton.dart';

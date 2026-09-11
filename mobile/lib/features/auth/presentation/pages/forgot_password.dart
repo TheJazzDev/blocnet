@@ -3,7 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
-import 'package:blocnet/shared/widgets/app_primary_button.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -90,15 +90,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
             const SizedBox(height: AppSpace.xl),
 
-            Row(
-              children: [
-                PrimaryButton(
-                  title: _linkSent ? 'Resend link' : 'Send reset link',
-                  isEnabled: !isBusy && authStore.isSupabaseConfigured,
-                  isLoading: isBusy,
-                  onPressed: _submit,
-                ),
-              ],
+            AppButton(
+              label: _linkSent ? 'Resend link' : 'Send reset link',
+              onPressed: !isBusy && authStore.isSupabaseConfigured
+                  ? _submit
+                  : null,
+              isLoading: isBusy,
+              fullWidth: true,
             ),
 
             const SizedBox(height: AppSpace.xl),

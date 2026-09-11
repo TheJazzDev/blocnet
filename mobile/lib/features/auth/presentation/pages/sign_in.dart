@@ -4,7 +4,7 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
-import 'package:blocnet/shared/widgets/app_primary_button.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -200,15 +200,13 @@ class _SignInScreenState extends State<SignInScreen> {
             const SizedBox(height: AppSpace.lg),
 
             // Primary CTA — full width
-            Row(
-              children: [
-                PrimaryButton(
-                  title: 'Sign in',
-                  isEnabled: !isAnyBusy && authStore.isSupabaseConfigured,
-                  isLoading: isBusy,
-                  onPressed: _submit,
-                ),
-              ],
+            AppButton(
+              label: 'Sign in',
+              onPressed: !isAnyBusy && authStore.isSupabaseConfigured
+                  ? _submit
+                  : null,
+              isLoading: isBusy,
+              fullWidth: true,
             ),
             const SizedBox(height: AppSpace.xl),
 

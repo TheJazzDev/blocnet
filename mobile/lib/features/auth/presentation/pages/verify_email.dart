@@ -3,7 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
-import 'package:blocnet/shared/widgets/app_primary_button.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -289,15 +289,11 @@ class _CodeVerificationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpace.md),
-          Row(
-            children: [
-              PrimaryButton(
-                title: 'Verify code',
-                isEnabled: !isLoading,
-                isLoading: isLoading,
-                onPressed: onVerify,
-              ),
-            ],
+          AppButton(
+            label: 'Verify code',
+            onPressed: isLoading ? null : onVerify,
+            isLoading: isLoading,
+            fullWidth: true,
           ),
         ],
       ),

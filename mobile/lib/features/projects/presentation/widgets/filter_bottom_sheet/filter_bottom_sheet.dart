@@ -3,8 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
-import 'package:blocnet/shared/widgets/app_primary_button.dart';
-import 'package:blocnet/shared/widgets/app_secondary_button.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:provider/provider.dart';
@@ -191,16 +190,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   const SizedBox(height: AppSpace.lg),
                   Row(
                     children: [
-                      SecondaryButton(
-                        onPressed: _clearFilters,
-                        title: 'Clear All Filters',
-                        isEnabled: _hasSelection,
+                      Expanded(
+                        child: AppButton(
+                          label: 'Clear All Filters',
+                          // The old SecondaryButton passed onPressed through
+                          // regardless of isEnabled, so a greyed-out button
+                          // still cleared the filters.
+                          onPressed: _hasSelection ? _clearFilters : null,
+                          variant: AppButtonVariant.secondary,
+                          fullWidth: true,
+                        ),
                       ),
                       const SizedBox(width: AppSpace.md),
-                      PrimaryButton(
-                        onPressed: _applyFilters,
-                        title: 'Apply Filters',
-                        isEnabled: _hasSelection,
+                      Expanded(
+                        child: AppButton(
+                          label: 'Apply Filters',
+                          onPressed: _hasSelection ? _applyFilters : null,
+                          fullWidth: true,
+                        ),
                       ),
                     ],
                   ),
