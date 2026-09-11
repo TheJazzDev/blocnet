@@ -1,8 +1,9 @@
 # Blocnet Feature Atlas
 
 > Source of truth for **what exists** across mobile, console and backend, with a live-verified status.
-> Produced 2026-09-11 from a code inventory + click-through of every reachable screen (account `claude-audit@blocnet.app`, branch `stage` @ `bb328fa`).
+> Produced 2026-09-11 morning from a code inventory + click-through of every reachable screen (account `claude-audit@blocnet.app`, branch `stage` @ `bb328fa`).
 > Live, formatted version: https://claude.ai/code/artifact/0279da3b-3cb9-475b-a237-330e98e02614
+> **Status column refreshed 2026-09-11 evening** after WS-A…J merged; rows marked ⟲ changed since the morning audit.
 > Findings and work tracking live in [`UX_UI_TRACKER.md`](UX_UI_TRACKER.md). Keep this file updated when a feature's status changes.
 
 **Status key:** `live` reachable and working with real data · `partial` reachable but stubbed, mis-gated or visibly incomplete · `dead` code exists but nothing reaches it · `unverified` exists in code, not exercised yet.
@@ -11,28 +12,28 @@
 
 ## Mobile (Flutter) — 44 routes, 3 spaces
 
-The app has three **spaces** (User, Hunter, Moderation) switched from the app-bar logo icon. Each space re-skins the accent (blue / cyan / red), swaps bottom-tab 2 (Community / Hunter Hub / Moderation) and swaps the Profile body.
+The app has three **spaces** (User, Hunter, Moderation) switched from a labelled chip in the app bar (one-time explainer on first launch). Each space re-skins the accent, swaps bottom-tab 2 (Community / Hunter Hub / Moderation); the Profile body is shared and role-aware.
 
 ### Auth & shell
 | Feature | Status | Notes |
 |---|---|---|
 | Sign in / Sign up / Verify / Forgot / Reset | unverified | 5 routes; Supabase email + Google; referral on signup |
 | Closed-alpha gate | unverified | `/public/closed-alpha/check` on boot |
-| Space switcher | live | Bottom sheet from logo icon; cross-fade + blackout |
+| Space switcher | live ⟲ | Labelled chip + explainer sheet (WS-F) |
 | Post-login prompts (hunter unlocked, referral) | unverified | Keyed per user in prefs |
 | Deep links & FCM push | unverified | Token registers on boot |
-| Offline banner / ConnectivityStore | dead | Fully commented out |
+| Offline banner / ConnectivityStore | removed ⟲ | deleted by WS-E |
 
 ### Home tab
 | Feature | Status | Notes |
 |---|---|---|
 | Updates feed (radar, edge card, top hunters, feed) | live | like / comment / bookmark / share |
-| General tab + filter chips | partial | Trending works; High/Med/Low all open `PriorityScreens()` with no argument |
-| Alpha Radar | live | "Loading alpha radar…" for seconds on cold start |
-| Edge Engine page | partial | Empty card + 3 zero chips with no follow CTA |
+| General tab + filter chips | live ⟲ | urgency level bound per route (WS-A) |
+| Alpha Radar | live | cold-start cache in WS-J |
+| Edge Engine page | live ⟲ | empty state with "Follow projects" CTA (WS-A) |
 | Global search | live | projects, updates, users |
 | Notifications + category chips | live | Insights screen exists, no digest to open |
-| Update detail | live | Tip Hunter CTA, comments; header count wrong (F-15) |
+| Update detail | live ⟲ | count fixed, Tip CTA below body (WS-A) |
 | Top Hunters + public profile sheet | live | follow / tip / block |
 
 ### Discover tab
@@ -41,7 +42,7 @@ The app has three **spaces** (User, Hunter, Moderation) switched from the app-ba
 | Curated feed | live | hype score, Follow, hunted-by |
 | Filters sheet | live | primary / secondary tag, priority |
 | My Gems tab | live | empty for this account |
-| Project detail | live | "Humber" typo (F-09) |
+| Gem detail | live ⟲ | typo fixed, Gems vocabulary (WS-A/F) |
 | Follow preferences per project | unverified | store wired, no UI seen |
 
 ### Community tab (User space)
@@ -50,24 +51,24 @@ The app has three **spaces** (User, Hunter, Moderation) switched from the app-ba
 | General / Market Talk feeds | live | realtime via Supabase |
 | Post discussion, create post | live | |
 | Report content, My Reports | live | |
-| Submit appeal | dead | `submit_appeal_screen.dart` imported nowhere |
-| Community staff tools screen | dead | route never pushed |
+| Submit appeal | removed ⟲ | screen deleted by WS-E; appeals still submittable via backend only |
+| Community staff tools screen | removed ⟲ | deleted by WS-E |
 
 ### Mining tab
 | Feature | Status | Notes |
 |---|---|---|
 | Dashboard, start / claim | live | |
 | Leaderboard, hourly history | live | |
-| Downline screen | dead | route never pushed |
-| Referral code | partial | totals "…" forever — `/referrals/me` never called (F-03) |
+| Downline screen | removed ⟲ | deleted by WS-E |
+| Referral code | live ⟲ | totals from `/referrals/me` (WS-A) |
 
 ### Wallet tab
 | Feature | Status | Notes |
 |---|---|---|
 | Wallet home (pre-launch balance, address, assets) | live | |
-| Receive | partial | opens BNT asset detail, not an address/QR view (F-06) |
+| Receive | live ⟲ | address + QR + copy/share (WS-A) |
 | Send (internal transfer) | live | asset picker → `SendTokenPage` |
-| Swap | partial | "in rollout" stub list |
+| Swap | partial ⟲ | honest "not available yet" state (WS-A) |
 | Asset detail / transactions | live | |
 | Withdrawals | unverified | store wired, no entry point seen |
 | KYC submission | dead | no mobile UI; console queue can never fill |
@@ -79,12 +80,12 @@ The app has three **spaces** (User, Hunter, Moderation) switched from the app-ba
 | Edit profile | live | |
 | Badges gallery | live | 20 badges |
 | Quests + detail | live | 9 quests |
-| Levels | partial | ladder only, no requirements / progress (F-16) |
+| Levels | live ⟲ | tiers, requirements, progress (levels redesign) |
 | Tip history | live | |
 | Settings | live | layout, 7 notification categories, privacy |
-| Deactivate account | partial | calls `/users/me/deactivate`, which does not exist |
-| Help & Support | partial | 5 of 8 entries are "coming soon" |
-| System Alerts | partial | shown to admin, API allows owner/dev only |
+| Deactivate account | live ⟲ | `POST /me/deactivate` (WS-A/B) |
+| Help & Support | live ⟲ | FAQ, Getting Started, Glossary; dead ends removed (WS-F) |
+| System Alerts | live ⟲ | row shown only to owner/dev (WS-A) |
 | Blocked users | live | |
 
 ### Hunter space
@@ -95,16 +96,16 @@ The app has three **spaces** (User, Hunter, Moderation) switched from the app-ba
 | Create Update | live | needs an assigned project |
 | Submit New Gem | live | → console Project Proposals |
 | Manage My Gems / Updates | live | |
-| Hunter profile body | live | hides Badges / Quests / Levels / Activity |
-| Become Hunter | dead | 454-line screen, no entry point |
-| Project assignment invites | dead | no client for `/project-invites/*` |
+| Profile body | live ⟲ | single role-aware body; nothing hidden per space (WS-F) |
+| Become Hunter | live ⟲ | reachable from Profile and composer; posts to admin-applications; status read from `/admin-applications/mine` (WS-F/I/J) |
+| Project assignment invites | live ⟲ | Invites section in Hunter Hub (WS-F) |
 
 ### Moderation space
 | Feature | Status | Notes |
 |---|---|---|
 | Moderation Hub | live | |
 | Reports Queue ("Staff Tools"), Appeals Queue | live | |
-| User Actions / History tiles | partial | "Coming Soon" snackbars |
+| User Actions / History tiles | removed ⟲ | tiles removed (WS-F); sanctions remain console-only |
 
 ---
 
@@ -114,26 +115,26 @@ All pages require owner / dev / admin + 2FA gate. Walked as **admin**.
 
 | Page | Status | Notes |
 |---|---|---|
-| /dashboard | live | recent activity is page-view noise (F-13) |
+| /dashboard | live ⟲ | view events filtered by default (WS-C) |
 | /edge-engine, /decision-engine, /ml-analysis, /settings | live | |
-| /projects, /updates, /comments | live | status moderation with reason dialog |
+| /projects, /updates, /comments | live ⟲ | status moderation; /projects has "Manage hunters" sheet (WS-G) |
 | /community (Posts / Comments / Reports) | live | warn / mute / suspend / restrict |
-| /applications | partial | proposals render full markdown inline (F-18); role apps owner-only |
+| /applications | live ⟲ | proposals clamped; "Owner review required" note (WS-C/G) |
 | /tags | live | |
 | /wallet-users, /wallet-withdrawals | live | |
-| /wallet-kyc | partial | queue nothing can fill (F-28) |
+| /wallet-kyc | partial ⟲ | explanatory empty state; still no client submits KYC |
 | /wallet-settings | live | |
-| /tips-transactions, /tip-settings | live | |
+| /tips-transactions, /tip-settings | live ⟲ | MCR retired; BNP + BNT only (WS-G/H) |
 | /mining, /mining/leaderboard, /referrals | live | |
-| /levels, /badges | live | dev role silently read-only (F-12) |
-| /quests, /quest-submissions | live | dev role hard-blocked (F-12) |
+| /levels, /badges | live ⟲ | `canManageGamification` (WS-C) |
+| /quests, /quest-submissions | live ⟲ | same helper; nav hidden when not allowed (WS-C) |
 | /users | live | |
-| /users/[id] | partial | Activity, Projects, Social, Audit, Lifecycle are placeholders; "Unnamed User" header (F-05) |
+| /users/[id] | partial ⟲ | stub tabs hidden behind a flag; header falls back to @username (WS-C) |
 | /closed-alpha, /console-access, /community-access, /roles | live | |
 | /notifications | live | push + email broadcast |
-| /audit-log | partial | Export permanently disabled |
-| /ops-events | unverified | owner/dev; admin copy says "Owner role is required" |
-| /social-credentials | unverified | owner; admin silently redirected |
+| /audit-log | live ⟲ | view filter toggle; Export has a tooltip (WS-C) |
+| /ops-events | unverified ⟲ | copy fixed to "Owner or dev" (WS-C) |
+| /social-credentials | unverified ⟲ | access-denied card instead of redirect (WS-C) |
 | /settings | live | 6 runtime flags, 2FA |
 | /signin + 2FA stages, /unsupported-device | unverified | |
 
