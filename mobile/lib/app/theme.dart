@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
 class AppColors {
-  // ── Brand primary — bright cyan (#0deef2) ────────────────────────────────
+  // ── Brand primary — Signal Cyan (#22D3EE) ────────────────────────────────
   static Color primary50 = const Color(0xFFECFEFF);
   static Color primary75 = const Color(0xFFCFFAFE);
   static Color primary100 = const Color(0xFFA5F3FC);
   static Color primary200 = const Color(0xFF67E8F9);
   static Color primary300 = const Color(0xFF22D3EE);
-  static Color primary400 = const Color(0xFF0deef2);
-  static Color primary500 = const Color(0xFF0deef2);
+  static Color primary400 = const Color(0xFF22D3EE);
+  static Color primary500 = const Color(0xFF22D3EE);
   static Color primary600 = const Color(0xFF0891B2);
   static Color primary700 = const Color(0xFF0E7490);
   static Color primary800 = const Color(0xFF155E75);
@@ -17,18 +17,19 @@ class AppColors {
   static Color primary950 = const Color(0xFF083344);
 
   // ── Cyan glow (for shadows / glows) ──────────────────────────────────────
-  static Color cyanGlow = const Color(0xFF0deef2).withValues(alpha: 0.25);
+  static Color cyanGlow = const Color(0xFF22D3EE).withValues(alpha: 0.25);
 
   // ── Secondary accent ─────────────────────────────────────────────────────
   static const Color secondary500 = Color(0xFF2563EB);
-  static const Color userAccent = secondary500;
-  static Color hunterAccent = const Color(0xFF0deef2);
+  /// User space — deep cyan. Same hue as the brand, one step calmer.
+  static const Color userAccent = Color(0xFF0891B2);
+  static Color hunterAccent = const Color(0xFF22D3EE);
   static const Color moderationAccent = Color(0xFFEF4444); // Red for moderation theme
 
   // ── Teal aliases (mapped to cyan primary) ─────────────────────────────────
   static Color teal300 = const Color(0xFF67E8F9);
-  static Color teal400 = const Color(0xFF0deef2);
-  static Color teal500 = const Color(0xFF0deef2);
+  static Color teal400 = const Color(0xFF22D3EE);
+  static Color teal500 = const Color(0xFF22D3EE);
 
   static Color accentForSpace(bool isHunterSpace) =>
       isHunterSpace ? hunterAccent : userAccent;
@@ -115,7 +116,7 @@ class AppColors {
 
   // ── Hype score colors ─────────────────────────────────────────────────────
   static Color hypeHigh = const Color(0xFF10B981);
-  static Color hypeMid = const Color(0xFF0deef2);
+  static Color hypeMid = const Color(0xFF22D3EE);
   static Color hypeLow = const Color(0xFF52525B);
 
   // ── Legacy aliases ────────────────────────────────────────────────────────

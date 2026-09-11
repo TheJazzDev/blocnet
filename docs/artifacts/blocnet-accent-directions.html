@@ -1,0 +1,773 @@
+<title>Blocnet Accent Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap">
+
+<style>
+  /* ── Committed dark. This is a colour-judgement surface for a dark-only app;
+       accents must be read on the app's real ground (#09090b) or the
+       comparison lies. Every colour is painted explicitly. ───────────────── */
+  :root {
+    --ground:     #09090b;  /* AppColors.bgBase   */
+    --surface:    #131316;
+    --surface-2:  #18181b;  /* AppColors.bgSurface */
+    --elevated:   #27272a;  /* AppColors.bgElevated */
+    --line:       #27272a;  /* AppColors.borderSubtle */
+    --line-soft:  #1c1c20;
+    --ink:        #FAFAFA;  /* AppColors.textPrimary */
+    --ink-2:      #C7CBD5;  /* AppColors.textSecondary */
+    --ink-3:      #A5ADBA;  /* AppColors.textMuted */
+    --ink-4:      #7D8797;  /* AppColors.textFaint */
+    --warn:       #F5A524;
+    --bad:        #EF4444;
+    --good:       #10B981;
+
+    --sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+    /* fallback accent; each .dir overrides via JS */
+    --accent: #22D3EE;
+    --on-accent: #09090b;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 72px;
+  }
+
+  /* ── Header ──────────────────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    text-wrap: balance;
+    margin: 0 0 16px;
+  }
+  .lede {
+    max-width: 62ch;
+    color: var(--ink-2);
+    font-size: 16px;
+    margin: 0 0 8px;
+  }
+  .lede + .lede { margin-top: 12px; }
+  .lede strong { color: var(--ink); font-weight: 500; }
+
+  .note {
+    max-width: 62ch;
+    margin: 28px 0 0;
+    padding: 14px 16px;
+    border-left: 2px solid var(--elevated);
+    background: var(--surface);
+    color: var(--ink-3);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+
+  /* ── Section framing ─────────────────────────────────────────────────── */
+  .rule {
+    height: 1px;
+    background: var(--line-soft);
+    border: 0;
+    margin: 56px 0 0;
+  }
+  h2 {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin: 40px 0 20px;
+  }
+
+  /* ── Today's accents ─────────────────────────────────────────────────── */
+  .today {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--line-soft);
+    border: 1px solid var(--line-soft);
+  }
+  .today-cell {
+    background: var(--ground);
+    padding: 18px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .today-head { display: flex; align-items: center; gap: 10px; }
+  .chipdot {
+    width: 26px; height: 26px; border-radius: 999px; flex: none;
+  }
+  .today-name { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+  .today-hex {
+    font-family: var(--mono); font-size: 19px; font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .cr {
+    font-family: var(--mono); font-size: 12px;
+    display: flex; align-items: center; gap: 7px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3);
+  }
+  .cr b { font-weight: 500; color: var(--ink-2); }
+  .verdict {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 3px;
+  }
+  .v-fail { background: rgba(239,68,68,0.15); color: #FCA5A5; }
+  .v-pass { background: rgba(16,185,129,0.13); color: #6EE7B7; }
+  .v-hot  { background: rgba(245,165,36,0.13); color: #FCD34D; }
+  .today-why { font-size: 12.5px; color: var(--ink-4); line-height: 1.5; margin: 0; }
+
+  /* ── Space toggle ────────────────────────────────────────────────────── */
+  .controls {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in oklab, var(--ground) 92%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line-soft);
+    margin-block: 32px 0;
+    padding-block: 14px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  }
+  .controls-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-4);
+  }
+  .seg { display: flex; gap: 3px; padding: 3px; background: var(--surface-2); border-radius: 9px; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label {
+    font-size: 13px; font-weight: 500; color: var(--ink-3);
+    padding: 6px 15px; border-radius: 6px; cursor: pointer;
+    transition: background 140ms ease, color 140ms ease;
+    white-space: nowrap;
+  }
+  .seg label:hover { color: var(--ink); }
+  .seg input:checked + label { background: var(--elevated); color: var(--ink); }
+  .seg input:focus-visible + label { outline: 2px solid var(--ink-3); outline-offset: 2px; }
+
+  /* ── Direction grid ──────────────────────────────────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 28px;
+    align-items: start;
+  }
+  @media (max-width: 1120px) { .grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 32px; } }
+  @media (max-width: 640px)  { .grid { grid-template-columns: minmax(0,1fr); } }
+
+  .dir { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+  .dir-head { display: flex; flex-direction: column; gap: 6px; }
+  .dir-n {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--accent); letter-spacing: 0.1em;
+    transition: color 260ms ease;
+  }
+  .dir-name { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+  .dir-thesis { font-size: 13px; color: var(--ink-3); margin: 0; line-height: 1.5; }
+
+  /* ── Phone mock ──────────────────────────────────────────────────────── */
+  .phone {
+    background: var(--ground);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    max-width: 100%;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 18px 40px -24px rgba(0,0,0,0.9);
+  }
+  .m-status {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 14px 3px;
+    font-family: var(--mono); font-size: 9.5px; color: var(--ink-4);
+    font-variant-numeric: tabular-nums;
+  }
+  .m-bars { display: flex; gap: 2.5px; align-items: flex-end; }
+  .m-bars i { width: 2.5px; background: var(--ink-4); border-radius: 1px; display: block; }
+
+  .m-appbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px 10px;
+  }
+  .m-logo {
+    width: 24px; height: 24px; border-radius: 7px; flex: none;
+    background: var(--accent);
+    display: grid; place-items: center;
+    transition: background 260ms ease;
+  }
+  .m-logo span {
+    width: 8px; height: 8px; border-radius: 2px;
+    background: var(--on-accent);
+    transition: background 260ms ease;
+  }
+  .m-word { font-size: 13.5px; font-weight: 600; letter-spacing: -0.02em; }
+  .m-space {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 2.5px 7px; border-radius: 999px;
+    color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 14%, transparent);
+    border: 1px solid color-mix(in oklab, var(--accent) 32%, transparent);
+    transition: color 260ms ease, background 260ms ease, border-color 260ms ease;
+  }
+  .m-bell { margin-left: auto; position: relative; color: var(--ink-3); display: flex; }
+  .m-bell b {
+    position: absolute; top: -1px; right: -1px;
+    width: 6px; height: 6px; border-radius: 999px;
+    background: var(--accent); border: 1.5px solid var(--ground);
+    transition: background 260ms ease;
+  }
+
+  .m-tabs {
+    display: flex; gap: 6px; padding: 0 12px 10px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .m-tab {
+    font-size: 10.5px; font-weight: 500; color: var(--ink-4);
+    padding: 4px 9px; border-radius: 999px;
+    border: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .m-tab.on {
+    color: var(--on-accent);
+    background: var(--accent);
+    border-color: var(--accent);
+    font-weight: 600;
+    transition: background 260ms ease, color 260ms ease, border-color 260ms ease;
+  }
+
+  .m-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+  .m-radar {
+    border-radius: 12px; padding: 11px 12px 12px;
+    background:
+      linear-gradient(135deg,
+        color-mix(in oklab, var(--accent) 17%, transparent) 0%,
+        color-mix(in oklab, var(--accent) 4%, transparent) 55%,
+        transparent 100%),
+      var(--surface-2);
+    border: 1px solid color-mix(in oklab, var(--accent) 26%, transparent);
+    display: flex; flex-direction: column; gap: 9px;
+    transition: background 260ms ease, border-color 260ms ease;
+  }
+  .m-radar-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .m-radar-label {
+    font-family: var(--mono); font-size: 8.5px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent);
+    transition: color 260ms ease;
+  }
+  .m-radar-score {
+    font-family: var(--mono); font-size: 21px; font-weight: 600;
+    letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .m-radar-sub { font-size: 10px; color: var(--ink-4); margin: 0; }
+  .spark { display: block; width: 100%; height: 30px; }
+
+  .m-card {
+    border-radius: 12px; padding: 11px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .m-card-top { display: flex; align-items: center; gap: 8px; }
+  .m-av {
+    width: 26px; height: 26px; border-radius: 999px; flex: none;
+    background: linear-gradient(140deg, var(--accent), color-mix(in oklab, var(--accent) 45%, #000));
+    display: grid; place-items: center;
+    font-size: 9px; font-weight: 600; color: var(--on-accent);
+    transition: background 260ms ease, color 260ms ease;
+  }
+  .m-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .m-name { font-size: 11.5px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+  .m-lvl {
+    font-family: var(--mono); font-size: 8px; font-weight: 600;
+    padding: 1px 4px; border-radius: 3px;
+    color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 15%, transparent);
+    transition: color 260ms ease, background 260ms ease;
+  }
+  .m-meta { font-size: 9.5px; color: var(--ink-4); }
+  .m-tag {
+    margin-left: auto; flex: none;
+    font-size: 8.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 4px;
+    color: var(--good);
+    background: rgba(16,185,129,0.12);
+    border: 1px solid rgba(16,185,129,0.28);
+  }
+  .m-text { font-size: 11px; color: var(--ink-2); margin: 0; line-height: 1.5; }
+  .m-acts {
+    display: flex; align-items: center; gap: 14px;
+    padding-top: 7px; border-top: 1px solid var(--line-soft);
+    font-family: var(--mono); font-size: 9.5px; color: var(--ink-4);
+    font-variant-numeric: tabular-nums;
+  }
+  .m-act { display: flex; align-items: center; gap: 4px; }
+  .m-act.liked { color: var(--accent); transition: color 260ms ease; }
+  .m-act:last-child { margin-left: auto; }
+
+  .m-nav {
+    display: flex; justify-content: space-between;
+    padding: 9px 14px 11px;
+    border-top: 1px solid var(--line-soft);
+    background: var(--surface);
+    margin-top: auto;
+  }
+  .m-navitem {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 8px; font-weight: 500; color: var(--ink-4);
+    flex: 1; min-width: 0;
+  }
+  .m-navitem span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .m-navitem.on { color: var(--accent); transition: color 260ms ease; }
+
+  /* ── Spec table under each phone ─────────────────────────────────────── */
+  .spec { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line-soft); }
+  .spec-row {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .spec-row:last-child { border-bottom: 0; }
+  .spec-sw { width: 16px; height: 16px; border-radius: 4px; flex: none; }
+  .spec-k {
+    font-size: 10px; font-weight: 500; color: var(--ink-4);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    width: 58px; flex: none;
+  }
+  .spec-v {
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .spec-cr { margin-left: auto; font-family: var(--mono); font-size: 10.5px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+
+  .owns {
+    font-size: 12px; color: var(--ink-3); line-height: 1.55;
+    margin: 0; padding: 11px 12px;
+    background: var(--surface);
+    border-left: 2px solid var(--accent);
+    transition: border-color 260ms ease;
+  }
+  .owns b { color: var(--ink-2); font-weight: 500; }
+
+  .verdict-line {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--ink-3);
+  }
+  .pill {
+    font-size: 9.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 4px;
+  }
+  .p-rec  { background: rgba(34,211,238,0.15); color: #67E8F9; }
+  .p-safe { background: rgba(125,135,151,0.15); color: var(--ink-3); }
+  .p-risk { background: rgba(245,165,36,0.14); color: #FCD34D; }
+
+  /* ── Recommendation ──────────────────────────────────────────────────── */
+  .rec {
+    margin-top: 22px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    padding: 26px 26px 28px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 32px;
+  }
+  @media (max-width: 780px) { .rec { grid-template-columns: minmax(0,1fr); gap: 24px; padding: 20px; } }
+  .rec h3 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 12px; }
+  .rec p { color: var(--ink-2); font-size: 14px; margin: 0 0 12px; line-height: 1.6; }
+  .rec p:last-child { margin-bottom: 0; }
+  .rec ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 14px; line-height: 1.65; }
+  .rec li { margin-bottom: 7px; }
+  .rec li b { color: var(--ink); font-weight: 500; }
+
+  pre {
+    margin: 0;
+    background: var(--ground);
+    border: 1px solid var(--line);
+    padding: 14px 15px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  pre .c { color: var(--ink-4); }
+  pre .del { color: #FCA5A5; }
+  pre .add { color: #6EE7B7; }
+  .code-cap {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-4); margin: 0 0 9px;
+  }
+
+  footer {
+    margin-top: 56px; padding-top: 22px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 12.5px; color: var(--ink-4);
+    display: flex; flex-wrap: wrap; gap: 6px 20px;
+  }
+  footer span { font-family: var(--mono); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Blocnet · mobile + console · accent decision</p>
+  <h1>Four ways to colour Blocnet</h1>
+  <p class="lede">
+    Mobile runs three <strong>spaces</strong> — User, Hunter, Moderation — and re-skins the whole
+    app from one variable when you switch. Today User is blue, Hunter is cyan, and the console
+    is a third blue that agrees with neither. This picks one system for all three.
+  </p>
+  <p class="lede">
+    Every phone below is the <strong>same screen and the same layout you ship today</strong>,
+    re-skinned. Nothing here proposes new structure — that comes later, and it would only
+    confuse the colour read. Flip the space toggle to see how each direction handles the split.
+  </p>
+
+  <p class="note">
+    One correction worth having up front: the console's primary is <b>oklch(0.67 0.17 268)</b>,
+    which resolves to <b>#698DFD</b> — a periwinkle blue, not the violet I called it earlier.
+    Your two palettes were never as far apart as that made them sound.
+  </p>
+
+  <hr class="rule">
+  <h2>What you ship today</h2>
+
+  <div class="today">
+    <div class="today-cell">
+      <div class="today-head">
+        <div class="chipdot" style="background:#2563EB"></div>
+        <div class="today-name">User space · <code style="font-family:var(--mono)">userAccent</code></div>
+      </div>
+      <div class="today-hex" style="color:#2563EB">#2563EB</div>
+      <div class="cr"><b>3.85:1</b> on #09090b <span class="verdict v-fail">Fails AA</span></div>
+      <p class="today-why">Below the 4.5:1 floor for text. Any label, link or count drawn in this blue on the app background is legally hard to read, and it is your most-used accent.</p>
+    </div>
+    <div class="today-cell">
+      <div class="today-head">
+        <div class="chipdot" style="background:#0deef2"></div>
+        <div class="today-name">Hunter space · <code style="font-family:var(--mono)">hunterAccent</code></div>
+      </div>
+      <div class="today-hex" style="color:#0deef2">#0deef2</div>
+      <div class="cr"><b>13.8:1</b> on #09090b <span class="verdict v-hot">Very hot</span></div>
+      <p class="today-why">Near-fluorescent. Reads brilliantly in small doses and fatigues the eye as a primary. Worth keeping the hue and dropping roughly one step of luminance.</p>
+    </div>
+    <div class="today-cell">
+      <div class="today-head">
+        <div class="chipdot" style="background:#EF4444"></div>
+        <div class="today-name">Moderation · <code style="font-family:var(--mono)">moderationAccent</code></div>
+      </div>
+      <div class="today-hex" style="color:#EF4444">#EF4444</div>
+      <div class="cr"><b>5.29:1</b> on #09090b <span class="verdict v-pass">Passes AA</span></div>
+      <p class="today-why">Keep as-is in all four directions. Red here is a semantic alarm, not brand — moderation should feel different from the rest of the product on purpose.</p>
+    </div>
+    <div class="today-cell">
+      <div class="today-head">
+        <div class="chipdot" style="background:#698DFD"></div>
+        <div class="today-name">Console · <code style="font-family:var(--mono)">--primary</code></div>
+      </div>
+      <div class="today-hex" style="color:#698DFD">#698DFD</div>
+      <div class="cr"><b>6.47:1</b> on #09090b <span class="verdict v-pass">Passes AA</span></div>
+      <p class="today-why">The most accessible accent you currently own, and it is the one nobody sees — it lives in the admin console.</p>
+    </div>
+  </div>
+
+  <div class="controls">
+    <span class="controls-label">Preview space</span>
+    <div class="seg" role="radiogroup" aria-label="Preview space">
+      <input type="radio" name="space" id="sp-user" value="user" checked>
+      <label for="sp-user">User</label>
+      <input type="radio" name="space" id="sp-hunter" value="hunter">
+      <label for="sp-hunter">Hunter</label>
+      <input type="radio" name="space" id="sp-mod" value="mod">
+      <label for="sp-mod">Moderation</label>
+    </div>
+  </div>
+
+  <div class="grid" id="grid">
+
+    <!-- ─────────────── 1 · Signal Cyan ─────────────── -->
+    <article class="dir"
+      data-user="#0891B2"  data-user-on="#FAFAFA"  data-user-cr="5.41"
+      data-hunter="#22D3EE" data-hunter-on="#09090b" data-hunter-cr="11.02"
+      data-mod="#EF4444"   data-mod-on="#FAFAFA"   data-mod-cr="5.29">
+      <div class="dir-head">
+        <div class="dir-n">DIRECTION 01</div>
+        <h3 class="dir-name">Signal Cyan</h3>
+        <p class="dir-thesis">One hue owns the brand. User and Hunter differ by intensity, not colour — deep cyan calms the everyday, electric cyan marks the hunt.</p>
+      </div>
+      <!--PHONE-->
+      <div class="spec">
+        <div class="spec-row"><div class="spec-sw" style="background:#0891B2"></div><div class="spec-k">User</div><div class="spec-v">#0891B2</div><div class="spec-cr">5.4:1</div></div>
+        <div class="spec-row"><div class="spec-sw" style="background:#22D3EE"></div><div class="spec-k">Hunter</div><div class="spec-v">#22D3EE</div><div class="spec-cr">11.0:1</div></div>
+        <div class="spec-row"><div class="spec-sw" style="background:#EF4444"></div><div class="spec-k">Mod</div><div class="spec-v">#EF4444</div><div class="spec-cr">5.3:1</div></div>
+      </div>
+      <p class="owns"><b>Who owns this hue.</b> Nobody big in social crypto. Chainlink, Base and Coinbase hold blue; Phantom holds purple. Bright cyan reads on-chain and terminal-native and is genuinely available.</p>
+      <div class="verdict-line"><span class="pill p-rec">Recommended</span> Strongest recall, cheapest migration</div>
+    </article>
+
+    <!-- ─────────────── 2 · Periwinkle & Cyan ─────────────── -->
+    <article class="dir"
+      data-user="#698DFD"  data-user-on="#09090b"  data-user-cr="6.47"
+      data-hunter="#22D3EE" data-hunter-on="#09090b" data-hunter-cr="11.02"
+      data-mod="#EF4444"   data-mod-on="#FAFAFA"   data-mod-cr="5.29">
+      <div class="dir-head">
+        <div class="dir-n">DIRECTION 02</div>
+        <h3 class="dir-name">Periwinkle &amp; Cyan</h3>
+        <p class="dir-thesis">Promote the console's existing blue to the User space. Two hues, but ones you already own, and the console needs no work at all.</p>
+      </div>
+      <!--PHONE-->
+      <div class="spec">
+        <div class="spec-row"><div class="spec-sw" style="background:#698DFD"></div><div class="spec-k">User</div><div class="spec-v">#698DFD</div><div class="spec-cr">6.5:1</div></div>
+        <div class="spec-row"><div class="spec-sw" style="background:#22D3EE"></div><div class="spec-k">Hunter</div><div class="spec-v">#22D3EE</div><div class="spec-cr">11.0:1</div></div>
+        <div class="spec-row"><div class="spec-sw" style="background:#EF4444"></div><div class="spec-k">Mod</div><div class="spec-v">#EF4444</div><div class="spec-cr">5.3:1</div></div>
+      </div>
+      <p class="owns"><b>Who owns this hue.</b> Crowded. Periwinkle-to-cyan is close to Farcaster, Rainbow and half of consumer web3. Safe, legible, and hard to pick out of a wallet drawer.</p>
+      <div class="verdict-line"><span class="pill p-safe">Lowest effort</span> Zero console change</div>
+    </article>
+
+    <!-- ─────────────── 3 · Mint Ledger ─────────────── -->
+    <article class="dir"
+      data-user="#2DD4A7"  data-user-on="#09090b"  data-user-cr="10.51"
+      data-hunter="#A3E635" data-hunter-on="#09090b" data-hunter-cr="13.21"
+      data-mod="#EF4444"   data-mod-on="#FAFAFA"   data-mod-cr="5.29">
+      <div class="dir-head">
+        <div class="dir-n">DIRECTION 03</div>
+        <h3 class="dir-name">Mint Ledger</h3>
+        <p class="dir-thesis">Money colour. Mint for the everyday, lime for the hunt — a single green family that says balance, yield and earning.</p>
+      </div>
+      <!--PHONE-->
+      <div class="spec">
+        <div class="spec-row"><div class="spec-sw" style="background:#2DD4A7"></div><div class="spec-k">User</div><div class="spec-v">#2DD4A7</div><div class="spec-cr">10.5:1</div></div>
+        <div class="spec-row"><div class="spec-sw" style="background:#A3E635"></div><div class="spec-k">Hunter</div><div class="spec-v">#A3E635</div><div class="spec-cr">13.2:1</div></div>
+        <div class="spec-row"><div class="spec-sw" style="background:#EF4444"></div><div class="spec-k">Mod</div><div class="spec-v">#EF4444</div><div class="spec-cr">5.3:1</div></div>
+      </div>
+      <p class="owns"><b>Who owns this hue.</b> Hyperliquid and Jupiter lean mint and lime. The real cost is internal: green already means <em>success</em> in your app (#10B981), so brand and status would collide on every screen.</p>
+      <div class="verdict-line"><span class="pill p-risk">Semantic clash</span> Fights your success colour</div>
+    </article>
+
+    <!-- ─────────────── 4 · Ember & Cyan ─────────────── -->
+    <article class="dir"
+      data-user="#F5A524"  data-user-on="#09090b"  data-user-cr="9.76"
+      data-hunter="#22D3EE" data-hunter-on="#09090b" data-hunter-cr="11.02"
+      data-mod="#EF4444"   data-mod-on="#FAFAFA"   data-mod-cr="5.29">
+      <div class="dir-head">
+        <div class="dir-n">DIRECTION 04</div>
+        <h3 class="dir-name">Ember &amp; Cyan</h3>
+        <p class="dir-thesis">Warm for the miner, cool for the hunter. Gold is the colour of the thing your users are actually here to earn, and no social crypto app is using it.</p>
+      </div>
+      <!--PHONE-->
+      <div class="spec">
+        <div class="spec-row"><div class="spec-sw" style="background:#F5A524"></div><div class="spec-k">User</div><div class="spec-v">#F5A524</div><div class="spec-cr">9.8:1</div></div>
+        <div class="spec-row"><div class="spec-sw" style="background:#22D3EE"></div><div class="spec-k">Hunter</div><div class="spec-v">#22D3EE</div><div class="spec-cr">11.0:1</div></div>
+        <div class="spec-row"><div class="spec-sw" style="background:#EF4444"></div><div class="spec-k">Mod</div><div class="spec-v">#EF4444</div><div class="spec-cr">5.3:1</div></div>
+      </div>
+      <p class="owns"><b>Who owns this hue.</b> Blur took orange for NFT trading; warm gold in a social feed is wide open. The risk is proximity to your red moderation alarm and to warning states.</p>
+      <div class="verdict-line"><span class="pill p-risk">The bold one</span> Most distinctive, most risk</div>
+    </article>
+
+  </div>
+
+  <hr class="rule">
+  <h2>Recommendation</h2>
+
+  <div class="rec">
+    <div>
+      <h3>Signal Cyan, with the split done by intensity</h3>
+      <p>
+        Cyan is the only hue on this page you already own and nobody else is using. It survives
+        the thing that kills most crypto palettes, which is that the accent has to work as a
+        4,000-instance UI colour and not just a logo.
+      </p>
+      <p>The intensity split is the part that matters for your User and Hunter question:</p>
+      <ul>
+        <li><b>One brand, two energies.</b> Deep cyan for the everyday app, electric cyan for the Hunter space. Someone who sees either one still recognises Blocnet, which a two-hue system gives up.</li>
+        <li><b>The switch becomes felt, not just seen.</b> Entering Hunter mode brightens and charges the same colour rather than swapping to a different brand. That is the moment worth designing.</li>
+        <li><b>Moderation stays red.</b> It is not a third brand. It is an alarm, and it should feel like leaving the product.</li>
+        <li><b>Console follows mobile.</b> Change one token and the admin finally matches the app.</li>
+      </ul>
+      <p>
+        If you want the safe answer instead, take Direction 02 — it is legible, it is cheap, and
+        it costs you nothing but distinctiveness. I would not ship Direction 03 while green means
+        success in your app.
+      </p>
+    </div>
+    <div>
+      <p class="code-cap">mobile/lib/app/theme.dart</p>
+      <pre><span class="c">// applySpaceAccent() already rebuilds the whole
+// primary ramp from one colour, so the entire
+// change is these three lines.</span>
+
+<span class="del">- static const Color userAccent = secondary500;</span>
+<span class="add">+ static const Color userAccent = Color(0xFF0891B2);</span>
+
+<span class="del">- static Color hunterAccent = const Color(0xFF0deef2);</span>
+<span class="add">+ static Color hunterAccent = const Color(0xFF22D3EE);</span>
+
+<span class="c">  // moderation unchanged — semantic, not brand</span>
+  static const Color moderationAccent = Color(0xFFEF4444);</pre>
+      <p class="code-cap" style="margin-top:20px">console/app/globals.css</p>
+      <pre><span class="del">- --primary: oklch(0.67 0.17 268);</span>
+<span class="add">+ --primary: oklch(0.60 0.12 210);</span>  <span class="c">/* #0891B2 */</span></pre>
+      <p style="font-size:12.5px;color:var(--ink-4);margin-top:14px;line-height:1.6">
+        Both files are already token-driven, so this is the whole colour migration. The 117
+        hardcoded hex values scattered across 22 Dart files are the separate cleanup — they are
+        what stops a one-line change from being truly one line.
+      </p>
+    </div>
+  </div>
+
+  <footer>
+    <span>Contrast measured against #09090b · WCAG 2.1 relative luminance</span>
+    <span>AA body text floor 4.5:1</span>
+    <span>43 screens · 137 widget files · 68,029 lines</span>
+  </footer>
+
+</div>
+
+<script>
+  const PHONE = `
+    <div class="phone">
+      <div class="m-status">
+        <span>9:41</span>
+        <span class="m-bars"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:5px"></i></span>
+      </div>
+      <div class="m-appbar">
+        <div class="m-logo"><span></span></div>
+        <div class="m-word">Blocnet</div>
+        <div class="m-space" data-space-chip>User</div>
+        <div class="m-bell">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
+          </svg>
+          <b></b>
+        </div>
+      </div>
+      <div class="m-tabs">
+        <div class="m-tab on">Trending</div>
+        <div class="m-tab">High</div>
+        <div class="m-tab">Medium</div>
+        <div class="m-tab">Low</div>
+      </div>
+      <div class="m-body">
+        <div class="m-radar">
+          <div class="m-radar-top">
+            <div class="m-radar-label">Alpha Radar</div>
+            <div class="m-radar-score">87.4</div>
+          </div>
+          <svg class="spark" viewBox="0 0 200 34" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 28 L20 25 L40 27 L60 19 L80 22 L100 14 L120 16 L140 9 L160 12 L180 6 L200 3 L200 34 L0 34 Z"
+                  fill="var(--accent)" fill-opacity="0.16"></path>
+            <path d="M0 28 L20 25 L40 27 L60 19 L80 22 L100 14 L120 16 L140 9 L160 12 L180 6 L200 3"
+                  fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"></path>
+            <circle cx="200" cy="3" r="2.5" fill="var(--accent)"></circle>
+          </svg>
+          <p class="m-radar-sub">Nebula Swap climbing · 14 signals in 6h</p>
+        </div>
+        <div class="m-card">
+          <div class="m-card-top">
+            <div class="m-av">AL</div>
+            <div class="m-who">
+              <div class="m-name">Ada Lovelace <span class="m-lvl">LV 12</span></div>
+              <div class="m-meta">Nebula Swap · 2h ago</div>
+            </div>
+            <div class="m-tag">Alpha</div>
+          </div>
+          <p class="m-text">Mainnet contracts cleared their Zellic audit this morning. Routing goes live across all 14 venues on Thursday.</p>
+          <div class="m-acts">
+            <span class="m-act liked">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-8-5.3-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.7-8 11-8 11z"></path></svg>
+              248
+            </span>
+            <span class="m-act">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-4-.9L3 21l1.9-4.5A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"></path></svg>
+              31
+            </span>
+            <span class="m-act">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="m-nav">
+        <div class="m-navitem on">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"></path></svg>
+          <span>Home</span>
+        </div>
+        <div class="m-navitem">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg>
+          <span>Discover</span>
+        </div>
+        <div class="m-navitem">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"></path><path d="M16.5 5.2a3.2 3.2 0 0 1 0 5.9"></path><path d="M18.5 14.8c1.6.8 2.5 2.3 2.5 4.2"></path></svg>
+          <span data-nav-tab>Community</span>
+        </div>
+        <div class="m-navitem">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"></rect><path d="M3 10h18"></path><circle cx="17" cy="14.5" r="1.2" fill="currentColor" stroke="none"></circle></svg>
+          <span>Wallet</span>
+        </div>
+        <div class="m-navitem">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"></circle><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"></path></svg>
+          <span>Profile</span>
+        </div>
+      </div>
+    </div>`;
+
+  const LABELS = { user: ['User', 'Community'], hunter: ['Hunter', 'Hunter Hub'], mod: ['Mod', 'Moderation'] };
+
+  const dirs = Array.from(document.querySelectorAll('.dir'));
+
+  // Inject the shared mock into each direction, at the <!--PHONE--> slot position.
+  dirs.forEach((d) => {
+    const spec = d.querySelector('.spec');
+    spec.insertAdjacentHTML('beforebegin', PHONE);
+  });
+
+  function apply(space) {
+    const [chip, navTab] = LABELS[space];
+    dirs.forEach((d) => {
+      d.style.setProperty('--accent', d.dataset[space]);
+      d.style.setProperty('--on-accent', d.dataset[space + 'On']);
+      const c = d.querySelector('[data-space-chip]');
+      const n = d.querySelector('[data-nav-tab]');
+      if (c) c.textContent = chip;
+      if (n) n.textContent = navTab;
+    });
+  }
+
+  document.querySelectorAll('input[name="space"]').forEach((input) => {
+    input.addEventListener('change', () => apply(input.value));
+  });
+
+  apply('user');
+</script>

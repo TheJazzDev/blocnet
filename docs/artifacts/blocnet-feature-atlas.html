@@ -1,0 +1,472 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Blocnet Feature Atlas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f5; --line:#d9dee6; --line-2:#c4cbd6;
+    --ink:#161b22; --ink-2:#4a5566; --ink-3:#7a8595;
+    --accent:#0e8f9c; --accent-soft:#d8f1f3; --accent-ink:#0a6b75;
+    --live:#1f8a4c; --live-soft:#dcf3e5; --partial:#b26a00; --partial-soft:#fdeccd; --dead:#b3261e; --dead-soft:#f9dcd9; --na:#6b7480; --na-soft:#e6e9ee;
+    --p1:#b3261e; --p2:#b26a00; --p3:#3b5bdb;
+    --mobile:#2f6fdb; --console:#7c4dbd; --backend:#0e8f9c;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --display:"Sora","IBM Plex Sans",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1318; --surface:#161b22; --surface-2:#1d242d; --line:#2a323d; --line-2:#3a4450;
+      --ink:#e8ecf1; --ink-2:#aab4c2; --ink-3:#7f8a99;
+      --accent:#3cc7d3; --accent-soft:#12343a; --accent-ink:#7fdde6;
+      --live:#4ccc7f; --live-soft:#123521; --partial:#f0b24a; --partial-soft:#3b2a0c; --dead:#f07b73; --dead-soft:#3f1815; --na:#98a3b2; --na-soft:#262d37;
+      --p1:#f07b73; --p2:#f0b24a; --p3:#7f9ff0;
+      --mobile:#7fa7f0; --console:#b593e6; --backend:#3cc7d3;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1318; --surface:#161b22; --surface-2:#1d242d; --line:#2a323d; --line-2:#3a4450;
+    --ink:#e8ecf1; --ink-2:#aab4c2; --ink-3:#7f8a99;
+    --accent:#3cc7d3; --accent-soft:#12343a; --accent-ink:#7fdde6;
+    --live:#4ccc7f; --live-soft:#123521; --partial:#f0b24a; --partial-soft:#3b2a0c; --dead:#f07b73; --dead-soft:#3f1815; --na:#98a3b2; --na-soft:#262d37;
+    --p1:#f07b73; --p2:#f0b24a; --p3:#7f9ff0;
+    --mobile:#7fa7f0; --console:#b593e6; --backend:#3cc7d3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.55;padding-inline:16px;padding-block:0 64px}
+  a{color:var(--accent-ink)}
+  .wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px}
+  @media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}}
+  nav.toc{position:sticky;top:0;align-self:start;padding-block:28px;font-size:13px}
+  @media (max-width:900px){nav.toc{position:static;padding-block:16px 0;border-bottom:1px solid var(--line)}}
+  nav.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  @media (max-width:900px){nav.toc ol{flex-direction:row;flex-wrap:wrap;gap:6px 14px}}
+  nav.toc a{color:var(--ink-2);text-decoration:none}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc .grp{margin-top:14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+  nav.toc .grp:first-child{margin-top:0}
+  main{min-width:0;padding-block:28px 0}
+  header.top{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+  .eyebrow{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  h1{font-family:var(--display);font-weight:700;font-size:1.65rem;line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+  @media (min-width:640px){h1{font-size:2.1rem}}
+  .lede{color:var(--ink-2);max-width:68ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--ink-3)}
+  .meta b{color:var(--ink-2);font-weight:500}
+  h2{font-family:var(--display);font-weight:600;font-size:1.25rem;margin:44px 0 6px;letter-spacing:-.01em;text-wrap:balance;scroll-margin-top:16px}
+  @media (min-width:640px){h2{font-size:1.45rem}}
+  h3{font-family:var(--display);font-weight:600;font-size:1rem;margin:26px 0 8px;scroll-margin-top:16px}
+  h2 + p, h3 + p{margin-top:0}
+  p{max-width:72ch}
+  .sub{color:var(--ink-2);margin:0 0 14px;max-width:72ch}
+  .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0 6px}
+  @media (min-width:700px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+  .tile .n{font-family:var(--display);font-size:1.5rem;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+  .tile .l{font-size:12px;color:var(--ink-2)}
+  .tile .s{font-size:11.5px;color:var(--ink-3)}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12.5px;color:var(--ink-2);margin:10px 0 4px}
+  .pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.03em;padding:2px 8px;border-radius:999px;line-height:1.5;white-space:nowrap;vertical-align:middle}
+  .live{background:var(--live-soft);color:var(--live)}
+  .partial{background:var(--partial-soft);color:var(--partial)}
+  .dead{background:var(--dead-soft);color:var(--dead)}
+  .na{background:var(--na-soft);color:var(--na)}
+  .unv{background:var(--na-soft);color:var(--ink-2)}
+  .sf{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:4px;line-height:1.6;white-space:nowrap;border:1px solid}
+  .sf.m{color:var(--mobile);border-color:var(--mobile)}
+  .sf.c{color:var(--console);border-color:var(--console)}
+  .sf.b{color:var(--backend);border-color:var(--backend)}
+  .sf.x{color:var(--ink-2);border-color:var(--line-2)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:10px 0 18px}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);font-weight:600;text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+  td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  td.f{font-weight:500;white-space:nowrap}
+  td.st{white-space:nowrap}
+  td.d{color:var(--ink-2);min-width:26ch}
+  tr.grp td{background:var(--surface-2);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:6px 12px}
+  code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;color:var(--ink)}
+  .matrix td{text-align:center;white-space:nowrap}
+  .matrix td:first-child{text-align:left;font-weight:500}
+  .matrix td:last-child{text-align:left;color:var(--ink-2);white-space:normal;min-width:24ch}
+  .ck{color:var(--live);font-weight:600}
+  .no{color:var(--ink-3)}
+  .half{color:var(--partial);font-weight:600}
+  .findings{list-style:none;padding:0;margin:12px 0 0;display:flex;flex-direction:column;gap:10px}
+  .fd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:start}
+  .fd .id{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding-top:3px}
+  .fd .h{font-weight:600;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+  .fd .h .t{font-family:var(--display);font-size:14.5px}
+  .fd .body{grid-column:2;color:var(--ink-2);max-width:78ch}
+  .fd .body b{color:var(--ink);font-weight:600}
+  .fd .where{grid-column:2;font-size:12px;color:var(--ink-3)}
+  .pr{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:2px}
+  .pr.p1{background:var(--p1)}.pr.p2{background:var(--p2)}.pr.p3{background:var(--p3)}
+  .cat{font-size:11px;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase}
+  .callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0;max-width:80ch}
+  .callout p{margin:0;color:var(--ink)}
+  ul.plain{padding-left:18px;margin:6px 0 0;color:var(--ink-2)}
+  ul.plain li{margin:3px 0}
+  ul.plain li b{color:var(--ink);font-weight:500}
+  .small{font-size:12.5px;color:var(--ink-3)}
+  .foot{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-size:12.5px;color:var(--ink-3)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li class="grp">Phase 1</li>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#mobile">Mobile inventory</a></li>
+    <li><a href="#console">Console inventory</a></li>
+    <li><a href="#backend">Backend capabilities</a></li>
+    <li><a href="#matrix">Cross-surface matrix</a></li>
+    <li><a href="#dead">Dead code</a></li>
+    <li class="grp">Phase 2</li>
+    <li><a href="#findings">UX/UI findings</a></li>
+    <li><a href="#consistency">Console vs mobile</a></li>
+    <li class="grp">Appendix</li>
+    <li><a href="#unverified">Not verified</a></li>
+    <li><a href="#method">Method</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="top">
+  <div class="eyebrow">Blocnet · post-stabilization phase</div>
+  <h1>Blocnet Feature Atlas</h1>
+  <p class="lede">Every feature across mobile, console and backend, with a live-verified status, followed by a prioritized first-time-user UX/UI review. Nothing has been fixed yet. This is the map we pick priorities from.</p>
+  <div class="meta">
+    <span><b>Date</b> 11 Sep 2026</span>
+    <span><b>Account</b> claude-audit@blocnet.app (admin, hunter-eligible, community moderator)</span>
+    <span><b>Mobile</b> Android emulator, API 36, 1280×2856, local backend :3080</span>
+    <span><b>Console</b> Chrome, 1372×891 and 820×900, localhost:3081</span>
+    <span><b>Branch</b> stage @ bb328fa</span>
+  </div>
+</header>
+
+<h2 id="overview">Overview</h2>
+<p class="sub">Status meanings: <span class="pill live">live</span> reachable and working with real data · <span class="pill partial">partial</span> reachable but stubbed, empty by design, mis-gated or visibly incomplete · <span class="pill dead">dead</span> code exists but nothing reaches it · <span class="pill unv">unverified</span> exists in code, could not be exercised this session.</p>
+<div class="tiles">
+  <div class="tile"><span class="n">44</span><span class="l">Mobile routes</span><span class="s">39 protected + 5 auth · 4 dead routes</span></div>
+  <div class="tile"><span class="n">36</span><span class="l">Console pages</span><span class="s">34 in nav · 1 deep-link only · 3 public</span></div>
+  <div class="tile"><span class="n">~180</span><span class="l">Backend endpoints</span><span class="s">34 feature modules · 71 Prisma models</span></div>
+  <div class="tile"><span class="n">8</span><span class="l">Server capabilities with no client</span><span class="s">plus 1 broken client→server path</span></div>
+</div>
+<div class="callout"><p><b>Headline.</b> The product is broad and mostly real: the three mobile spaces, the whole console nav, and the economy stack (wallet, tips, mining, quests, badges, levels) all render live data. The gaps cluster in four places: hunter onboarding (Become Hunter, project assignment invites) is built on the server but unreachable on any client; KYC has a full admin review queue but no way for a user to submit; the console member-detail page is half placeholder; and several mobile entry points lead to "coming soon" or a role error.</p></div>
+
+<h2 id="mobile">Mobile inventory (Flutter)</h2>
+<p class="sub">Grouped by where a user finds it. The app has three <b>spaces</b> (User, Hunter, Moderation) switched from the app-bar logo icon; each space re-skins the accent color, swaps bottom-tab 2, and swaps the Profile body. Source: <code>lib/app/router.dart</code>, <code>lib/routes/protected_routes.dart</code>, 21 provided stores in <code>main.dart</code>.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Feature</th><th>Status</th><th>What it is / what I saw</th></tr></thead>
+<tbody>
+<tr class="grp"><td colspan="3">Auth &amp; shell</td></tr>
+<tr><td class="f">Sign in / Sign up / Verify email / Forgot / Reset</td><td class="st"><span class="pill unv">unverified</span></td><td class="d">5 routes, Supabase email + Google, referral code on signup, username availability check. Not exercised: the test account was already signed in and I did not sign out without the password.</td></tr>
+<tr><td class="f">Closed-alpha gate</td><td class="st"><span class="pill unv">unverified</span></td><td class="d">Email allowlist check on boot (<code>/public/closed-alpha/check</code>), toggled from console Settings.</td></tr>
+<tr><td class="f">Space switcher (User / Hunter / Moderation)</td><td class="st"><span class="pill live">live</span></td><td class="d">Bottom sheet from the app-bar logo. Cross-fades the whole shell; accent goes blue → cyan → red; tab 2 becomes Community → Hunter Hub → Moderation.</td></tr>
+<tr><td class="f">Post-login prompts</td><td class="st"><span class="pill unv">unverified</span></td><td class="d">"Hunter role unlocked" dialog and referral-code sheet, keyed per user in prefs. Already dismissed on this account.</td></tr>
+<tr><td class="f">Deep links &amp; push (FCM)</td><td class="st"><span class="pill unv">unverified</span></td><td class="d">Handles auth callbacks, referral signup, projects/updates/community, notification taps. Device token registers on boot.</td></tr>
+<tr><td class="f">Offline banner / connectivity</td><td class="st"><span class="pill dead">dead</span></td><td class="d">Whole store and banner part-file are commented out.</td></tr>
+
+<tr class="grp"><td colspan="3">Home tab</td></tr>
+<tr><td class="f">Updates feed</td><td class="st"><span class="pill live">live</span></td><td class="d">Alpha Radar card, Edge Engine brief card, Top Hunters row, then the update feed with like / comment / bookmark / share, urgency chips and tag chips.</td></tr>
+<tr><td class="f">General tab + filter chips</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Trending opens a real card list. High / Medium / Low all route to the same <code>PriorityScreens()</code> with no argument, so the widget cannot tell which level was tapped.</td></tr>
+<tr><td class="f">Alpha Radar</td><td class="st"><span class="pill live">live</span></td><td class="d">"You are fully caught up" state; ack endpoint wired. Shows "Loading alpha radar…" for several seconds on cold start.</td></tr>
+<tr><td class="f">Edge Engine page</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Opens from the brief card. With no followed projects it is a single card and three zero chips on an otherwise empty screen; no CTA to follow projects. Feed / explain / feedback all wired.</td></tr>
+<tr><td class="f">Global search</td><td class="st"><span class="pill live">live</span></td><td class="d">Full-screen search across projects, updates and users (profiles/search).</td></tr>
+<tr><td class="f">Notifications + category chips</td><td class="st"><span class="pill live">live</span></td><td class="d">All / Updates / Social / Governance / Wallet / Mining… chips, mark-all-read, unread dots. Insights screen (digest) exists but no digest was available to open.</td></tr>
+<tr><td class="f">Update detail</td><td class="st"><span class="pill live">live</span></td><td class="d">Full-screen dialog: urgency badge, "Tip Hunter" CTA, tags, body, comments with replies and reactions, "More from" carousels.</td></tr>
+<tr><td class="f">Top Hunters + public profile sheet</td><td class="st"><span class="pill live">live</span></td><td class="d">Ranked list; tapping opens a bottom-sheet profile with follow, tip, block and recent updates.</td></tr>
+
+<tr class="grp"><td colspan="3">Discover tab</td></tr>
+<tr><td class="f">Curated feed</td><td class="st"><span class="pill live">live</span></td><td class="d">Projects with hype score, follower/update counts, "Hunted by", Follow button, sort chip.</td></tr>
+<tr><td class="f">Filters sheet</td><td class="st"><span class="pill live">live</span></td><td class="d">Primary tag, secondary tag, priority level; clear / apply.</td></tr>
+<tr><td class="f">My Gems tab</td><td class="st"><span class="pill live">live</span></td><td class="d">Followed / managed projects (empty for this account).</td></tr>
+<tr><td class="f">Project detail</td><td class="st"><span class="pill live">live</span></td><td class="d">Hero, followers/updates/hunters, Follow, share, bookmark, description, recent updates carousel. Contains the "Humber" typo (see F-09).</td></tr>
+<tr><td class="f">Follow preferences per project</td><td class="st"><span class="pill unv">unverified</span></td><td class="d">GET/PATCH preferences wired in <code>ProjectsStore</code>; not surfaced in the screens I walked.</td></tr>
+
+<tr class="grp"><td colspan="3">Community tab (User space)</td></tr>
+<tr><td class="f">General / Market Talk feeds</td><td class="st"><span class="pill live">live</span></td><td class="d">Posts with reactions, comments, bookmark, share, overflow menu (report). Realtime via Supabase.</td></tr>
+<tr><td class="f">Post discussion</td><td class="st"><span class="pill live">live</span></td><td class="d">Post + threaded comments with reply; composer pinned to bottom.</td></tr>
+<tr><td class="f">Create post</td><td class="st"><span class="pill live">live</span></td><td class="d">Text + topic chip; mention search wired.</td></tr>
+<tr><td class="f">Report content / My Reports</td><td class="st"><span class="pill live">live</span></td><td class="d">Report sheet; My Reports shows stats and the user's own reports.</td></tr>
+<tr><td class="f">Submit appeal</td><td class="st"><span class="pill dead">dead</span></td><td class="d"><code>submit_appeal_screen.dart</code> (314 lines, posts <code>/community/appeals</code>) is imported nowhere.</td></tr>
+<tr><td class="f">Community staff tools screen</td><td class="st"><span class="pill dead">dead</span></td><td class="d">Route <code>/community-staff-tools</code> is role-gated and defined, never pushed. The Moderation space's Reports Queue is a different screen.</td></tr>
+
+<tr class="grp"><td colspan="3">Mining tab</td></tr>
+<tr><td class="f">Mining dashboard</td><td class="st"><span class="pill live">live</span></td><td class="d">24h cycle, BNP/h rate, power, earned/claimed, referrals, Start Mining CTA.</td></tr>
+<tr><td class="f">Leaderboard</td><td class="st"><span class="pill live">live</span></td><td class="d">13 ranked miners with claimable state and progress bar.</td></tr>
+<tr><td class="f">Hourly history</td><td class="st"><span class="pill live">live</span></td><td class="d">Last 48 checkpoints (empty here). Backed by <code>/mining/me</code> data, not a dedicated endpoint.</td></tr>
+<tr><td class="f">Downline screen</td><td class="st"><span class="pill dead">dead</span></td><td class="d"><code>/mining/downline</code> is routed but never navigated to; the store already calls <code>/referrals/downline</code>.</td></tr>
+<tr><td class="f">Referral code</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Code, copy code / copy link work. Total and Active referrals render "…" permanently because nothing calls <code>/referrals/me</code>.</td></tr>
+
+<tr class="grp"><td colspan="3">Wallet tab</td></tr>
+<tr><td class="f">Wallet home</td><td class="st"><span class="pill live">live</span></td><td class="d">"Pre-launch" balance, BSC address with copy, quick-start tip, Receive / Send / Swap, three assets (BNT, BNB, USDT), recent activity, disclaimer.</td></tr>
+<tr><td class="f">Receive</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Opens the BNT asset detail page, not a receive/QR view. Address is only on the wallet home.</td></tr>
+<tr><td class="f">Send (internal transfer)</td><td class="st"><span class="pill live">live</span></td><td class="d">Asset picker sheet → <code>SendTokenPage</code> (not routed, pushed directly). Balance was 0 so the form was not submitted.</td></tr>
+<tr><td class="f">Swap</td><td class="st"><span class="pill partial">partial</span></td><td class="d">"Swap flow is in rollout" banner over an asset list; no actual conversion step.</td></tr>
+<tr><td class="f">Asset detail / transactions</td><td class="st"><span class="pill live">live</span></td><td class="d">Per-asset balance, Send / Receive, transaction list; "View all" opens the full ledger.</td></tr>
+<tr><td class="f">Withdrawals</td><td class="st"><span class="pill unv">unverified</span></td><td class="d">GET/POST <code>/wallet/withdrawals</code> in <code>WalletStore</code>; no entry point seen on the walked screens.</td></tr>
+<tr><td class="f">KYC submission</td><td class="st"><span class="pill dead">dead</span></td><td class="d">No mobile UI. Backend has submit/status endpoints and the console has a review queue, so nothing can ever enter that queue.</td></tr>
+
+<tr class="grp"><td colspan="3">Profile tab (User space)</td></tr>
+<tr><td class="f">Profile hero + tabs</td><td class="st"><span class="pill live">live</span></td><td class="d">Avatar, level chip ("Newcomer"), space tag, following / tips sent / badges, Activity / Following / Saved tabs.</td></tr>
+<tr><td class="f">Edit profile</td><td class="st"><span class="pill live">live</span></td><td class="d">Avatar upload, display name, bio.</td></tr>
+<tr><td class="f">Badges gallery</td><td class="st"><span class="pill live">live</span></td><td class="d">All / My / Progress tabs; 20 badges with rarity and unlock threshold.</td></tr>
+<tr><td class="f">Quests + quest detail</td><td class="st"><span class="pill live">live</span></td><td class="d">Available / In progress / Completed; 9 quests with reward, category, start / submit / proof upload / claim.</td></tr>
+<tr><td class="f">Levels</td><td class="st"><span class="pill partial">partial</span></td><td class="d">15-level ladder with current marker, but no requirements or progress shown per level (console has them).</td></tr>
+<tr><td class="f">Tip history (sent)</td><td class="st"><span class="pill live">live</span></td><td class="d">Mode switches to "received" in Hunter space.</td></tr>
+<tr><td class="f">Settings</td><td class="st"><span class="pill live">live</span></td><td class="d">App layout (list/card), 7 notification categories, My Reports, Blocked users, Deactivate account.</td></tr>
+<tr><td class="f">Deactivate account</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Screen is live; the call goes to <code>/users/me/deactivate</code>, which does not exist (handler lives under <code>/admin/users/me/…</code> behind an admin guard). Will fail for every user.</td></tr>
+<tr><td class="f">Help &amp; Support</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Email support works; FAQs, Getting Started, Account &amp; Privacy, Live Chat and Report a Bug are "coming soon" snackbars.</td></tr>
+<tr><td class="f">System Alerts</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Menu shows it to admins; the API only allows owner/dev, so an admin gets a red "Insufficient role permissions" banner.</td></tr>
+<tr><td class="f">Blocked users</td><td class="st"><span class="pill live">live</span></td><td class="d">List + unblock (empty here).</td></tr>
+
+<tr class="grp"><td colspan="3">Hunter space</td></tr>
+<tr><td class="f">Hunter Hub (tab 2)</td><td class="st"><span class="pill live">live</span></td><td class="d">Tip balance, success rate, followers, recent tips, Manage My Projects, season ranking, Elite status card, "Discuss with the community".</td></tr>
+<tr><td class="f">Composer FAB</td><td class="st"><span class="pill live">live</span></td><td class="d">Sheet with "Post Hunter Update" and "Submit New Gem". Only on tabs 0–2.</td></tr>
+<tr><td class="f">Create Update</td><td class="st"><span class="pill live">live</span></td><td class="d">Requires an assigned project; this account has none so it shows one sentence and nothing else.</td></tr>
+<tr><td class="f">Submit New Gem (project proposal)</td><td class="st"><span class="pill live">live</span></td><td class="d">Name, symbol, URL, primary tag, description, justification → console Applications › Project Proposals.</td></tr>
+<tr><td class="f">Manage My Gems / Manage My Updates</td><td class="st"><span class="pill live">live</span></td><td class="d">Created / contributing / submitted sections; updates list with empty-state CTA back to the hub.</td></tr>
+<tr><td class="f">Hunter profile body</td><td class="st"><span class="pill live">live</span></td><td class="d">Different Profile body: success rate, sentiment, 7D/30D stats, community voice, hunter signals, content shortcuts. Hides Badges / Quests / Levels / Activity that the User-space profile shows.</td></tr>
+<tr><td class="f">Become Hunter</td><td class="st"><span class="pill dead">dead</span></td><td class="d">454-line onboarding screen routed at <code>/become-hunter</code>; no screen links to it. Admin-application endpoints exist server-side.</td></tr>
+<tr><td class="f">Project assignment invites</td><td class="st"><span class="pill dead">dead</span></td><td class="d">No client for <code>/project-invites/mine</code> or respond; hunters can only be attached from the server.</td></tr>
+
+<tr class="grp"><td colspan="3">Moderation space</td></tr>
+<tr><td class="f">Moderation Hub (tab 2)</td><td class="st"><span class="pill live">live</span></td><td class="d">Pending reports / appeals / restrictions counters, quick-action tiles, guidelines card.</td></tr>
+<tr><td class="f">Reports Queue ("Staff Tools")</td><td class="st"><span class="pill live">live</span></td><td class="d">Search, status/target filters, stats, paginated queue.</td></tr>
+<tr><td class="f">Appeals Queue</td><td class="st"><span class="pill live">live</span></td><td class="d">Status filter, list (empty).</td></tr>
+<tr><td class="f">User Actions / History tiles</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Both show a "Coming Soon" snackbar. Warnings, mutes, suspensions and restrictions are only reachable from the console.</td></tr>
+</tbody></table></div>
+
+<h2 id="console">Console inventory (Next.js admin)</h2>
+<p class="sub">All 36 protected pages require owner / dev / admin plus the 2FA gate. Walked as <b>admin</b>; owner- and dev-only surfaces are marked. Nav is one list in <code>components/admin-shell/Sidebar.tsx</code>.</p>
+<div class="tw"><table>
+<thead><tr><th>Page</th><th>Status</th><th>What it does / what I saw</th></tr></thead>
+<tbody>
+<tr class="grp"><td colspan="3">Overview &amp; Edge Engine</td></tr>
+<tr><td class="f">/dashboard</td><td class="st"><span class="pill live">live</span></td><td class="d">Project/user/queue/content tiles, operational queue, platform health, economy snapshot, BEE snapshot, decision drilldown, recent activity, quick stats.</td></tr>
+<tr><td class="f">/edge-engine (Command Center)</td><td class="st"><span class="pill live">live</span></td><td class="d">Global decisions, ML coverage, runtime state, dispatch preview, runtime snapshot; window selector.</td></tr>
+<tr><td class="f">/edge-engine/decision-engine</td><td class="st"><span class="pill live">live</span></td><td class="d">Decision KPIs, global top decisions, act/watch/ignore feedback.</td></tr>
+<tr><td class="f">/edge-engine/ml-analysis</td><td class="st"><span class="pill live">live</span></td><td class="d">ML runtime, quality, sentiment distribution, provider usage, topics.</td></tr>
+<tr><td class="f">/edge-engine/settings</td><td class="st"><span class="pill live">live</span></td><td class="d">Runtime toggles, ML service URL / provider / timeout, model limits, recompute.</td></tr>
+<tr class="grp"><td colspan="3">Content</td></tr>
+<tr><td class="f">/projects · /updates · /comments</td><td class="st"><span class="pill live">live</span></td><td class="d">Search, status filter, paging, row menu → Set Paused / Hidden / Archived with reason dialog.</td></tr>
+<tr><td class="f">/community (Posts / Comments / Reports)</td><td class="st"><span class="pill live">live</span></td><td class="d">Three tabs; report resolution; per-user warn / mute / suspend / restrict dialog.</td></tr>
+<tr><td class="f">/applications</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Role Applications tab (review is owner-only, empty) and Project Proposals tab, which renders each proposal's full markdown inline.</td></tr>
+<tr><td class="f">/tags</td><td class="st"><span class="pill live">live</span></td><td class="d">Primary / secondary tag create + inline edit dialog.</td></tr>
+<tr class="grp"><td colspan="3">Economy</td></tr>
+<tr><td class="f">/wallet-users</td><td class="st"><span class="pill live">live</span></td><td class="d">Directory with wallet status, KYC state, available BNT, enable / disable.</td></tr>
+<tr><td class="f">/wallet-withdrawals</td><td class="st"><span class="pill live">live</span></td><td class="d">Queue with approve / reject dialog (one reverted request in data).</td></tr>
+<tr><td class="f">/wallet-kyc</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Review queue with Approve / Reject per user, but every row is "Not Submitted" and always will be (no client submits KYC).</td></tr>
+<tr><td class="f">/wallet-settings</td><td class="st"><span class="pill live">live</span></td><td class="d">Runtime kill-switches, confirmations, RPC URLs, enabled assets, manual deposit reprocess, risk limits, fees, prices, health.</td></tr>
+<tr><td class="f">/tips-transactions · /tip-settings</td><td class="st"><span class="pill live">live</span></td><td class="d">Ledger with filters; per-currency fee policy and active currency (BNP / BNT / MCR).</td></tr>
+<tr class="grp"><td colspan="3">Gamification</td></tr>
+<tr><td class="f">/mining · /mining/leaderboard · /referrals</td><td class="st"><span class="pill live">live</span></td><td class="d">Cycle economics config + 24h metrics; ranked miners; manual referral bind + metrics.</td></tr>
+<tr><td class="f">/levels</td><td class="st"><span class="pill live">live</span></td><td class="d">15 levels with requirements, inline edit, icon upload. Dev role is read-only here (unlike other pages).</td></tr>
+<tr><td class="f">/badges</td><td class="st"><span class="pill live">live</span></td><td class="d">20 badges grouped by category, create / edit / grant dialogs. Dev role read-only.</td></tr>
+<tr><td class="f">/quests · /quest-submissions</td><td class="st"><span class="pill live">live</span></td><td class="d">9 quests with create / edit; 4 pending proof reviews with screenshot + approve / reject / revoke. Dev role is hard-blocked with a full-page "no permission".</td></tr>
+<tr class="grp"><td colspan="3">Access</td></tr>
+<tr><td class="f">/users (Members)</td><td class="st"><span class="pill live">live</span></td><td class="d">Directory with role / status filters, stat tiles, Manage links.</td></tr>
+<tr><td class="f">/users/[id]</td><td class="st"><span class="pill partial">partial</span></td><td class="d">7 tabs. Overview, Roles &amp; Badges, Financial, Mining &amp; Quests are real. Activity feed, Projects involvement, followers / following lists, per-user audit log and lifecycle notification settings are placeholders with <code>TODO</code> comments.</td></tr>
+<tr><td class="f">/closed-alpha</td><td class="st"><span class="pill live">live</span></td><td class="d">Single + bulk email allowlist, toggle, remove, copy all (18 emails).</td></tr>
+<tr><td class="f">/console-access · /community-access</td><td class="st"><span class="pill live">live</span></td><td class="d">Governance role grants with confirm dialog + note; community admin / moderator grants.</td></tr>
+<tr><td class="f">/roles (Role Matrix)</td><td class="st"><span class="pill live">live</span></td><td class="d">Owner / Dev / Admin capability matrix, read-only.</td></tr>
+<tr class="grp"><td colspan="3">Engagement &amp; System</td></tr>
+<tr><td class="f">/notifications</td><td class="st"><span class="pill live">live</span></td><td class="d">Push + in-app broadcast with audience picker and preview; Email broadcast tab with from / reply-to / subject / preview text.</td></tr>
+<tr><td class="f">/audit-log</td><td class="st"><span class="pill partial">partial</span></td><td class="d">Latest 100 events. Export button permanently disabled; log is dominated by page-view events.</td></tr>
+<tr><td class="f">/ops-events</td><td class="st"><span class="pill unv">unverified</span></td><td class="d">Owner / dev only. As admin: "Access denied. Owner role is required" (copy is wrong, dev also passes).</td></tr>
+<tr><td class="f">/social-credentials</td><td class="st"><span class="pill unv">unverified</span></td><td class="d">Owner only. As admin it silently redirects to /dashboard.</td></tr>
+<tr><td class="f">/settings</td><td class="st"><span class="pill live">live</span></td><td class="d">6 runtime feature flags, admin 2FA enrollment / recovery / policy (policy owner-only), diagnostics.</td></tr>
+<tr><td class="f">/signin · 2FA stages · /unsupported-device</td><td class="st"><span class="pill unv">unverified</span></td><td class="d">Credentials → 2FA challenge → setup → recovery codes. Not exercised (already signed in; no password).</td></tr>
+</tbody></table></div>
+
+<h2 id="backend">Backend capabilities (NestJS)</h2>
+<p class="sub">34 feature modules imported in <code>src/app.module.ts</code>, ~180 routes across 43 controllers, 71 Prisma models. Everything is consumed by at least one client except the items below. Full endpoint list is in the agent notes; this table is the delta that matters for the map.</p>
+<div class="tw"><table>
+<thead><tr><th>Capability</th><th>Status</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td class="f">Project assignments (5 routes)</td><td class="st"><span class="pill dead">no client</span></td><td class="d">Assign / invite hunter, list invites, my invites, respond. <code>ProjectHunter</code>, <code>ProjectHunterInvite</code>, <code>InviteStatus</code> exist only for this.</td></tr>
+<tr><td class="f">Wallet KYC submit / status</td><td class="st"><span class="pill dead">no client</span></td><td class="d">Console review queue is wired; no client ever creates a <code>KycProfile</code>.</td></tr>
+<tr><td class="f">Admin social overview</td><td class="st"><span class="pill dead">no client</span></td><td class="d"><code>GET /admin/social/overview</code>; the webhook receiver itself is external by design.</td></tr>
+<tr><td class="f">Referrals: <code>GET /referrals/me</code></td><td class="st"><span class="pill dead">no client</span></td><td class="d">Explains the "…" on the mobile Referral Code screen.</td></tr>
+<tr><td class="f">Levels leaderboard · user wallet health · delete device token</td><td class="st"><span class="pill dead">no client</span></td><td class="d">Three read endpoints nobody calls.</td></tr>
+<tr><td class="f"><code>EdgeEngagement</code> model + <code>EdgeAction</code> enum</td><td class="st"><span class="pill dead">orphan table</span></td><td class="d">Click / view-duration telemetry defined in schema, never written or read.</td></tr>
+<tr><td class="f"><code>TipConversion</code> · <code>TipFeeConfig</code></td><td class="st"><span class="pill partial">write-less</span></td><td class="d">Read / aggregated only; no service ever inserts rows; fee config has no admin editor.</td></tr>
+<tr><td class="f">Self-deactivate / reactivate</td><td class="st"><span class="pill dead">broken path</span></td><td class="d">Handlers sit in <code>AdminUsersController</code> under <code>/admin/users/me/…</code> with an owner/admin guard; mobile calls <code>/users/me/deactivate</code>. 404 for everyone, 403 even at the right path for normal users.</td></tr>
+<tr><td class="f">Background work</td><td class="st"><span class="pill live">live</span></td><td class="d">No cron / queue library: digest worker (5 min), wallet settlement + deposit indexer (poll + WS), config refreshers (15 s), and one <code>level.up</code> event listener.</td></tr>
+<tr><td class="f">Runtime flags</td><td class="st"><span class="pill live">live</span></td><td class="d">closedAlpha, alphaRadar, followPrefs, weeklyDigest, mining, referrals are DB-overridable from console; BEE, event notifications, digest worker are env-only.</td></tr>
+</tbody></table></div>
+
+<h2 id="matrix">Cross-surface matrix</h2>
+<p class="sub">Which surface owns each domain. <span class="ck">✓</span> full, <span class="half">◐</span> partial, <span class="no">—</span> none.</p>
+<div class="tw"><table class="matrix">
+<thead><tr><th>Domain</th><th>Mobile</th><th>Console</th><th>Backend</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>Projects (discover, detail, follow)</td><td class="ck">✓</td><td class="half">◐</td><td class="ck">✓</td><td>Console moderates status only; no project editor.</td></tr>
+<tr><td>Project proposals (gems)</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td>Submit on mobile, review on console.</td></tr>
+<tr><td>Hunter onboarding &amp; assignment</td><td class="no">—</td><td class="half">◐</td><td class="ck">✓</td><td>Console can promote the role; nobody can invite / assign to a project.</td></tr>
+<tr><td>Updates + comments</td><td class="ck">✓</td><td class="half">◐</td><td class="ck">✓</td><td>Console moderates; cannot author.</td></tr>
+<tr><td>Community posts</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td></td></tr>
+<tr><td>Community moderation actions</td><td class="half">◐</td><td class="ck">✓</td><td class="ck">✓</td><td>Mobile: queues only; warn / mute / suspend are console-only.</td></tr>
+<tr><td>Appeals</td><td class="half">◐</td><td class="no">—</td><td class="ck">✓</td><td>Mobile can review; nobody can submit (screen is dead).</td></tr>
+<tr><td>Edge engine (BEE)</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td></td></tr>
+<tr><td>Wallet (custody, transfers)</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td>Swap is a stub on mobile.</td></tr>
+<tr><td>Withdrawals</td><td class="half">◐</td><td class="ck">✓</td><td class="ck">✓</td><td>No visible request entry point on mobile.</td></tr>
+<tr><td>KYC</td><td class="no">—</td><td class="ck">✓</td><td class="ck">✓</td><td>Queue can never fill.</td></tr>
+<tr><td>Tips</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td></td></tr>
+<tr><td>Mining + referrals</td><td class="half">◐</td><td class="ck">✓</td><td class="ck">✓</td><td>Referral totals missing on mobile; downline screen dead.</td></tr>
+<tr><td>Levels</td><td class="half">◐</td><td class="ck">✓</td><td class="ck">✓</td><td>Mobile shows ladder without requirements.</td></tr>
+<tr><td>Badges · Quests</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td></td></tr>
+<tr><td>Notifications</td><td class="ck">✓</td><td class="ck">✓</td><td class="ck">✓</td><td>Console = broadcast; mobile = inbox + prefs.</td></tr>
+<tr><td>Users, roles, governance</td><td class="no">—</td><td class="ck">✓</td><td class="ck">✓</td><td></td></tr>
+<tr><td>Audit / ops / system alerts</td><td class="half">◐</td><td class="ck">✓</td><td class="ck">✓</td><td>Mobile System Alerts fails for admins.</td></tr>
+<tr><td>Closed alpha, feature flags, 2FA, social creds</td><td class="no">—</td><td class="ck">✓</td><td class="ck">✓</td><td>Homepage also uses closed-alpha join.</td></tr>
+<tr><td>Account deactivation</td><td class="half">◐</td><td class="ck">✓</td><td class="half">◐</td><td>Mobile self-service path is broken.</td></tr>
+</tbody></table></div>
+
+<h2 id="dead">Dead code worth deleting or wiring</h2>
+<h3>Mobile</h3>
+<ul class="plain">
+  <li><b>Unreachable screens:</b> <code>submit_appeal_screen.dart</code>, <code>become_hunter_screen.dart</code>, <code>mining_downline_screen.dart</code>, <code>community_staff_tools_screen.dart</code>. Decide wire-or-delete for each; the first two block real flows.</li>
+  <li><b>Orphan stores:</b> <code>AppStore</code> and <code>AdminsStore</code> are provided in <code>main.dart</code> and consumed by nothing; <code>PriorityStore</code> and <code>ConnectivityStore</code> are commented out.</li>
+  <li><b>Zero-import files:</b> <code>app/app.dart</code> (empty), <code>tag_filter_utility.dart</code>, <code>custom_icon_button.dart</code>, <code>session_gateway.dart</code>, <code>auth/data/models/user.dart</code>, <code>level_progress_card.dart</code>, <code>referral_code_card.dart</code>, <code>your_projects_view_model.dart</code>, <code>bottom_sheet_filter_controller.dart</code>, <code>dot_divider.dart</code>, <code>toggle_button.dart</code>.</li>
+  <li><b>Alias routes never pushed:</b> <code>/home</code>, <code>/discover</code>, <code>/mining</code>.</li>
+</ul>
+<h3>Console</h3>
+<ul class="plain">
+  <li><b>Unused components:</b> <code>shared/DataTable.tsx</code>, <code>shared/FiltersBar.tsx</code>, <code>shared/SearchInput.tsx</code>, <code>providers/auth-store-provider.tsx</code>, <code>edge-section-nav.tsx</code>, <code>mining/ReferralSupportCard.tsx</code>, <code>use-dashboard-data-v2.ts</code> (still cited by <code>lib/stores/README.md</code>).</li>
+  <li><b>17 stale migration docs</b> at the console root (TANSTACK_*, ZUSTAND_*, MIGRATION_*, FINAL_*…).</li>
+  <li><b>Dead import:</b> <code>EnvironmentWatermark</code> commented in <code>app/signin/page.tsx</code>; the component file does not exist.</li>
+</ul>
+<h3>Backend</h3>
+<ul class="plain">
+  <li><b>Orphan table:</b> <code>EdgeEngagement</code> + <code>EdgeAction</code>.</li>
+  <li><b>Unconsumed routes:</b> the eight listed in the backend table above.</li>
+</ul>
+
+<h2 id="findings">UX/UI findings, prioritized</h2>
+<p class="sub">Judged as a first-time user, not a bug hunt. <span class="pr p1"></span> P1 = blocks or misleads a new user on a main path · <span class="pr p2"></span> P2 = confusing or inconsistent, worth a design decision · <span class="pr p3"></span> P3 = polish. Each item names the surface and the screen or file so it can be picked up cold.</p>
+
+<h3>P1 · fix before anyone else signs up</h3>
+<ol class="findings">
+  <li class="fd"><span class="id">F-01</span><div class="h"><span class="pr p1"></span><span class="t">The "space" concept is invisible until you stumble on it</span><span class="sf m">mobile</span><span class="cat">navigation</span></div>
+    <div class="body">The only entry to User / Hunter / Moderation is an unlabeled logo icon in the app bar. Switching re-skins the whole app (accent color, tab 2, the entire Profile body) with a blackout transition, and the Hunter-space Profile hides Badges, Quests, Levels and Activity that the User-space Profile shows. A new hunter will think features disappeared. <b>Decide:</b> either make spaces an explicit, named control with an onboarding moment, or collapse to one shell with role-aware sections.</div>
+    <div class="where">app_bar.dart space switcher · main_screen_shells.part.dart · user_profile_body.dart vs hunter_profile_body.dart</div></li>
+  <li class="fd"><span class="id">F-02</span><div class="h"><span class="pr p1"></span><span class="t">Raw exception strings shown to users</span><span class="sf m">mobile</span><span class="cat">error copy</span></div>
+    <div class="body">Hunter Hub rendered "Tip sync warning: ClientException: Connection closed before full header was received, uri=http://localhost:3080/api/tips/history?limit=100…" inside two cards, in orange, with a "Retry Sync" button. Internal URLs and Dart class names leak on a transient network hiccup. Profile shows "Insufficient role permissions" in a red banner when an admin taps the System Alerts entry the menu itself offered.</div>
+    <div class="where">hunter_hub_screen.dart tip sections · system_alerts_screen.dart · user/hunter profile bodies (System Alerts row gated owner/dev/admin, API allows owner/dev)</div></li>
+  <li class="fd"><span class="id">F-03</span><div class="h"><span class="pr p1"></span><span class="t">Referral screen looks broken: totals are "…" forever</span><span class="sf m">mobile</span><span class="cat">data</span></div>
+    <div class="body">Total Referrals and Active Referrals never resolve because no client calls <code>/referrals/me</code>. The code and copy buttons work, so the user assumes the counts are loading. One fetch fixes it; until then show "0" or hide the tiles.</div>
+    <div class="where">referral_code_screen.dart · mining_store.dart</div></li>
+  <li class="fd"><span class="id">F-04</span><div class="h"><span class="pr p1"></span><span class="t">Layout jumps sideways when a menu or tab opens</span><span class="sf c">console</span><span class="cat">layout bug</span></div>
+    <div class="body">Opening the row "…" menu on Projects, or switching tabs on a member detail page, scrolls the whole viewport horizontally so the sidebar slides half off-screen. The shell is <code>h-screen overflow-hidden</code>, but the content column still has a wider-than-viewport child (likely the fixed "Stage" badge or a table min-width) that Radix focus-scroll reveals. It happens at 1372px, so it is not a narrow-screen issue.</div>
+    <div class="where">components/admin-shell/index.tsx · features/users/[id] tab bar · any page with a DropdownMenu</div></li>
+  <li class="fd"><span class="id">F-05</span><div class="h"><span class="pr p1"></span><span class="t">Member detail is half placeholder and mislabels the member</span><span class="sf c">console</span><span class="cat">incomplete surface</span></div>
+    <div class="body">Header reads "Unnamed User" for claude-audit because display name is empty; it should fall back to username. Of seven tabs, Activity, Social and System are "will be available here", Projects tiles are hard-coded "—", and Lifecycle notifications are a stub. An admin landing here from Members reads the page as broken rather than unfinished. Either ship the sections or hide the tabs until they exist.</div>
+    <div class="where">features/users/[id]/components/{ActivitySection,ProjectsSection,SocialSection,AuditLogSection,LifecycleSection}.tsx</div></li>
+  <li class="fd"><span class="id">F-06</span><div class="h"><span class="pr p1"></span><span class="t">Wallet quick actions do not do what they say</span><span class="sf m">mobile</span><span class="cat">affordance</span></div>
+    <div class="body">"Receive" opens the BNT asset detail page (which has its own Receive button) instead of an address / QR view; the address only lives on the wallet home. "Swap" opens a list titled "Swap flow is in rollout" with no conversion step. Both are first-tap actions on a money screen and both dead-end. Also note "Pre-launch" is set as the balance at hero size with no inline explanation of what that means.</div>
+    <div class="where">wallet/presentation/widgets/quick_actions.dart · swap_flow_screen.dart · wallet_screen.dart hero</div></li>
+</ol>
+
+<h3>P2 · confusing or inconsistent, decide together</h3>
+<ol class="findings">
+  <li class="fd"><span class="id">F-07</span><div class="h"><span class="pr p2"></span><span class="t">Vocabulary differs between surfaces</span><span class="sf x">cross-surface</span><span class="cat">consistency</span></div>
+    <div class="body">Mobile says <b>Gems</b>, <b>Submit New Gem</b>, <b>Hunter updates</b>, <b>Users</b>; console says <b>Projects</b>, <b>Project Proposals</b>, <b>Updates</b>, <b>Members</b>. Mobile mines <b>BNP</b> and tips in BNP while the wallet holds <b>BNT</b>; the console tip settings add <b>MCR</b>. Nothing on either surface explains BNP vs BNT. A one-page glossary and a rename pass would remove most support questions.</div>
+    <div class="where">mobile profile menus, discover, hunter hub · console Sidebar.tsx, tip-settings</div></li>
+  <li class="fd"><span class="id">F-08</span><div class="h"><span class="pr p2"></span><span class="t">Cold start shows a half-built home for ~7 s</span><span class="sf m">mobile</span><span class="cat">perceived performance</span></div>
+    <div class="body">On launch the Home tab shows "Loading alpha radar…", grey avatar circles, an empty feed and no space-switcher icon until the feed resolves (home_feed_ready ≈ 7000 ms in the run log, 15 API calls in the first 10 s). A skeleton feed and a cached last-feed would make the app feel instant; the bootstrap payload already exists (<code>/me/home-bootstrap</code>).</div>
+    <div class="where">sections/home.dart · home_bootstrap_service.dart · startup-metrics log lines</div></li>
+  <li class="fd"><span class="id">F-09</span><div class="h"><span class="pr p2"></span><span class="t">"Humber" typo on every project page</span><span class="sf m">mobile</span><span class="cat">copy</span></div>
+    <div class="body">Project detail shows "Lead Humber: bless50ing" and "Recent Humber Updates in …". Small, but it is on the highest-traffic detail screen.</div>
+    <div class="where">project_details_info.dart</div></li>
+  <li class="fd"><span class="id">F-10</span><div class="h"><span class="pr p2"></span><span class="t">Dead-end menu entries presented as live</span><span class="sf m">mobile</span><span class="cat">expectation</span></div>
+    <div class="body">Help &amp; Support lists eight cards; five (FAQs, Getting Started, Account &amp; Privacy, Live Chat, Report a Bug) pop a "coming soon" snackbar. Moderation Hub gives User Actions and History the same tile weight as the working queues. A first-time user learns not to trust chevrons. Either hide, mark "Soon" on the card, or ship minimal versions (FAQ can be a static page).</div>
+    <div class="where">help_support_screen.dart lines 87–164 · moderation_hub_screen.dart lines 119, 329</div></li>
+  <li class="fd"><span class="id">F-11</span><div class="h"><span class="pr p2"></span><span class="t">Console sidebar needs scrolling to reach half the product</span><span class="sf c">console</span><span class="cat">navigation</span></div>
+    <div class="body">34 links in 8 groups inside a scroll area that is ~250 px tall at 891 px viewport height, because the user card, View-As-Role select and Sign Out are pinned below. Gamification, Access, Engagement and System are never visible without scrolling the sidebar itself. Options: collapsible groups, move the role switcher into a header menu, or a compact density.</div>
+    <div class="where">components/admin-shell/index.tsx aside · Sidebar.tsx</div></li>
+  <li class="fd"><span class="id">F-12</span><div class="h"><span class="pr p2"></span><span class="t">Role gating disagrees with the nav and with the copy</span><span class="sf c">console</span><span class="cat">permissions UX</span></div>
+    <div class="body">Quests and Quest Reviews appear in the nav for dev but hard-block with a full-page denial; Badges and Levels silently go read-only for dev while every other page uses the shared <code>canMutate*</code> helpers. Ops Events says "Owner role is required" though dev is allowed. Social Credentials redirects an admin to the dashboard with no message. Mobile has the mirror problem with System Alerts (F-02). Pick one rule: hide what the role cannot open, and use the same helper everywhere.</div>
+    <div class="where">Sidebar.tsx buildNavItems · quests/badges/levels PageClients · ops-events PageClient copy · lib/rbac/permissions.ts</div></li>
+  <li class="fd"><span class="id">F-13</span><div class="h"><span class="pr p2"></span><span class="t">Recent activity is noise</span><span class="sf c">console</span><span class="cat">signal</span></div>
+    <div class="body">Dashboard "Recent activity" and the Audit Log are dominated by the admin's own page views (<code>edge.admin.config.view</code> × N, <code>settings.closed_alpha.allowlist.view</code>). Real governance actions are buried. Either stop auditing read views, or filter them out of the dashboard feed by default. Audit Log's Export button is also permanently disabled with no tooltip.</div>
+    <div class="where">DashboardPageClient recent activity · audit-log PageClient line 64</div></li>
+  <li class="fd"><span class="id">F-14</span><div class="h"><span class="pr p2"></span><span class="t">Body text is small on mobile; users have said so</span><span class="sf m">mobile</span><span class="cat">typography</span></div>
+    <div class="body">49 hard-coded <code>fontSize: 9–10</code> sites and 110 at 11–12 (badges, quest chips, stat labels, filter labels, level badges). A community comment in the live data reads "I feel is kinda tiny". Metadata rows on feed cards ("in Bless50ing", tag chips, timestamps) are 11–12 px on a 1280-wide device. Set a type scale in the theme (minimum 12 for anything readable, 13–14 body) and replace the literals.</div>
+    <div class="where">quests_page.dart, badge_gallery_page.dart, update_card.dart, filter_label.dart, stat_card.dart, level_badge.dart and others (grep fontSize)</div></li>
+  <li class="fd"><span class="id">F-15</span><div class="h"><span class="pr p2"></span><span class="t">Update detail says "Comments 0" above three comments</span><span class="sf m">mobile</span><span class="cat">data consistency</span></div>
+    <div class="body">The header count comes from a different field than the rendered list. Same screen puts the large "Tip Hunter" button above the update body, so the first thing a reader sees on an alpha post is a payment CTA.</div>
+    <div class="where">update_details_dialog.dart header + tip CTA placement</div></li>
+  <li class="fd"><span class="id">F-16</span><div class="h"><span class="pr p2"></span><span class="t">Levels page does not say how to level up</span><span class="sf m">mobile</span><span class="cat">progression</span></div>
+    <div class="body">15 locked rows with names only. The console defines requirements per level (BNP, comments, days active, quests, updates, projects) and the backend computes progress, but the mobile page shows neither. The only entry point is the small "Newcomer" chip on the profile. The unused <code>level_progress_card.dart</code> already sketches the right component.</div>
+    <div class="where">levels_page.dart · levels_store.dart (/levels/me has progress)</div></li>
+  <li class="fd"><span class="id">F-17</span><div class="h"><span class="pr p2"></span><span class="t">Priority filters all open the same screen</span><span class="sf m">mobile</span><span class="cat">navigation</span></div>
+    <div class="body">High / Medium / Low Urgency chips on the General tab route to three names that all build <code>PriorityScreens()</code> with no argument, so the destination cannot know which chip was tapped. Trending works. Pass the level (or use one route with an argument).</div>
+    <div class="where">explore.dart lines 90–108 · protected_routes.dart · priority.dart</div></li>
+  <li class="fd"><span class="id">F-18</span><div class="h"><span class="pr p2"></span><span class="t">Project proposals render full markdown inline</span><span class="sf c">console</span><span class="cat">density</span></div>
+    <div class="body">The INTERLINK proposal shows its entire description with an embedded architecture diagram inside the list, pushing the next proposal far below the fold. Truncate to a few lines with expand, or open in a review drawer like quest submissions do.</div>
+    <div class="where">features/applications PageClient, proposals tab</div></li>
+  <li class="fd"><span class="id">F-19</span><div class="h"><span class="pr p2"></span><span class="t">Empty states without a next step</span><span class="sf m">mobile</span><span class="cat">onboarding</span></div>
+    <div class="body">Edge Engine page: one card, three zero chips, nothing else, no "Follow projects" button even though the copy says to. Create Update: a single sentence "No projects are assigned to your hunter account yet" with no way to get assigned (F-20). Hunter Hub "0/0 quality signals" in red and "Elite Hunter Status … 0%" read as failure on day one.</div>
+    <div class="where">edge_engine_page.dart · create_update_screen.dart · hunter_hub_screen.dart</div></li>
+  <li class="fd"><span class="id">F-20</span><div class="h"><span class="pr p2"></span><span class="t">Hunter path has no beginning</span><span class="sf x">cross-surface</span><span class="cat">flow gap</span></div>
+    <div class="body">A user cannot apply to become a hunter (Become Hunter screen is unreachable), and a hunter cannot be attached to a project except by a server call nobody makes (assignment module has no client). Today the only route is an owner promoting the role in the console, after which the hunter still cannot post because no project is assigned. This is a product-flow decision, not a UI tweak.</div>
+    <div class="where">become_hunter_screen.dart · backend project-assignments · console has no assign UI</div></li>
+</ol>
+
+<h3>P3 · polish</h3>
+<ol class="findings">
+  <li class="fd"><span class="id">F-21</span><div class="h"><span class="pr p3"></span><span class="t">System back on a tab root quits the app instantly</span><span class="sf m">mobile</span><span class="cat">navigation</span></div>
+    <div class="body">Back from any bottom-tab root exits to the launcher with no "press again to exit" and a full cold start on return. This bit the audit several times; it will bite users on Android gesture nav.</div><div class="where">main_screen.dart (no PopScope)</div></li>
+  <li class="fd"><span class="id">F-22</span><div class="h"><span class="pr p3"></span><span class="t">Settings subtitle describes only part of the page</span><span class="sf m">mobile</span><span class="cat">copy</span></div>
+    <div class="body">"Control how you receive Blocnet updates" sits above App layout, notification categories and Privacy &amp; Security. Wallet notification category expands to "+ 11 more" types with no way to see them.</div><div class="where">settings_screen.dart</div></li>
+  <li class="fd"><span class="id">F-23</span><div class="h"><span class="pr p3"></span><span class="t">Hunter-space profile hero is jargon for a new hunter</span><span class="sf m">mobile</span><span class="cat">copy</span></div>
+    <div class="body">"7D: 0 · 30D: 0 · High%: 0% · Median: N/A · Last: N/A", "0/0 quality signals", "Sentiment Neutral, no reviews yet", default bio "Building trusted alpha for the Blocnet community". Explain or hide until there is data.</div><div class="where">hunter_profile_body_hero</div></li>
+  <li class="fd"><span class="id">F-24</span><div class="h"><span class="pr p3"></span><span class="t">Discover cards show an unlabeled decimal</span><span class="sf m">mobile</span><span class="cat">clarity</span></div>
+    <div class="body">"0.9", "0.7", "0.6" at the right of each project card is the hype score; the only hint is the sort chip. Label it or draw it as a meter.</div><div class="where">discover_projects.dart card</div></li>
+  <li class="fd"><span class="id">F-25</span><div class="h"><span class="pr p3"></span><span class="t">Tailwind v3 gradient classes in shared UI</span><span class="sf c">console</span><span class="cat">standards</span></div>
+    <div class="body">11 uses of <code>bg-gradient-to-*</code> (button, badge, table, tabs, page-header, roles page, admin-shell). They render today via the compatibility alias, but CLAUDE.md mandates <code>bg-linear-to-*</code>. No non-responsive <code>text-3xl+</code> or <code>p-8+</code> were found, and the tablet breakpoint collapses the sidebar correctly; the member-detail tab bar does wrap into two misaligned rows at 820 px.</div><div class="where">components/ui/{button,badge,table,tabs}.tsx · page-header.tsx · admin-shell/index.tsx · roles PageClient</div></li>
+  <li class="fd"><span class="id">F-26</span><div class="h"><span class="pr p3"></span><span class="t">Console "Stage" badge and Next devtools overlap content</span><span class="sf c">console</span><span class="cat">chrome</span></div>
+    <div class="body">The fixed environment badge sits under the Next.js dev button at the bottom-right and is clipped in every screenshot. Move it to the header next to the logo (the sign-in page already computes the label).</div><div class="where">admin-shell/index.tsx environment badge</div></li>
+  <li class="fd"><span class="id">F-27</span><div class="h"><span class="pr p3"></span><span class="t">Count flashes and loading gaps</span><span class="sf m">mobile</span><span class="cat">loading</span></div>
+    <div class="body">Quests tabs render "Available (0)" then "(9)"; Badges, Quests, Settings and Tip History show a bare centered spinner for 1–3 s; Hunter Hub tiles spin individually. A shared skeleton pattern would unify these.</div><div class="where">quests_page.dart · badge_gallery_page.dart · settings_screen.dart · tip_history_screen.dart</div></li>
+  <li class="fd"><span class="id">F-28</span><div class="h"><span class="pr p3"></span><span class="t">Wallet KYC page is a queue that cannot fill</span><span class="sf c">console</span><span class="cat">expectation</span></div>
+    <div class="body">Every row shows "Not Submitted" with live Approve / Reject buttons. Until a client can submit KYC, either hide the page or replace the actions with a "No submissions yet" state so admins do not approve empty profiles.</div><div class="where">features/wallet-kyc PageClient</div></li>
+</ol>
+
+<h2 id="consistency">Console vs mobile, same feature side by side</h2>
+<div class="tw"><table>
+<thead><tr><th>Feature</th><th>Mobile</th><th>Console</th><th>Inconsistency</th></tr></thead>
+<tbody>
+<tr><td class="f">Projects</td><td class="d">"Gems", hype score, Follow, hunted-by</td><td class="d">"Projects", status, primary tag, followers, updates</td><td class="d">Different noun; console never shows hype score; mobile never shows status.</td></tr>
+<tr><td class="f">Levels</td><td class="d">Ladder, names only</td><td class="d">Requirements per level, icons</td><td class="d">Requirements exist server-side but only admins see them.</td></tr>
+<tr><td class="f">Referrals</td><td class="d">Code + "…" totals</td><td class="d">Metrics, manual bind</td><td class="d">Mobile never fetches totals.</td></tr>
+<tr><td class="f">Moderation</td><td class="d">Reports + appeals queues; actions "coming soon"</td><td class="d">Full warn / mute / suspend / restrict</td><td class="d">Moderator on mobile can see a report but cannot act on the user.</td></tr>
+<tr><td class="f">Quests</td><td class="d">Proof upload, claim</td><td class="d">Review with screenshot, approve / reject / revoke</td><td class="d">Consistent; the best-aligned pair.</td></tr>
+<tr><td class="f">Wallet</td><td class="d">"Pre-launch", BEP-20 chips, Send / Receive / Swap</td><td class="d">"Ready" status, KYC "Not Submitted", tier</td><td class="d">Mobile never mentions KYC or tiers; console never shows "pre-launch".</td></tr>
+<tr><td class="f">Tips currency</td><td class="d">BNP</td><td class="d">BNP active, BNT and MCR configurable</td><td class="d">MCR appears nowhere on mobile.</td></tr>
+<tr><td class="f">Audit / alerts</td><td class="d">System Alerts (fails for admin)</td><td class="d">Audit Log, Ops Events (owner/dev)</td><td class="d">Role rules differ from the menus that expose them.</td></tr>
+<tr><td class="f">Visual language</td><td class="d">Near-black ground, per-space accent (blue / cyan / red), rounded cards, Material icons</td><td class="d">Navy radial gradient ground, indigo primary with teal gradient buttons, Lucide icons</td><td class="d">Both dark, but different accent families and icon sets; nothing visually ties the admin to the app.</td></tr>
+</tbody></table></div>
+
+<h2 id="unverified">Not verified this session</h2>
+<ul class="plain">
+  <li><b>Auth flows</b> on both surfaces (sign in, sign up, verify, forgot / reset, console 2FA stages). Needs the test password so I can sign out and back in.</li>
+  <li><b>Owner / dev only console pages:</b> Ops Events, Social Credentials, admin-application review, 2FA policy.</li>
+  <li><b>Mutating flows</b> I deliberately did not trigger: start mining, send tip, submit quest proof, post a community post, deactivate, moderation sanctions, broadcasts.</li>
+  <li><b>Push notifications, deep links, notification insights, follow preferences, withdrawal request, send-token submit.</b></li>
+  <li><b>Homepage</b> (Next.js marketing) was out of scope but is a third backend client (public stats, closed-alpha join).</li>
+</ul>
+
+<h2 id="method">Method</h2>
+<p>Three code-inventory passes (router + stores, console pages + nav + hooks, backend controllers + schema + client grep) ran in parallel, then every reachable screen was opened live: 116 emulator screenshots via adb across all three spaces, and every console page plus its dialogs in Chrome at desktop and tablet widths. Status is "live" only when I saw it render real data. Findings were written from the screenshots, then cross-checked against the code so each names a file.</p>
+<div class="foot">Blocnet Feature Atlas · replaces the retired Fix Ledger · nothing here has been changed in the repo.</div>
+</main>
+</div>
+
+</body></html>
