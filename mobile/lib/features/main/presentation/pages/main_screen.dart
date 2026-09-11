@@ -65,6 +65,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _hunterIndex = 0;
   int _moderationIndex = 0;
 
+  /// Double-back-to-exit window for the system back gesture on tab 0.
+  static const Duration _exitBackWindow = Duration(seconds: 2);
+  DateTime? _lastBackPressAt;
+
   @override
   void initState() {
     super.initState();
@@ -225,6 +229,45 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
   }
 
+  int _currentIndexForActiveSpace() {
+    final activeSpace = context.read<AuthStore>().activeSpace;
+    if (activeSpace == 'hunter') return _hunterIndex;
+    if (activeSpace == 'moderation') return _moderationIndex;
+    return _userIndex;
+  }
+
+  /// System back on a bottom-tab root: a non-zero tab returns to tab 0; on
+  /// tab 0 the first press warns and a second press within
+  /// [_exitBackWindow] exits the app.
+  void _handleSystemBack() {
+    if (_currentIndexForActiveSpace() != MainTabScope.homeTab) {
+      _selectTabInActiveSpace(MainTabScope.homeTab);
+      return;
+    }
+
+    final now = DateTime.now();
+    final last = _lastBackPressAt;
+    if (last != null && now.difference(last) <= _exitBackWindow) {
+      SystemNavigator.pop();
+      return;
+    }
+
+    _lastBackPressAt = now;
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('Press back again to exit'),
+          duration: _exitBackWindow,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.bgElevated,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+  }
+
   void _onFabTap(BuildContext context) {
     HapticFeedback.mediumImpact();
     _openComposerSheet(context);
@@ -257,45 +300,52 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       );
     }
 
-    return MainTabScope(
-      selectTab: _selectTabInActiveSpace,
-      child: Stack(
-        children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 420),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (child, animation) {
-              final spaceKey = (child.key as ValueKey?)?.value?.toString();
-              final slideX = spaceKey == 'hunter'
-                  ? 0.08
-                  : spaceKey == 'moderation'
-                      ? -0.08
-                      : spaceKey == 'user'
-                          ? -0.08
-                          : 0.0;
-              final slide = Tween<Offset>(
-                begin: Offset(slideX, 0),
-                end: Offset.zero,
-              ).animate(animation);
-              final scale =
-                  Tween<double>(begin: 0.985, end: 1).animate(animation);
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: slide,
-                  child: ScaleTransition(
-                    scale: scale,
-                    child: child,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _handleSystemBack();
+      },
+      child: MainTabScope(
+        selectTab: _selectTabInActiveSpace,
+        child: Stack(
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 420),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                final spaceKey = (child.key as ValueKey?)?.value?.toString();
+                final slideX = spaceKey == 'hunter'
+                    ? 0.08
+                    : spaceKey == 'moderation'
+                        ? -0.08
+                        : spaceKey == 'user'
+                            ? -0.08
+                            : 0.0;
+                final slide = Tween<Offset>(
+                  begin: Offset(slideX, 0),
+                  end: Offset.zero,
+                ).animate(animation);
+                final scale =
+                    Tween<double>(begin: 0.985, end: 1).animate(animation);
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: slide,
+                    child: ScaleTransition(
+                      scale: scale,
+                      child: child,
+                    ),
                   ),
-                ),
-              );
-            },
-            child: shell,
-          ),
-          // const _OfflineStatusBanner(),
-          if (_isSwitchingSpace) const _SpaceSwitchOverlay(),
-        ],
+                );
+              },
+              child: shell,
+            ),
+            // const _OfflineStatusBanner(),
+            if (_isSwitchingSpace) const _SpaceSwitchOverlay(),
+          ],
+        ),
       ),
     );
   }
