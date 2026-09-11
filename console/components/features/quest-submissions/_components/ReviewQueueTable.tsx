@@ -117,7 +117,7 @@ export function ReviewQueueTable({
                         className="h-8 w-8 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-teal-400 flex items-center justify-center text-white text-xs font-bold">
+                      <div className="h-8 w-8 rounded-full bg-linear-to-br from-primary to-teal-400 flex items-center justify-center text-white text-xs font-bold">
                         {(submission.user.displayName ?? submission.user.email)[0].toUpperCase()}
                       </div>
                     )}

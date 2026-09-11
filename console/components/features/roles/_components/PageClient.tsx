@@ -75,7 +75,7 @@ export default function RolesPage() {
         {(matrix?.governanceRoles ?? []).map((entry) => (
           <Card
             key={entry.role}
-            className='border-primary/20 bg-gradient-to-br from-card to-card/70'>
+            className='border-primary/20 bg-linear-to-br from-card to-card/70'>
             <CardHeader className='pb-3'>
               <CardTitle className='text-base'>{entry.label}</CardTitle>
               <CardDescription>{entry.description}</CardDescription>

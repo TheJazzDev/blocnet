@@ -185,7 +185,7 @@ export function AdminShell({
           <div className='absolute -bottom-36 left-[-8rem] h-96 w-96 rounded-full bg-violet-400/10 blur-3xl' />
         </div>
 
-        <aside className='relative z-10 hidden w-[260px] shrink-0 flex-col border-r border-sidebar-border/70 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/92 lg:flex'>
+        <aside className='relative z-10 hidden w-[260px] shrink-0 flex-col border-r border-sidebar-border/70 bg-linear-to-b from-sidebar via-sidebar to-sidebar/92 lg:flex'>
           <SidebarContent
             pathname={pathname}
             onSignOut={handleSignOut}
@@ -230,7 +230,7 @@ export function AdminShell({
           />
 
           {sessionValue.actingAsRole && (
-            <div className='border-b border-teal-400/20 bg-gradient-to-r from-primary/10 to-teal-400/10 px-4 py-2.5 md:px-6 lg:px-8'>
+            <div className='border-b border-teal-400/20 bg-linear-to-r from-primary/10 to-teal-400/10 px-4 py-2.5 md:px-6 lg:px-8'>
               <div className='mx-auto flex w-full max-w-7xl items-center justify-between gap-3'>
                 <p className='flex items-center gap-2 text-sm text-foreground'>
                   <CheckCircle2 className='h-4 w-4 text-teal-300' />

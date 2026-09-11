@@ -63,7 +63,7 @@ export function SubmissionReviewDialog({
                     className='h-12 w-12 rounded-full object-cover'
                   />
                 ) : (
-                  <div className='h-12 w-12 rounded-full bg-gradient-to-br from-primary to-teal-400 flex items-center justify-center text-white font-bold'>
+                  <div className='h-12 w-12 rounded-full bg-linear-to-br from-primary to-teal-400 flex items-center justify-center text-white font-bold'>
                     {(selectedSubmission.user.displayName ?? selectedSubmission.user.email)[0].toUpperCase()}
                   </div>
                 )}
