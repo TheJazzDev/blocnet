@@ -1,0 +1,69 @@
+/* design-sync Tailwind v4 entry - compiled by .design-sync/build-css.mjs into
+   console/.ds-css/styles.css (cfg.cssEntry). Imports the console's real
+   theme so tokens/fonts/base styles stay single-sourced in globals.css. */
+@import "../../console/app/globals.css";
+
+/* Component + preview sources (in addition to the console app auto-scan). */
+@source "../../console/components/ui";
+@source "../previews";
+
+/* Safelisted utility vocabulary for layout glue written by the design agent.
+   Every family below maps to a token in globals.css @theme or a core scale. */
+@source inline("{sm:,md:,lg:,}{flex,inline-flex,grid,block,inline-block,hidden,contents}");
+@source inline("{sm:,md:,lg:,}{flex-col,flex-row,flex-wrap,flex-1,shrink-0,grow,flex-none}");
+@source inline("{sm:,md:,lg:,}items-{start,center,end,stretch,baseline}");
+@source inline("{sm:,md:,lg:,}justify-{start,center,end,between,around}");
+@source inline("{sm:,md:,lg:,}grid-cols-{1,2,3,4,5,6,12}");
+@source inline("{sm:,md:,lg:,}col-span-{1,2,3,4,6,12}");
+@source inline("{sm:,md:,lg:,}{p,px,py,pt,pb,pl,pr}-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,12,14,16,20,24}");
+@source inline("{sm:,md:,lg:,}{m,mx,my,mt,mb,ml,mr}-{0,0.5,1,1.5,2,3,4,5,6,8,10,12,16,20,auto}");
+@source inline("{sm:,md:,lg:,}{gap,gap-x,gap-y,space-y,space-x}-{0,0.5,1,1.5,2,2.5,3,4,5,6,7,8,10,12,16}");
+@source inline("{sm:,md:,lg:,}w-{full,fit,auto,px,screen,1/2,1/3,2/3,1/4,3/4,0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,11,12,14,16,20,24,28,32,36,40,44,48,52,56,60,64,72,80,96}");
+@source inline("{sm:,md:,lg:,}h-{full,fit,auto,px,screen,0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,11,12,14,16,20,24,28,32,36,40,44,48,52,56,60,64,72,80,96}");
+@source inline("size-{3,3.5,4,5,6,7,8,9,10,11,12,14,16,20,24}");
+@source inline("{min-w,max-w}-{0,xs,sm,md,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,full,fit,none,prose}");
+@source inline("{min-h,max-h}-{0,screen,full,fit,dvh,64,96}");
+@source inline("{sm:,md:,lg:,}text-{xs,sm,base,lg,xl,2xl,3xl,4xl,5xl}");
+@source inline("font-{normal,medium,semibold,bold,sans,mono}");
+@source inline("leading-{none,tight,snug,normal,relaxed}");
+@source inline("tracking-{tight,normal,wide,wider,widest}");
+@source inline("text-{left,center,right}");
+@source inline("{truncate,uppercase,lowercase,capitalize,tabular-nums,whitespace-nowrap,break-words,line-clamp-1,line-clamp-2,line-clamp-3,italic,underline,underline-offset-4}");
+@source inline("{hover:,}{bg,text,border,ring,fill,stroke,divide,placeholder}-{background,foreground,card,card-foreground,popover,popover-foreground,primary,primary-foreground,secondary,secondary-foreground,muted,muted-foreground,accent,accent-foreground,destructive,destructive-foreground,border,input,ring,sidebar,sidebar-foreground,sidebar-primary,sidebar-accent,sidebar-border,chart-1,chart-2,chart-3,chart-4,chart-5,transparent,current,white,black}");
+@source inline("{hover:,}{bg,text,border}-{primary,secondary,accent,muted,destructive,card,background,foreground,border,chart-1,chart-2,chart-3,chart-4,chart-5,white,black}/{5,10,15,20,25,30,40,50,60,70,80,90}");
+@source inline("{bg,text,border}-{emerald,amber,rose,sky,cyan,violet,slate}-{300,400,500,600}");
+@source inline("{bg,text,border}-{emerald,amber,rose,sky,cyan,violet,slate}-{400,500}/{10,15,20,30}");
+@source inline("bg-{gradient-to-r,gradient-to-br,gradient-to-b,linear-to-r,linear-to-br,linear-to-b}");
+@source inline("{from,via,to}-{primary,accent,secondary,background,card,cyan-400,emerald-400,violet-500,transparent}");
+@source inline("{from,to}-{primary,cyan-400,accent}/{20,40,60,80}");
+@source inline("rounded-{none,sm,md,lg,xl,2xl,3xl,full}");
+@source inline("{sm:,md:,}rounded-{lg,xl,2xl,3xl}");
+@source inline("rounded-{t,b,l,r}-{lg,xl,2xl}");
+@source inline("{border,border-0,border-2,border-t,border-b,border-l,border-r,border-x,border-y,border-dashed,divide-y,divide-x}");
+@source inline("{ring,ring-1,ring-2,ring-offset-2,outline-none,ring-inset}");
+@source inline("shadow-{none,xs,sm,md,lg,xl,2xl}");
+@source inline("{overflow-hidden,overflow-auto,overflow-x-auto,overflow-y-auto,overflow-visible}");
+@source inline("{relative,absolute,fixed,sticky,inset-0,inset-x-0,inset-y-0,top-0,bottom-0,left-0,right-0,top-4,right-4,z-0,z-10,z-20,z-30,z-40,z-50}");
+@source inline("{-,}{top,bottom,left,right,inset}-{1,2,3,4,6,8}");
+@source inline("{-,}space-x-{1,2,3,4}");
+@source inline("{min-w,min-h}-{4,5,6,8,10,12,16,20,24,32,40,48,64,80,96}");
+@source inline("opacity-{0,25,40,50,60,70,75,80,90,100}");
+@source inline("{cursor-pointer,cursor-not-allowed,cursor-default,select-none,pointer-events-none,pointer-events-auto}");
+@source inline("{transition,transition-all,transition-colors,transition-opacity,transition-transform,duration-150,duration-200,duration-300,ease-out,ease-in-out,animate-pulse,animate-spin,animate-in,fade-in-0}");
+@source inline("{sr-only,aspect-square,aspect-video,object-cover,object-contain,backdrop-blur-sm,backdrop-blur-md,antialiased,scroll-smooth,list-disc,list-inside}");
+@source inline("{hover:,}{scale-95,scale-100,scale-105,-translate-y-0.5,translate-y-0}");
+@source inline("{focus-visible:,}{ring-1,ring-2,ring-ring,ring-primary,outline-none}");
+@source inline("{group,group-hover:text-foreground,group-hover:opacity-100,group-hover:bg-accent/70,peer}");
+@source inline("{disabled:opacity-50,disabled:pointer-events-none,data-[state=active]:bg-primary/15,data-[state=open]:bg-accent}");
+@source inline("{sm:,md:,lg:,}{max-w-sm,max-w-md,max-w-lg,max-w-xl,max-w-2xl,max-w-3xl,max-w-4xl,max-w-5xl,max-w-6xl,mx-auto}");
+@source inline("{sm:,md:,lg:,}{py-12,py-16,py-20,py-24,py-8,py-10}");
+@source inline("prose{,-sm,-invert}");
+
+/* The console is dark-only. globals.css sets the body canvas inside
+   @layer base, which any unlayered host default (white card/canvas
+   backgrounds) beats in the cascade - restate the canvas unlayered so the
+   design system's own surface wins everywhere it is embedded. */
+html body {
+  background-color: var(--background);
+  color: var(--foreground);
+}

@@ -2,6 +2,7 @@
   "name": "blocnet-admin",
   "version": "0.1.0",
   "private": true,
+  "types": "dist/types/index.d.ts",
   "scripts": {
     "dev": "next dev -p 3081",
     "build": "next build",

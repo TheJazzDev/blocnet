@@ -1,0 +1,117 @@
+{
+  "projectId": "ac45a2a1-0d3c-443e-a3d0-6a5a5e22b701",
+  "pkg": "blocnet-admin",
+  "globalName": "BlocnetUI",
+  "shape": "package",
+  "buildCmd": "node .design-sync/build-css.mjs && node .design-sync/build-dts.mjs",
+  "srcDir": "components/ui",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": ".ds-css/styles.css",
+  "extraFonts": [
+    "../.design-sync/fonts/geist.css"
+  ],
+  "componentSrcMap": {
+    "AlertDescription": null,
+    "AlertTitle": null,
+    "AvatarFallback": null,
+    "AvatarImage": null,
+    "CardContent": null,
+    "CardDescription": null,
+    "CardFooter": null,
+    "CardHeader": null,
+    "CardTitle": null,
+    "DialogClose": null,
+    "DialogContent": null,
+    "DialogDescription": null,
+    "DialogFooter": null,
+    "DialogHeader": null,
+    "DialogOverlay": null,
+    "DialogPortal": null,
+    "DialogTitle": null,
+    "DialogTrigger": null,
+    "DropdownMenuCheckboxItem": null,
+    "DropdownMenuContent": null,
+    "DropdownMenuGroup": null,
+    "DropdownMenuItem": null,
+    "DropdownMenuLabel": null,
+    "DropdownMenuPortal": null,
+    "DropdownMenuRadioGroup": null,
+    "DropdownMenuRadioItem": null,
+    "DropdownMenuSeparator": null,
+    "DropdownMenuShortcut": null,
+    "DropdownMenuSub": null,
+    "DropdownMenuSubContent": null,
+    "DropdownMenuSubTrigger": null,
+    "DropdownMenuTrigger": null,
+    "ScrollBar": null,
+    "SelectContent": null,
+    "SelectGroup": null,
+    "SelectItem": null,
+    "SelectLabel": null,
+    "SelectScrollDownButton": null,
+    "SelectScrollUpButton": null,
+    "SelectSeparator": null,
+    "SelectTrigger": null,
+    "SelectValue": null,
+    "TableBody": null,
+    "TableCaption": null,
+    "TableCell": null,
+    "TableFooter": null,
+    "TableHead": null,
+    "TableHeader": null,
+    "TableRow": null,
+    "TabsContent": null,
+    "TabsList": null,
+    "TabsTrigger": null,
+    "TooltipContent": null,
+    "TooltipProvider": null,
+    "TooltipTrigger": null
+  },
+  "docsDir": "../.design-sync/docs",
+  "overrides": {
+    "Dialog": {
+      "cardMode": "single",
+      "viewport": "720x480",
+      "primaryStory": "InviteModerator"
+    },
+    "DropdownMenu": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "ProjectActions"
+    },
+    "Select": {
+      "cardMode": "single",
+      "viewport": "480x360",
+      "primaryStory": "StatusPicker"
+    },
+    "Tooltip": {
+      "cardMode": "single",
+      "viewport": "480x220",
+      "primaryStory": "OnIconButton"
+    },
+    "Table": {
+      "cardMode": "column"
+    },
+    "Card": {
+      "cardMode": "column"
+    },
+    "LoadingSpinner": {
+      "cardMode": "column"
+    },
+    "Switch": {
+      "cardMode": "column"
+    },
+    "Textarea": {
+      "cardMode": "column"
+    },
+    "ScrollArea": {
+      "cardMode": "column"
+    },
+    "Tabs": {
+      "cardMode": "column"
+    }
+  },
+  "tokensGlob": "tokens.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "tokensPkg": "@blocnet/console-tokens"
+}
