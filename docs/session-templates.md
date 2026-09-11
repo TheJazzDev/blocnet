@@ -102,3 +102,50 @@ I'm continuing work on Blocnet. Read docs/FEATURE_ATLAS.md, section "Dead code r
 
 Run this only after WS-A, WS-B and WS-C have merged. Delete the zero-import files and orphan stores listed for mobile and console, the 17 stale migration docs at console root, and the dead EnvironmentWatermark import. Do NOT delete become_hunter_screen.dart, submit_appeal_screen.dart, mining_downline_screen.dart or community_staff_tools_screen.dart — those wait on WS-D decisions. Do not drop the EdgeEngagement table without a migration and an explicit go-ahead. Verify with `flutter analyze`, console `bun run build`, backend `bun run build`. One commit per surface. Update the Session Log.
 ```
+
+### WS-F — Mobile: spaces, hunter path, coming-soon, glossary
+
+Run after WS-A has merged (it edits the same profile/hunter files).
+
+```
+I'm continuing work on Blocnet. Read CLAUDE.md, then docs/UX_UI_TRACKER.md (Decisions log first) and docs/FEATURE_ATLAS.md.
+
+Workstream WS-F (mobile/ only). Implement the 2026-09-11 decisions:
+- F-01 Spaces become explicit. Replace the bare logo icon in the app bar with a chip showing the current space name + icon (tap opens the existing switcher sheet). Add a one-time explainer sheet the first time a user has more than one space available ("You have two spaces: User for reading and community, Hunter for posting updates and managing gems"), keyed per user in prefs. Merge user_profile_body and hunter_profile_body into ONE profile body with role-aware sections: hero + Activity/Following/Saved for everyone; Hunter stats block and hunter shortcuts appear when the user is a hunter, regardless of active space. Nothing may disappear when switching space.
+- F-20 Wire Become Hunter: make /become-hunter reachable from the User-space Profile ("Become a Hunter" row, hidden once the user has the hunter role or a pending application) and from the composer sheet for non-hunters. It submits POST /admin-applications with targetRole=hunter (backend exists). Add "My project invites": GET /project-invites/mine and PATCH /project-invites/:id/respond, shown in Hunter Hub "Manage My Projects" as an "Invites" section with Accept / Decline.
+- F-10 Help & Support: remove Live Chat, Report a Bug and Account & Privacy rows; keep Email Support and Documentation; add static FAQ and Getting Started screens (markdown or simple widgets, content drafted from FEATURE_ATLAS.md — what Gems, Hunters, Updates, BNP and BNT are, how mining and quests work). Moderation Hub: remove the User Actions and History tiles.
+- F-16 Levels page: show each level's requirements (BNP, comments, days active, quests, updates, projects — from GET /levels) and the user's progress toward the next level (GET /levels/me). The unused level_progress_card.dart is a starting point; delete it if you replace it.
+- F-07 Vocabulary: users FIND Gems, admins CREATE Projects, hunters POST Updates. Audit every user-facing string in mobile/lib for "project" and decide per string whether the user is looking at a Gem (rename) or at admin/system wording (keep). Add a Glossary screen under Help (Gem, Hunter, Update, Alpha Radar, Edge brief, BNP = Blocnet Point mined now, BNT = Blocnet Token at launch, BNP converts to BNT). Remove any MCR string.
+
+Rules: existing store pattern, small files, `flutter analyze` + `flutter test` green per commit, commit per finding with `WS-F F-xx:` prefix and the standard co-author trailer. Do not touch backend/ or console/. Report done/partial/skipped per finding with files and branch.
+```
+
+### WS-G — Console: hunter assignment, MCR removal
+
+Run after WS-C has merged.
+
+```
+I'm continuing work on Blocnet. Read CLAUDE.md, console/CLAUDE.md, then docs/UX_UI_TRACKER.md (Decisions log first) and docs/FEATURE_ATLAS.md.
+
+Workstream WS-G (console/ only):
+- F-20 Hunter assignment UI. On /projects add a row action "Manage hunters" opening a Sheet that lists current hunters, lets an admin search members with the hunter role (GET /admin/users?role=hunter) and either Assign directly (POST /projects/:projectId/hunters/:hunterId/assign) or Invite (POST .../invite), and shows pending invites (GET /projects/:projectId/invites). Also surface hunter role applications: /applications › Role Applications already lists them; make Approve/Reject work for admins on hunter applications if the backend allows it, otherwise show who can approve.
+- F-07 MCR removal: /tip-settings must not show MCR (filter by code and hide "MCR" everywhere); rename user-facing labels "MCR/hour" → "BNP/hour" (users/[id] MiningSection) and any other MCR text. Keep reading the API fields (`lifetimeMinedMcr` etc.) until WS-H renames them; centralize the mapping in one adapter so the rename is a one-line change.
+- F-07 vocabulary: console keeps "Projects", "Updates", "Members". Add a small "Gems = Projects as users see them" hint in the Projects page header description.
+
+Mobile-first Tailwind v4 rules apply. Split components past ~300 lines. `bun run lint && bun run test && bun run build` per commit, `WS-G F-xx:` prefix, standard co-author trailer. Do not touch mobile/ or backend/. Report per finding with files and branch.
+```
+
+### WS-H — Backend: MCR retirement
+
+Run after WS-B has merged.
+
+```
+I'm continuing work on Blocnet. Read CLAUDE.md, then docs/UX_UI_TRACKER.md (Decisions log first) and docs/FEATURE_ATLAS.md.
+
+Workstream WS-H (backend/ only). MCR ("Mine Credits") is discarded; BNP = Blocnet Point, BNT = Blocnet Token.
+1. Data: the dev DB has a TipCurrency row code=MCR with 2 TipAccount rows and 0 TipTransaction rows; it is NOT in prisma/seed.ts or seed.dev.ts. Write a Prisma migration via `bunx prisma migrate dev --name retire_mcr_tip_currency` whose SQL deletes TipAccount rows for currencyCode='MCR' only where no TipTransaction references them, then deletes the TipCurrency row. Guard so it is a no-op when MCR is absent (prod). Never `db push`.
+2. Guard the API: tips-admin settings endpoints reject creating/enabling a currency with code MCR; `GET /admin/tips/settings` never returns it.
+3. Naming: rename `lifetimeMinedMcr / lifetimeClaimedMcr / lifetimeUnclaimedMcr` to `...Bnp` in mining-admin.service.ts, wallet-admin.service.ts and their DTOs, and the `mcr` local in notification-events.service.ts. Keep the old field names in responses for one release as deprecated aliases so the console (WS-G) can switch without breaking; note the removal date in the tracker report.
+4. Add a short comment block at the top of the tips module documenting BNP vs BNT and the planned BNP→BNT conversion at launch (no conversion code yet).
+`bun run build && bun run test` per commit, `WS-H F-07:` prefix, standard co-author trailer. Do not touch mobile/ or console/. Report with the migration file name and the response shape changes.
+```
