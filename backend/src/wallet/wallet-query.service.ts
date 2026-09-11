@@ -314,6 +314,17 @@ export class WalletQueryService {
     return rows.map((row) => this.toWithdrawalResponse(row));
   }
 
+  /**
+   * User-facing wallet block for `GET /wallet/me`.
+   *
+   * Custody internals stay out: `provider` and `providerWalletId` are the
+   * custody provider's own identifiers and `failureReason` is a raw provider
+   * error string. None of the three is actionable for the wallet owner, and
+   * all three are operational detail that belongs on the admin surface only
+   * (`GET /admin/wallet/*`, which serialises them separately in
+   * `WalletAdminService`). `status` already tells a user whether their wallet
+   * is provisioning, ready, errored or disabled.
+   */
   private toWalletSummary(wallet: UserWallet) {
     return {
       id: wallet.id,
@@ -321,9 +332,6 @@ export class WalletQueryService {
       address: wallet.address,
       chainId: wallet.chainId,
       chainEnvironment: wallet.chainEnvironment,
-      provider: wallet.provider,
-      providerWalletId: wallet.providerWalletId,
-      failureReason: wallet.failureReason,
       provisionedAt: wallet.provisionedAt,
     };
   }
