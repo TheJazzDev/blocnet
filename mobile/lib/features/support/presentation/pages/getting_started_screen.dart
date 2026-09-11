@@ -26,8 +26,7 @@ class GettingStartedScreen extends StatelessWidget {
         children: [
           const SupportHeader(
             title: 'Your first week on Blocnet',
-            subtitle:
-                'Seven steps, in the order that makes the app click. You '
+            subtitle: 'Seven steps, in the order that makes the app click. You '
                 'can do them all in one sitting.',
           ),
           const SizedBox(height: AppSpace.lg),

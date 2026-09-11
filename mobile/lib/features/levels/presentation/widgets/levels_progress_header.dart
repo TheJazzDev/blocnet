@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_progress_card.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Top-of-page block for the user's own progress. Wraps [LevelProgressCard]
@@ -41,13 +42,9 @@ class _Placeholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface.flush(
+      radius: AppRadius.lg,
       height: 76,
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Center(
         child: SizedBox(
           width: 18,
@@ -71,7 +68,8 @@ class _ErrorRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.sm, AppSpace.sm, AppSpace.sm),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.md, AppSpace.sm, AppSpace.sm, AppSpace.sm),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(AppRadius.lgValue),
@@ -79,7 +77,8 @@ class _ErrorRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline_rounded, size: AppIcon.sm, color: AppColors.error500),
+          Icon(Icons.error_outline_rounded,
+              size: AppIcon.sm, color: AppColors.error500),
           const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Text(
@@ -100,7 +99,8 @@ class _ErrorRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
               minimumSize: const Size(0, 32),
             ),
-            child: const Text('Retry', style: TextStyle(fontSize: AppText.bodySize)),
+            child: const Text('Retry',
+                style: TextStyle(fontSize: AppText.bodySize)),
           ),
         ],
       ),

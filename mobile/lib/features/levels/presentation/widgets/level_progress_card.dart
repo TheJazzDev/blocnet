@@ -134,7 +134,8 @@ class _CurrentLevelRow extends StatelessWidget {
           ),
         ),
         if (showChevron)
-          Icon(Icons.chevron_right_rounded, size: AppIcon.md, color: AppColors.textMuted),
+          Icon(Icons.chevron_right_rounded,
+              size: AppIcon.md, color: AppColors.textMuted),
       ],
     );
   }
@@ -249,7 +250,8 @@ class _MetricBar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(metric.metric.icon, size: AppIcon.xs, color: AppColors.textMuted),
+            Icon(metric.metric.icon,
+                size: AppIcon.xs, color: AppColors.textMuted),
             const SizedBox(width: AppSpace.sm),
             Expanded(
               child: Text(
@@ -302,7 +304,8 @@ class _Banner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(top: AppSpace.md),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.mdValue),

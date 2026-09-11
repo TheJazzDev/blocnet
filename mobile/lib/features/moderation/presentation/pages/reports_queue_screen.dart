@@ -15,8 +15,7 @@ class ReportsQueueScreen extends StatefulWidget {
   const ReportsQueueScreen({super.key});
 
   @override
-  State<ReportsQueueScreen> createState() =>
-      _ReportsQueueScreenState();
+  State<ReportsQueueScreen> createState() => _ReportsQueueScreenState();
 }
 
 class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
@@ -176,9 +175,10 @@ class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
     final auth = context.read<AuthStore>();
     final decision = await showCommunityContentModerationSheet(
       context,
-      targetLabel: report.targetType == CommunityReportTargetType.communityComment
-          ? 'comment'
-          : 'post',
+      targetLabel:
+          report.targetType == CommunityReportTargetType.communityComment
+              ? 'comment'
+              : 'post',
       canArchive: auth.isCommunityAdmin,
     );
     if (decision == null) return;
@@ -264,7 +264,8 @@ class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
             isRefreshing: _isLoading,
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.hair),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.hair),
             child: _StaffOverviewCard(
               openCount: openCount,
               contentCount: contentCount,
@@ -282,7 +283,8 @@ class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
                 : _error != null && _reports.isEmpty
                     ? Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.xl),
                           child: Text(
                             _error!,
                             textAlign: TextAlign.center,
@@ -306,7 +308,8 @@ class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
                             ),
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.sm, AppSpace.md, AppSpace.md),
+                            padding: const EdgeInsets.fromLTRB(AppSpace.md,
+                                AppSpace.sm, AppSpace.md, AppSpace.md),
                             itemBuilder: (context, index) {
                               final report = _reports[index];
                               return _ReportCard(
@@ -324,15 +327,14 @@ class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
                                           CommunityReportStatus.dismissed,
                                         )
                                     : null,
-                                onContentActions:
-                                    report.targetType ==
-                                                CommunityReportTargetType
-                                                    .communityPost ||
-                                            report.targetType ==
-                                                CommunityReportTargetType
-                                                    .communityComment
-                                        ? () => _moderateReportTarget(report)
-                                        : null,
+                                onContentActions: report.targetType ==
+                                            CommunityReportTargetType
+                                                .communityPost ||
+                                        report.targetType ==
+                                            CommunityReportTargetType
+                                                .communityComment
+                                    ? () => _moderateReportTarget(report)
+                                    : null,
                                 onUserActions: () => _openUserActions(report),
                               );
                             },
@@ -386,7 +388,8 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -429,7 +432,8 @@ class _FilterBar extends StatelessWidget {
                   size: AppText.bodySize,
                   weight: FontWeight.w400,
                 ),
-                prefixIcon: Icon(Icons.search_rounded, size: AppIcon.md, color: AppColors.textMuted),
+                prefixIcon: Icon(Icons.search_rounded,
+                    size: AppIcon.md, color: AppColors.textMuted),
                 prefixIconConstraints: const BoxConstraints(minWidth: 40),
                 suffixIcon: isRefreshing
                     ? Padding(
@@ -444,7 +448,8 @@ class _FilterBar extends StatelessWidget {
                         ),
                       )
                     : null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.md, vertical: AppSpace.sm),
                 isDense: true,
               ),
             ),
@@ -548,7 +553,8 @@ class _DropdownField<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: AppSpace.hair, bottom: AppSpace.xs),
+          padding:
+              const EdgeInsets.only(left: AppSpace.hair, bottom: AppSpace.xs),
           child: Text(
             label,
             style: AppTypography.custom(
@@ -671,7 +677,8 @@ class _ReportCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.lg),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -691,7 +698,8 @@ class _ReportCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpace.md),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(AppRadius.fullValue),
@@ -797,7 +805,8 @@ class _StaffOverviewCard extends StatelessWidget {
             AppColors.bgSurface.withValues(alpha: 0.85),
           ],
         ),
-        border: Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.75)),
+        border:
+            Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.75)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -895,7 +904,8 @@ class _OverviewStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.mdValue),
@@ -941,7 +951,8 @@ class _MetaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: AppColors.bgElevated,
         borderRadius: BorderRadius.circular(AppRadius.mdValue),
@@ -1066,7 +1077,8 @@ class _PaginationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.sm, AppSpace.md, AppSpace.md),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.md, AppSpace.sm, AppSpace.md, AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
         border: Border(

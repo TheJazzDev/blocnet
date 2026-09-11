@@ -196,7 +196,8 @@ class _MetaChip extends StatelessWidget {
           if (roleLabel != null) ...[
             const SizedBox(width: AppSpace.xs),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs, vertical: 1),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.xs, vertical: 1),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppRadius.smValue),
                 border: Border.all(

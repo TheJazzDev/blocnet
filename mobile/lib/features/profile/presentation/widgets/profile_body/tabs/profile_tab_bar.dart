@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Underlined segmented tab bar for the Activity / Following / Saved tabs.
@@ -82,7 +83,8 @@ class ProfileTabEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -137,16 +139,9 @@ class ProfileTabTileFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final tile = GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AppSurface(
         margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
         padding: const EdgeInsets.all(AppSpace.md),
-        decoration: isCardMode
-            ? BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                border: Border.all(color: AppColors.borderSubtle),
-              )
-            : null,
         child: child,
       ),
     );

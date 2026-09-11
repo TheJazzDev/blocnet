@@ -148,7 +148,8 @@ class _HistoryRow extends StatelessWidget {
               ),
               const SizedBox(height: AppSpace.xs),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(AppRadius.fullValue),

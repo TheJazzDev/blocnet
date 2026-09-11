@@ -21,7 +21,8 @@ class ProfileStatsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, 0),
+      padding:
+          const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

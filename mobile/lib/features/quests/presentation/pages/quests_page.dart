@@ -199,17 +199,20 @@ class _QuestsPageState extends State<QuestsPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.explore_off, size: AppIcon.xxl, color: Colors.grey.shade600),
+            Icon(Icons.explore_off,
+                size: AppIcon.xxl, color: Colors.grey.shade600),
             const SizedBox(height: AppSpace.lg),
             Text(
               'No available quests',
-              style: TextStyle(fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
+              style: TextStyle(
+                  fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
             ),
             const SizedBox(height: AppSpace.sm),
             Text(
               'Check back later for new quests!',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: AppText.bodySize, color: Colors.grey.shade600),
+              style: TextStyle(
+                  fontSize: AppText.bodySize, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -240,17 +243,20 @@ class _QuestsPageState extends State<QuestsPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.pending_actions, size: AppIcon.xxl, color: Colors.grey.shade600),
+            Icon(Icons.pending_actions,
+                size: AppIcon.xxl, color: Colors.grey.shade600),
             const SizedBox(height: AppSpace.lg),
             Text(
               'No quests in progress',
-              style: TextStyle(fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
+              style: TextStyle(
+                  fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
             ),
             const SizedBox(height: AppSpace.sm),
             Text(
               'Open an available quest and verify when ready.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: AppText.bodySize, color: Colors.grey.shade600),
+              style: TextStyle(
+                  fontSize: AppText.bodySize, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -286,13 +292,15 @@ class _QuestsPageState extends State<QuestsPage>
             const SizedBox(height: AppSpace.lg),
             Text(
               'No completed quests yet',
-              style: TextStyle(fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
+              style: TextStyle(
+                  fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
             ),
             const SizedBox(height: AppSpace.sm),
             Text(
               'Complete quests to earn rewards!',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: AppText.bodySize, color: Colors.grey.shade600),
+              style: TextStyle(
+                  fontSize: AppText.bodySize, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -458,7 +466,8 @@ class _QuestCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpace.md),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdValue)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.mdValue)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.mdValue),
@@ -584,8 +593,10 @@ class _QuestPointsPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair)
-          : const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+          ? const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.hair)
+          : const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: Colors.amber.shade400.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.fullValue),
@@ -629,8 +640,10 @@ class _QuestStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair)
-          : const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+          ? const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.hair)
+          : const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: Color(status.color).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.mdValue),

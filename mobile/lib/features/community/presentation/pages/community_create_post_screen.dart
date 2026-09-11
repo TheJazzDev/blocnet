@@ -7,7 +7,7 @@ import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
-import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -107,7 +107,8 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -181,22 +182,10 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                           final isActive = _selectedTopic == topic;
                           return GestureDetector(
                             onTap: () => setState(() => _selectedTopic = topic),
-                            child: Container(
+                            child: AppSurface(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpace.md, vertical: AppSpace.sm),
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? AppColors.primary500
-                                        .withValues(alpha: 0.15)
-                                    : AppColors.bgSurface,
-                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                                border: Border.all(
-                                  color: isActive
-                                      ? AppColors.primary400
-                                          .withValues(alpha: 0.6)
-                                      : AppColors.borderSubtle,
-                                ),
-                              ),
+                                  horizontal: AppSpace.md,
+                                  vertical: AppSpace.sm),
                               child: Text(
                                 topic.label,
                                 style: AppTypography.custom(
@@ -218,7 +207,8 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
               SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.md),
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.md),
                   child: SizedBox(
                     width: double.infinity,
                     height: 44,
@@ -231,7 +221,8 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                         disabledBackgroundColor:
                             AppColors.primary500.withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.mdValue),
                         ),
                       ),
                       child: store.isSubmittingPost

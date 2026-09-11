@@ -10,6 +10,7 @@ import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -252,7 +253,8 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
               width: 34,
               height: 34,
               alignment: Alignment.center,
-              child: Icon(Icons.add, size: AppIcon.lg, color: AppColors.textSecondary),
+              child: Icon(Icons.add,
+                  size: AppIcon.lg, color: AppColors.textSecondary),
             ),
           ),
       ],
@@ -356,8 +358,8 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                 ),
                 const SizedBox(height: AppSpace.sm),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm, vertical: AppSpace.xs),
                   decoration: BoxDecoration(
                     color: AppColors.primary500.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.fullValue),
@@ -453,14 +455,10 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
       _ => AppColors.warning500,
     };
 
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       margin: const EdgeInsets.only(bottom: AppSpace.md),
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -479,7 +477,8 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
               ),
               const SizedBox(width: AppSpace.md),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(AppRadius.fullValue),
@@ -584,7 +583,8 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.sm, vertical: AppSpace.xs),
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(AppRadius.fullValue),

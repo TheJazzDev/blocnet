@@ -76,7 +76,8 @@ class TagButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: AppSpace.lg),
+        padding:
+            const EdgeInsets.symmetric(vertical: 7, horizontal: AppSpace.lg),
         decoration: BoxDecoration(
           border: Border.all(
             color: isSelected ? AppColors.teal500 : AppColors.borderSubtle,

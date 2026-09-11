@@ -180,13 +180,15 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
             const SizedBox(height: AppSpace.lg),
             Text(
               'No badges earned yet',
-              style: TextStyle(fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
+              style: TextStyle(
+                  fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
             ),
             const SizedBox(height: AppSpace.sm),
             Text(
               'Complete quests and stay active to earn badges!',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: AppText.bodySize, color: Colors.grey.shade600),
+              style: TextStyle(
+                  fontSize: AppText.bodySize, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -397,7 +399,8 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
             ),
             Text(
               '$earned / $total',
-              style: TextStyle(fontSize: AppText.captionSize, color: AppColors.textMuted),
+              style: TextStyle(
+                  fontSize: AppText.captionSize, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -486,7 +489,8 @@ class _BadgeCard extends StatelessWidget {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
               child: Column(
                 children: [
                   Row(
@@ -498,7 +502,8 @@ class _BadgeCard extends StatelessWidget {
                           color: isEarned
                               ? unlockedBase.withValues(alpha: 0.18)
                               : AppColors.bgElevated,
-                          borderRadius: BorderRadius.circular(AppRadius.fullValue),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.fullValue),
                           border: Border.all(
                             color: isEarned
                                 ? unlockedBase.withValues(alpha: 0.52)
@@ -660,7 +665,8 @@ class _BadgeDetailsSheet extends StatelessWidget {
             const SizedBox(height: AppSpace.lg),
             Text(
               badge.name,
-              style: const TextStyle(fontSize: AppText.headlineSize, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: AppText.headlineSize, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppSpace.sm),
             Row(
@@ -675,7 +681,8 @@ class _BadgeDetailsSheet extends StatelessWidget {
             Text(
               badge.description,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: AppText.bodySize, color: Colors.grey.shade300),
+              style: TextStyle(
+                  fontSize: AppText.bodySize, color: Colors.grey.shade300),
             ),
             const SizedBox(height: AppSpace.xl),
             if (isEarned) ...[

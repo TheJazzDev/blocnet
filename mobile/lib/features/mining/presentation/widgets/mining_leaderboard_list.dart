@@ -38,7 +38,8 @@ class MiningLeaderboardList extends StatelessWidget {
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.sm, vertical: AppSpace.xs),
               decoration: BoxDecoration(
                 color: AppColors.primary500.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppRadius.fullValue),
@@ -240,7 +241,8 @@ class _LeaderboardTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [

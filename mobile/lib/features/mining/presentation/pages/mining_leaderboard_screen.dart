@@ -42,7 +42,8 @@ class _MiningLeaderboardScreenState extends State<MiningLeaderboardScreen> {
             onRefresh: () => store.loadLeaderboard(force: true),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               children: [
                 MiningLeaderboardList(
                   items: store.leaderboard,

@@ -16,7 +16,8 @@ class SecondaryLabel extends StatelessWidget {
         (useDisplayText && raw.length > 8) ? '${raw.substring(0, 8)}…' : raw;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpace.hair, horizontal: AppSpace.md),
+      padding: const EdgeInsets.symmetric(
+          vertical: AppSpace.hair, horizontal: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.primary500.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.xlValue),

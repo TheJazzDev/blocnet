@@ -432,7 +432,8 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
               right: widget.minimal ? -3 : -3,
               child: Container(
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs, vertical: 1),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.xs, vertical: 1),
                 constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
                 decoration: BoxDecoration(
                   color: Colors.red,

@@ -47,7 +47,8 @@ class _MiningScreenState extends State<MiningScreen> {
           onRefresh: store.refreshAll,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, 110),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpace.lg, AppSpace.lg, AppSpace.lg, 110),
             children: [
               const SizedBox(height: AppSpace.xs),
               MiningHeroCard(

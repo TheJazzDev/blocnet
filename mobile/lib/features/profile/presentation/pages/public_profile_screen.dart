@@ -256,7 +256,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           children: [
             if (widget.asSheet)
               Padding(
-                padding: const EdgeInsets.only(top: AppSpace.md, bottom: AppSpace.sm),
+                padding: const EdgeInsets.only(
+                    top: AppSpace.md, bottom: AppSpace.sm),
                 child: Container(
                   width: 44,
                   height: 4,
@@ -267,7 +268,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.xs, AppSpace.md, AppSpace.sm),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.md, AppSpace.xs, AppSpace.md, AppSpace.sm),
               child: Row(
                 children: [
                   Text(
@@ -301,7 +303,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       posts.map((post) => post.projectId).toSet().length;
 
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.xs, AppSpace.lg, AppSpace.xl),
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpace.lg, AppSpace.xs, AppSpace.lg, AppSpace.xl),
                     child: Column(
                       children: [
                         AppAvatar(
@@ -364,7 +367,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             label: _roleLabel(displayRoleKey),
                             textColor: _roleTextColor(displayRoleKey),
                             borderColor: _roleBorderColor(displayRoleKey),
-                            backgroundColor: _roleBackgroundColor(displayRoleKey),
+                            backgroundColor:
+                                _roleBackgroundColor(displayRoleKey),
                           ),
                         const SizedBox(height: AppSpace.lg),
                         Row(
@@ -412,7 +416,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                           : Colors.black,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                                        borderRadius: BorderRadius.circular(
+                                            AppRadius.mdValue),
                                       ),
                                     ),
                                     child: _isSubmittingFollow
@@ -469,7 +474,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                       foregroundColor: AppColors.primary400,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                                        borderRadius: BorderRadius.circular(
+                                            AppRadius.mdValue),
                                         side: BorderSide(
                                           color: AppColors.primary500
                                               .withValues(alpha: 0.45),
@@ -510,7 +516,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                     : Colors.black,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.mdValue),
                                 ),
                               ),
                               child: _isSubmittingFollow
@@ -553,15 +560,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                           .withValues(alpha: 0.45),
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.mdValue),
                                 ),
                                 backgroundColor: _isBlocked
                                     ? AppColors.primary500
                                         .withValues(alpha: 0.08)
                                     : AppColors.error500
                                         .withValues(alpha: 0.08),
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: AppSpace.md),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpace.md),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 visualDensity: VisualDensity.compact,
                               ),

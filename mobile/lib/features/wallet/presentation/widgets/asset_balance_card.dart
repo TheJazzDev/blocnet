@@ -5,6 +5,7 @@ import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dar
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -44,7 +45,8 @@ class AssetBalanceCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: AppSpace.md, horizontal: AppSpace.md),
+      padding: const EdgeInsets.symmetric(
+          vertical: AppSpace.md, horizontal: AppSpace.md),
       decoration: isCardMode
           ? BoxDecoration(
               gradient: LinearGradient(
@@ -73,15 +75,10 @@ class AssetBalanceCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpace.sm),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
-                decoration: BoxDecoration(
-                  color:
-                      (isCardMode ? AppColors.bgSurface : AppColors.bgElevated)
-                          .withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(AppRadius.lgValue),
-                  border: Border.all(color: AppColors.borderSubtle),
-                ),
+              AppSurface(
+                radius: AppRadius.lg,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 child: Text(
                   assetBadgeText(asset),
                   style: AppTypography.custom(

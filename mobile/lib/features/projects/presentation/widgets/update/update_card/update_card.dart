@@ -96,7 +96,8 @@ class UpdateCard extends StatelessWidget {
               // Content
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -168,7 +169,8 @@ class _ProjectHeader extends StatelessWidget {
         const SizedBox(width: AppSpace.sm),
         // Priority pill — small, right-aligned
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.hair),
           decoration: BoxDecoration(
             color: priorityColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppRadius.xlValue),

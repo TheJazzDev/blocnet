@@ -30,7 +30,8 @@ class NotificationInsightsScreen extends StatelessWidget {
       body: !hasInsights
           ? const _EmptyInsightsState()
           : ListView(
-              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, 100),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg, AppSpace.md, AppSpace.lg, 100),
               children: [
                 Text(
                   'Your ${summary!.windowDays}-day notification insights',

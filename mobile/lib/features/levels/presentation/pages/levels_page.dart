@@ -126,7 +126,8 @@ class _LevelsPageState extends State<LevelsPage> {
               levelsStore.fetchMyProgress(),
             ]),
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.xl),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.xl),
               itemCount: sections.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {

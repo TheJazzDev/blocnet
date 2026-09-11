@@ -65,12 +65,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     _primaryTagOptions = {...primaryTagValues};
     _secondaryTagOptions = {...secondaryTagValues};
 
-    final allowedPriorities = priorities.isEmpty
-        ? Priority.getAll().toSet()
-        : priorities.toSet();
-    _selectedPriorities = _selectedPriorities
-        .where(allowedPriorities.contains)
-        .toSet();
+    final allowedPriorities =
+        priorities.isEmpty ? Priority.getAll().toSet() : priorities.toSet();
+    _selectedPriorities =
+        _selectedPriorities.where(allowedPriorities.contains).toSet();
   }
 
   Set<String> get _unselectedPrimaryTags =>

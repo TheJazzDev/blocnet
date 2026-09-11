@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -196,14 +197,9 @@ class _SendTokenPageState extends State<SendTokenPage> {
     final subtitle = _isInternal
         ? 'Settles instantly between Blocnet wallets.'
         : 'Requests admin approval before on-chain send.';
-    return Container(
+    return AppSurface(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Row(
         children: [
           Icon(
@@ -366,14 +362,10 @@ class _SendTokenPageState extends State<SendTokenPage> {
               else
                 _modeHint(),
               const SizedBox(height: AppSpace.lg),
-              Container(
+              AppSurface(
+                radius: AppRadius.lg,
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpace.lg),
-                decoration: BoxDecoration(
-                  color: AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(AppRadius.lgValue),
-                  border: Border.all(color: AppColors.borderSubtle),
-                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

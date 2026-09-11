@@ -27,8 +27,8 @@ class BalanceCard extends StatelessWidget {
                 : 'Provisioning wallet...');
 
     final totalUsd = snapshot?.totalUsdValue ?? '0';
-    final hasLivePricing =
-        (snapshot?.assets ?? const []).any((a) => isUsdPriceLive(a.priceSource));
+    final hasLivePricing = (snapshot?.assets ?? const [])
+        .any((a) => isUsdPriceLive(a.priceSource));
     final isBalanceHidden = visibilityStore.isBalanceHidden;
     final balanceText = isBalanceHidden
         ? '\$••••••'

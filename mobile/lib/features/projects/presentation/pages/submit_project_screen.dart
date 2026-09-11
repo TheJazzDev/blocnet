@@ -68,9 +68,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
           padding: const EdgeInsets.all(AppSpace.lg),
           child: Text(
             'Your current role does not allow project submission.',
-            style: AppTypography.custom(color: AppColors.textMuted,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
               size: AppText.bodySize,
-              weight: FontWeight.w400,),
+              weight: FontWeight.w400,
+            ),
           ),
         ),
       );
@@ -97,9 +99,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
           padding: const EdgeInsets.all(AppSpace.lg),
           child: Text(
             'Primary tags are not configured yet. Contact admin.',
-            style: AppTypography.custom(color: AppColors.textMuted,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
               size: AppText.bodySize,
-              weight: FontWeight.w400,),
+              weight: FontWeight.w400,
+            ),
           ),
         ),
       );
@@ -118,9 +122,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               if (_submitError != null && _submitError!.isNotEmpty) ...[
                 Text(
                   _submitError!,
-                  style: AppTypography.custom(color: AppColors.error500,
+                  style: AppTypography.custom(
+                    color: AppColors.error500,
                     size: AppText.bodySize,
-                    weight: FontWeight.w400,),
+                    weight: FontWeight.w400,
+                  ),
                 ),
                 const SizedBox(height: AppSpace.md),
               ],
@@ -128,9 +134,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _nameController,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: AppText.bodySize,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 decoration: _fieldDecoration(hintText: 'e.g. Codawoo'),
                 validator: (value) {
                   final next = value?.trim() ?? '';
@@ -144,9 +152,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _symbolController,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: AppText.bodySize,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 decoration: _fieldDecoration(hintText: 'e.g. COD'),
               ),
               const SizedBox(height: AppSpace.lg),
@@ -154,9 +164,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
               const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _websiteController,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: AppText.bodySize,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 decoration: _fieldDecoration(hintText: 'https://example.com'),
               ),
               const SizedBox(height: AppSpace.lg),
@@ -166,9 +178,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 value: _selectedPrimaryTagId,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: AppText.bodySize,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 items: tagsStore.primaryTags
                     .map(
                       (tag) => DropdownMenuItem<String>(
@@ -202,9 +216,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 controller: _descriptionController,
                 minLines: 6,
                 maxLines: 10,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: AppText.bodySize,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 decoration: _fieldDecoration(
                   hintText: 'Explain what this gem is about.',
                 ),
@@ -222,9 +238,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 controller: _reasonController,
                 minLines: 3,
                 maxLines: 6,
-                style: AppTypography.custom(color: AppColors.textSecondary,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
                   size: AppText.bodySize,
-                  weight: FontWeight.w400,),
+                  weight: FontWeight.w400,
+                ),
                 decoration: _fieldDecoration(
                   hintText: 'Credibility, risk checks, relevance, etc.',
                 ),
@@ -359,7 +377,8 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
           width: 2,
         ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
+      contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg, vertical: AppSpace.lg),
     );
   }
 

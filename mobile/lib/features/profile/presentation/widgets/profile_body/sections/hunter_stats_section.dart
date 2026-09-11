@@ -23,7 +23,8 @@ class HunterStatsSection extends StatelessWidget {
     final median = metrics.medianHoursBetweenUpdates;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, 0),
+      padding:
+          const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -64,8 +65,7 @@ class HunterStatsSection extends StatelessWidget {
               ),
               TrustChip(
                 label: 'Median',
-                value:
-                    median == null ? 'N/A' : '${median.toStringAsFixed(1)}h',
+                value: median == null ? 'N/A' : '${median.toStringAsFixed(1)}h',
               ),
               TrustChip(label: 'Last', value: lastActiveLabel),
             ],
@@ -97,7 +97,8 @@ class _HunterStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.md, vertical: AppSpace.sm),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

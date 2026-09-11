@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 class EdgeBriefTeaserCard extends StatelessWidget {
@@ -28,14 +29,10 @@ class EdgeBriefTeaserCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Container(
+    return AppSurface(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(AppSpace.md, 0, AppSpace.md, AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
+      padding:
+          const EdgeInsets.fromLTRB(AppSpace.md, 0, AppSpace.md, AppSpace.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -61,8 +58,8 @@ class EdgeBriefTeaserCard extends StatelessWidget {
                 onPressed: onOpen,
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.xs),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.md, vertical: AppSpace.xs),
                 ),
                 child: Text(
                   'Open',

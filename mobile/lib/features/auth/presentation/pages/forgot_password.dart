@@ -92,9 +92,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
             AppButton(
               label: _linkSent ? 'Resend link' : 'Send reset link',
-              onPressed: !isBusy && authStore.isSupabaseConfigured
-                  ? _submit
-                  : null,
+              onPressed:
+                  !isBusy && authStore.isSupabaseConfigured ? _submit : null,
               isLoading: isBusy,
               fullWidth: true,
             ),
@@ -131,7 +130,8 @@ class _SuccessCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg, vertical: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.successColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.mdValue),

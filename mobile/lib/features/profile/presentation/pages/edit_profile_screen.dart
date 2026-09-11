@@ -8,6 +8,7 @@ import 'package:blocnet/services/community/community_posts_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -159,7 +160,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
         behavior: HitTestBehavior.translucent,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
           child: Form(
             key: _formKey,
             child: Column(
@@ -203,7 +205,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: AppColors.borderSubtle),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.mdValue),
                             ),
                           ),
                           child: Text(
@@ -222,15 +225,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: AppSpace.lg),
                 _FieldLabel('Username'),
                 const SizedBox(height: AppSpace.sm),
-                Container(
+                AppSurface(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                    border: Border.all(color: AppColors.borderSubtle),
-                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.lg, vertical: AppSpace.md),
                   child: Text(
                     auth.username ?? '@set-at-signup',
                     style: AppTypography.custom(
@@ -357,8 +355,8 @@ class _Input extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.mdValue),
           borderSide: BorderSide(color: AppColors.primary400, width: 1.4),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.lg, vertical: AppSpace.md),
       ),
     );
   }

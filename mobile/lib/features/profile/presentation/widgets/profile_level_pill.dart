@@ -24,7 +24,8 @@ class ProfileLevelPill extends StatelessWidget {
       onTap: () => Navigator.of(context).pushNamed(AppRoutes.levels),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs, vertical: AppSpace.xs),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.xs, vertical: AppSpace.xs),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
           borderRadius: BorderRadius.circular(AppRadius.smValue),

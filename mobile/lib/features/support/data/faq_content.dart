@@ -17,8 +17,7 @@ const List<FaqEntry> faqEntries = [
   FaqEntry(
     icon: Icons.diamond_outlined,
     question: 'What is a Gem?',
-    answer:
-        'A Gem is a crypto project listed on Blocnet. You find Gems in the '
+    answer: 'A Gem is a crypto project listed on Blocnet. You find Gems in the '
         'Discover tab, follow the ones you care about and their Updates show '
         'up in your Home feed. Gems are proposed by Hunters and approved by '
         'the Blocnet team before they are listed.',
@@ -36,8 +35,7 @@ const List<FaqEntry> faqEntries = [
   FaqEntry(
     icon: Icons.bolt_rounded,
     question: 'What is an Update?',
-    answer:
-        'An Update is a post by a Hunter about one Gem: news, on-chain '
+    answer: 'An Update is a post by a Hunter about one Gem: news, on-chain '
         'activity, partnerships, airdrops or warnings. Each Update carries a '
         'priority (High, Medium or Low) and tags, and you can like, comment, '
         'bookmark, share and tip from it. Filter the Home feed by priority '
@@ -55,8 +53,7 @@ const List<FaqEntry> faqEntries = [
   FaqEntry(
     icon: Icons.insights_rounded,
     question: 'What is an Edge brief?',
-    answer:
-        'Edge is Blocnet\'s decision engine. It reads the Updates from the '
+    answer: 'Edge is Blocnet\'s decision engine. It reads the Updates from the '
         'Gems you follow, scores them and turns the result into short briefs: '
         'what changed, how urgent it is and why. Open the Edge page from Home '
         'to read the latest briefs. Follow a few Gems first, otherwise Edge '
@@ -65,8 +62,7 @@ const List<FaqEntry> faqEntries = [
   FaqEntry(
     icon: Icons.memory_rounded,
     question: 'How does mining work?',
-    answer:
-        'Open the Mining tab and start a session. BNP accrues every hour '
+    answer: 'Open the Mining tab and start a session. BNP accrues every hour '
         'while the session runs; when the cycle ends you claim what you '
         'mined and start the next one. Binding a referral code and inviting '
         'friends boosts your rate, and the leaderboard shows the top miners.',
@@ -74,8 +70,7 @@ const List<FaqEntry> faqEntries = [
   FaqEntry(
     icon: Icons.toll_rounded,
     question: 'What are BNP and BNT?',
-    answer:
-        'BNP is the Blocnet Point: the unit you mine, earn from quests and '
+    answer: 'BNP is the Blocnet Point: the unit you mine, earn from quests and '
         'use to tip Hunters today. BNT is the Blocnet Token, which launches '
         'on BNB Smart Chain. When BNT launches, your BNP converts to BNT. '
         'Until then the wallet shows pre-launch balances only.',
@@ -83,8 +78,7 @@ const List<FaqEntry> faqEntries = [
   FaqEntry(
     icon: Icons.task_alt_outlined,
     question: 'What are quests?',
-    answer:
-        'Quests are small tasks (follow a Gem, leave a comment, invite a '
+    answer: 'Quests are small tasks (follow a Gem, leave a comment, invite a '
         'friend and so on) that pay a BNP reward. Some complete automatically '
         'and some are checked by the Blocnet team before the reward lands. '
         'Find them under Profile > Quests.',
@@ -100,8 +94,7 @@ const List<FaqEntry> faqEntries = [
   FaqEntry(
     icon: Icons.stairs_outlined,
     question: 'How do levels work?',
-    answer:
-        'There are 15 levels grouped into five tiers. Each level lists its '
+    answer: 'There are 15 levels grouped into five tiers. Each level lists its '
         'requirements: BNP earned, comments, days active, quests completed '
         'and, higher up, Updates published and Gems created. Profile > Levels '
         'shows every requirement with your current progress, and your level '
@@ -129,8 +122,7 @@ const List<FaqEntry> faqEntries = [
   FaqEntry(
     icon: Icons.support_agent_outlined,
     question: 'How do I get help?',
-    answer:
-        'Email support@blocnet.app from the Help & Support screen. Include '
+    answer: 'Email support@blocnet.app from the Help & Support screen. Include '
         'your username and, if it is about a specific Gem or Update, a link '
         'to it.',
   ),

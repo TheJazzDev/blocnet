@@ -11,7 +11,8 @@ class RoleChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.sm, vertical: AppSpace.hair),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(color: color.withValues(alpha: 0.9), width: 0.8),

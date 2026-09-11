@@ -128,12 +128,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               },
             ),
             const SizedBox(height: AppSpace.xl),
-
             AppButton(
               label: 'Update password',
-              onPressed: !isBusy && authStore.isSupabaseConfigured
-                  ? _submit
-                  : null,
+              onPressed:
+                  !isBusy && authStore.isSupabaseConfigured ? _submit : null,
               isLoading: isBusy,
               fullWidth: true,
             ),

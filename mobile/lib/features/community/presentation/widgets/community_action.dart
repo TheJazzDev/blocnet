@@ -22,7 +22,8 @@ class CommunityAction extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpace.sm, horizontal: AppSpace.hair),
+        padding: const EdgeInsets.symmetric(
+            vertical: AppSpace.sm, horizontal: AppSpace.hair),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

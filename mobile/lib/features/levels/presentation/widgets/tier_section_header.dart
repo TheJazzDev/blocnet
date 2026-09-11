@@ -26,7 +26,8 @@ class TierSectionHeader extends StatelessWidget {
     final total = section.levels.length;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpace.hair, AppSpace.xs, AppSpace.hair, AppSpace.sm),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.hair, AppSpace.xs, AppSpace.hair, AppSpace.sm),
       child: Row(
         children: [
           Container(

@@ -8,6 +8,7 @@ import 'package:blocnet/features/wallet/presentation/widgets/section_header.dart
 import 'package:blocnet/features/wallet/presentation/widgets/transactions_list.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -83,16 +84,9 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
                 const SizedBox(height: AppSpace.xl),
                 if (!walletStore.canTransferAsset(_assetCode) ||
                     !walletStore.canWithdrawAsset(_assetCode))
-                  Container(
+                  AppSurface(
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppSpace.md),
-                    decoration: isCardMode
-                        ? BoxDecoration(
-                            color: AppColors.bgSurface,
-                            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                            border: Border.all(color: AppColors.borderSubtle),
-                          )
-                        : null,
                     child: Text(
                       'Send and withdrawal are currently disabled for $_assetCode. '
                       'Receive/deposit is available.',

@@ -17,8 +17,7 @@ class MoreFromUpdateSecondaryTags extends StatefulWidget {
       _MoreFromSecondaryTagsState();
 }
 
-class _MoreFromSecondaryTagsState
-    extends State<MoreFromUpdateSecondaryTags> {
+class _MoreFromSecondaryTagsState extends State<MoreFromUpdateSecondaryTags> {
   @override
   Widget build(BuildContext context) {
     final secondaryTags = widget.post.secondaryTags;
@@ -47,7 +46,8 @@ class _MoreFromSecondaryTagsState
                   children: List.generate(
                     secondaryTags.length,
                     (index) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpace.xs),
                       child: SecondaryLabel(
                         secondaryTags[index],
                         useDisplayText: false,
@@ -72,8 +72,7 @@ class _MoreFromSecondaryTagsState
             : Column(
                 children: List.generate(
                   morePosts.length,
-                  (index) =>
-                      UpdateCard(post: morePosts[index], miniCard: true),
+                  (index) => UpdateCard(post: morePosts[index], miniCard: true),
                 ),
               ),
       ],

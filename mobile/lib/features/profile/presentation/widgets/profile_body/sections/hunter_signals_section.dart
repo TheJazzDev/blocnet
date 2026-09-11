@@ -4,6 +4,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// The hunter's two most recent updates ("signals") with a View All link.
@@ -58,7 +59,8 @@ class HunterSignalsSection extends StatelessWidget {
                   children: [
                     for (var i = 0; i < visible.length; i++) ...[
                       _SignalCard(update: visible[i]),
-                      if (i != visible.length - 1) const SizedBox(height: AppSpace.md),
+                      if (i != visible.length - 1)
+                        const SizedBox(height: AppSpace.md),
                     ],
                   ],
                 ),
@@ -82,13 +84,8 @@ class _SignalCard extends StatelessWidget {
     final signalLabel = _signalLabel(priority);
     final signalColor = _signalColor(priority);
 
-    return Container(
+    return AppSurface(
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -134,7 +131,8 @@ class _SignalCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   color: signalColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.smValue),
@@ -190,17 +188,13 @@ class _EmptySignalsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         children: [
-          Icon(Icons.post_add_outlined, size: AppIcon.lg, color: AppColors.textFaint),
+          Icon(Icons.post_add_outlined,
+              size: AppIcon.lg, color: AppColors.textFaint),
           const SizedBox(height: AppSpace.sm),
           Text(
             'No signals posted yet',

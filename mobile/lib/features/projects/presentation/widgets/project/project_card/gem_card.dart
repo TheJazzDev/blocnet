@@ -366,7 +366,8 @@ class GemCard extends StatelessWidget {
                               AppColors.primary500.withValues(alpha: 0.12),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(AppRadius.lgValue),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.lgValue),
                           border: Border.all(
                             color: AppColors.primary500.withValues(alpha: 0.3),
                             width: 2,
@@ -374,7 +375,8 @@ class GemCard extends StatelessWidget {
                         ),
                         child: project.logo.isNotEmpty
                             ? ClipRRect(
-                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.mdValue),
                                 child: Image.network(
                                   project.logo,
                                   fit: BoxFit.cover,
@@ -437,7 +439,8 @@ class GemCard extends StatelessWidget {
                                             .withValues(alpha: 0.15),
                                       ],
                                     ),
-                                    borderRadius: BorderRadius.circular(AppRadius.smValue),
+                                    borderRadius: BorderRadius.circular(
+                                        AppRadius.smValue),
                                     border: Border.all(
                                       color: AppColors.teal400
                                           .withValues(alpha: 0.4),
@@ -500,7 +503,8 @@ class GemCard extends StatelessWidget {
                           child: SizedBox(
                             height: 8,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(AppRadius.fullValue),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.fullValue),
                               child: Stack(
                                 children: [
                                   Container(color: AppColors.bgElevated),
@@ -639,7 +643,8 @@ class GemCard extends StatelessWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.bgElevated,
-                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.mdValue),
                                 border: Border.all(
                                   color: AppColors.borderSubtle,
                                 ),
@@ -675,7 +680,8 @@ class GemCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color:
                                     AppColors.primary500.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.mdValue),
                                 border: Border.all(
                                   color: AppColors.primary500
                                       .withValues(alpha: 0.25),
@@ -712,7 +718,8 @@ class GemCard extends StatelessWidget {
                                       )
                                     : null,
                                 color: isFollowed ? null : AppColors.bgElevated,
-                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.mdValue),
                                 border: Border.all(
                                   color: isFollowed
                                       ? AppColors.primary500

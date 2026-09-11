@@ -38,7 +38,8 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
       setState(() {
         _pendingReports = (stats['pendingReports'] as num?)?.toInt() ?? 0;
         _pendingAppeals = (stats['pendingAppeals'] as num?)?.toInt() ?? 0;
-        _activeRestrictions = (stats['activeRestrictions'] as num?)?.toInt() ?? 0;
+        _activeRestrictions =
+            (stats['activeRestrictions'] as num?)?.toInt() ?? 0;
       });
     } catch (e) {
       if (!mounted) return;
@@ -367,7 +368,8 @@ class _QuickActionTile extends StatelessWidget {
                 top: 0,
                 right: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm, vertical: AppSpace.hair),
                   decoration: BoxDecoration(
                     color: color,
                     borderRadius: BorderRadius.circular(AppRadius.fullValue),

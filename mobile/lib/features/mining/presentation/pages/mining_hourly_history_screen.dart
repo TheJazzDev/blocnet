@@ -50,7 +50,8 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
             onRefresh: () => store.loadSnapshot(force: true),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               children: [
                 Text(
                   'Last 48 hourly checkpoints from your mining sessions.',

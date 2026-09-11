@@ -26,7 +26,8 @@ class _FollowBottomSheetState extends State<FollowBottomSheet> {
         child: ClipRRect(
           borderRadius: const BorderRadius.all(Radius.circular(16)),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: AppSpace.lg, horizontal: AppSpace.xl),
+            padding: const EdgeInsets.symmetric(
+                vertical: AppSpace.lg, horizontal: AppSpace.xl),
             color: AppColors.bgSurface,
             child: Column(
               mainAxisSize: MainAxisSize.min,

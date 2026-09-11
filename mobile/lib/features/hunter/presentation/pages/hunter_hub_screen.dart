@@ -14,6 +14,7 @@ import 'package:blocnet/services/projects/project_invites_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -137,7 +138,8 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, 0),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg, AppSpace.lg, AppSpace.lg, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   const HunterStatsGrid(),
@@ -195,14 +197,10 @@ class _RecentReceivedTipsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final visibleRows = rows.take(6).toList(growable: false);
 
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -512,14 +510,11 @@ class _CommunityBridgeLink extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _navigateToCommunity(context),
-      child: Container(
+      child: AppSurface(
+        radius: AppRadius.lg,
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.lg, vertical: AppSpace.lg),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

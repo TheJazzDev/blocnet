@@ -33,7 +33,7 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
   final VoidCallback onShareTap;
   final VoidCallback onBookmark;
   final Future<void> Function(CommunityContentModerationDecision decision)?
-  onModerate;
+      onModerate;
   final bool canArchiveModeration;
 
   void _openAuthorProfile(BuildContext context) {
@@ -276,7 +276,8 @@ class _DiscussionAction extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpace.sm, horizontal: AppSpace.hair),
+        padding: const EdgeInsets.symmetric(
+            vertical: AppSpace.sm, horizontal: AppSpace.hair),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

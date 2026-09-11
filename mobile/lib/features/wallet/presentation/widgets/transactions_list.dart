@@ -255,7 +255,8 @@ class TransactionsList extends StatelessWidget {
                       height: 4,
                       decoration: BoxDecoration(
                         color: AppColors.borderMuted,
-                        borderRadius: BorderRadius.circular(AppRadius.fullValue),
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.fullValue),
                       ),
                     ),
                   ),
@@ -280,7 +281,8 @@ class TransactionsList extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.bgElevated,
-                          borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.mdValue),
                           border: Border.all(color: AppColors.borderSubtle),
                         ),
                         child: Row(
@@ -327,7 +329,8 @@ class TransactionsList extends StatelessWidget {
                                   height: 30,
                                   decoration: BoxDecoration(
                                     color: AppColors.bgSurface,
-                                    borderRadius: BorderRadius.circular(AppRadius.smValue),
+                                    borderRadius: BorderRadius.circular(
+                                        AppRadius.smValue),
                                     border: Border.all(
                                         color: AppColors.borderSubtle),
                                   ),
@@ -358,10 +361,12 @@ class TransactionsList extends StatelessWidget {
                           foregroundColor: Colors.black,
                           minimumSize: const Size.fromHeight(44),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.mdValue),
                           ),
                         ),
-                        icon: const Icon(Icons.open_in_new_rounded, size: AppIcon.md),
+                        icon: const Icon(Icons.open_in_new_rounded,
+                            size: AppIcon.md),
                         label: const Text('Verify on block explorer'),
                       ),
                     ),
@@ -545,12 +550,14 @@ class TransactionsList extends StatelessWidget {
           children: [
             InkWell(
               borderRadius: BorderRadius.circular(AppRadius.mdValue),
-              onTap:
-                  canOpenDetails ? () => _showTransactionDetails(context, row) : null,
+              onTap: canOpenDetails
+                  ? () => _showTransactionDetails(context, row)
+                  : null,
               child: Container(
                 width: double.infinity,
                 margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
-                padding: const EdgeInsets.symmetric(vertical: AppSpace.md, horizontal: AppSpace.md),
+                padding: const EdgeInsets.symmetric(
+                    vertical: AppSpace.md, horizontal: AppSpace.md),
                 decoration: isCardMode
                     ? BoxDecoration(
                         gradient: LinearGradient(
@@ -619,7 +626,8 @@ class TransactionsList extends StatelessWidget {
                                   ),
                                   decoration: BoxDecoration(
                                     color: badgeColor.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(AppRadius.smValue),
+                                    borderRadius: BorderRadius.circular(
+                                        AppRadius.smValue),
                                   ),
                                   child: Text(
                                     row.badgeLabel!,

@@ -392,7 +392,8 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
         borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.error500),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+      contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg, vertical: AppSpace.md),
     );
   }
 

@@ -52,7 +52,8 @@ class ProfileSearchResult {
       displayName: json['displayName']?.toString(),
       username: json['username']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
-      followersCount: int.tryParse(json['followersCount']?.toString() ?? '') ?? 0,
+      followersCount:
+          int.tryParse(json['followersCount']?.toString() ?? '') ?? 0,
       roles: roles,
       currentLevel: parseCurrentLevel(json['currentLevel']),
     );

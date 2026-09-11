@@ -239,7 +239,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                           onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
-                          onModeratePost: canModerateContent ? _moderatePost : null,
+                          onModeratePost:
+                              canModerateContent ? _moderatePost : null,
                           canArchiveModeration: canArchiveModeration,
                         ),
                         CommunityFeedList(
@@ -252,7 +253,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                           onRefresh: _handleRefresh,
                           onLike: store.toggleLike,
                           onBookmark: store.toggleBookmark,
-                          onModeratePost: canModerateContent ? _moderatePost : null,
+                          onModeratePost:
+                              canModerateContent ? _moderatePost : null,
                           canArchiveModeration: canArchiveModeration,
                         ),
                       ],
@@ -274,7 +276,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                             horizontal: AppSpace.md, vertical: AppSpace.sm),
                         decoration: BoxDecoration(
                           color: accent,
-                          borderRadius: BorderRadius.circular(AppRadius.fullValue),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.fullValue),
                         ),
                         child: Text(
                           '$pendingCount new posts',

@@ -526,7 +526,8 @@ class _HunterOnboardingDialog extends StatelessWidget {
     return Dialog(
       elevation: 0,
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: AppSpace.xl),
+      insetPadding:
+          const EdgeInsets.symmetric(horizontal: 22, vertical: AppSpace.xl),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
@@ -551,7 +552,8 @@ class _HunterOnboardingDialog extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.lg),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

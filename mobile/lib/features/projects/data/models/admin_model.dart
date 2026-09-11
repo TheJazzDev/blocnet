@@ -96,10 +96,8 @@ class Admin {
         (json['name'] ?? json['displayName'] ?? fallbackName).toString().trim();
     final name = rawName.isEmpty ? fallbackName : rawName;
     final usernameSource = (json['username'] ?? '').toString().trim();
-    final normalizedUsername = usernameSource
-        .replaceAll('@', '')
-        .toLowerCase()
-        .replaceAll(' ', '_');
+    final normalizedUsername =
+        usernameSource.replaceAll('@', '').toLowerCase().replaceAll(' ', '_');
     final username = normalizedUsername.isEmpty
         ? '@${id.isEmpty ? 'member' : id.substring(0, id.length > 6 ? 6 : id.length)}'
         : '@$normalizedUsername';

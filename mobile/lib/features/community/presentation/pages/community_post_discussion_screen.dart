@@ -308,7 +308,9 @@ class _CommunityPostDiscussionScreenState
         reason: decision.reason,
       );
       if (!mounted) return;
-      await context.read<CommunityPostsStore>().fetchComments(postId, force: true);
+      await context
+          .read<CommunityPostsStore>()
+          .fetchComments(postId, force: true);
       if (!mounted) return;
       AppSnackbar.showSuccess(
         context,
@@ -323,11 +325,12 @@ class _CommunityPostDiscussionScreenState
   String _contentActionSuccessMessage(
     CommunityContentModerationStatus status,
     String target,
-  ) => switch (status) {
-    CommunityContentModerationStatus.active => '$target restored',
-    CommunityContentModerationStatus.hidden => '$target hidden',
-    CommunityContentModerationStatus.archived => '$target archived',
-  };
+  ) =>
+      switch (status) {
+        CommunityContentModerationStatus.active => '$target restored',
+        CommunityContentModerationStatus.hidden => '$target hidden',
+        CommunityContentModerationStatus.archived => '$target archived',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -372,8 +375,8 @@ class _CommunityPostDiscussionScreenState
                           children: [
                             ListView(
                               controller: _threadScrollController,
-                              padding:
-                                  const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.md),
+                              padding: const EdgeInsets.fromLTRB(AppSpace.lg,
+                                  AppSpace.md, AppSpace.lg, AppSpace.md),
                               children: [
                                 CommunityDiscussionPostDetailsCard(
                                   post: post,
@@ -456,8 +459,8 @@ class _CommunityPostDiscussionScreenState
                                       ),
                                       decoration: BoxDecoration(
                                         color: AppColors.primary500,
-                                        borderRadius:
-                                            BorderRadius.circular(AppRadius.fullValue),
+                                        borderRadius: BorderRadius.circular(
+                                            AppRadius.fullValue),
                                       ),
                                       child: Text(
                                         '${_pendingNewCommentIds.length} new comments',

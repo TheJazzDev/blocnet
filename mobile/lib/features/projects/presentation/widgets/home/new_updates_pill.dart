@@ -27,7 +27,8 @@ class NewUpdatesPill extends StatelessWidget {
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.md, vertical: AppSpace.sm),
             decoration: BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(AppRadius.fullValue),

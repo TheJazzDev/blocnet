@@ -5,7 +5,7 @@ import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
-import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -162,7 +162,8 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: AppSpace.md, bottom: AppSpace.sm),
+                  padding: const EdgeInsets.only(
+                      top: AppSpace.md, bottom: AppSpace.sm),
                   child: Container(
                     width: 44,
                     height: 4,
@@ -173,7 +174,8 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.xs, AppSpace.md, AppSpace.sm),
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpace.md, AppSpace.xs, AppSpace.md, AppSpace.sm),
                   child: Row(
                     children: [
                       Text(
@@ -208,14 +210,9 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                       children: [
                         _RecipientHeader(recipient: widget.recipient),
                         const SizedBox(height: AppSpace.md),
-                        Container(
+                        AppSurface(
                           width: double.infinity,
                           padding: const EdgeInsets.all(AppSpace.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.bgSurface,
-                            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                            border: Border.all(color: AppColors.borderSubtle),
-                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -316,7 +313,8 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                               foregroundColor: Colors.black,
                               minimumSize: const Size.fromHeight(48),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.mdValue),
                               ),
                             ),
                             child: store.isSending
@@ -351,7 +349,8 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                         if (store.isLoadingSentHistory && history.isEmpty)
                           Center(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: AppSpace.md),
                               child: CircularProgressIndicator(
                                 color: AppColors.primary500,
                                 strokeWidth: 2,
@@ -359,14 +358,9 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                             ),
                           )
                         else if (history.isEmpty)
-                          Container(
+                          AppSurface(
                             width: double.infinity,
                             padding: const EdgeInsets.all(AppSpace.md),
-                            decoration: BoxDecoration(
-                              color: AppColors.bgSurface,
-                              borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                              border: Border.all(color: AppColors.borderSubtle),
-                            ),
                             child: Text(
                               'No tip history yet for this hunter.',
                               style: AppTypography.custom(
@@ -394,7 +388,8 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                             allSentHistory.isEmpty)
                           Center(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: AppSpace.md),
                               child: CircularProgressIndicator(
                                 color: AppColors.primary500,
                                 strokeWidth: 2,
@@ -402,14 +397,9 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                             ),
                           )
                         else if (allSentHistory.isEmpty)
-                          Container(
+                          AppSurface(
                             width: double.infinity,
                             padding: const EdgeInsets.all(AppSpace.md),
-                            decoration: BoxDecoration(
-                              color: AppColors.bgSurface,
-                              borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                              border: Border.all(color: AppColors.borderSubtle),
-                            ),
                             child: Text(
                               'No sent tips yet.',
                               style: AppTypography.custom(
@@ -457,7 +447,8 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
         borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.primary500),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: 11),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: 11),
     );
   }
 }
@@ -470,20 +461,16 @@ class _RecipientHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = recipient.avatarUrl?.trim() ?? '';
-    return Container(
+    return AppSurface(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Row(
         children: [
           AppAvatar(
             radius: 18,
             imageUrl: avatarUrl,
-            fallback: Icon(Icons.person, color: AppColors.textMuted, size: AppIcon.md),
+            fallback: Icon(Icons.person,
+                color: AppColors.textMuted, size: AppIcon.md),
           ),
           const SizedBox(width: AppSpace.md),
           Expanded(
@@ -511,7 +498,8 @@ class _RecipientHeader extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.sm, vertical: AppSpace.xs),
             decoration: BoxDecoration(
               color: AppColors.primary500.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(AppRadius.fullValue),
@@ -549,14 +537,9 @@ class _TipHistoryRow extends StatelessWidget {
     final dateLabel =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 
-    return Container(
+    return AppSurface(
       margin: const EdgeInsets.only(bottom: AppSpace.sm),
       padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Row(
         children: [
           Expanded(

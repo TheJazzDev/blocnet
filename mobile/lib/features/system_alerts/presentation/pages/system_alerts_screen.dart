@@ -11,6 +11,7 @@ import 'package:blocnet/features/system_alerts/data/repositories/system_alerts_a
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -283,8 +284,8 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: () => _openAdminConsole(alert),
-                        icon:
-                            const Icon(Icons.open_in_browser_rounded, size: AppIcon.sm),
+                        icon: const Icon(Icons.open_in_browser_rounded,
+                            size: AppIcon.sm),
                         label: const Text('Open in Admin Console'),
                       ),
                     ),
@@ -422,7 +423,8 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
                         )
                       : ListView.separated(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
+                          padding: const EdgeInsets.fromLTRB(AppSpace.lg,
+                              AppSpace.md, AppSpace.lg, AppSpace.xl),
                           itemCount: _alerts.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 0),
@@ -561,15 +563,9 @@ class _SystemAlertRowWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (mode == FeedViewMode.card) {
-      return Container(
+      return AppSurface.flush(
+        radius: AppRadius.lg,
         margin: const EdgeInsets.only(bottom: AppSpace.sm),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          border: Border.all(
-            color: AppColors.borderSubtle,
-          ),
-        ),
         child: child,
       );
     }

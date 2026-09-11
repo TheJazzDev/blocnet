@@ -4,6 +4,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/receive_address_card.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -55,7 +56,8 @@ class WalletReceiveScreen extends StatelessWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -68,13 +70,8 @@ class WalletReceiveScreen extends StatelessWidget {
             else
               _WalletNotReadyCard(message: walletNotReadyMessage(walletStore)),
             const SizedBox(height: AppSpace.lg),
-            Container(
+            AppSurface(
               padding: const EdgeInsets.all(AppSpace.md),
-              decoration: BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                border: Border.all(color: AppColors.borderSubtle),
-              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -114,13 +111,10 @@ class _WalletNotReadyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: 28),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
+    return AppSurface(
+      radius: AppRadius.lg,
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: 28),
       child: Column(
         children: [
           Icon(

@@ -25,7 +25,8 @@ class SwapFlowScreen extends StatelessWidget {
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpace.xxl, vertical: 40),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.xxl, vertical: 40),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

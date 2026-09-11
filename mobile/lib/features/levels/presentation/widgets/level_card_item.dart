@@ -29,13 +29,15 @@ class LevelCardItem extends StatelessWidget {
     final borderAlpha = isCurrent ? 0.45 : (isLocked ? 0.16 : 0.3);
 
     return Material(
-      color: isCurrent ? tierColor.withValues(alpha: 0.08) : AppColors.bgSurface,
+      color:
+          isCurrent ? tierColor.withValues(alpha: 0.08) : AppColors.bgSurface,
       borderRadius: BorderRadius.circular(AppRadius.lgValue),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lgValue),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(AppSpace.sm, AppSpace.md, AppSpace.sm, AppSpace.md),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.sm, AppSpace.md, AppSpace.sm, AppSpace.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lgValue),
             border: Border.all(

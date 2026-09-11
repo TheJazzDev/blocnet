@@ -38,13 +38,15 @@ class ProfileFollowingTab extends StatelessWidget {
 
     return ListView.builder(
       primary: false,
-      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
       itemCount: watchlist.length,
       itemBuilder: (context, index) {
         return ProfileTabTileFrame(
           isCardMode: isCardMode,
           showDivider: !isCardMode && index != watchlist.length - 1,
-          child: _FollowedGem(project: watchlist[index], isCardMode: isCardMode),
+          child:
+              _FollowedGem(project: watchlist[index], isCardMode: isCardMode),
         );
       },
     );
@@ -77,7 +79,8 @@ class _FollowedGem extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.sm, vertical: AppSpace.hair),
               decoration: BoxDecoration(
                 color: isCardMode ? AppColors.bgElevated : AppColors.bgSurface,
                 borderRadius: BorderRadius.circular(AppRadius.smValue),
@@ -109,7 +112,8 @@ class _FollowedGem extends StatelessWidget {
         const SizedBox(height: AppSpace.sm),
         Row(
           children: [
-            Icon(Icons.people_outline, size: AppIcon.sm, color: AppColors.textFaint),
+            Icon(Icons.people_outline,
+                size: AppIcon.sm, color: AppColors.textFaint),
             const SizedBox(width: AppSpace.xs),
             Text(
               '${project.followersCount} followers',

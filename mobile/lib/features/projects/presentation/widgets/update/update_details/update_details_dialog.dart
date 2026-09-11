@@ -116,7 +116,8 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                 child: widget.commentsOnly
                     ? SingleChildScrollView(
                         controller: _scrollController,
-                        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xl),
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xl),
                         child: _CommentsSection(
                           key: _commentsSectionKey,
                           updateId: widget.id,
@@ -132,7 +133,8 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                       )
                     : SingleChildScrollView(
                         controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -418,8 +420,8 @@ class _CommentsSectionState extends State<_CommentsSection> {
             const SizedBox(height: AppSpace.md),
             if (_replyToUsername != null) ...[
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.md, vertical: AppSpace.sm),
                 margin: const EdgeInsets.only(bottom: AppSpace.sm),
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
@@ -494,7 +496,8 @@ class _CommentsSectionState extends State<_CommentsSection> {
                   ),
                 ),
               ),
-            if (comments.isNotEmpty && hasMore) const SizedBox(height: AppSpace.sm),
+            if (comments.isNotEmpty && hasMore)
+              const SizedBox(height: AppSpace.sm),
             if (isLoading && comments.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
@@ -682,8 +685,8 @@ class _CommentTile extends StatelessWidget {
               if (roleLabel != null) ...[
                 const SizedBox(width: AppSpace.sm),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm, vertical: AppSpace.hair),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppRadius.smValue),
                     border: Border.all(
@@ -705,7 +708,8 @@ class _CommentTile extends StatelessWidget {
               ],
               const SizedBox(width: AppSpace.sm),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   color: AppColors.primary500.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.smValue),
@@ -1052,8 +1056,8 @@ class _CommentTile extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.lg, vertical: AppSpace.md),
               ),
               child: Text(
                 'Cancel',
@@ -1078,8 +1082,8 @@ class _CommentTile extends StatelessWidget {
                 Navigator.of(context).pop();
               },
               style: TextButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.lg, vertical: AppSpace.md),
                 backgroundColor: AppColors.teal400.withValues(alpha: 0.12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.mdValue),

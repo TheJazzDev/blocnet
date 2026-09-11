@@ -51,7 +51,8 @@ class SpaceSwitcher extends StatelessWidget {
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
             height: 30,
-            padding: const EdgeInsets.only(left: AppSpace.sm, right: AppSpace.sm),
+            padding:
+                const EdgeInsets.only(left: AppSpace.sm, right: AppSpace.sm),
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppRadius.fullValue),

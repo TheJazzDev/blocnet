@@ -61,7 +61,8 @@ class _TopHuntersScreenState extends State<TopHuntersScreen> {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
             itemCount: entries.length,
             separatorBuilder: (_, __) =>
                 Divider(color: AppColors.borderSubtle, height: 1),
@@ -144,7 +145,8 @@ class _HunterListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: AppSpace.xs, horizontal: 0),
+      contentPadding:
+          const EdgeInsets.symmetric(vertical: AppSpace.xs, horizontal: 0),
       onTap: () => PublicProfileScreen.showSheet(context, entry.admin),
       leading: Row(
         mainAxisSize: MainAxisSize.min,

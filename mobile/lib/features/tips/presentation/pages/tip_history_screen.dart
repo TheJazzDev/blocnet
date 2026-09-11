@@ -6,7 +6,7 @@ import 'package:blocnet/features/tips/presentation/models/tip_history_mode.dart'
 import 'package:blocnet/features/tips/presentation/widgets/tip_history_list_item.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
-import 'package:blocnet/shared/widgets/app_skeleton.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -72,7 +72,8 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                 : store.loadSentHistory(force: true, limit: 100),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               children: [
                 Text(
                   isReceived
@@ -97,14 +98,9 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                 if (isLoading && rows.isEmpty)
                   const SkeletonList(items: 4, itemHeight: 64)
                 else if (rows.isEmpty)
-                  Container(
+                  AppSurface(
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppSpace.lg),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgSurface,
-                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                      border: Border.all(color: AppColors.borderSubtle),
-                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

@@ -63,8 +63,7 @@ mixin _HomeEdgeActions on State<HomeScreen> {
           onFollowProjects: () {
             Navigator.of(pageContext).pop();
             if (!mounted) return;
-            MainTabScope.maybeOf(context)
-                ?.selectTab(MainTabScope.discoverTab);
+            MainTabScope.maybeOf(context)?.selectTab(MainTabScope.discoverTab);
           },
         ),
       ),

@@ -200,7 +200,8 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
           children: [
             // Section header
             Padding(
-              padding: const EdgeInsets.fromLTRB(0, AppSpace.lg, 0, AppSpace.md),
+              padding:
+                  const EdgeInsets.fromLTRB(0, AppSpace.lg, 0, AppSpace.md),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -214,8 +215,8 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.sm, vertical: AppSpace.xs),
                     decoration: BoxDecoration(
                       color: AppColors.bgSurface,
                       borderRadius: BorderRadius.circular(AppRadius.smValue),

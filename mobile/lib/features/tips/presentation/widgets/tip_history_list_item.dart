@@ -5,7 +5,7 @@ import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/models/tip_history_mode.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
-import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// One sent/received tip row in the tip history list.
@@ -37,14 +37,9 @@ class TipHistoryListItem extends StatelessWidget {
       weight: FontWeight.w700,
     );
 
-    return Container(
+    return AppSurface(
       margin: const EdgeInsets.only(bottom: AppSpace.md),
       padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

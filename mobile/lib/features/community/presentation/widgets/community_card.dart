@@ -42,7 +42,7 @@ class CommunityCard extends StatelessWidget {
   final VoidCallback onCommentTap;
   final VoidCallback onBookmark;
   final Future<void> Function(CommunityContentModerationDecision decision)?
-  onModerate;
+      onModerate;
   final bool canArchiveModeration;
 
   void _openAuthorProfile(BuildContext context) {
@@ -178,7 +178,8 @@ class CommunityCard extends StatelessWidget {
             children: [
               if (isModerator && onModerate != null)
                 ListTile(
-                  leading: Icon(Icons.shield_outlined, size: AppIcon.md, color: AppColors.textSecondary),
+                  leading: Icon(Icons.shield_outlined,
+                      size: AppIcon.md, color: AppColors.textSecondary),
                   title: Text(
                     'Moderate',
                     style: AppTypography.custom(
@@ -194,7 +195,8 @@ class CommunityCard extends StatelessWidget {
                 ),
               if (!isOwnPost) ...[
                 ListTile(
-                  leading: Icon(Icons.flag_outlined, size: AppIcon.md, color: AppColors.error500),
+                  leading: Icon(Icons.flag_outlined,
+                      size: AppIcon.md, color: AppColors.error500),
                   title: Text(
                     'Report Post',
                     style: AppTypography.custom(
@@ -209,7 +211,8 @@ class CommunityCard extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.block, size: AppIcon.md, color: AppColors.error500),
+                  leading: Icon(Icons.block,
+                      size: AppIcon.md, color: AppColors.error500),
                   title: Text(
                     'Block User',
                     style: AppTypography.custom(
@@ -338,29 +341,43 @@ class CommunityCard extends StatelessWidget {
                               weight: FontWeight.w400,
                             ),
                           ),
-                          if (post.status != CommunityContentModerationStatus.active) ...[
+                          if (post.status !=
+                              CommunityContentModerationStatus.active) ...[
                             const SizedBox(width: AppSpace.sm),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: AppSpace.hair),
                               decoration: BoxDecoration(
-                                color: post.status == CommunityContentModerationStatus.hidden
-                                    ? AppColors.warning500.withValues(alpha: 0.15)
-                                    : AppColors.error500.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(AppRadius.smValue),
+                                color: post.status ==
+                                        CommunityContentModerationStatus.hidden
+                                    ? AppColors.warning500
+                                        .withValues(alpha: 0.15)
+                                    : AppColors.error500
+                                        .withValues(alpha: 0.15),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.smValue),
                                 border: Border.all(
-                                  color: post.status == CommunityContentModerationStatus.hidden
-                                      ? AppColors.warning500.withValues(alpha: 0.4)
-                                      : AppColors.error500.withValues(alpha: 0.4),
+                                  color: post.status ==
+                                          CommunityContentModerationStatus
+                                              .hidden
+                                      ? AppColors.warning500
+                                          .withValues(alpha: 0.4)
+                                      : AppColors.error500
+                                          .withValues(alpha: 0.4),
                                 ),
                               ),
                               child: Text(
-                                post.status == CommunityContentModerationStatus.hidden
+                                post.status ==
+                                        CommunityContentModerationStatus.hidden
                                     ? 'HIDDEN'
                                     : 'ARCHIVED',
                                 style: AppTypography.custom(
                                   size: AppText.captionSize,
                                   weight: FontWeight.w700,
-                                  color: post.status == CommunityContentModerationStatus.hidden
+                                  color: post.status ==
+                                          CommunityContentModerationStatus
+                                              .hidden
                                       ? AppColors.warning500
                                       : AppColors.error500,
                                   letterSpacing: 0.3,

@@ -8,6 +8,7 @@ import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -161,13 +162,9 @@ class _TipsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final symbol = currencySymbol.trim().isEmpty ? 'BNP' : currencySymbol;
 
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -197,7 +194,8 @@ class _TipsCard extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   color: AppColors.successColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.xlValue),
@@ -472,13 +470,9 @@ class _StatCard extends StatelessWidget {
       _TrendTone.neutral => AppColors.textMuted,
     };
 
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -487,7 +481,8 @@ class _StatCard extends StatelessWidget {
               Icon(icon, size: AppIcon.sm, color: iconColor),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   color: trendColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.mdValue),

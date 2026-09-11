@@ -22,9 +22,8 @@ class EdgeExplainUpdate {
       urgency: (json['urgency'] ?? '').toString(),
       projectName: (json['projectName'] ?? '').toString(),
       projectSlug: (json['projectSlug'] ?? '').toString(),
-      createdAt:
-          DateTime.tryParse((json['createdAt'] ?? '').toString()) ??
-              DateTime.now(),
+      createdAt: DateTime.tryParse((json['createdAt'] ?? '').toString()) ??
+          DateTime.now(),
     );
   }
 }
@@ -121,7 +120,8 @@ class EdgeExplainResponse {
     final explanationJson = json['explanation'];
 
     return EdgeExplainResponse(
-      asOf: DateTime.tryParse((json['asOf'] ?? '').toString()) ?? DateTime.now(),
+      asOf:
+          DateTime.tryParse((json['asOf'] ?? '').toString()) ?? DateTime.now(),
       enabled: json['enabled'] == true,
       decisionId: (json['decisionId'] ?? '').toString(),
       update: updateJson is Map<String, dynamic>

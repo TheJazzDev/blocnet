@@ -74,7 +74,8 @@ class _TagSelectorState extends State<TagSelector> {
       return GestureDetector(
         onTap: () => widget.onTagToggle(tag),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: AppSpace.md),
+          padding:
+              const EdgeInsets.symmetric(vertical: 7, horizontal: AppSpace.md),
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.teal500.withValues(alpha: 0.12)

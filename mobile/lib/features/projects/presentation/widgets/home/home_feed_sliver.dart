@@ -45,7 +45,8 @@ class HomeFeedSliver extends StatelessWidget {
                 final isUnseen = radarLastSeenAt == null
                     ? true
                     : post.createdAt.isAfter(radarLastSeenAt);
-                final isHighPriority = post.priority.label.toLowerCase() == 'high';
+                final isHighPriority =
+                    post.priority.label.toLowerCase() == 'high';
                 return isUnseen || isHighPriority;
               }).toList()
             : enrichedPosts;

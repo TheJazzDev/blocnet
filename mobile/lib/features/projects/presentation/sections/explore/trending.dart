@@ -103,7 +103,8 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.xxl, vertical: 60),
+        padding:
+            const EdgeInsets.symmetric(horizontal: AppSpace.xxl, vertical: 60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

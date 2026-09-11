@@ -3,7 +3,8 @@ import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 
 class UpdateProjectLogo extends StatelessWidget {
-  const UpdateProjectLogo({required this.logoUrl, required this.size, super.key});
+  const UpdateProjectLogo(
+      {required this.logoUrl, required this.size, super.key});
 
   final String logoUrl;
   final double size;

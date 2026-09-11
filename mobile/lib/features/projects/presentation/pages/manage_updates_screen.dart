@@ -60,7 +60,8 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
         // Calculate stats
         final totalUpdates = own.length;
         final totalLikes = own.fold<int>(0, (sum, u) => sum + u.likesCount);
-        final totalComments = own.fold<int>(0, (sum, u) => sum + u.commentsCount);
+        final totalComments =
+            own.fold<int>(0, (sum, u) => sum + u.commentsCount);
 
         return Scaffold(
           backgroundColor: AppColors.bgBase,
@@ -77,9 +78,11 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                   backgroundColor: AppColors.bgSurface,
                   onRefresh: store.refreshUpdates,
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.lg, vertical: AppSpace.md),
                     children: [
-                      if (store.lastError != null && store.lastError!.isNotEmpty) ...[
+                      if (store.lastError != null &&
+                          store.lastError!.isNotEmpty) ...[
                         Text(
                           store.lastError!,
                           style: AppTypography.custom(
@@ -131,12 +134,13 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
 
                         // Updates List
                         ...own.asMap().entries.map(
-                          (entry) => _UpdateTile(
-                            mode: mode,
-                            showDivider: !isCardMode && entry.key != own.length - 1,
-                            update: entry.value,
-                          ),
-                        ),
+                              (entry) => _UpdateTile(
+                                mode: mode,
+                                showDivider:
+                                    !isCardMode && entry.key != own.length - 1,
+                                update: entry.value,
+                              ),
+                            ),
                       ],
                     ],
                   ),
@@ -352,7 +356,8 @@ class _EmptyState extends StatelessWidget {
           GestureDetector(
             onTap: () => Navigator.of(context).pushNamed(AppRoutes.hunterHub),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl, vertical: AppSpace.md),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.xl, vertical: AppSpace.md),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.teal400, AppColors.teal500],
@@ -521,10 +526,12 @@ class _UpdateTile extends StatelessWidget {
                           const SizedBox(width: AppSpace.sm),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                                horizontal: AppSpace.sm,
+                                vertical: AppSpace.hair),
                             decoration: BoxDecoration(
                               color: priorityColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(AppRadius.smValue),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.smValue),
                               border: Border.all(
                                 color: priorityColor.withValues(alpha: 0.35),
                               ),
@@ -683,7 +690,8 @@ class _MetricChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.smValue),

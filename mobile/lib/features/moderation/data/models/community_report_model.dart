@@ -63,13 +63,21 @@ class CommunityReport {
       details: json['details'] as String?,
       status: _parseStatus(json['status']?.toString()),
       reviewedById: json['reviewedById'] as String?,
-      reviewedAt: json['reviewedAt'] != null ? DateTime.parse(json['reviewedAt'] as String) : null,
+      reviewedAt: json['reviewedAt'] != null
+          ? DateTime.parse(json['reviewedAt'] as String)
+          : null,
       reviewNotes: json['reviewNotes'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
-      reporter: json['reporter'] != null ? ProfileSummary.fromApi(json['reporter'] as Map<String, dynamic>) : null,
-      targetUser: json['targetUser'] != null ? ProfileSummary.fromApi(json['targetUser'] as Map<String, dynamic>) : null,
-      reviewedBy: json['reviewedBy'] != null ? ProfileSummary.fromApi(json['reviewedBy'] as Map<String, dynamic>) : null,
+      reporter: json['reporter'] != null
+          ? ProfileSummary.fromApi(json['reporter'] as Map<String, dynamic>)
+          : null,
+      targetUser: json['targetUser'] != null
+          ? ProfileSummary.fromApi(json['targetUser'] as Map<String, dynamic>)
+          : null,
+      reviewedBy: json['reviewedBy'] != null
+          ? ProfileSummary.fromApi(json['reviewedBy'] as Map<String, dynamic>)
+          : null,
     );
   }
 

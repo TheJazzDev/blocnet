@@ -94,7 +94,8 @@ class _WalletScreenState extends State<WalletScreen> {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: const Padding(
-              padding: EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+              padding: EdgeInsets.fromLTRB(
+                  AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               child: TransactionsList(),
             ),
           ),

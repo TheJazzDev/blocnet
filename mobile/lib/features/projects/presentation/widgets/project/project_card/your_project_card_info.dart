@@ -43,7 +43,8 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpace.xs, horizontal: AppSpace.md),
+      padding: const EdgeInsets.symmetric(
+          vertical: AppSpace.xs, horizontal: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgElevated,
         borderRadius: BorderRadius.circular(AppRadius.xlValue),

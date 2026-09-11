@@ -13,8 +13,7 @@ import 'package:blocnet/features/profile/presentation/pages/public_profile_scree
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/users/blocks_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
-import 'package:blocnet/shared/widgets/app_avatar.dart';
-import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -23,13 +22,8 @@ class CommunityDiscussionEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Text(
         'No comments yet. Start the discussion.',
         style: AppTypography.custom(
@@ -58,7 +52,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
   final VoidCallback? onReply;
   final VoidCallback? onLike;
   final Future<void> Function(CommunityContentModerationDecision decision)?
-  onModerate;
+      onModerate;
   final bool canArchiveModeration;
 
   void _openAuthorProfile(BuildContext context) {
@@ -194,7 +188,8 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
             children: [
               if (isModerator && onModerate != null)
                 ListTile(
-                  leading: Icon(Icons.shield_outlined, size: AppIcon.md, color: AppColors.textSecondary),
+                  leading: Icon(Icons.shield_outlined,
+                      size: AppIcon.md, color: AppColors.textSecondary),
                   title: Text(
                     'Moderate',
                     style: AppTypography.custom(
@@ -210,7 +205,8 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                 ),
               if (!isOwnComment) ...[
                 ListTile(
-                  leading: Icon(Icons.flag_outlined, size: AppIcon.md, color: AppColors.error500),
+                  leading: Icon(Icons.flag_outlined,
+                      size: AppIcon.md, color: AppColors.error500),
                   title: Text(
                     'Report Comment',
                     style: AppTypography.custom(
@@ -225,7 +221,8 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.block, size: AppIcon.md, color: AppColors.error500),
+                  leading: Icon(Icons.block,
+                      size: AppIcon.md, color: AppColors.error500),
                   title: Text(
                     'Block User',
                     style: AppTypography.custom(
@@ -265,250 +262,257 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
     final content = GestureDetector(
       onLongPress: !isOwnComment ? () => _openReportSheet(context) : null,
       child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () => _openAuthorProfile(context),
-          behavior: HitTestBehavior.opaque,
-          child: AppAvatar(
-            radius: 18,
-            imageUrl: comment.admin?.imageUrl,
-            fallback: _avatarFallback(name),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () => _openAuthorProfile(context),
+            behavior: HitTestBehavior.opaque,
+            child: AppAvatar(
+              radius: 18,
+              imageUrl: comment.admin?.imageUrl,
+              fallback: _avatarFallback(name),
+            ),
           ),
-        ),
-        const SizedBox(width: AppSpace.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: GestureDetector(
-                      onTap: () => _openAuthorProfile(context),
-                      behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: UserNameWithLevelIcon(
-                              name: name,
-                              currentLevel: admin?.currentLevel,
-                              levelBadgeSize: LevelBadgeSize.small,
-                              textStyle: AppTypography.custom(
-                                color: AppColors.textPrimary,
-                                size: AppText.bodySize,
-                                weight: FontWeight.w700,
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: GestureDetector(
+                        onTap: () => _openAuthorProfile(context),
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: UserNameWithLevelIcon(
+                                name: name,
+                                currentLevel: admin?.currentLevel,
+                                levelBadgeSize: LevelBadgeSize.small,
+                                textStyle: AppTypography.custom(
+                                  color: AppColors.textPrimary,
+                                  size: AppText.bodySize,
+                                  weight: FontWeight.w700,
+                                ),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (roleLabel != null) ...[
+                      const SizedBox(width: AppSpace.sm),
+                      RoleChip(label: roleLabel, color: roleColor),
+                    ],
+                    const SizedBox(width: AppSpace.sm),
+                    Text(
+                      getTimeStamp(comment.createdAt),
+                      style: AppTypography.custom(
+                        color: AppColors.textFaint,
+                        size: AppText.captionSize,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.xs),
+                    GestureDetector(
+                      onTap: () => _showMoreOptions(context),
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpace.hair),
+                        child: Icon(
+                          Icons.more_horiz_rounded,
+                          size: AppIcon.md,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpace.hair),
+                Row(
+                  children: [
+                    Text(
+                      username,
+                      style: AppTypography.custom(
+                        color: AppColors.textMuted,
+                        size: AppText.bodySize,
+                        weight: FontWeight.w400,
+                      ),
+                    ),
+                    if (comment.status !=
+                        CommunityContentModerationStatus.active) ...[
+                      const SizedBox(width: AppSpace.sm),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                        decoration: BoxDecoration(
+                          color: comment.status ==
+                                  CommunityContentModerationStatus.hidden
+                              ? AppColors.warning500.withValues(alpha: 0.15)
+                              : AppColors.error500.withValues(alpha: 0.15),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.smValue),
+                          border: Border.all(
+                            color: comment.status ==
+                                    CommunityContentModerationStatus.hidden
+                                ? AppColors.warning500.withValues(alpha: 0.4)
+                                : AppColors.error500.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Text(
+                          comment.status ==
+                                  CommunityContentModerationStatus.hidden
+                              ? 'HIDDEN'
+                              : 'ARCHIVED',
+                          style: AppTypography.custom(
+                            size: AppText.captionSize,
+                            weight: FontWeight.w700,
+                            color: comment.status ==
+                                    CommunityContentModerationStatus.hidden
+                                ? AppColors.warning500
+                                : AppColors.error500,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: AppSpace.sm),
+                if (!isNestedReply && comment.replyToData != null) ...[
+                  GestureDetector(
+                    onTap: () {
+                      // TODO: Scroll to original comment
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(AppSpace.sm),
+                      decoration: BoxDecoration(
+                        color: AppColors.bgBase,
+                        borderRadius: BorderRadius.circular(AppRadius.smValue),
+                        border: Border.all(
+                          color: AppColors.borderSubtle.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.subdirectory_arrow_right,
+                                size: AppIcon.xs,
+                                color: AppColors.textMuted,
+                              ),
+                              const SizedBox(width: AppSpace.xs),
+                              Text(
+                                'Replying to ',
+                                style: AppTypography.custom(
+                                  color: AppColors.textMuted,
+                                  size: AppText.captionSize,
+                                  weight: FontWeight.w400,
+                                ),
+                              ),
+                              Text(
+                                '@${_formatReplyUsername(comment.replyToData!)}',
+                                style: AppTypography.custom(
+                                  color: AppColors.primary400,
+                                  size: AppText.captionSize,
+                                  weight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpace.xs),
+                          Text(
+                            _truncateContent(comment.replyToData!.content, 50),
+                            style: AppTypography.custom(
+                              color: AppColors.textFaint,
+                              size: AppText.captionSize,
+                              weight: FontWeight.w400,
+                              height: 1.4,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
                   ),
-                  if (roleLabel != null) ...[
-                    const SizedBox(width: AppSpace.sm),
-                    RoleChip(label: roleLabel, color: roleColor),
-                  ],
-                  const SizedBox(width: AppSpace.sm),
-                  Text(
-                    getTimeStamp(comment.createdAt),
-                    style: AppTypography.custom(
-                      color: AppColors.textFaint,
-                      size: AppText.captionSize,
-                      weight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  GestureDetector(
-                    onTap: () => _showMoreOptions(context),
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpace.hair),
-                      child: Icon(
-                        Icons.more_horiz_rounded,
-                        size: AppIcon.md,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: AppSpace.sm),
                 ],
-              ),
-              const SizedBox(height: AppSpace.hair),
-              Row(
-                children: [
-                  Text(
-                    username,
-                    style: AppTypography.custom(
-                      color: AppColors.textMuted,
-                      size: AppText.bodySize,
-                      weight: FontWeight.w400,
-                    ),
+                MentionText(
+                  text: comment.content,
+                  style: AppTypography.custom(
+                    color: AppColors.textSecondary,
+                    size: AppText.bodySize,
+                    weight: FontWeight.w400,
+                    height: 1.6,
                   ),
-                  if (comment.status != CommunityContentModerationStatus.active) ...[
-                    const SizedBox(width: AppSpace.sm),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
-                      decoration: BoxDecoration(
-                        color: comment.status == CommunityContentModerationStatus.hidden
-                            ? AppColors.warning500.withValues(alpha: 0.15)
-                            : AppColors.error500.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(AppRadius.smValue),
-                        border: Border.all(
-                          color: comment.status == CommunityContentModerationStatus.hidden
-                              ? AppColors.warning500.withValues(alpha: 0.4)
-                              : AppColors.error500.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Text(
-                        comment.status == CommunityContentModerationStatus.hidden
-                            ? 'HIDDEN'
-                            : 'ARCHIVED',
-                        style: AppTypography.custom(
-                          size: AppText.captionSize,
-                          weight: FontWeight.w700,
-                          color: comment.status == CommunityContentModerationStatus.hidden
-                              ? AppColors.warning500
-                              : AppColors.error500,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: AppSpace.sm),
-              if (!isNestedReply && comment.replyToData != null) ...[
-                GestureDetector(
-                  onTap: () {
-                    // TODO: Scroll to original comment
+                  onMentionTap: (mentionUsername) async {
+                    await MentionProfileNavigator.openFromUsername(
+                      context,
+                      mentionUsername,
+                    );
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpace.sm),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgBase,
-                      borderRadius: BorderRadius.circular(AppRadius.smValue),
-                      border: Border.all(
-                        color: AppColors.borderSubtle.withValues(alpha: 0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                ),
+                const SizedBox(height: AppSpace.sm),
+                Row(
+                  children: [
+                    if (onLike != null) ...[
+                      GestureDetector(
+                        onTap: onLike,
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.subdirectory_arrow_right,
-                              size: AppIcon.xs,
-                              color: AppColors.textMuted,
+                              comment.isLiked
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border,
+                              size: AppIcon.sm,
+                              color: comment.isLiked
+                                  ? AppColors.primary400
+                                  : AppColors.textMuted,
                             ),
                             const SizedBox(width: AppSpace.xs),
                             Text(
-                              'Replying to ',
+                              comment.likesCount.toString(),
                               style: AppTypography.custom(
-                                color: AppColors.textMuted,
-                                size: AppText.captionSize,
-                                weight: FontWeight.w400,
-                              ),
-                            ),
-                            Text(
-                              '@${_formatReplyUsername(comment.replyToData!)}',
-                              style: AppTypography.custom(
-                                color: AppColors.primary400,
-                                size: AppText.captionSize,
+                                color: comment.isLiked
+                                    ? AppColors.primary400
+                                    : AppColors.textMuted,
+                                size: AppText.labelSize,
                                 weight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: AppSpace.xs),
-                        Text(
-                          _truncateContent(comment.replyToData!.content, 50),
+                      ),
+                      const SizedBox(width: AppSpace.lg),
+                    ],
+                    if (onReply != null)
+                      GestureDetector(
+                        onTap: onReply,
+                        behavior: HitTestBehavior.opaque,
+                        child: Text(
+                          'Reply',
                           style: AppTypography.custom(
-                            color: AppColors.textFaint,
-                            size: AppText.captionSize,
-                            weight: FontWeight.w400,
-                            height: 1.4,
+                            color: AppColors.textMuted,
+                            size: AppText.labelSize,
+                            weight: FontWeight.w600,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpace.sm),
-              ],
-              MentionText(
-                text: comment.content,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                  height: 1.6,
-                ),
-                onMentionTap: (mentionUsername) async {
-                  await MentionProfileNavigator.openFromUsername(
-                    context,
-                    mentionUsername,
-                  );
-                },
-              ),
-              const SizedBox(height: AppSpace.sm),
-              Row(
-                children: [
-                  if (onLike != null) ...[
-                    GestureDetector(
-                      onTap: onLike,
-                      behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            comment.isLiked
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border,
-                            size: AppIcon.sm,
-                            color: comment.isLiked
-                                ? AppColors.primary400
-                                : AppColors.textMuted,
-                          ),
-                          const SizedBox(width: AppSpace.xs),
-                          Text(
-                            comment.likesCount.toString(),
-                            style: AppTypography.custom(
-                              color: comment.isLiked
-                                  ? AppColors.primary400
-                                  : AppColors.textMuted,
-                              size: AppText.labelSize,
-                              weight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
                       ),
-                    ),
-                    const SizedBox(width: AppSpace.lg),
                   ],
-                  if (onReply != null)
-                    GestureDetector(
-                      onTap: onReply,
-                      behavior: HitTestBehavior.opaque,
-                      child: Text(
-                        'Reply',
-                        style: AppTypography.custom(
-                          color: AppColors.textMuted,
-                          size: AppText.labelSize,
-                          weight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
 
     return Padding(

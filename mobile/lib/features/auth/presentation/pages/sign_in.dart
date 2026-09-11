@@ -202,9 +202,8 @@ class _SignInScreenState extends State<SignInScreen> {
             // Primary CTA — full width
             AppButton(
               label: 'Sign in',
-              onPressed: !isAnyBusy && authStore.isSupabaseConfigured
-                  ? _submit
-                  : null,
+              onPressed:
+                  !isAnyBusy && authStore.isSupabaseConfigured ? _submit : null,
               isLoading: isBusy,
               fullWidth: true,
             ),
@@ -316,7 +315,8 @@ class _ConfigWarning extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.md),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md, vertical: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.warning900.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(AppRadius.mdValue),

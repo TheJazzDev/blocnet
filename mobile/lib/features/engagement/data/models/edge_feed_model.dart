@@ -24,9 +24,8 @@ class EdgeDecisionUpdate {
       id: (json['id'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
       urgency: (json['urgency'] ?? '').toString(),
-      createdAt:
-          DateTime.tryParse((json['createdAt'] ?? '').toString()) ??
-              DateTime.now(),
+      createdAt: DateTime.tryParse((json['createdAt'] ?? '').toString()) ??
+          DateTime.now(),
       projectId: (json['projectId'] ?? '').toString(),
       projectName: (json['projectName'] ?? '').toString(),
       projectSlug: (json['projectSlug'] ?? '').toString(),
@@ -106,7 +105,8 @@ class EdgeFeedResponse {
         .toList();
 
     return EdgeFeedResponse(
-      asOf: DateTime.tryParse((json['asOf'] ?? '').toString()) ?? DateTime.now(),
+      asOf:
+          DateTime.tryParse((json['asOf'] ?? '').toString()) ?? DateTime.now(),
       enabled: json['enabled'] == true,
       limit: int.tryParse((json['limit'] ?? '').toString()) ?? 20,
       nextCursor: json['nextCursor']?.toString(),

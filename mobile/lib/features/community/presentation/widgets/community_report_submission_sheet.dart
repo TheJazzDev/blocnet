@@ -257,7 +257,8 @@ class _CommunityReportSubmissionSheetState
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                        borderSide: BorderSide(color: AppColors.primary400, width: 1.5),
+                        borderSide:
+                            BorderSide(color: AppColors.primary400, width: 1.5),
                       ),
                       contentPadding: const EdgeInsets.all(AppSpace.md),
                     ),
@@ -346,17 +347,18 @@ class _CommunityReportSubmissionSheetState
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed:
-                          _isSubmitting || _selectedReason == null
-                              ? null
-                              : _submitReport,
+                      onPressed: _isSubmitting || _selectedReason == null
+                          ? null
+                          : _submitReport,
                       style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
+                        padding:
+                            const EdgeInsets.symmetric(vertical: AppSpace.lg),
                         backgroundColor: AppColors.error500,
                         disabledBackgroundColor:
                             AppColors.error500.withValues(alpha: 0.3),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.mdValue),
                         ),
                       ),
                       child: _isSubmitting
@@ -412,9 +414,7 @@ class _ReasonOption extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpace.md),
           decoration: BoxDecoration(
             border: Border.all(
-              color: isSelected
-                  ? AppColors.primary400
-                  : AppColors.borderSubtle,
+              color: isSelected ? AppColors.primary400 : AppColors.borderSubtle,
               width: isSelected ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(AppRadius.mdValue),

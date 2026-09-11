@@ -31,16 +31,14 @@ const List<GlossaryTerm> glossaryTerms = [
   GlossaryTerm(
     term: 'Hunter',
     icon: Icons.radar_rounded,
-    definition:
-        'A vetted member who tracks Gems, posts Updates about them and '
+    definition: 'A vetted member who tracks Gems, posts Updates about them and '
         'submits new Gems. Hunters have a public track record and can be '
         'tipped for good calls. Apply from Profile > Become a Hunter.',
   ),
   GlossaryTerm(
     term: 'Update',
     icon: Icons.bolt_rounded,
-    definition:
-        'A post by a Hunter about one Gem: news, on-chain activity, '
+    definition: 'A post by a Hunter about one Gem: news, on-chain activity, '
         'partnerships, airdrops or warnings, with a priority of High, Medium '
         'or Low. You can like, comment on, bookmark, share and tip an Update.',
   ),
@@ -54,8 +52,7 @@ const List<GlossaryTerm> glossaryTerms = [
   GlossaryTerm(
     term: 'Edge brief',
     icon: Icons.insights_rounded,
-    definition:
-        'A short, scored summary produced by Edge, Blocnet\'s decision '
+    definition: 'A short, scored summary produced by Edge, Blocnet\'s decision '
         'engine, from the latest Updates of the Gems you follow: what '
         'changed, how urgent it is and why.',
   ),
@@ -72,8 +69,7 @@ const List<GlossaryTerm> glossaryTerms = [
     term: 'BNP',
     expansion: 'Blocnet Point',
     icon: Icons.toll_rounded,
-    definition:
-        'What you mine, earn from quests and tip with today. BNP is an '
+    definition: 'What you mine, earn from quests and tip with today. BNP is an '
         'in-app point, not a token on chain.',
   ),
   GlossaryTerm(

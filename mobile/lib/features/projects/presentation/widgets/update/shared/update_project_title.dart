@@ -18,9 +18,8 @@ class UpdateProjectTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: margin
-          ? const EdgeInsets.only(bottom: AppSpace.sm)
-          : EdgeInsets.zero,
+      margin:
+          margin ? const EdgeInsets.only(bottom: AppSpace.sm) : EdgeInsets.zero,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

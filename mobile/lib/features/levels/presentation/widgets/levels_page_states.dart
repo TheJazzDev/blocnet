@@ -34,7 +34,8 @@ class LevelsErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded, size: AppIcon.xxl, color: AppColors.error500),
+            Icon(Icons.error_outline_rounded,
+                size: AppIcon.xxl, color: AppColors.error500),
             const SizedBox(height: AppSpace.md),
             Text(
               message,

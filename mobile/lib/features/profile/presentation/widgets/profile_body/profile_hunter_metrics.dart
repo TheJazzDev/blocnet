@@ -186,7 +186,8 @@ class HunterSentiment {
     required int total,
   }) {
     if (total == 0) {
-      return const HunterSentiment(label: 'Neutral', footnote: 'No reviews yet');
+      return const HunterSentiment(
+          label: 'Neutral', footnote: 'No reviews yet');
     }
     final net = highCount - lowCount;
     if (net > 0) {

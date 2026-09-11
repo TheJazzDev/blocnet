@@ -42,11 +42,16 @@ class UserLevelModel {
       iconUrl: json['iconUrl']?.toString() ?? '',
       level: int.tryParse(json['level']?.toString() ?? '') ?? 0,
       requiredBnp: json['requiredBnp']?.toString() ?? '0',
-      requiredComments: int.tryParse(json['requiredComments']?.toString() ?? '') ?? 0,
-      requiredDaysActive: int.tryParse(json['requiredDaysActive']?.toString() ?? '') ?? 0,
-      requiredQuests: int.tryParse(json['requiredQuests']?.toString() ?? '') ?? 0,
-      requiredUpdates: int.tryParse(json['requiredUpdates']?.toString() ?? '') ?? 0,
-      requiredProjects: int.tryParse(json['requiredProjects']?.toString() ?? '') ?? 0,
+      requiredComments:
+          int.tryParse(json['requiredComments']?.toString() ?? '') ?? 0,
+      requiredDaysActive:
+          int.tryParse(json['requiredDaysActive']?.toString() ?? '') ?? 0,
+      requiredQuests:
+          int.tryParse(json['requiredQuests']?.toString() ?? '') ?? 0,
+      requiredUpdates:
+          int.tryParse(json['requiredUpdates']?.toString() ?? '') ?? 0,
+      requiredProjects:
+          int.tryParse(json['requiredProjects']?.toString() ?? '') ?? 0,
       color: json['color']?.toString(),
       isActive: json['isActive'] == true,
       sortOrder: int.tryParse(json['sortOrder']?.toString() ?? '') ?? 0,
@@ -124,8 +129,10 @@ class UserMetrics {
     return UserMetrics(
       totalBnpEarned: json['totalBnpEarned']?.toString() ?? '0',
       totalComments: int.tryParse(json['totalComments']?.toString() ?? '') ?? 0,
-      totalDaysActive: int.tryParse(json['totalDaysActive']?.toString() ?? '') ?? 0,
-      totalQuestsCompleted: int.tryParse(json['totalQuestsCompleted']?.toString() ?? '') ?? 0,
+      totalDaysActive:
+          int.tryParse(json['totalDaysActive']?.toString() ?? '') ?? 0,
+      totalQuestsCompleted:
+          int.tryParse(json['totalQuestsCompleted']?.toString() ?? '') ?? 0,
       totalUpdates: int.tryParse(json['totalUpdates']?.toString() ?? '') ?? 0,
       totalProjects: int.tryParse(json['totalProjects']?.toString() ?? '') ?? 0,
     );
@@ -168,11 +175,13 @@ class UserLevelProgressModel {
     final nextLevelRaw = json['nextLevel'];
 
     return UserLevelProgressModel(
-      currentLevel: UserLevelModel.fromApi(_asStringKeyMap(json['currentLevel'])),
+      currentLevel:
+          UserLevelModel.fromApi(_asStringKeyMap(json['currentLevel'])),
       nextLevel: nextLevelRaw != null
           ? UserLevelModel.fromApi(_asStringKeyMap(nextLevelRaw))
           : null,
-      achievedAt: DateTime.tryParse(json['achievedAt']?.toString() ?? '') ?? DateTime.now(),
+      achievedAt: DateTime.tryParse(json['achievedAt']?.toString() ?? '') ??
+          DateTime.now(),
       metrics: UserMetrics.fromApi(_asStringKeyMap(json['metrics'])),
       progressToNext: progressToNextRaw != null
           ? ProgressToNext.fromApi(_asStringKeyMap(progressToNextRaw))

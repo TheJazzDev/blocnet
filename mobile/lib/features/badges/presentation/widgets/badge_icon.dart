@@ -271,8 +271,10 @@ class BadgeRarityChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair)
-          : const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+          ? const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.hair)
+          : const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: Color(rarity.color).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.mdValue),
@@ -320,8 +322,10 @@ class BadgeCategoryChip extends StatelessWidget {
     final categoryColor = Color(category.color);
     return Container(
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair)
-          : const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+          ? const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.hair)
+          : const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: categoryColor.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(AppRadius.mdValue),

@@ -41,7 +41,8 @@ class _FollowPreferenceSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,9 +69,11 @@ class _FollowPreferenceSheet extends StatelessWidget {
             const SizedBox(height: AppSpace.xs),
             Text(
               projectName,
-              style: AppTypography.custom(color: AppColors.textMuted,
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
                 size: AppText.bodySize,
-                weight: FontWeight.w400,),
+                weight: FontWeight.w400,
+              ),
             ),
             const SizedBox(height: AppSpace.lg),
             for (final level in FollowAlertLevel.values) ...[
@@ -119,7 +122,8 @@ class _PreferenceTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.lg, vertical: AppSpace.md),
         decoration: BoxDecoration(
           gradient: selected
               ? LinearGradient(
@@ -240,7 +244,8 @@ class _MuteTile extends StatelessWidget {
           TextButton(
             onPressed: isMuted ? onUnmute : onMute,
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.md, vertical: AppSpace.sm),
               backgroundColor: isMuted
                   ? AppColors.error500.withValues(alpha: 0.12)
                   : AppColors.primary500.withValues(alpha: 0.12),

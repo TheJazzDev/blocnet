@@ -165,8 +165,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   onTap: _jumpToLatest,
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.md, vertical: AppSpace.sm),
                     decoration: BoxDecoration(
                       color: accent,
                       borderRadius: BorderRadius.circular(AppRadius.fullValue),

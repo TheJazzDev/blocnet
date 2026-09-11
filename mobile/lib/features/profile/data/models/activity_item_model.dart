@@ -73,8 +73,7 @@ String _toTitleCase(String value) {
       .split(RegExp(r'\s+'))
       .where((part) => part.isNotEmpty)
       .map((part) {
-        final lower = part.toLowerCase();
-        return '${lower[0].toUpperCase()}${lower.substring(1)}';
-      })
-      .join(' ');
+    final lower = part.toLowerCase();
+    return '${lower[0].toUpperCase()}${lower.substring(1)}';
+  }).join(' ');
 }

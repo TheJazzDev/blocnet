@@ -38,7 +38,8 @@ class ProfileActivityTab extends StatelessWidget {
 
     return ListView.builder(
       primary: false,
-      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];

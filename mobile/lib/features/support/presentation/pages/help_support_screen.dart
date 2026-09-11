@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -203,17 +204,9 @@ class _HelpTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AppSurface(
         margin: const EdgeInsets.only(bottom: AppSpace.md),
         padding: const EdgeInsets.all(AppSpace.lg),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(
-            color: AppColors.borderSubtle,
-            width: 1,
-          ),
-        ),
         child: Row(
           children: [
             Container(
@@ -283,17 +276,9 @@ class _ContactTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AppSurface(
         margin: const EdgeInsets.only(bottom: AppSpace.md),
         padding: const EdgeInsets.all(AppSpace.lg),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(
-            color: AppColors.borderSubtle,
-            width: 1,
-          ),
-        ),
         child: Row(
           children: [
             Container(
@@ -361,17 +346,10 @@ class _ResourceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AppSurface(
         margin: const EdgeInsets.only(bottom: AppSpace.md),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(
-            color: AppColors.borderSubtle,
-            width: 1,
-          ),
-        ),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.lg, vertical: AppSpace.md),
         child: Row(
           children: [
             Icon(

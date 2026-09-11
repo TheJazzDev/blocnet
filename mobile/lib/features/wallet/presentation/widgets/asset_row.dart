@@ -43,7 +43,8 @@ class AssetRow extends StatelessWidget {
       child: Container(
         width: double.infinity,
         margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
-        padding: const EdgeInsets.symmetric(vertical: AppSpace.md, horizontal: AppSpace.md),
+        padding: const EdgeInsets.symmetric(
+            vertical: AppSpace.md, horizontal: AppSpace.md),
         decoration: isCardMode
             ? BoxDecoration(
                 gradient: LinearGradient(
@@ -124,7 +125,8 @@ class AssetRow extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: accent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(AppRadius.smValue),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.smValue),
                         ),
                         child: Text(
                           assetBadgeText(asset),

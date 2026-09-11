@@ -20,7 +20,8 @@ class UpdateDetailsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final headerTitle = title?.trim();
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg, vertical: AppSpace.md),
       child: Row(
         children: [
           _HeaderIconButton(

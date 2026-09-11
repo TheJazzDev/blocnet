@@ -47,7 +47,8 @@ class ProjectProposalsApiRepository {
       query['status'] = normalizedStatus;
     }
 
-    final response = await _apiClient.get('/project-proposals/mine', query: query);
+    final response =
+        await _apiClient.get('/project-proposals/mine', query: query);
     if (response is! List) return const <ProjectProposalModel>[];
 
     return response

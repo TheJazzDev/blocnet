@@ -5,6 +5,7 @@ import 'package:blocnet/features/community/data/models/community_moderation_mode
 import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 class MyReportsScreen extends StatefulWidget {
@@ -116,9 +117,14 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 
   Map<String, int> _calculateStatistics() {
     final total = _reports.length;
-    final open = _reports.where((r) => r.status == CommunityReportStatus.open).length;
-    final resolved = _reports.where((r) => r.status == CommunityReportStatus.resolved).length;
-    final dismissed = _reports.where((r) => r.status == CommunityReportStatus.dismissed).length;
+    final open =
+        _reports.where((r) => r.status == CommunityReportStatus.open).length;
+    final resolved = _reports
+        .where((r) => r.status == CommunityReportStatus.resolved)
+        .length;
+    final dismissed = _reports
+        .where((r) => r.status == CommunityReportStatus.dismissed)
+        .length;
 
     return {
       'total': total,
@@ -175,7 +181,8 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(AppSpace.lg),
-      itemCount: _reports.length + (_hasMore ? 1 : 0) + 1, // +1 for stats header
+      itemCount:
+          _reports.length + (_hasMore ? 1 : 0) + 1, // +1 for stats header
       itemBuilder: (context, index) {
         // Statistics header
         if (index == 0) {
@@ -207,13 +214,8 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpace.xxl),
-        child: Container(
+        child: AppSurface(
           padding: const EdgeInsets.all(AppSpace.xl),
-          decoration: BoxDecoration(
-            color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-            border: Border.all(color: AppColors.borderSubtle),
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -253,13 +255,8 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpace.xxl),
-        child: Container(
+        child: AppSurface(
           padding: const EdgeInsets.all(AppSpace.xl),
-          decoration: BoxDecoration(
-            color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-            border: Border.all(color: AppColors.borderSubtle),
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -419,7 +416,8 @@ class _ReportCard extends StatelessWidget {
               ),
             ),
 
-            if (report.details != null && report.details!.trim().isNotEmpty) ...[
+            if (report.details != null &&
+                report.details!.trim().isNotEmpty) ...[
               const SizedBox(height: AppSpace.sm),
               Text(
                 report.details!,
@@ -526,7 +524,6 @@ class _ReportCard extends StatelessWidget {
   }
 }
 
-
 class _ReportStatistics extends StatelessWidget {
   const _ReportStatistics({required this.stats});
 
@@ -539,7 +536,8 @@ class _ReportStatistics extends StatelessWidget {
     final resolved = stats["resolved"] ?? 0;
     final dismissed = stats["dismissed"] ?? 0;
     final reviewedCount = resolved + dismissed;
-    final reviewedRate = total > 0 ? (reviewedCount / total * 100).toStringAsFixed(0) : "0";
+    final reviewedRate =
+        total > 0 ? (reviewedCount / total * 100).toStringAsFixed(0) : "0";
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpace.lg),
@@ -563,40 +561,80 @@ class _ReportStatistics extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.analytics_outlined, color: AppColors.primary400, size: AppIcon.md),
+              Icon(Icons.analytics_outlined,
+                  color: AppColors.primary400, size: AppIcon.md),
               const SizedBox(width: AppSpace.sm),
-              Text("Report Statistics", style: AppTypography.custom(size: AppText.bodySize, weight: FontWeight.w600, color: AppColors.textPrimary)),
+              Text("Report Statistics",
+                  style: AppTypography.custom(
+                      size: AppText.bodySize,
+                      weight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
             ],
           ),
           const SizedBox(height: AppSpace.lg),
           Row(
             children: [
-              Expanded(child: _StatCard(label: "Total", value: total.toString(), color: AppColors.primary400, icon: Icons.flag_outlined)),
+              Expanded(
+                  child: _StatCard(
+                      label: "Total",
+                      value: total.toString(),
+                      color: AppColors.primary400,
+                      icon: Icons.flag_outlined)),
               const SizedBox(width: AppSpace.md),
-              Expanded(child: _StatCard(label: "Pending", value: open.toString(), color: AppColors.warning500, icon: Icons.pending_outlined)),
+              Expanded(
+                  child: _StatCard(
+                      label: "Pending",
+                      value: open.toString(),
+                      color: AppColors.warning500,
+                      icon: Icons.pending_outlined)),
             ],
           ),
           const SizedBox(height: AppSpace.md),
           Row(
             children: [
-              Expanded(child: _StatCard(label: "Resolved", value: resolved.toString(), color: Colors.green, icon: Icons.check_circle_outline)),
+              Expanded(
+                  child: _StatCard(
+                      label: "Resolved",
+                      value: resolved.toString(),
+                      color: Colors.green,
+                      icon: Icons.check_circle_outline)),
               const SizedBox(width: AppSpace.md),
-              Expanded(child: _StatCard(label: "Dismissed", value: dismissed.toString(), color: AppColors.textMuted, icon: Icons.cancel_outlined)),
+              Expanded(
+                  child: _StatCard(
+                      label: "Dismissed",
+                      value: dismissed.toString(),
+                      color: AppColors.textMuted,
+                      icon: Icons.cancel_outlined)),
             ],
           ),
           if (total > 0) ...[
             const SizedBox(height: AppSpace.md),
             Container(
               padding: const EdgeInsets.all(AppSpace.md),
-              decoration: BoxDecoration(color: AppColors.bgSurface, borderRadius: BorderRadius.circular(AppRadius.smValue)),
+              decoration: BoxDecoration(
+                  color: AppColors.bgSurface,
+                  borderRadius: BorderRadius.circular(AppRadius.smValue)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.speed, size: AppIcon.sm, color: AppColors.primary400),
+                  Icon(Icons.speed,
+                      size: AppIcon.sm, color: AppColors.primary400),
                   const SizedBox(width: AppSpace.sm),
-                  Text("Review Rate: ", style: AppTypography.custom(size: AppText.labelSize, weight: FontWeight.w500, color: AppColors.textSecondary)),
-                  Text("$reviewedRate%", style: AppTypography.custom(size: AppText.labelSize, weight: FontWeight.w700, color: AppColors.primary400)),
-                  Text(" ($reviewedCount/$total reviewed)", style: AppTypography.custom(size: AppText.captionSize, weight: FontWeight.w400, color: AppColors.textMuted)),
+                  Text("Review Rate: ",
+                      style: AppTypography.custom(
+                          size: AppText.labelSize,
+                          weight: FontWeight.w500,
+                          color: AppColors.textSecondary)),
+                  Text("$reviewedRate%",
+                      style: AppTypography.custom(
+                          size: AppText.labelSize,
+                          weight: FontWeight.w700,
+                          color: AppColors.primary400)),
+                  Text(" ($reviewedCount/$total reviewed)",
+                      style: AppTypography.custom(
+                          size: AppText.captionSize,
+                          weight: FontWeight.w400,
+                          color: AppColors.textMuted)),
                 ],
               ),
             ),
@@ -608,7 +646,11 @@ class _ReportStatistics extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value, required this.color, required this.icon});
+  const _StatCard(
+      {required this.label,
+      required this.value,
+      required this.color,
+      required this.icon});
   final String label;
   final String value;
   final Color color;
@@ -618,14 +660,25 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(color: AppColors.bgSurface, borderRadius: BorderRadius.circular(AppRadius.mdValue), border: Border.all(color: color.withValues(alpha: 0.3))),
+      decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
+          border: Border.all(color: color.withValues(alpha: 0.3))),
       child: Column(
         children: [
           Icon(icon, color: color, size: AppIcon.md),
           const SizedBox(height: AppSpace.sm),
-          Text(value, style: AppTypography.custom(size: AppText.headlineSize, weight: FontWeight.w700, color: color)),
+          Text(value,
+              style: AppTypography.custom(
+                  size: AppText.headlineSize,
+                  weight: FontWeight.w700,
+                  color: color)),
           const SizedBox(height: AppSpace.hair),
-          Text(label, style: AppTypography.custom(size: AppText.captionSize, weight: FontWeight.w500, color: AppColors.textMuted)),
+          Text(label,
+              style: AppTypography.custom(
+                  size: AppText.captionSize,
+                  weight: FontWeight.w500,
+                  color: AppColors.textMuted)),
         ],
       ),
     );

@@ -10,8 +10,8 @@ import 'package:blocnet/features/settings/presentation/widgets/setting_switch_ti
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/notifications/notification_settings_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
-import 'package:blocnet/shared/widgets/app_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -449,14 +449,10 @@ class _SettingsRetryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

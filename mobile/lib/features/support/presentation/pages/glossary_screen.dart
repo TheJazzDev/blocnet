@@ -4,6 +4,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/support/data/glossary_content.dart';
 import 'package:blocnet/features/support/presentation/widgets/support_widgets.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Static glossary of Blocnet vocabulary, reachable from Help & Support.
@@ -48,14 +49,9 @@ class _GlossaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final expansion = term.expansion;
 
-    return Container(
+    return AppSurface(
       margin: const EdgeInsets.only(bottom: AppSpace.md),
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -66,7 +62,8 @@ class _GlossaryCard extends StatelessWidget {
               color: AppColors.primary500.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppRadius.mdValue),
             ),
-            child: Icon(term.icon, size: AppIcon.sm, color: AppColors.primary400),
+            child:
+                Icon(term.icon, size: AppIcon.sm, color: AppColors.primary400),
           ),
           const SizedBox(width: AppSpace.md),
           Expanded(

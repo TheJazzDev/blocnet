@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Heading + subtitle at the top of a support screen.
@@ -81,7 +82,8 @@ class _SupportFaqTileState extends State<SupportFaqTile> {
           children: [
             Row(
               children: [
-                Icon(widget.icon, size: AppIcon.md, color: AppColors.primary400),
+                Icon(widget.icon,
+                    size: AppIcon.md, color: AppColors.primary400),
                 const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Text(
@@ -142,14 +144,10 @@ class SupportStepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       margin: const EdgeInsets.only(bottom: AppSpace.md),
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -162,7 +160,8 @@ class SupportStepCard extends StatelessWidget {
                   color: AppColors.primary500.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
-                child: Icon(icon, size: AppIcon.md, color: AppColors.primary400),
+                child:
+                    Icon(icon, size: AppIcon.md, color: AppColors.primary400),
               ),
               const SizedBox(width: AppSpace.md),
               Expanded(

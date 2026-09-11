@@ -60,7 +60,8 @@ class ExploreSection extends StatelessWidget {
         children: [
           // Filter label
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpace.lg, 0, AppSpace.lg, AppSpace.md),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpace.lg, 0, AppSpace.lg, AppSpace.md),
             child: Text(
               'FILTER',
               style: TextStyle(

@@ -4,6 +4,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -116,15 +117,11 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
         showFilter: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
         children: [
-          Container(
+          AppSurface(
             padding: const EdgeInsets.all(AppSpace.lg),
-            decoration: BoxDecoration(
-              color: AppColors.bgSurface,
-              borderRadius: BorderRadius.circular(AppRadius.mdValue),
-              border: Border.all(color: AppColors.borderSubtle),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

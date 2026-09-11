@@ -32,7 +32,8 @@ class _ProfileTabsSectionState extends State<ProfileTabsSection> {
           onChanged: (i) => setState(() => _tabIndex = i),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, 0),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.lg, AppSpace.sm, AppSpace.lg, 0),
           child: Text(
             switch (_tabIndex) {
               0 => 'Your actions on Blocnet.',

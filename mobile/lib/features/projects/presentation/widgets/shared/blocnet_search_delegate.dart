@@ -135,7 +135,8 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
         return Container(
           color: AppColors.bgBase,
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.lg, vertical: AppSpace.md),
             children: [
               if (isProfileLoading || profileMatches.isNotEmpty) ...[
                 _sectionTitle('Users & Hunters'),

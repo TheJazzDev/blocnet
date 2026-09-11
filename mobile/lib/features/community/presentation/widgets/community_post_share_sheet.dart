@@ -13,7 +13,8 @@ Future<void> showCommunityPostShareSheet(
 }) async {
   final trimmedContent = content.trim();
   final deepPath = '/community/$postId';
-  final webLink = 'https://blocnet.app/open?path=${Uri.encodeComponent(deepPath)}';
+  final webLink =
+      'https://blocnet.app/open?path=${Uri.encodeComponent(deepPath)}';
   final deepLink = 'io.blocnet.app://community/$postId';
   final shareText = '$trimmedContent\n$webLink';
 
@@ -48,7 +49,8 @@ Future<void> showCommunityPostShareSheet(
       return SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

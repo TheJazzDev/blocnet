@@ -81,8 +81,8 @@ class ProjectInvitesSection extends StatelessWidget {
               if (pending.isNotEmpty) ...[
                 const SizedBox(width: AppSpace.sm),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: AppSpace.hair),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 7, vertical: AppSpace.hair),
                   decoration: BoxDecoration(
                     color: AppColors.primary500.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(AppRadius.fullValue),

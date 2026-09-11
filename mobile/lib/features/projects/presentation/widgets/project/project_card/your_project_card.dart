@@ -1,6 +1,7 @@
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import '../project_details/project_details_dialog.dart';
 import 'your_project_card_info.dart';
@@ -60,14 +61,9 @@ class _YourProjectCardState extends State<YourProjectCard> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
+              AppSurface.flush(
                 width: 42,
                 height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                  border: Border.all(color: AppColors.borderSubtle),
-                ),
                 child: widget.project.logo.isNotEmpty
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(11),
@@ -147,14 +143,10 @@ class _YourProjectCardState extends State<YourProjectCard> {
 
     return GestureDetector(
       onTap: _openDetails,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpace.lg),
+      child: AppSurface(
+        radius: AppRadius.lg,
         margin: const EdgeInsets.only(bottom: AppSpace.md),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          border: Border.all(color: AppColors.borderSubtle, width: 1),
-        ),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

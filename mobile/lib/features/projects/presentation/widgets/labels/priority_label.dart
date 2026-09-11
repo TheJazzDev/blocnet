@@ -20,7 +20,8 @@ class PriorityLabel extends StatelessWidget {
 
     if (isButton) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpace.sm, horizontal: AppSpace.lg),
+        padding: const EdgeInsets.symmetric(
+            vertical: AppSpace.sm, horizontal: AppSpace.lg),
         decoration: BoxDecoration(
           color: priorityColor,
           borderRadius: const BorderRadius.all(Radius.circular(30)),
@@ -32,7 +33,8 @@ class PriorityLabel extends StatelessWidget {
             const SizedBox(width: AppSpace.sm),
             Text(
               '${priority.label[0].toUpperCase()}${priority.label.substring(1).toLowerCase()} Urgency',
-              style: TextStyle(color: Colors.black, fontSize: AppText.captionSize),
+              style:
+                  TextStyle(color: Colors.black, fontSize: AppText.captionSize),
             ),
           ],
         ),
@@ -55,7 +57,8 @@ class PriorityLabel extends StatelessWidget {
           const SizedBox(width: AppSpace.sm),
           Text(
             '${priority.label[0].toUpperCase()}${priority.label.substring(1).toLowerCase()} Urgency',
-            style: TextStyle(color: priorityColor, fontSize: AppText.captionSize),
+            style:
+                TextStyle(color: priorityColor, fontSize: AppText.captionSize),
           ),
         ],
       ),

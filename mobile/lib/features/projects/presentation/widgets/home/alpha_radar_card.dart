@@ -4,6 +4,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -36,14 +37,9 @@ class AlphaRadarCard extends StatelessWidget {
         ? '${summary.newUpdatesCount} new updates · ${summary.highUrgencyCount} high urgency'
         : 'You are fully caught up';
 
-    return Container(
+    return AppSurface(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -90,8 +86,8 @@ class AlphaRadarCard extends StatelessWidget {
               runSpacing: 8,
               children: summary.activeProjects.take(3).map((project) {
                 return Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm, vertical: AppSpace.xs),
                   decoration: BoxDecoration(
                     color: AppColors.bgElevated,
                     borderRadius: BorderRadius.circular(AppRadius.fullValue),

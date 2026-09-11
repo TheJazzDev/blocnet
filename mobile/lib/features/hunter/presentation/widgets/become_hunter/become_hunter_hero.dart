@@ -33,7 +33,8 @@ class BecomeHunterHero extends StatelessWidget {
               color: AppColors.primary500.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppRadius.lgValue),
             ),
-            child: Icon(Icons.radar_rounded, color: AppColors.primary400, size: AppIcon.lg),
+            child: Icon(Icons.radar_rounded,
+                color: AppColors.primary400, size: AppIcon.lg),
           ),
           const SizedBox(height: AppSpace.md),
           Text(

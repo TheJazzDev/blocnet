@@ -30,7 +30,8 @@ class CommunityDiscussionComposer extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
           border: Border(
@@ -42,7 +43,8 @@ class CommunityDiscussionComposer extends StatelessWidget {
           children: [
             if (replyingToUsername != null) ...[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.md, vertical: AppSpace.sm),
                 margin: const EdgeInsets.only(bottom: AppSpace.sm),
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,

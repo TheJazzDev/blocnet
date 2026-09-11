@@ -44,7 +44,8 @@ class SeasonLeaderboardRow extends StatelessWidget {
       color: entry.isCurrentUser
           ? AppColors.primary500.withValues(alpha: 0.06)
           : Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg, vertical: AppSpace.md),
       child: Row(
         children: [
           SizedBox(

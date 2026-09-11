@@ -67,9 +67,8 @@ class EdgeBriefDecision {
       title: (json['title'] ?? '').toString(),
       projectName: (json['projectName'] ?? '').toString(),
       urgency: (json['urgency'] ?? '').toString(),
-      createdAt:
-          DateTime.tryParse((json['createdAt'] ?? '').toString()) ??
-              DateTime.now(),
+      createdAt: DateTime.tryParse((json['createdAt'] ?? '').toString()) ??
+          DateTime.now(),
     );
   }
 
@@ -153,7 +152,8 @@ class EdgeBriefResponse {
         .toList();
 
     return EdgeBriefResponse(
-      asOf: DateTime.tryParse((json['asOf'] ?? '').toString()) ?? DateTime.now(),
+      asOf:
+          DateTime.tryParse((json['asOf'] ?? '').toString()) ?? DateTime.now(),
       enabled: json['enabled'] == true,
       windowDays: int.tryParse((json['windowDays'] ?? '').toString()) ?? 7,
       totalSignals: int.tryParse((json['totalSignals'] ?? '').toString()) ?? 0,

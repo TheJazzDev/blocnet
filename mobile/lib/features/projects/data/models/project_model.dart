@@ -122,14 +122,12 @@ class Project {
               ?.map((value) => value.toString())
               .toList() ??
           const [],
-      secondaryTags: (json['secondaryTags'] as List<dynamic>?)
-              ?.map((rawTag) {
-                if (rawTag is Map<String, dynamic>) {
-                  return SecondaryTag.fromApi(rawTag);
-                }
-                return SecondaryTag.fromJson(rawTag.toString());
-              })
-              .toList() ??
+      secondaryTags: (json['secondaryTags'] as List<dynamic>?)?.map((rawTag) {
+            if (rawTag is Map<String, dynamic>) {
+              return SecondaryTag.fromApi(rawTag);
+            }
+            return SecondaryTag.fromJson(rawTag.toString());
+          }).toList() ??
           const [],
       apps: _toNullableStringMap(json['apps']) ??
           {

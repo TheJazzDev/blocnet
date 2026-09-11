@@ -22,9 +22,8 @@ class TipApiRepository {
     String direction = 'all',
     String? currencyCode,
   }) async {
-    final boundedLimit = limit <= 0
-        ? 30
-        : (limit > _maxHistoryLimit ? _maxHistoryLimit : limit);
+    final boundedLimit =
+        limit <= 0 ? 30 : (limit > _maxHistoryLimit ? _maxHistoryLimit : limit);
     final boundedOffset = offset < 0 ? 0 : offset;
     final response = await _apiClient.get(
       '/tips/history',

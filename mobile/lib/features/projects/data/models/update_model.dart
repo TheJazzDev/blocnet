@@ -137,8 +137,7 @@ class Update {
                   : derivedDescription))
           .toString(),
       likesCount: int.tryParse(json['likesCount']?.toString() ?? '') ?? 0,
-      commentsCount:
-          int.tryParse(json['commentsCount']?.toString() ?? '') ?? 0,
+      commentsCount: int.tryParse(json['commentsCount']?.toString() ?? '') ?? 0,
       bookmarksCount:
           int.tryParse(json['bookmarksCount']?.toString() ?? '') ?? 0,
       isCommented: json['isCommented'] == true,

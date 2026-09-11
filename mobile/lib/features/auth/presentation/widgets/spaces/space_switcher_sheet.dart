@@ -43,7 +43,8 @@ class SpaceSwitcherSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              margin: const EdgeInsets.only(top: AppSpace.md, bottom: AppSpace.sm),
+              margin:
+                  const EdgeInsets.only(top: AppSpace.md, bottom: AppSpace.sm),
               width: 40,
               height: 4,
               decoration: BoxDecoration(
@@ -52,7 +53,8 @@ class SpaceSwitcherSheet extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl, vertical: AppSpace.md),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.xl, vertical: AppSpace.md),
               child: Row(
                 children: [
                   Icon(
@@ -132,7 +134,8 @@ class _SpaceOptionTile extends StatelessWidget {
         ),
       ),
       trailing: isCurrent
-          ? Icon(Icons.check_circle_rounded, color: space.accent, size: AppIcon.lg)
+          ? Icon(Icons.check_circle_rounded,
+              color: space.accent, size: AppIcon.lg)
           : null,
       onTap: onTap,
     );

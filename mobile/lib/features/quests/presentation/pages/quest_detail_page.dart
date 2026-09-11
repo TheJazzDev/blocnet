@@ -8,6 +8,7 @@ import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.da
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
 import 'package:blocnet/services/engagement/quests_store.dart';
 import 'package:blocnet/shared/utils/external_url_launcher.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -107,16 +108,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   }
 
   Widget _buildQuestHeader() {
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpace.xl),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: AppColors.borderSubtle,
-          width: 1,
-        ),
-      ),
       child: Column(
         children: [
           Container(
@@ -160,16 +154,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   }
 
   Widget _buildQuestInfo() {
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: AppColors.borderSubtle,
-          width: 1,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -237,16 +224,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   }
 
   Widget _buildRewardsSection() {
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: AppColors.borderSubtle,
-          width: 1,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -333,16 +313,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
 
   Widget _buildTargetSection() {
     final targetUrl = _resolvedTargetUrl!;
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: AppColors.borderSubtle,
-          width: 1,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -448,16 +421,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
       );
     }
 
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: AppColors.borderSubtle,
-          width: 1,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -639,14 +605,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
       );
     }
 
-    return Container(
+    return AppSurface(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Text(
         'Submit your proof above to send this quest for admin review.',
         style: AppTypography.custom(
@@ -868,7 +829,8 @@ class _QuestTypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: AppColors.bgBase,
         borderRadius: BorderRadius.circular(AppRadius.mdValue),
@@ -910,7 +872,8 @@ class _QuestStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: Color(status.color).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.lgValue),

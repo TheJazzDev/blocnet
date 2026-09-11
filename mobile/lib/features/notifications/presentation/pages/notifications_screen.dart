@@ -166,12 +166,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ),
                             child: ListView.builder(
                               controller: _scrollController,
-                              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, 96),
+                              padding: const EdgeInsets.fromLTRB(
+                                  AppSpace.lg, AppSpace.sm, AppSpace.lg, 96),
                               itemBuilder: (context, index) {
                                 final itemCount = store.notifications.length;
                                 if (index >= itemCount) {
                                   return const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: AppSpace.lg),
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: AppSpace.lg),
                                     child: Center(
                                       child: SizedBox(
                                         width: 18,
@@ -351,7 +353,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       builder: (_) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -634,7 +637,8 @@ class _NotificationTile extends StatelessWidget {
                           horizontal: AppSpace.sm, vertical: AppSpace.hair),
                       decoration: BoxDecoration(
                         color: style.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.fullValue),
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.fullValue),
                       ),
                       child: Text(
                         style.label,
@@ -712,7 +716,8 @@ class _NotificationCategoryFilterBar extends StatelessWidget {
     return SizedBox(
       height: 48,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.sm),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.sm),
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
           final option = options[index];
@@ -721,7 +726,8 @@ class _NotificationCategoryFilterBar extends StatelessWidget {
             onTap: () => onSelect(option.key),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: 7),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.md, vertical: 7),
               decoration: BoxDecoration(
                 color: isSelected
                     ? option.color.withValues(alpha: 0.18)

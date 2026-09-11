@@ -97,7 +97,8 @@ class _ProfileSavedTabState extends State<ProfileSavedTab> {
 
     return ListView.builder(
       primary: false,
-      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
       itemCount: bookmarks.length,
       itemBuilder: (context, index) {
         final update = bookmarks[index];

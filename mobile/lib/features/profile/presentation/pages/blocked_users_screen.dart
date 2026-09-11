@@ -3,7 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/users/blocks_store.dart';
-import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -166,7 +166,8 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           return RefreshIndicator(
             onRefresh: store.fetchBlockedUsers,
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               itemCount: blockedUsers.length,
               separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
               itemBuilder: (context, index) {
@@ -183,13 +184,8 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                         : null;
                 final isPending = _pendingUnblockIds.contains(user.blockedId);
 
-                return Container(
+                return AppSurface(
                   padding: const EdgeInsets.all(AppSpace.md),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                    border: Border.all(color: AppColors.borderSubtle),
-                  ),
                   child: Row(
                     children: [
                       AppAvatar(

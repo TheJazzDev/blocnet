@@ -41,7 +41,8 @@ class AuthScreenShell extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(AppSpace.sm, AppSpace.sm, AppSpace.sm, 0),
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpace.sm, AppSpace.sm, AppSpace.sm, 0),
                     child: Row(
                       children: [
                         SizedBox(
@@ -103,7 +104,8 @@ class AuthScreenShell extends StatelessWidget {
                   // Form card — frosted dark panel
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                       child: _FormCard(child: child),
                     ),
                   ),
@@ -367,7 +369,8 @@ class _FormCard extends StatelessWidget {
               ),
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(AppSpace.xl, 28, AppSpace.xl, AppSpace.xxl),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.xl, 28, AppSpace.xl, AppSpace.xxl),
               child: child,
             ),
           ),

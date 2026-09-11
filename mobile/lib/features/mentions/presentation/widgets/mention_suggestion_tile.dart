@@ -24,7 +24,8 @@ class MentionSuggestionTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.smValue),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.sm),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.sm, vertical: AppSpace.sm),
         child: Row(
           children: [
             AppAvatar(

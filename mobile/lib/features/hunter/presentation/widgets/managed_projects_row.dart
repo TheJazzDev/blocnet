@@ -6,6 +6,7 @@ import 'package:blocnet/features/projects/data/models/project_proposal_model.dar
 import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -173,14 +174,10 @@ class _ManagedProjectCard extends StatelessWidget {
     final name = item.name.trim().isNotEmpty ? item.name : 'Unnamed';
     final ticker = _deriveTicker(name);
 
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       width: 160,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -290,7 +287,8 @@ class _StatusChip extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: AppSpace.hair),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 7, vertical: AppSpace.hair),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.xlValue),
@@ -357,13 +355,9 @@ class _ActionButton extends StatelessWidget {
 class _EmptyManagedProjects extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpace.xl),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         children: [
           Icon(Icons.folder_open_outlined,

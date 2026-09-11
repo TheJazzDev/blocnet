@@ -136,8 +136,7 @@ class _HunterAvatar extends StatelessWidget {
 
   const _HunterAvatar.create({
     this.onTap,
-  })
-      : imageUrl = '',
+  })  : imageUrl = '',
         name = 'My Updates',
         currentLevel = null,
         hasRing = false,
@@ -245,7 +244,8 @@ class _HunterAvatar extends StatelessWidget {
     return AppAvatar(
       radius: 20,
       imageUrl: imageUrl,
-      fallback: Icon(Icons.person, size: AppIcon.sm, color: AppColors.textMuted),
+      fallback:
+          Icon(Icons.person, size: AppIcon.sm, color: AppColors.textMuted),
     );
   }
 }

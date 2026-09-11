@@ -60,10 +60,7 @@ class ProjectDetailsInfo extends StatelessWidget {
                       height: 96,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            AppColors.primary500,
-                            AppColors.primary700
-                          ],
+                          colors: [AppColors.primary500, AppColors.primary700],
                         ),
                         borderRadius: BorderRadius.circular(AppRadius.xlValue),
                       ),
@@ -153,7 +150,8 @@ class ProjectDetailsInfo extends StatelessWidget {
                               child: Container(
                                 height: 46,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(AppRadius.lgValue),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.lgValue),
                                   gradient: LinearGradient(
                                     colors: [
                                       AppColors.primary500,
@@ -286,7 +284,8 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpace.md, horizontal: AppSpace.sm),
+      padding: const EdgeInsets.symmetric(
+          vertical: AppSpace.md, horizontal: AppSpace.sm),
       decoration: BoxDecoration(
         color: AppColors.bgBase.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(AppRadius.lgValue),
@@ -333,7 +332,8 @@ class _DetailChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpace.xs, horizontal: AppSpace.md),
+      padding: const EdgeInsets.symmetric(
+          vertical: AppSpace.xs, horizontal: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgElevated,
         borderRadius: BorderRadius.circular(AppRadius.xlValue),

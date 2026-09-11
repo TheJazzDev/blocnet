@@ -57,7 +57,8 @@ class MoreFromProjectName extends StatelessWidget {
                           children: List.generate(posts.length, (index) {
                             final post = posts[index];
                             return Padding(
-                              padding: const EdgeInsets.only(right: AppSpace.xl),
+                              padding:
+                                  const EdgeInsets.only(right: AppSpace.xl),
                               child: MoreFromProjectNameUpdateCard(post: post),
                             );
                           }),

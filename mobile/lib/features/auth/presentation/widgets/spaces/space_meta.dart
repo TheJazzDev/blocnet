@@ -56,8 +56,7 @@ class SpaceMeta {
     id: 'moderation',
     label: 'Moderation',
     description: 'Community moderation hub',
-    purpose:
-        'Review reports and appeals and keep the community safe.',
+    purpose: 'Review reports and appeals and keep the community safe.',
     icon: Icons.shield_rounded,
     accent: AppColors.moderationAccent,
   );

@@ -217,7 +217,8 @@ class _CodeVerificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg, vertical: AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.darkGrey100,
         borderRadius: BorderRadius.circular(AppRadius.mdValue),
@@ -306,7 +307,8 @@ class _ResentBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg, vertical: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.successColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.mdValue),

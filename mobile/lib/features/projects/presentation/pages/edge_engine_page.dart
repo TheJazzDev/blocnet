@@ -51,7 +51,8 @@ class EdgeEnginePage extends StatelessWidget {
         onRefresh: edgeStore.refresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
           children: [
             EdgeBriefCard(
               brief: summary,
@@ -257,7 +258,8 @@ class BriefMetricChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.xs),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -335,7 +337,8 @@ class EdgeDecisionRow extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -397,8 +400,8 @@ class EdgeDecisionRow extends StatelessWidget {
               GestureDetector(
                 onTap: () => onExplain(decision),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm, vertical: AppSpace.xs),
                   decoration: BoxDecoration(
                     color: AppColors.primary500.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppRadius.smValue),
@@ -454,7 +457,8 @@ class ActionChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.md, vertical: AppSpace.sm),
         decoration: BoxDecoration(
           gradient: isRecommended
               ? LinearGradient(
@@ -509,7 +513,8 @@ class EdgeExplainSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,8 +584,8 @@ class EdgeExplainSheet extends StatelessWidget {
                 runSpacing: 8,
                 children: details.reasonCodes.map((reason) {
                   return Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.sm, vertical: AppSpace.xs),
                     decoration: BoxDecoration(
                       color: AppColors.bgElevated,
                       borderRadius: BorderRadius.circular(AppRadius.fullValue),

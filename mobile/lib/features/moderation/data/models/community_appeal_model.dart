@@ -57,14 +57,24 @@ class CommunityAppeal {
       reason: json['reason'] as String,
       status: _parseStatus(json['status']?.toString()),
       reviewedById: json['reviewedById'] as String?,
-      reviewedAt: json['reviewedAt'] != null ? DateTime.parse(json['reviewedAt'] as String) : null,
+      reviewedAt: json['reviewedAt'] != null
+          ? DateTime.parse(json['reviewedAt'] as String)
+          : null,
       reviewNotes: json['reviewNotes'] as String?,
-      decision: json['decision'] != null ? _parseDecision(json['decision']?.toString()) : null,
+      decision: json['decision'] != null
+          ? _parseDecision(json['decision']?.toString())
+          : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
-      report: json['report'] != null ? CommunityReport.fromApi(json['report'] as Map<String, dynamic>) : null,
-      appealer: json['appealer'] != null ? ProfileSummary.fromApi(json['appealer'] as Map<String, dynamic>) : null,
-      reviewedBy: json['reviewedBy'] != null ? ProfileSummary.fromApi(json['reviewedBy'] as Map<String, dynamic>) : null,
+      report: json['report'] != null
+          ? CommunityReport.fromApi(json['report'] as Map<String, dynamic>)
+          : null,
+      appealer: json['appealer'] != null
+          ? ProfileSummary.fromApi(json['appealer'] as Map<String, dynamic>)
+          : null,
+      reviewedBy: json['reviewedBy'] != null
+          ? ProfileSummary.fromApi(json['reviewedBy'] as Map<String, dynamic>)
+          : null,
     );
   }
 

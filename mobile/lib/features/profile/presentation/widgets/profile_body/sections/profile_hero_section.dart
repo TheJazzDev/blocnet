@@ -7,6 +7,7 @@ import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_level_pill.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Avatar, name, email, bio, earned badges, level pill and the active
@@ -66,7 +67,8 @@ class ProfileHeroSection extends StatelessWidget {
         ),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -163,14 +165,9 @@ class ProfileHeroSection extends StatelessWidget {
           child: GestureDetector(
             onTap: onEditTap,
             behavior: HitTestBehavior.opaque,
-            child: Container(
+            child: AppSurface.flush(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                border: Border.all(color: AppColors.borderSubtle),
-              ),
               child: Icon(
                 Icons.edit_outlined,
                 size: AppIcon.sm,
@@ -241,8 +238,7 @@ class _Avatar extends StatelessWidget {
                     ? Image.network(
                         avatarUrl!.trim(),
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            Center(child: fallback()),
+                        errorBuilder: (_, __, ___) => Center(child: fallback()),
                       )
                     : Center(child: fallback()),
               ),
@@ -283,7 +279,8 @@ class _SpaceLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.sm, vertical: AppSpace.hair),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(AppRadius.fullValue),

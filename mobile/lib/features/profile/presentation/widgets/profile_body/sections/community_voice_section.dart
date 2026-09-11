@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/profile_hunter_metrics.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Horizontal "Community voice" metric cards for hunters.
@@ -41,10 +42,12 @@ class CommunityVoiceSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpace.lg, 0, AppSpace.lg, AppSpace.xs),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.lg, 0, AppSpace.lg, AppSpace.xs),
           child: Row(
             children: [
-              Icon(Icons.forum_outlined, size: AppIcon.sm, color: AppColors.textFaint),
+              Icon(Icons.forum_outlined,
+                  size: AppIcon.sm, color: AppColors.textFaint),
               const SizedBox(width: AppSpace.sm),
               Text(
                 'COMMUNITY VOICE',
@@ -89,14 +92,9 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
       width: 220,
       padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

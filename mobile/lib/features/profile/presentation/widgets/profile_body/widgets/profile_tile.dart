@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -41,17 +42,11 @@ class ProfileTile extends StatelessWidget {
     final tile = GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
+      child: AppSurface(
         width: double.infinity,
         margin: EdgeInsets.only(bottom: isCardMode ? 8 : 0),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
-        decoration: isCardMode
-            ? BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                border: Border.all(color: AppColors.borderSubtle),
-              )
-            : null,
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.lg, vertical: AppSpace.md),
         child: Row(
           children: [
             if (isCardMode)
@@ -70,7 +65,8 @@ class ProfileTile extends StatelessWidget {
                 ),
               )
             else
-              Icon(icon, size: AppIcon.md, color: iconColor ?? AppColors.textMuted),
+              Icon(icon,
+                  size: AppIcon.md, color: iconColor ?? AppColors.textMuted),
             const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
@@ -101,7 +97,8 @@ class ProfileTile extends StatelessWidget {
               trailing!,
               const SizedBox(width: AppSpace.sm),
             ],
-            Icon(Icons.chevron_right, size: AppIcon.md, color: AppColors.textFaint),
+            Icon(Icons.chevron_right,
+                size: AppIcon.md, color: AppColors.textFaint),
           ],
         ),
       ),
@@ -132,7 +129,8 @@ class ProfileTilePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.sm, vertical: AppSpace.hair),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.fullValue),

@@ -83,7 +83,8 @@ class _CategorySwitchTileState extends State<CategorySwitchTile> {
           : null,
       footer: canExpand && _expanded
           ? Padding(
-              padding: const EdgeInsets.only(left: AppSpace.xxl, bottom: AppSpace.md),
+              padding: const EdgeInsets.only(
+                  left: AppSpace.xxl, bottom: AppSpace.md),
               child: Wrap(
                 spacing: 6,
                 runSpacing: 6,
@@ -96,7 +97,8 @@ class _CategorySwitchTileState extends State<CategorySwitchTile> {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.bgElevated,
-                          borderRadius: BorderRadius.circular(AppRadius.smValue),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.smValue),
                           border: Border.all(color: AppColors.borderSubtle),
                         ),
                         child: Text(

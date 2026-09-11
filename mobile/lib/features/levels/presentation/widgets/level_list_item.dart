@@ -35,7 +35,8 @@ class LevelListItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(

@@ -7,6 +7,7 @@ import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -141,7 +142,8 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                   left: AppSpace.lg,
                   right: AppSpace.lg,
                   top: AppSpace.lg,
-                  bottom: AppSpace.lg + MediaQuery.of(context).viewInsets.bottom,
+                  bottom:
+                      AppSpace.lg + MediaQuery.of(context).viewInsets.bottom,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -153,7 +155,8 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         height: 4,
                         decoration: BoxDecoration(
                           color: AppColors.borderMuted,
-                          borderRadius: BorderRadius.circular(AppRadius.fullValue),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.fullValue),
                         ),
                       ),
                     ),
@@ -400,7 +403,8 @@ class _ReferralCodeCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.md),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl, vertical: AppSpace.md),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.xl, vertical: AppSpace.md),
             decoration: BoxDecoration(
               color: AppColors.bgElevated,
               borderRadius: BorderRadius.circular(AppRadius.mdValue),
@@ -523,16 +527,9 @@ class _StatsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasError = errorMessage != null && errorMessage!.isNotEmpty;
 
-    return Container(
+    return AppSurface(
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: AppColors.borderSubtle,
-          width: 1,
-        ),
-      ),
       child: Column(
         children: [
           Row(
@@ -646,7 +643,8 @@ class _ReferrerSection extends StatelessWidget {
     }
 
     if (referredBy != null) {
-      final normalizedUsername = referredBy.username?.trim().replaceAll('@', '');
+      final normalizedUsername =
+          referredBy.username?.trim().replaceAll('@', '');
       final referrerName =
           (normalizedUsername != null && normalizedUsername.isNotEmpty)
               ? '@$normalizedUsername'
@@ -686,14 +684,9 @@ class _BindReferrerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -783,14 +776,9 @@ class _ReferrerCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpace.md),
-        Container(
+        AppSurface(
           width: double.infinity,
           padding: const EdgeInsets.all(AppSpace.lg),
-          decoration: BoxDecoration(
-            color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-            border: Border.all(color: AppColors.borderSubtle),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -805,8 +793,8 @@ class _ReferrerCard extends StatelessWidget {
               if (code != null && code!.isNotEmpty) ...[
                 const SizedBox(height: AppSpace.sm),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm, vertical: AppSpace.xs),
                   decoration: BoxDecoration(
                     color: AppColors.bgElevated,
                     borderRadius: BorderRadius.circular(AppRadius.fullValue),

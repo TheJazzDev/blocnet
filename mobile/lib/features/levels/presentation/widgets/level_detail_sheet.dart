@@ -72,7 +72,8 @@ class LevelDetailSheet extends StatelessWidget {
             ),
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,

@@ -23,7 +23,8 @@ extension _MainScreenComposerSheet on _MainScreenState {
         return SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -111,7 +112,8 @@ class _ComposerTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.lg, vertical: AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.bgElevated,
           borderRadius: BorderRadius.circular(AppRadius.lgValue),

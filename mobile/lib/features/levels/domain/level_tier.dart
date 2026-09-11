@@ -131,7 +131,9 @@ class LevelTierSection {
 List<LevelTierSection> groupLevelsByTier(List<UserLevelModel> levels) {
   final buckets = <int, List<UserLevelModel>>{};
   for (final level in levels) {
-    buckets.putIfAbsent(LevelTier.forLevel(level.level).index, () => []).add(level);
+    buckets
+        .putIfAbsent(LevelTier.forLevel(level.level).index, () => [])
+        .add(level);
   }
 
   final sections = <LevelTierSection>[];

@@ -460,7 +460,8 @@ class _FeedCardState extends State<FeedCard>
                               ),
                               decoration: BoxDecoration(
                                 color: priorityColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(AppRadius.fullValue),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.fullValue),
                                 border: Border.all(
                                   color: priorityColor.withValues(alpha: 0.35),
                                 ),
@@ -717,7 +718,8 @@ class _FeedCardState extends State<FeedCard>
                           horizontal: AppSpace.md, vertical: AppSpace.xs),
                       decoration: BoxDecoration(
                         color: priorityColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.fullValue),
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.fullValue),
                         border: Border.all(
                           color: priorityColor.withValues(alpha: 0.35),
                         ),
@@ -852,7 +854,8 @@ class _FeedRoleChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.sm, vertical: AppSpace.hair),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(color: color.withValues(alpha: 0.85), width: 0.8),
@@ -1027,7 +1030,8 @@ class _TagPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _colorForLabel(label);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.sm, vertical: AppSpace.hair),
       decoration: BoxDecoration(
         border: Border.all(color: color.withValues(alpha: 0.4)),
         borderRadius: BorderRadius.circular(AppRadius.smValue),

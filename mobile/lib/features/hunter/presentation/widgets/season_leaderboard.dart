@@ -7,6 +7,7 @@ import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/levels_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -92,8 +93,8 @@ class SeasonLeaderboard extends StatelessWidget {
         updatesCount: entry.value.updatesCount,
         totalTipsReceived: entry.value.totalTipsReceived,
         isCurrentUser: isCurrentUser,
-        currentLevel: entry.value.currentLevel ??
-            (isCurrentUser ? myLevel : null),
+        currentLevel:
+            entry.value.currentLevel ?? (isCurrentUser ? myLevel : null),
       );
     }).toList();
 
@@ -137,16 +138,13 @@ class SeasonLeaderboard extends StatelessWidget {
       addRow(entry);
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
+    return AppSurface.flush(
+      radius: AppRadius.lg,
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.sm),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.sm),
             child: Row(
               children: [
                 Text(
@@ -210,7 +208,8 @@ class SeasonLeaderboard extends StatelessWidget {
             onTap: onViewFullLeaderboard ??
                 () => Navigator.of(context).pushNamed(AppRoutes.topHunters),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpace.lg, 11, AppSpace.lg, AppSpace.md),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg, 11, AppSpace.lg, AppSpace.md),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

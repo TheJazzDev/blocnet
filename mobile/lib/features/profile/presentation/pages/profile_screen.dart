@@ -82,7 +82,8 @@ class ProfileScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.lg, vertical: AppSpace.md),
             ),
             child: Text(
               'Cancel',
@@ -96,7 +97,8 @@ class ProfileScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.lg, vertical: AppSpace.md),
               backgroundColor: AppColors.error500.withValues(alpha: 0.12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.mdValue),
