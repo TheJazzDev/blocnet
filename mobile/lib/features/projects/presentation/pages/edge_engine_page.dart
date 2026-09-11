@@ -19,7 +19,7 @@ class EdgeEnginePage extends StatelessWidget {
       onAction;
   final Future<void> Function(EdgeBriefDecision decision) onExplain;
 
-  /// Invoked by the empty state's "Follow projects" button. The launcher
+  /// Invoked by the empty state's "Follow gems" button. The launcher
   /// owns navigation (pop this page, switch the shell to Discover).
   final VoidCallback? onFollowProjects;
 

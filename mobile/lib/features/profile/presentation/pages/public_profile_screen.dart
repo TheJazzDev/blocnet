@@ -373,7 +373,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             const SizedBox(width: 8),
                             StatCard(value: '$postsCount', label: 'Posts'),
                             const SizedBox(width: 8),
-                            StatCard(value: '$projectCount', label: 'Projects'),
+                            StatCard(value: '$projectCount', label: 'Gems'),
                           ],
                         ),
                         if (_isLoadingPublicProfile) ...[
@@ -606,7 +606,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ...posts.take(4).map(
                                 (post) => ActivityCard(
                                   title: post.title,
-                                  subtitle: post.project?.name ?? 'Project',
+                                  subtitle: post.project?.name ?? 'Gem',
                                   time: getTimeStamp(post.createdAt),
                                 ),
                               ),

@@ -1,7 +1,9 @@
 import 'package:blocnet/features/support/data/faq_content.dart';
 import 'package:blocnet/features/support/data/getting_started_content.dart';
+import 'package:blocnet/features/support/data/glossary_content.dart';
 import 'package:blocnet/features/support/presentation/pages/faq_screen.dart';
 import 'package:blocnet/features/support/presentation/pages/getting_started_screen.dart';
+import 'package:blocnet/features/support/presentation/pages/glossary_screen.dart';
 import 'package:blocnet/features/support/presentation/pages/help_support_screen.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
@@ -38,6 +40,7 @@ void main() {
 
     expect(find.text('FAQs'), findsOneWidget);
     expect(find.text('Getting Started Guide'), findsOneWidget);
+    expect(find.text('Glossary'), findsOneWidget);
     expect(find.text('Email Support'), findsOneWidget);
     expect(find.text('Documentation'), findsOneWidget);
 
@@ -96,5 +99,49 @@ void main() {
       );
       expect(find.text('${i + 1}. ${step.title}'), findsOneWidget);
     }
+  });
+
+  test('glossary defines every agreed term with BNP/BNT expansions', () {
+    final terms = glossaryTerms.map((t) => t.term).toList();
+    expect(
+      terms,
+      containsAll([
+        'Gem',
+        'Hunter',
+        'Update',
+        'Alpha Radar',
+        'Edge brief',
+        'Space',
+        'BNP',
+        'BNT',
+        'Tip',
+      ]),
+    );
+    expect(
+      glossaryTerms.firstWhere((t) => t.term == 'BNP').expansion,
+      'Blocnet Point',
+    );
+    expect(
+      glossaryTerms.firstWhere((t) => t.term == 'BNT').expansion,
+      'Blocnet Token',
+    );
+    expect(
+      glossaryTerms.firstWhere((t) => t.term == 'BNT').definition,
+      contains('BNP converts to BNT'),
+    );
+  });
+
+  testWidgets('glossary screen renders the terms', (tester) async {
+    await tester.pumpWidget(_app(const GlossaryScreen()));
+    await tester.pump();
+
+    expect(find.text('Gem'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('= Blocnet Point'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('= Blocnet Point'), findsOneWidget);
+    expect(find.textContaining('MCR'), findsNothing);
   });
 }

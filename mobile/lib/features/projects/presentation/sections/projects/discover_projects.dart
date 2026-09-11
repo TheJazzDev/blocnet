@@ -146,7 +146,7 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Gems will appear here when projects are listed.',
+                  'Gems will appear here once they are listed.',
                   textAlign: TextAlign.center,
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
@@ -181,7 +181,7 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Adjust your filters to see more projects.',
+                  'Adjust your filters to see more gems.',
                   textAlign: TextAlign.center,
                   style: AppTypography.custom(
                     color: AppColors.textFaint,

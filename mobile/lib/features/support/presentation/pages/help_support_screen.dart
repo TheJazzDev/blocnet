@@ -93,6 +93,12 @@ class _QuickHelpSection extends StatelessWidget {
           onTap: () =>
               Navigator.of(context).pushNamed(AppRoutes.gettingStarted),
         ),
+        _HelpTile(
+          icon: Icons.menu_book_outlined,
+          title: 'Glossary',
+          subtitle: 'Gem, Hunter, Update, Space, BNP, BNT and more',
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.glossary),
+        ),
       ],
     );
   }

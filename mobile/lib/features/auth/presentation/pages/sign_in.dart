@@ -110,7 +110,7 @@ class _SignInScreenState extends State<SignInScreen> {
       showBack: false,
       heading: 'Sign in to Blocnet',
       subtitle:
-          'Connect to your account and track the latest signals from your favorite projects.',
+          'Connect to your account and track the latest signals from your favorite gems.',
       notice: !authStore.isSupabaseConfigured ? _ConfigWarning() : null,
       child: Form(
         key: _formKey,

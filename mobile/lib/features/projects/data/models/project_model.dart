@@ -108,7 +108,7 @@ class Project {
     return Project(
       id: (json['id'] ?? '').toString(),
       logo: (json['logo'] ?? '').toString(),
-      name: (json['name'] ?? 'Untitled Project').toString(),
+      name: (json['name'] ?? 'Untitled Gem').toString(),
       details: (json['details'] ?? json['description'] ?? '').toString(),
       adminId: adminId,
       website: json['website']?.toString(),

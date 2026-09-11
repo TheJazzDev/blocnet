@@ -565,7 +565,7 @@ class _UpdateTile extends StatelessWidget {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              update.project?.name ?? 'Project',
+                              update.project?.name ?? 'Gem',
                               style: AppTypography.custom(
                                 color: AppColors.textMuted,
                                 size: 12,

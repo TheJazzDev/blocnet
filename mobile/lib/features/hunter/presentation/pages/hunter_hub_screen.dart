@@ -151,7 +151,7 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
                     onRetry: () => _syncTips(force: true),
                   ),
                   const SizedBox(height: 24),
-                  _SectionHeader(title: 'Manage My Projects'),
+                  _SectionHeader(title: 'Manage My Gems'),
                   const SizedBox(height: 12),
                   const ProjectInvitesSection(),
                   const ManagedProjectsRow(),

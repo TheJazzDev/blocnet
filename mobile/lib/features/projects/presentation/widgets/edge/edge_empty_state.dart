@@ -3,7 +3,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
 /// Shown on the Edge Engine page when the brief has no signals yet. Gives the
-/// user the one thing that changes that: following projects.
+/// user the one thing that changes that: following gems.
 class EdgeEmptyState extends StatelessWidget {
   const EdgeEmptyState({super.key, required this.onFollowProjects});
 
@@ -42,8 +42,8 @@ class EdgeEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Edge scores the updates from projects you follow. Follow a few '
-            'projects and decisions will start showing up here.',
+            'Edge scores the updates from gems you follow. Follow a few '
+            'gems and decisions will start showing up here.',
             style: AppTypography.custom(
               color: AppColors.textMuted,
               size: 12,
@@ -67,7 +67,7 @@ class EdgeEmptyState extends StatelessWidget {
                   ),
                 ),
                 icon: const Icon(Icons.explore_rounded, size: 18),
-                label: const Text('Follow projects'),
+                label: const Text('Follow gems'),
               ),
             ),
           ],

@@ -20,7 +20,7 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
   final Map<String, Future<List<ProfileSearchResult>>> _profileSearchCache = {};
 
   @override
-  String get searchFieldLabel => 'Search projects, updates, users, hunters';
+  String get searchFieldLabel => 'Search gems, updates, users, hunters';
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -163,7 +163,7 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                 const SizedBox(height: 10),
               ],
               if (projectMatches.isNotEmpty) ...[
-                _sectionTitle('Projects'),
+                _sectionTitle('Gems'),
                 const SizedBox(height: 8),
                 ...projectMatches.map(
                   (project) => ListTile(
@@ -215,7 +215,7 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                       ),
                     ),
                     subtitle: Text(
-                      post.project?.name ?? 'Unknown Project',
+                      post.project?.name ?? 'Unknown Gem',
                       style: TextStyle(
                         color: AppColors.textFaint,
                         fontFamily: 'Geist',

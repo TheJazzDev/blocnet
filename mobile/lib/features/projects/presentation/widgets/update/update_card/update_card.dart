@@ -101,7 +101,7 @@ class UpdateCard extends StatelessWidget {
                     children: [
                       // Project name header row
                       _ProjectHeader(
-                        projectName: post.project?.name ?? 'Project',
+                        projectName: post.project?.name ?? 'Gem',
                         priorityColor: priorityColor,
                         priorityLabel: post.priority.label,
                         onProjectTap: () => _openProjectDetails(context),

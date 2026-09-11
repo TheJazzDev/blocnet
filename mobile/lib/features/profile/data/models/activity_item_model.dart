@@ -49,9 +49,9 @@ class ActivityItem {
       case 'community_post.bookmark.remove':
         return 'Removed a bookmark';
       case 'project.follow':
-        return 'Added a project to watchlist';
+        return 'Followed a gem';
       case 'project.unfollow':
-        return 'Removed a project from watchlist';
+        return 'Unfollowed a gem';
       case 'profile.follow':
         return 'Followed a hunter profile';
       case 'profile.unfollow':

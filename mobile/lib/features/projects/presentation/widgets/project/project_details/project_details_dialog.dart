@@ -42,7 +42,7 @@ class ProjectDetailsDialog extends StatelessWidget {
         backgroundColor: AppColors.bgBase,
         body: Column(
           children: [
-            ProjectDetailsHeader(projectId: project.id),
+            ProjectDetailsHeader(projectId: project.id, title: project.name),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(

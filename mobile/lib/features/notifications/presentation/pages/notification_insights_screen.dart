@@ -52,7 +52,7 @@ class NotificationInsightsScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                 ],
                 if (summary.activeProjects.isNotEmpty) ...[
-                  const _InsightsSectionLabel('Most Active Projects'),
+                  const _InsightsSectionLabel('Most Active Gems'),
                   const SizedBox(height: 6),
                   ...summary.activeProjects.take(6).map(
                         (entry) => _InsightsLine(

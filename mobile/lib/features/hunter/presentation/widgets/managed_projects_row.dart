@@ -369,7 +369,7 @@ class _EmptyManagedProjects extends StatelessWidget {
               size: 28, color: AppColors.textFaint),
           const SizedBox(height: 8),
           Text(
-            'No projects yet',
+            'No gems yet',
             style: AppTypography.custom(
               color: AppColors.textMuted,
               size: 13,
@@ -378,7 +378,7 @@ class _EmptyManagedProjects extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Submit a gem to start managing projects',
+            'Submit a gem to get started',
             textAlign: TextAlign.center,
             style: AppTypography.custom(
               color: AppColors.textFaint,

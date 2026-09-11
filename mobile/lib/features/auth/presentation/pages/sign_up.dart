@@ -349,7 +349,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return AuthScreenShell(
       appBarTitle: '',
       heading: 'Join Blocnet',
-      subtitle: 'Create your account to start following projects.',
+      subtitle: 'Create your account to start following gems.',
       child: Form(
         key: _formKey,
         child: Column(

@@ -166,7 +166,7 @@ class ProjectDetailsInfo extends StatelessWidget {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    isFollowed ? 'Following' : 'Follow Project',
+                                    isFollowed ? 'Following' : 'Follow Gem',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 13,

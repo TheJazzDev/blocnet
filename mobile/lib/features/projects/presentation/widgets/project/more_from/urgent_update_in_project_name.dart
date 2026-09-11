@@ -70,7 +70,7 @@ class _UrgentPostInProjectNameState extends State<UrgentPostInProjectName> {
         const SizedBox(height: 16),
         urgentPosts.isEmpty
             ? Text(
-                'No urgent updates available for this project!',
+                'No urgent updates for this gem yet.',
                 style: TextStyle(
                   color: AppColors.textFaint,
                   fontSize: 12,

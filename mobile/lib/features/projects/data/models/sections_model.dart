@@ -11,8 +11,8 @@ class Section {
 class Sections {
   static const forYou = Section("for_you", "For You");
   static const explore = Section("explore", "Explore");
-  static const yourProjects = Section("your_projects", "Your Projects");
-  static const discoverProjects = Section("discover_projects", "Discover Projects");
+  static const yourProjects = Section("your_projects", "My Gems");
+  static const discoverProjects = Section("discover_projects", "Discover Gems");
 
   static const List<Section> all = [
     forYou,

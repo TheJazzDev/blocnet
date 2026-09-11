@@ -78,7 +78,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
           return Padding(
             padding: const EdgeInsets.only(top: 24),
             child: Text(
-              'No projects available yet.',
+              'No gems available yet.',
               style: TextStyle(
                 color: AppColors.textFaint,
                 fontSize: 13,

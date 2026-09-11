@@ -79,7 +79,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
         body: const Padding(
           padding: EdgeInsets.all(16),
           child: _AccessDenied(
-            message: 'Your current role does not allow managing projects.',
+            message: 'Your current role does not allow managing gems.',
           ),
         ),
       );
@@ -174,7 +174,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                           ),
                         ),
                       ] else if (_proposals.isEmpty)
-                        _EmptyHint('No submitted project proposals yet.')
+                        _EmptyHint('No gems submitted for review yet.')
                       else
                         ..._buildProposalRows(_proposals, viewMode),
                     ],

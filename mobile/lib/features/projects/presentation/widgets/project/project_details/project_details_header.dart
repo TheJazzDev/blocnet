@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class ProjectDetailsHeader extends StatelessWidget {
   const ProjectDetailsHeader({
     required this.projectId,
-    this.title = 'Project Detail',
+    this.title = 'Gem',
     super.key,
   });
 

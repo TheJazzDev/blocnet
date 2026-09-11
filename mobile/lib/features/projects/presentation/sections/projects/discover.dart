@@ -171,7 +171,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      '${_pendingNewProjectIds.length} new projects',
+                      '${_pendingNewProjectIds.length} new gems',
                       style: AppTypography.custom(
                         color: AppColors.onAccentForSpace(isHunterSpace),
                         size: 12,
