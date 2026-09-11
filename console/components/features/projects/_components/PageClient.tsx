@@ -38,15 +38,23 @@ import {
 } from "@/components/ui/table";
 import { useProjectsAdmin } from "../_hooks/use-projects-admin";
 import { formatDate, statusBadge, type StatusFilter } from "../_lib/projects-admin";
+import { ManageHuntersSheet } from "./ManageHuntersSheet";
 import type { ProjectStatus } from "@/lib/api-client";
+import { canManageHunters } from "@/lib/rbac";
+import { useProjectsStore } from "@/lib/stores";
 
 export default function ProjectsPageClient() {
   const session = useAdminSession();
   const state = useProjectsAdmin(session.effectiveRoles);
+  const canManage = canManageHunters(session.effectiveRoles);
+  const openHunterSheet = useProjectsStore((store) => store.openHunterSheet);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Projects" description="Moderate project visibility and lifecycle status." />
+      <PageHeader
+        title="Projects"
+        description="Moderate project visibility and lifecycle status. Users see projects as Gems in the app."
+      />
 
       <Card>
         <CardHeader className="pb-3">
@@ -148,6 +156,14 @@ export default function ProjectsPageClient() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {canManage && (
+                            <>
+                              <DropdownMenuItem onClick={() => openHunterSheet(project)}>
+                                Manage hunters
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
                           {project.status !== "active" && (
                             <DropdownMenuItem onClick={() => state.openModeration(project, "active")}>
                               Set Active
@@ -215,6 +231,8 @@ export default function ProjectsPageClient() {
           await state.submitModeration(status as ProjectStatus, reason);
         }}
       />
+
+      {canManage && <ManageHuntersSheet />}
     </div>
   );
 }

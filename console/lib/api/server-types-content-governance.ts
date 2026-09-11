@@ -1,3 +1,5 @@
+import type { UserLevel } from "./server-types-levels";
+
 export type ProjectStatus = "active" | "paused" | "hidden" | "archived";
 export type UpdateStatus = "published" | "hidden" | "archived";
 export type ContentStatus = "active" | "hidden" | "archived";
@@ -31,6 +33,37 @@ export interface AdminProject {
   };
   createdAt: string;
   updatedAt: string;
+}
+
+export type ProjectInviteStatus = "pending" | "accepted" | "rejected" | "cancelled";
+
+/** Row returned by GET /projects/:projectId/invites (owner/admin). */
+export interface ProjectHunterInvite {
+  id: string;
+  projectId: string;
+  hunterId: string;
+  invitedBy: string;
+  note: string | null;
+  status: ProjectInviteStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  hunter: {
+    id: string;
+    email: string;
+    displayName: string | null;
+    currentLevel: UserLevel | null;
+  };
+}
+
+/** Row returned by POST /projects/:projectId/hunters/:hunterId/assign. */
+export interface ProjectHunterAssignment {
+  id: string;
+  projectId: string;
+  hunterId: string;
+  assignedBy: string;
+  createdAt: string;
 }
 
 export interface AdminUpdate {

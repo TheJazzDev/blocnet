@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { clientApi, type AdminTipSettings } from "@/lib/api-client";
+import { stripRetiredTipCurrencies } from "@/lib/api/tip-currencies";
 import { toDrafts, type CurrencyDraft } from "../_lib/tip-settings";
 
 export function useTipSettings() {
@@ -19,7 +20,7 @@ export function useTipSettings() {
     setLoading(true);
     setError(null);
     try {
-      const next = await clientApi.getTipSettings();
+      const next = stripRetiredTipCurrencies(await clientApi.getTipSettings());
       setSettings(next);
       setDrafts(toDrafts(next));
       setActiveCurrencyCode(next.activeCurrencyCode ?? next.currencies[0]?.code ?? "");
@@ -47,18 +48,20 @@ export function useTipSettings() {
     setSavingCode(code);
     setError(null);
     try {
-      const next = await clientApi.updateTipCurrencySettings(code, {
-        name: draft.name.trim(),
-        symbol: draft.symbol.trim(),
-        isEnabled: draft.isEnabled,
-        feeBps: draft.feeBps,
-        minTip: draft.minTip,
-        maxTip: draft.maxTip.trim() ? draft.maxTip.trim() : null,
-        minFee: draft.minFee,
-        maxFee: draft.maxFee.trim() ? draft.maxFee.trim() : null,
-        senderPaysFee: draft.senderPaysFee,
-        policyActive: draft.policyActive,
-      });
+      const next = stripRetiredTipCurrencies(
+        await clientApi.updateTipCurrencySettings(code, {
+          name: draft.name.trim(),
+          symbol: draft.symbol.trim(),
+          isEnabled: draft.isEnabled,
+          feeBps: draft.feeBps,
+          minTip: draft.minTip,
+          maxTip: draft.maxTip.trim() ? draft.maxTip.trim() : null,
+          minFee: draft.minFee,
+          maxFee: draft.maxFee.trim() ? draft.maxFee.trim() : null,
+          senderPaysFee: draft.senderPaysFee,
+          policyActive: draft.policyActive,
+        }),
+      );
       setSettings(next);
       setDrafts(toDrafts(next));
       setActiveCurrencyCode(next.activeCurrencyCode ?? code);
@@ -74,7 +77,9 @@ export function useTipSettings() {
     setActivating(true);
     setError(null);
     try {
-      const next = await clientApi.setActiveTipCurrency({ currencyCode: activeCurrencyCode });
+      const next = stripRetiredTipCurrencies(
+        await clientApi.setActiveTipCurrency({ currencyCode: activeCurrencyCode }),
+      );
       setSettings(next);
       setDrafts(toDrafts(next));
       setActiveCurrencyCode(next.activeCurrencyCode ?? activeCurrencyCode);

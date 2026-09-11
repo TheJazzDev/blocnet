@@ -3,19 +3,22 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AdminMiningMetrics } from "@/lib/api-client";
+import { toMiningTotals } from "@/lib/api/mining-totals";
 
 type MiningMetricsCardProps = {
   metrics: AdminMiningMetrics | null;
 };
 
 export function MiningMetricsCard({ metrics }: MiningMetricsCardProps) {
+  const totals = toMiningTotals(metrics);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Mining Metrics (24h)</CardTitle>
       </CardHeader>
       <CardContent>
-        {!metrics ? (
+        {!metrics || !totals ? (
           <p className="text-sm text-muted-foreground">No metrics available.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -39,13 +42,13 @@ export function MiningMetricsCard({ metrics }: MiningMetricsCardProps) {
               title="Active Direct Referrals"
               value={formatNumber(metrics.activeDirectReferrals)}
             />
-            <Metric title="Lifetime Mined (BNP)" value={formatNumber(metrics.lifetimeMinedMcr)} />
+            <Metric title="Lifetime Mined (BNP)" value={formatNumber(totals.lifetimeMinedBnp)} />
             <Metric
               title="Lifetime Claimed (BNP)"
-              value={formatNumber(metrics.lifetimeClaimedMcr)}
+              value={formatNumber(totals.lifetimeClaimedBnp)}
             />
-            <Metric title="Unclaimed (BNP)" value={formatNumber(metrics.lifetimeUnclaimedMcr)} />
-            <Metric title="Total Miners" value={formatNumber(metrics.totalMiners)} />
+            <Metric title="Unclaimed (BNP)" value={formatNumber(totals.lifetimeUnclaimedBnp)} />
+            <Metric title="Total Miners" value={formatNumber(totals.totalMiners)} />
           </div>
         )}
       </CardContent>

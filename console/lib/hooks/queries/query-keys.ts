@@ -44,6 +44,7 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) => [...queryKeys.projects.lists(), filters] as const,
     details: () => [...queryKeys.projects.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.projects.details(), id] as const,
+    invites: (projectId: string) => [...queryKeys.projects.all, 'invites', projectId] as const,
   },
 
   // Updates

@@ -7,6 +7,9 @@ import type {
   AdminUpdate,
   CommunityTopic,
   ContentStatus,
+  ProjectHunterAssignment,
+  ProjectHunterInvite,
+  ProjectInviteStatus,
   ProjectStatus,
   UpdateStatus,
 } from "./api";
@@ -34,6 +37,35 @@ export const contentApi = {
     apiFetch<AdminProject>(`/admin/content/projects/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify(body),
+    }),
+
+  listProjectInvites: (
+    projectId: string,
+    params?: { status?: ProjectInviteStatus; limit?: number; offset?: number },
+  ) =>
+    apiFetch<ProjectHunterInvite[]>(
+      `/projects/${projectId}/invites${toQuery({
+        status: params?.status,
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+      // The sheet renders this error inline (e.g. 403 for admins who do not
+      // own the project); a toast on top of it would be noise.
+      { suppressErrorToast: true },
+    ),
+
+  assignProjectHunter: (projectId: string, hunterId: string, body: { note?: string }) =>
+    apiFetch<ProjectHunterAssignment>(`/projects/${projectId}/hunters/${hunterId}/assign`, {
+      method: "POST",
+      body: JSON.stringify(body),
+      successMessage: "Hunter assigned to project",
+    }),
+
+  inviteProjectHunter: (projectId: string, hunterId: string, body: { note?: string }) =>
+    apiFetch<ProjectHunterInvite>(`/projects/${projectId}/hunters/${hunterId}/invite`, {
+      method: "POST",
+      body: JSON.stringify(body),
+      successMessage: "Invite sent to hunter",
     }),
 
   listAdminUpdates: (params?: {
