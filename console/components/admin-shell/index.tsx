@@ -6,7 +6,6 @@ import axios from 'axios';
 import { CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import {
-  getAdminEnvironmentLabel,
   resolveAdminEnvironmentFromHost,
   type AdminEnvironment,
 } from '@/lib/environment';
@@ -98,10 +97,6 @@ export function AdminShell({
   );
   const topRole = useMemo(() => getAdminGovernanceRole(realRoles), [realRoles]);
   const roleOptions = useMemo(() => getRoleViewOptions(realRoles), [realRoles]);
-  const environmentLabel = useMemo(
-    () => getAdminEnvironmentLabel(environment),
-    [environment],
-  );
 
   useEffect(() => {
     setActingAsRole(currentUser.actingAsRole ?? null);
@@ -197,6 +192,7 @@ export function AdminShell({
             user={sessionValue}
             topRole={topRole}
             roleOptions={roleOptions}
+            environment={environment}
             onChangeRoleView={handleRoleViewChange}
             onResetRoleView={resetRoleView}
           />
@@ -220,6 +216,7 @@ export function AdminShell({
             user={sessionValue}
             topRole={topRole}
             roleOptions={roleOptions}
+            environment={environment}
             onChangeRoleView={handleRoleViewChange}
             onResetRoleView={resetRoleView}
           />
@@ -228,20 +225,9 @@ export function AdminShell({
         <div className='relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden'>
           <TopBar
             mobileOpen={mobileOpen}
+            environment={environment}
             onToggleMobile={() => setMobileOpen(!mobileOpen)}
           />
-
-          <div className='pointer-events-none fixed bottom-4 right-8 z-30'>
-            <div
-              className={cn(
-                'rounded-md border px-3 py-1.5 text-[11px] font-semibold shadow-lg backdrop-blur-xs',
-                environment === 'production'
-                  ? 'border-teal-400/30 bg-teal-500/12 text-teal-200'
-                  : 'border-amber-400/30 bg-amber-500/12 text-amber-200',
-              )}>
-              {environmentLabel}
-            </div>
-          </div>
 
           {sessionValue.actingAsRole && (
             <div className='border-b border-teal-400/20 bg-gradient-to-r from-primary/10 to-teal-400/10 px-4 py-2.5 md:px-6 lg:px-8'>

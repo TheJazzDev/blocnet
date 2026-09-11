@@ -34,6 +34,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { AdminEnvironment } from '@/lib/environment';
+import { EnvironmentBadge } from './EnvironmentBadge';
 import {
   canManageTags,
   canManageSocialCredentials,
@@ -175,6 +177,7 @@ export function SidebarContent({
   user,
   topRole,
   roleOptions,
+  environment,
   onChangeRoleView,
   onResetRoleView,
 }: {
@@ -183,6 +186,7 @@ export function SidebarContent({
   user: SidebarUser;
   topRole: AdminPanelRole | null;
   roleOptions: AdminPanelRole[];
+  environment: AdminEnvironment;
   onChangeRoleView: (role: AdminPanelRole | null) => void;
   onResetRoleView: () => void;
 }) {
@@ -195,7 +199,7 @@ export function SidebarContent({
   return (
     <>
       <div className='flex items-center gap-2.5 px-4 py-5'>
-        <div className='flex h-8 w-8 items-center justify-center'>
+        <div className='flex h-8 w-8 shrink-0 items-center justify-center'>
           <Image
             src='/logo2.png'
             alt='Blocnet'
@@ -204,8 +208,11 @@ export function SidebarContent({
             priority
           />
         </div>
-        <div>
-          <h1 className='text-sm font-bold tracking-tight'>Blocnet Console</h1>
+        <div className='flex min-w-0 flex-1 items-center justify-between gap-2'>
+          <h1 className='truncate text-sm font-bold tracking-tight'>
+            Blocnet Console
+          </h1>
+          <EnvironmentBadge environment={environment} />
         </div>
       </div>
       <Separator />
