@@ -99,8 +99,7 @@ export * from './use-my-entity-query';
 
 ## Documentation
 
-See `/console/TANSTACK_QUERY_SETUP.md` for complete documentation including:
-- Migration guide
+See `console/CLAUDE.md` (State Architecture) and the [TanStack Query docs](https://tanstack.com/query/latest) for:
 - Best practices
 - Pagination examples
 - Optimistic updates
