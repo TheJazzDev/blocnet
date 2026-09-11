@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -52,21 +53,10 @@ export class QuestsAdminController {
     return this.questsService.getAllQuests(includeInactive === 'true');
   }
 
-  @Patch(':questId')
-  @ApiOperation({ summary: 'Admin: Update a quest' })
-  @ApiResponse({
-    status: 200,
-    description: 'Quest updated successfully',
-    type: QuestResponseDto,
-  })
-  async updateQuest(
-    @Param('questId') questId: string,
-    @Body() dto: UpdateQuestDto,
-    @CurrentUser('id') adminId: string,
-  ) {
-    return this.questsService.updateQuest(questId, dto, adminId);
-  }
-
+  // Static paths are declared before the `:questId` catch-all. Express matches
+  // on method + path so the ordering is not load-bearing today, but
+  // ParseUUIDPipe below is: it turns e.g. PATCH /admin/quests/submissions into
+  // a 400 instead of a lookup for questId='submissions'.
   @Get('submissions')
   @ApiOperation({ summary: 'Admin: Get quest submissions' })
   @ApiResponse({
@@ -91,6 +81,21 @@ export class QuestsAdminController {
     );
   }
 
+  @Patch(':questId')
+  @ApiOperation({ summary: 'Admin: Update a quest' })
+  @ApiResponse({
+    status: 200,
+    description: 'Quest updated successfully',
+    type: QuestResponseDto,
+  })
+  async updateQuest(
+    @Param('questId', new ParseUUIDPipe()) questId: string,
+    @Body() dto: UpdateQuestDto,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.questsService.updateQuest(questId, dto, adminId);
+  }
+
   @Post('submissions/:submissionId/approve')
   @ApiOperation({ summary: 'Admin: Approve quest submission' })
   @ApiResponse({
@@ -98,7 +103,7 @@ export class QuestsAdminController {
     description: 'Submission approved and rewards awarded',
   })
   async approveSubmission(
-    @Param('submissionId') submissionId: string,
+    @Param('submissionId', new ParseUUIDPipe()) submissionId: string,
     @Body() dto: { reviewNotes?: string },
     @CurrentUser('id') adminId: string,
   ) {
@@ -116,7 +121,7 @@ export class QuestsAdminController {
     description: 'Submission rejected',
   })
   async rejectSubmission(
-    @Param('submissionId') submissionId: string,
+    @Param('submissionId', new ParseUUIDPipe()) submissionId: string,
     @Body() dto: { reviewNotes?: string; rejectionReason?: string },
     @CurrentUser('id') adminId: string,
   ) {
@@ -140,7 +145,7 @@ export class QuestsAdminController {
     description: 'Submission approval revoked and rewards reversed',
   })
   async revokeSubmission(
-    @Param('submissionId') submissionId: string,
+    @Param('submissionId', new ParseUUIDPipe()) submissionId: string,
     @Body() dto: RevokeQuestSubmissionDto,
     @CurrentUser('id') adminId: string,
   ) {
