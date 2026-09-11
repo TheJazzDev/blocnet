@@ -15,11 +15,13 @@ import {
 import { createPublicClient, http } from 'viem';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
+import { buildLifetimeMiningTotals } from '../mining/dto/lifetime-mining-totals.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { TurnkeyCustodyAdapter } from './custody/turnkey-custody.adapter';
 import { normalizePagination } from '../common/utils/pagination.util';
 import { ListWalletUsersQuery } from './dto/list-wallet-users.query';
 import { ReprocessDepositByTxHashDto } from './dto/reprocess-deposit-by-tx-hash.dto';
+import type { WalletHealthMiningTotals } from './dto/wallet-health-mining-totals.dto';
 import { toDecimalString } from './types/decimal';
 import { WalletConfigService } from './wallet-config.service';
 import { WalletDepositIndexerService } from './wallet-deposit-indexer.service';
@@ -307,12 +309,13 @@ export class WalletAdminService {
       totalAmount: toDecimalString(row._sum.amount),
     }));
 
-    const lifetimeMinedMcr = lifetimeMinedAggregate._sum.points ?? 0;
-    const lifetimeClaimedMcr = lifetimeClaimedAggregate._sum.points ?? 0;
-    const lifetimeUnclaimedMcr = Math.max(
-      lifetimeMinedMcr - lifetimeClaimedMcr,
-      0,
-    );
+    const mining: WalletHealthMiningTotals = {
+      ...buildLifetimeMiningTotals(
+        lifetimeMinedAggregate._sum.points,
+        lifetimeClaimedAggregate._sum.points,
+      ),
+      totalMiners: lifetimeMinersRows.length,
+    };
     const questRewardPoints = questRewardAggregate._sum.points ?? 0;
     const questRewardEvents = questRewardAggregate._count._all ?? 0;
 
@@ -352,12 +355,7 @@ export class WalletAdminService {
         walletAssetHoldings,
         tipCurrencyTotals,
         creditedDepositsTotals,
-        mining: {
-          lifetimeMinedMcr,
-          lifetimeClaimedMcr,
-          lifetimeUnclaimedMcr,
-          totalMiners: lifetimeMinersRows.length,
-        },
+        mining,
         quests: {
           rewardPointsTotal: questRewardPoints,
           rewardEventsTotal: questRewardEvents,
