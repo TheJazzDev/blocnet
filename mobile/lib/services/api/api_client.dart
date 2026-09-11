@@ -42,10 +42,33 @@ class ApiClient {
     _tokenRefresher = refresher;
   }
 
-  Future<dynamic> get(String path, {Map<String, String>? query}) async {
+  /// Identical GETs (same path + query) issued while one is still in flight
+  /// share that request instead of hitting the network again. Several
+  /// stores fetch the same list on cold start (`/projects`, `/updates`);
+  /// this collapses them without any store knowing about the other.
+  static final Map<String, Future<dynamic>> _inFlightGets = {};
+
+  Future<dynamic> get(String path, {Map<String, String>? query}) {
     final uri = _buildUri(path, query);
-    final response =
-        await _request(() => _httpClient.get(uri, headers: _headers()));
+    final key = uri.toString();
+    final pending = _inFlightGets[key];
+    if (pending != null) return pending;
+
+    final request = _performGet(uri, label: path);
+    _inFlightGets[key] = request;
+    request.whenComplete(() {
+      if (identical(_inFlightGets[key], request)) {
+        _inFlightGets.remove(key);
+      }
+    }).ignore();
+    return request;
+  }
+
+  Future<dynamic> _performGet(Uri uri, {required String label}) async {
+    final response = await _request(
+      () => _httpClient.get(uri, headers: _headers()),
+      label: label,
+    );
     return _parseResponse(response);
   }
 
@@ -57,6 +80,7 @@ class ApiClient {
         headers: _headers(),
         body: body == null ? null : jsonEncode(body),
       ),
+      label: path,
     );
     return _parseResponse(response);
   }
@@ -69,6 +93,7 @@ class ApiClient {
         headers: _headers(),
         body: body == null ? null : jsonEncode(body),
       ),
+      label: path,
     );
     return _parseResponse(response);
   }
@@ -81,14 +106,17 @@ class ApiClient {
         headers: _headers(),
         body: body == null ? null : jsonEncode(body),
       ),
+      label: path,
     );
     return _parseResponse(response);
   }
 
   Future<dynamic> delete(String path) async {
     final uri = _buildUri(path);
-    final response =
-        await _request(() => _httpClient.delete(uri, headers: _headers()));
+    final response = await _request(
+      () => _httpClient.delete(uri, headers: _headers()),
+      label: path,
+    );
     return _parseResponse(response);
   }
 
@@ -101,7 +129,7 @@ class ApiClient {
     final uri = _buildUri(path);
 
     Future<http.StreamedResponse> send() async {
-      StartupMetricsService.recordApiCall();
+      StartupMetricsService.recordApiCall(label: path);
       final request = http.MultipartRequest('POST', uri);
       request.headers['Accept'] = 'application/json';
 
@@ -181,9 +209,12 @@ class ApiClient {
     return headers;
   }
 
-  Future<http.Response> _request(Future<http.Response> Function() call) async {
+  Future<http.Response> _request(
+    Future<http.Response> Function() call, {
+    String? label,
+  }) async {
     try {
-      StartupMetricsService.recordApiCall();
+      StartupMetricsService.recordApiCall(label: label);
       final response = await call().timeout(_requestTimeout);
       if (response.statusCode == 401) {
         final refreshedToken = await _refreshAuthToken();

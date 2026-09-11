@@ -7,6 +7,7 @@ import 'package:blocnet/features/projects/presentation/sections/explore/explore.
 import 'package:blocnet/features/projects/presentation/widgets/home/catch_up_banner.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/empty_feed.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/app/theme.dart';
@@ -102,15 +103,9 @@ class _FeedLoadingPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: const Padding(
-        padding: EdgeInsets.symmetric(vertical: 40),
-        child: Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2.6,
-          ),
-        ),
-      ),
+    return const SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: AppSpace.lg),
+      sliver: SliverToBoxAdapter(child: FeedSkeleton()),
     );
   }
 }

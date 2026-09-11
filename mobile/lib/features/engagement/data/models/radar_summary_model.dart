@@ -51,6 +51,28 @@ class RadarSummary {
 
   bool get hasUpdates => newUpdatesCount > 0 || highUrgencyCount > 0;
 
+  /// True when everything the radar card renders is identical. [asOf] is
+  /// ignored because it changes on every request.
+  bool contentEquals(RadarSummary other) {
+    if (lastSeenAt != other.lastSeenAt ||
+        newUpdatesCount != other.newUpdatesCount ||
+        highUrgencyCount != other.highUrgencyCount ||
+        activeProjects.length != other.activeProjects.length) {
+      return false;
+    }
+    for (var i = 0; i < activeProjects.length; i++) {
+      final a = activeProjects[i];
+      final b = other.activeProjects[i];
+      if (a.projectId != b.projectId ||
+          a.projectName != b.projectName ||
+          a.newCount != b.newCount ||
+          a.highCount != b.highCount) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   factory RadarSummary.fromApi(Map<String, dynamic> json) {
     final activeProjects =
         (json['activeProjects'] as List<dynamic>? ?? const [])
