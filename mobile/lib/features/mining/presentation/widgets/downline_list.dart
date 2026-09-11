@@ -1,7 +1,9 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
@@ -159,15 +161,12 @@ class _DownlineTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.username?.trim().isNotEmpty == true
-                      ? '@${item.username!.trim().replaceAll('@', '')}'
-                      : (item.displayName?.trim().isNotEmpty == true
-                          ? item.displayName!
-                          : 'User'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.custom(
+                UserNameWithLevelIcon(
+                  name: _displayLabel(item),
+                  currentLevel: item.currentLevel,
+                  levelBadgeSize: LevelBadgeSize.tiny,
+                  iconSpacing: 4,
+                  textStyle: AppTypography.custom(
                     color: AppColors.textPrimary,
                     size: 13,
                     weight: FontWeight.w700,
@@ -231,6 +230,16 @@ class _DownlineTile extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _displayLabel(DownlineMember member) {
+    if (member.username?.trim().isNotEmpty == true) {
+      return '@${member.username!.trim().replaceAll('@', '')}';
+    }
+    if (member.displayName?.trim().isNotEmpty == true) {
+      return member.displayName!;
+    }
+    return 'User';
   }
 
   String _initials(DownlineMember member) {

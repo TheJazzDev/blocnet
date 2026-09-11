@@ -2,23 +2,9 @@ import { apiFetch } from '@/lib/api-client-http';
 import axios from 'axios';
 import { extractApiErrorMessage } from '@/lib/api-error';
 
-export interface UserLevel {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  iconUrl: string;
-  level: number;
-  requiredBnp: string;
-  requiredComments: number;
-  requiredDaysActive: number;
-  requiredQuests: number;
-  requiredUpdates: number;
-  requiredProjects: number;
-  color: string | null;
-  isActive: boolean;
-  sortOrder: number;
-}
+import type { UserLevel } from './server-types-levels';
+
+export type { UserLevel };
 
 export interface UpdateLevelInput {
   name?: string;

@@ -1,4 +1,5 @@
 import type { WalletKycStatus, WalletStatus } from "./server-types-wallet";
+import type { UserLevel } from "./server-types-levels";
 
 export interface AdminMe {
   id: string;
@@ -46,6 +47,7 @@ export interface AdminUser {
   updatesPosted: number;
   badgesCount: number;
   primaryBadge: AdminBadgeSummary | null;
+  currentLevel: UserLevel | null;
   createdAt: string;
 }
 
@@ -79,6 +81,7 @@ export interface AdminUserDetail {
   updatedAt: string;
   roles: string[];
   primaryBadge: AdminBadgeSummary | null;
+  currentLevel: UserLevel | null;
   badges: Array<{
     earnedAt: string;
     badge: AdminBadgeSummary;

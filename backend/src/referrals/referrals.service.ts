@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
+import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
 import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
@@ -74,6 +75,9 @@ export class ReferralsService {
                 displayName: true,
                 username: true,
                 referralCode: true,
+                currentLevel: {
+                  select: currentLevelSelect,
+                },
               },
             })
           : Promise.resolve(null),
@@ -86,7 +90,15 @@ export class ReferralsService {
 
     return {
       code: profile.referralCode,
-      referredBy: referrer,
+      referredBy: referrer
+        ? {
+            id: referrer.id,
+            displayName: referrer.displayName,
+            username: referrer.username,
+            referralCode: referrer.referralCode,
+            currentLevel: toCurrentLevelDto(referrer.currentLevel),
+          }
+        : null,
       referredAt: profile.referredAt,
       canBindUntil,
       bindWindowOpen: !profile.referredById && asOf <= canBindUntil,
@@ -106,13 +118,23 @@ export class ReferralsService {
         id: true,
         displayName: true,
         username: true,
+        currentLevel: {
+          select: currentLevelSelect,
+        },
       },
     });
 
     return {
       valid: !!profile,
       code,
-      referrer: profile,
+      referrer: profile
+        ? {
+            id: profile.id,
+            displayName: profile.displayName,
+            username: profile.username,
+            currentLevel: toCurrentLevelDto(profile.currentLevel),
+          }
+        : null,
     };
   }
 
@@ -321,6 +343,9 @@ export class ReferralsService {
           avatarUrl: true,
           referredAt: true,
           miningClaimedPoints: true,
+          currentLevel: {
+            select: currentLevelSelect,
+          },
           miningSessions: {
             orderBy: {
               startsAt: 'desc',
@@ -368,6 +393,7 @@ export class ReferralsService {
         displayName: row.displayName,
         avatarUrl: row.avatarUrl,
         referredAt: row.referredAt,
+        currentLevel: toCurrentLevelDto(row.currentLevel),
         status,
         isActive,
         progressPct,

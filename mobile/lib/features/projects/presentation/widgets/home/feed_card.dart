@@ -110,38 +110,32 @@ class _FeedCardState extends State<FeedCard>
     }
   }
 
-  Future<void> _ensureAuthorLevel() async {
+  /// Resolves the author's level without a network round-trip.
+  ///
+  /// The updates payload already carries `author.currentLevel`; when it is
+  /// missing we only consult the [LevelsStore] cache. Fetching
+  /// `/levels/user/:id` per card caused an N+1 on the feed, so no request is
+  /// made here. Called from [initState] and [didUpdateWidget], both of which
+  /// are followed by a build, so fields are assigned directly.
+  void _ensureAuthorLevel() {
     final author = post.admin;
-    if (author == null) return;
-    if (author.currentLevel != null) return;
+    if (author == null || author.currentLevel != null) return;
 
     final authorId = author.id.trim();
     if (authorId.isEmpty) return;
+    if (_resolvedAuthorId == authorId && _resolvedAuthorLevel != null) return;
 
-    final levelsStore = context.read<LevelsStore>();
-    final cachedLevel = levelsStore.cachedLevelForUser(authorId);
-    if (cachedLevel != null) {
-      if (!mounted) return;
-      setState(() {
-        _resolvedAuthorId = authorId;
-        _resolvedAuthorLevel = cachedLevel;
-      });
+    UserLevelModel? cachedLevel;
+    try {
+      cachedLevel = context.read<LevelsStore>().cachedLevelForUser(authorId);
+    } catch (_) {
+      // Ignore provider errors in previews/tests where stores are absent.
       return;
     }
+    if (cachedLevel == null) return;
 
-    if (_resolvedAuthorId == authorId && _resolvedAuthorLevel != null) {
-      return;
-    }
-
-    final progress = await levelsStore.getUserLevel(authorId);
-    if (!mounted) return;
-    if (post.admin?.id.trim() != authorId) return;
-    if (progress?.currentLevel == null) return;
-
-    setState(() {
-      _resolvedAuthorId = authorId;
-      _resolvedAuthorLevel = progress!.currentLevel;
-    });
+    _resolvedAuthorId = authorId;
+    _resolvedAuthorLevel = cachedLevel;
   }
 
   Future<void> _loadBookmarkState() async {

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationType, Prisma } from '@prisma/client';
+import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -132,6 +133,9 @@ export class MentionsService {
         username: true,
         displayName: true,
         avatarUrl: true,
+        currentLevel: {
+          select: currentLevelSelect,
+        },
       },
     });
 
@@ -148,6 +152,7 @@ export class MentionsService {
         username,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
+        currentLevel: toCurrentLevelDto(user.currentLevel),
       };
     });
   }

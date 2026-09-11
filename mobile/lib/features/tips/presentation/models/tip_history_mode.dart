@@ -1,0 +1,1 @@
+enum TipHistoryMode { sent, received }

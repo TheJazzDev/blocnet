@@ -4,7 +4,7 @@ import 'package:blocnet/features/profile/data/models/profile_search_result_model
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
-import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/blocnet_search_people_tile.dart';
 import 'package:flutter/material.dart';
 
 class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
@@ -154,46 +154,12 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                     ),
                   )
                 else
-                  ...profileMatches.map((profile) {
-                    final avatarUrl = profile.avatarUrl?.trim() ?? '';
-                    final roles = _searchRoleLabels(profile.roles);
-                    return ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      leading: AppAvatar(
-                        radius: 14,
-                        imageUrl: avatarUrl,
-                        fallback: Icon(
-                          Icons.person_outline_rounded,
-                          color: AppColors.textMuted,
-                          size: 16,
-                        ),
-                      ),
-                      title: Text(
-                        profile.label,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontFamily: 'Geist',
-                          fontSize: 14,
-                        ),
-                      ),
-                      subtitle: Text(
-                        profile.handle.isNotEmpty
-                            ? (roles.isNotEmpty
-                                ? '${profile.handle} · $roles'
-                                : profile.handle)
-                            : roles,
-                        style: TextStyle(
-                          color: AppColors.textFaint,
-                          fontFamily: 'Geist',
-                          fontSize: 12,
-                        ),
-                      ),
-                      onTap: () {
-                        close(context, _asAdmin(profile));
-                      },
-                    );
-                  }),
+                  ...profileMatches.map(
+                    (profile) => BlocnetSearchPeopleTile(
+                      profile: profile,
+                      onTap: () => close(context, _asAdmin(profile)),
+                    ),
+                  ),
                 const SizedBox(height: 10),
               ],
               if (projectMatches.isNotEmpty) ...[
@@ -289,16 +255,6 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
     );
   }
 
-  String _searchRoleLabels(List<String> roles) {
-    final normalized = roles.map((role) => role.toLowerCase()).toSet();
-    final labels = <String>[];
-    if (normalized.contains('owner') || normalized.contains('admin')) {
-      labels.add('Admin');
-    }
-    if (normalized.contains('hunter')) labels.add('Hunter');
-    return labels.join(' • ');
-  }
-
   Admin _asAdmin(ProfileSearchResult result) {
     final name = (result.displayName?.trim().isNotEmpty ?? false)
         ? result.displayName!.trim()
@@ -313,6 +269,7 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
       imageUrl: result.avatarUrl?.trim() ?? '',
       followers: result.followersCount,
       roles: result.roles,
+      currentLevel: result.currentLevel,
     );
   }
 }

@@ -1,7 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/season_leaderboard_row.dart';
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/engagement/levels_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -23,6 +26,7 @@ class SeasonLeaderboard extends StatelessWidget {
     final updates = context.watch<UpdatesStore>().updates;
     final currentUserId = auth.userId ?? '';
     final currentUsername = auth.username ?? auth.displayName ?? 'You';
+    final myLevel = _readMyLevel(context);
 
     final scores = <String, _LeaderboardScore>{};
     for (final update in updates) {
@@ -43,6 +47,7 @@ class SeasonLeaderboard extends StatelessWidget {
           updatesCount: 1,
           totalTipsReceived: update.admin?.totalTipsReceived ?? 0,
           lastUpdateAt: update.createdAt,
+          currentLevel: update.admin?.currentLevel,
         );
       } else {
         final nextLastUpdate = update.createdAt.isAfter(existing.lastUpdateAt)
@@ -59,6 +64,7 @@ class SeasonLeaderboard extends StatelessWidget {
               ? existing.totalTipsReceived
               : (update.admin?.totalTipsReceived ?? 0),
           lastUpdateAt: nextLastUpdate,
+          currentLevel: update.admin?.currentLevel,
         );
       }
     }
@@ -72,37 +78,37 @@ class SeasonLeaderboard extends StatelessWidget {
         return a.username.compareTo(b.username);
       });
 
-    final entries = ranked
-        .asMap()
-        .entries
-        .map(
-          (entry) => _LeaderboardEntry(
-            rank: entry.key + 1,
-            username: entry.value.username,
-            updatesCount: entry.value.updatesCount,
-            totalTipsReceived: entry.value.totalTipsReceived,
-            isCurrentUser: _isCurrentUser(
-              adminId: entry.value.adminId,
-              username: entry.value.username,
-              currentUserId: currentUserId,
-              currentUsername: currentUsername,
-            ),
-          ),
-        )
-        .toList();
+    final entries = ranked.asMap().entries.map((entry) {
+      final isCurrentUser = _isCurrentUser(
+        adminId: entry.value.adminId,
+        username: entry.value.username,
+        currentUserId: currentUserId,
+        currentUsername: currentUsername,
+      );
+      return SeasonLeaderboardEntry(
+        rank: entry.key + 1,
+        username: entry.value.username,
+        updatesCount: entry.value.updatesCount,
+        totalTipsReceived: entry.value.totalTipsReceived,
+        isCurrentUser: isCurrentUser,
+        currentLevel: entry.value.currentLevel ??
+            (isCurrentUser ? myLevel : null),
+      );
+    }).toList();
 
     final currentEntryIndex =
         entries.indexWhere((entry) => entry.isCurrentUser);
-    final fallbackCurrent = _LeaderboardEntry(
+    final fallbackCurrent = SeasonLeaderboardEntry(
       rank: entries.length + 1,
       username: _formatUsername(currentUsername),
       updatesCount: 0,
       totalTipsReceived: 0,
       isCurrentUser: true,
+      currentLevel: myLevel,
     );
 
-    final rows = <_LeaderboardEntry>[];
-    void addRow(_LeaderboardEntry row) {
+    final rows = <SeasonLeaderboardEntry>[];
+    void addRow(SeasonLeaderboardEntry row) {
       final exists = rows.any(
         (item) => item.rank == row.rank && item.username == row.username,
       );
@@ -193,7 +199,7 @@ class SeasonLeaderboard extends StatelessWidget {
             final isLast = entry.key == rows.length - 1;
             return Column(
               children: [
-                _LeaderboardRow(entry: entry.value),
+                SeasonLeaderboardRow(entry: entry.value),
                 if (!isLast) const Divider(height: 1),
               ],
             );
@@ -238,6 +244,7 @@ class _LeaderboardScore {
     required this.updatesCount,
     required this.totalTipsReceived,
     required this.lastUpdateAt,
+    this.currentLevel,
   });
 
   final String adminId;
@@ -245,12 +252,14 @@ class _LeaderboardScore {
   final int updatesCount;
   final double totalTipsReceived;
   final DateTime lastUpdateAt;
+  final UserLevelModel? currentLevel;
 
   _LeaderboardScore copyWith({
     String? username,
     int? updatesCount,
     double? totalTipsReceived,
     DateTime? lastUpdateAt,
+    UserLevelModel? currentLevel,
   }) {
     return _LeaderboardScore(
       adminId: adminId,
@@ -258,96 +267,7 @@ class _LeaderboardScore {
       updatesCount: updatesCount ?? this.updatesCount,
       totalTipsReceived: totalTipsReceived ?? this.totalTipsReceived,
       lastUpdateAt: lastUpdateAt ?? this.lastUpdateAt,
-    );
-  }
-}
-
-class _LeaderboardEntry {
-  const _LeaderboardEntry({
-    required this.rank,
-    required this.username,
-    required this.updatesCount,
-    required this.totalTipsReceived,
-    required this.isCurrentUser,
-  });
-
-  final int rank;
-  final String username;
-  final int updatesCount;
-  final double totalTipsReceived;
-  final bool isCurrentUser;
-}
-
-class _LeaderboardRow extends StatelessWidget {
-  const _LeaderboardRow({required this.entry});
-
-  final _LeaderboardEntry entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final rankColor = entry.rank == 1
-        ? const Color(0xFFFFD700)
-        : entry.isCurrentUser
-            ? AppColors.primary400
-            : AppColors.textMuted;
-
-    return Container(
-      color: entry.isCurrentUser
-          ? AppColors.primary500.withValues(alpha: 0.06)
-          : Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 34,
-            child: Text(
-              '#${entry.rank}',
-              style: AppTypography.custom(
-                color: rankColor,
-                size: 13,
-                weight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              entry.isCurrentUser ? 'You (${entry.username})' : entry.username,
-              style: AppTypography.custom(
-                color: entry.isCurrentUser
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary,
-                size: 12,
-                weight: entry.isCurrentUser ? FontWeight.w600 : FontWeight.w400,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            entry.updatesCount.toString(),
-            style: AppTypography.custom(
-              color: entry.isCurrentUser
-                  ? AppColors.primary400
-                  : AppColors.textSecondary,
-              size: 12,
-              weight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 18),
-          Text(
-            _formatTipsReceived(entry.totalTipsReceived),
-            style: AppTypography.custom(
-              color: entry.isCurrentUser
-                  ? AppColors.primary400
-                  : AppColors.textSecondary,
-              size: 12,
-              weight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
+      currentLevel: currentLevel ?? this.currentLevel,
     );
   }
 }
@@ -401,9 +321,12 @@ bool _isCurrentUser({
   return normalizedCurrent.isNotEmpty && normalizedEntry == normalizedCurrent;
 }
 
-String _formatTipsReceived(double value) {
-  if (value == value.roundToDouble()) {
-    return value.toInt().toString();
+/// The signed-in hunter's own level, used when their row has no update-level
+/// data yet. Tolerates screens rendered without a [LevelsStore] provider.
+UserLevelModel? _readMyLevel(BuildContext context) {
+  try {
+    return context.watch<LevelsStore>().myProgress?.currentLevel;
+  } catch (_) {
+    return null;
   }
-  return value.toStringAsFixed(2);
 }

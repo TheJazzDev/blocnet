@@ -1,3 +1,6 @@
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/shared/utils/user_level_parsing.dart';
+
 class ProfileSearchResult {
   const ProfileSearchResult({
     required this.id,
@@ -6,6 +9,7 @@ class ProfileSearchResult {
     required this.avatarUrl,
     required this.followersCount,
     required this.roles,
+    this.currentLevel,
   });
 
   final String id;
@@ -14,6 +18,7 @@ class ProfileSearchResult {
   final String? avatarUrl;
   final int followersCount;
   final List<String> roles;
+  final UserLevelModel? currentLevel;
 
   bool get isHunter =>
       roles.map((role) => role.toLowerCase()).contains('hunter');
@@ -49,6 +54,7 @@ class ProfileSearchResult {
       avatarUrl: json['avatarUrl']?.toString(),
       followersCount: int.tryParse(json['followersCount']?.toString() ?? '') ?? 0,
       roles: roles,
+      currentLevel: parseCurrentLevel(json['currentLevel']),
     );
   }
 }

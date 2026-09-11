@@ -32,6 +32,7 @@ import {
   getInitials,
   roleBadge,
 } from "./users-table-utils";
+import { UserLevelCell } from "./UserLevelCell";
 
 type RoleFilter = "all" | "user" | "hunter" | "core_team";
 type StatusFilter = "all" | "active" | "deactivated";
@@ -198,6 +199,7 @@ export default function UsersPage() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Member Role</TableHead>
+                  <TableHead>Level</TableHead>
                   <TableHead>Badges</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Projects</TableHead>
@@ -227,6 +229,9 @@ export default function UsersPage() {
                       </div>
                     </TableCell>
                     <TableCell>{roleBadge(getHighestMemberRole(user.roles))}</TableCell>
+                    <TableCell>
+                      <UserLevelCell level={user.currentLevel ?? null} />
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">

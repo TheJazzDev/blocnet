@@ -43,6 +43,28 @@ void main() {
       expect(decision.route, AppRoutes.manageProjects);
     });
 
+    test('categorises level_up as rewards', () {
+      expect(NotificationTargetResolver.categoryForType('level_up'), 'rewards');
+      expect(NotificationTargetResolver.categoryForType('LEVEL_UP'), 'rewards');
+    });
+
+    test('routes level_up notifications to the levels screen', () {
+      final decision = NotificationTargetResolver.resolve(type: 'level_up');
+
+      expect(decision.opensUpdateDetails, isFalse);
+      expect(decision.route, AppRoutes.levels);
+      expect(decision.arguments, isNull);
+    });
+
+    test('routes /levels deeplinks to the levels screen', () {
+      final decision = NotificationTargetResolver.resolve(
+        type: 'unknown_type',
+        deeplink: 'blocnet://levels',
+      );
+
+      expect(decision.route, AppRoutes.levels);
+    });
+
     test('falls back to main for unsupported notifications', () {
       final decision = NotificationTargetResolver.resolve(
         type: 'unknown_type',

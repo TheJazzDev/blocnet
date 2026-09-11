@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 
 export const updateInclude = {
   author: {
@@ -25,23 +26,7 @@ export const updateInclude = {
         },
       },
       currentLevel: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          description: true,
-          iconUrl: true,
-          level: true,
-          requiredBnp: true,
-          requiredComments: true,
-          requiredDaysActive: true,
-          requiredQuests: true,
-          requiredUpdates: true,
-          requiredProjects: true,
-          color: true,
-          isActive: true,
-          sortOrder: true,
-        },
+        select: currentLevelSelect,
       },
     },
   },
@@ -109,25 +94,7 @@ export function toUpdateResponse(
       followers: 0,
       roles: update.author.roles.map((entry) => entry.role),
       primaryBadge: update.author.primaryBadge ?? null,
-      currentLevel: update.author.currentLevel
-        ? {
-            id: update.author.currentLevel.id,
-            slug: update.author.currentLevel.slug,
-            name: update.author.currentLevel.name,
-            description: update.author.currentLevel.description,
-            iconUrl: update.author.currentLevel.iconUrl,
-            level: update.author.currentLevel.level,
-            requiredBnp: update.author.currentLevel.requiredBnp.toString(),
-            requiredComments: update.author.currentLevel.requiredComments,
-            requiredDaysActive: update.author.currentLevel.requiredDaysActive,
-            requiredQuests: update.author.currentLevel.requiredQuests,
-            requiredUpdates: update.author.currentLevel.requiredUpdates,
-            requiredProjects: update.author.currentLevel.requiredProjects,
-            color: update.author.currentLevel.color,
-            isActive: update.author.currentLevel.isActive,
-            sortOrder: update.author.currentLevel.sortOrder,
-          }
-        : null,
+      currentLevel: toCurrentLevelDto(update.author.currentLevel),
     },
     project: {
       id: update.project.id,

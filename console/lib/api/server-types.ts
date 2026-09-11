@@ -5,3 +5,4 @@ export * from './server-types-security';
 export * from './server-types-wallet-health';
 export * from './server-types-tips-mining';
 export * from './server-types-roles';
+export * from './server-types-levels';

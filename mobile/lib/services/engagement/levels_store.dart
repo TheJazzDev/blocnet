@@ -11,8 +11,11 @@ class LevelsStore with ChangeNotifier {
   UserLevelProgressModel? _myProgress;
   bool _isLoadingLevels = false;
   bool _isLoadingProgress = false;
+  bool _isRecalculating = false;
+  bool _levelChanged = false;
   String? _levelsError;
   String? _progressError;
+  Future<void>? _inFlightProgress;
   final Map<String, UserLevelProgressModel> _userProgressByUserId = {};
   final Map<String, Future<UserLevelProgressModel?>> _inFlightUserLevels = {};
 
@@ -20,6 +23,11 @@ class LevelsStore with ChangeNotifier {
   UserLevelProgressModel? get myProgress => _myProgress;
   bool get isLoadingLevels => _isLoadingLevels;
   bool get isLoadingProgress => _isLoadingProgress;
+  bool get isRecalculating => _isRecalculating;
+
+  /// Whether the most recent [recalculateMyLevel] call moved the user to a
+  /// different level. Reset at the start of every recalculation.
+  bool get levelChanged => _levelChanged;
   String? get levelsError => _levelsError;
   String? get progressError => _progressError;
 
@@ -56,10 +64,22 @@ class LevelsStore with ChangeNotifier {
     }
   }
 
-  /// Fetch the current user's level progress
-  Future<void> fetchMyProgress() async {
-    if (_isLoadingProgress) return;
+  /// Fetch the current user's level progress.
+  ///
+  /// Concurrent callers share the in-flight request instead of firing a
+  /// second one.
+  Future<void> fetchMyProgress() {
+    final inFlight = _inFlightProgress;
+    if (inFlight != null) return inFlight;
 
+    final request = _fetchMyProgress();
+    _inFlightProgress = request;
+    return request.whenComplete(() {
+      if (identical(_inFlightProgress, request)) _inFlightProgress = null;
+    });
+  }
+
+  Future<void> _fetchMyProgress() async {
     _isLoadingProgress = true;
     _progressError = null;
     notifyListeners();
@@ -124,21 +144,53 @@ class LevelsStore with ChangeNotifier {
     return null;
   }
 
-  /// Manually trigger a level recalculation for the current user
+  /// Manually trigger a level recalculation for the current user.
+  ///
+  /// The endpoint answers with `{levelChanged, previousLevel, currentLevel}`
+  /// only, so the full progress (metrics, next level, progress bars) is
+  /// re-fetched from `/levels/me` afterwards. Returns `true` when the
+  /// recalculation itself succeeded; check [levelChanged] for the outcome.
   Future<bool> recalculateMyLevel() async {
+    if (_isRecalculating) return false;
+
+    _isRecalculating = true;
+    _levelChanged = false;
+    notifyListeners();
+
     try {
       final response = await _api.patch('/levels/me/recalculate');
-      if (response is Map<String, dynamic>) {
-        _myProgress = UserLevelProgressModel.fromApi(response);
-        notifyListeners();
-        return true;
+      if (response is! Map) return false;
+
+      _levelChanged = response['levelChanged'] == true;
+      final currentLevel = _levelFromRaw(response['currentLevel']);
+
+      // Wait for any fetch that started before the recalculation so its
+      // stale result cannot overwrite the refreshed one.
+      final pending = _inFlightProgress;
+      if (pending != null) await pending;
+      await fetchMyProgress();
+
+      // If the refresh failed, at least reflect the confirmed level.
+      final existing = _myProgress;
+      if (_progressError != null && existing != null && currentLevel != null) {
+        _myProgress = existing.copyWith(currentLevel: currentLevel);
       }
+      return true;
     } on ApiException catch (e) {
       debugPrint('Failed to recalculate level: ${e.message}');
     } catch (e) {
       debugPrint('Failed to recalculate level: $e');
+    } finally {
+      _isRecalculating = false;
+      notifyListeners();
     }
     return false;
+  }
+
+  static UserLevelModel? _levelFromRaw(Object? raw) {
+    if (raw is! Map) return null;
+    final json = raw.map((key, value) => MapEntry(key.toString(), value));
+    return UserLevelModel.fromApi(json);
   }
 
   /// Get level by level number
@@ -166,6 +218,9 @@ class LevelsStore with ChangeNotifier {
     _progressError = null;
     _isLoadingLevels = false;
     _isLoadingProgress = false;
+    _isRecalculating = false;
+    _levelChanged = false;
+    _inFlightProgress = null;
     notifyListeners();
   }
 

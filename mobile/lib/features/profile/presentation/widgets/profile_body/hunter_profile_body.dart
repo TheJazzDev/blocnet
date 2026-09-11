@@ -1,10 +1,13 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/features/profile/presentation/widgets/profile_level_pill.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/engagement/levels_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
@@ -45,6 +48,10 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
       final profileStore = context.read<UserProfileStore>();
       profileStore.fetchInitialOnce(userId: widget.auth.userId ?? '');
       profileStore.refreshFollowingProfiles();
+      final levelsStore = context.read<LevelsStore>();
+      if (levelsStore.myProgress == null) {
+        levelsStore.fetchMyProgress();
+      }
     });
   }
 
@@ -62,6 +69,7 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
     final followingCount =
         context.watch<UserProfileStore>().followingProfilesCount;
     final viewMode = context.watch<FeedViewModeStore>().mode;
+    final currentLevel = context.watch<LevelsStore>().myProgress?.currentLevel;
 
     final managedProjects = projects
         .where(
@@ -136,10 +144,12 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
         final projectsStore = context.read<ProjectsStore>();
         final updatesStore = context.read<UpdatesStore>();
         final userProfileStore = context.read<UserProfileStore>();
+        final levelsStore = context.read<LevelsStore>();
         await Future.wait([
           projectsStore.refreshProjects(),
           updatesStore.refreshUpdates(),
           userProfileStore.refreshAll(),
+          levelsStore.fetchMyProgress(),
         ]);
       },
       child: SingleChildScrollView(
@@ -154,6 +164,7 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
               bio: auth.bio,
               followersCount: followerCount,
               followingCount: followingCount,
+              currentLevel: currentLevel,
               onEditTap: () =>
                   Navigator.of(context).pushNamed(AppRoutes.editProfile),
             ),

@@ -6,7 +6,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/mentions/data/models/mention_user_model.dart';
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
-import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/features/mentions/presentation/widgets/mention_suggestion_tile.dart';
 
 class MentionHighlightTextController extends TextEditingController {
   static final RegExp _mentionRegex = RegExp(r'@([a-zA-Z0-9._-]+)');
@@ -263,7 +263,10 @@ class _MentionTextFieldState extends State<MentionTextField> {
                 itemCount: _suggestions.length,
                 itemBuilder: (context, index) {
                   final user = _suggestions[index];
-                  return _buildSuggestionItem(user);
+                  return MentionSuggestionTile(
+                    user: user,
+                    onTap: () => _insertMention(user),
+                  );
                 },
               ),
             ),
@@ -273,57 +276,6 @@ class _MentionTextFieldState extends State<MentionTextField> {
     );
 
     Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  Widget _buildSuggestionItem(MentionUserModel user) {
-    return InkWell(
-      onTap: () => _insertMention(user),
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Row(
-          children: [
-            AppAvatar(
-              radius: 16,
-              imageUrl: user.avatarUrl,
-              backgroundColor: AppColors.primary400.withValues(alpha: 0.2),
-              fallback: Text(
-                user.username[0].toUpperCase(),
-                style: AppTypography.custom(
-                  color: AppColors.primary400,
-                  size: 12,
-                  weight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user.displayName ?? user.username,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: 13,
-                      weight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    '@${user.username}',
-                    style: AppTypography.custom(
-                      color: AppColors.textMuted,
-                      size: 11,
-                      weight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _insertMention(MentionUserModel user) {

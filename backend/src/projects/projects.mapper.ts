@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 
 export const projectInclude = {
   primaryTag: {
@@ -26,6 +27,9 @@ export const projectInclude = {
       username: true,
       displayName: true,
       avatarUrl: true,
+      currentLevel: {
+        select: currentLevelSelect,
+      },
     },
   },
   _count: {
@@ -61,6 +65,7 @@ export function toProjectResponse(project: ProjectWithRelations) {
       username,
       imageUrl: ownerAdmin.avatarUrl ?? '',
       followers: _count.follows,
+      currentLevel: toCurrentLevelDto(ownerAdmin.currentLevel),
     },
   };
 }

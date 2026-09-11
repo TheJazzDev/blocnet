@@ -1,9 +1,11 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
@@ -199,15 +201,12 @@ class _LeaderboardTile extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(
-                        item.displayName?.trim().isNotEmpty == true
-                            ? item.displayName!
-                            : (item.username?.trim().isNotEmpty == true
-                                ? '@${item.username!}'
-                                : item.userId),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.custom(
+                      child: UserNameWithLevelIcon(
+                        name: _displayLabel(item),
+                        currentLevel: item.currentLevel,
+                        levelBadgeSize: LevelBadgeSize.tiny,
+                        iconSpacing: 4,
+                        textStyle: AppTypography.custom(
                           color: AppColors.textPrimary,
                           size: 13,
                           weight: FontWeight.w700,
@@ -287,6 +286,16 @@ class _LeaderboardTile extends StatelessWidget {
     if (status == 'claimable') return AppColors.successColor;
     if (status == 'running') return AppColors.primary400;
     return AppColors.textFaint;
+  }
+
+  String _displayLabel(MiningLeaderboardEntry member) {
+    if (member.displayName?.trim().isNotEmpty == true) {
+      return member.displayName!;
+    }
+    if (member.username?.trim().isNotEmpty == true) {
+      return '@${member.username!}';
+    }
+    return member.userId;
   }
 
   String _initials(MiningLeaderboardEntry member) {

@@ -16,6 +16,11 @@ import {
   type TipTransaction,
 } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import {
+  currentLevelSelect,
+  toCurrentLevelDto,
+  type CurrentLevelRecord,
+} from '../levels/level-summary';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
 import {
   createDeterministicIdempotencyKey,
@@ -47,18 +52,16 @@ type CurrencyWithFeeConfig = TipCurrency & {
 
 type TipTxWithDetails = TipTransaction & {
   currency: TipCurrency;
-  sender: {
-    id: string;
-    username: string | null;
-    displayName: string | null;
-    avatarUrl: string | null;
-  };
-  recipient: {
-    id: string;
-    username: string | null;
-    displayName: string | null;
-    avatarUrl: string | null;
-  };
+  sender: TipParticipantRecord;
+  recipient: TipParticipantRecord;
+};
+
+type TipParticipantRecord = {
+  id: string;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  currentLevel: CurrentLevelRecord | null;
 };
 
 type TxClient = Prisma.TransactionClient | PrismaService;
@@ -747,6 +750,9 @@ export class TipsService {
           username: true,
           displayName: true,
           avatarUrl: true,
+          currentLevel: {
+            select: currentLevelSelect,
+          },
         },
       },
       recipient: {
@@ -755,9 +761,22 @@ export class TipsService {
           username: true,
           displayName: true,
           avatarUrl: true,
+          currentLevel: {
+            select: currentLevelSelect,
+          },
         },
       },
     } satisfies Prisma.TipTransactionInclude;
+  }
+
+  private toTipParticipantResponse(participant: TipParticipantRecord) {
+    return {
+      id: participant.id,
+      username: participant.username,
+      displayName: participant.displayName,
+      avatarUrl: participant.avatarUrl,
+      currentLevel: toCurrentLevelDto(participant.currentLevel),
+    };
   }
 
   private toTipTransactionResponse(
@@ -790,8 +809,8 @@ export class TipsService {
         row.totalDebitAtomic,
         row.currency.decimals,
       ),
-      sender: row.sender,
-      recipient: row.recipient,
+      sender: this.toTipParticipantResponse(row.sender),
+      recipient: this.toTipParticipantResponse(row.recipient),
       note: row.note,
       contextType: row.contextType,
       contextId: row.contextId,

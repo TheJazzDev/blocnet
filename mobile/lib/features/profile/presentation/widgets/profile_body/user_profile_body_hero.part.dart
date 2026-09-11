@@ -212,55 +212,7 @@ class _UserHero extends StatelessWidget {
           Positioned(
             right: 16,
             top: 14,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pushNamed(AppRoutes.levels),
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: AppColors.borderSubtle),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    LevelBadgeIcon(
-                      level: currentLevel!,
-                      size: LevelBadgeSize.small,
-                    ),
-                    const SizedBox(width: 4),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 130),
-                      child: Text(
-                        currentLevel!.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.custom(
-                          color: AppColors.textPrimary,
-                          size: 11,
-                          weight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Icon(
-                      Icons.chevron_right,
-                      size: 14,
-                      color: AppColors.textMuted,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            child: ProfileLevelPill(level: currentLevel!),
           ),
       ],
     );

@@ -15,3 +15,4 @@ export { useWalletWithdrawalsStore } from "./wallet-withdrawals-store";
 export { useTipsTransactionsStore } from "./tips-transactions-store";
 export { useQuestsStore } from "./quests-store";
 export { useQuestSubmissionsStore } from "./quest-submissions-store";
+export { useLevelsStore } from "./levels-store";

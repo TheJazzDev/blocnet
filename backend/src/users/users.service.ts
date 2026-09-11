@@ -13,6 +13,7 @@ import {
   UpdateUrgency,
 } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 import {
   buildCommunityPostInclude,
   toCommunityPostResponse,
@@ -236,8 +237,21 @@ export class UsersService {
               role: true,
             },
           },
-          currentLevel: true,
-          levelProgress: true,
+          currentLevel: {
+            select: currentLevelSelect,
+          },
+          levelProgress: {
+            select: {
+              achievedAt: true,
+              totalBnpEarned: true,
+              totalComments: true,
+              totalDaysActive: true,
+              totalQuestsCompleted: true,
+              totalUpdates: true,
+              totalProjects: true,
+              lastRecalculatedAt: true,
+            },
+          },
           _count: {
             select: {
               authoredUpdates: true,
@@ -322,6 +336,19 @@ export class UsersService {
       displayName: profile.displayName,
       avatarUrl: profile.avatarUrl,
       roles: profile.roles.map((row) => row.role),
+      currentLevel: toCurrentLevelDto(profile.currentLevel),
+      levelProgress: profile.levelProgress
+        ? {
+            achievedAt: profile.levelProgress.achievedAt,
+            totalBnpEarned: profile.levelProgress.totalBnpEarned.toString(),
+            totalComments: profile.levelProgress.totalComments,
+            totalDaysActive: profile.levelProgress.totalDaysActive,
+            totalQuestsCompleted: profile.levelProgress.totalQuestsCompleted,
+            totalUpdates: profile.levelProgress.totalUpdates,
+            totalProjects: profile.levelProgress.totalProjects,
+            lastRecalculatedAt: profile.levelProgress.lastRecalculatedAt,
+          }
+        : null,
       stats: {
         projectsCreated: profile._count.ownedProjects,
         updatesCreated: profile._count.authoredUpdates,
@@ -438,6 +465,9 @@ export class UsersService {
               role: true,
             },
           },
+          currentLevel: {
+            select: currentLevelSelect,
+          },
           _count: {
             select: {
               followerLinks: true,
@@ -456,6 +486,7 @@ export class UsersService {
         avatarUrl: row.avatarUrl,
         followersCount: row._count.followerLinks,
         roles: row.roles.map((entry) => entry.role),
+        currentLevel: toCurrentLevelDto(row.currentLevel),
         // Keep this field for compatibility with Admin.fromApi fallback handling.
         email: row.email,
       })),

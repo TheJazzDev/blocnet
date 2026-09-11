@@ -136,6 +136,68 @@ describe('ReferralsService', () => {
     );
   });
 
+  it('returns referrer with canonical currentLevel from validateCode', async () => {
+    prisma.profile.findUnique.mockResolvedValueOnce({
+      id: 'ref-1',
+      displayName: 'Referrer',
+      username: 'referrer',
+      currentLevel: {
+        id: 'level-3',
+        slug: 'builder',
+        name: 'Builder',
+        description: 'Ships things',
+        iconUrl: 'https://cdn.example/l3.png',
+        level: 3,
+        requiredBnp: BigInt(1000),
+        requiredComments: 5,
+        requiredDaysActive: 3,
+        requiredQuests: 1,
+        requiredUpdates: 2,
+        requiredProjects: 1,
+        color: '#123456',
+        isActive: true,
+        sortOrder: 3,
+      },
+    });
+
+    const result = await service.validateCode('abc123');
+
+    expect(result.valid).toBe(true);
+    expect(result.code).toBe('ABC123');
+    expect(result.referrer).toEqual({
+      id: 'ref-1',
+      displayName: 'Referrer',
+      username: 'referrer',
+      currentLevel: {
+        id: 'level-3',
+        slug: 'builder',
+        name: 'Builder',
+        description: 'Ships things',
+        iconUrl: 'https://cdn.example/l3.png',
+        level: 3,
+        requiredBnp: '1000',
+        requiredComments: 5,
+        requiredDaysActive: 3,
+        requiredQuests: 1,
+        requiredUpdates: 2,
+        requiredProjects: 1,
+        color: '#123456',
+        isActive: true,
+        sortOrder: 3,
+      },
+    });
+    expect(() => JSON.stringify(result)).not.toThrow();
+  });
+
+  it('returns null referrer from validateCode when code is unknown', async () => {
+    prisma.profile.findUnique.mockResolvedValueOnce(null);
+
+    const result = await service.validateCode('nope');
+
+    expect(result.valid).toBe(false);
+    expect(result.referrer).toBeNull();
+  });
+
   it('counts active referrals using latest mining session start window', async () => {
     const now = new Date();
 

@@ -16,6 +16,7 @@ import {
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdminDeleteUserDto } from './dto/admin-delete-user.dto';
@@ -148,6 +149,9 @@ export class UsersAdminService {
               rarity: true,
             },
           },
+          currentLevel: {
+            select: currentLevelSelect,
+          },
           _count: {
             select: {
               hunterAssignments: true,
@@ -174,6 +178,7 @@ export class UsersAdminService {
         updatesPosted: u._count.authoredUpdates,
         badgesCount: u._count.earnedBadges,
         primaryBadge: u.primaryBadge,
+        currentLevel: toCurrentLevelDto(u.currentLevel),
         createdAt: u.createdAt,
       })),
       total,
@@ -198,6 +203,9 @@ export class UsersAdminService {
             category: true,
             rarity: true,
           },
+        },
+        currentLevel: {
+          select: currentLevelSelect,
         },
         earnedBadges: {
           orderBy: { earnedAt: 'desc' },
@@ -662,6 +670,7 @@ export class UsersAdminService {
       updatedAt: profile.updatedAt,
       roles: profile.roles.map((row) => row.role),
       primaryBadge: profile.primaryBadge,
+      currentLevel: toCurrentLevelDto(profile.currentLevel),
       badges: profile.earnedBadges.map((entry) => ({
         earnedAt: entry.earnedAt,
         badge: entry.badge,

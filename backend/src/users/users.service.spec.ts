@@ -62,6 +62,33 @@ describe('UsersService', () => {
       avatarUrl: 'https://img.example/hunter.png',
       createdAt: new Date('2025-01-01T00:00:00.000Z'),
       roles: [{ role: 'hunter' }],
+      currentLevel: {
+        id: 'level-3',
+        slug: 'builder',
+        name: 'Builder',
+        description: 'Ships things',
+        iconUrl: 'https://cdn.example/l3.png',
+        level: 3,
+        requiredBnp: BigInt(1000),
+        requiredComments: 5,
+        requiredDaysActive: 3,
+        requiredQuests: 1,
+        requiredUpdates: 2,
+        requiredProjects: 1,
+        color: '#123456',
+        isActive: true,
+        sortOrder: 3,
+      },
+      levelProgress: {
+        achievedAt: new Date('2026-02-01T00:00:00.000Z'),
+        totalBnpEarned: BigInt(2500),
+        totalComments: 3,
+        totalDaysActive: 12,
+        totalQuestsCompleted: 1,
+        totalUpdates: 4,
+        totalProjects: 2,
+        lastRecalculatedAt: new Date('2026-02-19T00:00:00.000Z'),
+      },
       _count: {
         authoredUpdates: 4,
         authoredComments: 3,
@@ -103,6 +130,59 @@ describe('UsersService', () => {
       medianHoursBetweenUpdates: 96,
       lastActiveAt: new Date('2026-02-20T10:00:00.000Z'),
     });
+    expect(result?.currentLevel).toEqual({
+      id: 'level-3',
+      slug: 'builder',
+      name: 'Builder',
+      description: 'Ships things',
+      iconUrl: 'https://cdn.example/l3.png',
+      level: 3,
+      requiredBnp: '1000',
+      requiredComments: 5,
+      requiredDaysActive: 3,
+      requiredQuests: 1,
+      requiredUpdates: 2,
+      requiredProjects: 1,
+      color: '#123456',
+      isActive: true,
+      sortOrder: 3,
+    });
+    expect(result?.levelProgress).toEqual({
+      achievedAt: new Date('2026-02-01T00:00:00.000Z'),
+      totalBnpEarned: '2500',
+      totalComments: 3,
+      totalDaysActive: 12,
+      totalQuestsCompleted: 1,
+      totalUpdates: 4,
+      totalProjects: 2,
+      lastRecalculatedAt: new Date('2026-02-19T00:00:00.000Z'),
+    });
+    expect(() => JSON.stringify(result)).not.toThrow();
+  });
+
+  it('returns null level fields on public profile when user has no level', async () => {
+    prisma.profile.findUnique.mockResolvedValue({
+      id: 'user-2',
+      displayName: 'Newbie',
+      avatarUrl: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      roles: [],
+      currentLevel: null,
+      levelProgress: null,
+      _count: {
+        authoredUpdates: 0,
+        authoredComments: 0,
+        ownedProjects: 0,
+        followerLinks: 0,
+        followingLinks: 0,
+      },
+    });
+    prisma.update.findMany.mockResolvedValue([]);
+
+    const result = await service.getPublicProfile('user-2');
+
+    expect(result?.currentLevel).toBeNull();
+    expect(result?.levelProgress).toBeNull();
   });
 
   it('deactivates account and records an audit event', async () => {

@@ -14,6 +14,7 @@ import { BadgesService } from '../badges/badges.service';
 import { BlocksService } from '../blocks/blocks.service';
 import { CommunityModerationEnforcementService } from '../community-moderation/community-moderation-enforcement.service';
 import { LevelsService } from '../levels/levels.service';
+import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 import { QuestsService } from '../quests/quests.service';
 import { MentionsService } from '../mentions/mentions.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -46,23 +47,7 @@ const buildCommentInclude = (viewerId: string) =>
           },
         },
         currentLevel: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            description: true,
-            iconUrl: true,
-            level: true,
-            requiredBnp: true,
-            requiredComments: true,
-            requiredDaysActive: true,
-            requiredQuests: true,
-            requiredUpdates: true,
-            requiredProjects: true,
-            color: true,
-            isActive: true,
-            sortOrder: true,
-          },
+          select: currentLevelSelect,
         },
       },
     },
@@ -373,9 +358,7 @@ export class CommentsService {
     return { deleted: true };
   }
 
-  private toCommentResponse(
-    comment: CommentWithRelations,
-  ) {
+  private toCommentResponse(comment: CommentWithRelations) {
     const rawUsername = (comment.author.username ?? '')
       .replaceAll('@', '')
       .trim();
@@ -401,26 +384,7 @@ export class CommentsService {
         followers: 0,
         roles: comment.author.roles.map((entry) => entry.role),
         primaryBadge: comment.author.primaryBadge ?? null,
-        currentLevel: comment.author.currentLevel
-          ? {
-              id: comment.author.currentLevel.id,
-              slug: comment.author.currentLevel.slug,
-              name: comment.author.currentLevel.name,
-              description: comment.author.currentLevel.description,
-              iconUrl: comment.author.currentLevel.iconUrl,
-              level: comment.author.currentLevel.level,
-              requiredBnp: comment.author.currentLevel.requiredBnp.toString(),
-              requiredComments: comment.author.currentLevel.requiredComments,
-              requiredDaysActive:
-                comment.author.currentLevel.requiredDaysActive,
-              requiredQuests: comment.author.currentLevel.requiredQuests,
-              requiredUpdates: comment.author.currentLevel.requiredUpdates,
-              requiredProjects: comment.author.currentLevel.requiredProjects,
-              color: comment.author.currentLevel.color,
-              isActive: comment.author.currentLevel.isActive,
-              sortOrder: comment.author.currentLevel.sortOrder,
-            }
-          : null,
+        currentLevel: toCurrentLevelDto(comment.author.currentLevel),
       },
     };
   }

@@ -1,3 +1,6 @@
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/shared/utils/user_level_parsing.dart';
+
 class MiningConfigModel {
   const MiningConfigModel({
     required this.cycleHours,
@@ -291,6 +294,7 @@ class DownlineMember {
     required this.claimedTotalPoints,
     required this.referredAt,
     required this.lastActiveAt,
+    this.currentLevel,
   });
 
   final String id;
@@ -298,6 +302,7 @@ class DownlineMember {
   final String? username;
   final String? displayName;
   final String? avatarUrl;
+  final UserLevelModel? currentLevel;
   final String status;
   final bool isActive;
   final double progressPct;
@@ -319,6 +324,7 @@ class DownlineMember {
           int.tryParse(json['claimedTotalPoints']?.toString() ?? '') ?? 0,
       referredAt: DateTime.tryParse(json['referredAt']?.toString() ?? ''),
       lastActiveAt: DateTime.tryParse(json['lastActiveAt']?.toString() ?? ''),
+      currentLevel: parseCurrentLevel(json['currentLevel']),
     );
   }
 }
@@ -359,6 +365,7 @@ class MiningLeaderboardEntry {
     required this.displayName,
     required this.avatarUrl,
     this.primaryBadge,
+    this.currentLevel,
     required this.claimedTotalPoints,
     required this.maturedUnclaimedPoints,
     required this.lifetimeEarnedPoints,
@@ -375,6 +382,7 @@ class MiningLeaderboardEntry {
   final String? displayName;
   final String? avatarUrl;
   final dynamic primaryBadge;
+  final UserLevelModel? currentLevel;
   final int claimedTotalPoints;
   final int maturedUnclaimedPoints;
   final int lifetimeEarnedPoints;
@@ -403,6 +411,7 @@ class MiningLeaderboardEntry {
       displayName: json['displayName']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
       primaryBadge: primaryBadge,
+      currentLevel: parseCurrentLevel(json['currentLevel']),
       claimedTotalPoints:
           int.tryParse(json['claimedTotalPoints']?.toString() ?? '') ?? 0,
       maturedUnclaimedPoints:

@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { UserDetailsHeader } from "../components/UserDetailsHeader";
 import { ProfileSection } from "../components/ProfileSection";
+import { LevelSection } from "../components/LevelSection";
 import { RolesSection } from "../components/RolesSection";
 import { BadgesSection } from "../components/BadgesSection";
 import { MiningSection } from "../components/MiningSection";
@@ -134,6 +135,7 @@ export default function UserManagementPageClient() {
             canEdit={state.canEditProfile}
             onUpdate={state.handleUpdateProfile}
           />
+          <LevelSection level={user.currentLevel ?? null} />
           <LifecycleSection user={user} />
         </TabsContent>
 

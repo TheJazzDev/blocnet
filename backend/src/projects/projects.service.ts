@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ProjectStatus } from '@prisma/client';
@@ -13,6 +14,7 @@ import { ListProjectsQuery } from './dto/list-projects.query';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { AppRole } from '../common/enums/role.enum';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { LevelsService } from '../levels/levels.service';
 import {
   normalizeName,
   normalizeSymbol,
@@ -23,9 +25,12 @@ import { projectInclude, toProjectResponse } from './projects.mapper';
 
 @Injectable()
 export class ProjectsService {
+  private readonly logger = new Logger(ProjectsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
+    private readonly levelsService: LevelsService,
   ) {}
 
   async createProject(actor: AuthUser, dto: CreateProjectDto) {
@@ -75,6 +80,8 @@ export class ProjectsService {
       resourceType: 'project',
       resourceId: project.id,
     });
+
+    await this.recalculateOwnerLevel(actor.id);
 
     return toProjectResponse(project);
   }
@@ -133,6 +140,8 @@ export class ProjectsService {
       resourceId: project.id,
       metadata: input.auditMetadata,
     });
+
+    await this.recalculateOwnerLevel(input.ownerUserId);
 
     return toProjectResponse(project);
   }
@@ -255,6 +264,20 @@ export class ProjectsService {
 
   toSlug(value: string): string {
     return toSlug(value);
+  }
+
+  /**
+   * Trigger level recalculation after a project is created (projects owned
+   * is a level criterion). Non-blocking: failures are logged and swallowed.
+   */
+  private async recalculateOwnerLevel(userId: string) {
+    try {
+      await this.levelsService.updateUserLevel(userId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to update user level after project create: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   async assertNoCanonicalConflict(input: {

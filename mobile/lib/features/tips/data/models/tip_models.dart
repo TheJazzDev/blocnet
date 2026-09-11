@@ -1,3 +1,6 @@
+import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/shared/utils/user_level_parsing.dart';
+
 class TipCurrencyFeePolicy {
   const TipCurrencyFeePolicy({
     required this.feeBps,
@@ -236,12 +239,14 @@ class TipUserPreview {
     required this.username,
     required this.displayName,
     required this.avatarUrl,
+    this.currentLevel,
   });
 
   final String id;
   final String? username;
   final String? displayName;
   final String? avatarUrl;
+  final UserLevelModel? currentLevel;
 
   factory TipUserPreview.fromApi(Map<String, dynamic> json) {
     return TipUserPreview(
@@ -249,6 +254,7 @@ class TipUserPreview {
       username: json['username']?.toString(),
       displayName: json['displayName']?.toString(),
       avatarUrl: json['avatarUrl']?.toString(),
+      currentLevel: parseCurrentLevel(json['currentLevel']),
     );
   }
 }

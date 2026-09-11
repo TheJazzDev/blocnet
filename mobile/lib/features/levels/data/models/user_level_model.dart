@@ -147,6 +147,22 @@ class UserLevelProgressModel {
   final UserMetrics metrics;
   final ProgressToNext? progressToNext;
 
+  UserLevelProgressModel copyWith({
+    UserLevelModel? currentLevel,
+    UserLevelModel? nextLevel,
+    DateTime? achievedAt,
+    UserMetrics? metrics,
+    ProgressToNext? progressToNext,
+  }) {
+    return UserLevelProgressModel(
+      currentLevel: currentLevel ?? this.currentLevel,
+      nextLevel: nextLevel ?? this.nextLevel,
+      achievedAt: achievedAt ?? this.achievedAt,
+      metrics: metrics ?? this.metrics,
+      progressToNext: progressToNext ?? this.progressToNext,
+    );
+  }
+
   factory UserLevelProgressModel.fromApi(Map<String, dynamic> json) {
     final progressToNextRaw = json['progressToNext'];
     final nextLevelRaw = json['nextLevel'];

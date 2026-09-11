@@ -3,6 +3,10 @@ import {
   NotificationType,
   DigestCadence,
 } from '@prisma/client';
+import {
+  NOTIFICATION_TYPES_BY_CATEGORY,
+  NOTIFICATION_TYPE_TO_CATEGORY,
+} from './notification-preferences.constants';
 import { NotificationPreferencesService } from './notification-preferences.service';
 
 describe('NotificationPreferencesService', () => {
@@ -37,6 +41,18 @@ describe('NotificationPreferencesService', () => {
     const catalog = await service.getCatalog();
     expect(catalog.categories.length).toBeGreaterThan(0);
     expect(catalog.criticalTypes).toContain(NotificationType.role_changed);
+  });
+
+  it('classifies level_up under rewards, not system', () => {
+    expect(NOTIFICATION_TYPE_TO_CATEGORY[NotificationType.level_up]).toBe(
+      NotificationCategory.rewards,
+    );
+    expect(
+      NOTIFICATION_TYPES_BY_CATEGORY[NotificationCategory.rewards],
+    ).toContain(NotificationType.level_up);
+    expect(
+      NOTIFICATION_TYPES_BY_CATEGORY[NotificationCategory.system],
+    ).not.toContain(NotificationType.level_up);
   });
 
   it('returns defaults when user has no saved preference rows', async () => {

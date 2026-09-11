@@ -17,6 +17,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { FcmService } from '../notifications/fcm.service';
+import { LevelsService } from '../levels/levels.service';
 import { QuestsService } from '../quests/quests.service';
 import { toUpdateResponse, updateInclude } from './updates.mapper';
 
@@ -32,6 +33,7 @@ export class UpdatesService {
     private readonly blocksService: BlocksService,
     private readonly fcmService: FcmService,
     private readonly questsService: QuestsService,
+    private readonly levelsService: LevelsService,
   ) {}
 
   async createUpdate(actor: AuthUser, projectId: string, dto: CreateUpdateDto) {
@@ -101,6 +103,15 @@ export class UpdatesService {
     await this.badgesService.checkEngagementMilestones(actor.id);
     await this.triggerQuestAction(actor.id, 'first_update');
 
+    // Trigger level recalculation after update published
+    try {
+      await this.levelsService.updateUserLevel(actor.id);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to update user level after update: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+
     return toUpdateResponse(update, { isCommented: false });
   }
 
@@ -130,7 +141,9 @@ export class UpdatesService {
     );
 
     return updates.map((update) =>
-      toUpdateResponse(update, { isCommented: commentedUpdateIds.has(update.id) }),
+      toUpdateResponse(update, {
+        isCommented: commentedUpdateIds.has(update.id),
+      }),
     );
   }
 

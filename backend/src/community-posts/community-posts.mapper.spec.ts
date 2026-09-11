@@ -29,6 +29,23 @@ describe('community-posts.mapper', () => {
         avatarUrl: null,
         roles: [],
         primaryBadge: null,
+        currentLevel: {
+          id: 'level-3',
+          slug: 'builder',
+          name: 'Builder',
+          description: 'Ships things',
+          iconUrl: 'https://cdn.example/l3.png',
+          level: 3,
+          requiredBnp: BigInt(1000),
+          requiredComments: 5,
+          requiredDaysActive: 3,
+          requiredQuests: 1,
+          requiredUpdates: 2,
+          requiredProjects: 1,
+          color: '#123456',
+          isActive: true,
+          sortOrder: 3,
+        },
       },
     } as unknown as CommunityPostWithViewerState;
 
@@ -38,6 +55,24 @@ describe('community-posts.mapper', () => {
     expect(response.admin.name).toBe('Blocnet Member');
     expect(response.admin.username).toBe('@abc123');
     expect(response.commentsCount).toBe(2);
+    expect(response.admin.currentLevel).toEqual({
+      id: 'level-3',
+      slug: 'builder',
+      name: 'Builder',
+      description: 'Ships things',
+      iconUrl: 'https://cdn.example/l3.png',
+      level: 3,
+      requiredBnp: '1000',
+      requiredComments: 5,
+      requiredDaysActive: 3,
+      requiredQuests: 1,
+      requiredUpdates: 2,
+      requiredProjects: 1,
+      color: '#123456',
+      isActive: true,
+      sortOrder: 3,
+    });
+    expect(() => JSON.stringify(response)).not.toThrow();
   });
 
   it('does not leak author email in public comment payloads', () => {

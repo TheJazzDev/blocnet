@@ -12,6 +12,7 @@ export type {
   AdminHardDeleteUserResponse,
   AdminUserStatus,
   AdminUsersResponse,
+  UserLevel,
   ProjectStatus,
   UpdateStatus,
   ContentStatus,

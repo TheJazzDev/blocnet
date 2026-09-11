@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { BadgesModule } from '../badges/badges.module';
 import { BlocksModule } from '../blocks/blocks.module';
+import { LevelsModule } from '../levels/levels.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { QuestsModule } from '../quests/quests.module';
 import { UpdatesController } from './updates.controller';
@@ -13,6 +14,7 @@ import { UpdatesService } from './updates.service';
     AuditLogModule,
     BadgesModule,
     BlocksModule,
+    LevelsModule,
     QuestsModule,
   ],
   controllers: [UpdatesController],

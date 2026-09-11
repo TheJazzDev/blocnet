@@ -72,6 +72,7 @@ export const NOTIFICATION_TYPES_BY_CATEGORY: Record<
     NotificationType.quest_completed,
     NotificationType.quest_verified,
     NotificationType.quest_rejected,
+    NotificationType.level_up,
   ],
   [NotificationCategory.system]: [
     NotificationType.system,

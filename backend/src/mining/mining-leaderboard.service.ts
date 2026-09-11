@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 import { PrismaService } from '../prisma/prisma.service';
 import { MiningCalculatorService } from './mining-calculator.service';
 
@@ -116,6 +117,9 @@ export class MiningLeaderboardService {
               rarity: true,
             },
           },
+          currentLevel: {
+            select: currentLevelSelect,
+          },
           miningSessions: {
             where: {
               claimedAt: null,
@@ -199,6 +203,7 @@ export class MiningLeaderboardService {
           displayName: profile.displayName,
           avatarUrl: profile.avatarUrl,
           primaryBadge: profile.primaryBadge ?? null,
+          currentLevel: toCurrentLevelDto(profile.currentLevel),
           claimedTotalPoints: claimedTotalPointsBigInt.toString(),
           maturedUnclaimedPoints,
           lifetimeEarnedPoints: lifetimeEarnedPointsBigInt.toString(),

@@ -9,6 +9,7 @@ class _HunterHero extends StatelessWidget {
     required this.followersCount,
     required this.followingCount,
     required this.onEditTap,
+    this.currentLevel,
   });
 
   final String displayName;
@@ -18,6 +19,7 @@ class _HunterHero extends StatelessWidget {
   final int followersCount;
   final int followingCount;
   final VoidCallback onEditTap;
+  final UserLevelModel? currentLevel;
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +197,13 @@ class _HunterHero extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (currentLevel != null) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: ProfileLevelPill(level: currentLevel!),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Row(
                       children: [

@@ -1,121 +1,79 @@
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/features/levels/domain/level_number_format.dart';
+import 'package:blocnet/features/levels/domain/level_requirement.dart';
+import 'package:blocnet/features/levels/domain/level_tier.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_requirement_row.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-/// A card widget that displays user's current level and progress to next level
+/// Compact card with the user's current level and the outstanding progress
+/// towards the next one, tinted with the current tier's colour.
 class LevelProgressCard extends StatelessWidget {
   const LevelProgressCard({
     super.key,
     required this.progress,
     this.onTap,
+    this.maxBars = 3,
   });
 
   final UserLevelProgressModel progress;
   final VoidCallback? onTap;
 
+  /// How many incomplete metrics to show as bars before truncating.
+  final int maxBars;
+
   @override
   Widget build(BuildContext context) {
-    final hasNextLevel = progress.nextLevel != null;
+    final current = progress.currentLevel;
+    final next = progress.nextLevel;
+    final tierColor = current.tierColor;
 
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.all(0),
+    return Material(
+      color: AppColors.bgSurface,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
           padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: tierColor.withValues(alpha: 0.3)),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                tierColor.withValues(alpha: 0.12),
+                tierColor.withValues(alpha: 0.02),
+              ],
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Current level header
-              Row(
-                children: [
-                  LevelBadge(
-                    level: progress.currentLevel,
-                    size: LevelBadgeSize.large,
-                    showName: false,
-                    showLevelNumber: false,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          progress.currentLevel.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Level ${progress.currentLevel.level}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (onTap != null)
-                    Icon(Icons.chevron_right, color: Colors.grey[400]),
-                ],
+              _CurrentLevelRow(
+                level: current,
+                tierColor: tierColor,
+                showChevron: onTap != null,
               ),
-
-              if (hasNextLevel) ...[
-                const SizedBox(height: 16),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-
-                // Next level target
-                Row(
-                  children: [
-                    Icon(Icons.flag_outlined, size: 16, color: Colors.grey[600]),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Next: ${progress.nextLevel!.name}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Progress bars
-                if (progress.progressToNext != null)
-                  _buildProgressSection(progress.progressToNext!),
-              ] else ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.amber[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.amber[200]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber[700], size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Max level reached!',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.amber[900],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              if (next == null)
+                _Banner(
+                  icon: Icons.emoji_events_rounded,
+                  text: 'Max level reached — you have completed every tier.',
+                  color: tierColor,
+                )
+              else ...[
+                const SizedBox(height: 10),
+                Divider(height: 1, color: tierColor.withValues(alpha: 0.2)),
+                const SizedBox(height: 10),
+                _NextLevelRow(next: next, tierColor: tierColor),
+                const SizedBox(height: 8),
+                _ProgressBars(
+                  progressToNext: progress.progressToNext,
+                  tierColor: tierColor,
+                  maxBars: maxBars,
                 ),
               ],
             ],
@@ -124,116 +82,254 @@ class LevelProgressCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildProgressSection(ProgressToNext progressToNext) {
-    final metrics = [
-      _MetricProgress('BNP', progressToNext.bnp, Icons.diamond_outlined),
-      _MetricProgress('Comments', progressToNext.comments, Icons.chat_bubble_outline),
-      _MetricProgress('Days Active', progressToNext.daysActive, Icons.calendar_today_outlined),
-      _MetricProgress('Quests', progressToNext.quests, Icons.assignment_outlined),
-      _MetricProgress('Updates', progressToNext.updates, Icons.update_outlined),
-      _MetricProgress('Projects', progressToNext.projects, Icons.folder_outlined),
-    ];
+class _CurrentLevelRow extends StatelessWidget {
+  const _CurrentLevelRow({
+    required this.level,
+    required this.tierColor,
+    required this.showChevron,
+  });
 
-    // Only show metrics that haven't been completed
-    final incompleteMetrics = metrics.where((m) => m.metric.percentage < 100).toList();
+  final UserLevelModel level;
+  final Color tierColor;
+  final bool showChevron;
 
-    return Column(
-      children: incompleteMetrics.isEmpty
-          ? [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(8),
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        LevelBadge(
+          level: level,
+          size: LevelBadgeSize.large,
+          showName: false,
+          showLevelNumber: false,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                level.name,
+                style: AppTypography.custom(
+                  color: AppColors.textPrimary,
+                  size: 14,
+                  weight: FontWeight.w700,
                 ),
-                child: Text(
-                  'All requirements met! Level up coming soon...',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.green[800],
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Level ${level.level} · ${level.tier.name} tier',
+                style: AppTypography.custom(
+                  color: tierColor,
+                  size: 11,
+                  weight: FontWeight.w600,
                 ),
               ),
-            ]
-          : incompleteMetrics.take(3).map((metric) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _buildProgressBar(
-                  metric.label,
-                  metric.metric,
-                  metric.icon,
-                ),
-              );
-            }).toList(),
+            ],
+          ),
+        ),
+        if (showChevron)
+          Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textMuted),
+      ],
+    );
+  }
+}
+
+class _NextLevelRow extends StatelessWidget {
+  const _NextLevelRow({required this.next, required this.tierColor});
+
+  final UserLevelModel next;
+  final Color tierColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(Icons.flag_outlined, size: 14, color: tierColor),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            'Next: ${next.name} · Level ${next.level}',
+            style: AppTypography.custom(
+              color: AppColors.textSecondary,
+              size: 11,
+              weight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProgressBars extends StatelessWidget {
+  const _ProgressBars({
+    required this.progressToNext,
+    required this.tierColor,
+    required this.maxBars,
+  });
+
+  final ProgressToNext? progressToNext;
+  final Color tierColor;
+  final int maxBars;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = _metricsOf(progressToNext);
+    final incomplete = metrics.where((m) => m.value.percentage < 100).toList();
+
+    if (metrics.isEmpty) return const SizedBox.shrink();
+    if (incomplete.isEmpty) {
+      return _Banner(
+        icon: Icons.check_circle_rounded,
+        text: 'All requirements met — refresh to level up.',
+        color: tierColor,
+      );
+    }
+
+    final shown = incomplete.take(maxBars).toList();
+    final hidden = incomplete.length - shown.length;
+
+    return Column(
+      children: [
+        for (final metric in shown)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _MetricBar(metric: metric, tierColor: tierColor),
+          ),
+        if (hidden > 0)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '+$hidden more requirement${hidden == 1 ? '' : 's'}',
+              style: AppTypography.custom(
+                color: AppColors.textFaint,
+                size: 10,
+                weight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildProgressBar(String label, ProgressMetric metric, IconData icon) {
-    final percentage = metric.percentage.clamp(0, 100);
-    final currentVal = _formatNumber(metric.current);
-    final requiredVal = _formatNumber(metric.required);
+  static List<_NamedMetric> _metricsOf(ProgressToNext? next) {
+    if (next == null) return const [];
+    return [
+      _NamedMetric(LevelMetric.bnp, next.bnp),
+      _NamedMetric(LevelMetric.comments, next.comments),
+      _NamedMetric(LevelMetric.daysActive, next.daysActive),
+      _NamedMetric(LevelMetric.quests, next.quests),
+      _NamedMetric(LevelMetric.updates, next.updates),
+      _NamedMetric(LevelMetric.projects, next.projects),
+    ].where((m) => parseBigInt(m.value.required) > BigInt.zero).toList();
+  }
+}
+
+class _MetricBar extends StatelessWidget {
+  const _MetricBar({required this.metric, required this.tierColor});
+
+  final _NamedMetric metric;
+  final Color tierColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = metric.value;
+    final fraction = (value.percentage.clamp(0, 100)) / 100;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 14, color: Colors.grey[600]),
+            Icon(metric.metric.icon, size: 13, color: AppColors.textMuted),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: Text(
+                metric.metric.shortLabel,
+                style: AppTypography.custom(
+                  color: AppColors.textSecondary,
+                  size: 11,
+                  weight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Spacer(),
             Text(
-              '$currentVal / $requiredVal',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[600],
+              '${formatCompactRaw(value.current)} / ${formatCompactRaw(value.required)}',
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: 10,
+                weight: FontWeight.w600,
               ),
             ),
           ],
         ),
         const SizedBox(height: 4),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(3),
           child: LinearProgressIndicator(
-            value: percentage / 100,
-            minHeight: 6,
-            backgroundColor: Colors.grey[200],
-            valueColor: AlwaysStoppedAnimation<Color>(
-              percentage >= 100 ? Colors.green : Colors.blue,
-            ),
+            value: fraction,
+            minHeight: 5,
+            backgroundColor: AppColors.borderSubtle,
+            valueColor: AlwaysStoppedAnimation<Color>(tierColor),
           ),
         ),
       ],
     );
   }
+}
 
-  String _formatNumber(String value) {
-    try {
-      final num = int.parse(value);
-      if (num >= 1000000) {
-        return '${(num / 1000000).toStringAsFixed(1)}M';
-      } else if (num >= 1000) {
-        return '${(num / 1000).toStringAsFixed(1)}K';
-      }
-      return NumberFormat('#,###').format(num);
-    } catch (_) {
-      return value;
-    }
+class _Banner extends StatelessWidget {
+  const _Banner({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.custom(
+                color: AppColors.textSecondary,
+                size: 11,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
-class _MetricProgress {
-  const _MetricProgress(this.label, this.metric, this.icon);
-  final String label;
-  final ProgressMetric metric;
-  final IconData icon;
+class _NamedMetric {
+  const _NamedMetric(this.metric, this.value);
+
+  final LevelMetric metric;
+  final ProgressMetric value;
 }

@@ -1,10 +1,16 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
+import 'package:blocnet/features/levels/domain/level_requirement.dart';
+import 'package:blocnet/features/levels/domain/level_tier.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_requirement_row.dart';
+import 'package:blocnet/features/levels/presentation/widgets/level_status_chip.dart';
 import 'package:flutter/material.dart';
 
-/// Bottom sheet showing detailed level information and requirements
+/// Bottom sheet with a level's description and all of its unlock criteria,
+/// compared against the user's raw metrics. Opens for any level, locked or
+/// not.
 class LevelDetailSheet extends StatelessWidget {
   const LevelDetailSheet({
     super.key,
@@ -26,7 +32,7 @@ class LevelDetailSheet extends StatelessWidget {
     required bool isLocked,
     required UserLevelProgressModel? myProgress,
   }) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
@@ -41,6 +47,10 @@ class LevelDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tierColor = level.tierColor;
+    final requirements = requirementsFor(level, metrics: myProgress?.metrics);
+    final metCount = requirements.where((r) => r.isComplete).length;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
@@ -50,190 +60,51 @@ class LevelDetailSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
             Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
+              margin: const EdgeInsets.only(top: 10),
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.borderSubtle,
+                color: AppColors.borderMuted,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-            // Header with icon and title
-            Row(
-              children: [
-                Opacity(
-                  opacity: isLocked ? 0.5 : 1.0,
-                  child: LevelBadge(
-                    level: level,
-                    size: LevelBadgeSize.large,
-                    showName: false,
-                    showLevelNumber: false,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          if (isLocked)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 6),
-                              child: Icon(
-                                Icons.lock_outline,
-                                size: 16,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          Expanded(
-                            child: Text(
-                              level.name,
-                              style: AppTypography.custom(
-                                color: isLocked
-                                    ? AppColors.textMuted
-                                    : AppColors.textPrimary,
-                                size: 16,
-                                weight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Level ${level.level}',
-                        style: AppTypography.custom(
-                          color: AppColors.textMuted,
-                          size: 12,
-                          weight: FontWeight.w500,
-                        ),
-                      ),
-                      if (isCurrent)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary500,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'YOUR CURRENT LEVEL',
-                              style: AppTypography.custom(
-                                color: Colors.white,
-                                size: 9,
-                                weight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ),
+                    _Header(
+                      level: level,
+                      tierColor: tierColor,
+                      isCurrent: isCurrent,
+                      isLocked: isLocked,
+                    ),
+                    const SizedBox(height: 14),
+                    if (level.description.isNotEmpty) ...[
+                      _DescriptionBox(text: level.description),
+                      const SizedBox(height: 16),
                     ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Description
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.bgBase,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                level.description,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: 13,
-                  weight: FontWeight.w400,
-                  height: 1.5,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Requirements section
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                isLocked ? 'Requirements to Unlock' : 'Requirements',
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: 14,
-                  weight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Requirements list
-            _buildRequirement(
-              icon: Icons.stars_rounded,
-              label: 'BNP',
-              required: _formatBnp(level.requiredBnp),
-              current: _formatBnp(myProgress?.metrics.totalBnpEarned ?? '0'),
-              rawRequired: level.requiredBnp,
-              rawCurrent: myProgress?.metrics.totalBnpEarned ?? '0',
-            ),
-            _buildRequirement(
-              icon: Icons.chat_bubble_outline,
-              label: 'Comments on Updates',
-              required: level.requiredComments.toString(),
-              current: myProgress?.metrics.totalComments.toString() ?? '0',
-            ),
-            _buildRequirement(
-              icon: Icons.calendar_today_outlined,
-              label: 'Days Active',
-              required: level.requiredDaysActive.toString(),
-              current: myProgress?.metrics.totalDaysActive.toString() ?? '0',
-            ),
-            if (level.requiredQuests > 0)
-              _buildRequirement(
-                icon: Icons.flag_outlined,
-                label: 'Quests Completed',
-                required: level.requiredQuests.toString(),
-                current: myProgress?.metrics.totalQuestsCompleted.toString() ?? '0',
-              ),
-
-            const SizedBox(height: 24),
-
-            // Close button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary500,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Close',
-                  style: AppTypography.custom(
-                    color: Colors.white,
-                    size: 14,
-                    weight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
+                    _RequirementsTitle(
+                      isCurrent: isCurrent,
+                      isLocked: isLocked,
+                      metCount: metCount,
+                      total: requirements.length,
+                      tierColor: tierColor,
+                    ),
+                    const SizedBox(height: 10),
+                    if (requirements.isEmpty)
+                      const _NoRequirements()
+                    else
+                      for (final requirement in requirements)
+                        LevelRequirementRow(
+                          requirement: requirement,
+                          tierColor: tierColor,
+                        ),
+                    const SizedBox(height: 12),
+                    _CloseButton(tierColor: tierColor),
                   ],
                 ),
               ),
@@ -243,152 +114,219 @@ class LevelDetailSheet extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildRequirement({
-    required IconData icon,
-    required String label,
-    required String required,
-    required String current,
-    String? rawRequired,
-    String? rawCurrent,
-  }) {
-    // Use raw values for comparison if provided (for BNP), otherwise use formatted
-    final compareRequired = rawRequired ?? required;
-    final compareCurrent = rawCurrent ?? current;
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.level,
+    required this.tierColor,
+    required this.isCurrent,
+    required this.isLocked,
+  });
 
-    final currentNum = int.tryParse(compareCurrent.replaceAll(',', '')) ?? 0;
-    final requiredNum = int.tryParse(compareRequired.replaceAll(',', '')) ?? 0;
-    final isComplete = currentNum >= requiredNum;
+  final UserLevelModel level;
+  final Color tierColor;
+  final bool isCurrent;
+  final bool isLocked;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isComplete
-              ? AppColors.primary500.withValues(alpha: 0.08)
-              : AppColors.bgBase,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isComplete
-                ? AppColors.primary500.withValues(alpha: 0.3)
-                : AppColors.borderSubtle,
-            width: isComplete ? 1.5 : 1,
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Opacity(
+          opacity: isLocked ? 0.5 : 1,
+          child: LevelBadge(
+            level: level,
+            size: LevelBadgeSize.large,
+            showName: false,
+            showLevelNumber: false,
           ),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: isComplete
-                    ? AppColors.primary500.withValues(alpha: 0.15)
-                    : AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                isComplete ? Icons.check_circle : icon,
-                size: 18,
-                color: isComplete ? AppColors.primary500 : AppColors.textMuted,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        label,
-                        style: AppTypography.custom(
-                          color: AppColors.textPrimary,
-                          size: 13,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                      if (isComplete)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 6),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary500,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              'DONE',
-                              style: AppTypography.custom(
-                                color: Colors.white,
-                                size: 8,
-                                weight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    isLocked
-                        ? 'You have $current / $required${isComplete ? ' ✓' : ''}'
-                        : 'Required: $required',
-                    style: AppTypography.custom(
-                      color: isComplete
-                          ? AppColors.primary500
-                          : AppColors.textMuted,
-                      size: 11,
-                      weight: isComplete ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isLocked && !isComplete)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.borderSubtle),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                level.name,
+                style: AppTypography.custom(
+                  color: isLocked ? AppColors.textMuted : AppColors.textPrimary,
+                  size: 15,
+                  weight: FontWeight.w700,
                 ),
-                child: Text(
-                  '+${_formatDiff(requiredNum - currentNum)}',
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: 11,
-                    weight: FontWeight.w700,
-                  ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Level ${level.level} · ${level.tier.name} tier',
+                style: AppTypography.custom(
+                  color: tierColor,
+                  size: 11,
+                  weight: FontWeight.w600,
                 ),
               ),
-          ],
+              const SizedBox(height: 6),
+              _statusChip(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _statusChip() {
+    if (isCurrent) {
+      return LevelStatusChip(label: 'YOUR CURRENT LEVEL', color: tierColor);
+    }
+    if (isLocked) {
+      return LevelStatusChip(
+        label: 'LOCKED',
+        color: AppColors.textMuted,
+        filled: false,
+        icon: Icons.lock_outline_rounded,
+      );
+    }
+    return LevelStatusChip(
+      label: 'UNLOCKED',
+      color: tierColor,
+      filled: false,
+      icon: Icons.check_rounded,
+    );
+  }
+}
+
+class _DescriptionBox extends StatelessWidget {
+  const _DescriptionBox({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.bgBase,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        text,
+        style: AppTypography.custom(
+          color: AppColors.textSecondary,
+          size: 12,
+          weight: FontWeight.w400,
+          height: 1.45,
         ),
       ),
     );
   }
+}
 
-  String _formatBnp(String value) {
-    final num = int.tryParse(value) ?? 0;
-    if (num >= 1000000) {
-      final millions = num / 1000000;
-      return '${millions.toStringAsFixed(millions.truncateToDouble() == millions ? 0 : 1)}M';
-    } else if (num >= 1000) {
-      final thousands = num / 1000;
-      return '${thousands.toStringAsFixed(thousands.truncateToDouble() == thousands ? 0 : 1)}K';
-    }
-    return num.toString();
+class _RequirementsTitle extends StatelessWidget {
+  const _RequirementsTitle({
+    required this.isCurrent,
+    required this.isLocked,
+    required this.metCount,
+    required this.total,
+    required this.tierColor,
+  });
+
+  final bool isCurrent;
+  final bool isLocked;
+  final int metCount;
+  final int total;
+  final Color tierColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = isLocked
+        ? 'Requirements to unlock'
+        : isCurrent
+            ? 'What got you here'
+            : 'Requirements';
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: 13,
+              weight: FontWeight.w700,
+            ),
+          ),
+        ),
+        if (total > 0)
+          Text(
+            '$metCount/$total met',
+            style: AppTypography.custom(
+              color: metCount >= total ? tierColor : AppColors.textMuted,
+              size: 11,
+              weight: FontWeight.w600,
+            ),
+          ),
+      ],
+    );
   }
+}
 
-  String _formatDiff(int diff) {
-    if (diff >= 1000000) {
-      final millions = diff / 1000000;
-      return '${millions.toStringAsFixed(millions.truncateToDouble() == millions ? 0 : 1)}M';
-    } else if (diff >= 1000) {
-      final thousands = diff / 1000;
-      return '${thousands.toStringAsFixed(thousands.truncateToDouble() == thousands ? 0 : 1)}K';
-    }
-    return diff.toString();
+class _NoRequirements extends StatelessWidget {
+  const _NoRequirements();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.bgBase,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Text(
+        'No requirements — this is where everyone starts.',
+        style: AppTypography.custom(
+          color: AppColors.textMuted,
+          size: 12,
+          weight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+class _CloseButton extends StatelessWidget {
+  const _CloseButton({required this.tierColor});
+
+  final Color tierColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = foregroundOn(tierColor);
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () => Navigator.of(context).pop(),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: tierColor,
+          foregroundColor: foreground,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          'Close',
+          style: AppTypography.custom(
+            color: foreground,
+            size: 13,
+            weight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }

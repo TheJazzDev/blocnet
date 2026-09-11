@@ -7,6 +7,7 @@ import { InviteStatus, RoleName } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -171,7 +172,7 @@ export class ProjectAssignmentsService {
       );
     }
 
-    return this.prisma.projectHunterInvite.findMany({
+    const invites = await this.prisma.projectHunterInvite.findMany({
       where: {
         projectId,
         status,
@@ -182,6 +183,9 @@ export class ProjectAssignmentsService {
             id: true,
             email: true,
             displayName: true,
+            currentLevel: {
+              select: currentLevelSelect,
+            },
           },
         },
       },
@@ -189,6 +193,16 @@ export class ProjectAssignmentsService {
       skip: offset,
       take: Math.min(limit, 100),
     });
+
+    return invites.map((invite) => ({
+      ...invite,
+      hunter: {
+        id: invite.hunter.id,
+        email: invite.hunter.email,
+        displayName: invite.hunter.displayName,
+        currentLevel: toCurrentLevelDto(invite.hunter.currentLevel),
+      },
+    }));
   }
 
   async listMyInvites(

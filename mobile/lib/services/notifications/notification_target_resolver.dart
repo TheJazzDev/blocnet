@@ -85,6 +85,7 @@ class NotificationTargetResolver {
       case 'quest_completed':
       case 'quest_verified':
       case 'quest_rejected':
+      case 'level_up':
         return 'rewards';
       default:
         return 'system';
@@ -138,6 +139,10 @@ class NotificationTargetResolver {
       return NotificationNavigationDecision.push(AppRoutes.badges);
     }
 
+    if (normalizedType == 'level_up') {
+      return NotificationNavigationDecision.push(AppRoutes.levels);
+    }
+
     if (normalizedType == 'community_liked' ||
         normalizedType == 'community_bookmarked') {
       if (finalPostId != null) {
@@ -167,6 +172,9 @@ class NotificationTargetResolver {
     if (deeplinkPath.contains('profile/badges') ||
         deeplinkPath.endsWith('/badges')) {
       return NotificationNavigationDecision.push(AppRoutes.badges);
+    }
+    if (deeplinkPath.startsWith('/levels')) {
+      return NotificationNavigationDecision.push(AppRoutes.levels);
     }
     if (deeplinkPath.startsWith('/wallet/transactions')) {
       return NotificationNavigationDecision.push(AppRoutes.walletTransactions);

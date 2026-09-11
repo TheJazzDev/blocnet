@@ -71,4 +71,62 @@ void main() {
     expect(response.data.first.status, 'claimable');
     expect(response.data.first.claimedTotalPoints, 240);
   });
+
+  test('parses currentLevel on downline members and tolerates absence', () {
+    final response = DownlineResponse.fromApi({
+      'data': [
+        {
+          'id': 'user-2',
+          'username': 'two',
+          'status': 'running',
+          'currentLevel': {
+            'id': 'lvl-3',
+            'slug': 'explorer',
+            'name': 'Explorer',
+            'level': 3,
+            'color': '#8B5CF6',
+            'isActive': true,
+          },
+        },
+        {'id': 'user-3', 'username': 'three', 'status': 'idle'},
+        {'id': 'user-4', 'username': 'four', 'currentLevel': 'not-a-map'},
+      ],
+      'total': 3,
+    });
+
+    final withLevel = response.data[0];
+    expect(withLevel.currentLevel, isNotNull);
+    expect(withLevel.currentLevel!.id, 'lvl-3');
+    expect(withLevel.currentLevel!.name, 'Explorer');
+    expect(withLevel.currentLevel!.level, 3);
+    expect(response.data[1].currentLevel, isNull);
+    expect(response.data[2].currentLevel, isNull);
+  });
+
+  test('parses currentLevel on mining leaderboard entries', () {
+    final response = MiningLeaderboardResponse.fromApi({
+      'data': [
+        {
+          'rank': 1,
+          'userId': 'user-1',
+          'displayName': 'Top Miner',
+          'lifetimeEarnedPoints': 900,
+          'sessionStatus': 'claimable',
+          'currentLevel': {
+            'id': 'lvl-7',
+            'slug': 'veteran',
+            'name': 'Veteran',
+            'level': 7,
+            'isActive': true,
+          },
+        },
+        {'rank': 2, 'userId': 'user-2', 'currentLevel': null},
+      ],
+      'total': 2,
+    });
+
+    expect(response.data[0].currentLevel?.slug, 'veteran');
+    expect(response.data[0].currentLevel?.level, 7);
+    expect(response.data[1].currentLevel, isNull);
+  });
 }
