@@ -1,5 +1,6 @@
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/users/me_snapshot_cache.dart';
 
 class ProjectsApiRepository {
   ProjectsApiRepository({ApiClient? apiClient})
@@ -37,11 +38,21 @@ class ProjectsApiRepository {
   }
 
   Future<void> followProject(String projectId) async {
-    await _apiClient.post('/projects/$projectId/follow');
+    try {
+      await _apiClient.post('/projects/$projectId/follow');
+    } finally {
+      // `/me` carries `followedProjectIds` + `followedProjects`; drop the
+      // snapshot even on failure, which may still have applied server-side.
+      MeSnapshotCache.invalidate();
+    }
   }
 
   Future<void> unfollowProject(String projectId) async {
-    await _apiClient.delete('/projects/$projectId/follow');
+    try {
+      await _apiClient.delete('/projects/$projectId/follow');
+    } finally {
+      MeSnapshotCache.invalidate();
+    }
   }
 
   Future<Map<String, dynamic>?> updateFollowPreferences(
@@ -61,10 +72,16 @@ class ProjectsApiRepository {
       body['mutedUntil'] = mutedUntil.toUtc().toIso8601String();
     }
 
-    final response = await _apiClient.patch(
-      '/projects/$projectId/follow/preferences',
-      body: body,
-    );
+    final dynamic response;
+    try {
+      response = await _apiClient.patch(
+        '/projects/$projectId/follow/preferences',
+        body: body,
+      );
+    } finally {
+      // Preferences are mirrored in `/me`'s `followedProjects`.
+      MeSnapshotCache.invalidate();
+    }
 
     if (response is! Map<String, dynamic>) {
       return null;

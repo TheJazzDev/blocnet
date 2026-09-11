@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/services/api/api_error.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/users/me_snapshot_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -722,7 +723,7 @@ class AuthStore extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _apiClient.patch(
+      final response = await _apiClient.patch(
         '/me',
         body: {
           if (nextDisplayName != null) 'displayName': nextDisplayName,
@@ -730,9 +731,17 @@ class AuthStore extends ChangeNotifier {
           if (nextBio != null) 'bio': nextBio,
         },
       );
+      // `PATCH /me` echoes the full document, so publish it instead of
+      // forcing everyone else to refetch.
+      if (response is Map<String, dynamic>) {
+        MeSnapshotCache.write(response);
+      } else {
+        MeSnapshotCache.invalidate();
+      }
       _lastError = null;
       return true;
     } catch (error) {
+      MeSnapshotCache.invalidate();
       _displayName = prevDisplayName;
       _avatarUrl = prevAvatarUrl;
       _bio = prevBio;
@@ -763,6 +772,8 @@ class AuthStore extends ChangeNotifier {
         fieldName: 'file',
         file: file,
       );
+      // The response carries only the new URL, so the snapshot has to go.
+      MeSnapshotCache.invalidate();
       if (response is! Map<String, dynamic>) {
         _lastError = 'Unexpected avatar upload response';
         notifyListeners();
@@ -778,6 +789,7 @@ class AuthStore extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (error) {
+      MeSnapshotCache.invalidate();
       _lastError = describeApiError(error, fallback: 'Failed to upload avatar');
       notifyListeners();
       return false;
@@ -826,6 +838,9 @@ class AuthStore extends ChangeNotifier {
       _userId = user['id']?.toString();
       _email = user['email']?.toString() ?? _email;
       _roles = _parseRoles(user['roles']);
+      // A snapshot belonging to anyone but the account we just verified is a
+      // correctness bug, not staleness.
+      MeSnapshotCache.retainForUser(_userId);
 
       if (hydrateProfile) {
         await _hydrateProfileFromMe();
@@ -899,6 +914,7 @@ class AuthStore extends ChangeNotifier {
         },
       );
 
+      MeSnapshotCache.invalidate();
       await signOut();
       return true;
     } on ApiException catch (error) {
@@ -1096,6 +1112,7 @@ class AuthStore extends ChangeNotifier {
   }
 
   void _clearAuth({required bool notify}) {
+    MeSnapshotCache.reset();
     _accessToken = null;
     _userId = null;
     _email = null;

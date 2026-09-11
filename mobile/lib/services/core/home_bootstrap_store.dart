@@ -1,4 +1,5 @@
 import 'package:blocnet/services/core/home_bootstrap_service.dart';
+import 'package:blocnet/services/users/me_snapshot_cache.dart';
 import 'package:flutter/foundation.dart';
 
 /// Owns the Home bootstrap payload across the app's lifetime.
@@ -76,6 +77,11 @@ class HomeBootstrapStore extends ChangeNotifier {
         windowDays: windowDays,
       );
       if (payload == null) return null;
+      // `meSummary` is the `/me` document verbatim (the handler calls
+      // `UsersService.getMe`), so publish it and spare the other stores a
+      // second request. Only network payloads qualify: the on-disk cache can
+      // be days old.
+      MeSnapshotCache.write(payload.meSummary);
       _latest = payload;
       _cached = CachedHomeBootstrap(
         payload: payload,

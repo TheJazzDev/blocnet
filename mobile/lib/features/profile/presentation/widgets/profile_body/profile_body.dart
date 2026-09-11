@@ -69,7 +69,7 @@ class _ProfileBodyState extends State<ProfileBody> {
 
   Future<void> _refresh() async {
     final futures = <Future<void>>[
-      context.read<UserProfileStore>().refreshAll(),
+      context.read<UserProfileStore>().refreshAll(forceRefresh: true),
       context.read<TipsStore>().loadOverview(force: true),
       context.read<TipsStore>().loadSentHistory(force: true, limit: 100),
       context.read<BadgesStore>().loadMyBadges(force: true),

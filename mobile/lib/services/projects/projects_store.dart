@@ -96,10 +96,15 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
 
   Future<void> fetchProjectsOnce() async {
     if (_projects.isNotEmpty || _isFetching) return;
-    await refreshProjects();
+    // Cold-start path: the shared `/me` snapshot (usually already filled by
+    // the auth hydration or the home bootstrap) is good enough here.
+    await refreshProjects(forceRefresh: false);
   }
 
-  Future<void> refreshProjects() async {
+  /// [forceRefresh] defaults to true because every other caller is a
+  /// user-triggered refresh that must show server truth; only
+  /// [fetchProjectsOnce] opts into the cached `/me` snapshot.
+  Future<void> refreshProjects({bool forceRefresh = true}) async {
     if (_isFetching) return;
 
     _isFetching = true;
@@ -129,7 +134,7 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
         );
 
       try {
-        final me = await _usersRepository.fetchMe();
+        final me = await _usersRepository.fetchMe(forceRefresh: forceRefresh);
         final followedIds =
             (me?['followedProjectIds'] as List<dynamic>? ?? const [])
                 .map((value) => value.toString())

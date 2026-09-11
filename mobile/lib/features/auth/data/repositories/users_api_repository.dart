@@ -6,6 +6,7 @@ import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
 import 'package:blocnet/features/projects/data/models/follow_preference_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/users/me_snapshot_cache.dart';
 
 class UsersApiRepository {
   UsersApiRepository({ApiClient? apiClient})
@@ -13,16 +14,17 @@ class UsersApiRepository {
 
   final ApiClient _apiClient;
 
-  Future<Map<String, dynamic>?> fetchMe() async {
-    final response = await _apiClient.get('/me');
-    if (response is! Map<String, dynamic>) {
-      return null;
-    }
-    return response;
+  /// Reads the shared `/me` snapshot, issuing the request only on a cache
+  /// miss. Pass [forceRefresh] wherever the caller must see server truth
+  /// (pull-to-refresh), never on a cold-start path.
+  Future<Map<String, dynamic>?> fetchMe({bool forceRefresh = false}) {
+    return MeSnapshotCache.readThrough(_apiClient, forceRefresh: forceRefresh);
   }
 
-  Future<Set<String>> fetchFollowedProjectIds() async {
-    final response = await fetchMe();
+  Future<Set<String>> fetchFollowedProjectIds({
+    bool forceRefresh = false,
+  }) async {
+    final response = await fetchMe(forceRefresh: forceRefresh);
     if (response == null) {
       return <String>{};
     }
@@ -54,8 +56,10 @@ class UsersApiRepository {
     return preferences;
   }
 
-  Future<Set<String>> fetchFollowedProfileIds() async {
-    final response = await fetchMe();
+  Future<Set<String>> fetchFollowedProfileIds({
+    bool forceRefresh = false,
+  }) async {
+    final response = await fetchMe(forceRefresh: forceRefresh);
     if (response == null) {
       return <String>{};
     }
@@ -133,11 +137,21 @@ class UsersApiRepository {
   }
 
   Future<void> followProfile(String profileId) async {
-    await _apiClient.post('/profiles/$profileId/follow');
+    try {
+      await _apiClient.post('/profiles/$profileId/follow');
+    } finally {
+      // `followedProfileIds` / `followingCount` moved, and an ambiguous
+      // failure may still have applied server-side.
+      MeSnapshotCache.invalidate();
+    }
   }
 
   Future<void> unfollowProfile(String profileId) async {
-    await _apiClient.delete('/profiles/$profileId/follow');
+    try {
+      await _apiClient.delete('/profiles/$profileId/follow');
+    } finally {
+      MeSnapshotCache.invalidate();
+    }
   }
 
   Future<List<ProfileSearchResult>> searchProfiles({

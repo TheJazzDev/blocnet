@@ -55,26 +55,31 @@ class UserProfileStore extends ChangeNotifier {
 
     if (_initialized) return;
     _initialized = true;
-    await refreshAll();
+    // First paint of the profile tab: reuse the shared `/me` snapshot rather
+    // than re-fetching a document another store just pulled.
+    await refreshAll(forceRefresh: false);
   }
 
-  Future<void> refreshAll() async {
+  Future<void> refreshAll({bool forceRefresh = true}) async {
     await Future.wait([
       refreshWatchlist(),
       refreshBookmarks(),
       refreshActivity(),
-      refreshFollowingProfiles(),
+      refreshFollowingProfiles(forceRefresh: forceRefresh),
     ]);
   }
 
-  Future<void> refreshFollowingProfiles() async {
+  /// Reads `followingCount` out of the shared `/me` snapshot. Follow and
+  /// unfollow invalidate that snapshot, so a toggle still lands on fresh
+  /// numbers without [forceRefresh].
+  Future<void> refreshFollowingProfiles({bool forceRefresh = false}) async {
     if (_isLoadingFollowingProfiles) return;
 
     _isLoadingFollowingProfiles = true;
     notifyListeners();
 
     try {
-      final me = await _usersRepository.fetchMe();
+      final me = await _usersRepository.fetchMe(forceRefresh: forceRefresh);
       final followingCountRaw = me?['followingCount'];
       final parsed = int.tryParse(followingCountRaw?.toString() ?? '');
 
