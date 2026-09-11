@@ -72,6 +72,15 @@ if (existsSync(fallbackEnvPath)) {
 const BACKFILL_TAG = 'F-39';
 const BACKFILL_AUDIT_ACTION = 'mining.claim.backfill';
 
+/**
+ * Hard upper bound on the cycles this one-off may grant: the moment the F-39
+ * fix was authored. A cycle ending after this was forfeited by
+ * `MiningExpiryService` exactly as the product owner intended, so a stray
+ * re-run of this script weeks later must never pay it out. Override with
+ * `--ended-before` only with a deliberate reason.
+ */
+const STRANDED_BEFORE = new Date('2026-09-11T22:42:00.000Z');
+
 type CliOptions = {
   apply: boolean;
   userIds: string[];
@@ -128,10 +137,15 @@ async function main() {
     const windowCutoff = new Date(
       asOf.getTime() - claimWindowHours * 60 * 60 * 1000,
     );
-    const endsBefore =
-      options.endedBefore && options.endedBefore < windowCutoff
-        ? options.endedBefore
-        : windowCutoff;
+    // Both bounds must hold: the cycle is past its claim window, and it is old
+    // enough to belong to the F-39 population rather than to a legitimate
+    // post-fix forfeit.
+    const endsBefore = [
+      windowCutoff,
+      options.endedBefore ?? STRANDED_BEFORE,
+    ].reduce((earliest, candidate) =>
+      candidate < earliest ? candidate : earliest,
+    );
 
     console.log('F-39 expired-claim backfill');
     console.log(`  mode              : ${options.apply ? 'APPLY' : 'DRY RUN'}`);
@@ -231,21 +245,26 @@ async function main() {
         continue;
       }
 
-      await prisma.$transaction((tx) =>
-        applyClaimSettlement(tx, {
-          userId: session.userId,
-          session,
-          claimedAt: asOf,
-          claimPoints,
-          checkpointCount: accrual._count._all,
-          reclaimForfeited: true,
-          extraLedgerMetadata: {
-            backfill: BACKFILL_TAG,
-            backfillReason: 'claim window deadlock (F-39)',
-            backfillRanAt: asOf.toISOString(),
-            forfeitedAt: session.expiredAt?.toISOString() ?? null,
-          },
-        }),
+      await prisma.$transaction(
+        (tx) =>
+          applyClaimSettlement(tx, {
+            userId: session.userId,
+            session,
+            claimedAt: asOf,
+            claimPoints,
+            checkpointCount: accrual._count._all,
+            reclaimForfeited: true,
+            extraLedgerMetadata: {
+              backfill: BACKFILL_TAG,
+              backfillReason: 'claim window deadlock (F-39)',
+              backfillRanAt: asOf.toISOString(),
+              forfeitedAt: session.expiredAt?.toISOString() ?? null,
+            },
+          }),
+        // Scripts often run against a remote/pooled database where each
+        // statement costs real latency; the default 5s interactive timeout is
+        // not enough for the six writes a settlement makes.
+        { timeout: 60_000, maxWait: 30_000 },
       );
 
       await prisma.auditLog.create({
