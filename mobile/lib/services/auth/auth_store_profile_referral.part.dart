@@ -1,10 +1,16 @@
 part of 'auth_store.dart';
 
 extension _AuthStoreProfileReferralExt on AuthStore {
-  Future<void> _hydrateProfileFromMe() async {
+  /// Fills the profile fields from the shared `/me` snapshot. On a cold start
+  /// this is usually the request that populates the snapshot for everyone
+  /// else; when the home bootstrap answered first it is a cache hit.
+  Future<void> _hydrateProfileFromMe({bool forceRefresh = false}) async {
     try {
-      final response = await _apiClient.get('/me');
-      if (response is! Map<String, dynamic>) return;
+      final response = await MeSnapshotCache.readThrough(
+        _apiClient,
+        forceRefresh: forceRefresh,
+      );
+      if (response == null) return;
 
       _displayName = response['displayName']?.toString() ?? _displayName;
       _avatarUrl = response['avatarUrl']?.toString() ?? _avatarUrl;
@@ -66,6 +72,8 @@ extension _AuthStoreProfileReferralExt on AuthStore {
 
     try {
       await _apiClient.post('/referrals/bind', body: {'code': pending});
+      // Binding rewrites referral state on the profile row.
+      MeSnapshotCache.invalidate();
       await _setPendingReferralCodeImpl(null);
     } on ApiException catch (error) {
       final body = (error.responseBody ?? '').toLowerCase();

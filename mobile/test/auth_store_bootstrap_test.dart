@@ -1,5 +1,6 @@
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/users/me_snapshot_cache.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,11 +69,13 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     ApiClient.setAuthToken(null);
     ApiClient.setAuthTokenRefresher(null);
+    MeSnapshotCache.reset();
   });
 
   tearDown(() {
     ApiClient.setAuthToken(null);
     ApiClient.setAuthTokenRefresher(null);
+    MeSnapshotCache.reset();
   });
 
   test(

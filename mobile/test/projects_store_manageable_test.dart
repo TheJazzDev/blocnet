@@ -146,7 +146,7 @@ class _FakeUsersApiRepository extends UsersApiRepository {
   final List<String> followedProjectIds;
 
   @override
-  Future<Map<String, dynamic>?> fetchMe() async {
+  Future<Map<String, dynamic>?> fetchMe({bool forceRefresh = false}) async {
     return <String, dynamic>{
       'followedProjectIds': followedProjectIds,
       'followedProjects': const <Map<String, dynamic>>[],
