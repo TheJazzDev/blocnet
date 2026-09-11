@@ -2,11 +2,9 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/comments/data/models/comment_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
-import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
-import 'package:blocnet/features/tips/data/models/tip_models.dart';
-import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_tip_hunter_button.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart';
 import 'package:blocnet/features/mentions/presentation/utils/mention_profile_navigator.dart';
@@ -139,8 +137,6 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                           children: [
                             const SizedBox(height: 4),
                             UpdateDetailsInfo(post: post),
-                            const SizedBox(height: 12),
-                            _buildTipHunterAction(post),
                             const SizedBox(height: 16),
                             _Divider(),
                             const SizedBox(height: 12),
@@ -149,6 +145,8 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                             _Divider(),
                             const SizedBox(height: 16),
                             RenderMarkdownContent(content: post.content),
+                            const SizedBox(height: 20),
+                            UpdateTipHunterButton(post: post),
                             const SizedBox(height: 24),
                             _CommentsSection(
                               key: _commentsSectionKey,
@@ -239,50 +237,6 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
 
     if (!mounted) return;
     _commentFocusNode.requestFocus();
-  }
-
-  Widget _buildTipHunterAction(Update post) {
-    final auth = context.watch<AuthStore>();
-    final recipientUserId = post.adminId.toString().trim();
-    if (recipientUserId.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final isSelf = auth.userId != null && auth.userId == recipientUserId;
-    if (isSelf) {
-      return const SizedBox.shrink();
-    }
-
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () {
-          TipHunterSheet.show(
-            context,
-            recipient: TipRecipient(
-              userId: recipientUserId,
-              username: post.admin?.username,
-              displayName: post.admin?.name,
-              avatarUrl: post.admin?.imageUrl,
-              isHunterHint: true,
-            ),
-            contextType: 'update',
-            contextId: post.id.toString(),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary500,
-          foregroundColor: Colors.black,
-          minimumSize: const Size.fromHeight(44),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        icon: const Icon(Icons.volunteer_activism_rounded, size: 18),
-        label: const Text('Tip Hunter'),
-      ),
-    );
   }
 }
 
@@ -385,33 +339,40 @@ class _CommentsSectionState extends State<_CommentsSection> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primary500.withValues(alpha: 0.15),
-                          AppColors.primary500.withValues(alpha: 0.08),
-                        ],
+                  // Count what is actually rendered below. While the first
+                  // page is still loading there is nothing to count yet, so
+                  // skip the badge instead of flashing "0".
+                  if (!(isLoading && threadedComments.isEmpty)) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
                       ),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.primary500.withValues(alpha: 0.25),
-                        width: 1.5,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary500.withValues(alpha: 0.15),
+                            AppColors.primary500.withValues(alpha: 0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.primary500.withValues(alpha: 0.25),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        '${threadedComments.length}',
+                        style: TextStyle(
+                          color: AppColors.primary400,
+                          fontSize: 11,
+                          fontFamily: 'Geist',
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                    child: Text(
-                      '${comments.length}',
-                      style: TextStyle(
-                        color: AppColors.primary400,
-                        fontSize: 11,
-                        fontFamily: 'Geist',
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                  ],
                 ],
                 const Spacer(),
                 GestureDetector(
