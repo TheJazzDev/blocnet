@@ -15,6 +15,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AllowDeactivated } from '../common/decorators/allow-deactivated.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AppRole } from '../common/enums/role.enum';
@@ -334,6 +336,42 @@ export class UsersController {
 
     return this.usersService.uploadMyAvatar(user.id, file);
   }
+
+  @Post('deactivate')
+  @ApiOperation({
+    summary: 'Deactivate my own account',
+    description:
+      'Self-service. Hides the profile and blocks further sign-in until the account is reactivated. Any signed-in user may call this.',
+  })
+  @ApiResponse({ status: 201, description: 'Account deactivated' })
+  @ApiResponse({ status: 400, description: 'Account is already deactivated' })
+  async deactivateMyAccount(
+    @CurrentUser() user: AuthUser | undefined,
+    @Body() dto: DeactivateAccountDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.usersService.deactivateAccount(user.id, dto.reason);
+  }
+
+  @Post('reactivate')
+  @AllowDeactivated()
+  @ApiOperation({
+    summary: 'Reactivate my own account',
+    description:
+      'Self-service. Restores a self-deactivated profile. This is the only authenticated route a deactivated account may call.',
+  })
+  @ApiResponse({ status: 201, description: 'Account reactivated' })
+  @ApiResponse({ status: 400, description: 'Account is not deactivated' })
+  async reactivateMyAccount(@CurrentUser() user: AuthUser | undefined) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.usersService.reactivateAccount(user.id);
+  }
 }
 
 @Controller('admin/users')
@@ -341,7 +379,6 @@ export class UsersController {
 @Roles(AppRole.OWNER, AppRole.ADMIN)
 export class AdminUsersController {
   constructor(
-    private readonly usersService: UsersService,
     private readonly usersAdminService: UsersAdminService,
     private readonly referralsService: ReferralsService,
   ) {}
@@ -441,26 +478,5 @@ export class AdminUsersController {
     }
 
     return this.usersAdminService.hardDeleteUserByOwner(user, id, dto);
-  }
-
-  @Post('me/deactivate')
-  async deactivateMyAccount(
-    @CurrentUser() user: AuthUser | undefined,
-    @Body() dto: DeactivateAccountDto,
-  ) {
-    if (!user) {
-      throw new UnauthorizedException('User context missing');
-    }
-
-    return this.usersService.deactivateAccount(user.id, dto.reason);
-  }
-
-  @Post('me/reactivate')
-  async reactivateMyAccount(@CurrentUser() user: AuthUser | undefined) {
-    if (!user) {
-      throw new UnauthorizedException('User context missing');
-    }
-
-    return this.usersService.reactivateAccount(user.id);
   }
 }

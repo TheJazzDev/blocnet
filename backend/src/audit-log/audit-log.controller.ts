@@ -6,11 +6,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Roles } from '../common/decorators/roles.decorator';
+import {
+  Roles,
+  RolesDeniedMessage,
+} from '../common/decorators/roles.decorator';
 import { AppRole } from '../common/enums/role.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ListAuditLogQuery } from './dto/list-audit-log.query';
 import { ListOpsEventsQuery } from './dto/list-ops-events.query';
 import { AuditLogService } from './audit-log.service';
 
@@ -21,22 +26,31 @@ export class AuditLogController {
 
   @Get()
   @Roles(AppRole.OWNER, AppRole.ADMIN)
+  @ApiOperation({
+    summary: 'List audit log entries visible to the caller',
+    description:
+      'Pass includeViews=false to exclude read-only admin view events (actions ending in ".view").',
+  })
   async list(
     @CurrentUser() user: AuthUser | undefined,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query() query: ListAuditLogQuery,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
 
-    const parsedLimit = limit ? Number(limit) : 100;
-    const parsedOffset = offset ? Number(offset) : 0;
-    return this.auditLogService.listForUser(user, parsedLimit, parsedOffset);
+    return this.auditLogService.listForUser(
+      user,
+      query.limit ?? 100,
+      query.offset ?? 0,
+      { includeViews: query.includeViews ?? true },
+    );
   }
 
   @Get('ops-events')
   @Roles(AppRole.OWNER, AppRole.DEV)
+  @RolesDeniedMessage('Only owner or dev can view ops events')
+  @ApiOperation({ summary: 'List ops events (owner/dev only)' })
   async listOpsEvents(
     @CurrentUser() user: AuthUser | undefined,
     @Query() query: ListOpsEventsQuery,
@@ -50,6 +64,16 @@ export class AuditLogController {
 
   @Get('system-alerts')
   @Roles(AppRole.OWNER, AppRole.DEV)
+  @RolesDeniedMessage('Only owner or dev can view system alerts')
+  @ApiOperation({
+    summary: 'List system alerts (owner/dev only)',
+    description:
+      'Warning/error ops events. Admins are refused with a 403 whose message is safe to display.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Only owner or dev can view system alerts',
+  })
   async listSystemAlerts(
     @CurrentUser() user: AuthUser | undefined,
     @Query() query: ListOpsEventsQuery,

@@ -24,6 +24,11 @@ type JwtPayload = {
   user_metadata?: Record<string, unknown>;
 };
 
+type AuthenticateOptions = {
+  /** Skip the deactivated-account rejection (self-service reactivation). */
+  allowDeactivated?: boolean;
+};
+
 const JWKS_FETCH_TIMEOUT_MS = 8000;
 const JWT_VERIFY_TIMEOUT_MS = 8000;
 
@@ -48,7 +53,10 @@ export class AuthService {
     }
   }
 
-  async authenticateRequest(token: string): Promise<AuthUser> {
+  async authenticateRequest(
+    token: string,
+    options: AuthenticateOptions = {},
+  ): Promise<AuthUser> {
     const payload = await this.verifyToken(token);
     const userId = payload.sub;
     const normalizedEmail = payload.email?.trim().toLowerCase() ?? null;
@@ -82,7 +90,7 @@ export class AuthService {
         username: true,
       },
     });
-    if (existingProfile?.isDeactivated) {
+    if (existingProfile?.isDeactivated && !options.allowDeactivated) {
       throw new UnauthorizedException('Account is deactivated');
     }
 

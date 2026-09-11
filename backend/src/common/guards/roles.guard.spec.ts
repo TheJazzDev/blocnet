@@ -74,6 +74,54 @@ describe('RolesGuard', () => {
     expect(request.user?.actingAsRole).toBe(AppRole.ADMIN);
   });
 
+  it('denies with the generic message when no override is set', async () => {
+    const reflector = {
+      getAllAndOverride: jest.fn((key: string) =>
+        key === 'roles' ? [AppRole.OWNER, AppRole.DEV] : undefined,
+      ),
+    } as unknown as Reflector;
+    const adminTwoFactorService = {
+      shouldEnforceChallengeForAdminPanel: jest.fn().mockResolvedValue(false),
+      validateSession: jest.fn(),
+    } as unknown as AdminTwoFactorService;
+    const guard = new RolesGuard(reflector, adminTwoFactorService);
+
+    await expect(
+      guard.canActivate(
+        createContext({
+          user: { id: 'u1', email: 'admin@blocnet.io', roles: [AppRole.ADMIN] },
+          headers: {},
+        }),
+      ),
+    ).rejects.toThrow('Insufficient role permissions');
+  });
+
+  it('denies with the handler-specific message when RolesDeniedMessage is set', async () => {
+    const reflector = {
+      getAllAndOverride: jest.fn((key: string) => {
+        if (key === 'roles') return [AppRole.OWNER, AppRole.DEV];
+        if (key === 'rolesDeniedMessage') {
+          return 'Only owner or dev can view system alerts';
+        }
+        return undefined;
+      }),
+    } as unknown as Reflector;
+    const adminTwoFactorService = {
+      shouldEnforceChallengeForAdminPanel: jest.fn().mockResolvedValue(false),
+      validateSession: jest.fn(),
+    } as unknown as AdminTwoFactorService;
+    const guard = new RolesGuard(reflector, adminTwoFactorService);
+
+    await expect(
+      guard.canActivate(
+        createContext({
+          user: { id: 'u1', email: 'admin@blocnet.io', roles: [AppRole.ADMIN] },
+          headers: {},
+        }),
+      ),
+    ).rejects.toThrow('Only owner or dev can view system alerts');
+  });
+
   it('ignores invalid or upward role requests', async () => {
     const reflector = {
       getAllAndOverride: jest
