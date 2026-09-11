@@ -38,6 +38,12 @@ class ApiClient {
     _authToken = token;
   }
 
+  /// The bearer token currently attached to outgoing requests.
+  ///
+  /// Exposed so tests can assert *when* auth is cleared relative to other
+  /// work — sign-out has to unregister the push token while this is still set.
+  static String? get debugAuthToken => _authToken;
+
   static void setAuthTokenRefresher(Future<String?> Function()? refresher) {
     _tokenRefresher = refresher;
   }
@@ -111,8 +117,8 @@ class ApiClient {
     return _parseResponse(response);
   }
 
-  Future<dynamic> delete(String path) async {
-    final uri = _buildUri(path);
+  Future<dynamic> delete(String path, {Map<String, String>? query}) async {
+    final uri = _buildUri(path, query);
     final response = await _request(
       () => _httpClient.delete(uri, headers: _headers()),
       label: path,

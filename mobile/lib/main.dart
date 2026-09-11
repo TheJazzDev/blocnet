@@ -171,6 +171,10 @@ void main() async {
     onNotificationTap: handleNotificationTap,
   );
 
+  // Unregister the device token while the session is still valid, otherwise
+  // the phone keeps receiving push for the signed-out account.
+  authStore.onBeforeSignOut = pushNotificationService.unregisterCurrentToken;
+
   void onAuthChanged() {
     if (authStore.isAuthenticated && !pushInitialised) {
       pushInitialised = true;

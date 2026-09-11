@@ -33,7 +33,8 @@ class _CountingApiClient extends ApiClient {
   Future<dynamic> post(String path, {Map<String, dynamic>? body}) async => null;
 
   @override
-  Future<dynamic> delete(String path) async => null;
+  Future<dynamic> delete(String path, {Map<String, String>? query}) async =>
+      null;
 }
 
 void main() {

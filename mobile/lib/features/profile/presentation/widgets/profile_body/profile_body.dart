@@ -6,6 +6,7 @@ import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/profile_hunter_metrics.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/community_voice_section.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_content_section.dart';
+import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_first_run_section.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_signals_section.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_stats_section.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/profile_hero_section.dart';
@@ -150,13 +151,21 @@ class _ProfileBodyState extends State<ProfileBody> {
               badgeCount: earnedBadges.length,
               accent: accent,
             ),
-            if (hunterMetrics != null) ...[
-              HunterStatsSection(metrics: hunterMetrics),
-              const SizedBox(height: AppSpace.lg),
-              CommunityVoiceSection(metrics: hunterMetrics),
-              const SizedBox(height: AppSpace.xl),
-              HunterSignalsSection(updates: hunterMetrics.hunterUpdates),
-            ],
+            // Every hunter metric below is derived from posted updates. With
+            // none posted the whole block is zeroes and N/As, so it is
+            // replaced by a single first-run state rather than shown empty.
+            if (hunterMetrics != null)
+              if (hunterMetrics.hunterUpdates.isEmpty)
+                HunterFirstRunSection(
+                  hasManagedProject: hunterMetrics.managedProjects.isNotEmpty,
+                )
+              else ...[
+                HunterStatsSection(metrics: hunterMetrics),
+                const SizedBox(height: AppSpace.lg),
+                CommunityVoiceSection(metrics: hunterMetrics),
+                const SizedBox(height: AppSpace.xl),
+                HunterSignalsSection(updates: hunterMetrics.hunterUpdates),
+              ],
             const SizedBox(height: AppSpace.lg),
             ProfileTabsSection(accent: accent),
             const SizedBox(height: AppSpace.lg),
