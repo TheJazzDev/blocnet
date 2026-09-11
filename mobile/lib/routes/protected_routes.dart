@@ -1,4 +1,5 @@
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/badges/presentation/pages/badge_gallery_page.dart';
 import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
@@ -159,9 +160,9 @@ class ProtectedRoutes {
       home: (context) => const MainScreen(initialIndex: 0),
       discover: (context) => const MainScreen(initialIndex: 1),
       trending: (context) => const TrendingScreen(),
-      midPriority: (context) => const PriorityScreens(),
-      lowPriority: (context) => const PriorityScreens(),
-      highPriority: (context) => const PriorityScreens(),
+      midPriority: (context) => PriorityScreens(priority: Priority.mid),
+      lowPriority: (context) => PriorityScreens(priority: Priority.low),
+      highPriority: (context) => PriorityScreens(priority: Priority.high),
       topHunters: (context) => const TopHuntersScreen(),
     };
   }

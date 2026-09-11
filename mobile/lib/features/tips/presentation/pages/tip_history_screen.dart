@@ -5,6 +5,7 @@ import 'package:blocnet/features/tips/presentation/models/tip_history_mode.dart'
 import 'package:blocnet/features/tips/presentation/widgets/tip_history_list_item.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
+import 'package:blocnet/shared/widgets/app_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -93,19 +94,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                 ),
                 const SizedBox(height: 12),
                 if (isLoading && rows.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary500,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  )
+                  const SkeletonList(items: 4, itemHeight: 64)
                 else if (rows.isEmpty)
                   Container(
                     width: double.infinity,
@@ -133,7 +122,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                         if (hasError) ...[
                           const SizedBox(height: 6),
                           Text(
-                            'Tip sync warning: ${store.lastError}',
+                            "Couldn't load tips. ${store.lastError}",
                             style: AppTypography.custom(
                               color: AppColors.warning500,
                               size: 11,

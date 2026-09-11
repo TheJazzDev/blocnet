@@ -146,13 +146,30 @@ class GemCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        score.toStringAsFixed(1),
-                        style: AppTypography.custom(
-                          color: scoreColor,
-                          size: 12,
-                          weight: FontWeight.w800,
-                        ),
+                      // Label the score so the decimal is not a mystery
+                      // number in list mode (grid mode has the HYPE SCORE bar).
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            score.toStringAsFixed(1),
+                            style: AppTypography.custom(
+                              color: scoreColor,
+                              size: 12,
+                              weight: FontWeight.w800,
+                              height: 1,
+                            ),
+                          ),
+                          Text(
+                            'hype',
+                            style: AppTypography.custom(
+                              color: AppColors.textFaint,
+                              size: 9,
+                              weight: FontWeight.w600,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

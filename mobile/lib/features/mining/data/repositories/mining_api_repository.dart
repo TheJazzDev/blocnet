@@ -24,6 +24,15 @@ class MiningApiRepository {
     await _apiClient.post('/mining/claim', body: {});
   }
 
+  Future<ReferralSummaryModel?> fetchReferralSummary() async {
+    final response = await _apiClient.get('/referrals/me');
+    if (response is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return ReferralSummaryModel.fromApi(response);
+  }
+
   Future<ReferralValidation?> validateReferralCode(String code) async {
     final response = await _apiClient.get(
       '/referrals/validate',

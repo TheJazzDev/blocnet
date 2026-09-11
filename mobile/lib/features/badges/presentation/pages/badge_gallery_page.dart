@@ -3,6 +3,7 @@ import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/engagement/badges_store.dart';
+import 'package:blocnet/shared/widgets/app_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -74,7 +75,14 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
             child: Consumer<BadgesStore>(
               builder: (context, store, child) {
                 if (store.isLoadingAll || store.isLoadingMy) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const SingleChildScrollView(
+                    physics: NeverScrollableScrollPhysics(),
+                    child: SkeletonList(
+                      items: 6,
+                      itemHeight: 84,
+                      padding: EdgeInsets.all(16),
+                    ),
+                  );
                 }
 
                 if (store.lastError != null) {

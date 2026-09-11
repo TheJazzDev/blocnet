@@ -5,6 +5,7 @@ import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hunter_stats_grid.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/managed_projects_row.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/season_leaderboard.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/tips_load_error_row.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
@@ -200,47 +201,17 @@ class _RecentReceivedTipsCard extends StatelessWidget {
               ),
             )
           else if (visibleRows.isEmpty) ...[
-            Text(
-              error == null || error!.trim().isEmpty
-                  ? 'No tips received yet.'
-                  : 'Unable to load received tips.',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: 12,
-                weight: FontWeight.w500,
-              ),
-            ),
-            if (error != null && error!.trim().isNotEmpty) ...[
-              const SizedBox(height: 4),
+            if (error == null || error!.trim().isEmpty)
               Text(
-                'Tip sync warning: $error',
+                'No tips received yet.',
                 style: AppTypography.custom(
-                  color: AppColors.warning500,
-                  size: 11,
+                  color: AppColors.textMuted,
+                  size: 12,
                   weight: FontWeight.w500,
                 ),
-              ),
-              const SizedBox(height: 6),
-              TextButton(
-                onPressed: onRetry,
-                style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  backgroundColor: AppColors.bgElevated,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  'Retry Sync',
-                  style: AppTypography.custom(
-                    color: AppColors.primary400,
-                    size: 12,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
+              )
+            else
+              TipsLoadErrorRow(onRetry: onRetry),
           ] else ...[
             ...visibleRows.map((row) => _RecentReceivedTipRow(row: row)),
           ],

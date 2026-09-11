@@ -59,7 +59,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                     RenderMarkdownContent(content: detailsContent),
                     const SizedBox(height: 28),
                     MoreFromProjectName(
-                      label: 'Recent Humber Updates in',
+                      label: 'Recent Hunter Updates in',
                       projectTitle: project.name,
                       posts: recentPostInProjectName,
                     ),

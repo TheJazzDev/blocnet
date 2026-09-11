@@ -12,29 +12,41 @@ class MiningStore extends ChangeNotifier {
   final MiningApiRepository _repository;
 
   MiningSnapshot? _snapshot;
+  ReferralSummaryModel? _referralSummary;
   List<DownlineMember> _downline = const [];
   List<MiningLeaderboardEntry> _leaderboard = const [];
   bool _isLoadingSnapshot = false;
+  bool _isLoadingReferral = false;
   bool _isLoadingDownline = false;
   bool _isLoadingLeaderboard = false;
   bool _isStarting = false;
   bool _isClaiming = false;
   bool _isBindingReferral = false;
   String? _lastError;
+  String? _referralError;
 
   MiningSnapshot? get snapshot => _snapshot;
+
+  /// Referral totals from `GET /referrals/me`. Falls back to the referral
+  /// block embedded in the mining snapshot when the dedicated call has not
+  /// resolved yet, so callers always get the freshest data available.
+  ReferralSummaryModel? get referralSummary =>
+      _referralSummary ?? _snapshot?.referral;
   List<DownlineMember> get downline => List.unmodifiable(_downline);
   List<MiningLeaderboardEntry> get leaderboard => List.unmodifiable(_leaderboard);
   bool get isLoadingSnapshot => _isLoadingSnapshot;
+  bool get isLoadingReferral => _isLoadingReferral;
   bool get isLoadingDownline => _isLoadingDownline;
   bool get isLoadingLeaderboard => _isLoadingLeaderboard;
   bool get isStarting => _isStarting;
   bool get isClaiming => _isClaiming;
   bool get isBindingReferral => _isBindingReferral;
   String? get lastError => _lastError;
+  String? get referralError => _referralError;
 
   bool get isBusy =>
       _isLoadingSnapshot ||
+      _isLoadingReferral ||
       _isLoadingDownline ||
       _isLoadingLeaderboard ||
       _isStarting ||
@@ -55,6 +67,27 @@ class MiningStore extends ChangeNotifier {
       _lastError = describeError(error);
     } finally {
       _isLoadingSnapshot = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadReferralSummary({bool force = false}) async {
+    if (_isLoadingReferral) return;
+    if (!force && _referralSummary != null) return;
+
+    _isLoadingReferral = true;
+    notifyListeners();
+
+    try {
+      final summary = await _repository.fetchReferralSummary();
+      if (summary != null) {
+        _referralSummary = summary;
+      }
+      _referralError = null;
+    } catch (error) {
+      _referralError = describeError(error);
+    } finally {
+      _isLoadingReferral = false;
       notifyListeners();
     }
   }
@@ -81,6 +114,7 @@ class MiningStore extends ChangeNotifier {
   Future<void> refreshAll() async {
     await Future.wait([
       loadSnapshot(force: true),
+      loadReferralSummary(force: true),
       loadDownline(force: true),
       loadLeaderboard(force: true),
     ]);
@@ -198,6 +232,8 @@ class MiningStore extends ChangeNotifier {
 
   void clear() {
     _snapshot = null;
+    _referralSummary = null;
+    _referralError = null;
     _downline = const [];
     _leaderboard = const [];
     _lastError = null;

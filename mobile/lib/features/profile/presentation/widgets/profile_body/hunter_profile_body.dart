@@ -289,7 +289,8 @@ class _HunterProfileBodyState extends State<HunterProfileBody> {
                   const SizedBox(height: 12),
                   const _HunterSectionLabel('Account'),
                   const SizedBox(height: 8),
-                  if (auth.isOwner || auth.isDev || auth.isAdmin)
+                  // Backend allows only owner/dev on /audit-log/system-alerts.
+                  if (auth.isOwner || auth.isDev)
                     _HunterTile(
                       mode: viewMode,
                       icon: Icons.warning_amber_rounded,
