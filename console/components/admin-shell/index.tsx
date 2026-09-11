@@ -6,7 +6,6 @@ import axios from 'axios';
 import { CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import {
-  getAdminEnvironmentLabel,
   resolveAdminEnvironmentFromHost,
   type AdminEnvironment,
 } from '@/lib/environment';
@@ -98,10 +97,6 @@ export function AdminShell({
   );
   const topRole = useMemo(() => getAdminGovernanceRole(realRoles), [realRoles]);
   const roleOptions = useMemo(() => getRoleViewOptions(realRoles), [realRoles]);
-  const environmentLabel = useMemo(
-    () => getAdminEnvironmentLabel(environment),
-    [environment],
-  );
 
   useEffect(() => {
     setActingAsRole(currentUser.actingAsRole ?? null);
@@ -177,16 +172,27 @@ export function AdminShell({
   return (
     <AdminSessionContext.Provider value={sessionValue}>
       <div className='relative flex h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_14%,rgba(99,102,241,0.16),transparent_34%),radial-gradient(circle_at_92%_8%,rgba(34,211,238,0.14),transparent_30%),var(--background)]'>
-        <div className='pointer-events-none absolute -top-28 right-[-6rem] h-80 w-80 rounded-full bg-cyan-300/10 blur-3xl' />
-        <div className='pointer-events-none absolute -bottom-36 left-[-8rem] h-96 w-96 rounded-full bg-violet-400/10 blur-3xl' />
+        {/*
+          Decorative blobs are clipped inside their own inset-0 layer. Left bare on
+          the shell they extend past its box and give the overflow-hidden shell
+          scrollable overflow, which focus-reveal (Radix menus/tabs) can consume and
+          the user can never scroll back. See F-04.
+        */}
+        <div
+          aria-hidden
+          className='pointer-events-none absolute inset-0 overflow-hidden'>
+          <div className='absolute -top-28 right-[-6rem] h-80 w-80 rounded-full bg-cyan-300/10 blur-3xl' />
+          <div className='absolute -bottom-36 left-[-8rem] h-96 w-96 rounded-full bg-violet-400/10 blur-3xl' />
+        </div>
 
-        <aside className='relative z-10 hidden w-[260px] shrink-0 flex-col border-r border-sidebar-border/70 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/92 lg:flex'>
+        <aside className='relative z-10 hidden w-[260px] shrink-0 flex-col border-r border-sidebar-border/70 bg-linear-to-b from-sidebar via-sidebar to-sidebar/92 lg:flex'>
           <SidebarContent
             pathname={pathname}
             onSignOut={handleSignOut}
             user={sessionValue}
             topRole={topRole}
             roleOptions={roleOptions}
+            environment={environment}
             onChangeRoleView={handleRoleViewChange}
             onResetRoleView={resetRoleView}
           />
@@ -210,31 +216,21 @@ export function AdminShell({
             user={sessionValue}
             topRole={topRole}
             roleOptions={roleOptions}
+            environment={environment}
             onChangeRoleView={handleRoleViewChange}
             onResetRoleView={resetRoleView}
           />
         </aside>
 
-        <div className='relative z-10 flex flex-1 flex-col overflow-hidden'>
+        <div className='relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden'>
           <TopBar
             mobileOpen={mobileOpen}
+            environment={environment}
             onToggleMobile={() => setMobileOpen(!mobileOpen)}
           />
 
-          <div className='pointer-events-none fixed bottom-4 right-8 z-30'>
-            <div
-              className={cn(
-                'rounded-md border px-3 py-1.5 text-[11px] font-semibold shadow-lg backdrop-blur-xs',
-                environment === 'production'
-                  ? 'border-teal-400/30 bg-teal-500/12 text-teal-200'
-                  : 'border-amber-400/30 bg-amber-500/12 text-amber-200',
-              )}>
-              {environmentLabel}
-            </div>
-          </div>
-
           {sessionValue.actingAsRole && (
-            <div className='border-b border-teal-400/20 bg-gradient-to-r from-primary/10 to-teal-400/10 px-4 py-2.5 md:px-6 lg:px-8'>
+            <div className='border-b border-teal-400/20 bg-linear-to-r from-primary/10 to-teal-400/10 px-4 py-2.5 md:px-6 lg:px-8'>
               <div className='mx-auto flex w-full max-w-7xl items-center justify-between gap-3'>
                 <p className='flex items-center gap-2 text-sm text-foreground'>
                   <CheckCircle2 className='h-4 w-4 text-teal-300' />
@@ -250,8 +246,8 @@ export function AdminShell({
             </div>
           )}
 
-          <main className='flex-1 overflow-y-auto'>
-            <div className='mx-auto p-4 md:p-6 lg:p-8'>{children}</div>
+          <main className='min-w-0 flex-1 overflow-x-hidden overflow-y-auto'>
+            <div className='min-w-0 p-4 md:p-6 lg:p-8'>{children}</div>
           </main>
         </div>
       </div>

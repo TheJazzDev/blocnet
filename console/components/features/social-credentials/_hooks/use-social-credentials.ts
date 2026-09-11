@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { clientApi, type AdminSocialCredential } from "@/lib/api-client";
+import { canManageSocialCredentials } from "@/lib/rbac";
 import {
   EMPTY_FORM,
   normalizeOptional,
@@ -10,14 +10,11 @@ import {
   type CredentialFormState,
 } from "../_lib/social-credentials";
 
-export function useSocialCredentials(
-  effectiveRoles: string[],
-  realRoles: string[],
-) {
-  const router = useRouter();
+export function useSocialCredentials(effectiveRoles: string[]) {
+  // Same rule the sidebar uses to show the link; "view as" lowers access too.
   const isOwner = useMemo(
-    () => realRoles.includes("owner") || effectiveRoles.includes("owner"),
-    [effectiveRoles, realRoles],
+    () => canManageSocialCredentials(effectiveRoles),
+    [effectiveRoles],
   );
 
   const [rows, setRows] = useState<AdminSocialCredential[]>([]);
@@ -59,16 +56,12 @@ export function useSocialCredentials(
 
   useEffect(() => {
     if (!isOwner) {
-      router.replace("/dashboard");
+      // No redirect: the page renders an access-denied card instead.
+      setLoading(false);
       return;
     }
     void loadRows();
-  }, [isOwner, router]);
-
-  useEffect(() => {
-    if (!isOwner) {
-      setLoading(false);
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOwner]);
 
   function resetMessages() {

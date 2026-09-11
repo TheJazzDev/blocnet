@@ -3,12 +3,16 @@
 import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { AdminEnvironment } from '@/lib/environment';
+import { EnvironmentBadge } from './EnvironmentBadge';
 
 export function TopBar({
   mobileOpen,
+  environment,
   onToggleMobile,
 }: {
   mobileOpen: boolean;
+  environment: AdminEnvironment;
   onToggleMobile: () => void;
 }) {
   return (
@@ -16,13 +20,13 @@ export function TopBar({
       <Button variant='ghost' size='icon' onClick={onToggleMobile}>
         {mobileOpen ? <X className='h-5 w-5' /> : <Menu className='h-5 w-5' />}
       </Button>
-      <div className='flex items-center gap-2'>
-        <div className='flex h-7 w-7 items-center justify-center'>
+      <div className='flex min-w-0 flex-1 items-center gap-2'>
+        <div className='flex h-7 w-7 shrink-0 items-center justify-center'>
           <Image src='/logo2.png' alt='Blocnet' width={28} height={28} priority />
         </div>
-        <span className='text-sm font-bold'>Blocnet Console</span>
+        <span className='truncate text-sm font-bold'>Blocnet Console</span>
+        <EnvironmentBadge environment={environment} />
       </div>
     </div>
   );
 }
-

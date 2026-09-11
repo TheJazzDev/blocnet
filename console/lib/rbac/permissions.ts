@@ -46,6 +46,11 @@ export function canMutateWallet(roles: string[]): boolean {
   return hasRole(roles, 'owner') || hasRole(roles, 'dev') || hasRole(roles, 'admin');
 }
 
+/** Quests, quest reviews, badges and levels: every governance role, dev included. */
+export function canManageGamification(roles: string[]): boolean {
+  return hasRole(roles, 'owner') || hasRole(roles, 'dev') || hasRole(roles, 'admin');
+}
+
 export function canViewOpsEvents(roles: string[]): boolean {
   return hasRole(roles, 'owner') || hasRole(roles, 'dev');
 }

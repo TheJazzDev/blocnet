@@ -1,6 +1,8 @@
 'use client';
 
 import { useAdminSession } from '@/components/admin-shell';
+import { AccessDeniedCard } from '@/components/shared/AccessDeniedCard';
+import { canManageGamification } from '@/lib/rbac';
 import { apiFetch } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,9 +20,7 @@ import { SubmissionReviewDialog } from './SubmissionReviewDialog';
 
 export default function QuestSubmissionsPage() {
   const session = useAdminSession();
-  const canReviewSubmissions =
-    session.effectiveRoles.includes('owner') ||
-    session.effectiveRoles.includes('admin');
+  const canReviewSubmissions = canManageGamification(session.effectiveRoles);
 
   const {
     submissions,
@@ -130,13 +130,10 @@ export default function QuestSubmissionsPage() {
 
   if (!canReviewSubmissions) {
     return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <div className='rounded-lg border border-red-200 bg-red-50 p-6'>
-          <p className='text-sm text-red-800'>
-            You do not have permission to review quest submissions.
-          </p>
-        </div>
-      </div>
+      <AccessDeniedCard
+        title='Quest Reviews'
+        requirement='Owner, dev or admin role is required to review quest submissions.'
+      />
     );
   }
 

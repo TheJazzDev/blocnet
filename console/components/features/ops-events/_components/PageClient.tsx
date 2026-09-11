@@ -2,8 +2,8 @@
 
 import { Loader2, RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AccessDeniedCard } from "@/components/shared/AccessDeniedCard";
 import { useAdminSession } from "@/components/admin-shell";
 import { canViewOpsEvents } from "@/lib/rbac";
 import { OpsFiltersCard } from "./OpsFiltersCard";
@@ -18,17 +18,11 @@ export default function OpsEventsPageClient() {
 
   if (!canView) {
     return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Ops Events"
-          description="Owner-only operational event stream."
-        />
-        <Card>
-          <CardContent className="py-10 text-sm text-muted-foreground">
-            Access denied. Owner role is required to view operational events.
-          </CardContent>
-        </Card>
-      </div>
+      <AccessDeniedCard
+        title="Ops Events"
+        description="Operational event stream for owner and dev roles."
+        requirement="Owner or dev role is required to view operational events."
+      />
     );
   }
 
