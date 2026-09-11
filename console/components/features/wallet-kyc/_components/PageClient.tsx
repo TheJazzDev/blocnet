@@ -1,21 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -33,13 +23,40 @@ import {
 } from "@/components/ui/table";
 import { useAdminSession } from "@/components/admin-shell";
 import { canMutateWallet } from "@/lib/rbac";
-import { formatDate, kycBadge, type ReviewStatus, type StatusFilter } from "../_lib/wallet-kyc";
+import type { AdminWalletKycRecord } from "@/lib/api-client";
+import { formatDate, kycBadge, type StatusFilter } from "../_lib/wallet-kyc";
 import { useWalletKycAdmin } from "../_hooks/use-wallet-kyc-admin";
+import { KycReviewDialog } from "./KycReviewDialog";
+
+/** Only a real submission can be reviewed; "not submitted" rows have nothing to approve. */
+function isReviewable(row: AdminWalletKycRecord) {
+  return row.status === "pending";
+}
+
+function NoSubmissionsYet({ total }: { total: number }) {
+  return (
+    <div className="flex flex-col items-center gap-2 py-8 text-center sm:py-10">
+      <ShieldCheck className="h-8 w-8 text-muted-foreground/60 sm:h-10 sm:w-10" />
+      <p className="text-sm font-medium">No KYC submissions yet.</p>
+      <p className="max-w-md text-xs text-muted-foreground sm:text-sm">
+        Users will appear here once they submit verification from the app.
+        {total > 0 && ` ${total} wallet ${total === 1 ? "user has" : "users have"} not submitted.`}
+      </p>
+    </div>
+  );
+}
 
 export default function WalletKycPageClient() {
   const session = useAdminSession();
   const canMutate = canMutateWallet(session.effectiveRoles);
   const state = useWalletKycAdmin();
+
+  // Every row is "not submitted": a queue that cannot be worked, so say so
+  // instead of rendering a table of live Approve/Reject buttons (F-28).
+  const onlyUnsubmitted =
+    state.status !== "not_submitted" &&
+    state.rows.length > 0 &&
+    state.rows.every((row) => row.status === "not_submitted");
 
   return (
     <div className="space-y-6">
@@ -101,6 +118,8 @@ export default function WalletKycPageClient() {
             <p className="py-8 text-center text-sm text-destructive">{state.error}</p>
           ) : state.rows.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">No KYC records found.</p>
+          ) : onlyUnsubmitted ? (
+            <NoSubmissionsYet total={state.total} />
           ) : (
             <Table>
               <TableHeader>
@@ -113,132 +132,84 @@ export default function WalletKycPageClient() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {state.rows.map((row) => {
-                  const actionable = canMutate && (row.status === "pending" || row.status === "not_submitted");
-                  return (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <div className="space-y-0.5">
-                          <p className="font-medium">{row.user.displayName ?? row.user.email}</p>
-                          <p className="text-xs text-muted-foreground">{row.user.email}</p>
+                {state.rows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      <div className="space-y-0.5">
+                        <p className="font-medium">{row.user.displayName ?? row.user.email}</p>
+                        <p className="text-xs text-muted-foreground">{row.user.email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{kycBadge(row.status)}</TableCell>
+                    <TableCell>{row.tier}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDate(row.submittedAt)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {canMutate && isReviewable(row) ? (
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" onClick={() => state.openReview(row, "approved")}>
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => state.openReview(row, "rejected")}>
+                            Reject
+                          </Button>
                         </div>
-                      </TableCell>
-                      <TableCell>{kycBadge(row.status)}</TableCell>
-                      <TableCell>{row.tier}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(row.submittedAt)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {actionable ? (
-                          <div className="flex justify-end gap-2">
-                            <Button size="sm" variant="outline" onClick={() => state.openReview(row, "approved")}>
-                              Approve
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => state.openReview(row, "rejected")}>
-                              Reject
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">{formatDate(row.reviewedAt)}</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                      ) : row.status === "not_submitted" ? (
+                        <span className="text-xs text-muted-foreground">Awaiting submission</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">{formatDate(row.reviewedAt)}</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           )}
 
-          <div className="mt-4 flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              Showing {state.rows.length === 0 ? 0 : state.offset + 1}-{Math.min(state.offset + state.rows.length, state.total)} of {state.total}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={state.offset === 0 || state.loading}
-                onClick={() => state.setOffset((prev) => Math.max(prev - state.limit, 0))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Prev
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={state.offset + state.limit >= state.total || state.loading}
-                onClick={() => state.setOffset((prev) => prev + state.limit)}
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+          {!onlyUnsubmitted && (
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Showing {state.rows.length === 0 ? 0 : state.offset + 1}-{Math.min(state.offset + state.rows.length, state.total)} of {state.total}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={state.offset === 0 || state.loading}
+                  onClick={() => state.setOffset((prev) => Math.max(prev - state.limit, 0))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={state.offset + state.limit >= state.total || state.loading}
+                  onClick={() => state.setOffset((prev) => prev + state.limit)}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      <Dialog open={state.dialogOpen} onOpenChange={state.setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>KYC Review</DialogTitle>
-            <DialogDescription>
-              Submit a review decision and audit note for this KYC profile.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={state.reviewStatus} onValueChange={(next) => state.setReviewStatus(next as ReviewStatus)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {state.reviewStatus === "approved" && (
-              <div className="space-y-2">
-                <Label>Risk Tier</Label>
-                <Select value={state.tier} onValueChange={state.setTier}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="basic">basic</SelectItem>
-                    <SelectItem value="verified">verified</SelectItem>
-                    <SelectItem value="high_trust">high_trust</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Review note</Label>
-              <Textarea
-                value={state.note}
-                onChange={(e) => state.setNote(e.target.value)}
-                rows={4}
-                placeholder="Provide context for this review decision."
-              />
-            </div>
-
-            {state.dialogError && <p className="text-sm text-destructive">{state.dialogError}</p>}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => state.setDialogOpen(false)} disabled={state.submitting}>
-              Cancel
-            </Button>
-            <Button onClick={() => void state.submitReview()} disabled={state.submitting}>
-              {state.submitting ? "Saving..." : "Submit Review"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <KycReviewDialog
+        open={state.dialogOpen}
+        onOpenChange={state.setDialogOpen}
+        reviewStatus={state.reviewStatus}
+        setReviewStatus={state.setReviewStatus}
+        tier={state.tier}
+        setTier={state.setTier}
+        note={state.note}
+        setNote={state.setNote}
+        error={state.dialogError}
+        submitting={state.submitting}
+        onSubmit={() => void state.submitReview()}
+      />
     </div>
   );
 }
