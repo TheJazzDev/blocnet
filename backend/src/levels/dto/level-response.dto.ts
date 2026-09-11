@@ -77,3 +77,17 @@ export class LeaderboardEntryDto {
   };
   achievedAt: Date;
 }
+
+/**
+ * Paginated envelope for `GET /levels/leaderboard`.
+ *
+ * Same shape as the mining leaderboard so clients can page both identically:
+ * `total` is the number of ranked (non-deactivated) users, and `rank` inside
+ * each entry is absolute, not page-relative.
+ */
+export class LevelsLeaderboardResponseDto {
+  total: number;
+  limit: number;
+  offset: number;
+  data: LeaderboardEntryDto[];
+}

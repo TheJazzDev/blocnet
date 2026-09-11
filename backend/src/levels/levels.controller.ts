@@ -24,8 +24,9 @@ import { AppRole } from '../common/enums/role.enum';
 import {
   LevelResponseDto,
   UserLevelProgressDto,
-  LeaderboardEntryDto,
+  LevelsLeaderboardResponseDto,
 } from './dto/level-response.dto';
+import { ListLevelsLeaderboardQuery } from './dto/list-levels-leaderboard.query';
 import { UpdateLevelDto } from './dto/update-level.dto';
 import { LevelIconStorageService } from './level-icon-storage.service';
 
@@ -153,19 +154,30 @@ export class LevelsController {
 
   /**
    * Get leaderboard
-   * GET /api/levels/leaderboard
+   * GET /api/levels/leaderboard?limit=&offset=
+   *
+   * `limit` and `offset` are validated by the DTO (whole numbers, `limit >= 1`,
+   * `offset >= 0`) and clamped in the service, so a junk or oversized value is
+   * a 400 rather than a Prisma 500 or an unbounded scan.
    */
   @Get('leaderboard')
   async getLeaderboard(
-    @Query('limit') limit?: string,
-  ): Promise<LeaderboardEntryDto[]> {
-    const parsedLimit = limit ? parseInt(limit, 10) : 100;
-    const leaderboard = await this.levelsService.getLeaderboard(parsedLimit);
+    @Query() query: ListLevelsLeaderboardQuery,
+  ): Promise<LevelsLeaderboardResponseDto> {
+    const leaderboard = await this.levelsService.getLeaderboard({
+      limit: query.limit,
+      offset: query.offset,
+    });
 
-    return leaderboard.map((entry) => ({
-      ...entry,
-      level: LevelResponseDto.fromEntity(entry.level),
-    }));
+    return {
+      total: leaderboard.total,
+      limit: leaderboard.limit,
+      offset: leaderboard.offset,
+      data: leaderboard.data.map((entry) => ({
+        ...entry,
+        level: LevelResponseDto.fromEntity(entry.level),
+      })),
+    };
   }
 
   /**
