@@ -8,6 +8,7 @@ import {
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
+import { isClaimable } from '../mining/mining-settlement';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
 import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
@@ -16,6 +17,7 @@ type ReferralConfig = {
   referralsEnabled: boolean;
   activeReferralWindowHours: number;
   referralBindWindowHours: number;
+  claimWindowHours: number;
 };
 
 const DEFAULT_REFERRAL_CONFIG = {
@@ -356,6 +358,7 @@ export class ReferralsService {
               startsAt: true,
               endsAt: true,
               claimedAt: true,
+              expiredAt: true,
               effectivePointsPerCycle: true,
             },
           },
@@ -374,7 +377,7 @@ export class ReferralsService {
 
     const data = rows.map((row) => {
       const latestSession = row.miningSessions[0] ?? null;
-      const status = this.resolveSessionStatus(latestSession, asOf);
+      const status = this.resolveSessionStatus(latestSession, asOf, config);
       const progressPct = latestSession
         ? this.computeProgressPct(
             latestSession.startsAt,
@@ -520,6 +523,7 @@ export class ReferralsService {
         configRow.referralsEnabled && miningEnabledFlag && referralsEnabledFlag,
       activeReferralWindowHours: configRow.activeReferralWindowHours,
       referralBindWindowHours: configRow.referralBindWindowHours,
+      claimWindowHours: configRow.claimWindowHours,
     };
   }
 
@@ -559,24 +563,41 @@ export class ReferralsService {
     }).length;
   }
 
+  /**
+   * Mirrors the mining module's own rule (see `isClaimable` in
+   * `mining/mining-settlement.ts`): a cycle is claimable only while its window
+   * is still open. A downline member's cycles are settled when *they* next
+   * claim, start or open the app, so a stale past-window cycle can still be
+   * unsettled here — hence the window check, not just `expiredAt`.
+   */
   private resolveSessionStatus(
     latestSession: {
       startsAt: Date;
       endsAt: Date;
       claimedAt: Date | null;
+      expiredAt: Date | null;
     } | null,
     asOf: Date,
+    config: ReferralConfig,
   ) {
     if (!latestSession) {
       return 'idle' as const;
     }
 
-    if (latestSession.claimedAt) {
+    if (latestSession.claimedAt || latestSession.expiredAt) {
       return 'idle' as const;
     }
 
-    if (latestSession.endsAt <= asOf) {
+    if (
+      isClaimable(latestSession, asOf, {
+        claimWindowHours: config.claimWindowHours,
+      })
+    ) {
       return 'claimable' as const;
+    }
+
+    if (latestSession.endsAt <= asOf) {
+      return 'idle' as const;
     }
 
     return 'running' as const;
