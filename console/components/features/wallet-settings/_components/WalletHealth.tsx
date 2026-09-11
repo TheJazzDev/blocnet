@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { AdminWalletHealth } from '@/lib/api-client';
+import { toMiningTotals } from '@/lib/api/mining-totals';
 import { boolBadge, formatAmount, formatInteger, renderCountGroup } from './utils';
 
 export function WalletHealth({
@@ -18,6 +19,8 @@ export function WalletHealth({
   walletHealth: AdminWalletHealth | null;
   onRefresh: () => void;
 }) {
+  const mining = toMiningTotals(walletHealth?.economy.mining);
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -158,23 +161,23 @@ export function WalletHealth({
               <div className="grid gap-3 md:grid-cols-4">
                 <div className="rounded border p-2 text-xs">
                   <p className="text-muted-foreground">Lifetime Mined (BNP)</p>
-                  <p className="font-medium">{formatInteger(walletHealth.economy.mining.lifetimeMinedMcr)}</p>
+                  <p className="font-medium">{formatInteger(mining?.lifetimeMinedBnp ?? 0)}</p>
                 </div>
                 <div className="rounded border p-2 text-xs">
                   <p className="text-muted-foreground">Lifetime Claimed (BNP)</p>
                   <p className="font-medium">
-                    {formatInteger(walletHealth.economy.mining.lifetimeClaimedMcr)}
+                    {formatInteger(mining?.lifetimeClaimedBnp ?? 0)}
                   </p>
                 </div>
                 <div className="rounded border p-2 text-xs">
                   <p className="text-muted-foreground">Unclaimed (BNP)</p>
                   <p className="font-medium">
-                    {formatInteger(walletHealth.economy.mining.lifetimeUnclaimedMcr)}
+                    {formatInteger(mining?.lifetimeUnclaimedBnp ?? 0)}
                   </p>
                 </div>
                 <div className="rounded border p-2 text-xs">
                   <p className="text-muted-foreground">Total Miners</p>
-                  <p className="font-medium">{formatInteger(walletHealth.economy.mining.totalMiners)}</p>
+                  <p className="font-medium">{formatInteger(mining?.totalMiners ?? 0)}</p>
                 </div>
               </div>
             </div>

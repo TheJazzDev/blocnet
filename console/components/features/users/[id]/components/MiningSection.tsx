@@ -75,7 +75,7 @@ export function MiningSection({ user }: MiningSectionProps) {
                 maximumFractionDigits: 4,
               })}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-1">MCR/hour</p>
+            <p className="text-[11px] text-muted-foreground mt-1">BNP/hour</p>
           </div>
           <div className="rounded-md border p-3 bg-muted/30">
             <div className="flex items-center gap-2 mb-1">

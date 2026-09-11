@@ -93,8 +93,15 @@ export interface AdminMiningMetrics {
   activeReferralRatio: number;
   totalDirectReferrals: number;
   activeDirectReferrals: number;
+  /** BNP aliases arrive with WS-H; read totals through `toMiningTotals`. */
+  lifetimeMinedBnp?: number;
+  lifetimeClaimedBnp?: number;
+  lifetimeUnclaimedBnp?: number;
+  /** @deprecated legacy MCR naming, removed by WS-H. */
   lifetimeMinedMcr: number;
+  /** @deprecated legacy MCR naming, removed by WS-H. */
   lifetimeClaimedMcr: number;
+  /** @deprecated legacy MCR naming, removed by WS-H. */
   lifetimeUnclaimedMcr: number;
   totalMiners: number;
 }

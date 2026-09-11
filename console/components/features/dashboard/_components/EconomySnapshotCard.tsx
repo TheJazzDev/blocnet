@@ -4,6 +4,7 @@ import { TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type { AdminWalletHealth } from '@/lib/api-client';
+import { toMiningTotals } from '@/lib/api/mining-totals';
 import { formatTokenAmount } from './dashboard-utils';
 import { MetricCell } from './MetricCell';
 
@@ -18,7 +19,7 @@ export function EconomySnapshotCard({
 }: EconomySnapshotCardProps) {
   const walletAssetTotals = walletHealth?.economy.walletAssetHoldings ?? [];
   const tipCurrencyTotals = walletHealth?.economy.tipCurrencyTotals ?? [];
-  const miningTotals = walletHealth?.economy.mining;
+  const miningTotals = toMiningTotals(walletHealth?.economy.mining);
 
   const bntHolding = walletAssetTotals.find((row) => row.asset === 'BNT');
   const bnbHolding = walletAssetTotals.find((row) => row.asset === 'BNB');
@@ -29,8 +30,8 @@ export function EconomySnapshotCard({
   const questTotals = walletHealth?.economy.quests;
 
   const questShareOfClaimedPct =
-    miningTotals && miningTotals.lifetimeClaimedMcr > 0
-      ? ((questTotals?.rewardPointsTotal ?? 0) / miningTotals.lifetimeClaimedMcr) *
+    miningTotals && miningTotals.lifetimeClaimedBnp > 0
+      ? ((questTotals?.rewardPointsTotal ?? 0) / miningTotals.lifetimeClaimedBnp) *
         100
       : 0;
 
@@ -68,17 +69,17 @@ export function EconomySnapshotCard({
               />
               <MetricCell
                 label='Total BNP Mined'
-                value={(miningTotals?.lifetimeMinedMcr ?? 0).toLocaleString()}
+                value={(miningTotals?.lifetimeMinedBnp ?? 0).toLocaleString()}
                 hint={`${miningTotals?.totalMiners ?? 0} miners`}
               />
               <MetricCell
                 label='Total BNP Claimed'
-                value={(miningTotals?.lifetimeClaimedMcr ?? 0).toLocaleString()}
+                value={(miningTotals?.lifetimeClaimedBnp ?? 0).toLocaleString()}
                 hint='Lifetime'
               />
               <MetricCell
                 label='Total BNP Unclaimed'
-                value={(miningTotals?.lifetimeUnclaimedMcr ?? 0).toLocaleString()}
+                value={(miningTotals?.lifetimeUnclaimedBnp ?? 0).toLocaleString()}
                 hint='Lifetime outstanding'
               />
               <MetricCell

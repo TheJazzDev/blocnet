@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clientApi, type TipDirection } from "@/lib/api-client";
+import { stripRetiredTipCurrencies } from "@/lib/api/tip-currencies";
 import { queryKeys } from "./query-keys";
 import { queryOptions } from "./query-options";
 
@@ -28,6 +29,7 @@ export function useTipSettingsQuery() {
   return useQuery({
     queryKey: queryKeys.tips.settings(),
     queryFn: () => clientApi.getTipSettings(),
+    select: stripRetiredTipCurrencies,
     ...queryOptions.standard,
   });
 }

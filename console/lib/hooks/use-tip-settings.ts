@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from "react";
 import { useTipSettingsStore } from "@/lib/stores/tip-settings-store";
 import { clientApi } from "@/lib/api-client";
+import { stripRetiredTipCurrencies } from "@/lib/api/tip-currencies";
 
 interface UseTipSettingsOptions {
   autoLoad?: boolean;
@@ -15,7 +16,7 @@ export function useTipSettings(options: UseTipSettingsOptions = {}) {
   const { autoLoad = true } = options;
 
   const store = useTipSettingsStore();
-  const { settings, isLoading, error, setSettings, setLoading, setError } = store;
+  const { setSettings, setLoading, setError } = store;
 
   const loadSettings = useCallback(async () => {
     setLoading(true);
@@ -23,7 +24,7 @@ export function useTipSettings(options: UseTipSettingsOptions = {}) {
 
     try {
       const data = await clientApi.getTipSettings();
-      setSettings(data);
+      setSettings(stripRetiredTipCurrencies(data));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tip settings");
     }
