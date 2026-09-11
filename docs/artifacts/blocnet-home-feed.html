@@ -1,0 +1,459 @@
+<title>Blocnet Home Feed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap">
+
+<style>
+  /* Committed dark: the app is dark-only and a feed has to be judged on its
+     own ground. Page chrome is Geist; the phone mockups are system-ui,
+     because Flutter sets no fontFamily and inherits the platform face. */
+  :root {
+    --ground:    #09090b;
+    --surface:   #131316;
+    --surface-2: #18181b;
+    --elevated:  #27272a;
+    --line:      #27272a;
+    --line-soft: #1c1c20;
+    --ink:       #FAFAFA;
+    --ink-2:     #C7CBD5;
+    --ink-3:     #A5ADBA;
+    --ink-4:     #7D8797;
+    --cyan:      #22D3EE;
+    --cyan-deep: #0891B2;
+    --good:      #10B981;
+    --warn:      #F5A524;
+    --bad:       #EF4444;
+    --violet:    #A855F7;
+
+    --sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --app:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-4);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 44px); font-weight: 600; letter-spacing: -0.025em;
+    line-height: 1.1; text-wrap: balance; margin: 0 0 16px;
+  }
+  .lede { max-width: 64ch; color: var(--ink-2); font-size: 16px; margin: 0 0 12px; }
+  .lede strong { color: var(--ink); font-weight: 500; }
+
+  h2 {
+    font-size: 13px; font-weight: 600; font-family: var(--mono);
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-4);
+    margin: 0 0 6px;
+  }
+  .h2sub { color: var(--ink-3); font-size: 13.5px; margin: 0 0 20px; max-width: 74ch; }
+  hr.rule { height: 1px; background: var(--line-soft); border: 0; margin: 56px 0 28px; }
+
+  /* ── Vertical budget ───────────────────────────────────────────────────── */
+  .budget { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px; }
+  @media (max-width: 760px) { .budget { grid-template-columns: minmax(0,1fr); } }
+  .bcol { display: flex; flex-direction: column; gap: 10px; }
+  .bhead { display: flex; align-items: baseline; gap: 10px; }
+  .btitle { font-size: 15px; font-weight: 600; }
+  .btag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 4px;
+  }
+  .t-now { background: rgba(125,135,151,0.16); color: var(--ink-3); }
+  .t-new { background: rgba(34,211,238,0.15); color: #67E8F9; }
+  .bars { display: flex; flex-direction: column; gap: 3px; }
+  .bar {
+    display: grid; grid-template-columns: 150px minmax(0,1fr) 58px;
+    gap: 12px; align-items: center;
+    font-size: 12.5px; color: var(--ink-3);
+  }
+  .bar .fill { height: 22px; border-radius: 3px; }
+  .bar .px {
+    font-family: var(--mono); font-size: 11.5px; text-align: right;
+    color: var(--ink-4); font-variant-numeric: tabular-nums;
+  }
+  .f-chrome  { background: #3f3f46; }
+  .f-status  { background: var(--bad); }
+  .f-hunters { background: var(--warn); }
+  .f-content { background: var(--cyan); }
+  .btotal {
+    margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line-soft);
+    font-size: 13px; color: var(--ink-3);
+  }
+  .btotal b { color: var(--ink); font-weight: 500; font-family: var(--mono); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 18px 0 0; font-size: 12.5px; color: var(--ink-4); }
+  .legend span { display: flex; align-items: center; gap: 7px; }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: block; }
+
+  /* ── Phones ────────────────────────────────────────────────────────────── */
+  .compare { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 28px; margin-top: 24px; }
+  @media (max-width: 860px) { .compare { grid-template-columns: minmax(0,1fr); } }
+  .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .phone {
+    background: var(--ground); border: 1px solid var(--line);
+    border-radius: 20px; overflow: hidden; font-family: var(--app);
+    box-shadow: 0 20px 44px -26px rgba(0,0,0,0.95);
+  }
+  .fold {
+    border-top: 1px dashed rgba(34,211,238,0.5);
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--cyan);
+    padding: 4px 12px; background: rgba(34,211,238,0.05);
+  }
+
+  .m-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px 12px; }
+  .m-title { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
+  .m-right { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--ink-3); }
+  .m-chip {
+    font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 999px;
+    color: var(--cyan-deep); border: 1px solid rgba(8,145,178,0.5);
+    background: rgba(8,145,178,0.12);
+  }
+  .m-tabs { display: flex; gap: 20px; padding: 0 14px; border-bottom: 1px solid var(--line-soft); }
+  .m-tab { font-size: 13px; color: var(--ink-4); padding-bottom: 9px; }
+  .m-tab.on { color: var(--cyan-deep); font-weight: 600; box-shadow: inset 0 -2px 0 var(--cyan-deep); }
+
+  .m-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* current: two tall empty status cards */
+  .old-card {
+    border: 1px solid var(--line); border-radius: 12px;
+    background: var(--surface-2); padding: 12px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .old-label {
+    font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-4);
+  }
+  .old-h { font-size: 15px; font-weight: 500; }
+  .old-sub { font-size: 10px; color: var(--ink-4); }
+
+  /* proposed: one compact strip */
+  .strip {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 11px; border-radius: 10px;
+    background: var(--surface-2); border: 1px solid var(--line);
+    font-size: 12px; color: var(--ink-3);
+  }
+  .strip b { color: var(--ink-2); font-weight: 500; }
+  .strip .sep { color: var(--ink-4); }
+  .strip .go { margin-left: auto; color: var(--cyan-deep); font-weight: 600; font-size: 11.5px; }
+  .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--good); flex: none; }
+
+  .hunters { display: flex; gap: 12px; padding: 2px 0 4px; }
+  .hunter { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 58px; }
+  .havatar {
+    width: 44px; height: 44px; border-radius: 999px;
+    background: linear-gradient(140deg, var(--cyan-deep), #155E75);
+    border: 2px solid rgba(8,145,178,0.55);
+  }
+  .hname { font-size: 9.5px; color: var(--ink-3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .secline {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-4); padding: 4px 0 2px;
+  }
+  .secline .all { margin-left: auto; color: var(--cyan-deep); letter-spacing: 0.02em; text-transform: none; font-family: var(--app); font-size: 11px; font-weight: 600; }
+
+  /* feed cards */
+  .post { display: flex; flex-direction: column; gap: 9px; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+  .p-av { width: 34px; height: 34px; border-radius: 999px; flex: none; background: linear-gradient(140deg, var(--cyan), var(--cyan-deep)); }
+  .pill {
+    font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 999px;
+    letter-spacing: 0.04em; white-space: nowrap;
+  }
+  .p-hunter { color: var(--violet); background: rgba(168,85,247,0.14); border: 1px solid rgba(168,85,247,0.4); }
+  .p-high   { color: var(--bad); background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.4); }
+  .p-tag    { color: var(--warn); background: rgba(245,165,36,0.12); border: 1px solid rgba(245,165,36,0.38); }
+  .p-body { font-size: 15px; color: var(--ink-2); margin: 0; line-height: 1.5; }
+  .p-acts {
+    display: flex; align-items: center; gap: 18px;
+    font-size: 11px; color: var(--ink-4); font-variant-numeric: tabular-nums;
+  }
+  .p-acts .last { margin-left: auto; }
+
+  /* the old card's stacked chrome */
+  .old-post { display: flex; flex-direction: column; gap: 7px; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+  .op-row { display: flex; align-items: center; gap: 7px; }
+  .op-name { font-size: 13px; font-weight: 600; }
+  .op-handle { font-size: 12px; color: var(--ink-4); }
+  .op-meta { font-size: 12px; color: var(--ink-3); }
+  .op-time { margin-left: auto; font-size: 11px; color: var(--ink-4); white-space: nowrap; }
+
+  /* new header, two lines */
+  .np-head { display: flex; align-items: flex-start; gap: 9px; }
+  .np-who { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .np-l1 { display: flex; align-items: center; gap: 6px; }
+  .np-name { font-size: 14px; font-weight: 600; }
+  .np-time { font-size: 11px; color: var(--ink-4); }
+  .np-l2 { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-4); min-width: 0; }
+  .np-proj { color: var(--ink-3); }
+
+  /* ── Anatomy ───────────────────────────────────────────────────────────── */
+  .anat { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 22px; }
+  @media (max-width: 780px) { .anat { grid-template-columns: minmax(0,1fr); } }
+  .arow {
+    display: grid; grid-template-columns: 24px minmax(0,1fr);
+    gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft);
+    font-size: 13.5px; color: var(--ink-2);
+  }
+  .arow:last-child { border-bottom: 0; }
+  .anum {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-4);
+    padding-top: 3px; font-variant-numeric: tabular-nums;
+  }
+  .arow b { color: var(--ink); font-weight: 500; }
+
+  .note {
+    max-width: 74ch; margin: 22px 0 0; padding: 14px 16px;
+    border-left: 2px solid var(--elevated); background: var(--surface);
+    color: var(--ink-3); font-size: 13.5px; line-height: 1.6;
+  }
+  .note b { color: var(--ink-2); font-weight: 500; }
+
+  table.cost { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; }
+  table.cost th {
+    text-align: left; font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-4);
+    font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line);
+  }
+  table.cost td { padding: 9px 10px; border-bottom: 1px solid var(--line-soft); color: var(--ink-2); vertical-align: top; }
+  table.cost td:last-child { font-family: var(--mono); text-align: right; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.cost tr:last-child td { border-bottom: 0; }
+
+  footer {
+    margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line-soft);
+    font-size: 12.5px; color: var(--ink-4);
+    display: flex; flex-wrap: wrap; gap: 6px 20px;
+  }
+  footer span { font-family: var(--mono); }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Blocnet · mobile · screen 1 of 43</p>
+  <h1>The first screenful is mostly chrome</h1>
+  <p class="lede">
+    Measured off the running app at 1280×2856. <strong>53% of the first screen goes by before
+    a single piece of real content appears</strong>, and the two cards doing the most damage are
+    both reporting that there is nothing to report.
+  </p>
+  <p class="lede">
+    This is the home feed, so it is where the "not intuitive, inconsistent" complaint lands
+    hardest and where a fix pays back most. Nothing below changes what the screen does. It
+    changes how much of the screen each thing is allowed to take.
+  </p>
+
+  <hr class="rule">
+  <h2>Where the first screen goes</h2>
+  <p class="h2sub">Pixels above the fold on a Pixel 9 Pro, measured from the screenshots rather than estimated.</p>
+
+  <div class="budget">
+    <div class="bcol">
+      <div class="bhead"><span class="btitle">Today</span><span class="btag t-now">as shipped</span></div>
+      <div class="bars">
+        <div class="bar"><span>App bar + tabs</span><div class="fill f-chrome" style="width:26%"></div><span class="px">320</span></div>
+        <div class="bar"><span>Alpha Radar card</span><div class="fill f-status" style="width:17%"></div><span class="px">207</span></div>
+        <div class="bar"><span>Edge Engine card</span><div class="fill f-status" style="width:26%"></div><span class="px">319</span></div>
+        <div class="bar"><span>Top Hunters</span><div class="fill f-hunters" style="width:27%"></div><span class="px">329</span></div>
+        <div class="bar"><span>First post</span><div class="fill f-content" style="width:74%"></div><span class="px">897</span></div>
+      </div>
+      <p class="btotal">Content starts at <b>1,175px</b> of 2,232 usable — <b>53%</b>. One post fits.</p>
+    </div>
+
+    <div class="bcol">
+      <div class="bhead"><span class="btitle">Proposed</span><span class="btag t-new">same features</span></div>
+      <div class="bars">
+        <div class="bar"><span>App bar + tabs</span><div class="fill f-chrome" style="width:26%"></div><span class="px">320</span></div>
+        <div class="bar"><span>Status strip</span><div class="fill f-status" style="width:7%"></div><span class="px">86</span></div>
+        <div class="bar"><span>Top Hunters</span><div class="fill f-hunters" style="width:21%"></div><span class="px">258</span></div>
+        <div class="bar"><span>First post</span><div class="fill f-content" style="width:52%"></div><span class="px">628</span></div>
+        <div class="bar"><span>Second post</span><div class="fill f-content" style="width:52%"></div><span class="px">628</span></div>
+      </div>
+      <p class="btotal">Content starts at <b>664px</b> — <b>30%</b>. Two posts fit, and the second is a real one.</p>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><i class="f-chrome"></i> navigation</span>
+    <span><i class="f-status"></i> status, currently empty</span>
+    <span><i class="f-hunters"></i> people</span>
+    <span><i class="f-content"></i> content</span>
+  </div>
+
+  <hr class="rule">
+  <h2>Side by side</h2>
+  <p class="h2sub">Both at true proportions. The dashed line is where a Pixel 9 Pro cuts off.</p>
+
+  <div class="compare">
+    <div class="col">
+      <div class="bhead"><span class="btitle">Today</span><span class="btag t-now">as shipped</span></div>
+      <div class="phone">
+        <div class="m-bar">
+          <span class="m-title">Home</span>
+          <span class="m-right">⌕ &nbsp;♪<span class="m-chip">◉ User</span></span>
+        </div>
+        <div class="m-tabs"><span class="m-tab on">Updates</span><span class="m-tab">General</span></div>
+        <div class="m-body">
+          <div class="old-card">
+            <div class="old-label">◎ Alpha Radar</div>
+            <div class="old-h">You are fully caught up</div>
+          </div>
+          <div class="old-card">
+            <div class="old-label">✦ Blocnet Edge Engine</div>
+            <div class="old-h">Follow projects to receive an Edge brief.</div>
+            <div class="old-sub">0 signals · 0 act now · 0 watch</div>
+          </div>
+          <div class="secline">Top Hunters <span class="all">View All</span></div>
+          <div class="hunters">
+            <div class="hunter"><div class="havatar"></div><span class="hname">My Upda…</span></div>
+            <div class="hunter"><div class="havatar"></div><span class="hname">bless50i…</span></div>
+            <div class="hunter"><div class="havatar"></div><span class="hname">Taiwo</span></div>
+            <div class="hunter"><div class="havatar"></div><span class="hname">abtoonzz</span></div>
+          </div>
+          <div class="old-post">
+            <div class="op-row">
+              <div class="p-av"></div>
+              <span class="op-name">bless50ing</span>
+              <span class="pill p-hunter">HUNTER</span>
+              <span class="op-time">6 months ago</span>
+            </div>
+            <div class="op-row"><span class="op-handle" style="padding-left:43px">@bless50ing</span></div>
+            <div class="op-row" style="padding-left:43px">
+              <span class="op-meta">◈ in Bless50ing</span>
+              <span class="pill p-high" style="margin-left:auto">HIGH</span>
+            </div>
+            <div class="op-row" style="padding-left:43px"><span class="pill p-tag">AIRDROPS</span></div>
+            <p class="p-body">This is not just about mining. You get to see updates on other airdrops. All in one.</p>
+          </div>
+        </div>
+        <div class="fold">fold · one post visible</div>
+        <div class="m-body" style="opacity:.35">
+          <div class="p-acts"><span>♡ 0</span><span>💬 3</span><span>🔖</span><span class="last">↗</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="bhead"><span class="btitle">Proposed</span><span class="btag t-new">same features</span></div>
+      <div class="phone">
+        <div class="m-bar">
+          <span class="m-title">Home</span>
+          <span class="m-right">⌕ &nbsp;♪<span class="m-chip">◉ User</span></span>
+        </div>
+        <div class="m-tabs"><span class="m-tab on">Updates</span><span class="m-tab">General</span></div>
+        <div class="m-body">
+          <div class="strip">
+            <span class="dot"></span>
+            <b>Caught up</b>
+            <span class="sep">·</span>
+            <span>Edge: no signals yet</span>
+            <span class="go">Open</span>
+          </div>
+          <div class="secline">Top Hunters <span class="all">View All</span></div>
+          <div class="hunters">
+            <div class="hunter"><div class="havatar"></div><span class="hname">You</span></div>
+            <div class="hunter"><div class="havatar"></div><span class="hname">bless50ing</span></div>
+            <div class="hunter"><div class="havatar"></div><span class="hname">Taiwo</span></div>
+            <div class="hunter"><div class="havatar"></div><span class="hname">abtoonzz</span></div>
+          </div>
+          <div class="post">
+            <div class="np-head">
+              <div class="p-av"></div>
+              <div class="np-who">
+                <div class="np-l1">
+                  <span class="np-name">bless50ing</span>
+                  <span class="pill p-hunter">HUNTER</span>
+                  <span class="np-time" style="margin-left:auto">6mo</span>
+                </div>
+                <div class="np-l2">
+                  <span class="np-proj">Bless50ing</span>
+                  <span>·</span>
+                  <span class="pill p-tag">Airdrops</span>
+                  <span class="pill p-high" style="margin-left:auto">HIGH</span>
+                </div>
+              </div>
+            </div>
+            <p class="p-body">This is not just about mining. You get to see updates on other airdrops. All in one.</p>
+            <div class="p-acts"><span>♡ 0</span><span>💬 3</span><span>🔖</span><span class="last">↗</span></div>
+          </div>
+          <div class="post">
+            <div class="np-head">
+              <div class="p-av"></div>
+              <div class="np-who">
+                <div class="np-l1">
+                  <span class="np-name">Taiwo</span>
+                  <span class="pill p-hunter" style="color:var(--cyan);background:rgba(34,211,238,.14);border-color:rgba(34,211,238,.4)">CORE TEAM</span>
+                  <span class="np-time" style="margin-left:auto">6mo</span>
+                </div>
+                <div class="np-l2">
+                  <span class="np-proj">Core Mines</span>
+                  <span>·</span>
+                  <span class="pill p-tag">Mining</span>
+                  <span class="pill" style="margin-left:auto;color:var(--warn);background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.4)">MEDIUM</span>
+                </div>
+              </div>
+            </div>
+            <p class="p-body">Core Mining Pool difficulty update — the next epoch lands Thursday.</p>
+            <div class="p-acts"><span>♡ 12</span><span>💬 4</span><span>🔖</span><span class="last">↗</span></div>
+          </div>
+        </div>
+        <div class="fold">fold · two posts visible</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+  <h2>What actually changes</h2>
+
+  <div class="anat">
+    <div>
+      <div class="arow"><span class="anum">01</span><div><b>The two status cards collapse into one strip.</b> They are the same kind of thing — a system telling you its state — and right now both are reporting nothing while taking 526px. The strip carries both, and either half expands back into a full card the moment it has something real to say.</div></div>
+      <div class="arow"><span class="anum">02</span><div><b>The post header stops being a stack.</b> Name, handle, project, tag and urgency currently occupy four separate rows before the body. They become two: who and when, then where and what kind. Same information, half the height.</div></div>
+      <div class="arow"><span class="anum">03</span><div><b>Time gets short.</b> "6 months ago" becomes "6mo". It is metadata, it is the least important thing in the header, and at full length it pushes the urgency pill onto its own line.</div></div>
+    </div>
+    <div>
+      <div class="arow"><span class="anum">04</span><div><b>Hunter names stop truncating.</b> "My Upda…" and "bless50i…" are both cut today. Widening the cell and dropping "My Updates" to "You" fixes both.</div></div>
+      <div class="arow"><span class="anum">05</span><div><b>One pill, not three.</b> <code style="font-family:var(--mono);font-size:12px">feed_card.dart</code> defines <code style="font-family:var(--mono);font-size:12px">_FeedRoleChip</code>, <code style="font-family:var(--mono);font-size:12px">_ModernProjectChip</code> and <code style="font-family:var(--mono);font-size:12px">_TagPill</code> privately, across four different radii. They all become <code style="font-family:var(--mono);font-size:12px">AppPill</code>.</div></div>
+      <div class="arow"><span class="anum">06</span><div><b>The card gets split.</b> 1,163 lines in one file, with three widget classes hiding at the bottom. Header, body and actions become their own files.</div></div>
+    </div>
+  </div>
+
+  <p class="note">
+    <b>Nothing is removed.</b> Alpha Radar, the Edge brief, urgency, tags, project attribution
+    and every action survive. The only thing taken away is the amount of room a component gets
+    when it has nothing to say, which is the difference between an app that feels dense and one
+    that feels empty.
+  </p>
+
+  <hr class="rule">
+  <h2>What it costs</h2>
+  <table class="cost">
+    <thead><tr><th>Piece</th><th>Files</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td>Status strip, replacing the two cards</td><td>2 new, 1 edited</td><td>~2h</td></tr>
+      <tr><td>Feed card header rebuilt on AppPill</td><td>feed_card.dart</td><td>~3h</td></tr>
+      <tr><td>Split feed_card.dart into header / body / actions</td><td>1 → 4</td><td>~2h</td></tr>
+      <tr><td>Top Hunters cell width and labels</td><td>top_hunters_row.dart</td><td>~30m</td></tr>
+      <tr><td>Device verification and a second pass</td><td>—</td><td>~1h</td></tr>
+    </tbody>
+  </table>
+
+  <footer>
+    <span>measured on Pixel 9 Pro, 1280×2856, API 36</span>
+    <span>screen 1 of 43</span>
+    <span>mockups in the platform font, as the app renders them</span>
+  </footer>
+
+</div>
