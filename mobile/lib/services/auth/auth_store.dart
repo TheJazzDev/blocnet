@@ -890,7 +890,9 @@ class AuthStore extends ChangeNotifier {
 
     try {
       await _apiClient.post(
-        '/users/me/deactivate',
+        // POST /me/deactivate (UsersController, AuthGuard only). The old
+        // /users/me/deactivate path never existed on the backend.
+        '/me/deactivate',
         body: {
           if (reason != null && reason.trim().isNotEmpty)
             'reason': reason.trim(),
