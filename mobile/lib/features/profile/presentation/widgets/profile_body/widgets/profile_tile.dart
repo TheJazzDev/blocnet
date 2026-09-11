@@ -1,27 +1,16 @@
-part of 'hunter_profile_body.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
+import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class _HunterSectionLabel extends StatelessWidget {
-  const _HunterSectionLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: AppTypography.custom(
-        color: AppColors.textFaint,
-        size: 10,
-        weight: FontWeight.w600,
-        letterSpacing: 1.0,
-      ),
-    );
-  }
-}
-
-class _HunterTile extends StatelessWidget {
-  const _HunterTile({
-    required this.mode,
+/// Navigation row used by every list section of the profile body.
+/// Renders as a bordered card in card mode and as a divided row in list
+/// mode, following the global [FeedViewModeStore].
+class ProfileTile extends StatelessWidget {
+  const ProfileTile({
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -29,9 +18,9 @@ class _HunterTile extends StatelessWidget {
     this.showDivider = true,
     this.iconColor,
     this.titleColor,
+    this.trailing,
   });
 
-  final FeedViewMode mode;
   final IconData icon;
   final String title;
   final String subtitle;
@@ -40,9 +29,14 @@ class _HunterTile extends StatelessWidget {
   final Color? iconColor;
   final Color? titleColor;
 
+  /// Optional widget shown before the chevron (e.g. a status pill).
+  final Widget? trailing;
+
   @override
   Widget build(BuildContext context) {
-    final isCardMode = mode == FeedViewMode.card;
+    final isCardMode =
+        context.watch<FeedViewModeStore>().mode == FeedViewMode.card;
+
     final tile = GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -75,11 +69,7 @@ class _HunterTile extends StatelessWidget {
                 ),
               )
             else
-              Icon(
-                icon,
-                size: 18,
-                color: iconColor ?? AppColors.textMuted,
-              ),
+              Icon(icon, size: 18, color: iconColor ?? AppColors.textMuted),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -106,15 +96,17 @@ class _HunterTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
+            if (trailing != null) ...[
+              trailing!,
+              const SizedBox(width: 6),
+            ],
             Icon(Icons.chevron_right, size: 18, color: AppColors.textFaint),
           ],
         ),
       ),
     );
 
-    if (isCardMode) {
-      return tile;
-    }
+    if (isCardMode) return tile;
 
     return Column(
       children: [
@@ -129,73 +121,29 @@ class _HunterTile extends StatelessWidget {
   }
 }
 
-class _HunterTrustChips extends StatelessWidget {
-  const _HunterTrustChips({
-    required this.updatesLast7d,
-    required this.updatesLast30d,
-    required this.highUrgencyShare30d,
-    required this.medianHoursBetweenUpdates,
-    required this.lastActiveAt,
-  });
-
-  final int updatesLast7d;
-  final int updatesLast30d;
-  final double highUrgencyShare30d;
-  final double? medianHoursBetweenUpdates;
-  final DateTime? lastActiveAt;
-
-  @override
-  Widget build(BuildContext context) {
-    final lastActiveLabel = lastActiveAt == null
-        ? 'N/A'
-        : '${DateTime.now().difference(lastActiveAt!).inHours}h ago';
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _TrustChip(label: '7D', value: '$updatesLast7d'),
-        _TrustChip(label: '30D', value: '$updatesLast30d'),
-        _TrustChip(
-          label: 'High%',
-          value: '${highUrgencyShare30d.toStringAsFixed(0)}%',
-        ),
-        _TrustChip(
-          label: 'Median',
-          value: medianHoursBetweenUpdates == null
-              ? 'N/A'
-              : '${medianHoursBetweenUpdates!.toStringAsFixed(1)}h',
-        ),
-        _TrustChip(label: 'Last', value: lastActiveLabel),
-      ],
-    );
-  }
-}
-
-class _TrustChip extends StatelessWidget {
-  const _TrustChip({
-    required this.label,
-    required this.value,
-  });
+/// Small rounded status pill used as a [ProfileTile.trailing].
+class ProfileTilePill extends StatelessWidget {
+  const ProfileTilePill({super.key, required this.label, required this.color});
 
   final String label;
-  final String value;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderSubtle),
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
-        '$label: $value',
+        label,
         style: AppTypography.custom(
-          color: AppColors.textMuted,
-          size: 10,
-          weight: FontWeight.w600,
+          color: color,
+          size: 9,
+          weight: FontWeight.w700,
+          letterSpacing: 0.4,
         ),
       ),
     );

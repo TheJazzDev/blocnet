@@ -1,7 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/hunter_profile_body.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/user_profile_body.dart';
+import 'package:blocnet/features/profile/presentation/widgets/profile_body/profile_body.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -18,15 +17,12 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
-    final profileBody = auth.isInHunterSpace
-        ? HunterProfileBody(
-            auth: auth,
-            onSignOut: () => _confirmSignOut(context, auth),
-          )
-        : UserProfileBody(
-            auth: auth,
-            onSignOut: () => _confirmSignOut(context, auth),
-          );
+    // One body for every space: sections are gated by role, not by the
+    // active space, so nothing disappears when the user switches.
+    final profileBody = ProfileBody(
+      auth: auth,
+      onSignOut: () => _confirmSignOut(context, auth),
+    );
 
     final content = embeddedInMainShell
         ? ColoredBox(

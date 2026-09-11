@@ -1,5 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
+import 'package:blocnet/features/auth/presentation/widgets/spaces/spaces_explainer_sheet.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
 import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_screen.dart';
@@ -23,6 +25,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 part 'main/main_screen_shells.part.dart';
 part 'main/main_screen_nav.part.dart';
 part 'main/main_screen_composer.part.dart';
+part 'main/main_screen_spaces_explainer.part.dart';
 // part 'main/main_screen_offline_banner.part.dart';
 
 class MainScreen extends StatefulWidget {
@@ -43,6 +46,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   bool _hasCheckedReferralPrompt = false;
   bool _isShowingHunterOnboarding = false;
   String? _checkedHunterOnboardingUserId;
+  bool _isShowingSpacesExplainer = false;
+  String? _checkedSpacesExplainerUserId;
   bool _didRequestInitialNotifications = false;
 
   // Serializes post-login prompts (e.g. hunter onboarding dialog, referral
@@ -79,9 +84,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // Show the hunter onboarding dialog first (it's non-dismissible and
-      // tied directly to the role grant), then the referral bind sheet once
-      // it's been dismissed — never both at once.
+      // tied directly to the role grant), then the one-time spaces
+      // explainer, then the referral bind sheet — never two at once.
       _queuePostLoginPrompt(_maybePromptHunterOnboarding);
+      _queuePostLoginPrompt(_maybePromptSpacesExplainer);
       _queuePostLoginPrompt(_maybePromptReferralBind);
     });
   }
@@ -116,6 +122,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       });
     }
     _queuePostLoginPrompt(_maybePromptHunterOnboarding);
+    _queuePostLoginPrompt(_maybePromptSpacesExplainer);
 
     if (_lastActiveSpace == null) {
       _lastActiveSpace = activeSpace;
