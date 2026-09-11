@@ -238,13 +238,14 @@
 
 <div class="wrap">
 
-  <p class="eyebrow">Blocnet · mobile · scale proposal</p>
-  <h1>Three scales, measured from the app</h1>
+  <p class="eyebrow">Blocnet · mobile · scale — applied</p>
+  <h1>Four scales, measured from the app</h1>
   <p class="lede">
     Every number below comes from counting what <strong>mobile/lib</strong> already does. The type
-    scale replaces <strong>32 sizes across 1,117 call sites</strong>, spacing replaces
-    <strong>16 gap values across 1,060 spacers</strong>, corners replace <strong>10 radii across
-    462 sites</strong>.
+    scale replaces <strong>23 sizes across 824 call sites</strong>, icons <strong>21 sizes across
+    285 sites</strong>, spacing <strong>16 gap values across 1,658 sites</strong>, and corners
+    <strong>10 radii across 462 sites</strong>. <strong>Applied and shipped</strong> — 204 files
+    changed, 113 tests pass.
   </p>
   <p class="lede">
     Samples render in the platform font, not the brand font, because the Flutter app deliberately
@@ -369,7 +370,7 @@
 
   <div class="decide">
     <div>
-      <h3>The one call I cannot make from counts</h3>
+      <h3>The call, now made: promoted</h3>
       <p>
         <b>12px is used 224 times</b> and it is the size your users called tiny. From the source
         alone there is no way to tell which of those are body copy and which are dense labels
@@ -382,8 +383,9 @@
         some tight rows onto a second line.
       </p>
       <p>
-        My recommendation is <b>Promoted</b>, run as a codemod plus a per-screen sweep for
-        overflow. The mechanical version is cheaper but it will not settle the complaint.
+        <b>Promoted shipped.</b> Prose and labels are told apart by font weight: w400 at 12–13px
+        is a sentence and became body, w500 and up is a label and became label. That is how the
+        codebase already used weight, so the split fell out of the source rather than a guess.
       </p>
     </div>
     <div>
@@ -401,6 +403,18 @@
         against <code style="font-family:var(--mono);font-size:13px">AppTypography.custom(size: 14, weight: FontWeight.w400, color: c)</code>.
       </p>
     </div>
+  </div>
+
+  <hr class="rule">
+  <h2>Icons</h2>
+  <p class="h2sub">A late catch, and the reason this page first overcounted type. <code style="font-family:var(--mono);font-size:13px">size:</code> is Flutter's <code style="font-family:var(--mono);font-size:13px">Icon</code> parameter as well as the typography one: of 1,117 literals, 285 were icons, not text. The two had been drifting together because they were spelled the same.</p>
+  <div class="strip">
+    <div class="srow"><span class="sname">xs</span><span class="sval">12px</span><div class="sbar" style="width:12px;height:12px;border-radius:2px"></div><span class="sabs">inline with caption · from 10, 11, 13 · 27</span></div>
+    <div class="srow"><span class="sname">sm</span><span class="sval">16px</span><div class="sbar" style="width:16px;height:16px;border-radius:2px"></div><span class="sabs">inline with body · from 14, 15, 17 · 99</span></div>
+    <div class="srow"><span class="sname">md</span><span class="sval">20px</span><div class="sbar" style="width:20px;height:20px;border-radius:2px"></div><span class="sabs">the default · from 18, 19, 21, 22 · 124</span></div>
+    <div class="srow"><span class="sname">lg</span><span class="sval">24px</span><div class="sbar" style="width:24px;height:24px;border-radius:2px"></div><span class="sabs">app bar · from 28 · 10</span></div>
+    <div class="srow"><span class="sname">xl</span><span class="sval">32px</span><div class="sbar" style="width:32px;height:32px;border-radius:2px"></div><span class="sabs">feature tiles · from 36, 38, 40 · 15</span></div>
+    <div class="srow"><span class="sname">xxl</span><span class="sval">48px</span><div class="sbar" style="width:48px;height:48px;border-radius:2px"></div><span class="sabs">empty states · from 64 · 10</span></div>
   </div>
 
   <hr class="rule">
@@ -429,8 +443,8 @@
   </div>
 
   <footer>
-    <span>1,117 type sites · 1,060 spacers · 462 radii</span>
-    <span>counted from mobile/lib at stage</span>
+    <span>824 type · 285 icon · 1,658 spacing · 462 radii</span>
+    <span>counted from mobile/lib, applied across 204 files</span>
     <span>samples in the platform font, as the app renders them</span>
   </footer>
 
