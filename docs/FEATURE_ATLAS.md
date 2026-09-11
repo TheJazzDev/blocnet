@@ -145,14 +145,14 @@ Everything is consumed by at least one client except:
 
 | Capability | Status | Detail |
 |---|---|---|
-| Project assignments (5 routes) | no client | assign / invite / respond; `ProjectHunter`, `ProjectHunterInvite` exist only for this |
+| Project assignments (5 routes) | consumed (console assign/invite/list, mobile invites) | wired 2026-09-11 by WS-F/WS-G |
 | Wallet KYC submit / status | no client | |
 | `GET /admin/social/overview` | no client | |
-| `GET /referrals/me` | no client | causes F-03 |
+| `GET /referrals/me` | consumed (mobile) | wired 2026-09-11 by WS-A |
 | `GET /levels/leaderboard`, `GET /wallet/health`, `DELETE /device-tokens/:id` | no client | |
-| `EdgeEngagement` model + `EdgeAction` enum | orphan table | never written or read |
+| `EdgeEngagement` model + `EdgeAction` enum | orphan table | never written or read; dropping needs a migration and an explicit go-ahead |
 | `TipConversion`, `TipFeeConfig` | write-less | read only; no admin editor for fee config |
-| Self-deactivate / reactivate | broken path | handler under `/admin/users/me/…` with owner/admin guard; mobile calls `/users/me/deactivate` |
+| Self-deactivate / reactivate | live | `POST /me/deactivate`, `POST /me/reactivate` (WS-B) |
 
 Background work: no cron/queue library — digest worker (5 min), wallet settlement + deposit indexer, config refreshers (15 s), one `level.up` listener. Runtime flags overridable from console: closedAlpha, alphaRadar, followPrefs, weeklyDigest, mining, referrals.
 
@@ -187,8 +187,14 @@ Background work: no cron/queue library — digest worker (5 min), wallet settlem
 
 ## Dead code register
 
+> Cleared 2026-09-11 by WS-E. Kept on purpose: alias routes `/home` `/discover` `/mining` (deep links), `level_progress_card.dart` (used by the levels redesign), `become_hunter_screen.dart` (wired by WS-F), `EdgeEngagement` table (needs a migration).
+
+<details><summary>Original register (historical)</summary>
+
 **Mobile:** `submit_appeal_screen.dart`, `become_hunter_screen.dart`, `mining_downline_screen.dart`, `community_staff_tools_screen.dart` (decide wire-or-delete); orphan stores `AppStore`, `AdminsStore`; commented `PriorityStore`, `ConnectivityStore`, offline banner; zero-import files `app/app.dart`, `tag_filter_utility.dart`, `custom_icon_button.dart`, `session_gateway.dart`, `auth/data/models/user.dart`, `level_progress_card.dart`, `referral_code_card.dart`, `your_projects_view_model.dart`, `bottom_sheet_filter_controller.dart`, `dot_divider.dart`, `toggle_button.dart`; alias routes `/home`, `/discover`, `/mining`.
 
 **Console:** `shared/DataTable.tsx`, `shared/FiltersBar.tsx`, `shared/SearchInput.tsx`, `providers/auth-store-provider.tsx`, `edge-section-nav.tsx`, `mining/ReferralSupportCard.tsx`, `use-dashboard-data-v2.ts`; 17 stale migration docs at console root; dead `EnvironmentWatermark` import in `app/signin/page.tsx`.
 
 **Backend:** `EdgeEngagement` + `EdgeAction`; the unconsumed routes above.
+
+</details>
