@@ -1,112 +1,188 @@
 # Design brief — Blocnet home feed
 
-**Paste this into Claude Design.** It deliberately does not describe the current screen.
-The existing layout is what we are trying to get away from, and showing it would anchor
-the work to it.
+**Paste this into Claude Design, and attach the six screenshots in
+`docs/design-briefs/reference/`.**
+
+Those screenshots are there so you know the real icon language, the real content
+density and the real copy. **They are not a layout to preserve.** The current
+arrangement is what we are trying to get away from. Take the material, leave the
+structure.
 
 ---
 
-## The product
+## Read this first, or nothing else will land
 
-Blocnet is a mobile social network for crypto. People follow projects ("gems"), read
-updates posted by vetted **hunters**, mine a token by running a daily cycle, complete
-quests, and hold a wallet. It is social first and financial second: the feed is where
-people live, and the money features hang off it.
+On X and Telegram, someone calls a token once and walks away. Followers pile in, farm
+it, buy it. Then nothing. The caller has no obligation to say what happened next.
 
-The audience is crypto-native and young. They already use Phantom, Rainbow, Jupiter and
-Farcaster daily, and they judge an app in about four seconds. The bar is not "clean
-admin dashboard." The bar is an app someone opens because it feels good to open.
+That leaves the user holding a job they cannot do. If you are farming fifteen projects
+across six months, you personally have to remember that one opened KYC on Tuesday,
+another ends its mining phase Friday, and a third moved its snapshot. Miss one and
+months of work evaporates.
 
-## The screen
+**Blocnet does not sell discovery. It sells not missing anything.**
 
-The home feed. First thing after login, most-visited surface in the product.
+A **hunter** finds a project — a **gem** — does the diligence, posts it, and is then
+obligated to keep updating it through its entire lifecycle. One gem has exactly one
+owner, because accountability that is shared is accountability that is nobody's. The
+hunter is paid back in tips from members who made money, in reputation, and in paid
+placements from projects that want their audience. They are held honest by liability:
+call a scam and the community reports you and you lose your standing.
 
-### Its jobs, in priority order
+A **member** follows the five gems they actually care about out of two hundred, then
+goes and lives their life. They are never tracking anything themselves. When their
+hunter posts, they act.
 
-1. **Show me what is new** in the projects I follow, with a sense of how urgent it is.
-2. **Make me feel the pulse of the network** — that things are happening right now,
-   even on a quiet day.
-3. **Get me to react** — like, comment, bookmark, share, tip.
-4. **Surface who is worth following** — hunters with a track record.
-5. **Tell me when the system has something for me** — a personalised "Edge" signal, or
-   a radar alert that a followed project is moving.
+Full context: `docs/PRODUCT.md` in the repo.
 
-Job 2 is the one currently failing hardest, and it is the reason this redesign exists.
+## The user, and their day
 
-## The material you have
+Crypto-native. Farming or holding across more projects than any person can track. They
+are not browsing. They already used X this morning and it told them nothing they can
+act on.
 
-Every update in the feed carries:
+They open Blocnet for one reason: **to find out whether anything needs them.**
+
+## The job of this screen
+
+In priority order.
+
+1. **Tell me nothing has slipped.** Across every gem I follow.
+2. **Tell me what needs me, and by when.** A deadline I can still act on is the single
+   most valuable thing in the product.
+3. **Let me act on it** without hunting for the button.
+4. **Show me my hunters are doing their job** — that the gems I follow are being kept
+   current, not abandoned.
+5. **Let me pay someone back** when their call made me money.
+
+## The emotional target
+
+One sentence, and everything should serve it:
+
+> **"I would have missed that."**
+
+The moment a member realises Blocnet just saved them is the whole product. Design to
+produce that feeling as often as possible.
+
+And the corollary most designers get backwards: **a quiet feed is this product
+succeeding.** "Nothing needs you. All five gems current, checked two minutes ago" is
+what people are paying attention for. It should read as **cover**, like a system that
+has your back, not as an empty room apologising for itself. Do not treat the calm state
+as a failure to fill.
+
+## What a gem is, and the part that does not exist yet
+
+A gem is a project a hunter found and now owns: an airdrop, a token in its mining phase,
+an IDO, a testnet.
+
+It moves through a **lifecycle** — mining, KYC, snapshot, IDO, distribution, ended —
+and that movement is what a member actually needs to know.
+
+**Two things the product needs and the codebase does not have yet:**
+
+1. **A lifecycle stage on a gem.** Today `ProjectStatus` is only active/paused/hidden/
+   archived, which are moderation states.
+2. **A deadline on an update.** Nothing anywhere carries an action window.
+
+**Design as though both exist.** We will build them. Do not design around their absence
+— that is exactly how the current screen ended up unable to say the one thing that
+matters. Assume a gem knows what phase it is in and that a time-sensitive update knows
+when it closes.
+
+## Real material
+
+### Content that exists today
 
 | Field | Values |
 |---|---|
-| Author | display name, @handle, avatar, level (1–15), role badge |
+| Author | display name, @handle, avatar, level 1–15, role badge |
 | Role badge | `HUNTER`, `CORE TEAM`, `MODERATOR`, `ADMIN`, or none |
-| Project | name and logo — the "gem" the update is about |
-| Urgency | `high`, `medium`, `low` |
+| Gem | name, logo, follower count |
+| Urgency | high, medium, low |
 | Tag | Alpha, Airdrop, Partnership, Warning, Info, General |
-| Title and body | body can be a sentence or several paragraphs, and often carries emoji |
-| Timestamp | minutes to months old |
-| Engagement | like count, comment count, bookmark state, share |
+| Title and body | a sentence to several paragraphs, often with emoji |
+| Engagement | likes, comments, bookmark, share, **tip** |
+| Alpha Radar | unseen high-urgency count, **already grouped per gem with a per-gem count** |
+| Edge Engine (BEE) | per gem: signal count and a verdict of `act`, `watch` or `ignore` |
 
-Also available on this screen, if you want them:
+### Icon language
 
-- **Alpha Radar** — whether the user is caught up, or has N unseen high-urgency updates.
-- **Edge Engine** — an ML brief. Per followed project it emits a signal count and a
-  verdict of `act now`, `watch`, or nothing. Often empty for new users.
-- **Top Hunters** — a ranked row of hunters, each with an avatar and a name.
-- **Live counts** — followers, updates today, miners active. Real numbers exist for these.
+The app uses **Material Icons, rounded and outlined**, 210 of them. Use real Material
+icon names, not invented glyphs. The ones it leans on:
+
+`layers_outlined` · `bolt_rounded` · `radar_rounded` · `diamond_outlined` ·
+`flag_outlined` · `trending_up_rounded` · `favorite_rounded` · `swap_horiz_rounded` ·
+`verified_rounded` · `volunteer_activism_outlined` (tipping) · `visibility_outlined` ·
+`chevron_right_rounded` · `account_balance_wallet_outlined` · `groups_outlined` ·
+`explore_outlined` · `home_rounded` · `person_rounded` · `shield_rounded`
+
+### Copy that is real
+
+Hunters write like this, emoji included:
+
+> "This is not just about mining ⛏️ You get to see updates on other airdrops. All in
+> one. 👌 Stay tuned and mine bnt agressively 🔥"
+
+> "Core Mining Pool Difficulty Update"
+
+Gems in the live data: Core Mines, Bless50ing. Hunters: @jazzdev, @bless50ing,
+@abtoonzz. The economy is **BNP** today, **BNT** at mainnet.
 
 ## Hard constraints
 
-These are not negotiable because they are already shipped and verified.
+Already shipped and verified. Not negotiable.
 
-- **Dark only.** Ground `#09090b`, surfaces `#18181b` and `#27272a`, borders `#27272a`.
-- **Accent is Signal Cyan.** `#0891B2` in the normal (User) space, `#22D3EE` in Hunter
-  space. Red `#EF4444` is reserved for moderation and destructive actions, never brand.
-- **Type scale** (px): 11 caption, 13 label, 15 body, 17 subtitle, 20 title, 24 headline,
-  32 display, 48 display-xl. Body copy must not go below 15.
+- **Dark only.** Ground `#09090b`, surfaces `#18181b` / `#27272a`, borders `#27272a`.
+- **Signal Cyan.** `#0891B2` in User space, `#22D3EE` in Hunter space. Red `#EF4444`
+  is moderation and destructive only, never brand.
+- **Type** (px): 11 caption, 13 label, 15 body, 17 subtitle, 20 title, 24 headline,
+  32 display, 48 display-xl. Body never below 15.
 - **Spacing** on a 4pt grid: 2, 4, 8, 12, 16, 24, 32, 48.
 - **Corners**: 8 small, 12 default, 16 panels, 20 sheets, full for pills.
-- **Platform font.** The app inherits the system face, so design in system-ui, not a
-  brand font.
-- Bottom tab bar with six destinations stays. A floating compose button stays.
+- **Platform font.** Flutter inherits the system face. Design in system-ui.
+- **Do not rename or re-order the bottom tabs.** Six destinations stay as they are.
+  Navigation is a separate decision and should not ride along with this.
 
-## What you are free to change
+## What is yours to change
 
-Everything else. Specifically, please do not assume the current screen's answers to any
-of these:
+Everything else. Do not assume the current screen's answer to any of these.
 
-- Whether the feed is a list of cards at all. Consider density, grouping by project or
-  time, a hero item, mixed cell sizes, horizontal rails.
-- How urgency reads. It is currently a small coloured pill and it disappears.
-- Where system status (radar, Edge) lives, or whether it is on this screen.
-- Whether Top Hunters is a row, and where it sits.
-- How the network's activity is made visible when the user's own feed is quiet.
-- Motion. A feed that never moves feels dead; we have no motion design at all today.
+- Whether the feed is a list of posts at all. It might be a list of **gems and their
+  state**, with updates underneath.
+- How a deadline reads. This is the most important unsolved thing on the screen.
+- How "you are covered" is expressed when nothing needs the user.
+- Where the Edge Engine verdict lives and how much room it earns.
+- How a hunter's reliability becomes visible — cadence and coverage, not just a badge.
+- Where tipping appears. It currently hides in a profile, and it should be near the
+  moment value is realised.
+- Motion. There is none today, and a feed that never moves feels dead.
 
 ## What to produce
 
-**Three genuinely different directions**, not three variants of one idea. Each as a
-phone screen at 390 × 844, showing the feed with real-feeling content: project names
-like Nebula Swap, Orbit Lend, Core Mines; hunters like @ada, @satoshi, @jazzdev; bodies
-that read like real crypto updates, including one with emoji.
+**Three genuinely different directions**, not three skins. Phone screens at 390 × 844.
 
-For each direction, show the quiet state too — a user who follows nothing and has no
-signals. That is every new user's first impression and it is where the current design
-fails worst.
+Each direction must show **three states**, because the third is where the current app
+fails hardest and where the product's promise is either kept or broken:
 
-Say in one line what each direction is betting on.
+1. **Something needs you.** Two gems have time-sensitive updates, one closing soon.
+2. **You are covered.** Five gems followed, everything current, nothing to do.
+3. **New user.** Follows nothing, no signals yet.
 
-## What "good" looks like here
+Say in one line what each direction bets on, and one line on how it produces *"I would
+have missed that."*
 
-- A first screen that is mostly content, not mostly chrome.
-- Urgency and freshness legible at a glance, without reading.
-- Somewhere the eye rests — one element per screen that is allowed to be large.
-- It should look like it belongs next to Phantom and Jupiter, not next to an admin panel.
+## What good looks like
+
+- A member can answer "does anything need me?" in under two seconds, without reading.
+- Deadlines are impossible to miss and obviously actionable.
+- The calm state feels like insurance, not like an empty inbox.
+- It could only be Blocnet. Swap the gem names and it should still be recognisable as
+  this product and no other.
 
 ## What to avoid
 
-- Generic dashboard layout: a grid of equal stat cards with an icon in each corner.
-- Purple-to-blue gradients. Phantom owns purple and the brand is cyan.
-- Anything that needs data we do not have. Stick to the fields listed above.
-- Making the quiet state feel like an error.
+- A generic crypto dashboard: a grid of equal stat cards with a corner icon in each.
+- Purple-to-blue gradients. Phantom owns purple; the brand is cyan.
+- Treating this as a social timeline. Engagement is secondary; coverage is the point.
+- Invented glyphs where a real Material icon exists.
+- Designing around the missing lifecycle and deadline data. Assume it.
