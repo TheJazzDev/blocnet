@@ -33,6 +33,9 @@ void main() {
     expect(routes.containsKey(AppRoutes.manageUpdates), isTrue);
     expect(routes.containsKey(AppRoutes.hunterHub), isTrue);
     expect(routes.containsKey(AppRoutes.becomeHunter), isTrue);
+    expect(routes.containsKey(AppRoutes.helpSupport), isTrue);
+    expect(routes.containsKey(AppRoutes.faq), isTrue);
+    expect(routes.containsKey(AppRoutes.gettingStarted), isTrue);
     expect(routes.containsKey(AppRoutes.home), isTrue);
     expect(routes.containsKey(AppRoutes.discover), isTrue);
     expect(routes.containsKey(AppRoutes.trending), isTrue);

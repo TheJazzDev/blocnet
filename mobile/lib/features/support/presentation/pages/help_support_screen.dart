@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -82,35 +83,15 @@ class _QuickHelpSection extends StatelessWidget {
         _HelpTile(
           icon: Icons.question_answer_outlined,
           title: 'FAQs',
-          subtitle: 'Find answers to common questions',
-          onTap: () {
-            // TODO: Navigate to FAQ page
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('FAQ page coming soon')),
-            );
-          },
+          subtitle: 'Gems, Hunters, Updates, mining, BNP and BNT explained',
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.faq),
         ),
         _HelpTile(
           icon: Icons.lightbulb_outline,
           title: 'Getting Started Guide',
-          subtitle: 'Learn how to use Blocnet',
-          onTap: () {
-            // TODO: Navigate to guide
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Guide coming soon')),
-            );
-          },
-        ),
-        _HelpTile(
-          icon: Icons.security_outlined,
-          title: 'Account & Privacy',
-          subtitle: 'Manage your security and data',
-          onTap: () {
-            // TODO: Navigate to privacy settings
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Privacy settings coming soon')),
-            );
-          },
+          subtitle: 'Your first week on Blocnet, step by step',
+          onTap: () =>
+              Navigator.of(context).pushNamed(AppRoutes.gettingStarted),
         ),
       ],
     );
@@ -141,28 +122,6 @@ class _ContactSection extends StatelessWidget {
             if (await canLaunchUrl(uri)) {
               await launchUrl(uri);
             }
-          },
-        ),
-        _ContactTile(
-          icon: Icons.chat_bubble_outline,
-          title: 'Live Chat',
-          subtitle: 'Chat with our support team',
-          onTap: () {
-            // TODO: Open live chat
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Live chat coming soon')),
-            );
-          },
-        ),
-        _ContactTile(
-          icon: Icons.bug_report_outlined,
-          title: 'Report a Bug',
-          subtitle: 'Help us improve Blocnet',
-          onTap: () {
-            // TODO: Open bug report form
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Bug report form coming soon')),
-            );
           },
         ),
       ],

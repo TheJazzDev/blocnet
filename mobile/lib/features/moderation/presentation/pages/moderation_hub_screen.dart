@@ -115,12 +115,6 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
                   ),
                 );
               },
-              onUserManagementTap: () {
-                // TODO: Navigate to user management screen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('User Management - Coming Soon')),
-                );
-              },
               pendingReports: _pendingReports,
               pendingAppeals: _pendingAppeals,
             ),
@@ -259,79 +253,45 @@ class _QuickActionsGrid extends StatelessWidget {
   const _QuickActionsGrid({
     required this.onReportsQueueTap,
     required this.onAppealsQueueTap,
-    required this.onUserManagementTap,
     required this.pendingReports,
     required this.pendingAppeals,
   });
 
   final VoidCallback onReportsQueueTap;
   final VoidCallback onAppealsQueueTap;
-  final VoidCallback onUserManagementTap;
   final int pendingReports;
   final int pendingAppeals;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    // Only actions that exist today: reports and appeals. User Actions and
+    // History return once a mobile client for them ships.
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _QuickActionTile(
-                icon: Icons.flag_rounded,
-                label: 'Reports Queue',
-                badge: pendingReports > 0 ? '$pendingReports' : null,
-                color: AppColors.error500,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onReportsQueueTap();
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionTile(
-                icon: Icons.replay_rounded,
-                label: 'Appeals',
-                badge: pendingAppeals > 0 ? '$pendingAppeals' : null,
-                color: AppColors.warning500,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onAppealsQueueTap();
-                },
-              ),
-            ),
-          ],
+        Expanded(
+          child: _QuickActionTile(
+            icon: Icons.flag_rounded,
+            label: 'Reports Queue',
+            badge: pendingReports > 0 ? '$pendingReports' : null,
+            color: AppColors.error500,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onReportsQueueTap();
+            },
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _QuickActionTile(
-                icon: Icons.person_off_rounded,
-                label: 'User Actions',
-                color: AppColors.teal400,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onUserManagementTap();
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionTile(
-                icon: Icons.history_rounded,
-                label: 'History',
-                color: AppColors.primary400,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('History - Coming Soon')),
-                  );
-                },
-              ),
-            ),
-          ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickActionTile(
+            icon: Icons.replay_rounded,
+            label: 'Appeals',
+            badge: pendingAppeals > 0 ? '$pendingAppeals' : null,
+            color: AppColors.warning500,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onAppealsQueueTap();
+            },
+          ),
         ),
       ],
     );

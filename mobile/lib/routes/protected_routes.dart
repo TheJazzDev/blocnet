@@ -29,6 +29,8 @@ import 'package:blocnet/features/profile/presentation/pages/deactivate_account_s
 import 'package:blocnet/features/profile/presentation/pages/edit_profile_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/profile_screen.dart';
 import 'package:blocnet/features/settings/presentation/pages/settings_screen.dart';
+import 'package:blocnet/features/support/presentation/pages/faq_screen.dart';
+import 'package:blocnet/features/support/presentation/pages/getting_started_screen.dart';
 import 'package:blocnet/features/support/presentation/pages/help_support_screen.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_asset_detail_screen.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_screen.dart';
@@ -57,6 +59,8 @@ class ProtectedRoutes {
   static const String quests = AppRoutes.quests;
   static const String referralCode = AppRoutes.referralCode;
   static const String helpSupport = AppRoutes.helpSupport;
+  static const String faq = AppRoutes.faq;
+  static const String gettingStarted = AppRoutes.gettingStarted;
   static const String blockedUsers = AppRoutes.blockedUsers;
   static const String deactivateAccount = AppRoutes.deactivateAccount;
   static const String createUpdate = AppRoutes.createUpdate;
@@ -140,6 +144,8 @@ class ProtectedRoutes {
       quests: (context) => const QuestsPage(),
       referralCode: (context) => const ReferralCodeScreen(),
       helpSupport: (context) => const HelpSupportScreen(),
+      faq: (context) => const FaqScreen(),
+      gettingStarted: (context) => const GettingStartedScreen(),
       blockedUsers: (context) => const BlockedUsersScreen(),
       deactivateAccount: (context) => const DeactivateAccountScreen(),
       createUpdate: (context) => const CreateUpdateScreen(),
@@ -187,6 +193,8 @@ class ProtectedRoutes {
     quests,
     referralCode,
     helpSupport,
+    faq,
+    gettingStarted,
     blockedUsers,
     deactivateAccount,
     createUpdate,

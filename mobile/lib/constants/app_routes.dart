@@ -19,6 +19,8 @@ class AppRoutes {
   static const String quests = '/quests';
   static const String referralCode = '/referral-code';
   static const String helpSupport = '/help-support';
+  static const String faq = '/help-support/faq';
+  static const String gettingStarted = '/help-support/getting-started';
   static const String blockedUsers = '/blocked-users';
   static const String deactivateAccount = '/deactivate-account';
   static const String createUpdate = '/create-update';
