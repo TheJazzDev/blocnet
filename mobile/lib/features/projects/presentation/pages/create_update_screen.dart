@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/create_update_empty_state.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:blocnet/services/projects/tags_store.dart';
@@ -118,18 +119,8 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       return Scaffold(
         backgroundColor: AppColors.bgBase,
         appBar: _buildAppBar(),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            _isHunterRestricted(auth)
-                ? 'No projects are assigned to your hunter account yet.'
-                : 'No project is available for updates yet.',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: 13,
-              weight: FontWeight.w400,
-            ),
-          ),
+        body: CreateUpdateEmptyState(
+          isHunterRestricted: _isHunterRestricted(auth),
         ),
       );
     }

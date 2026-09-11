@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
 import 'package:blocnet/features/engagement/data/models/edge_explain_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/edge/edge_empty_state.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,16 +12,25 @@ class EdgeEnginePage extends StatelessWidget {
     super.key,
     required this.onAction,
     required this.onExplain,
+    this.onFollowProjects,
   });
 
   final Future<void> Function(EdgeBriefDecision decision, String action)
       onAction;
   final Future<void> Function(EdgeBriefDecision decision) onExplain;
 
+  /// Invoked by the empty state's "Follow projects" button. The launcher
+  /// owns navigation (pop this page, switch the shell to Discover).
+  final VoidCallback? onFollowProjects;
+
   @override
   Widget build(BuildContext context) {
     final edgeStore = context.watch<EdgeEngineStore>();
     final summary = edgeStore.brief;
+    final hasNoSignals = summary != null &&
+        !edgeStore.isFetching &&
+        summary.totalSignals == 0 &&
+        summary.topDecisions.isEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -49,6 +59,10 @@ class EdgeEnginePage extends StatelessWidget {
               onExplain: onExplain,
               useCardChrome: false,
             ),
+            if (hasNoSignals) ...[
+              const SizedBox(height: 14),
+              EdgeEmptyState(onFollowProjects: onFollowProjects),
+            ],
           ],
         ),
       ),

@@ -99,12 +99,20 @@ class HunterStatsGrid extends StatelessWidget {
             Expanded(
               child: _StatCard(
                 label: 'Success Rate',
-                value: '$successRate%',
+                value: hunterUpdates.isEmpty ? '--' : '$successRate%',
                 icon: Icons.track_changes_rounded,
-                iconColor: AppColors.successColor,
-                trend:
-                    '$qualitySignals/${hunterUpdates.length} quality signals',
-                trendPositive: successRate >= 50,
+                iconColor: hunterUpdates.isEmpty
+                    ? AppColors.textMuted
+                    : AppColors.successColor,
+                trend: hunterUpdates.isEmpty
+                    ? 'No updates yet'
+                    : '$qualitySignals/${hunterUpdates.length} quality signals',
+                // No data is not a failure: render neutral, not red.
+                trendTone: hunterUpdates.isEmpty
+                    ? _TrendTone.neutral
+                    : (successRate >= 50
+                        ? _TrendTone.positive
+                        : _TrendTone.negative),
               ),
             ),
             const SizedBox(width: 10),
@@ -115,7 +123,9 @@ class HunterStatsGrid extends StatelessWidget {
                 icon: Icons.people_outline_rounded,
                 iconColor: AppColors.primary400,
                 trend: '$updatesThisWeek updates this week',
-                trendPositive: true,
+                trendTone: updatesThisWeek == 0
+                    ? _TrendTone.neutral
+                    : _TrendTone.positive,
               ),
             ),
           ],
@@ -434,6 +444,8 @@ String _formatAmount(double value) {
   return text;
 }
 
+enum _TrendTone { positive, negative, neutral }
+
 class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.label,
@@ -441,7 +453,7 @@ class _StatCard extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.trend,
-    required this.trendPositive,
+    required this.trendTone,
   });
 
   final String label;
@@ -449,12 +461,15 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String trend;
-  final bool trendPositive;
+  final _TrendTone trendTone;
 
   @override
   Widget build(BuildContext context) {
-    final trendColor =
-        trendPositive ? AppColors.successColor : AppColors.error500;
+    final trendColor = switch (trendTone) {
+      _TrendTone.positive => AppColors.successColor,
+      _TrendTone.negative => AppColors.error500,
+      _TrendTone.neutral => AppColors.textMuted,
+    };
 
     return Container(
       padding: const EdgeInsets.all(14),

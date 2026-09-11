@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
+import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_screen.dart';
 import 'package:blocnet/features/moderation/presentation/pages/moderation_hub_screen.dart';
 import 'package:blocnet/features/projects/presentation/sections/home.dart';
@@ -129,11 +130,14 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       setState(() {
         _isSwitchingSpace = true;
         if (activeSpace == 'hunter') {
-          _hunterIndex = targetTab ?? _mapToHunterIndex(previousSpace, _userIndex, _moderationIndex);
+          _hunterIndex = targetTab ??
+              _mapToHunterIndex(previousSpace, _userIndex, _moderationIndex);
         } else if (activeSpace == 'moderation') {
-          _moderationIndex = targetTab ?? _mapToModerationIndex(previousSpace, _userIndex, _hunterIndex);
+          _moderationIndex = targetTab ??
+              _mapToModerationIndex(previousSpace, _userIndex, _hunterIndex);
         } else {
-          _userIndex = targetTab ?? _mapToUserIndex(previousSpace, _hunterIndex, _moderationIndex);
+          _userIndex = targetTab ??
+              _mapToUserIndex(previousSpace, _hunterIndex, _moderationIndex);
         }
       });
 
@@ -156,7 +160,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     return null;
   }
 
-  int _mapToHunterIndex(String previousSpace, int userIndex, int moderationIndex) {
+  int _mapToHunterIndex(
+      String previousSpace, int userIndex, int moderationIndex) {
     if (previousSpace == 'user') {
       // Community in User space maps to Hunter Hub in Hunter space
       return userIndex == 2 ? 2 : userIndex.clamp(0, 5);
@@ -167,7 +172,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     return 2; // Default to Hunter Hub
   }
 
-  int _mapToModerationIndex(String previousSpace, int userIndex, int hunterIndex) {
+  int _mapToModerationIndex(
+      String previousSpace, int userIndex, int hunterIndex) {
     if (previousSpace == 'user') {
       // Community in User space maps to Moderation Hub in Moderation space
       return userIndex == 2 ? 2 : userIndex.clamp(0, 5);
@@ -178,7 +184,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     return 2; // Default to Moderation Hub
   }
 
-  int _mapToUserIndex(String previousSpace, int hunterIndex, int moderationIndex) {
+  int _mapToUserIndex(
+      String previousSpace, int hunterIndex, int moderationIndex) {
     if (previousSpace == 'hunter') {
       // Hunter Hub in Hunter space maps to Community in User space
       return hunterIndex == 2 ? 2 : hunterIndex.clamp(0, 5);
@@ -202,6 +209,20 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void _onModerationNavTap(int pageIndex) {
     if (_moderationIndex == pageIndex) return;
     setState(() => _moderationIndex = pageIndex);
+  }
+
+  /// Switches the bottom tab of whichever space is active. Exposed to the
+  /// tab stack through [MainTabScope].
+  void _selectTabInActiveSpace(int pageIndex) {
+    final index = pageIndex.clamp(0, 5);
+    final activeSpace = context.read<AuthStore>().activeSpace;
+    if (activeSpace == 'hunter') {
+      _onHunterNavTap(index);
+    } else if (activeSpace == 'moderation') {
+      _onModerationNavTap(index);
+    } else {
+      _onUserNavTap(index);
+    }
   }
 
   void _onFabTap(BuildContext context) {
@@ -236,39 +257,46 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       );
     }
 
-    return Stack(
-      children: [
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 420),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) {
-            final spaceKey = (child.key as ValueKey?)?.value?.toString();
-            final slideX = spaceKey == 'hunter' ? 0.08 :
-                          spaceKey == 'moderation' ? -0.08 :
-                          spaceKey == 'user' ? -0.08 : 0.0;
-            final slide = Tween<Offset>(
-              begin: Offset(slideX, 0),
-              end: Offset.zero,
-            ).animate(animation);
-            final scale =
-                Tween<double>(begin: 0.985, end: 1).animate(animation);
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: slide,
-                child: ScaleTransition(
-                  scale: scale,
-                  child: child,
+    return MainTabScope(
+      selectTab: _selectTabInActiveSpace,
+      child: Stack(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 420),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              final spaceKey = (child.key as ValueKey?)?.value?.toString();
+              final slideX = spaceKey == 'hunter'
+                  ? 0.08
+                  : spaceKey == 'moderation'
+                      ? -0.08
+                      : spaceKey == 'user'
+                          ? -0.08
+                          : 0.0;
+              final slide = Tween<Offset>(
+                begin: Offset(slideX, 0),
+                end: Offset.zero,
+              ).animate(animation);
+              final scale =
+                  Tween<double>(begin: 0.985, end: 1).animate(animation);
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: slide,
+                  child: ScaleTransition(
+                    scale: scale,
+                    child: child,
+                  ),
                 ),
-              ),
-            );
-          },
-          child: shell,
-        ),
-        // const _OfflineStatusBanner(),
-        if (_isSwitchingSpace) const _SpaceSwitchOverlay(),
-      ],
+              );
+            },
+            child: shell,
+          ),
+          // const _OfflineStatusBanner(),
+          if (_isSwitchingSpace) const _SpaceSwitchOverlay(),
+        ],
+      ),
     );
   }
 

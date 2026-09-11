@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
@@ -377,9 +378,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => EdgeEnginePage(
+        builder: (pageContext) => EdgeEnginePage(
           onAction: _sendEdgeFeedback,
           onExplain: _openEdgeExplain,
+          onFollowProjects: () {
+            Navigator.of(pageContext).pop();
+            if (!mounted) return;
+            MainTabScope.maybeOf(context)
+                ?.selectTab(MainTabScope.discoverTab);
+          },
         ),
       ),
     );
