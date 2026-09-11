@@ -9,6 +9,7 @@ class MiningConfigModel {
     required this.maxBoostBps,
     required this.activeReferralWindowHours,
     required this.referralBindWindowHours,
+    required this.claimWindowHours,
     required this.enabled,
     required this.referralsEnabled,
   });
@@ -19,6 +20,10 @@ class MiningConfigModel {
   final int maxBoostBps;
   final int activeReferralWindowHours;
   final int referralBindWindowHours;
+
+  /// Hours a completed cycle stays claimable. Past this the backend forfeits
+  /// the cycle: the points are gone and no Claim can recover them.
+  final int claimWindowHours;
   final bool enabled;
   final bool referralsEnabled;
 
@@ -36,6 +41,8 @@ class MiningConfigModel {
               168,
       referralBindWindowHours:
           int.tryParse(json['referralBindWindowHours']?.toString() ?? '') ?? 24,
+      claimWindowHours:
+          int.tryParse(json['claimWindowHours']?.toString() ?? '') ?? 48,
       enabled: json['enabled'] == true,
       referralsEnabled: json['referralsEnabled'] == true,
     );
@@ -203,6 +210,7 @@ class MiningHourlyCheckpointModel {
     required this.activeReferralsSnapshot,
     required this.boostBpsSnapshot,
     required this.claimedAt,
+    required this.expiredAt,
     required this.status,
   });
 
@@ -215,9 +223,17 @@ class MiningHourlyCheckpointModel {
   final int activeReferralsSnapshot;
   final int boostBpsSnapshot;
   final DateTime? claimedAt;
+
+  /// Set when the checkpoint's cycle was forfeited. These points were never
+  /// paid and never will be.
+  final DateTime? expiredAt;
+
+  /// One of `claimed`, `expired` or `unclaimed`.
   final String status;
 
   bool get isClaimed => status == 'claimed';
+  bool get isExpired => status == 'expired';
+  bool get isUnclaimed => !isClaimed && !isExpired;
 
   factory MiningHourlyCheckpointModel.fromApi(Map<String, dynamic> json) {
     return MiningHourlyCheckpointModel(
@@ -232,8 +248,54 @@ class MiningHourlyCheckpointModel {
       boostBpsSnapshot:
           int.tryParse(json['boostBpsSnapshot']?.toString() ?? '') ?? 0,
       claimedAt: DateTime.tryParse(json['claimedAt']?.toString() ?? ''),
+      expiredAt: DateTime.tryParse(json['expiredAt']?.toString() ?? ''),
       status: json['status']?.toString() ?? 'unclaimed',
     );
+  }
+}
+
+/// A mining cycle whose claim window elapsed unclaimed. The backend settles
+/// these with an `expiredAt` stamp; the points are forfeited, not pending.
+///
+/// Arrives in three places: `expiredCycles[]` on a claim or start response,
+/// and `lastExpiredCycle` on the mining snapshot (where `claimDeadline` is
+/// not sent).
+class MiningExpiredCycle {
+  const MiningExpiredCycle({
+    required this.sessionId,
+    required this.startsAt,
+    required this.endsAt,
+    required this.claimDeadline,
+    required this.expiredAt,
+    required this.forfeitedPoints,
+  });
+
+  final String sessionId;
+  final DateTime? startsAt;
+  final DateTime? endsAt;
+  final DateTime? claimDeadline;
+  final DateTime? expiredAt;
+  final int forfeitedPoints;
+
+  factory MiningExpiredCycle.fromApi(Map<String, dynamic> json) {
+    return MiningExpiredCycle(
+      sessionId: json['sessionId']?.toString() ?? '',
+      startsAt: DateTime.tryParse(json['startsAt']?.toString() ?? ''),
+      endsAt: DateTime.tryParse(json['endsAt']?.toString() ?? ''),
+      claimDeadline:
+          DateTime.tryParse(json['claimDeadline']?.toString() ?? ''),
+      expiredAt: DateTime.tryParse(json['expiredAt']?.toString() ?? ''),
+      forfeitedPoints:
+          int.tryParse(json['forfeitedPoints']?.toString() ?? '') ?? 0,
+    );
+  }
+
+  static List<MiningExpiredCycle> listFromApi(Object? raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((row) => MiningExpiredCycle.fromApi(row.cast<String, dynamic>()))
+        .toList(growable: false);
   }
 }
 
@@ -245,6 +307,7 @@ class MiningSnapshot {
     required this.session,
     required this.referral,
     required this.hourlyHistory,
+    required this.lastExpiredCycle,
   });
 
   final DateTime asOf;
@@ -254,6 +317,29 @@ class MiningSnapshot {
   final ReferralSummaryModel referral;
   final List<MiningHourlyCheckpointModel> hourlyHistory;
 
+  /// Most recent forfeited cycle, or null if this account has never let a
+  /// claim window elapse.
+  final MiningExpiredCycle? lastExpiredCycle;
+
+  /// Replaces whole sub-objects rather than merging fields, so a server
+  /// response that reports a *lower* balance (forfeited checkpoints are no
+  /// longer counted) can never be masked by the cached one.
+  MiningSnapshot copyWith({
+    MiningBalanceModel? balance,
+    MiningSessionModel? session,
+    MiningExpiredCycle? lastExpiredCycle,
+  }) {
+    return MiningSnapshot(
+      asOf: asOf,
+      config: config,
+      balance: balance ?? this.balance,
+      session: session ?? this.session,
+      referral: referral,
+      hourlyHistory: hourlyHistory,
+      lastExpiredCycle: lastExpiredCycle ?? this.lastExpiredCycle,
+    );
+  }
+
   factory MiningSnapshot.fromApi(Map<String, dynamic> json) {
     final configRaw = (json['config'] as Map?)?.cast<String, dynamic>() ?? {};
     final balanceRaw = (json['balance'] as Map?)?.cast<String, dynamic>() ?? {};
@@ -262,6 +348,8 @@ class MiningSnapshot {
         (json['referral'] as Map?)?.cast<String, dynamic>() ?? {};
     final hourlyHistoryRaw =
         (json['hourlyHistory'] as List?)?.cast<dynamic>() ?? const [];
+    final lastExpiredRaw =
+        (json['lastExpiredCycle'] as Map?)?.cast<String, dynamic>();
 
     return MiningSnapshot(
       asOf: DateTime.tryParse(json['asOf']?.toString() ?? '') ?? DateTime.now(),
@@ -277,6 +365,9 @@ class MiningSnapshot {
             ),
           )
           .toList(growable: false),
+      lastExpiredCycle: lastExpiredRaw == null
+          ? null
+          : MiningExpiredCycle.fromApi(lastExpiredRaw),
     );
   }
 }

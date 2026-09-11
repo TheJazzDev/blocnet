@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/mining/data/mining_expiry_copy.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:flutter/material.dart';
@@ -91,9 +92,20 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rangeLabel = _formatRange(item.hourStartAt, item.hourEndAt);
-    final statusColor =
-        item.isClaimed ? AppColors.successColor : AppColors.primary500;
-    final statusLabel = item.isClaimed ? 'Claimed' : 'Unclaimed';
+    // Three states now: claimed (paid), expired (forfeited with the cycle) and
+    // unclaimed (still pending).
+    final statusColor = item.isClaimed
+        ? AppColors.successColor
+        : item.isExpired
+            ? AppColors.warning500
+            : AppColors.primary500;
+    final statusLabel = MiningExpiryCopy.checkpointStatusLabel(item);
+    final amountColor =
+        item.isExpired ? AppColors.textFaint : AppColors.successColor;
+    final amountPrefix = item.isExpired ? '' : '+';
+    final settledLabel = item.isExpired
+        ? 'forfeited ${formatGroupedNumber(item.points, maxDecimals: 0)}'
+        : 'settled ${formatGroupedNumber(item.points, maxDecimals: 0)}';
     final estimatedHourlyPoints = _estimateHourlyPoints();
 
     return Padding(
@@ -130,16 +142,20 @@ class _HistoryRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '+${formatGroupedNumber(estimatedHourlyPoints, maxDecimals: 2, minDecimals: 2)} BNP',
+                '$amountPrefix${formatGroupedNumber(estimatedHourlyPoints, maxDecimals: 2, minDecimals: 2)} BNP',
                 style: AppTypography.custom(
                   size: AppText.labelSize,
                   weight: FontWeight.w800,
-                  color: AppColors.successColor,
+                  color: amountColor,
+                ).copyWith(
+                  decoration:
+                      item.isExpired ? TextDecoration.lineThrough : null,
+                  decorationColor: amountColor,
                 ),
               ),
               const SizedBox(height: AppSpace.hair),
               Text(
-                'settled ${formatGroupedNumber(item.points, maxDecimals: 0)}',
+                settledLabel,
                 style: AppTypography.custom(
                   size: AppText.captionSize,
                   weight: FontWeight.w500,

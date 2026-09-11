@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/mining/presentation/widgets/mining_expired_notice_card.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_hero_card.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
@@ -18,6 +19,8 @@ class MiningScreen extends StatefulWidget {
 
 class _MiningScreenState extends State<MiningScreen> {
   String? _lastShownError;
+  String? _lastShownForfeitNotice;
+  String? _dismissedExpiredSessionId;
 
   @override
   void initState() {
@@ -41,6 +44,27 @@ class _MiningScreenState extends State<MiningScreen> {
           });
         }
 
+        // A forfeited cycle is an outcome, not a crash: it gets its own
+        // warning-styled message rather than the red error treatment.
+        final forfeitNotice = store.forfeitNotice;
+        if (forfeitNotice == null || forfeitNotice.isEmpty) {
+          _lastShownForfeitNotice = null;
+        } else if (forfeitNotice != _lastShownForfeitNotice) {
+          // Guard against the several rebuilds `refreshAll` triggers before
+          // the frame callback lands, so the notice is shown exactly once.
+          _lastShownForfeitNotice = forfeitNotice;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _showFeedback(forfeitNotice, tone: _FeedbackTone.warning);
+            store.clearForfeitNotice();
+          });
+        }
+
+        final expiredCycle = store.snapshot?.lastExpiredCycle;
+        final showExpiredNotice =
+            MiningExpiredNoticeCard.isCurrent(store.snapshot) &&
+                expiredCycle?.sessionId != _dismissedExpiredSessionId;
+
         return RefreshIndicator(
           color: AppColors.primary500,
           backgroundColor: AppColors.bgSurface,
@@ -59,6 +83,17 @@ class _MiningScreenState extends State<MiningScreen> {
                 isClaiming: store.isClaiming,
                 isLoadingSnapshot: store.isLoadingSnapshot,
               ),
+              if (showExpiredNotice && expiredCycle != null) ...[
+                const SizedBox(height: AppSpace.md),
+                MiningExpiredNoticeCard(
+                  cycle: expiredCycle,
+                  claimWindowHours:
+                      store.snapshot?.config.claimWindowHours ?? 48,
+                  onDismiss: () => setState(() {
+                    _dismissedExpiredSessionId = expiredCycle.sessionId;
+                  }),
+                ),
+              ],
               const SizedBox(height: AppSpace.md),
               _MiningSectionEntryCard(
                 icon: Icons.leaderboard_rounded,
@@ -104,8 +139,11 @@ class _MiningScreenState extends State<MiningScreen> {
 
   Future<void> _onStart(MiningStore store) async {
     try {
-      await store.startMining();
+      final result = await store.startMining();
       if (!mounted) return;
+      // A start that also forfeited older cycles already set the store's
+      // forfeit notice, which the builder surfaces on its own.
+      if (result != null && result.hasExpiredCycles) return;
       _showFeedback('Mining cycle started.');
     } catch (_) {
       // surfaced via store.lastError
@@ -113,28 +151,44 @@ class _MiningScreenState extends State<MiningScreen> {
   }
 
   Future<void> _onClaim(MiningStore store) async {
-    final pointsBefore = store.snapshot?.balance.claimedTotalPoints ?? 0;
     final walletStore = context.read<WalletStore>();
     try {
-      await store.claimMining();
-      final pointsAfter = store.snapshot?.balance.claimedTotalPoints ?? 0;
-      final claimedNow = (pointsAfter - pointsBefore).clamp(0, 1 << 31);
+      final result = await store.claimMining();
+      if (result == null) return;
+
+      // The response body — not the absence of an exception — decides whether
+      // anything was actually paid out.
+      if (!result.isClaimed) {
+        // The forfeit copy is surfaced by the builder via store.forfeitNotice.
+        return;
+      }
+
       try {
         await walletStore.refreshAll();
       } catch (_) {
-        // Wallet refresh is best-effort; mining claim already succeeded.
+        // Wallet refresh is best-effort; the claim itself already succeeded.
       }
       if (!mounted) return;
-      final message = claimedNow > 0
-          ? 'Claimed ${formatGroupedNumber(claimedNow, maxDecimals: 0)} BNP. New mining session started.'
-          : 'Rewards claimed. New mining session started.';
-      _showFeedback(message);
+      final claimed = result.claimedPoints;
+      final nextCycle = result.startedNextCycle
+          ? ' New mining session started.'
+          : '';
+      final message = claimed > 0
+          ? 'Claimed ${formatGroupedNumber(claimed, maxDecimals: 0)} BNP.$nextCycle'
+          : 'Rewards claimed.$nextCycle';
+      _showFeedback(message.trim());
     } catch (_) {
       // surfaced via store.lastError
     }
   }
 
-  void _showFeedback(String message, {bool isError = false}) {
+  void _showFeedback(
+    String message, {
+    bool isError = false,
+    _FeedbackTone? tone,
+  }) {
+    final resolved =
+        tone ?? (isError ? _FeedbackTone.error : _FeedbackTone.success);
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
@@ -144,19 +198,31 @@ class _MiningScreenState extends State<MiningScreen> {
           style: AppTypography.custom(
             size: AppText.labelSize,
             weight: FontWeight.w600,
-            color: isError ? AppColors.darkGrey900 : Colors.black,
+            color: resolved == _FeedbackTone.error
+                ? AppColors.darkGrey900
+                : Colors.black,
           ),
         ),
-        backgroundColor: isError ? AppColors.error500 : AppColors.successColor,
+        backgroundColor: switch (resolved) {
+          _FeedbackTone.error => AppColors.error500,
+          _FeedbackTone.warning => AppColors.warning500,
+          _FeedbackTone.success => AppColors.successColor,
+        },
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.mdValue),
         ),
-        duration: const Duration(seconds: 2),
+        duration: Duration(
+          seconds: resolved == _FeedbackTone.warning ? 6 : 2,
+        ),
       ),
     );
   }
 }
+
+/// Success, a forfeited cycle, and a genuine failure are three different
+/// things and must not look alike.
+enum _FeedbackTone { success, warning, error }
 
 class _MiningSectionEntryCard extends StatelessWidget {
   const _MiningSectionEntryCard({

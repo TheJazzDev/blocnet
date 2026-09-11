@@ -133,9 +133,11 @@ class _MiningHeroCardState extends State<MiningHeroCard>
     final hasSession = session != null && !session.isIdle;
     final isSessionReadyCheck = widget.isLoadingSnapshot && session == null;
     final canStart = !isSessionReadyCheck && !hasSession;
-    final reachedEnd = session?.endsAt != null &&
-        !session!.endsAt!.toUtc().isAfter(_now.toUtc());
-    final canClaim = hasSession && (session.isClaimable || reachedEnd);
+    // `claimable` is the ONLY state that earns a Claim button. The local clock
+    // reaching `endsAt` is not enough: a cycle past its claim window is
+    // forfeited server-side and reports `running` -> `idle`, so offering Claim
+    // there is offering a button that cannot succeed (F-39).
+    final canClaim = hasSession && session.isClaimable;
     final statusLabel = canClaim
         ? 'Claim Ready'
         : session?.isRunning == true
@@ -420,8 +422,15 @@ class _MiningHeroCardState extends State<MiningHeroCard>
     }
 
     final countdown = _formatCountdown(session?.endsAt, now);
+    final label = countdown == null
+        ? 'Claim Locked'
+        : countdown == '00:00'
+            // The device clock hit the end but the server has not marked the
+            // cycle claimable yet. Never label this "Claim" — it would fail.
+            ? 'Wrapping up this cycle...'
+            : 'Claim in $countdown';
     return _MiningActionState(
-      label: countdown == null ? 'Claim Locked' : 'Claim in $countdown',
+      label: label,
       color: AppColors.bgElevated,
       textColor: AppColors.textMuted,
       onPressed: null,
@@ -435,8 +444,13 @@ class _MiningHeroCardState extends State<MiningHeroCard>
     if (session == null || session.isIdle) {
       return 'Start to begin your ${cycleHours}h cycle.';
     }
-    if (session.isClaimable || _hasReachedSessionEnd(session.endsAt, now)) {
+    if (session.isClaimable) {
       return 'Cycle complete. You can claim now.';
+    }
+    if (_hasReachedSessionEnd(session.endsAt, now)) {
+      // Ended by the device clock but the server has not said `claimable` yet.
+      // Wait for the refresh rather than promising a Claim that would fail.
+      return 'Cycle finishing up. Pull to refresh in a moment.';
     }
     return 'Mining in progress';
   }
