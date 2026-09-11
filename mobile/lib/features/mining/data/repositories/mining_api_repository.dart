@@ -1,3 +1,4 @@
+import 'package:blocnet/features/mining/data/models/mining_claim_models.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/services/api/api_client.dart';
 
@@ -16,12 +17,25 @@ class MiningApiRepository {
     return MiningSnapshot.fromApi(response);
   }
 
-  Future<void> startMining() async {
-    await _apiClient.post('/mining/start', body: {});
+  Future<MiningStartResult> startMining() async {
+    final response = await _apiClient.post('/mining/start', body: {});
+    if (response is! Map<String, dynamic>) {
+      return MiningStartResult.unknown();
+    }
+
+    return MiningStartResult.fromApi(response);
   }
 
-  Future<void> claimMining() async {
-    await _apiClient.post('/mining/claim', body: {});
+  /// Returns the parsed body, never void: `POST /mining/claim` answers 200 both
+  /// when it pays out and when it forfeits an expired cycle, so the body is the
+  /// only thing that tells the two apart.
+  Future<MiningClaimResult> claimMining() async {
+    final response = await _apiClient.post('/mining/claim', body: {});
+    if (response is! Map<String, dynamic>) {
+      return MiningClaimResult.unknown();
+    }
+
+    return MiningClaimResult.fromApi(response);
   }
 
   Future<ReferralSummaryModel?> fetchReferralSummary() async {

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:blocnet/features/mining/data/mining_expiry_copy.dart';
+import 'package:blocnet/features/mining/data/models/mining_claim_models.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/mining/data/repositories/mining_api_repository.dart';
 import 'package:blocnet/services/api/api_client.dart';
@@ -24,6 +26,8 @@ class MiningStore extends ChangeNotifier {
   bool _isBindingReferral = false;
   String? _lastError;
   String? _referralError;
+  MiningClaimResult? _lastClaimResult;
+  String? _forfeitNotice;
 
   MiningSnapshot? get snapshot => _snapshot;
 
@@ -43,6 +47,22 @@ class MiningStore extends ChangeNotifier {
   bool get isBindingReferral => _isBindingReferral;
   String? get lastError => _lastError;
   String? get referralError => _referralError;
+
+  /// Parsed body of the most recent claim. A claim that forfeited is reported
+  /// here with `isExpired`, not through [lastError] — it is an outcome, not a
+  /// crash.
+  MiningClaimResult? get lastClaimResult => _lastClaimResult;
+
+  /// Plain-English explanation of a cycle that expired unclaimed, set by
+  /// [claimMining] or [startMining]. Cleared by [clearForfeitNotice] once the
+  /// UI has shown it.
+  String? get forfeitNotice => _forfeitNotice;
+
+  void clearForfeitNotice() {
+    if (_forfeitNotice == null) return;
+    _forfeitNotice = null;
+    notifyListeners();
+  }
 
   bool get isBusy =>
       _isLoadingSnapshot ||
@@ -139,16 +159,22 @@ class MiningStore extends ChangeNotifier {
     }
   }
 
-  Future<void> startMining() async {
-    if (_isStarting) return;
+  Future<MiningStartResult?> startMining() async {
+    if (_isStarting) return null;
 
     _isStarting = true;
     notifyListeners();
 
     try {
-      await _repository.startMining();
+      final result = await _repository.startMining();
+      // Start reconciles too: older cycles can be forfeited on the way in, and
+      // the user is owed that news.
+      _forfeitNotice = result.hasExpiredCycles
+          ? MiningExpiryCopy.startForfeited(result)
+          : null;
       await refreshAll();
       _lastError = null;
+      return result;
     } catch (error) {
       _lastError = describeError(error);
       rethrow;
@@ -158,16 +184,33 @@ class MiningStore extends ChangeNotifier {
     }
   }
 
-  Future<void> claimMining() async {
-    if (_isClaiming) return;
+  /// Claims the completed cycle.
+  ///
+  /// `POST /mining/claim` answers 200 whether it paid out or forfeited an
+  /// expired cycle, so "no exception thrown" is not success. The parsed result
+  /// is returned and mirrored on [lastClaimResult]; a forfeit sets
+  /// [forfeitNotice] instead of [lastError].
+  Future<MiningClaimResult?> claimMining() async {
+    if (_isClaiming) return null;
 
     _isClaiming = true;
     notifyListeners();
 
     try {
-      await _repository.claimMining();
+      final result = await _repository.claimMining();
+      _lastClaimResult = result;
+      _forfeitNotice =
+          result.isClaimed ? null : _describeForfeit(result);
+
+      // Reconcile before refreshing: the response's balance is authoritative
+      // and may be LOWER than the cached one (forfeited checkpoints stop
+      // counting), so apply it wholesale rather than leaving a stale higher
+      // number on screen while the refresh is in flight.
+      _applyAuthoritativeClaimState(result);
+
       await refreshAll();
       _lastError = null;
+      return result;
     } catch (error) {
       _lastError = describeError(error);
       rethrow;
@@ -175,6 +218,38 @@ class MiningStore extends ChangeNotifier {
       _isClaiming = false;
       notifyListeners();
     }
+  }
+
+  String? _describeForfeit(MiningClaimResult result) {
+    if (result.status == 'unknown') {
+      // Unreadable body: say nothing rather than claim a payout that may not
+      // have happened. The forced refresh below shows the real state.
+      return null;
+    }
+
+    return MiningExpiryCopy.claimExpired(
+      result,
+      claimWindowHours: _snapshot?.config.claimWindowHours,
+    );
+  }
+
+  /// Overwrites the cached balance and session with the values the claim
+  /// response reported. Sub-objects are replaced, never field-merged, so a
+  /// value that went *down* survives.
+  void _applyAuthoritativeClaimState(MiningClaimResult result) {
+    final current = _snapshot;
+    if (current == null) return;
+    if (result.balance == null && result.nextSession == null) return;
+
+    _snapshot = current.copyWith(
+      balance: result.balance,
+      session: result.nextSession,
+      // `expiredCycles` arrives oldest-first; the snapshot field means "most
+      // recent", so take the last one.
+      lastExpiredCycle:
+          result.expiredCycles.isEmpty ? null : result.expiredCycles.last,
+    );
+    notifyListeners();
   }
 
   Future<ReferralValidation?> validateReferralCode(String code) {
@@ -221,7 +296,11 @@ class MiningStore extends ChangeNotifier {
         return 'Claim your completed cycle before starting a new one.';
       }
       if (error.statusCode == 409 && body?.contains('not_claimable') == true) {
-        return 'This cycle is still running. Claim becomes available at cycle end.';
+        return 'Nothing to claim yet — this cycle pays out once it finishes.';
+      }
+      if (body?.contains('claim_window_expired') == true) {
+        return 'That cycle expired before it was claimed, so its points were '
+            'forfeited. Start a new cycle to keep mining.';
       }
 
       return error.message;
@@ -237,6 +316,8 @@ class MiningStore extends ChangeNotifier {
     _downline = const [];
     _leaderboard = const [];
     _lastError = null;
+    _lastClaimResult = null;
+    _forfeitNotice = null;
     notifyListeners();
   }
 }
