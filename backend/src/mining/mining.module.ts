@@ -8,6 +8,7 @@ import { MiningController } from './mining.controller';
 import { MiningService } from './mining.service';
 import { MiningCalculatorService } from './mining-calculator.service';
 import { MiningConfigService } from './mining-config.service';
+import { MiningExpiryService } from './mining-expiry.service';
 import { MiningAdminService } from './mining-admin.service';
 import { MiningLeaderboardService } from './mining-leaderboard.service';
 
@@ -23,6 +24,7 @@ import { MiningLeaderboardService } from './mining-leaderboard.service';
     MiningService,
     MiningCalculatorService,
     MiningConfigService,
+    MiningExpiryService,
     MiningAdminService,
     MiningLeaderboardService,
   ],
@@ -30,6 +32,7 @@ import { MiningLeaderboardService } from './mining-leaderboard.service';
     MiningService,
     MiningCalculatorService,
     MiningConfigService,
+    MiningExpiryService,
     MiningAdminService,
     MiningLeaderboardService,
   ],

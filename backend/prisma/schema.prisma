@@ -1165,6 +1165,10 @@ model MiningSession {
   startsAt                DateTime
   endsAt                  DateTime
   claimedAt               DateTime?
+  /// Terminal state for a cycle whose claim window elapsed unclaimed.
+  /// Mutually exclusive with claimedAt: a session is paid (claimedAt) or
+  /// forfeited (expiredAt), never both, and never neither once settled.
+  expiredAt               DateTime?
   basePointsPerCycle      Int
   activeReferralsSnapshot Int
   boostBpsSnapshot        Int
@@ -1177,6 +1181,7 @@ model MiningSession {
 
   @@index([userId, createdAt])
   @@index([userId, claimedAt])
+  @@index([userId, expiredAt])
   @@index([userId, startsAt])
 }
 
@@ -1205,6 +1210,10 @@ model MiningHourlyCheckpoint {
   boostBpsSnapshot        Int
   points                  Int
   claimedAt               DateTime?
+  /// Terminal state for accrual that belonged to a forfeited cycle. Keeps
+  /// forfeited points out of every "unclaimed" aggregate without deleting the
+  /// accrual history.
+  expiredAt               DateTime?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
   session                 MiningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -1213,6 +1222,7 @@ model MiningHourlyCheckpoint {
   @@unique([sessionId, hourIndex])
   @@index([userId, hourEndAt])
   @@index([sessionId, claimedAt])
+  @@index([sessionId, expiredAt])
 }
 
 model MiningConfig {
