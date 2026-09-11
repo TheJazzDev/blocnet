@@ -20,6 +20,19 @@ type AuditInput = {
   metadata?: Record<string, unknown>;
 };
 
+type ListAuditLogOptions = {
+  /** When false, drop read-only admin view events (actions ending in ".view"). */
+  includeViews?: boolean;
+};
+
+/**
+ * Read-only admin page views (`edge.admin.config.view`, `digest.view`, ...)
+ * are still written for traceability; this lets list consumers hide them.
+ */
+const VIEW_EVENT_EXCLUSION: Prisma.AuditLogWhereInput = {
+  NOT: { action: { endsWith: '.view' } },
+};
+
 type OpsEvent = {
   id: string;
   action: string;
@@ -126,13 +139,21 @@ export class AuditLogService {
     return entry;
   }
 
-  async listForUser(user: AuthUser, limit = 100, offset = 0) {
+  async listForUser(
+    user: AuthUser,
+    limit = 100,
+    offset = 0,
+    options: ListAuditLogOptions = {},
+  ) {
     const safeLimit = Math.min(Math.max(limit, 1), 500);
     const safeOffset = Math.max(offset, 0);
-    const visibilityWhere = this.buildVisibilityWhere(user);
+    const where = this.combineWhere([
+      this.buildVisibilityWhere(user),
+      options.includeViews === false ? VIEW_EVENT_EXCLUSION : undefined,
+    ]);
 
     return this.prisma.auditLog.findMany({
-      ...(visibilityWhere ? { where: visibilityWhere } : {}),
+      ...(where ? { where } : {}),
       orderBy: { createdAt: 'desc' },
       skip: safeOffset,
       take: safeLimit,
@@ -376,6 +397,17 @@ export class AuditLogService {
     }
 
     return filtered.slice(offset, offset + limit);
+  }
+
+  private combineWhere(
+    conditions: Array<Prisma.AuditLogWhereInput | undefined>,
+  ): Prisma.AuditLogWhereInput | undefined {
+    const present = conditions.filter(
+      (condition): condition is Prisma.AuditLogWhereInput => !!condition,
+    );
+    if (present.length === 0) return undefined;
+    if (present.length === 1) return present[0];
+    return { AND: present };
   }
 
   private buildVisibilityWhere(

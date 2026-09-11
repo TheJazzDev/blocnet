@@ -127,6 +127,58 @@ describe('AuditLogService', () => {
     );
   });
 
+  it('excludes ".view" events for owner when includeViews=false', async () => {
+    prisma.auditLog.findMany.mockResolvedValue([]);
+
+    await service.listForUser(
+      { id: 'owner-1', email: 'owner@test.dev', roles: [AppRole.OWNER] },
+      100,
+      0,
+      { includeViews: false },
+    );
+
+    expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { NOT: { action: { endsWith: '.view' } } },
+      }),
+    );
+  });
+
+  it('combines the view exclusion with admin visibility rules', async () => {
+    prisma.auditLog.findMany.mockResolvedValue([]);
+
+    await service.listForUser(
+      { id: 'admin-1', email: 'admin@test.dev', roles: [AppRole.ADMIN] },
+      100,
+      0,
+      { includeViews: false },
+    );
+
+    const call = prisma.auditLog.findMany.mock.calls[0]?.[0];
+    expect(call.where).toEqual({
+      AND: [
+        expect.objectContaining({
+          NOT: expect.objectContaining({ action: expect.anything() }),
+        }),
+        { NOT: { action: { endsWith: '.view' } } },
+      ],
+    });
+  });
+
+  it('keeps ".view" events by default (includeViews omitted or true)', async () => {
+    prisma.auditLog.findMany.mockResolvedValue([]);
+
+    await service.listForUser(
+      { id: 'owner-1', email: 'owner@test.dev', roles: [AppRole.OWNER] },
+      100,
+      0,
+      { includeViews: true },
+    );
+
+    const call = prisma.auditLog.findMany.mock.calls[0]?.[0];
+    expect(call).not.toHaveProperty('where');
+  });
+
   it('throws for users without governance role', async () => {
     await expect(
       service.listForUser({

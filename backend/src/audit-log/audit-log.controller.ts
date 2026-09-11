@@ -11,6 +11,8 @@ import { AppRole } from '../common/enums/role.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { ApiOperation } from '@nestjs/swagger';
+import { ListAuditLogQuery } from './dto/list-audit-log.query';
 import { ListOpsEventsQuery } from './dto/list-ops-events.query';
 import { AuditLogService } from './audit-log.service';
 
@@ -21,18 +23,25 @@ export class AuditLogController {
 
   @Get()
   @Roles(AppRole.OWNER, AppRole.ADMIN)
+  @ApiOperation({
+    summary: 'List audit log entries visible to the caller',
+    description:
+      'Pass includeViews=false to exclude read-only admin view events (actions ending in ".view").',
+  })
   async list(
     @CurrentUser() user: AuthUser | undefined,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query() query: ListAuditLogQuery,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
 
-    const parsedLimit = limit ? Number(limit) : 100;
-    const parsedOffset = offset ? Number(offset) : 0;
-    return this.auditLogService.listForUser(user, parsedLimit, parsedOffset);
+    return this.auditLogService.listForUser(
+      user,
+      query.limit ?? 100,
+      query.offset ?? 0,
+      { includeViews: query.includeViews ?? true },
+    );
   }
 
   @Get('ops-events')
