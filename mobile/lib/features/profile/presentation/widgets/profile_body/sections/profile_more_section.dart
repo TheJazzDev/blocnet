@@ -3,11 +3,14 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/widgets/profile_tile.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/users/hunter_application_store.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 /// "More" and "Account" tiles. Every entry here is shown to everyone; the
 /// only role-gated rows are System Alerts (owner/dev, matching the
-/// backend guard) and the received-tips shortcut for hunters.
+/// backend guard), the received-tips shortcut for hunters and the
+/// Become a Hunter entry for users who do not hold the role yet.
 class ProfileMoreSection extends StatelessWidget {
   const ProfileMoreSection({
     super.key,
@@ -22,6 +25,8 @@ class ProfileMoreSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final navigator = Navigator.of(context);
     final isHunter = auth.hasHunterSpace;
+    final applicationPending =
+        context.watch<HunterApplicationStore>().isPending;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -30,6 +35,22 @@ class ProfileMoreSection extends StatelessWidget {
         children: [
           const SectionLabel('More'),
           const SizedBox(height: 8),
+          if (!isHunter)
+            ProfileTile(
+              icon: Icons.radar_rounded,
+              iconColor: AppColors.primary400,
+              title: 'Become a Hunter',
+              subtitle: applicationPending
+                  ? 'Application pending review'
+                  : 'Post updates for gems and earn tips',
+              trailing: applicationPending
+                  ? ProfileTilePill(
+                      label: 'PENDING',
+                      color: AppColors.warning500,
+                    )
+                  : null,
+              onTap: () => navigator.pushNamed(AppRoutes.becomeHunter),
+            ),
           ProfileTile(
             icon: Icons.emoji_events_outlined,
             title: 'Badges',

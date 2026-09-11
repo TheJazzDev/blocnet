@@ -160,10 +160,12 @@ class NotificationTargetResolver {
     }
 
     if (isGovernanceType(normalizedType)) {
+      // Invites are accepted/declined from the Invites section of Hunter
+      // Hub's "Manage My Gems"; assignment changes land there too.
       if (normalizedType == 'project_invite_received' ||
           normalizedType == 'project_invite_responded' ||
           normalizedType == 'project_assignment_changed') {
-        return NotificationNavigationDecision.push(AppRoutes.manageProjects);
+        return NotificationNavigationDecision.push(AppRoutes.hunterHub);
       }
       return NotificationNavigationDecision.push(AppRoutes.profile);
     }

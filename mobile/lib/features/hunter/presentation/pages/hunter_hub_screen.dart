@@ -4,9 +4,12 @@ import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hunter_stats_grid.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/managed_projects_row.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/project_invites_section.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/season_leaderboard.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/tips_load_error_row.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/projects/project_invites_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
@@ -43,6 +46,7 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
     await Future.wait([
       projectsStore.fetchProjectsOnce(),
       updatesStore.fetchUpdatesOnce(),
+      context.read<ProjectInvitesStore>().loadMine(),
       _syncTips(force: true),
     ]);
   }
@@ -100,8 +104,21 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
         ? 0
         : ((qualitySignals / hunterUpdates.length) * 100).round();
 
+    // Embedded in the main shell the shell's app bar applies; when pushed
+    // standalone (e.g. from an invite notification) supply our own.
+    final isStandalone = Navigator.of(context).canPop();
+
     return Scaffold(
       backgroundColor: AppColors.bgBase,
+      appBar: isStandalone
+          ? const CustomAppBar(
+              title: 'Hunter Hub',
+              backButton: true,
+              showSearch: false,
+              showFilter: false,
+              showSpaceSwitcher: false,
+            )
+          : null,
       body: RefreshIndicator(
         color: AppColors.primary500,
         backgroundColor: AppColors.bgSurface,
@@ -111,6 +128,7 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
           await Future.wait([
             projectsStore.refreshProjects(),
             updatesStore.refreshUpdates(),
+            context.read<ProjectInvitesStore>().loadMine(force: true),
             _syncTips(force: true),
           ]);
         },
@@ -135,6 +153,7 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
                   const SizedBox(height: 24),
                   _SectionHeader(title: 'Manage My Projects'),
                   const SizedBox(height: 12),
+                  const ProjectInvitesSection(),
                   const ManagedProjectsRow(),
                   const SizedBox(height: 24),
                   _SectionHeader(title: 'Season Ranking'),

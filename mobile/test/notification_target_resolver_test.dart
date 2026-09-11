@@ -35,12 +35,15 @@ void main() {
       expect(decision.arguments, 'post_9');
     });
 
-    test('routes invite notifications to manage projects', () {
-      final decision = NotificationTargetResolver.resolve(
-        type: 'project_invite_received',
-      );
-
-      expect(decision.route, AppRoutes.manageProjects);
+    test('routes invite notifications to hunter hub', () {
+      for (final type in [
+        'project_invite_received',
+        'project_invite_responded',
+        'project_assignment_changed',
+      ]) {
+        final decision = NotificationTargetResolver.resolve(type: type);
+        expect(decision.route, AppRoutes.hunterHub, reason: type);
+      }
     });
 
     test('categorises level_up as rewards', () {

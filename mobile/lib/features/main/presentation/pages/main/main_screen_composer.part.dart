@@ -4,6 +4,10 @@ extension _MainScreenComposerSheet on _MainScreenState {
   Future<void> _openComposerSheet(BuildContext context) async {
     if (!mounted) return;
 
+    final canCreate = context.read<AuthStore>().canCreateUpdate;
+    final applicationPending =
+        context.read<HunterApplicationStore>().isPending;
+
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.bgSurface,
@@ -40,27 +44,41 @@ extension _MainScreenComposerSheet on _MainScreenState {
                   ),
                 ),
                 const SizedBox(height: 10),
-                _ComposerTile(
-                  title: 'Post Hunter Update',
-                  subtitle: 'Share intel about a project you track',
-                  icon: Icons.bolt_rounded,
-                  iconColor: AppColors.teal400,
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    Navigator.of(context).pushNamed(AppRoutes.createUpdate);
-                  },
-                ),
-                const SizedBox(height: 8),
-                _ComposerTile(
-                  title: 'Submit New Gem',
-                  subtitle: 'Propose a project to be listed on Blocnet',
-                  icon: Icons.diamond_outlined,
-                  iconColor: AppColors.primary400,
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    Navigator.of(context).pushNamed(AppRoutes.submitProject);
-                  },
-                ),
+                if (canCreate) ...[
+                  _ComposerTile(
+                    title: 'Post Hunter Update',
+                    subtitle: 'Share intel about a gem you track',
+                    icon: Icons.bolt_rounded,
+                    iconColor: AppColors.teal400,
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).pushNamed(AppRoutes.createUpdate);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _ComposerTile(
+                    title: 'Submit New Gem',
+                    subtitle: 'Propose a gem to be listed on Blocnet',
+                    icon: Icons.diamond_outlined,
+                    iconColor: AppColors.primary400,
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).pushNamed(AppRoutes.submitProject);
+                    },
+                  ),
+                ] else
+                  _ComposerTile(
+                    title: 'Become a Hunter',
+                    subtitle: applicationPending
+                        ? 'Application pending review'
+                        : 'Hunters post updates and submit gems',
+                    icon: Icons.radar_rounded,
+                    iconColor: AppColors.primary400,
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).pushNamed(AppRoutes.becomeHunter);
+                    },
+                  ),
               ],
             ),
           ),

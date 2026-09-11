@@ -20,7 +20,9 @@ import 'package:blocnet/services/notifications/notification_navigator.dart';
 import 'package:blocnet/services/engagement/quests_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/projects/project_invites_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/services/users/hunter_application_store.dart';
 import 'package:blocnet/services/projects/tags_store.dart';
 import 'package:blocnet/services/community/comments_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
@@ -230,6 +232,18 @@ void main() async {
         ),
         // ChangeNotifierProvider(create: (_) => PriorityStore()),
         ChangeNotifierProvider(create: (_) => ProjectsStore()),
+        ChangeNotifierProvider(create: (_) => ProjectInvitesStore()),
+        ChangeNotifierProxyProvider<AuthStore, HunterApplicationStore>(
+          create: (_) => HunterApplicationStore(),
+          update: (_, auth, store) {
+            final applicationStore = store ?? HunterApplicationStore();
+            applicationStore.ensureUserScope(
+              auth.userId,
+              isHunter: auth.hasHunterSpace,
+            );
+            return applicationStore;
+          },
+        ),
       ],
       child: Consumer<AuthStore>(
         builder: (context, auth, _) => MaterialApp(

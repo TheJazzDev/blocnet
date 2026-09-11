@@ -16,6 +16,7 @@ import 'package:blocnet/services/auth/auth_store.dart';
 // import 'package:blocnet/services/core/connectivity_store.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
+import 'package:blocnet/services/users/hunter_application_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
@@ -304,6 +305,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         key: const ValueKey('user'),
         currentIndex: _userIndex,
         onNavTap: _onUserNavTap,
+        onFabTap: () => _onFabTap(context),
       );
     }
 

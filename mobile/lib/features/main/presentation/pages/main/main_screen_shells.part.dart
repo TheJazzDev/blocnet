@@ -122,14 +122,18 @@ class _UserSpaceShell extends StatelessWidget {
     super.key,
     required this.currentIndex,
     required this.onNavTap,
+    required this.onFabTap,
   });
 
   final int currentIndex;
   final ValueChanged<int> onNavTap;
+  final VoidCallback onFabTap;
 
   @override
   Widget build(BuildContext context) {
     final tab = _userTabs[currentIndex];
+    // Home and Discover only: the Community tab owns its own FAB.
+    final showComposerFab = currentIndex == 0 || currentIndex == 1;
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -158,6 +162,9 @@ class _UserSpaceShell extends StatelessWidget {
         currentIndex: currentIndex,
         onTap: onNavTap,
       ),
+      floatingActionButton:
+          showComposerFab ? _FloatingComposerFab(onPressed: onFabTap) : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

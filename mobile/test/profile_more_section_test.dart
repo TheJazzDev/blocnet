@@ -2,6 +2,7 @@ import 'package:blocnet/features/profile/presentation/widgets/profile_body/secti
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/profile_more_section.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/users/hunter_application_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +31,7 @@ Future<void> _pump(WidgetTester tester, AuthStore auth) async {
       providers: [
         ChangeNotifierProvider<AuthStore>.value(value: auth),
         ChangeNotifierProvider(create: (_) => FeedViewModeStore()),
+        ChangeNotifierProvider(create: (_) => HunterApplicationStore()),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -72,6 +74,8 @@ void main() {
     expect(find.text('Tip History (Received)'), findsNothing);
     expect(find.text('System Alerts'), findsNothing);
     expect(find.text('Manage My Gems'), findsNothing);
+    // Non-hunters get the entry point into the hunter path.
+    expect(find.text('Become a Hunter'), findsOneWidget);
   });
 
   testWidgets('hunters additionally see content shortcuts and received tips',
@@ -87,6 +91,7 @@ void main() {
     expect(find.text('Quests'), findsOneWidget);
     expect(find.text('Levels'), findsOneWidget);
     expect(find.text('System Alerts'), findsNothing);
+    expect(find.text('Become a Hunter'), findsNothing);
   });
 
   testWidgets('system alerts stay owner/dev only', (tester) async {
