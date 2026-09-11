@@ -1,0 +1,379 @@
+<title>Blocnet Feed Directions</title>
+<style>
+:root{--bg:#09090b;--s1:#18181b;--s2:#27272a;--bd:#27272a;--cy:#0891B2;--cy2:#22D3EE;--fg:#fafafa;--mut:#a1a1aa;--dim:#71717a;--red:#EF4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0c0c0e;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
+/* Scroll frame added so the 1,656px canvas never forces the page sideways. */
+.scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.canvas{position:relative;width:1760px;height:2180px}
+.col{position:absolute;width:390px}
+.cap{color:#e4e4e7;font-size:13px;line-height:1.5;margin-bottom:16px}
+.cap b{display:block;font-size:20px;font-weight:650;letter-spacing:-.01em;color:#fff;margin-bottom:6px}
+.cap span{color:#8b8b93}
+.st{color:#6b6b73;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:24px 0 8px}
+.ph{width:390px;height:844px;background:var(--bg);border-radius:20px;overflow:hidden;position:relative;color:var(--fg);box-shadow:0 0 0 1px #232327,0 24px 60px -20px #000}
+.sb{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;flex:0 0 auto}
+.sb i{display:block;width:38px;height:11px;background:var(--s2);border-radius:3px}
+.body{position:absolute;top:44px;bottom:84px;left:0;right:0;overflow:hidden}
+.pad{padding:0 16px}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:84px;background:#0d0d0f;border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(6,1fr);align-items:start;padding-top:12px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--dim);font-weight:500}
+.tab.on{color:var(--cy2)}
+.gl{width:18px;height:18px;display:flex;flex-direction:column;justify-content:center;gap:3px;align-items:center}
+.gl b{display:block;width:16px;height:2px;border-radius:1px;background:currentColor}
+.gl.d{justify-content:center}.gl.d b{width:12px;height:12px;border-radius:3px;transform:rotate(45deg);border:1.5px solid currentColor;background:none}
+.gl.c b{width:14px;height:14px;border-radius:50%;border:1.5px solid currentColor;background:none}
+.gl.sq b{width:14px;height:14px;border-radius:4px;border:1.5px solid currentColor;background:none}
+.gl.w b{width:16px;height:12px;border-radius:3px;border:1.5px solid currentColor;background:none}
+.gl.p b:first-child{width:8px;height:8px;border-radius:50%;background:currentColor}.gl.p b:last-child{width:14px;height:6px;border-radius:6px 6px 0 0;background:currentColor}
+.fab{position:absolute;right:16px;bottom:100px;width:56px;height:56px;border-radius:50%;background:var(--cy);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px -6px rgba(8,145,178,.7);z-index:5}
+.fab:before,.fab:after{content:"";position:absolute;background:#fff;border-radius:2px}.fab:before{width:18px;height:2px}.fab:after{width:2px;height:18px}
+.av{border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#d4d4d8;flex:0 0 auto}
+.lg{border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--cy2);flex:0 0 auto}
+.bdg{font-size:11px;font-weight:700;letter-spacing:.08em;padding:2px 6px;border-radius:4px;background:#0891B21f;color:var(--cy2);flex:0 0 auto}
+.bdg.n{background:var(--s2);color:var(--mut)}
+.pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--bd);color:var(--mut);display:inline-flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--cy2);flex:0 0 auto;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 #22d3ee88}50%{opacity:.45;box-shadow:0 0 0 5px #22d3ee00}}
+.hdr{display:flex;align-items:center;justify-content:space-between;height:48px}
+.wm{font-size:17px;font-weight:700;letter-spacing:-.02em}
+.eng{display:flex;gap:16px;font-size:13px;color:var(--dim);align-items:center}
+.eng b{font-weight:500;display:flex;align-items:center;gap:6px}
+.eng b:before{content:"";width:12px;height:12px;border:1.5px solid currentColor;border-radius:3px;display:block}
+.eng b.h:before{border-radius:50% 50% 50% 50%/60% 60% 40% 40%}
+.eng b.c:before{border-radius:3px 3px 0 3px}
+.eng b.s:before{border-radius:2px;border-style:dashed}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.tk{height:32px;background:var(--s1);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);overflow:hidden;display:flex;align-items:center}
+.tkr{display:flex;gap:32px;white-space:nowrap;font-size:13px;color:var(--mut);animation:mar 26s linear infinite;padding-left:16px}
+.tkr em{font-style:normal;color:var(--cy2)}
+@keyframes mar{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.sect{display:flex;align-items:center;gap:8px;margin:16px 0 8px;font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--dim)}
+.sect s{flex:1;height:1px;background:var(--bd);text-decoration:none}
+.hero{background:var(--s1);border-radius:16px;padding:16px;position:relative;overflow:hidden;border:1px solid var(--bd)}
+.hero:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cy2);box-shadow:0 0 16px 2px #22d3ee99}
+.hero h2{font-size:24px;font-weight:650;line-height:1.2;letter-spacing:-.02em;margin:12px 0 8px}
+.hero p{font-size:15px;line-height:1.5;color:var(--mut)}
+.row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #1c1c20;position:relative}
+.row .u{position:absolute;left:-16px;top:8px;bottom:8px;width:3px;border-radius:0 2px 2px 0}
+.u.hi{background:var(--cy2)}.u.md{background:#0891B2}.u.lo{background:#3f3f46}
+.row h3{font-size:15px;font-weight:550;line-height:1.35;letter-spacing:-.01em}
+.row .m{font-size:13px;color:var(--dim);margin-top:4px;display:flex;gap:8px;align-items:center}
+.tm{font-size:11px;color:var(--dim);flex:0 0 auto;align-self:flex-start;padding-top:2px}
+.radar{height:280px;border-radius:20px;background:var(--s1);border:1px solid var(--bd);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rings{position:absolute;left:50%;top:52%;width:520px;height:520px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#22d3ee00 0,#22d3ee00 17%,#22d3ee1a 17.4%,#22d3ee00 18%,#22d3ee00 37%,#22d3ee14 37.4%,#22d3ee00 38%,#22d3ee00 62%,#22d3ee10 62.4%,#22d3ee00 63%,#22d3ee00 87%,#22d3ee0d 87.4%,#22d3ee00 88%)}
+.sweep{position:absolute;left:50%;top:52%;width:520px;height:520px;transform:translate(-50%,-50%);border-radius:50%;background:conic-gradient(from 0deg,#22d3ee00 0deg,#22d3ee00 300deg,#22d3ee1f 352deg,#22d3ee47 359deg,#22d3ee00 360deg);animation:spin 7s linear infinite}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.blip{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--cy2);box-shadow:0 0 10px 2px #22d3ee88}
+.blip.m{width:6px;height:6px;background:#0891B2;box-shadow:none}
+.blip.l{width:4px;height:4px;background:#52525b;box-shadow:none}
+.rnum{font-size:48px;font-weight:680;letter-spacing:-.04em;line-height:1;position:relative}
+.rlab{font-size:13px;color:var(--mut);margin-top:8px;position:relative;text-align:center}
+.chips{position:absolute;bottom:12px;left:12px;right:12px;display:flex;gap:8px;overflow:hidden}
+.chip{background:#27272acc;backdrop-filter:blur(8px);border:1px solid #3f3f46;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:600;color:#e4e4e7;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.chip i{width:5px;height:5px;border-radius:50%;background:var(--cy2);display:block}
+.fbar{display:flex;gap:8px;margin:16px 0 4px}
+.fbar a{font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;color:var(--mut)}
+.fbar a.on{background:var(--s2);color:var(--fg)}
+.drow{display:flex;align-items:center;gap:12px;height:60px;border-bottom:1px solid #1a1a1e;position:relative;padding-left:10px}
+.drow .u{position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:2px}
+.drow h3{font-size:15px;font-weight:500;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drow .m{font-size:11px;color:var(--dim);margin-top:3px}
+.hlist{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #1a1a1e}
+.btnp{background:var(--cy);color:#fff;font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;flex:0 0 auto}
+.rail{display:flex;gap:12px;padding:8px 16px 4px;overflow:hidden}
+.gem{width:60px;flex:0 0 auto;text-align:center}
+.gem .ring{width:60px;height:60px;border-radius:50%;padding:3px;background:var(--bd);display:flex}
+.gem.new .ring{background:conic-gradient(from 200deg,var(--cy2),#0891B2 60%,#22d3ee)}
+.gem .ring div{flex:1;border-radius:50%;background:var(--s1);border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#d4d4d8}
+.gem.new .ring div{color:var(--cy2)}
+.gem p{font-size:11px;color:var(--mut);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edge{margin:8px 16px 0;border-radius:16px;padding:16px;background:linear-gradient(180deg,#0891b21f,#0891b208),var(--s1);border:1px solid #0891b24d;position:relative;overflow:hidden}
+.edge .vd{font-size:32px;font-weight:680;letter-spacing:-.03em;line-height:1;margin:8px 0}
+.edge p{font-size:15px;color:#d4d4d8;line-height:1.5}
+.gsect{display:flex;align-items:center;gap:8px;margin:20px 0 4px}
+.gsect h4{font-size:15px;font-weight:650;letter-spacing:-.01em}
+.gsect s{flex:1;height:1px;background:var(--bd);text-decoration:none}
+.gsect em{font-style:normal;font-size:11px;font-weight:700;color:var(--cy2);letter-spacing:.06em}
+.grow{padding:12px 0 12px 12px;border-left:1px solid var(--bd);margin-left:12px;position:relative}
+.grow:before{content:"";position:absolute;left:-2px;top:18px;width:3px;height:3px;border-radius:50%;background:var(--bd)}
+.grow.hi{border-left-color:#0891B2}.grow.hi:before{background:var(--cy2);box-shadow:0 0 8px 2px #22d3ee77;width:5px;height:5px;left:-3px}
+.grow h3{font-size:15px;font-weight:550;line-height:1.4;letter-spacing:-.01em}
+.grow .m{font-size:13px;color:var(--dim);margin-top:6px;display:flex;gap:8px;align-items:center}
+.disc{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:center}
+.disc h3{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.disc p{font-size:13px;color:var(--mut);margin-top:4px}
+.qh{font-size:24px;font-weight:650;letter-spacing:-.02em;line-height:1.25}
+.qs{font-size:15px;color:var(--mut);line-height:1.5;margin-top:8px}
+.lcount{display:flex;gap:0;background:var(--s1);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+.lcount div{flex:1;padding:12px;border-right:1px solid var(--bd)}
+.lcount div:last-child{border:0}
+.lcount b{display:block;font-size:20px;font-weight:650;letter-spacing:-.02em}
+.lcount span{font-size:11px;color:var(--dim)}
+@media (prefers-reduced-motion: reduce){.tkr,.sweep,.dot{animation:none!important}}
+</style>
+
+<div class="scroll"><div class="canvas">
+
+<div class="col" style="left:64px;top:48px;width:1656px">
+<div class="cap" style="font-size:15px"><b style="font-size:32px;letter-spacing:-.03em">Blocnet home feed — three directions</b>
+<span>390 × 844, dark only, Signal Cyan. Each column is one direction: the live state on top, the new-user quiet state below. Motion is running in the page — ticker, radar sweep, pulsing freshness dots.</span></div>
+</div>
+
+<!-- ============ A ============ -->
+<div class="col" style="left:64px;top:176px">
+<div class="cap"><b>A · The Ticker</b><span>Bets that the pulse belongs at the top of the screen and never stops — one hero item you can read without tapping, everything else compressed into scannable lines.</span></div>
+<div class="st">Live state</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><i></i></div>
+  <div class="body">
+    <div class="pad hdr"><span class="wm">Blocnet</span><span class="pill"><span class="dot"></span><span class="mono">402</span> mining</span></div>
+    <div class="tk"><div class="tkr">
+      <span><em>@ada</em> posted in Nebula Swap</span><span><em>+18</em> followers · Orbit Lend</span><span><em>@satoshi</em> flagged a warning</span><span>Core Mines <em>cycle 41</em> open</span>
+      <span><em>@ada</em> posted in Nebula Swap</span><span><em>+18</em> followers · Orbit Lend</span><span><em>@satoshi</em> flagged a warning</span><span>Core Mines <em>cycle 41</em> open</span>
+    </div></div>
+    <div class="pad">
+      <div class="sect"><span style="color:var(--cy2)">NOW</span><s></s><span>3 high urgency</span></div>
+      <div class="hero">
+        <div style="display:flex;align-items:center;gap:8px"><span class="lg" style="width:24px;height:24px;font-size:11px">N</span><span style="font-size:13px;font-weight:600">Nebula Swap</span><span class="bdg">ALPHA</span></div>
+        <h2>Points program goes live tonight at 00:00 UTC</h2>
+        <p>Retro snapshot already taken — anything you bridge after the announcement will not count. Two weeks of volume, capped per wallet. 🚀</p>
+        <div style="display:flex;align-items:center;gap:8px;margin:16px 0 12px">
+          <span class="av" style="width:28px;height:28px">AD</span>
+          <span style="font-size:13px;font-weight:600">ada</span><span style="font-size:13px;color:var(--dim)">@ada · L12</span>
+          <span class="bdg">HUNTER</span><span class="tm" style="margin-left:auto">4m</span>
+        </div>
+        <div class="eng"><b class="h">248</b><b class="c">31</b><b class="s">Tip</b></div>
+      </div>
+      <div class="row" style="margin-top:4px"><span class="u hi"></span><span class="lg" style="width:32px;height:32px">O</span>
+        <div style="flex:1;min-width:0"><h3>Oracle feed stalled for 40 minutes, team acknowledged</h3><div class="m">Orbit Lend · <span style="color:#f4f4f5">@satoshi</span> · <span class="bdg n">WARNING</span></div></div><span class="tm mono">12m</span></div>
+      <div class="row"><span class="u md"></span><span class="lg" style="width:32px;height:32px">C</span>
+        <div style="flex:1;min-width:0"><h3>Cycle 41 rewards doubled for the first 6 hours</h3><div class="m">Core Mines · <span style="color:#f4f4f5">@jazzdev</span> · <span class="bdg n">INFO</span></div></div><span class="tm mono">38m</span></div>
+      <div class="row"><span class="u md"></span><span class="lg" style="width:32px;height:32px">N</span>
+        <div style="flex:1;min-width:0"><h3>Partnership with Helio custody confirmed on stage</h3><div class="m">Nebula Swap · <span style="color:#f4f4f5">@ada</span> · <span class="bdg n">PARTNERSHIP</span></div></div><span class="tm mono">1h</span></div>
+      <div class="sect"><span>EARLIER TODAY</span><s></s></div>
+      <div class="row" style="opacity:.72"><span class="u lo"></span><span class="lg" style="width:32px;height:32px">O</span>
+        <div style="flex:1;min-width:0"><h3>Governance call notes, quorum reached at 61%</h3><div class="m">Orbit Lend · @jazzdev</div></div><span class="tm mono">6h</span></div>
+    </div>
+  </div>
+  <div class="fab"></div>
+  <div class="tabs">
+    <span class="tab on"><span class="gl"><b></b><b></b><b></b></span>Feed</span>
+    <span class="tab"><span class="gl d"><b></b></span>Gems</span>
+    <span class="tab"><span class="gl c"><b></b></span>Mine</span>
+    <span class="tab"><span class="gl sq"><b></b></span>Quests</span>
+    <span class="tab"><span class="gl w"><b></b></span>Wallet</span>
+    <span class="tab"><span class="gl p"><b></b><b></b></span>You</span>
+  </div>
+</div>
+<div class="st">Quiet state — follows nothing, no signals</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><i></i></div>
+  <div class="body">
+    <div class="pad hdr"><span class="wm">Blocnet</span><span class="pill"><span class="dot"></span><span class="mono">402</span> mining</span></div>
+    <div class="tk"><div class="tkr">
+      <span><em>@ada</em> posted in Nebula Swap</span><span><em>+18</em> followers · Orbit Lend</span><span><em>@satoshi</em> flagged a warning</span><span>Core Mines <em>cycle 41</em> open</span>
+      <span><em>@ada</em> posted in Nebula Swap</span><span><em>+18</em> followers · Orbit Lend</span><span><em>@satoshi</em> flagged a warning</span><span>Core Mines <em>cycle 41</em> open</span>
+    </div></div>
+    <div class="pad" style="padding-top:24px">
+      <div class="qh">The network is busy.<br>Your feed is empty.</div>
+      <div class="qs">Follow a gem and its updates land here first, newest at the top.</div>
+      <div class="lcount" style="margin-top:24px">
+        <div><b class="mono">1,284</b><span>updates today</span></div>
+        <div><b class="mono">402</b><span>miners active</span></div>
+        <div><b class="mono">37</b><span>hunters live</span></div>
+      </div>
+      <div class="sect"><span>MOST FOLLOWED THIS WEEK</span><s></s></div>
+      <div class="row"><span class="u md"></span><span class="lg" style="width:40px;height:40px;font-size:15px">N</span>
+        <div style="flex:1;min-width:0"><h3>Nebula Swap</h3><div class="m">28.4k followers · 6 updates today</div></div><span class="btnp">Follow</span></div>
+      <div class="row"><span class="u md"></span><span class="lg" style="width:40px;height:40px;font-size:15px">O</span>
+        <div style="flex:1;min-width:0"><h3>Orbit Lend</h3><div class="m">19.1k followers · 4 updates today</div></div><span class="btnp">Follow</span></div>
+      <div class="row"><span class="u lo"></span><span class="lg" style="width:40px;height:40px;font-size:15px">C</span>
+        <div style="flex:1;min-width:0"><h3>Core Mines</h3><div class="m">11.7k followers · 2 updates today</div></div><span class="btnp">Follow</span></div>
+    </div>
+  </div>
+  <div class="fab"></div>
+  <div class="tabs">
+    <span class="tab on"><span class="gl"><b></b><b></b><b></b></span>Feed</span>
+    <span class="tab"><span class="gl d"><b></b></span>Gems</span>
+    <span class="tab"><span class="gl c"><b></b></span>Mine</span>
+    <span class="tab"><span class="gl sq"><b></b></span>Quests</span>
+    <span class="tab"><span class="gl w"><b></b></span>Wallet</span>
+    <span class="tab"><span class="gl p"><b></b><b></b></span>You</span>
+  </div>
+</div>
+</div>
+
+<!-- ============ B ============ -->
+<div class="col" style="left:598px;top:176px">
+<div class="cap"><b>B · Radar First</b><span>Bets that urgency is spatial: one instrument at the top owns the whole "what needs me" question, so the feed underneath can be as dense as a terminal.</span></div>
+<div class="st">Live state</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><i></i></div>
+  <div class="body">
+    <div class="pad hdr"><span class="wm">Blocnet</span><span class="pill">All projects</span></div>
+    <div class="pad">
+      <div class="radar">
+        <div class="rings"></div><div class="sweep"></div>
+        <span class="blip" style="left:78px;top:64px"></span><span class="blip" style="left:262px;top:96px"></span><span class="blip" style="right:56px;bottom:104px"></span>
+        <span class="blip m" style="left:130px;top:186px"></span><span class="blip m" style="right:112px;top:58px"></span>
+        <span class="blip l" style="left:44px;bottom:72px"></span><span class="blip l" style="left:196px;bottom:44px"></span><span class="blip l" style="right:30px;top:150px"></span>
+        <div class="rnum mono">3</div>
+        <div class="rlab">unseen high urgency<br><span style="color:var(--dim)">across 2 of 6 followed gems</span></div>
+        <div class="chips">
+          <span class="chip"><i></i>Nebula Swap · points live</span><span class="chip"><i></i>Orbit Lend · oracle</span>
+        </div>
+      </div>
+      <div class="fbar"><a class="on">All</a><a>Alpha</a><a>Warnings</a><a>Airdrops</a></div>
+      <div class="drow"><span class="u hi"></span><span class="lg" style="width:28px;height:28px;font-size:11px">N</span>
+        <div style="flex:1;min-width:0"><h3>Points program goes live tonight 00:00 UTC 🚀</h3><div class="m">@ada · HUNTER · ALPHA</div></div><span class="tm mono">4m</span></div>
+      <div class="drow"><span class="u hi"></span><span class="lg" style="width:28px;height:28px;font-size:11px">O</span>
+        <div style="flex:1;min-width:0"><h3>Oracle feed stalled 40 min, team acknowledged</h3><div class="m">@satoshi · CORE TEAM · WARNING</div></div><span class="tm mono">12m</span></div>
+      <div class="drow"><span class="u md"></span><span class="lg" style="width:28px;height:28px;font-size:11px">C</span>
+        <div style="flex:1;min-width:0"><h3>Cycle 41 rewards doubled for six hours</h3><div class="m">@jazzdev · HUNTER · INFO</div></div><span class="tm mono">38m</span></div>
+      <div class="drow"><span class="u md"></span><span class="lg" style="width:28px;height:28px;font-size:11px">N</span>
+        <div style="flex:1;min-width:0"><h3>Helio custody partnership confirmed on stage</h3><div class="m">@ada · HUNTER · PARTNERSHIP</div></div><span class="tm mono">1h</span></div>
+      <div class="drow"><span class="u lo"></span><span class="lg" style="width:28px;height:28px;font-size:11px">O</span>
+        <div style="flex:1;min-width:0"><h3>Governance notes, quorum reached at 61%</h3><div class="m">@jazzdev · HUNTER · GENERAL</div></div><span class="tm mono">6h</span></div>
+      <div class="drow" style="opacity:.6"><span class="u lo"></span><span class="lg" style="width:28px;height:28px;font-size:11px">C</span>
+        <div style="flex:1;min-width:0"><h3>Weekly recap thread is up</h3><div class="m">@satoshi · HUNTER · GENERAL</div></div><span class="tm mono">1d</span></div>
+    </div>
+  </div>
+  <div class="fab"></div>
+  <div class="tabs">
+    <span class="tab on"><span class="gl"><b></b><b></b><b></b></span>Feed</span>
+    <span class="tab"><span class="gl d"><b></b></span>Gems</span>
+    <span class="tab"><span class="gl c"><b></b></span>Mine</span>
+    <span class="tab"><span class="gl sq"><b></b></span>Quests</span>
+    <span class="tab"><span class="gl w"><b></b></span>Wallet</span>
+    <span class="tab"><span class="gl p"><b></b><b></b></span>You</span>
+  </div>
+</div>
+<div class="st">Quiet state — follows nothing, no signals</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><i></i></div>
+  <div class="body">
+    <div class="pad hdr"><span class="wm">Blocnet</span><span class="pill">All projects</span></div>
+    <div class="pad">
+      <div class="radar" style="height:236px">
+        <div class="rings"></div><div class="sweep"></div>
+        <span class="blip l" style="left:66px;top:70px"></span><span class="blip l" style="left:250px;top:56px"></span><span class="blip l" style="right:52px;bottom:78px"></span>
+        <span class="blip l" style="left:120px;bottom:52px"></span><span class="blip m" style="right:96px;top:132px;opacity:.7"></span>
+        <div style="position:relative;text-align:center">
+          <div style="font-size:13px;color:var(--cy2);font-weight:700;letter-spacing:.1em">NETWORK LIVE</div>
+          <div class="rnum mono" style="font-size:32px;margin-top:8px">1,284</div>
+          <div class="rlab" style="margin-top:4px">updates today · 402 miners active</div>
+        </div>
+      </div>
+      <p style="font-size:15px;color:var(--mut);line-height:1.5;margin:16px 0 0">Your radar turns on as soon as you follow something. Start with the hunters other people trust.</p>
+      <div class="sect"><span>TOP HUNTERS</span><s></s></div>
+      <div class="hlist"><span class="av" style="width:40px;height:40px;font-size:13px">AD</span>
+        <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">ada <span class="bdg">HUNTER</span></div><div style="font-size:13px;color:var(--dim);margin-top:3px">@ada · L12 · 214 calls, 81% hit</div></div><span class="btnp">Follow</span></div>
+      <div class="hlist"><span class="av" style="width:40px;height:40px;font-size:13px">SA</span>
+        <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">satoshi <span class="bdg n">CORE TEAM</span></div><div style="font-size:13px;color:var(--dim);margin-top:3px">@satoshi · L15 · 96 calls, 77% hit</div></div><span class="btnp">Follow</span></div>
+      <div class="hlist"><span class="av" style="width:40px;height:40px;font-size:13px">JZ</span>
+        <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">jazzdev <span class="bdg">HUNTER</span></div><div style="font-size:13px;color:var(--dim);margin-top:3px">@jazzdev · L9 · 143 calls, 74% hit</div></div><span class="btnp">Follow</span></div>
+      <div class="hlist" style="border:0"><span class="av" style="width:40px;height:40px;font-size:13px">MR</span>
+        <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">mira <span class="bdg n">MODERATOR</span></div><div style="font-size:13px;color:var(--dim);margin-top:3px">@mira · L11 · 88 calls, 72% hit</div></div><span class="btnp">Follow</span></div>
+    </div>
+  </div>
+  <div class="fab"></div>
+  <div class="tabs">
+    <span class="tab on"><span class="gl"><b></b><b></b><b></b></span>Feed</span>
+    <span class="tab"><span class="gl d"><b></b></span>Gems</span>
+    <span class="tab"><span class="gl c"><b></b></span>Mine</span>
+    <span class="tab"><span class="gl sq"><b></b></span>Quests</span>
+    <span class="tab"><span class="gl w"><b></b></span>Wallet</span>
+    <span class="tab"><span class="gl p"><b></b><b></b></span>You</span>
+  </div>
+</div>
+</div>
+
+<!-- ============ C ============ -->
+<div class="col" style="left:1132px;top:176px">
+<div class="cap"><b>C · Gems, Not Posts</b><span>Bets that people follow projects, not authors: the feed is grouped into gem threads behind a rail of unread rings, with the Edge verdict as the one big thing.</span></div>
+<div class="st">Live state</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><i></i></div>
+  <div class="body">
+    <div class="pad hdr"><span class="wm">Blocnet</span><span class="pill"><span class="dot"></span>Live</span></div>
+    <div class="rail">
+      <span class="gem new"><span class="ring"><div>N</div></span><p>Nebula</p></span>
+      <span class="gem new"><span class="ring"><div>O</div></span><p>Orbit</p></span>
+      <span class="gem new"><span class="ring"><div>C</div></span><p>Core</p></span>
+      <span class="gem"><span class="ring"><div>H</div></span><p>Helio</p></span>
+      <span class="gem"><span class="ring"><div>V</div></span><p>Vault</p></span>
+      <span class="gem"><span class="ring"><div>A</div></span><p>Aero</p></span>
+    </div>
+    <div class="edge">
+      <div style="display:flex;align-items:center;gap:8px"><span class="bdg">EDGE ENGINE</span><span style="font-size:11px;color:var(--dim);margin-left:auto">updated 2m ago</span></div>
+      <div class="vd">Act now · Nebula Swap</div>
+      <p>4 signals converged: points snapshot tonight, volume up 3× on the week, and @ada moved from watch to conviction.</p>
+    </div>
+    <div class="pad">
+      <div class="gsect"><span class="lg" style="width:24px;height:24px;font-size:11px">N</span><h4>Nebula Swap</h4><em>2 NEW</em><s></s></div>
+      <div class="grow hi"><h3>Points program goes live tonight at 00:00 UTC. Retro snapshot already taken — bridging after the announcement will not count. 🚀</h3>
+        <div class="m"><span class="av" style="width:20px;height:20px;font-size:11px">AD</span><span style="color:#f4f4f5">@ada</span>· <span class="bdg n">ALPHA</span> · 4m · 248 likes</div></div>
+      <div class="grow"><h3>Helio custody partnership confirmed on stage</h3>
+        <div class="m"><span class="av" style="width:20px;height:20px;font-size:11px">AD</span><span style="color:#f4f4f5">@ada</span>· 1h · 96 likes</div></div>
+      <div class="gsect"><span class="lg" style="width:24px;height:24px;font-size:11px">O</span><h4>Orbit Lend</h4><em>1 NEW</em><s></s></div>
+      <div class="grow hi"><h3>Oracle feed stalled for 40 minutes, team acknowledged and is rotating providers</h3>
+        <div class="m"><span class="av" style="width:20px;height:20px;font-size:11px">SA</span><span style="color:#f4f4f5">@satoshi</span>· <span class="bdg n">WARNING</span> · 12m</div></div>
+      <div class="gsect"><span class="lg" style="width:24px;height:24px;font-size:11px">C</span><h4>Core Mines</h4><s></s></div>
+      <div class="grow"><h3>Cycle 41 rewards doubled for the first six hours</h3></div>
+    </div>
+  </div>
+  <div class="fab"></div>
+  <div class="tabs">
+    <span class="tab on"><span class="gl"><b></b><b></b><b></b></span>Feed</span>
+    <span class="tab"><span class="gl d"><b></b></span>Gems</span>
+    <span class="tab"><span class="gl c"><b></b></span>Mine</span>
+    <span class="tab"><span class="gl sq"><b></b></span>Quests</span>
+    <span class="tab"><span class="gl w"><b></b></span>Wallet</span>
+    <span class="tab"><span class="gl p"><b></b><b></b></span>You</span>
+  </div>
+</div>
+<div class="st">Quiet state — follows nothing, no signals</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><i></i></div>
+  <div class="body">
+    <div class="pad hdr"><span class="wm">Blocnet</span><span class="pill"><span class="dot"></span>Live</span></div>
+    <div class="rail">
+      <span class="gem"><span class="ring" style="background:none;border:1px dashed var(--bd)"><div style="background:none;border:0;color:var(--cy2);font-size:24px;font-weight:400">+</div></span><p style="color:var(--cy2)">Add</p></span>
+      <span class="gem"><span class="ring"><div>N</div></span><p>Nebula</p></span>
+      <span class="gem"><span class="ring"><div>O</div></span><p>Orbit</p></span>
+      <span class="gem"><span class="ring"><div>C</div></span><p>Core</p></span>
+      <span class="gem"><span class="ring"><div>H</div></span><p>Helio</p></span>
+      <span class="gem"><span class="ring"><div>V</div></span><p>Vault</p></span>
+    </div>
+    <div class="pad" style="padding-top:16px">
+      <div class="qh">Pick three gems.<br>Your feed builds itself.</div>
+      <div class="qs">Every gem you follow becomes a thread here, newest first. The Edge Engine starts calling once it has something to watch.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:24px">
+        <div class="disc"><span class="lg" style="width:44px;height:44px;font-size:17px">N</span>
+          <div style="flex:1;min-width:0"><h3>Nebula Swap</h3><p>Perps DEX · 28.4k followers · 6 today</p></div><span class="btnp">Follow</span></div>
+        <div class="disc"><span class="lg" style="width:44px;height:44px;font-size:17px">O</span>
+          <div style="flex:1;min-width:0"><h3>Orbit Lend</h3><p>Lending · 19.1k followers · 4 today</p></div><span class="btnp">Follow</span></div>
+        <div class="disc"><span class="lg" style="width:44px;height:44px;font-size:17px">C</span>
+          <div style="flex:1;min-width:0"><h3>Core Mines</h3><p>Infra · 11.7k followers · 2 today</p></div><span class="btnp">Follow</span></div>
+      </div>
+      <div class="tk" style="margin:24px -16px 0;border-radius:0"><div class="tkr">
+        <span><em>@ada</em> posted in Nebula Swap</span><span><em>402</em> miners active</span><span><em>@satoshi</em> flagged a warning</span><span>Core Mines <em>cycle 41</em> open</span>
+        <span><em>@ada</em> posted in Nebula Swap</span><span><em>402</em> miners active</span><span><em>@satoshi</em> flagged a warning</span><span>Core Mines <em>cycle 41</em> open</span>
+      </div></div>
+    </div>
+  </div>
+  <div class="fab"></div>
+  <div class="tabs">
+    <span class="tab on"><span class="gl"><b></b><b></b><b></b></span>Feed</span>
+    <span class="tab"><span class="gl d"><b></b></span>Gems</span>
+    <span class="tab"><span class="gl c"><b></b></span>Mine</span>
+    <span class="tab"><span class="gl sq"><b></b></span>Quests</span>
+    <span class="tab"><span class="gl w"><b></b></span>Wallet</span>
+    <span class="tab"><span class="gl p"><b></b><b></b></span>You</span>
+  </div>
+</div>
+</div>
+
+</div></div>
