@@ -91,6 +91,11 @@ export function UserDetailsHeader({
   onHardDelete,
 }: UserDetailsHeaderProps) {
   const sortedRoles = sortRolesTopToLowest(user.roles);
+  const displayName = user.displayName?.trim() || null;
+  const usernameHandle = user.username ? `@${user.username}` : null;
+  // Display name, then @username, then email. Never "Unnamed User".
+  const headline = displayName ?? usernameHandle ?? user.email;
+  const showUsernameLine = Boolean(usernameHandle) && headline !== usernameHandle;
 
   return (
     <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b pb-4 sm:pb-6">
@@ -122,7 +127,7 @@ export function UserDetailsHeader({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-lg sm:text-xl md:text-2xl font-bold truncate">
-                    {user.displayName ?? "Unnamed User"}
+                    {headline}
                   </h1>
                   {user.isDeactivated ? (
                     <Badge className="bg-red-500/15 text-red-300 text-xs shrink-0">Deactivated</Badge>
@@ -131,8 +136,8 @@ export function UserDetailsHeader({
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">{user.email}</p>
-                {user.username && (
-                  <p className="text-xs sm:text-sm text-muted-foreground">@{user.username}</p>
+                {showUsernameLine && (
+                  <p className="text-xs sm:text-sm text-muted-foreground">{usernameHandle}</p>
                 )}
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {sortedRoles.map((role) => (

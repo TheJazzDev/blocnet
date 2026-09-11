@@ -6,20 +6,10 @@ import { useAdminSession } from "@/components/admin-shell";
 import { clientApi } from "@/lib/api-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { UserDetailsHeader } from "../components/UserDetailsHeader";
 import { ProfileSection } from "../components/ProfileSection";
 import { LevelSection } from "../components/LevelSection";
-import { RolesSection } from "../components/RolesSection";
-import { BadgesSection } from "../components/BadgesSection";
+import { RolesBadgesTab } from "../components/RolesBadgesTab";
 import { MiningSection } from "../components/MiningSection";
 import { WalletSection } from "../components/WalletSection";
 import { QuestsSection } from "../components/QuestsSection";
@@ -29,7 +19,15 @@ import { SocialSection } from "../components/SocialSection";
 import { LifecycleSection } from "../components/LifecycleSection";
 import { AuditLogSection } from "../components/AuditLogSection";
 import { ReferralSupportSection } from "../components/ReferralSupportSection";
+import { UserConfirmDialog } from "../components/UserConfirmDialog";
 import { useUserManagementPage } from "../_hooks/use-user-management-page";
+import {
+  UNIMPLEMENTED_SECTIONS_VISIBLE,
+  USER_DETAIL_TABS,
+  isUserDetailTabVisible,
+} from "./user-detail-tabs";
+
+const TAB_CONTENT_CLASS = "mt-4 space-y-4 sm:mt-6 sm:space-y-6";
 
 export default function UserManagementPageClient() {
   const session = useAdminSession();
@@ -64,6 +62,9 @@ export default function UserManagementPageClient() {
   }
 
   const user = state.user;
+  const activeTab = isUserDetailTabVisible(state.activeTab)
+    ? state.activeTab
+    : USER_DETAIL_TABS[0].value;
 
   return (
     <div className="space-y-4 pb-8 sm:space-y-6">
@@ -100,145 +101,39 @@ export default function UserManagementPageClient() {
         </Card>
       )}
 
-      <Tabs
-        value={state.activeTab}
-        onValueChange={state.setActiveTab}
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-4 gap-1 lg:grid-cols-7">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="roles-badges" className="text-xs sm:text-sm">
-            Roles & Badges
-          </TabsTrigger>
-          <TabsTrigger value="financial" className="text-xs sm:text-sm">
-            Financial
-          </TabsTrigger>
-          <TabsTrigger value="mining-quests" className="text-xs sm:text-sm">
-            Mining & Quests
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="text-xs sm:text-sm">
-            Activity
-          </TabsTrigger>
-          <TabsTrigger value="social" className="text-xs sm:text-sm">
-            Social
-          </TabsTrigger>
-          <TabsTrigger value="system" className="text-xs sm:text-sm">
-            System
-          </TabsTrigger>
+      <Tabs value={activeTab} onValueChange={state.setActiveTab} className="w-full">
+        {/* Scrolls sideways instead of wrapping into misaligned rows (F-05). */}
+        <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {USER_DETAIL_TABS.map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="shrink-0 text-xs sm:text-sm"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4 space-y-4 sm:mt-6 sm:space-y-6">
+        <TabsContent value="overview" className={TAB_CONTENT_CLASS}>
           <ProfileSection
             user={user}
             canEdit={state.canEditProfile}
             onUpdate={state.handleUpdateProfile}
           />
           <LevelSection level={user.currentLevel ?? null} />
-          <LifecycleSection user={user} />
+          {UNIMPLEMENTED_SECTIONS_VISIBLE && <LifecycleSection user={user} />}
         </TabsContent>
 
-        <TabsContent value="roles-badges" className="mt-4 space-y-4 sm:mt-6 sm:space-y-6">
-          <RolesSection
-            user={user}
-            actorRoles={state.actorRoles}
-            actorIsOwner={state.actorIsOwner}
-            targetIsSelf={state.targetIsSelf}
-            canManageRoles={state.canManageRoles}
-            actionLoading={state.actionLoading}
-            onPromoteToOwner={() =>
-              state.runAction("grant-owner", () => clientApi.promoteToOwner(user.id), {
-                confirmText: `Grant Owner role to ${user.email}?`,
-              })
-            }
-            onDemoteOwner={() =>
-              state.runAction("revoke-owner", () => clientApi.demoteOwner(user.id), {
-                confirmText: `Revoke Owner role from ${user.email}?`,
-              })
-            }
-            onPromoteToCoreTeam={() =>
-              state.runAction(
-                "grant-core-team",
-                () => clientApi.promoteToCoreTeam(user.id),
-                { confirmText: `Grant Core Team role to ${user.email}?` },
-              )
-            }
-            onDemoteCoreTeam={() =>
-              state.runAction(
-                "revoke-core-team",
-                () => clientApi.demoteCoreTeam(user.id),
-                { confirmText: `Revoke Core Team role from ${user.email}?` },
-              )
-            }
-            onPromoteToAdmin={() =>
-              state.runAction("grant-admin", () => clientApi.promoteToAdmin(user.id), {
-                confirmText: `Grant Admin role to ${user.email}?`,
-              })
-            }
-            onDemoteAdmin={() =>
-              state.runAction("revoke-admin", () => clientApi.demoteAdmin(user.id), {
-                confirmText: `Revoke Admin role from ${user.email}?`,
-              })
-            }
-            onPromoteToCommunityAdmin={() =>
-              state.runAction(
-                "grant-community-admin",
-                () => clientApi.promoteToCommunityAdmin(user.id),
-                { confirmText: `Grant Community Admin role to ${user.email}?` },
-              )
-            }
-            onDemoteCommunityAdmin={() =>
-              state.runAction(
-                "revoke-community-admin",
-                () => clientApi.demoteCommunityAdmin(user.id),
-                { confirmText: `Revoke Community Admin role from ${user.email}?` },
-              )
-            }
-            onPromoteToCommunityModerator={() =>
-              state.runAction(
-                "grant-community-moderator",
-                () => clientApi.promoteToCommunityModerator(user.id),
-                {
-                  confirmText: `Grant Community Moderator role to ${user.email}?`,
-                },
-              )
-            }
-            onDemoteCommunityModerator={() =>
-              state.runAction(
-                "revoke-community-moderator",
-                () => clientApi.demoteCommunityModerator(user.id),
-                {
-                  confirmText: `Revoke Community Moderator role from ${user.email}?`,
-                },
-              )
-            }
-            onPromoteToHunter={() =>
-              state.runAction("grant-hunter", () => clientApi.promoteToHunter(user.id), {
-                confirmText: `Grant Hunter role to ${user.email}?`,
-              })
-            }
-            onDemoteHunter={() =>
-              state.runAction("revoke-hunter", () => clientApi.demoteHunter(user.id), {
-                confirmText: `Revoke Hunter role from ${user.email}?`,
-              })
-            }
-          />
-          <BadgesSection
-            user={user}
-            allBadges={state.allBadges}
-            canManage={state.canManageAccount}
-            actionLoading={state.actionLoading}
-            onGrantBadge={state.handleGrantBadge}
-            onRevokeBadge={state.handleRevokeBadge}
-          />
+        <TabsContent value="roles-badges" className={TAB_CONTENT_CLASS}>
+          <RolesBadgesTab user={user} state={state} />
         </TabsContent>
 
-        <TabsContent value="financial" className="mt-4 space-y-4 sm:mt-6 sm:space-y-6">
+        <TabsContent value="financial" className={TAB_CONTENT_CLASS}>
           <WalletSection user={user} />
         </TabsContent>
 
-        <TabsContent value="mining-quests" className="mt-4 space-y-4 sm:mt-6 sm:space-y-6">
+        <TabsContent value="mining-quests" className={TAB_CONTENT_CLASS}>
           <MiningSection user={user} />
           <ReferralSupportSection
             user={user}
@@ -248,63 +143,37 @@ export default function UserManagementPageClient() {
           <QuestsSection user={user} />
         </TabsContent>
 
-        <TabsContent value="activity" className="mt-4 space-y-4 sm:mt-6 sm:space-y-6">
-          <ActivitySection user={user} />
-          <ProjectsSection userId={user.id} />
-        </TabsContent>
+        {UNIMPLEMENTED_SECTIONS_VISIBLE && (
+          <>
+            <TabsContent value="activity" className={TAB_CONTENT_CLASS}>
+              <ActivitySection user={user} />
+              <ProjectsSection userId={user.id} />
+            </TabsContent>
 
-        <TabsContent value="social" className="mt-4 space-y-4 sm:mt-6 sm:space-y-6">
-          <SocialSection user={user} />
-        </TabsContent>
+            <TabsContent value="social" className={TAB_CONTENT_CLASS}>
+              <SocialSection user={user} />
+            </TabsContent>
 
-        <TabsContent value="system" className="mt-4 space-y-4 sm:mt-6 sm:space-y-6">
-          <AuditLogSection userId={user.id} />
-        </TabsContent>
+            <TabsContent value="system" className={TAB_CONTENT_CLASS}>
+              <AuditLogSection userId={user.id} />
+            </TabsContent>
+          </>
+        )}
       </Tabs>
 
-      <Dialog
+      <UserConfirmDialog
         open={state.confirmOpen}
+        confirmText={state.pendingConfirmation?.confirmText ?? null}
+        actionKey={state.pendingConfirmation?.key ?? null}
+        loading={Boolean(state.actionLoading)}
         onOpenChange={(nextOpen) => {
           state.setConfirmOpen(nextOpen);
           if (!nextOpen) {
             state.setPendingConfirmation(null);
           }
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
-            <DialogDescription>
-              {state.pendingConfirmation?.confirmText ?? "Please confirm this action."}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => state.setConfirmOpen(false)}
-              disabled={Boolean(state.actionLoading)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant={
-                state.pendingConfirmation?.key.includes("revoke") ||
-                state.pendingConfirmation?.key.includes("delete") ||
-                state.pendingConfirmation?.key.includes("deactivate")
-                  ? "destructive"
-                  : "default"
-              }
-              onClick={() => void state.confirmPendingAction()}
-              disabled={!state.pendingConfirmation || Boolean(state.actionLoading)}
-            >
-              {state.actionLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onConfirm={() => void state.confirmPendingAction()}
+      />
     </div>
   );
 }
