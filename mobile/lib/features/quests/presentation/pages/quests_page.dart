@@ -8,6 +8,7 @@ import 'package:blocnet/features/quests/presentation/pages/quest_detail_page.dar
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/engagement/quests_store.dart';
+import 'package:blocnet/shared/widgets/app_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -106,7 +107,14 @@ class _QuestsPageState extends State<QuestsPage>
             child: Consumer<QuestsStore>(
               builder: (context, store, child) {
                 if (store.isLoadingAll || store.isLoadingMy) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const SingleChildScrollView(
+                    physics: NeverScrollableScrollPhysics(),
+                    child: SkeletonList(
+                      items: 6,
+                      itemHeight: 84,
+                      padding: EdgeInsets.all(16),
+                    ),
+                  );
                 }
 
                 if (store.lastError != null &&

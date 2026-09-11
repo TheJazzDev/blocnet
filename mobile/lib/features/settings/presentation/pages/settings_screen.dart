@@ -10,6 +10,7 @@ import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/notifications/notification_settings_store.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
+import 'package:blocnet/shared/widgets/app_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -71,10 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _SettingsHeader(),
                 const SizedBox(height: 20),
                 if (settingsStore.isLoading && !settingsStore.hasLoaded) ...[
-                  const SizedBox(
-                    height: 220,
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
+                  const SkeletonList(items: 5, itemHeight: 56),
                 ] else if (prefs == null || catalog == null) ...[
                   _SettingsRetryCard(
                     onRetry: settingsStore.refresh,
