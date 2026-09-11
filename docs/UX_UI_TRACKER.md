@@ -23,6 +23,8 @@ Parallel-safe splits. Each touches one surface so they can run as separate sessi
 | G | Console: hunter assignment UI, MCR removal, vocabulary | `console/` (after C merges) | F-20 (console half), F-07 (MCR, `*Mcr` labels) | [session-templates.md#ws-g](session-templates.md#ws-g--console-hunter-assignment-mcr-removal) |
 | I | Backend: my-application read endpoint | `backend/` | F-30 | in-session prompt |
 | J | Mobile: cold-start cache | `mobile/` | F-08 | in-session prompt |
+| K | Backend: orphan table + unconsumed routes | `backend/` | F-31, F-32 | in-session prompt |
+| L | Mobile: dedupe GET /me on boot | `mobile/` | F-33 | in-session prompt |
 | H | Backend: MCR retirement, BNP/BNT naming | `backend/` (after B merges) | F-07 (MCR data migration, `*Mcr` → `*Bnp` DTO rename) | [session-templates.md#ws-h](session-templates.md#ws-h--backend-mcr-retirement) |
 
 Deferred to the Claude Design system phase (do not spend effort now): F-14 typography scale, F-23 hunter hero copy density, visual-language alignment between console and mobile.
@@ -63,6 +65,9 @@ Deferred to the Claude Design system phase (do not spend effort now): F-14 typog
 | F-28 | P3 | console | KYC review page is a queue that cannot fill | C | done | WS-C branch `worktree-agent-a88c135bc63ee32a2` | empty state until a client can submit |
 | F-29 | P3 | console | React hydration mismatch (Radix ids) logged by the collapsible sidebar and Select triggers in dev | G | done | WS-G branch `worktree-agent-a6ef2734796896b59` | appeared after WS-C sidebar + design-system commit; server/client trees differ (likely localStorage-driven open state or the mobile/desktop double render). Fix by rendering a deterministic initial state and applying stored state after mount. |
 | F-30 | P3 | mobile+backend | No "my application" read endpoint, so a rejected hunter application stays "pending" on the phone | I (+J) | done | WS-I d0b5c79 + WS-J | add `GET /admin-applications/mine`; mobile switches from the local prefs flag to the server state |
+| F-31 | P3 | backend | `EdgeEngagement` table + `EdgeAction` enum are an orphan: never written or read | K | in-progress | | owner gave go-ahead 2026-09-11 to drop via migration, conditional on the table being empty |
+| F-32 | P3 | backend | Five routes still have no client (user KYC submit/status, user wallet health, admin social overview, levels leaderboard, delete device token) | K | in-progress | | triage: delete-device-token is a real gap (push keeps arriving after sign-out); user wallet health checked for operational leakage; KYC is a product decision |
+| F-33 | P3 | mobile | `GET /me` fetched twice on cold start; three consumers each pull the whole document for one slice | L | in-progress | | callers: `_hydrateProfileFromMe`, `projects_store` (followedProjectIds), `user_profile_store` (followingCount). Prefer feeding stores from the existing home-bootstrap payload over a second cache |
 | F-DEACT | P1 | mobile+backend | Self-deactivate calls a path that does not exist | B (+A) | done | WS-B `worktree-agent-a1cf1647e0b009938` + WS-A `worktree-agent-ad7eabf5d8e1c872f` | backend done: `POST /me/deactivate`, `POST /me/reactivate` (new `@AllowDeactivated()` so a deactivated session can reactivate). Mobile side (switch to `/me/deactivate`) in WS-A |
 
 ---
