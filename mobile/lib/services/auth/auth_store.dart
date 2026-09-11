@@ -880,8 +880,16 @@ class AuthStore extends ChangeNotifier {
     }
   }
 
+  /// Work that must run while the session is still authenticated — today,
+  /// unregistering the FCM device token so a signed-out phone stops receiving
+  /// push. Set once at wiring time; failures never block sign-out.
+  Future<void> Function()? onBeforeSignOut;
+
   Future<void> signOut() async {
     _explicitSignOutInProgress = true;
+    // Runs before Supabase sign-out and before [_clearAuth] drops the bearer
+    // token, so the request still authenticates as the departing user.
+    await _runBeforeSignOut();
     try {
       if (isSupabaseConfigured) {
         try {
@@ -893,6 +901,17 @@ class AuthStore extends ChangeNotifier {
     } finally {
       _explicitSignOutInProgress = false;
       _clearAuth(notify: true);
+    }
+  }
+
+  Future<void> _runBeforeSignOut() async {
+    final task = onBeforeSignOut;
+    if (task == null) return;
+
+    try {
+      await task();
+    } catch (error) {
+      debugPrint('Pre-sign-out task failed: $error');
     }
   }
 

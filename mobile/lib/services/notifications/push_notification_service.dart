@@ -5,21 +5,24 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/notifications/device_token_registrar.dart';
 
 /// Handles FCM token registration, permission requests, and foreground
 /// notification display. Call [init] once after the user is authenticated.
 class PushNotificationService {
   PushNotificationService({
     ApiClient? apiClient,
+    DeviceTokenRegistrar? registrar,
     VoidCallback? onForegroundMessage,
     Function(RemoteMessage)? onForegroundMessageWithData,
     Function(RemoteMessage)? onNotificationTap,
-  })  : _apiClient = apiClient ?? ApiClient(),
+  })  : _registrar =
+            registrar ?? DeviceTokenRegistrar(apiClient: apiClient),
         _onForegroundMessageCallback = onForegroundMessage,
         _onForegroundMessageWithDataCallback = onForegroundMessageWithData,
         _onNotificationTapCallback = onNotificationTap;
 
-  final ApiClient _apiClient;
+  final DeviceTokenRegistrar _registrar;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final VoidCallback? _onForegroundMessageCallback;
   final Function(RemoteMessage)? _onForegroundMessageWithDataCallback;
@@ -64,7 +67,7 @@ class PushNotificationService {
 
       // Re-register whenever the token rotates.
       _tokenRefreshSub ??= _messaging.onTokenRefresh.listen(
-        _registerToken,
+        _registrar.handleTokenRefresh,
         onError: (Object error, StackTrace stackTrace) {
           debugPrint(
             '[PushNotificationService] onTokenRefresh stream error: $error',
@@ -90,6 +93,12 @@ class PushNotificationService {
     }
   }
 
+  /// Tell the backend to stop pushing to this device's token.
+  ///
+  /// Must run while the session is still authenticated, so [AuthStore] calls
+  /// it before clearing the auth token. Never throws.
+  Future<void> unregisterCurrentToken() => _registrar.unregisterCurrentToken();
+
   /// Release subscriptions. Call when the user signs out.
   void dispose() {
     _foregroundSub?.cancel();
@@ -106,7 +115,7 @@ class PushNotificationService {
     try {
       final token = await _messaging.getToken();
       if (token != null && token.isNotEmpty) {
-        await _registerToken(token);
+        await _registrar.register(token);
       }
     } on FirebaseException catch (error) {
       if (_isApnsNotReadyError(error)) {
@@ -155,25 +164,6 @@ class PushNotificationService {
 
   bool _isApnsNotReadyError(FirebaseException error) {
     return error.code == 'apns-token-not-set';
-  }
-
-  Future<void> _registerToken(String token) async {
-    try {
-      final platform = Platform.isAndroid
-          ? 'android'
-          : Platform.isIOS
-              ? 'ios'
-              : 'web';
-
-      await _apiClient.post(
-        '/device-tokens/register',
-        body: {'token': token, 'platform': platform},
-      );
-    } catch (_) {
-      // Best-effort — a failed registration is non-fatal. The token will be
-      // retried on the next app launch via [onTokenRefresh].
-      debugPrint('[PushNotificationService] Token registration failed');
-    }
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
