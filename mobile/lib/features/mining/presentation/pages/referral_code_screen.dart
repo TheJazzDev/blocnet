@@ -25,7 +25,9 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(context.read<MiningStore>().loadSnapshot(force: true));
+      final store = context.read<MiningStore>();
+      unawaited(store.loadSnapshot(force: true));
+      unawaited(store.loadReferralSummary(force: true));
     });
   }
 
@@ -231,7 +233,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
     final miningStore = context.watch<MiningStore>();
-    final referral = miningStore.snapshot?.referral;
+    final referral = miningStore.referralSummary;
     final referralCode =
         _normalizedCode(auth.referralCode) ?? _normalizedCode(referral?.code);
     final displayName = _resolveDisplayName(auth);
@@ -267,7 +269,10 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
             _StatsSection(
               totalReferrals: referral?.totalDirectReferrals ?? 0,
               activeReferrals: referral?.activeDirectReferrals ?? 0,
-              loading: miningStore.isLoadingSnapshot && referral == null,
+              loading: miningStore.isLoadingReferral && referral == null,
+              errorMessage: referral == null ? miningStore.referralError : null,
+              onRetry: () =>
+                  unawaited(miningStore.loadReferralSummary(force: true)),
             ),
             const SizedBox(height: 24),
             _ReferrerSection(referral: referral),
@@ -503,14 +508,20 @@ class _StatsSection extends StatelessWidget {
     required this.totalReferrals,
     required this.activeReferrals,
     required this.loading,
+    required this.errorMessage,
+    required this.onRetry,
   });
 
   final int totalReferrals;
   final int activeReferrals;
   final bool loading;
+  final String? errorMessage;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
+    final hasError = errorMessage != null && errorMessage!.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -521,24 +532,56 @@ class _StatsSection extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          _StatItem(
-            label: 'Total Referrals',
-            value: loading ? '...' : '$totalReferrals',
-            icon: Icons.people_outline,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _StatItem(
+                label: 'Total Referrals',
+                value: loading ? '...' : '$totalReferrals',
+                icon: Icons.people_outline,
+              ),
+              Container(
+                height: 40,
+                width: 1,
+                color: AppColors.borderSubtle,
+              ),
+              _StatItem(
+                label: 'Active Referrals',
+                value: loading ? '...' : '$activeReferrals',
+                icon: Icons.trending_up_rounded,
+              ),
+            ],
           ),
-          Container(
-            height: 40,
-            width: 1,
-            color: AppColors.borderSubtle,
-          ),
-          _StatItem(
-            label: 'Active Referrals',
-            value: loading ? '...' : '$activeReferrals',
-            icon: Icons.trending_up_rounded,
-          ),
+          if (hasError) ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: onRetry,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.refresh_rounded,
+                    size: 14,
+                    color: AppColors.warning500,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      "Couldn't load referral totals. Tap to retry.",
+                      style: AppTypography.custom(
+                        color: AppColors.warning500,
+                        size: 12,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
