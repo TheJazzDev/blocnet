@@ -10,6 +10,7 @@ import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/core/deep_link_service.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/services/core/home_bootstrap_store.dart';
 import 'package:blocnet/services/engagement/levels_store.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:blocnet/services/notifications/notification_settings_store.dart';
@@ -197,6 +198,12 @@ void main() async {
       providers: [
         ChangeNotifierProvider<AuthStore>.value(value: authStore),
         ChangeNotifierProvider(create: (_) => UpdatesStore()),
+        // Eager so the Home bootstrap cache is read before the Home tab
+        // builds; that is what lets it paint on the first frame.
+        ChangeNotifierProvider(
+          create: (_) => HomeBootstrapStore()..warmUp(),
+          lazy: false,
+        ),
         ChangeNotifierProvider(create: (_) => FeedViewModeStore()),
         ChangeNotifierProvider(create: (_) => CommunityPostsStore()),
         ChangeNotifierProvider(create: (_) => EdgeEngineStore()),

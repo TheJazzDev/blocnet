@@ -27,8 +27,13 @@ class UpdatesStore extends ChangeNotifier {
   bool get isFetching => _isFetching;
   String? get lastError => _lastError;
 
-  void hydrateFromUpdates(List<Update> updates, {bool notify = true}) {
-    if (updates.isEmpty) return;
+  /// Replaces the feed with [updates] (from the Home bootstrap cache or
+  /// payload). Returns false and notifies nobody when nothing visible
+  /// changed, so a cached feed followed by an identical network feed does
+  /// not rebuild every card.
+  bool hydrateFromUpdates(List<Update> updates, {bool notify = true}) {
+    if (updates.isEmpty) return false;
+    if (_sameFeed(_updates, updates)) return false;
     _updates
       ..clear()
       ..addAll(updates);
@@ -36,6 +41,28 @@ class UpdatesStore extends ChangeNotifier {
     if (notify) {
       notifyListeners();
     }
+    return true;
+  }
+
+  static bool _sameFeed(List<Update> current, List<Update> next) {
+    if (current.length != next.length) return false;
+    for (var i = 0; i < current.length; i++) {
+      final a = current[i];
+      final b = next[i];
+      if (a.id != b.id ||
+          a.lastEditedAt != b.lastEditedAt ||
+          a.likesCount != b.likesCount ||
+          a.commentsCount != b.commentsCount ||
+          a.bookmarksCount != b.bookmarksCount ||
+          a.isCommented != b.isCommented ||
+          a.title != b.title ||
+          a.content != b.content ||
+          a.admin?.imageUrl != b.admin?.imageUrl ||
+          (a.project == null) != (b.project == null)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> fetchUpdatesOnce() async {

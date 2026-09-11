@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -15,7 +16,11 @@ import 'package:provider/provider.dart';
 
 /// Horizontal scrollable row of top hunters (admin avatars) at the top of the feed.
 class TopHuntersRow extends StatelessWidget {
-  const TopHuntersRow({super.key});
+  const TopHuntersRow({super.key, this.isLoading = false});
+
+  /// True while the feed has no posts yet and is still loading; the row
+  /// then shows avatar skeletons after the "My Updates" button.
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +101,7 @@ class TopHuntersRow extends StatelessWidget {
                   },
                 ),
                 const SizedBox(width: AppSpace.lg),
+                if (isLoading && admins.isEmpty) const TopHuntersSkeleton(),
                 // Real hunters
                 ...admins.map((admin) => Padding(
                       padding: const EdgeInsets.only(right: AppSpace.lg),

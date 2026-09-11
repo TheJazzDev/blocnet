@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -23,36 +24,7 @@ class AlphaRadarCard extends StatelessWidget {
     final accent =
         AppColors.accentForSpace(context.watch<AuthStore>().isInHunterSpace);
     if (isLoading) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppSpace.lg),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: accent,
-              ),
-            ),
-            const SizedBox(width: AppSpace.md),
-            Text(
-              'Loading alpha radar...',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      );
+      return const RadarCardSkeleton();
     }
 
     final summary = radar;

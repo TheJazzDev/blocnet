@@ -1,30 +1,34 @@
 import 'dart:async';
 
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
+import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/presentation/pages/edge_engine_page.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/alpha_radar_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/edge_brief_teaser_card.dart';
-import 'package:blocnet/features/projects/presentation/widgets/home/home_feed_sliver.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_tab_bar.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/home_feed_sliver.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/new_updates_pill.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/top_hunters_row.dart';
-import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
-import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
-import 'package:blocnet/services/core/home_bootstrap_service.dart';
-import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/services/core/home_bootstrap_payload.dart';
+import 'package:blocnet/services/core/home_bootstrap_store.dart';
 import 'package:blocnet/services/core/startup_metrics_service.dart';
+import 'package:blocnet/services/edge/edge_engine_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+part 'home/home_edge_actions.part.dart';
+part 'home/home_hydration.part.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,27 +37,24 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with _HomeHydration, _HomeEdgeActions {
   Section _activeSection = Sections.forYou;
-  bool _isFeedReady = false;
-  bool _isEdgeReady = false;
-  bool _isBootstrapLoading = false;
   final ScrollController _scrollController = ScrollController();
   final Set<String> _pendingNewPostIds = <String>{};
-  final UsersApiRepository _usersRepository = UsersApiRepository();
-  final HomeBootstrapService _homeBootstrapService = HomeBootstrapService();
   final FeedSyncController _feedSyncController =
       FeedSyncController(debugLabel: 'Home');
-  RadarSummary? _radarSummary;
-  bool _isLoadingRadar = true;
-  bool _isAcknowledgingRadar = false;
-  bool _showCatchupFilter = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
     StartupMetricsService.markHomeShellReady();
+
+    // Paint whatever the bootstrap cache holds before the first frame; the
+    // network refresh runs after it in the post-frame callback.
+    _applyCachedBootstrapSync();
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       await _hydrateHomeProgressively();
@@ -126,61 +127,19 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _scrollToTop() async {
+    if (!_scrollController.hasClients) return;
+    await _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   Future<void> _jumpToLatest() async {
-    if (_scrollController.hasClients) {
-      await _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      );
-    }
+    await _scrollToTop();
     if (!mounted) return;
     setState(() => _pendingNewPostIds.clear());
-  }
-
-  Future<void> _loadRadar() async {
-    if (!mounted) return;
-    setState(() => _isLoadingRadar = true);
-
-    try {
-      final radar = await _usersRepository.fetchRadar();
-      if (!mounted) return;
-      setState(() => _radarSummary = radar);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _radarSummary = null);
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingRadar = false);
-      }
-    }
-  }
-
-  Future<void> _ackRadarSeen() async {
-    final radar = _radarSummary;
-    if (_isAcknowledgingRadar || radar == null || !radar.hasUpdates) {
-      return;
-    }
-
-    _isAcknowledgingRadar = true;
-    try {
-      await _usersRepository.ackRadar();
-      if (!mounted) return;
-      setState(() {
-        _radarSummary = RadarSummary(
-          asOf: DateTime.now(),
-          lastSeenAt: DateTime.now(),
-          newUpdatesCount: 0,
-          highUrgencyCount: 0,
-          activeProjects: const [],
-        );
-        _showCatchupFilter = false;
-      });
-    } catch (_) {
-      // Keep existing radar state; next refresh can recover.
-    } finally {
-      _isAcknowledgingRadar = false;
-    }
   }
 
   void _onCatchUpTap() {
@@ -189,217 +148,27 @@ class _HomeScreenState extends State<HomeScreen> {
       _activeSection = Sections.forYou;
       _showCatchupFilter = true;
     });
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      );
-    }
+    unawaited(_scrollToTop());
   }
 
-  Future<void> _handleRefresh() async {
-    final projectsStore = context.read<ProjectsStore>();
-    final updatesStore = context.read<UpdatesStore>();
-    final edgeStore = context.read<EdgeEngineStore>();
-    await Future.wait([
-      projectsStore.refreshProjects(),
-      updatesStore.refreshUpdates(),
-      edgeStore.refresh(),
-    ]);
-    await _loadRadar();
-
+  Future<void> _handlePullToRefresh() async {
+    await _refreshAllSections();
     if (!mounted) return;
-    setState(() {
-      _pendingNewPostIds.clear();
-      _showCatchupFilter = false;
-      _isFeedReady = updatesStore.posts.isNotEmpty;
-      _isEdgeReady = edgeStore.brief != null;
-    });
-  }
-
-  Future<void> _hydrateHomeProgressively() async {
-    if (!mounted) return;
-    setState(() => _isBootstrapLoading = true);
-
-    final updatesStore = context.read<UpdatesStore>();
-    final edgeStore = context.read<EdgeEngineStore>();
-    final projectsStore = context.read<ProjectsStore>();
-
-    try {
-      final cached = await _homeBootstrapService.loadCached();
-      if (cached != null && mounted) {
-        _applyBootstrapPayload(
-          cached,
-          updatesStore: updatesStore,
-          edgeStore: edgeStore,
-          projectsStore: projectsStore,
-        );
-      }
-    } catch (_) {
-      // Best effort cache restore.
-    }
-
-    HomeBootstrapPayload? remotePayload;
-    try {
-      remotePayload = await _homeBootstrapService.fetchHomeBootstrap(
-        feedLimit: 100,
-        windowDays: 7,
-      );
-      if (remotePayload != null && mounted) {
-        _applyBootstrapPayload(
-          remotePayload,
-          updatesStore: updatesStore,
-          edgeStore: edgeStore,
-          projectsStore: projectsStore,
-        );
-        await _homeBootstrapService.saveCached(remotePayload);
-      }
-    } catch (_) {
-      // Fallback to existing per-section loading below.
-    }
-
-    try {
-      final futures = <Future<void>>[
-        projectsStore.fetchProjectsOnce(),
-        remotePayload == null || remotePayload.feedItems.isEmpty
-            ? updatesStore.fetchUpdatesOnce()
-            : updatesStore.refreshUpdates(),
-        remotePayload == null || remotePayload.edgeBrief == null
-            ? edgeStore.fetchOnce()
-            : edgeStore.refresh(),
-        _loadRadar(),
-      ];
-
-      await Future.wait(futures);
-      if (!mounted) return;
-
-      setState(() {
-        _isFeedReady = updatesStore.posts.isNotEmpty;
-        _isEdgeReady = edgeStore.brief != null;
-      });
-
-      if (_isFeedReady) {
-        StartupMetricsService.markHomeFeedReady();
-      }
-      if (_isEdgeReady) {
-        StartupMetricsService.markEdgeReady();
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isBootstrapLoading = false);
-      }
-    }
-  }
-
-  void _applyBootstrapPayload(
-    HomeBootstrapPayload payload, {
-    required UpdatesStore updatesStore,
-    required EdgeEngineStore edgeStore,
-    required ProjectsStore projectsStore,
-  }) {
-    unawaited(
-      projectsStore.hydrateFollowStateFromMeSummary(
-        payload.meSummary,
-        notify: false,
-      ),
-    );
-    updatesStore.hydrateFromUpdates(payload.feedItems, notify: false);
-    edgeStore.hydrateBrief(payload.edgeBrief, notify: false);
-
-    setState(() {
-      _radarSummary = payload.radar ?? _radarSummary;
-      _isLoadingRadar = payload.radar == null;
-      _isFeedReady = payload.feedItems.isNotEmpty;
-      _isEdgeReady = payload.edgeBrief != null;
-    });
-
-    if (_isFeedReady) {
-      StartupMetricsService.markHomeFeedReady();
-    }
-    if (_isEdgeReady) {
-      StartupMetricsService.markEdgeReady();
-    }
-  }
-
-  Future<void> _sendEdgeFeedback(
-    EdgeBriefDecision decision,
-    String action,
-  ) async {
-    final edgeStore = context.read<EdgeEngineStore>();
-    final ok = await edgeStore.sendFeedback(
-      decisionId: decision.decisionId,
-      action: action,
-      context: const {
-        'surface': 'home_edge_brief',
-      },
-    );
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok
-              ? 'BEE feedback saved: ${action.toUpperCase()}'
-              : 'Failed to submit BEE feedback',
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openEdgeExplain(EdgeBriefDecision decision) async {
-    final edgeStore = context.read<EdgeEngineStore>();
-    final explain = await edgeStore.fetchExplain(decision.decisionId);
-    if (!mounted) return;
-
-    if (explain == null || !explain.hasExplanation) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to load BEE explanation')),
-      );
-      return;
-    }
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (_) => EdgeExplainSheet(explain: explain),
-    );
-  }
-
-  Future<void> _openEdgeEnginePage() async {
-    final edgeStore = context.read<EdgeEngineStore>();
-    if (edgeStore.brief == null && !edgeStore.isFetching) {
-      await edgeStore.refresh();
-    }
-    if (!mounted) return;
-
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (pageContext) => EdgeEnginePage(
-          onAction: _sendEdgeFeedback,
-          onExplain: _openEdgeExplain,
-          onFollowProjects: () {
-            Navigator.of(pageContext).pop();
-            if (!mounted) return;
-            MainTabScope.maybeOf(context)
-                ?.selectTab(MainTabScope.discoverTab);
-          },
-        ),
-      ),
-    );
+    setState(() => _pendingNewPostIds.clear());
   }
 
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
     final edgeStore = context.watch<EdgeEngineStore>();
+    final updatesStore = context.watch<UpdatesStore>();
     final feedViewMode = context.watch<FeedViewModeStore>().mode;
-    final accent =
-        AppColors.accentForSpace(context.watch<AuthStore>().isInHunterSpace);
+    final isInHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    final accent = AppColors.accentForSpace(isInHunterSpace);
+    final isForYou = _activeSection == Sections.forYou;
+    final feedLoading = !_isFeedReady &&
+        updatesStore.posts.isEmpty &&
+        (_isBootstrapLoading || updatesStore.isFetching);
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -408,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
           RefreshIndicator(
             color: accent,
             backgroundColor: AppColors.bgSurface,
-            onRefresh: _handleRefresh,
+            onRefresh: _handlePullToRefresh,
             child: CustomScrollView(
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
@@ -420,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTabChanged: _onTabChanged,
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: AppSpace.md)),
+                const SliverToBoxAdapter(child: AppSpace.gapMd),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                   sliver: SliverToBoxAdapter(
@@ -431,32 +200,34 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: AppSpace.md)),
-                if (_activeSection == Sections.forYou) ...[
+                const SliverToBoxAdapter(child: AppSpace.gapMd),
+                if (isForYou) ...[
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                     sliver: SliverToBoxAdapter(
                       child: EdgeBriefTeaserCard(
                         brief: edgeStore.brief,
-                        isLoading: (edgeStore.isFetching || _isBootstrapLoading) &&
-                            edgeStore.brief == null,
+                        isLoading:
+                            (edgeStore.isFetching || _isBootstrapLoading) &&
+                                edgeStore.brief == null,
                         onOpen: _openEdgeEnginePage,
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: AppSpace.md)),
-                ],
-                if (_activeSection == Sections.forYou) ...[
-                  const SliverPadding(
-                    padding: EdgeInsets.symmetric(horizontal: AppSpace.lg),
-                    sliver: SliverToBoxAdapter(child: TopHuntersRow()),
+                  const SliverToBoxAdapter(child: AppSpace.gapMd),
+                  SliverPadding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                    sliver: SliverToBoxAdapter(
+                      child: TopHuntersRow(isLoading: feedLoading),
+                    ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: AppSpace.md)),
+                  const SliverToBoxAdapter(child: AppSpace.gapMd),
                 ],
                 HomeFeedSliver(
                   activeSection: _activeSection,
-                  isInitialLoading:
-                      !_isFeedReady && context.watch<UpdatesStore>().posts.isEmpty,
+                  isInitialLoading: feedLoading,
                   showCatchupFilter: _showCatchupFilter,
                   radarSummary: _radarSummary,
                   feedViewMode: feedViewMode,
@@ -468,14 +239,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          if (_activeSection == Sections.forYou &&
-              _pendingNewPostIds.isNotEmpty)
+          if (isForYou && _pendingNewPostIds.isNotEmpty)
             NewUpdatesPill(
               count: _pendingNewPostIds.length,
               backgroundColor: accent,
-              textColor: AppColors.onAccentForSpace(
-                context.watch<AuthStore>().isInHunterSpace,
-              ),
+              textColor: AppColors.onAccentForSpace(isInHunterSpace),
               onTap: _jumpToLatest,
             ),
         ],

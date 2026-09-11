@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
 import 'package:flutter/material.dart';
 
 class EdgeBriefTeaserCard extends StatelessWidget {
@@ -19,36 +20,7 @@ class EdgeBriefTeaserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppSpace.lg),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.primary400,
-              ),
-            ),
-            const SizedBox(width: AppSpace.md),
-            Text(
-              'Loading edge intelligence...',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.labelSize,
-                weight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      );
+      return const EdgeBriefSkeleton();
     }
 
     final summary = brief;

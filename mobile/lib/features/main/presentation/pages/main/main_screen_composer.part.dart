@@ -5,8 +5,13 @@ extension _MainScreenComposerSheet on _MainScreenState {
     if (!mounted) return;
 
     final canCreate = context.read<AuthStore>().canCreateUpdate;
-    final applicationPending =
-        context.read<HunterApplicationStore>().isPending;
+    final applicationStatus = context.read<HunterApplicationStore>().status;
+    final becomeHunterSubtitle = switch (applicationStatus) {
+      HunterApplicationStatus.pending => 'Application pending review',
+      HunterApplicationStatus.approved => 'Approved. Hunter tools on the way',
+      HunterApplicationStatus.rejected => 'Not approved. You can apply again',
+      HunterApplicationStatus.none => 'Hunters post updates and submit gems',
+    };
 
     await showModalBottomSheet<void>(
       context: context,
@@ -69,9 +74,7 @@ extension _MainScreenComposerSheet on _MainScreenState {
                 ] else
                   _ComposerTile(
                     title: 'Become a Hunter',
-                    subtitle: applicationPending
-                        ? 'Application pending review'
-                        : 'Hunters post updates and submit gems',
+                    subtitle: becomeHunterSubtitle,
                     icon: Icons.radar_rounded,
                     iconColor: AppColors.primary400,
                     onTap: () {

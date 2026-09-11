@@ -20,6 +20,8 @@ class HunterApplicationModel {
   final DateTime? reviewedAt;
 
   bool get isPending => status == 'pending';
+  bool get isApproved => status == 'approved';
+  bool get isRejected => status == 'rejected';
 
   factory HunterApplicationModel.fromApi(Map<String, dynamic> json) {
     return HunterApplicationModel(

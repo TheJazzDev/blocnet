@@ -27,18 +27,41 @@ class EdgeEngineStore extends ChangeNotifier {
   String? get lastError => _lastError;
   List<EdgeDecision> get decisions => _feed?.items ?? const [];
 
-  void hydrateBrief(EdgeBriefResponse? brief, {bool notify = true}) {
-    if (brief == null) return;
+  /// Applies a brief from the Home bootstrap (cache or network). Returns
+  /// false without notifying when the brief's content is unchanged.
+  bool hydrateBrief(EdgeBriefResponse? brief, {bool notify = true}) {
+    if (brief == null) return false;
+    final current = _brief;
+    if (current != null && current.contentEquals(brief)) return false;
     _brief = brief;
     _lastError = null;
     if (notify) {
       notifyListeners();
     }
+    return true;
   }
 
   Future<void> fetchOnce() async {
     if ((_feed != null && _brief != null) || _isFetching) return;
     await refresh();
+  }
+
+  /// Loads only the decision feed. Used after the Home bootstrap already
+  /// delivered the brief, so the brief is not fetched a second time.
+  Future<void> ensureFeed({int limit = 30}) async {
+    if (_feed != null || _isFetching) return;
+
+    _isFetching = true;
+    notifyListeners();
+    try {
+      _feed = await _repository.fetchFeed(limit: limit);
+      _lastError = null;
+    } catch (error) {
+      _lastError = error.toString();
+    } finally {
+      _isFetching = false;
+      notifyListeners();
+    }
   }
 
   Future<void> refresh() async {

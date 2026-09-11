@@ -113,6 +113,35 @@ class EdgeBriefResponse {
 
   bool get hasSignals => totalSignals > 0 || topDecisions.isNotEmpty;
 
+  /// True when everything the brief renders is identical. [asOf] is ignored
+  /// because it changes on every request.
+  bool contentEquals(EdgeBriefResponse other) {
+    if (enabled != other.enabled ||
+        windowDays != other.windowDays ||
+        totalSignals != other.totalSignals ||
+        highUrgencyCount != other.highUrgencyCount ||
+        recommendedNowCount != other.recommendedNowCount ||
+        watchCount != other.watchCount ||
+        headline != other.headline ||
+        topProjects.length != other.topProjects.length ||
+        topDecisions.length != other.topDecisions.length) {
+      return false;
+    }
+    for (var i = 0; i < topProjects.length; i++) {
+      if (topProjects[i].projectId != other.topProjects[i].projectId ||
+          topProjects[i].count != other.topProjects[i].count) {
+        return false;
+      }
+    }
+    for (var i = 0; i < topDecisions.length; i++) {
+      if (topDecisions[i].decisionId != other.topDecisions[i].decisionId ||
+          topDecisions[i].edgeScore != other.topDecisions[i].edgeScore) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   factory EdgeBriefResponse.fromApi(Map<String, dynamic> json) {
     final topProjects = (json['topProjects'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
