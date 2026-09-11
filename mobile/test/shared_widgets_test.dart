@@ -218,4 +218,272 @@ void main() {
       expect(taps, 1);
     });
   });
+
+  group('AppSectionHeader', () {
+    testWidgets('uppercases the title and fires the action', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(_phone(
+        AppSectionHeader(
+          title: 'Top Hunters',
+          icon: Icons.trending_up_rounded,
+          actionLabel: 'View All',
+          onAction: () => taps++,
+        ),
+      ));
+      expect(find.text('TOP HUNTERS'), findsOneWidget);
+      expect(find.byIcon(Icons.trending_up_rounded), findsOneWidget);
+      await tester.tap(find.text('View All'));
+      expect(taps, 1);
+    });
+
+    testWidgets('a long title ellipsises rather than overflowing',
+        (tester) async {
+      await tester.pumpWidget(_phone(
+        const AppSectionHeader(
+          title: 'A section title far too long to sit on one phone line',
+          actionLabel: 'View All',
+        ),
+      ));
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('AppEmptyState', () {
+    testWidgets('renders icon, title, message and a next step',
+        (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(_phone(
+        AppEmptyState(
+          icon: Icons.inbox_outlined,
+          title: 'No updates yet',
+          message: 'Follow a project and its updates land here.',
+          actionLabel: 'Discover projects',
+          onAction: () => taps++,
+        ),
+      ));
+      expect(find.text('No updates yet'), findsOneWidget);
+      expect(find.byIcon(Icons.inbox_outlined), findsOneWidget);
+      await tester.tap(find.text('Discover projects'));
+      expect(taps, 1);
+    });
+
+    testWidgets('the error twin tints the icon and defaults to Try again',
+        (tester) async {
+      await tester.pumpWidget(_phone(
+        AppEmptyState.error(title: 'Could not load tips', onAction: () {}),
+      ));
+      expect(find.text('Try again'), findsOneWidget);
+      expect(
+        tester.widget<Icon>(find.byIcon(Icons.error_outline_rounded)).color,
+        AppColors.error500,
+      );
+    });
+
+    testWidgets('no action renders no button', (tester) async {
+      await tester.pumpWidget(_phone(
+        const AppEmptyState(title: 'Nothing here'),
+      ));
+      expect(find.byType(AppButton), findsNothing);
+    });
+  });
+
+  group('AppButton', () {
+    testWidgets('primary fills with the accent and presses', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(_phone(
+        AppButton(label: 'Start Mining', onPressed: () => taps++),
+      ));
+      await tester.tap(find.text('Start Mining'));
+      expect(taps, 1);
+      expect(
+        tester
+            .widget<Material>(find.descendant(
+              of: find.byType(AppButton),
+              matching: find.byType(Material),
+            ))
+            .color,
+        AppColors.primary500,
+      );
+    });
+
+    testWidgets('a null onPressed disables it', (tester) async {
+      await tester.pumpWidget(_phone(
+        const AppButton(label: 'Disabled', onPressed: null),
+      ));
+      expect(tester.widget<InkWell>(find.byType(InkWell)).onTap, isNull);
+      expect(tester.widget<Opacity>(find.byType(Opacity)).opacity, 0.45);
+    });
+
+    testWidgets('loading blocks presses but keeps the label', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(_phone(
+        AppButton(label: 'Saving', onPressed: () => taps++, isLoading: true),
+      ));
+      expect(find.text('Saving'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      await tester.tap(find.text('Saving'), warnIfMissed: false);
+      expect(taps, 0);
+    });
+
+    testWidgets('meets the 44px touch target at regular size',
+        (tester) async {
+      await tester.pumpWidget(_phone(
+        AppButton(label: 'Tap', onPressed: () {}),
+      ));
+      expect(
+        tester.getSize(find.byType(AppButton)).height,
+        greaterThanOrEqualTo(44),
+      );
+    });
+
+    testWidgets('danger uses the error tone', (tester) async {
+      await tester.pumpWidget(_phone(
+        AppButton(
+          label: 'Suspend',
+          onPressed: () {},
+          variant: AppButtonVariant.danger,
+        ),
+      ));
+      expect(
+        tester
+            .widget<Material>(find.descendant(
+              of: find.byType(AppButton),
+              matching: find.byType(Material),
+            ))
+            .color,
+        AppColors.error500,
+      );
+    });
+  });
+
+  group('AppStatTile', () {
+    testWidgets('renders label, value and a positive delta', (tester) async {
+      await tester.pumpWidget(_phone(
+        const AppStatTile(
+          label: 'Active miners',
+          value: '12,480',
+          delta: '+8.2% vs. yesterday',
+        ),
+      ));
+      expect(find.text('Active miners'), findsOneWidget);
+      expect(find.text('12,480'), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.text('+8.2% vs. yesterday')).style!.color,
+        AppColors.successColor,
+      );
+    });
+
+    testWidgets('a negative delta uses the error tone', (tester) async {
+      await tester.pumpWidget(_phone(
+        const AppStatTile(
+          label: 'Balance',
+          value: '120',
+          delta: '-4.1%',
+          deltaIsPositive: false,
+        ),
+      ));
+      expect(
+        tester.widget<Text>(find.text('-4.1%')).style!.color,
+        AppColors.error500,
+      );
+    });
+
+    testWidgets('values use tabular figures so digits do not shuffle',
+        (tester) async {
+      await tester.pumpWidget(_phone(
+        const AppStatTile(label: 'Mined', value: '4,210.55'),
+      ));
+      final style = tester.widget<Text>(find.text('4,210.55')).style!;
+      expect(style.fontFeatures, contains(const FontFeature.tabularFigures()));
+    });
+
+    testWidgets('fits two across a phone without overflowing', (tester) async {
+      await tester.pumpWidget(_phone(
+        const Row(
+          children: [
+            Expanded(child: AppStatTile(label: 'Mining Power', value: '10.0 TH/s')),
+            SizedBox(width: AppSpace.md),
+            Expanded(child: AppStatTile(label: 'Total Earned', value: '0 BNP')),
+          ],
+        ),
+      ));
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('AppTextField', () {
+    testWidgets('renders label, hint and helper', (tester) async {
+      await tester.pumpWidget(_phone(
+        const AppTextField(
+          label: 'Moderation note',
+          hint: 'Why is this being rejected?',
+          helper: 'Visible to the project team.',
+        ),
+      ));
+      expect(find.text('Moderation note'), findsOneWidget);
+      expect(find.text('Why is this being rejected?'), findsOneWidget);
+      expect(find.text('Visible to the project team.'), findsOneWidget);
+    });
+
+    testWidgets('an error replaces the helper and tints it', (tester) async {
+      await tester.pumpWidget(_phone(
+        const AppTextField(
+          label: 'Email',
+          helper: 'We never share this.',
+          errorText: 'That address is already in use.',
+        ),
+      ));
+      expect(find.text('We never share this.'), findsNothing);
+      expect(
+        tester.widget<Text>(find.text('That address is already in use.'))
+            .style!.color,
+        AppColors.error500,
+      );
+    });
+
+    testWidgets('typing reaches onChanged', (tester) async {
+      var typed = '';
+      await tester.pumpWidget(_phone(
+        AppTextField(label: 'Name', onChanged: (v) => typed = v),
+      ));
+      await tester.enterText(find.byType(TextField), 'Nebula');
+      expect(typed, 'Nebula');
+    });
+  });
+
+  group('AppSheet', () {
+    testWidgets('shows a handle, title and content', (tester) async {
+      await tester.pumpWidget(_phone(
+        const AppSheet(title: 'Switch Space', child: Text('body')),
+      ));
+      expect(find.text('Switch Space'), findsOneWidget);
+      expect(find.text('body'), findsOneWidget);
+      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+    });
+
+    testWidgets('show() opens it over the page and pops on close',
+        (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (ctx) => ElevatedButton(
+              onPressed: () => AppSheet.show<void>(
+                context: ctx,
+                title: 'Filters',
+                builder: (_) => const Text('sheet body'),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.text('sheet body'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+      expect(find.text('sheet body'), findsNothing);
+    });
+  });
 }
