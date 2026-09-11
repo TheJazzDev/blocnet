@@ -335,6 +335,7 @@ export class UsersAdminService {
         where: {
           userId,
           claimedAt: null,
+          expiredAt: null,
         },
         orderBy: {
           startsAt: 'desc',
@@ -373,6 +374,7 @@ export class UsersAdminService {
         where: {
           userId,
           claimedAt: null,
+          expiredAt: null,
           hourEndAt: {
             lte: asOf,
           },

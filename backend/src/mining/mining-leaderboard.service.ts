@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client';
 import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 import { PrismaService } from '../prisma/prisma.service';
 import { MiningCalculatorService } from './mining-calculator.service';
+import { MiningConfigService } from './mining-config.service';
+import { isClaimable } from './mining-settlement';
 
 type MiningSessionStatus = 'idle' | 'running' | 'claimable';
 
@@ -18,10 +20,12 @@ export class MiningLeaderboardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly miningCalculator: MiningCalculatorService,
+    private readonly miningConfigService: MiningConfigService,
   ) {}
 
   async getLeaderboard(options: GetLeaderboardOptions = {}) {
     const asOf = new Date();
+    const config = await this.miningConfigService.getEffectiveConfig();
     const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
     const offset = Math.max(options.offset ?? 0, 0);
     const searchQuery = options.q?.trim();
@@ -123,6 +127,7 @@ export class MiningLeaderboardService {
           miningSessions: {
             where: {
               claimedAt: null,
+              expiredAt: null,
             },
             orderBy: {
               startsAt: 'desc',
@@ -162,6 +167,7 @@ export class MiningLeaderboardService {
             in: userIds,
           },
           claimedAt: null,
+          expiredAt: null,
           hourEndAt: {
             lte: asOf,
           },
@@ -189,11 +195,21 @@ export class MiningLeaderboardService {
         const maturedUnclaimedPoints = maturedByUserId.get(profile.id) ?? 0;
         const lifetimeEarnedPointsBigInt =
           claimedTotalPointsBigInt + BigInt(maturedUnclaimedPoints);
-        const sessionStatus: MiningSessionStatus = !currentSession
-          ? ('idle' as MiningSessionStatus)
-          : currentSession.endsAt.getTime() <= asOf.getTime()
+        // A cycle past its claim window is no longer claimable even if the
+        // owner has not hit a mining endpoint yet to have it settled, so the
+        // board must not badge it CLAIMABLE (F-39).
+        const sessionIsLive =
+          currentSession !== null &&
+          currentSession.endsAt.getTime() > asOf.getTime();
+        const sessionIsClaimable =
+          currentSession !== null && isClaimable(currentSession, asOf, config);
+        const sessionStatus: MiningSessionStatus = sessionIsLive
+          ? ('running' as MiningSessionStatus)
+          : sessionIsClaimable
             ? ('claimable' as MiningSessionStatus)
-            : ('running' as MiningSessionStatus);
+            : ('idle' as MiningSessionStatus);
+        const displaySession =
+          sessionIsLive || sessionIsClaimable ? currentSession : null;
 
         return {
           rank: offset + index + 1,
@@ -208,16 +224,16 @@ export class MiningLeaderboardService {
           maturedUnclaimedPoints,
           lifetimeEarnedPoints: lifetimeEarnedPointsBigInt.toString(),
           sessionStatus,
-          sessionProgressPct: currentSession
+          sessionProgressPct: displaySession
             ? this.miningCalculator.computeProgressPct(
-                currentSession.startsAt,
-                currentSession.endsAt,
+                displaySession.startsAt,
+                displaySession.endsAt,
                 asOf,
               )
             : 0,
-          sessionEndsAt: currentSession?.endsAt ?? null,
-          boostBpsSnapshot: currentSession?.boostBpsSnapshot ?? 0,
-          activeReferralsSnapshot: currentSession?.activeReferralsSnapshot ?? 0,
+          sessionEndsAt: displaySession?.endsAt ?? null,
+          boostBpsSnapshot: displaySession?.boostBpsSnapshot ?? 0,
+          activeReferralsSnapshot: displaySession?.activeReferralsSnapshot ?? 0,
         };
       }),
     };

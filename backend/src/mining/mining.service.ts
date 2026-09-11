@@ -7,20 +7,27 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { MiningPointSource, Prisma, TipAccountType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { LevelsService } from '../levels/levels.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
-import { BNP_CURRENCY_CODE } from '../tips/tip.constants';
 import {
   MiningCalculatorService,
   EffectiveMiningConfig,
 } from './mining-calculator.service';
 import { MiningConfigService } from './mining-config.service';
-
-const BNP_ATOMIC_MULTIPLIER = 1000n;
+import {
+  MiningExpiryService,
+  type ForfeitedCycle,
+} from './mining-expiry.service';
+import {
+  applyClaimSettlement,
+  isClaimable,
+  MiningSessionAlreadySettledError,
+  resolveClaimPoints,
+} from './mining-settlement';
 
 type MiningSessionStatus = 'idle' | 'running' | 'claimable';
 
@@ -37,6 +44,20 @@ type MiningSessionRow = {
   activeReferralsSnapshot: number;
 };
 
+/** An unsettled cycle is one that is neither paid out nor forfeited. */
+const UNSETTLED = { claimedAt: null, expiredAt: null } as const;
+
+function toExpiredCycleDto(cycle: ForfeitedCycle) {
+  return {
+    sessionId: cycle.sessionId,
+    startsAt: cycle.startsAt,
+    endsAt: cycle.endsAt,
+    claimDeadline: cycle.claimDeadline,
+    expiredAt: cycle.expiredAt,
+    forfeitedPoints: cycle.forfeitedPoints,
+  };
+}
+
 @Injectable()
 export class MiningService {
   private readonly logger = new Logger(MiningService.name);
@@ -50,6 +71,7 @@ export class MiningService {
     private readonly levelsService: LevelsService,
     private readonly miningCalculator: MiningCalculatorService,
     private readonly miningConfigService: MiningConfigService,
+    private readonly miningExpiryService: MiningExpiryService,
   ) {}
 
   async getMe(userId: string) {
@@ -57,6 +79,9 @@ export class MiningService {
     const config = await this.miningConfigService.getEffectiveConfig();
 
     await this.syncHourlyAccrualForUser(userId, asOf, config);
+    // Reconcile on read: a cycle whose window elapsed is forfeited here, so the
+    // snapshot never advertises points the user can no longer claim.
+    await this.miningExpiryService.settleExpiredForUser(userId, asOf, config);
 
     const [
       profile,
@@ -65,6 +90,7 @@ export class MiningService {
       totalDirectReferrals,
       activeDirectReferrals,
       hourlyHistoryRows,
+      lastExpiredSession,
     ] = await Promise.all([
       this.prisma.profile.findUnique({
         where: { id: userId },
@@ -79,7 +105,7 @@ export class MiningService {
       this.prisma.miningSession.findFirst({
         where: {
           userId,
-          claimedAt: null,
+          ...UNSETTLED,
         },
         orderBy: {
           startsAt: 'desc',
@@ -88,7 +114,7 @@ export class MiningService {
       this.prisma.miningHourlyCheckpoint.aggregate({
         where: {
           userId,
-          claimedAt: null,
+          ...UNSETTLED,
           hourEndAt: {
             lte: asOf,
           },
@@ -119,6 +145,22 @@ export class MiningService {
           activeReferralsSnapshot: true,
           boostBpsSnapshot: true,
           claimedAt: true,
+          expiredAt: true,
+        },
+      }),
+      this.prisma.miningSession.findFirst({
+        where: {
+          userId,
+          expiredAt: { not: null },
+        },
+        orderBy: {
+          endsAt: 'desc',
+        },
+        select: {
+          id: true,
+          startsAt: true,
+          endsAt: true,
+          expiredAt: true,
         },
       }),
     ]);
@@ -174,6 +216,25 @@ export class MiningService {
           projectedCyclePointsNow: config.basePointsPerCycle,
         };
 
+    const lastExpiredCycle = lastExpiredSession
+      ? {
+          sessionId: lastExpiredSession.id,
+          startsAt: lastExpiredSession.startsAt,
+          endsAt: lastExpiredSession.endsAt,
+          expiredAt: lastExpiredSession.expiredAt,
+          forfeitedPoints:
+            (
+              await this.prisma.miningHourlyCheckpoint.aggregate({
+                where: {
+                  sessionId: lastExpiredSession.id,
+                  expiredAt: { not: null },
+                },
+                _sum: { points: true },
+              })
+            )._sum.points ?? 0,
+        }
+      : null;
+
     const canBindUntil = new Date(
       profile.createdAt.getTime() +
         config.referralBindWindowHours * 60 * 60 * 1000,
@@ -191,6 +252,12 @@ export class MiningService {
         ).toString(),
       },
       session,
+      /**
+       * Most recent forfeited cycle, so clients can explain a missing payout
+       * instead of showing a Claim button that can only fail. Null when the
+       * account has never let a claim window elapse.
+       */
+      lastExpiredCycle,
       referral: {
         code: profile.referralCode,
         referredBy: referrer
@@ -216,7 +283,12 @@ export class MiningService {
         activeReferralsSnapshot: row.activeReferralsSnapshot,
         boostBpsSnapshot: row.boostBpsSnapshot,
         claimedAt: row.claimedAt,
-        status: row.claimedAt ? 'claimed' : 'unclaimed',
+        expiredAt: row.expiredAt,
+        status: row.claimedAt
+          ? 'claimed'
+          : row.expiredAt
+            ? 'expired'
+            : 'unclaimed',
       })),
     };
   }
@@ -239,11 +311,18 @@ export class MiningService {
     const asOf = new Date();
 
     await this.syncHourlyAccrualForUser(userId, asOf, config);
+    // Reconcile on write: forfeit anything past its window first, so only a
+    // genuinely claimable cycle can block a new one.
+    const forfeited = await this.miningExpiryService.settleExpiredForUser(
+      userId,
+      asOf,
+      config,
+    );
 
-    const unclaimedSessions = await this.prisma.miningSession.findMany({
+    const unsettledSessions = await this.prisma.miningSession.findMany({
       where: {
         userId,
-        claimedAt: null,
+        ...UNSETTLED,
       },
       orderBy: {
         startsAt: 'desc',
@@ -251,7 +330,7 @@ export class MiningService {
       take: 10,
     });
 
-    const running = unclaimedSessions.find(
+    const running = unsettledSessions.find(
       (session) => session.endsAt.getTime() > asOf.getTime(),
     );
 
@@ -259,6 +338,7 @@ export class MiningService {
       return {
         ok: true,
         status: 'running',
+        expiredCycles: forfeited.map(toExpiredCycleDto),
         session: await this.toSessionState(
           userId,
           running,
@@ -269,8 +349,8 @@ export class MiningService {
       };
     }
 
-    const claimable = unclaimedSessions.find(
-      (session) => session.endsAt.getTime() <= asOf.getTime(),
+    const claimable = unsettledSessions.find((session) =>
+      isClaimable(session, asOf, config),
     );
 
     if (claimable) {
@@ -304,6 +384,7 @@ export class MiningService {
     return {
       ok: true,
       status: 'started',
+      expiredCycles: forfeited.map(toExpiredCycleDto),
       session: await this.toSessionState(
         userId,
         session,
@@ -319,11 +400,19 @@ export class MiningService {
     const config = await this.miningConfigService.getEffectiveConfig();
 
     await this.syncHourlyAccrualForUser(userId, asOf, config);
+    // Reconcile on write: settle anything past its window before deciding what
+    // is claimable, so claim() can never dead-end on a cycle it refuses to
+    // settle (F-39).
+    const forfeited = await this.miningExpiryService.settleExpiredForUser(
+      userId,
+      asOf,
+      config,
+    );
 
-    const unclaimedSessions = await this.prisma.miningSession.findMany({
+    const unsettledSessions = await this.prisma.miningSession.findMany({
       where: {
         userId,
-        claimedAt: null,
+        ...UNSETTLED,
       },
       orderBy: {
         startsAt: 'desc',
@@ -331,25 +420,18 @@ export class MiningService {
       take: 10,
     });
 
-    const claimWindowMs = config.claimWindowHours * 60 * 60 * 1000;
-
-    const claimable = unclaimedSessions.find(
-      (session) => session.endsAt.getTime() <= asOf.getTime(),
+    const claimable = unsettledSessions.find((session) =>
+      isClaimable(session, asOf, config),
     );
 
     if (!claimable) {
+      if (forfeited.length > 0) {
+        return this.buildExpiredClaimResult(userId, asOf, config, forfeited);
+      }
+
       throw new ConflictException({
         code: 'not_claimable',
         message: 'No completed mining cycle is available to claim',
-      });
-    }
-
-    // Check if claim window has expired
-    const claimDeadline = new Date(claimable.endsAt.getTime() + claimWindowMs);
-    if (asOf.getTime() > claimDeadline.getTime()) {
-      throw new ConflictException({
-        code: 'claim_window_expired',
-        message: `Claim window expired. You must claim within ${config.claimWindowHours} hours of cycle completion.`,
       });
     }
 
@@ -357,7 +439,7 @@ export class MiningService {
       this.prisma.miningHourlyCheckpoint.aggregate({
         where: {
           sessionId: claimable.id,
-          claimedAt: null,
+          ...UNSETTLED,
         },
         _sum: {
           points: true,
@@ -366,111 +448,35 @@ export class MiningService {
       this.prisma.miningHourlyCheckpoint.count({
         where: {
           sessionId: claimable.id,
-          claimedAt: null,
+          ...UNSETTLED,
         },
       }),
     ]);
 
-    const checkpointPoints = checkpointAggregate._sum.points;
-    const claimPoints =
-      checkpointPoints != null && checkpointPoints > 0
-        ? checkpointPoints
-        : Math.max(claimable.effectivePointsPerCycle, 0);
+    const claimPoints = resolveClaimPoints(
+      checkpointAggregate._sum.points,
+      claimable,
+    );
 
-    await this.prisma.$transaction(async (tx) => {
-      const updated = await tx.miningSession.updateMany({
-        where: {
-          id: claimable.id,
-          claimedAt: null,
-        },
-        data: {
+    try {
+      await this.prisma.$transaction((tx) =>
+        applyClaimSettlement(tx, {
+          userId,
+          session: claimable,
           claimedAt: asOf,
-        },
-      });
-
-      if (updated.count === 0) {
+          claimPoints,
+          checkpointCount,
+        }),
+      );
+    } catch (error) {
+      if (error instanceof MiningSessionAlreadySettledError) {
         throw new ConflictException({
           code: 'already_claimed',
           message: 'This mining session has already been claimed',
         });
       }
-
-      await tx.miningHourlyCheckpoint.updateMany({
-        where: {
-          sessionId: claimable.id,
-          claimedAt: null,
-        },
-        data: {
-          claimedAt: asOf,
-        },
-      });
-
-      await tx.miningPointLedger.create({
-        data: {
-          userId,
-          sessionId: claimable.id,
-          source: 'cycle_claim',
-          points: claimPoints,
-          metadata: {
-            startsAt: claimable.startsAt.toISOString(),
-            endsAt: claimable.endsAt.toISOString(),
-            basePointsPerCycle: claimable.basePointsPerCycle,
-            hourlyCheckpointCount: checkpointCount,
-            boostBpsSnapshot: claimable.boostBpsSnapshot,
-            activeReferralsSnapshot: claimable.activeReferralsSnapshot,
-          },
-        },
-      });
-
-      await tx.profile.update({
-        where: { id: userId },
-        data: {
-          miningClaimedPoints: {
-            increment: BigInt(claimPoints),
-          },
-        },
-      });
-
-      const tipCreditAtomic = BigInt(claimPoints) * BNP_ATOMIC_MULTIPLIER;
-      if (tipCreditAtomic > 0n) {
-        await tx.tipCurrency.upsert({
-          where: { code: BNP_CURRENCY_CODE },
-          update: {},
-          create: {
-            code: BNP_CURRENCY_CODE,
-            name: 'Blocnet Points',
-            symbol: 'BNP',
-            decimals: 3,
-            kind: 'points',
-            isEnabled: true,
-            isActiveTippingCurrency: true,
-          },
-        });
-
-        await tx.tipAccount.upsert({
-          where: {
-            accountType_ownerRef_currencyCode: {
-              accountType: TipAccountType.user,
-              ownerRef: userId,
-              currencyCode: BNP_CURRENCY_CODE,
-            },
-          },
-          update: {
-            userId,
-            balanceAtomic: {
-              increment: tipCreditAtomic,
-            },
-          },
-          create: {
-            accountType: TipAccountType.user,
-            ownerRef: userId,
-            userId,
-            currencyCode: BNP_CURRENCY_CODE,
-            balanceAtomic: tipCreditAtomic,
-          },
-        });
-      }
-    });
+      throw error;
+    }
 
     await this.auditLogService.create({
       actorId: userId,
@@ -493,69 +499,11 @@ export class MiningService {
       );
     }
 
-    let nextSessionState: Awaited<
-      ReturnType<typeof this.toSessionState>
-    > | null = null;
-
-    if (config.enabled) {
-      const nextSessionAsOf = new Date();
-      const unclaimedAfterClaim = await this.prisma.miningSession.findMany({
-        where: {
-          userId,
-          claimedAt: null,
-        },
-        orderBy: {
-          startsAt: 'desc',
-        },
-        take: 10,
-      });
-
-      const runningAfterClaim = unclaimedAfterClaim.find(
-        (session) => session.endsAt.getTime() > nextSessionAsOf.getTime(),
-      );
-      const claimableAfterClaim = unclaimedAfterClaim.find(
-        (session) => session.endsAt.getTime() <= nextSessionAsOf.getTime(),
-      );
-
-      if (runningAfterClaim) {
-        nextSessionState = await this.toSessionState(
-          userId,
-          runningAfterClaim,
-          nextSessionAsOf,
-          config,
-        );
-      } else if (!claimableAfterClaim) {
-        const nextSession = await this.createMiningSession(
-          userId,
-          config,
-          nextSessionAsOf,
-          this.prisma,
-        );
-
-        await this.auditLogService.create({
-          actorId: userId,
-          action: 'mining.start',
-          resourceType: 'mining_session',
-          resourceId: nextSession.id,
-          metadata: {
-            startsAt: nextSession.startsAt.toISOString(),
-            endsAt: nextSession.endsAt.toISOString(),
-            effectivePointsPerCycle: nextSession.effectivePointsPerCycle,
-            boostBpsSnapshot: nextSession.boostBpsSnapshot,
-            activeReferralsSnapshot: nextSession.activeReferralsSnapshot,
-            trigger: 'auto_after_claim',
-          },
-        });
-
-        nextSessionState = await this.toSessionState(
-          userId,
-          nextSession,
-          nextSessionAsOf,
-          config,
-          nextSession.activeReferralsSnapshot,
-        );
-      }
-    }
+    const nextSessionState = await this.ensureNextSessionState(
+      userId,
+      config,
+      'auto_after_claim',
+    );
 
     const [profile, maturedUnclaimedAggregate] = await Promise.all([
       this.prisma.profile.findUnique({
@@ -565,7 +513,7 @@ export class MiningService {
       this.prisma.miningHourlyCheckpoint.aggregate({
         where: {
           userId,
-          claimedAt: null,
+          ...UNSETTLED,
           hourEndAt: {
             lte: asOf,
           },
@@ -590,9 +538,11 @@ export class MiningService {
 
     return {
       ok: true,
+      status: 'claimed' as const,
       sessionId: claimable.id,
       claimedAt: asOf,
       claimedPoints: claimPoints,
+      expiredCycles: forfeited.map(toExpiredCycleDto),
       balance: {
         claimedTotalPoints: claimedTotalPointsBigInt.toString(),
         maturedUnclaimedPoints,
@@ -604,6 +554,146 @@ export class MiningService {
     };
   }
 
+  /**
+   * Result for a claim where every candidate cycle had already passed its
+   * window. The cycles are settled as forfeited before we get here, so this is
+   * a terminal, honest answer — not the old state-free 409 that left the
+   * account wedged.
+   */
+  private async buildExpiredClaimResult(
+    userId: string,
+    asOf: Date,
+    config: EffectiveMiningConfig,
+    forfeited: ForfeitedCycle[],
+  ) {
+    const forfeitedPoints = forfeited.reduce(
+      (total, cycle) => total + cycle.forfeitedPoints,
+      0,
+    );
+
+    const nextSessionState = await this.ensureNextSessionState(
+      userId,
+      config,
+      'auto_after_expiry',
+    );
+
+    const [profile, maturedUnclaimedAggregate] = await Promise.all([
+      this.prisma.profile.findUnique({
+        where: { id: userId },
+        select: { miningClaimedPoints: true },
+      }),
+      this.prisma.miningHourlyCheckpoint.aggregate({
+        where: {
+          userId,
+          ...UNSETTLED,
+          hourEndAt: {
+            lte: asOf,
+          },
+        },
+        _sum: {
+          points: true,
+        },
+      }),
+    ]);
+
+    const claimedTotalPointsBigInt = profile?.miningClaimedPoints ?? 0n;
+    const maturedUnclaimedPoints = maturedUnclaimedAggregate._sum.points ?? 0;
+
+    return {
+      ok: false,
+      status: 'expired' as const,
+      code: 'claim_window_expired',
+      message:
+        forfeited.length === 1
+          ? `That mining cycle expired. Cycles must be claimed within ${config.claimWindowHours} hours of completing.`
+          : `${forfeited.length} mining cycles expired. Cycles must be claimed within ${config.claimWindowHours} hours of completing.`,
+      claimedPoints: 0,
+      forfeitedPoints,
+      expiredCycles: forfeited.map(toExpiredCycleDto),
+      balance: {
+        claimedTotalPoints: claimedTotalPointsBigInt.toString(),
+        maturedUnclaimedPoints,
+        lifetimeEarnedPoints: (
+          claimedTotalPointsBigInt + BigInt(maturedUnclaimedPoints)
+        ).toString(),
+      },
+      nextSession: nextSessionState,
+    };
+  }
+
+  /**
+   * Returns the session the user should see next: the running one if any,
+   * otherwise a freshly opened cycle. Never opens a cycle while a claimable
+   * one is still outstanding.
+   */
+  private async ensureNextSessionState(
+    userId: string,
+    config: EffectiveMiningConfig,
+    trigger: 'auto_after_claim' | 'auto_after_expiry',
+  ) {
+    if (!config.enabled) {
+      return null;
+    }
+
+    const asOf = new Date();
+    const unsettled = await this.prisma.miningSession.findMany({
+      where: {
+        userId,
+        ...UNSETTLED,
+      },
+      orderBy: {
+        startsAt: 'desc',
+      },
+      take: 10,
+    });
+
+    const running = unsettled.find(
+      (session) => session.endsAt.getTime() > asOf.getTime(),
+    );
+
+    if (running) {
+      return this.toSessionState(userId, running, asOf, config);
+    }
+
+    const stillClaimable = unsettled.find((session) =>
+      isClaimable(session, asOf, config),
+    );
+
+    if (stillClaimable) {
+      return null;
+    }
+
+    const nextSession = await this.createMiningSession(
+      userId,
+      config,
+      asOf,
+      this.prisma,
+    );
+
+    await this.auditLogService.create({
+      actorId: userId,
+      action: 'mining.start',
+      resourceType: 'mining_session',
+      resourceId: nextSession.id,
+      metadata: {
+        startsAt: nextSession.startsAt.toISOString(),
+        endsAt: nextSession.endsAt.toISOString(),
+        effectivePointsPerCycle: nextSession.effectivePointsPerCycle,
+        boostBpsSnapshot: nextSession.boostBpsSnapshot,
+        activeReferralsSnapshot: nextSession.activeReferralsSnapshot,
+        trigger,
+      },
+    });
+
+    return this.toSessionState(
+      userId,
+      nextSession,
+      asOf,
+      config,
+      nextSession.activeReferralsSnapshot,
+    );
+  }
+
   private async syncHourlyAccrualForUser(
     userId: string,
     asOf: Date,
@@ -613,7 +703,7 @@ export class MiningService {
     const sessions = await prisma.miningSession.findMany({
       where: {
         userId,
-        claimedAt: null,
+        ...UNSETTLED,
       },
       orderBy: {
         startsAt: 'asc',
@@ -730,7 +820,7 @@ export class MiningService {
       {
         where: {
           sessionId: session.id,
-          claimedAt: null,
+          ...UNSETTLED,
           hourEndAt: {
             lte: asOf,
           },
