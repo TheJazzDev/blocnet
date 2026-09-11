@@ -10,7 +10,10 @@ import {
   resolveEffectiveRoles,
   type EffectiveRoleResolution,
 } from '../auth/effective-role';
-import { ROLES_KEY } from '../decorators/roles.decorator';
+import {
+  ROLES_DENIED_MESSAGE_KEY,
+  ROLES_KEY,
+} from '../decorators/roles.decorator';
 import { AppRole } from '../enums/role.enum';
 import type { AuthUser } from '../interfaces/auth-user.interface';
 
@@ -81,7 +84,13 @@ export class RolesGuard implements CanActivate {
     );
 
     if (!hasPermission) {
-      throw new ForbiddenException('Insufficient role permissions');
+      const deniedMessage = this.reflector.getAllAndOverride<string>(
+        ROLES_DENIED_MESSAGE_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+      throw new ForbiddenException(
+        deniedMessage ?? 'Insufficient role permissions',
+      );
     }
 
     const adminPanelHeader = request.headers['x-admin-panel-request'];

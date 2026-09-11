@@ -121,4 +121,37 @@ describe('AuditLogController', () => {
       expect(auditLogService.listForUser).not.toHaveBeenCalled();
     });
   });
+
+  describe('GET /audit-log/system-alerts', () => {
+    it('serves owner and dev', async () => {
+      auditLogService.listSystemAlerts.mockResolvedValue([]);
+
+      currentUser.roles = [AppRole.OWNER];
+      await request(app.getHttpServer())
+        .get('/audit-log/system-alerts')
+        .expect(200);
+
+      currentUser.roles = [AppRole.DEV];
+      await request(app.getHttpServer())
+        .get('/audit-log/system-alerts')
+        .expect(200);
+
+      expect(auditLogService.listSystemAlerts).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns a displayable 403 body for admin', async () => {
+      currentUser.roles = [AppRole.ADMIN];
+
+      const response = await request(app.getHttpServer())
+        .get('/audit-log/system-alerts')
+        .expect(403);
+
+      expect(response.body).toEqual({
+        statusCode: 403,
+        error: 'Forbidden',
+        message: 'Only owner or dev can view system alerts',
+      });
+      expect(auditLogService.listSystemAlerts).not.toHaveBeenCalled();
+    });
+  });
 });

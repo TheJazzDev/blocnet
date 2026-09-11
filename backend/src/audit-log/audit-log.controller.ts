@@ -6,12 +6,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Roles } from '../common/decorators/roles.decorator';
+import {
+  Roles,
+  RolesDeniedMessage,
+} from '../common/decorators/roles.decorator';
 import { AppRole } from '../common/enums/role.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ListAuditLogQuery } from './dto/list-audit-log.query';
 import { ListOpsEventsQuery } from './dto/list-ops-events.query';
 import { AuditLogService } from './audit-log.service';
@@ -46,6 +49,8 @@ export class AuditLogController {
 
   @Get('ops-events')
   @Roles(AppRole.OWNER, AppRole.DEV)
+  @RolesDeniedMessage('Only owner or dev can view ops events')
+  @ApiOperation({ summary: 'List ops events (owner/dev only)' })
   async listOpsEvents(
     @CurrentUser() user: AuthUser | undefined,
     @Query() query: ListOpsEventsQuery,
@@ -59,6 +64,16 @@ export class AuditLogController {
 
   @Get('system-alerts')
   @Roles(AppRole.OWNER, AppRole.DEV)
+  @RolesDeniedMessage('Only owner or dev can view system alerts')
+  @ApiOperation({
+    summary: 'List system alerts (owner/dev only)',
+    description:
+      'Warning/error ops events. Admins are refused with a 403 whose message is safe to display.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Only owner or dev can view system alerts',
+  })
   async listSystemAlerts(
     @CurrentUser() user: AuthUser | undefined,
     @Query() query: ListOpsEventsQuery,
