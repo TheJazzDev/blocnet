@@ -52,6 +52,10 @@
 @source inline("{transition,transition-all,transition-colors,transition-opacity,transition-transform,duration-150,duration-200,duration-300,ease-out,ease-in-out,animate-pulse,animate-spin,animate-in,fade-in-0}");
 @source inline("{sr-only,aspect-square,aspect-video,object-cover,object-contain,backdrop-blur-sm,backdrop-blur-md,antialiased,scroll-smooth,list-disc,list-inside}");
 @source inline("{hover:,}{scale-95,scale-100,scale-105,-translate-y-0.5,translate-y-0}");
+@source inline("{-,}rotate-{45,90,180}");
+@source inline("group-data-[state=closed]:{-,}rotate-{90,180}");
+@source inline("data-[state=open]:{-,}rotate-{90,180}");
+@source inline("{origin-center,origin-top,origin-left}");
 @source inline("{focus-visible:,}{ring-1,ring-2,ring-ring,ring-primary,outline-none}");
 @source inline("{group,group-hover:text-foreground,group-hover:opacity-100,group-hover:bg-accent/70,peer}");
 @source inline("{disabled:opacity-50,disabled:pointer-events-none,data-[state=active]:bg-primary/15,data-[state=open]:bg-accent}");

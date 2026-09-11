@@ -14,6 +14,10 @@
 - **Card overrides** (`cfg.overrides`): open overlays (Dialog, DropdownMenu, Select, Tooltip) use `cardMode: single` + a viewport so the popover renders inside the card; wide stories (Card, Table, Tabs, Textarea, Switch, ScrollArea, LoadingSpinner) use `cardMode: column` after `[GRID_OVERFLOW]` warns.
 - **Known render warns**: none - the final validate is warning-free (`validate-4.log`, driver-1.log).
 
+- **Build order matters: previews before CSS.** `build-css.mjs` scans `.design-sync/previews/` via `@source`. If you author a new preview and rebuild the bundle *without* re-running `build-css.mjs` first, any utility class only that preview uses is missing from `styles.css` and the card renders subtly wrong with no error. Caught once on `Collapsible` (`group-data-[state=closed]:-rotate-90` silently absent, chevrons never rotated). **Always run `cfg.buildCmd` before `package-build.mjs`.**
+- **Rotate/transform utilities** are safelisted in `tailwind/entry.css` (`rotate-*`, `group-data-[state=closed]:*`, `data-[state=open]:*`). Radix components signal state through `data-state`, so a design that animates a chevron or caret needs those variants present.
+- **Brand accent is Signal Cyan** as of 2026-09-11: mobile `userAccent` #0891B2 / `hunterAccent` #22D3EE, console `--primary` `oklch(0.609 0.111 221.5)`. Both flow into the design system automatically through `globals.css` → `build-css.mjs`. `--chart-1` is deliberately left periwinkle: categorical data colour is independent of the accent.
+
 ## Re-sync risks
 
 - `console/app/globals.css` is the single source of tokens, fonts and the body canvas; any change there flows through `build-css.mjs` automatically, but a rename of `--font-sans` family names must be mirrored in `.design-sync/fonts/geist.css`.

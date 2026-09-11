@@ -65,7 +65,9 @@
     "TabsTrigger": null,
     "TooltipContent": null,
     "TooltipProvider": null,
-    "TooltipTrigger": null
+    "TooltipTrigger": null,
+    "CollapsibleTrigger": null,
+    "CollapsibleContent": null
   },
   "docsDir": "../.design-sync/docs",
   "overrides": {
@@ -108,6 +110,9 @@
       "cardMode": "column"
     },
     "Tabs": {
+      "cardMode": "column"
+    },
+    "Collapsible": {
       "cardMode": "column"
     }
   },
