@@ -10,7 +10,6 @@ class AppRoutes {
   static const String mining = '/mining';
   static const String miningLeaderboard = '/mining/leaderboard';
   static const String miningHourlyHistory = '/mining/hourly-history';
-  static const String miningDownline = '/mining/downline';
   static const String notifications = '/notifications';
   static const String notificationInsights = '/notifications/insights';
   static const String systemAlerts = '/system-alerts';
@@ -50,7 +49,6 @@ class AppRoutes {
   static const String topHunters = '/top-hunters';
   static const String communityCreatePost = '/community-create-post';
   static const String communityDiscussion = '/community-discussion';
-  static const String communityStaffTools = '/community-staff-tools';
   static const String myReports = '/my-reports';
   static const String editProfile = '/edit-profile';
 }

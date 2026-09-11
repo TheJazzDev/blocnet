@@ -4,7 +4,6 @@ import 'package:blocnet/features/badges/presentation/pages/badge_gallery_page.da
 import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
 import 'package:blocnet/features/levels/presentation/pages/levels_page.dart';
-import 'package:blocnet/features/mining/presentation/pages/mining_downline_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_hourly_history_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_leaderboard_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/create_update_screen.dart';
@@ -16,7 +15,6 @@ import 'package:blocnet/features/quests/presentation/pages/quests_page.dart';
 import 'package:blocnet/features/tips/presentation/pages/tip_history_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_create_post_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_post_discussion_screen.dart';
-import 'package:blocnet/features/community/presentation/pages/community_staff_tools_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/my_reports_screen.dart';
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/referral_code_screen.dart';
@@ -51,7 +49,6 @@ class ProtectedRoutes {
   static const String mining = AppRoutes.mining;
   static const String miningLeaderboard = AppRoutes.miningLeaderboard;
   static const String miningHourlyHistory = AppRoutes.miningHourlyHistory;
-  static const String miningDownline = AppRoutes.miningDownline;
   static const String notifications = AppRoutes.notifications;
   static const String notificationInsights = AppRoutes.notificationInsights;
   static const String systemAlerts = AppRoutes.systemAlerts;
@@ -71,7 +68,6 @@ class ProtectedRoutes {
   static const String manageUpdates = AppRoutes.manageUpdates;
   static const String communityCreatePost = AppRoutes.communityCreatePost;
   static const String communityDiscussion = AppRoutes.communityDiscussion;
-  static const String communityStaffTools = AppRoutes.communityStaffTools;
   static const String myReports = AppRoutes.myReports;
   static const String editProfile = AppRoutes.editProfile;
 
@@ -125,7 +121,6 @@ class ProtectedRoutes {
       mining: (context) => const MainScreen(initialIndex: 3),
       miningLeaderboard: (context) => const MiningLeaderboardScreen(),
       miningHourlyHistory: (context) => const MiningHourlyHistoryScreen(),
-      miningDownline: (context) => const MiningDownlineScreen(),
       // Notifications is now a push route (not a main tab)
       notifications: (context) {
         final args = ModalRoute.of(context)?.settings.arguments;
@@ -157,7 +152,6 @@ class ProtectedRoutes {
       manageUpdates: (context) => const ManageUpdatesScreen(),
       communityCreatePost: (context) => const CommunityCreatePostScreen(),
       communityDiscussion: (context) => const CommunityPostDiscussionScreen(),
-      communityStaffTools: (context) => const CommunityStaffToolsScreen(),
       myReports: (context) => const MyReportsScreen(),
       editProfile: (context) => const EditProfileScreen(),
 
@@ -187,7 +181,6 @@ class ProtectedRoutes {
     mining,
     miningLeaderboard,
     miningHourlyHistory,
-    miningDownline,
     notifications,
     notificationInsights,
     systemAlerts,
@@ -207,7 +200,6 @@ class ProtectedRoutes {
     manageUpdates,
     communityCreatePost,
     communityDiscussion,
-    communityStaffTools,
     myReports,
     editProfile,
     hunterHub,
@@ -228,15 +220,6 @@ class ProtectedRoutes {
     'hunter',
   };
 
-  static const Set<String> _communityStaffRoles = {
-    'owner',
-    'dev',
-    'admin',
-    'community_admin',
-    'community_moderator',
-    'moderator',
-  };
-
   static const Set<String> _opsRoles = {
     'owner',
     'dev',
@@ -250,6 +233,5 @@ class ProtectedRoutes {
     manageUpdates: _contributorRoles,
     hunterHub: _contributorRoles,
     systemAlerts: _opsRoles,
-    communityStaffTools: _communityStaffRoles,
   };
 }

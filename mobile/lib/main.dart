@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:blocnet/app/router.dart';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/services/users/admins_store.dart';
-import 'package:blocnet/services/core/app_store.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/badges_store.dart';
 import 'package:blocnet/services/users/blocks_store.dart';
@@ -26,7 +24,6 @@ import 'package:blocnet/services/users/hunter_application_store.dart';
 import 'package:blocnet/services/projects/tags_store.dart';
 import 'package:blocnet/services/community/comments_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
-// import 'package:blocnet/services/core/connectivity_store.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
 import 'package:blocnet/services/core/startup_metrics_service.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
@@ -199,8 +196,6 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthStore>.value(value: authStore),
-        ChangeNotifierProvider(create: (_) => AppStore()),
-        // ChangeNotifierProvider(create: (_) => ConnectivityStore()),
         ChangeNotifierProvider(create: (_) => UpdatesStore()),
         ChangeNotifierProvider(create: (_) => FeedViewModeStore()),
         ChangeNotifierProvider(create: (_) => CommunityPostsStore()),
@@ -219,7 +214,6 @@ void main() async {
         ChangeNotifierProvider(create: (_) => WalletVisibilityStore()),
         ChangeNotifierProvider(create: (_) => BlocksStore(ApiClient())),
         ChangeNotifierProvider(create: (_) => TagsStore()),
-        ChangeNotifierProvider(create: (_) => AdminsStore()),
         ChangeNotifierProvider<BadgesStore>.value(value: badgesStore),
         ChangeNotifierProvider<LevelsStore>.value(value: levelsStore),
         ChangeNotifierProxyProvider<AuthStore, QuestsStore>(
@@ -230,7 +224,6 @@ void main() async {
             return store;
           },
         ),
-        // ChangeNotifierProvider(create: (_) => PriorityStore()),
         ChangeNotifierProvider(create: (_) => ProjectsStore()),
         ChangeNotifierProvider(create: (_) => ProjectInvitesStore()),
         ChangeNotifierProxyProvider<AuthStore, HunterApplicationStore>(
