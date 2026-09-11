@@ -132,6 +132,16 @@ export class WalletQueryService {
     };
   }
 
+  /**
+   * User-facing wallet health.
+   *
+   * Deliberately narrow: this route is reachable by any signed-in user, so it
+   * reports only what a wallet screen needs — whether the feature and its
+   * deposit/withdrawal legs are on, the caller's own wallet and balances, and
+   * the public chain coordinates. Operational posture (Turnkey mode, RPC
+   * reachability, treasury provisioning, custody provider ids and failure
+   * strings) stays on the admin-only `/admin/wallet/health`.
+   */
   async getWalletHealth(userId: string) {
     const wallet =
       await this.walletProvisioningService.ensureWalletForUser(userId);
@@ -142,29 +152,28 @@ export class WalletQueryService {
       );
 
     const isMainnet = wallet.chainEnvironment === 'mainnet';
-    const rpcUrl = isMainnet
-      ? this.walletConfigService.bscRpcMainnet
-      : this.walletConfigService.bscRpcTestnet;
+    // Public on-chain contract address — safe to expose so a client can show
+    // or add the token; everything else derived from config is not.
     const tokenAddress = isMainnet
       ? this.walletConfigService.bntTokenAddressMainnet
       : this.walletConfigService.bntTokenAddressTestnet;
-    const treasuryWalletId = isMainnet
-      ? this.walletConfigService.treasuryWalletIdMainnet
-      : this.walletConfigService.treasuryWalletIdTestnet;
-    const treasurySweepAddress = isMainnet
-      ? this.walletConfigService.treasurySweepAddressMainnet
-      : this.walletConfigService.treasurySweepAddressTestnet;
 
     return {
       timestamp: new Date().toISOString(),
       flags: {
         walletEnabled: this.walletConfigService.walletEnabled,
+        userWalletEnabled: wallet.status !== WalletStatus.disabled,
         depositsEnabled: this.walletConfigService.depositsEnabled,
         withdrawalsEnabled: this.walletConfigService.withdrawalsEnabled,
-        turnkeyMode: this.walletConfigService.turnkeyMode,
-        turnkeyExecutionMode: this.walletConfigService.turnkeyExecutionMode,
       },
-      wallet: this.toWalletSummary(wallet),
+      wallet: {
+        id: wallet.id,
+        status: wallet.status,
+        address: wallet.address,
+        chainId: wallet.chainId,
+        chainEnvironment: wallet.chainEnvironment,
+        provisionedAt: wallet.provisionedAt,
+      },
       balances: {
         available: toDecimalString(account.available),
         pending: toDecimalString(account.pending),
@@ -173,11 +182,7 @@ export class WalletQueryService {
       network: {
         chainEnvironment: wallet.chainEnvironment,
         chainId: wallet.chainId,
-        rpcConfigured: Boolean(rpcUrl),
-        tokenAddressConfigured: Boolean(tokenAddress),
         tokenAddress: tokenAddress ?? null,
-        treasuryWalletIdConfigured: Boolean(treasuryWalletId),
-        treasurySweepAddressConfigured: Boolean(treasurySweepAddress),
       },
     };
   }

@@ -38,4 +38,28 @@ export class DeviceTokensService {
     await this.prisma.deviceToken.delete({ where: { id: existing.id } });
     return { deleted: true };
   }
+
+  /**
+   * Delete by push-token value, scoped to the caller.
+   *
+   * `token` is globally unique, so the `userId` filter is what prevents one
+   * user from unregistering another user's device. A token owned by someone
+   * else is indistinguishable from an unknown token in the response.
+   */
+  async removeByToken(userId: string, token: string) {
+    const existing = await this.prisma.deviceToken.findFirst({
+      where: {
+        token,
+        userId,
+      },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return { deleted: false };
+    }
+
+    await this.prisma.deviceToken.delete({ where: { id: existing.id } });
+    return { deleted: true };
+  }
 }
