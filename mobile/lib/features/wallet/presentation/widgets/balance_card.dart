@@ -83,6 +83,17 @@ class BalanceCard extends StatelessWidget {
             weight: FontWeight.w500,
           ),
         ),
+        if (!isBalanceHidden && !hasLivePricing) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Balances go live when BNT launches on BSC.',
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
+              size: 11,
+              weight: FontWeight.w500,
+            ),
+          ),
+        ],
         const SizedBox(height: 14),
         GestureDetector(
           onTap: () {

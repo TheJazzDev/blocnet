@@ -1,22 +1,15 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/wallet/presentation/pages/swap_flow_screen.dart';
+import 'package:blocnet/features/wallet/presentation/pages/wallet_receive_screen.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/quick_action_button.dart';
-import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final walletStore = context.watch<WalletStore>();
-    final defaultAsset = walletStore.supportedAssets.isEmpty
-        ? 'BNT'
-        : walletStore.supportedAssets.first;
-
     return Row(
       children: [
         Expanded(
@@ -32,9 +25,10 @@ class QuickActions extends StatelessWidget {
               ],
             ),
             onTap: () {
-              Navigator.of(context).pushNamed(
-                AppRoutes.walletAssetDetail,
-                arguments: {'assetCode': defaultAsset},
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const WalletReceiveScreen(),
+                ),
               );
             },
           ),
@@ -73,9 +67,7 @@ class QuickActions extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => SwapFlowScreen(
-                    initialAsset: defaultAsset,
-                  ),
+                  builder: (_) => const SwapFlowScreen(),
                 ),
               );
             },
