@@ -177,8 +177,18 @@ export function AdminShell({
   return (
     <AdminSessionContext.Provider value={sessionValue}>
       <div className='relative flex h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_14%,rgba(99,102,241,0.16),transparent_34%),radial-gradient(circle_at_92%_8%,rgba(34,211,238,0.14),transparent_30%),var(--background)]'>
-        <div className='pointer-events-none absolute -top-28 right-[-6rem] h-80 w-80 rounded-full bg-cyan-300/10 blur-3xl' />
-        <div className='pointer-events-none absolute -bottom-36 left-[-8rem] h-96 w-96 rounded-full bg-violet-400/10 blur-3xl' />
+        {/*
+          Decorative blobs are clipped inside their own inset-0 layer. Left bare on
+          the shell they extend past its box and give the overflow-hidden shell
+          scrollable overflow, which focus-reveal (Radix menus/tabs) can consume and
+          the user can never scroll back. See F-04.
+        */}
+        <div
+          aria-hidden
+          className='pointer-events-none absolute inset-0 overflow-hidden'>
+          <div className='absolute -top-28 right-[-6rem] h-80 w-80 rounded-full bg-cyan-300/10 blur-3xl' />
+          <div className='absolute -bottom-36 left-[-8rem] h-96 w-96 rounded-full bg-violet-400/10 blur-3xl' />
+        </div>
 
         <aside className='relative z-10 hidden w-[260px] shrink-0 flex-col border-r border-sidebar-border/70 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/92 lg:flex'>
           <SidebarContent
@@ -215,7 +225,7 @@ export function AdminShell({
           />
         </aside>
 
-        <div className='relative z-10 flex flex-1 flex-col overflow-hidden'>
+        <div className='relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden'>
           <TopBar
             mobileOpen={mobileOpen}
             onToggleMobile={() => setMobileOpen(!mobileOpen)}
@@ -250,8 +260,8 @@ export function AdminShell({
             </div>
           )}
 
-          <main className='flex-1 overflow-y-auto'>
-            <div className='mx-auto p-4 md:p-6 lg:p-8'>{children}</div>
+          <main className='min-w-0 flex-1 overflow-x-hidden overflow-y-auto'>
+            <div className='min-w-0 p-4 md:p-6 lg:p-8'>{children}</div>
           </main>
         </div>
       </div>
