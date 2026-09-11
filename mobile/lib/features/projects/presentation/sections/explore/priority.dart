@@ -9,8 +9,15 @@ import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// Lists updates for one urgency level.
+///
+/// The level is bound per route in `ProtectedRoutes` (`priority:`); the
+/// `{'priority': Priority}` route argument is kept as a fallback so callers
+/// that push a generic route still get the level they asked for.
 class PriorityScreens extends StatefulWidget {
-  const PriorityScreens({super.key});
+  const PriorityScreens({super.key, this.priority});
+
+  final Priority? priority;
 
   @override
   State<PriorityScreens> createState() => _PriorityScreensState();
@@ -29,7 +36,10 @@ class _PriorityScreensState extends State<PriorityScreens> {
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
-    priority = args?['priority'] ?? Priority.high;
+    final argPriority = args?['priority'];
+    priority = widget.priority ??
+        (argPriority is Priority ? argPriority : null) ??
+        Priority.high;
     viewModel = PriorityScreenViewModel(priority: priority);
     Provider.of<UpdatesStore>(context, listen: false).fetchUpdatesOnce();
 
