@@ -51,7 +51,10 @@ export default function ProjectsPageClient() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Projects" description="Moderate project visibility and lifecycle status." />
+      <PageHeader
+        title="Projects"
+        description="Moderate project visibility and lifecycle status. Users see projects as Gems in the app."
+      />
 
       <Card>
         <CardHeader className="pb-3">
