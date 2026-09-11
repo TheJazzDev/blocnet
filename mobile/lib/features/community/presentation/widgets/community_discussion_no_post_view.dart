@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class CommunityDiscussionNoPostView extends StatelessWidget {
           'No post selected.',
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 14,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),

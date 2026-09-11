@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/community/data/models/community_topic.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
@@ -106,7 +107,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -121,12 +122,12 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                                   : 'B',
                               style: AppTypography.custom(
                                 color: AppColors.primary400,
-                                size: 16,
+                                size: AppText.subtitleSize,
                                 weight: FontWeight.w700,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: AppSpace.md),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +136,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                                   displayName,
                                   style: AppTypography.custom(
                                     color: AppColors.textPrimary,
-                                    size: 14,
+                                    size: AppText.bodySize,
                                     weight: FontWeight.w600,
                                   ),
                                 ),
@@ -143,7 +144,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                                   username,
                                   style: AppTypography.custom(
                                     color: AppColors.textMuted,
-                                    size: 12,
+                                    size: AppText.bodySize,
                                     weight: FontWeight.w400,
                                   ),
                                 ),
@@ -152,7 +153,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: AppSpace.lg),
                       MentionTextField(
                         controller: _contentCtrl,
                         focusNode: _contentFocus,
@@ -162,17 +163,17 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                         maxLines: 12,
                         showFocusHighlight: false,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpace.lg),
                       Text(
                         'TOPIC',
                         style: AppTypography.custom(
                           color: AppColors.textFaint,
-                          size: 10,
+                          size: AppText.captionSize,
                           weight: FontWeight.w600,
                           letterSpacing: 0.8,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpace.sm),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -182,13 +183,13 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                             onTap: () => setState(() => _selectedTopic = topic),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
+                                  horizontal: AppSpace.md, vertical: AppSpace.sm),
                               decoration: BoxDecoration(
                                 color: isActive
                                     ? AppColors.primary500
                                         .withValues(alpha: 0.15)
                                     : AppColors.bgSurface,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                                 border: Border.all(
                                   color: isActive
                                       ? AppColors.primary400
@@ -202,7 +203,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                                   color: isActive
                                       ? AppColors.primary400
                                       : AppColors.textSecondary,
-                                  size: 12,
+                                  size: AppText.labelSize,
                                   weight: FontWeight.w500,
                                 ),
                               ),
@@ -217,7 +218,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
               SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.md),
                   child: SizedBox(
                     width: double.infinity,
                     height: 44,
@@ -230,7 +231,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                         disabledBackgroundColor:
                             AppColors.primary500.withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.mdValue),
                         ),
                       ),
                       child: store.isSubmittingPost
@@ -245,7 +246,7 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
                           : Text(
                               'Post',
                               style: AppTypography.custom(
-                                size: 14,
+                                size: AppText.bodySize,
                                 color: Colors.black,
                                 weight: FontWeight.w700,
                               ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -11,10 +12,10 @@ class StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(color: AppColors.borderSubtle),
         ),
         child: Column(
@@ -23,7 +24,7 @@ class StatCard extends StatelessWidget {
               value,
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 17,
+                size: AppText.subtitleSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -31,7 +32,7 @@ class StatCard extends StatelessWidget {
               label,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w400,
               ),
             ),

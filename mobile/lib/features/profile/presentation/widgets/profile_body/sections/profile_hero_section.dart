@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
@@ -65,7 +66,7 @@ class ProfileHeroSection extends StatelessWidget {
         ),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -74,7 +75,7 @@ class ProfileHeroSection extends StatelessWidget {
                 avatarUrl: avatarUrl,
                 showVerifiedMark: isHunter,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +87,7 @@ class ProfileHeroSection extends StatelessWidget {
                             displayName,
                             style: AppTypography.custom(
                               color: AppColors.textPrimary,
-                              size: 18,
+                              size: AppText.titleSize,
                               weight: FontWeight.w800,
                             ),
                             maxLines: 1,
@@ -94,7 +95,7 @@ class ProfileHeroSection extends StatelessWidget {
                           ),
                         ),
                         if (primaryBadge != null && badges.isEmpty) ...[
-                          const SizedBox(width: 6),
+                          const SizedBox(width: AppSpace.sm),
                           BadgeIcon(
                             badge: primaryBadge!,
                             size: BadgeSize.medium,
@@ -106,12 +107,12 @@ class ProfileHeroSection extends StatelessWidget {
                       ],
                     ),
                     if (email?.trim().isNotEmpty ?? false) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpace.xs),
                       Text(
                         email!.trim(),
                         style: AppTypography.custom(
                           color: AppColors.textMuted,
-                          size: 10,
+                          size: AppText.captionSize,
                           weight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -119,12 +120,12 @@ class ProfileHeroSection extends StatelessWidget {
                       ),
                     ],
                     if (normalizedBio.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpace.xs),
                       Text(
                         normalizedBio,
                         style: AppTypography.custom(
                           color: AppColors.textMuted,
-                          size: 11,
+                          size: AppText.captionSize,
                           weight: FontWeight.w500,
                         ),
                         maxLines: 2,
@@ -132,7 +133,7 @@ class ProfileHeroSection extends StatelessWidget {
                       ),
                     ],
                     if (badges.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpace.sm),
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
@@ -148,7 +149,7 @@ class ProfileHeroSection extends StatelessWidget {
                         ],
                       ),
                     ],
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpace.sm),
                     _SpaceLabel(space: activeSpace),
                   ],
                 ),
@@ -167,12 +168,12 @@ class ProfileHeroSection extends StatelessWidget {
               height: 34,
               decoration: BoxDecoration(
                 color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Icon(
                 Icons.edit_outlined,
-                size: 17,
+                size: AppIcon.sm,
                 color: AppColors.primary400,
               ),
             ),
@@ -208,7 +209,7 @@ class _Avatar extends StatelessWidget {
           displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
           style: AppTypography.custom(
             color: AppColors.teal400,
-            size: 22,
+            size: AppText.headlineSize,
             weight: FontWeight.w800,
           ),
         );
@@ -232,7 +233,7 @@ class _Avatar extends StatelessWidget {
               shape: BoxShape.circle,
               color: AppColors.bgBase,
             ),
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(AppSpace.hair),
             child: ClipOval(
               child: Container(
                 color: AppColors.bgElevated,
@@ -264,7 +265,7 @@ class _Avatar extends StatelessWidget {
               ),
               child: const Icon(
                 Icons.verified_rounded,
-                size: 12,
+                size: AppIcon.xs,
                 color: Colors.black,
               ),
             ),
@@ -282,22 +283,22 @@ class _SpaceLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.fullValue),
         border: Border.all(color: space.accent.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(space.icon, size: 10, color: space.accent),
-          const SizedBox(width: 4),
+          Icon(space.icon, size: AppIcon.xs, color: space.accent),
+          const SizedBox(width: AppSpace.xs),
           Text(
             '${space.label} Space',
             style: AppTypography.custom(
               color: space.accent,
-              size: 9,
+              size: AppText.captionSize,
               weight: FontWeight.w600,
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -29,22 +30,22 @@ class LevelsErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded, size: 40, color: AppColors.error500),
-            const SizedBox(height: 12),
+            Icon(Icons.error_outline_rounded, size: AppIcon.xxl, color: AppColors.error500),
+            const SizedBox(height: AppSpace.md),
             Text(
               message,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             ElevatedButton(
               onPressed: onRetry,
               child: const Text('Retry'),
@@ -67,7 +68,7 @@ class LevelsEmptyState extends StatelessWidget {
         'No levels available',
         style: AppTypography.custom(
           color: AppColors.textMuted,
-          size: 13,
+          size: AppText.labelSize,
           weight: FontWeight.w500,
         ),
       ),

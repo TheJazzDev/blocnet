@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/domain/level_requirement.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_status_chip.dart';
@@ -53,11 +54,11 @@ class LevelRequirementRow extends StatelessWidget {
     final metric = requirement.metric;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(bottom: AppSpace.sm),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: complete ? tierColor.withValues(alpha: 0.08) : AppColors.bgBase,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: complete
               ? tierColor.withValues(alpha: 0.35)
@@ -73,15 +74,15 @@ class LevelRequirementRow extends StatelessWidget {
               color: complete
                   ? tierColor.withValues(alpha: 0.16)
                   : AppColors.bgSurface,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.smValue),
             ),
             child: Icon(
               complete ? Icons.check_rounded : metric.icon,
-              size: 16,
+              size: AppIcon.sm,
               color: complete ? tierColor : AppColors.textMuted,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,24 +94,24 @@ class LevelRequirementRow extends StatelessWidget {
                         metric.label,
                         style: AppTypography.custom(
                           color: AppColors.textPrimary,
-                          size: 12,
+                          size: AppText.labelSize,
                           weight: FontWeight.w700,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpace.sm),
                     Text(
                       '${requirement.currentLabel} / ${requirement.requiredLabel}',
                       style: AppTypography.custom(
                         color: complete ? tierColor : AppColors.textMuted,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(3),
                   child: LinearProgressIndicator(
@@ -126,7 +127,7 @@ class LevelRequirementRow extends StatelessWidget {
             ),
           ),
           if (!complete) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             LevelStatusChip(
               label: '+${requirement.remainingLabel}',
               color: AppColors.textMuted,

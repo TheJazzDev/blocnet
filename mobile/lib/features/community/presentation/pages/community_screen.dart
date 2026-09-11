@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
@@ -270,16 +271,16 @@ class _CommunityScreenState extends State<CommunityScreen>
                       behavior: HitTestBehavior.opaque,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                            horizontal: AppSpace.md, vertical: AppSpace.sm),
                         decoration: BoxDecoration(
                           color: accent,
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(AppRadius.fullValue),
                         ),
                         child: Text(
                           '$pendingCount new posts',
                           style: AppTypography.custom(
                             color: onAccent,
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w700,
                           ),
                         ),

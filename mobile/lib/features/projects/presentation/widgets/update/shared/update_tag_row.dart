@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
@@ -21,10 +22,10 @@ class UpdateTagRow extends StatelessWidget {
             PrimaryLabel(
               primaryTag: post.project?.primaryTag ?? PrimaryTag.none,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpace.sm),
           ],
           ...post.secondaryTags.map((tag) => Padding(
-                padding: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.only(right: AppSpace.sm),
                 child: SecondaryLabel(tag),
               )),
         ],

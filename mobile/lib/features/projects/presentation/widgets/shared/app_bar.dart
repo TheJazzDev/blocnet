@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/space_switcher.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
@@ -62,7 +63,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
           child: SizedBox(
             height: kToolbarHeight,
             child: Row(
@@ -87,7 +88,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                           )
                         : const _ProfileAvatarButton(),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                 ],
                 Expanded(
                   child: Align(
@@ -96,7 +97,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       title,
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 17,
+                        size: AppText.subtitleSize,
                         weight: FontWeight.w700,
                         letterSpacing: -0.3,
                       ),
@@ -110,7 +111,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   children: [
                     ...actions,
                     if (showProfileShortcut) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpace.sm),
                       _AppBarIconButton(
                         icon: Icons.person_outline_rounded,
                         minimal: minimalActionIcons,
@@ -120,7 +121,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ],
                     if (showFilter) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpace.sm),
                       _AppBarIconButton(
                         icon: Icons.tune_rounded,
                         minimal: minimalActionIcons,
@@ -136,7 +137,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ],
                     if (showSearch) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpace.sm),
                       _AppBarIconButton(
                         icon: Icons.search_rounded,
                         minimal: minimalActionIcons,
@@ -146,11 +147,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ],
                     if (showNotificationBell) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpace.sm),
                       _NotificationBellButton(minimal: minimalActionIcons),
                     ],
                     if (showSpaceSwitcher) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpace.sm),
                       SpaceSwitcher(minimal: minimalActionIcons),
                     ],
                   ],
@@ -230,7 +231,7 @@ class _AppBarIconButton extends StatelessWidget {
               height: 38,
               decoration: BoxDecoration(
                 color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(color: AppColors.borderSubtle, width: 1),
               ),
               child: iconWidget,
@@ -271,7 +272,7 @@ class _ProfileAvatarButton extends StatelessWidget {
           initials,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 12,
+            size: AppText.labelSize,
             weight: FontWeight.w700,
           ),
         );
@@ -279,7 +280,7 @@ class _ProfileAvatarButton extends StatelessWidget {
       return Icon(
         Icons.person_rounded,
         color: AppColors.textSecondary,
-        size: 18,
+        size: AppIcon.md,
       );
     }
 
@@ -390,7 +391,7 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
                             : Icons.notifications_outlined,
                         color:
                             unreadCount > 0 ? accent : AppColors.textSecondary,
-                        size: 22,
+                        size: AppIcon.lg,
                       ),
                     ),
                   )
@@ -399,7 +400,7 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
                     height: 38,
                     decoration: BoxDecoration(
                       color: AppColors.bgElevated,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                       border:
                           Border.all(color: AppColors.borderSubtle, width: 1),
                     ),
@@ -408,7 +409,7 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
                           ? Icons.notifications_rounded
                           : Icons.notifications_outlined,
                       color: unreadCount > 0 ? accent : AppColors.textSecondary,
-                      size: 18,
+                      size: AppIcon.md,
                     ),
                   ),
             builder: (context, child) {
@@ -431,11 +432,11 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
               right: widget.minimal ? -3 : -3,
               child: Container(
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs, vertical: 1),
                 constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
                 decoration: BoxDecoration(
                   color: Colors.red,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border: Border.all(color: AppColors.bgBase, width: 1.5),
                 ),
                 child: Center(
@@ -443,7 +444,7 @@ class _NotificationBellButtonState extends State<_NotificationBellButton>
                     unreadCount > 99 ? '99+' : unreadCount.toString(),
                     style: AppTypography.custom(
                       color: Colors.white,
-                      size: 9,
+                      size: AppText.captionSize,
                       weight: FontWeight.w700,
                       height: 1.0,
                     ),

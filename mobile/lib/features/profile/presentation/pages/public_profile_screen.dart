@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
@@ -156,7 +157,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           '$actionLabel user?',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -164,7 +165,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           description,
           style: AppTypography.custom(
             color: AppColors.textSecondary,
-            size: 13,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),
@@ -175,7 +176,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               'Cancel',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -186,7 +187,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               actionLabel,
               style: AppTypography.custom(
                 color: _isBlocked ? AppColors.primary400 : AppColors.error500,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -255,25 +256,25 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           children: [
             if (widget.asSheet)
               Padding(
-                padding: const EdgeInsets.only(top: 10, bottom: 8),
+                padding: const EdgeInsets.only(top: AppSpace.md, bottom: AppSpace.sm),
                 child: Container(
                   width: 44,
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+              padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.xs, AppSpace.md, AppSpace.sm),
               child: Row(
                 children: [
                   Text(
                     'Public Profile',
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 17,
+                      size: AppText.subtitleSize,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -300,7 +301,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       posts.map((post) => post.projectId).toSet().length;
 
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                    padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.xs, AppSpace.lg, AppSpace.xl),
                     child: Column(
                       children: [
                         AppAvatar(
@@ -312,12 +313,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                 : 'U',
                             style: AppTypography.custom(
                               color: AppColors.primary400,
-                              size: 24,
+                              size: AppText.headlineSize,
                               weight: FontWeight.w700,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpace.md),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -333,13 +334,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                 levelBadgeSize: LevelBadgeSize.small,
                                 textStyle: AppTypography.custom(
                                   color: AppColors.textPrimary,
-                                  size: 22,
+                                  size: AppText.headlineSize,
                                   weight: FontWeight.w700,
                                 ),
                               ),
                             ),
                             if (admin.primaryBadge != null) ...[
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppSpace.sm),
                               BadgeIcon(
                                 badge: admin.primaryBadge!,
                                 size: BadgeSize.medium,
@@ -348,16 +349,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             ],
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpace.xs),
                         Text(
                           username,
                           style: AppTypography.custom(
                             color: AppColors.textMuted,
-                            size: 13,
+                            size: AppText.bodySize,
                             weight: FontWeight.w400,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppSpace.sm),
                         if (displayRoleKey != null)
                           ProfileRoleChip(
                             label: _roleLabel(displayRoleKey),
@@ -365,19 +366,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             borderColor: _roleBorderColor(displayRoleKey),
                             backgroundColor: _roleBackgroundColor(displayRoleKey),
                           ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpace.lg),
                         Row(
                           children: [
                             StatCard(
                                 value: '$followersCount', label: 'Followers'),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpace.sm),
                             StatCard(value: '$postsCount', label: 'Posts'),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpace.sm),
                             StatCard(value: '$projectCount', label: 'Gems'),
                           ],
                         ),
                         if (_isLoadingPublicProfile) ...[
-                          const SizedBox(height: 10),
+                          const SizedBox(height: AppSpace.md),
                           SizedBox(
                             width: 18,
                             height: 18,
@@ -388,10 +389,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ),
                         ],
                         if (trust != null) ...[
-                          const SizedBox(height: 14),
+                          const SizedBox(height: AppSpace.lg),
                           TrustChips(trust: trust),
                         ],
-                        const SizedBox(height: 14),
+                        const SizedBox(height: AppSpace.lg),
                         if (canTipHunter)
                           Row(
                             children: [
@@ -411,7 +412,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                           : Colors.black,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
                                       ),
                                     ),
                                     child: _isSubmittingFollow
@@ -433,14 +434,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                               color: _isFollowing
                                                   ? AppColors.textPrimary
                                                   : Colors.black,
-                                              size: 13,
+                                              size: AppText.labelSize,
                                               weight: FontWeight.w700,
                                             ),
                                           ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppSpace.sm),
                               Expanded(
                                 child: SizedBox(
                                   height: 42,
@@ -468,7 +469,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                       foregroundColor: AppColors.primary400,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
                                         side: BorderSide(
                                           color: AppColors.primary500
                                               .withValues(alpha: 0.45),
@@ -478,13 +479,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                     icon: Icon(
                                       Icons.volunteer_activism_rounded,
                                       color: AppColors.primary400,
-                                      size: 17,
+                                      size: AppIcon.sm,
                                     ),
                                     label: Text(
                                       'Tip Hunter',
                                       style: AppTypography.custom(
                                         color: AppColors.primary400,
-                                        size: 12.5,
+                                        size: AppText.labelSize,
                                         weight: FontWeight.w700,
                                       ),
                                     ),
@@ -509,7 +510,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                     : Colors.black,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                                 ),
                               ),
                               child: _isSubmittingFollow
@@ -529,14 +530,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                         color: _isFollowing
                                             ? AppColors.textPrimary
                                             : Colors.black,
-                                        size: 13,
+                                        size: AppText.labelSize,
                                         weight: FontWeight.w700,
                                       ),
                                     ),
                             ),
                           ),
                         if (!isOwnProfile) ...[
-                          const SizedBox(height: 10),
+                          const SizedBox(height: AppSpace.md),
                           SizedBox(
                             width: double.infinity,
                             height: 40,
@@ -552,7 +553,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                           .withValues(alpha: 0.45),
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                                 ),
                                 backgroundColor: _isBlocked
                                     ? AppColors.primary500
@@ -560,7 +561,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                     : AppColors.error500
                                         .withValues(alpha: 0.08),
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
+                                    const EdgeInsets.symmetric(horizontal: AppSpace.md),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 visualDensity: VisualDensity.compact,
                               ),
@@ -579,7 +580,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                       _isBlocked
                                           ? Icons.check_circle_outline
                                           : Icons.block_outlined,
-                                      size: 16,
+                                      size: AppIcon.sm,
                                       color: _isBlocked
                                           ? AppColors.primary400
                                           : AppColors.error500,
@@ -590,16 +591,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                   color: _isBlocked
                                       ? AppColors.primary400
                                       : AppColors.error500,
-                                  size: 12,
+                                  size: AppText.labelSize,
                                   weight: FontWeight.w700,
                                 ),
                               ),
                             ),
                           ),
                         ],
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpace.lg),
                         const SectionLabel('Recent Activity'),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpace.sm),
                         if (posts.isEmpty)
                           const EmptyActivityCard()
                         else

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -102,15 +103,15 @@ class _OverlayToast extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: spec.background,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             border: Border.all(color: spec.border),
           ),
-          padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.md, AppSpace.md),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(spec.icon, size: 18, color: spec.iconColor),
-              const SizedBox(width: 10),
+              Icon(spec.icon, size: AppIcon.md, color: spec.iconColor),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Text(
                   spec.message,
@@ -118,20 +119,20 @@ class _OverlayToast extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               GestureDetector(
                 onTap: onClose,
                 behavior: HitTestBehavior.opaque,
                 child: Padding(
-                  padding: const EdgeInsets.all(2),
+                  padding: const EdgeInsets.all(AppSpace.hair),
                   child: Icon(
                     Icons.close_rounded,
-                    size: 18,
+                    size: AppIcon.md,
                     color: AppColors.textMuted,
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +15,7 @@ class CreateUpdateEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -24,23 +25,23 @@ class CreateUpdateEmptyState extends StatelessWidget {
                 : 'No project is available for updates yet.',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 14,
+              size: AppText.bodySize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'An admin assigns projects to hunters from the console. If you '
             'have found a project worth tracking, submit it as a new gem and '
             'it can be assigned to you once approved.',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpace.lg),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -52,10 +53,10 @@ class CreateUpdateEmptyState extends StatelessWidget {
                 minimumSize: const Size.fromHeight(42),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
               ),
-              icon: const Icon(Icons.diamond_outlined, size: 18),
+              icon: const Icon(Icons.diamond_outlined, size: AppIcon.md),
               label: const Text('Submit a new gem'),
             ),
           ),

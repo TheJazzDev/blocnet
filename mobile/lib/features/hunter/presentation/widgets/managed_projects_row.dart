@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/project_proposal_model.dart';
@@ -100,7 +101,7 @@ class _ManagedProjectsRowState extends State<ManagedProjectsRow> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: visibleProjects.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpace.md),
         itemBuilder: (context, i) =>
             _ManagedProjectCard(item: visibleProjects[i]),
       ),
@@ -174,10 +175,10 @@ class _ManagedProjectCard extends StatelessWidget {
 
     return Container(
       width: 160,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -190,24 +191,24 @@ class _ManagedProjectCard extends StatelessWidget {
               _StatusChip(status: item.status),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Text(
             name,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 13,
+              size: AppText.labelSize,
               weight: FontWeight.w700,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           if (ticker.isNotEmpty) ...[
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpace.hair),
             Text(
               '\$$ticker',
               style: AppTypography.custom(
                 color: AppColors.primary400,
-                size: 10,
+                size: AppText.captionSize,
                 weight: FontWeight.w500,
               ),
             ),
@@ -253,7 +254,7 @@ class _ProjectIcon extends StatelessWidget {
       height: 32,
       decoration: BoxDecoration(
         color: AppColors.primary500.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.smValue),
         border: Border.all(
           color: AppColors.primary500.withValues(alpha: 0.25),
         ),
@@ -263,7 +264,7 @@ class _ProjectIcon extends StatelessWidget {
           initial,
           style: AppTypography.custom(
             color: AppColors.primary400,
-            size: 13,
+            size: AppText.labelSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -289,16 +290,16 @@ class _StatusChip extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: AppSpace.hair),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xlValue),
       ),
       child: Text(
         status,
         style: AppTypography.custom(
           color: color,
-          size: 9,
+          size: AppText.captionSize,
           weight: FontWeight.w600,
         ),
       ),
@@ -333,7 +334,7 @@ class _ActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 7),
           decoration: BoxDecoration(
             color: AppColors.primary500.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.smValue),
             border: Border.all(
               color: AppColors.primary500.withValues(alpha: 0.3),
             ),
@@ -343,7 +344,7 @@ class _ActionButton extends StatelessWidget {
             isPendingProposal ? 'Open' : label,
             style: AppTypography.custom(
               color: AppColors.primary400,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w600,
             ),
           ),
@@ -357,37 +358,37 @@ class _EmptyManagedProjects extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpace.xl),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
         children: [
           Icon(Icons.folder_open_outlined,
-              size: 28, color: AppColors.textFaint),
-          const SizedBox(height: 8),
+              size: AppIcon.xl, color: AppColors.textFaint),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'No gems yet',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 13,
+              size: AppText.labelSize,
               weight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpace.xs),
           Text(
             'Submit a gem to get started',
             textAlign: TextAlign.center,
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w400,
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               Expanded(
@@ -395,10 +396,10 @@ class _EmptyManagedProjects extends StatelessWidget {
                   onTap: () =>
                       Navigator.of(context).pushNamed(AppRoutes.manageProjects),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
                     decoration: BoxDecoration(
                       color: AppColors.bgElevated,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.smValue),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
                     alignment: Alignment.center,
@@ -406,7 +407,7 @@ class _EmptyManagedProjects extends StatelessWidget {
                       'View Submissions',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w600,
                       ),
                     ),

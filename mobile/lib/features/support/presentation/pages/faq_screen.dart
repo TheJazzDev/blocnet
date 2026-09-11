@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/support/data/faq_content.dart';
 import 'package:blocnet/features/support/presentation/widgets/support_widgets.dart';
@@ -21,7 +22,7 @@ class FaqScreen extends StatelessWidget {
         showSpaceSwitcher: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         children: [
           const SupportHeader(
             title: 'Frequently asked questions',
@@ -29,14 +30,14 @@ class FaqScreen extends StatelessWidget {
                 'Short answers to the things people ask most. Tap a question '
                 'to expand it.',
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpace.lg),
           for (final entry in faqEntries)
             SupportFaqTile(
               icon: entry.icon,
               question: entry.question,
               answer: entry.answer,
             ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpace.xl),
         ],
       ),
     );

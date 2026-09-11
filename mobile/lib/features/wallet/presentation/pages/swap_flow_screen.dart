@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -17,14 +18,14 @@ class SwapFlowScreen extends StatelessWidget {
           'Swap',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 18,
+            size: AppText.titleSize,
             weight: FontWeight.w700,
           ),
         ),
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.xxl, vertical: 40),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -44,27 +45,27 @@ class SwapFlowScreen extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.swap_horiz_rounded,
-                  size: 36,
+                  size: AppIcon.xl,
                   color: AppColors.teal400,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpace.xl),
               Text(
                 "Swap isn't available yet",
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 18,
+                  size: AppText.titleSize,
                   weight: FontWeight.w700,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               Text(
                 'In-app swaps arrive after BNT launches on BSC. '
                 'Until then you can still receive and send your assets.',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 13,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                   height: 1.5,
                 ),

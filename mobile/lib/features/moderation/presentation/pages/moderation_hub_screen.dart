@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/moderation/presentation/pages/appeals_queue_screen.dart';
 import 'package:blocnet/features/moderation/presentation/pages/reports_queue_screen.dart';
@@ -57,7 +58,7 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
       color: AppColors.primary400,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -66,20 +67,20 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
               'Moderation Hub',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 24,
+                size: AppText.headlineSize,
                 weight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpace.xs),
             Text(
               'Manage community content and user safety',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpace.xl),
 
             // Stats overview
             _StatsOverviewSection(
@@ -88,18 +89,18 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
               pendingAppeals: _pendingAppeals,
               activeRestrictions: _activeRestrictions,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpace.xl),
 
             // Quick actions grid
             Text(
               'Quick Actions',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 16,
+                size: AppText.subtitleSize,
                 weight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             _QuickActionsGrid(
               onReportsQueueTap: () {
                 Navigator.of(context).push(
@@ -118,7 +119,7 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
               pendingReports: _pendingReports,
               pendingAppeals: _pendingAppeals,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpace.xl),
 
             // Overview info card
             _OverviewInfoCard(),
@@ -154,7 +155,7 @@ class _StatsOverviewSection extends StatelessWidget {
             color: AppColors.error500,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: _StatCard(
             icon: Icons.replay_outlined,
@@ -163,7 +164,7 @@ class _StatsOverviewSection extends StatelessWidget {
             color: AppColors.warning500,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: _StatCard(
             icon: Icons.block_outlined,
@@ -193,7 +194,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -203,7 +204,7 @@ class _StatCard extends StatelessWidget {
             AppColors.bgSurface.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle.withValues(alpha: 0.75),
         ),
@@ -216,27 +217,27 @@ class _StatCard extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
             ),
             child: Center(
-              child: Icon(icon, size: 16, color: color),
+              child: Icon(icon, size: AppIcon.sm, color: color),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Text(
             value,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 20,
+              size: AppText.titleSize,
               weight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpace.hair),
           Text(
             label,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 10,
+              size: AppText.captionSize,
               weight: FontWeight.w500,
               height: 1.3,
             ),
@@ -280,7 +281,7 @@ class _QuickActionsGrid extends StatelessWidget {
             },
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: _QuickActionTile(
             icon: Icons.replay_rounded,
@@ -319,7 +320,7 @@ class _QuickActionTile extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -329,7 +330,7 @@ class _QuickActionTile extends StatelessWidget {
               AppColors.bgSurface.withValues(alpha: 0.88),
             ],
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(
             color: AppColors.borderSubtle.withValues(alpha: 0.75),
           ),
@@ -344,18 +345,18 @@ class _QuickActionTile extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   ),
                   child: Center(
-                    child: Icon(icon, size: 20, color: color),
+                    child: Icon(icon, size: AppIcon.md, color: color),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 Text(
                   label,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w600,
                   ),
                 ),
@@ -366,16 +367,16 @@ class _QuickActionTile extends StatelessWidget {
                 top: 0,
                 right: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                   child: Text(
                     badge!,
                     style: AppTypography.custom(
                       color: Colors.black,
-                      size: 10,
+                      size: AppText.captionSize,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -392,7 +393,7 @@ class _OverviewInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -402,7 +403,7 @@ class _OverviewInfoCard extends StatelessWidget {
             AppColors.teal400.withValues(alpha: 0.06),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.primary400.withValues(alpha: 0.2),
         ),
@@ -415,17 +416,17 @@ class _OverviewInfoCard extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: AppColors.primary400.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
             ),
             child: Center(
               child: Icon(
                 Icons.info_outline_rounded,
-                size: 18,
+                size: AppIcon.md,
                 color: AppColors.primary400,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,16 +435,16 @@ class _OverviewInfoCard extends StatelessWidget {
                   'Moderation Guidelines',
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpace.xs),
                 Text(
                   'Review reports promptly, apply consistent standards, and document decisions clearly. Appeals are reviewed by community admins.',
                   style: AppTypography.custom(
                     color: AppColors.textSecondary,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                     height: 1.5,
                   ),

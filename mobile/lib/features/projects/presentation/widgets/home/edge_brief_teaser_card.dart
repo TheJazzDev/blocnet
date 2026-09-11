@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
 import 'package:flutter/material.dart';
@@ -20,10 +21,10 @@ class EdgeBriefTeaserCard extends StatelessWidget {
     if (isLoading) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(color: AppColors.borderSubtle),
         ),
         child: Row(
@@ -36,12 +37,12 @@ class EdgeBriefTeaserCard extends StatelessWidget {
                 color: AppColors.primary400,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpace.md),
             Text(
               'Loading edge intelligence...',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 12,
+                size: AppText.labelSize,
                 weight: FontWeight.w500,
               ),
             ),
@@ -57,10 +58,10 @@ class EdgeBriefTeaserCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      padding: const EdgeInsets.fromLTRB(AppSpace.md, 0, AppSpace.md, AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -70,15 +71,15 @@ class EdgeBriefTeaserCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.auto_awesome_rounded,
-                size: 16,
+                size: AppIcon.sm,
                 color: AppColors.primary400,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 'BLOCNET EDGE ENGINE',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w700,
                   letterSpacing: 1.0,
                 ),
@@ -89,20 +90,20 @@ class EdgeBriefTeaserCard extends StatelessWidget {
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.xs),
                 ),
                 child: Text(
                   'Open',
                   style: AppTypography.custom(
                     color: AppColors.primary400,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             summary.headline.trim().isEmpty
                 ? 'Edge intelligence is ready.'
@@ -111,16 +112,16 @@ class EdgeBriefTeaserCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 13,
+              size: AppText.labelSize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             '${summary.totalSignals} signals · ${summary.recommendedNowCount} act now · ${summary.watchCount} watch',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w500,
             ),
           ),

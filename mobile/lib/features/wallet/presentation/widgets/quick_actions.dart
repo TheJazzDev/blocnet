@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/wallet/presentation/pages/swap_flow_screen.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_receive_screen.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
@@ -33,7 +34,7 @@ class QuickActions extends StatelessWidget {
             },
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: QuickActionButton(
             icon: Icons.arrow_upward_rounded,
@@ -51,7 +52,7 @@ class QuickActions extends StatelessWidget {
             },
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: QuickActionButton(
             icon: Icons.swap_horiz_rounded,

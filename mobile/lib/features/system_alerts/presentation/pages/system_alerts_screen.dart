@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -202,7 +203,7 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
             'Alert details',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 16,
+              size: AppText.subtitleSize,
               weight: FontWeight.w700,
             ),
           ),
@@ -224,77 +225,77 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
                   _detailRow('Actor ID', alert.actorId!),
                 if ((alert.actorEmail ?? '').isNotEmpty)
                   _detailRow('Actor', alert.actorEmail!),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 Text(
                   'Metadata',
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(AppSpace.md),
                   decoration: BoxDecoration(
                     color: AppColors.bgBase,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     border: Border.all(color: AppColors.borderSubtle),
                   ),
                   child: SelectableText(
                     metadata,
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w500,
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _copyText('Metadata', metadata),
-                        icon: const Icon(Icons.copy_rounded, size: 16),
+                        icon: const Icon(Icons.copy_rounded, size: AppIcon.sm),
                         label: const Text('Copy Metadata'),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () =>
                             _copyText('Console URL', adminUri.toString()),
-                        icon: const Icon(Icons.link_rounded, size: 16),
+                        icon: const Icon(Icons.link_rounded, size: AppIcon.sm),
                         label: const Text('Copy Console URL'),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 Row(
                   children: [
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: () => _openAdminConsole(alert),
                         icon:
-                            const Icon(Icons.open_in_browser_rounded, size: 16),
+                            const Icon(Icons.open_in_browser_rounded, size: AppIcon.sm),
                         label: const Text('Open in Admin Console'),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   'Admin console is optimized for tablet/desktop browsers.',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -318,7 +319,7 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
     bool copyable = true,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -327,7 +328,7 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
               text: TextSpan(
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                 ),
                 children: [
@@ -335,7 +336,7 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
                     text: '$label: ',
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 12,
+                      size: AppText.labelSize,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -345,12 +346,12 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
             ),
           ),
           if (copyable) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             InkWell(
               onTap: () => _copyText(label, value),
               child: Icon(
                 Icons.copy_rounded,
-                size: 16,
+                size: AppIcon.sm,
                 color: AppColors.textFaint,
               ),
             ),
@@ -380,7 +381,7 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
                 'Only owner/dev can access system alerts.',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 13,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                 ),
               ),
@@ -396,20 +397,20 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
                             Center(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 24),
+                                    horizontal: AppSpace.xl),
                                 child: Text(
                                   _error ?? 'No system alerts yet.',
                                   textAlign: TextAlign.center,
                                   style: AppTypography.custom(
                                     color: AppColors.textMuted,
-                                    size: 13,
+                                    size: AppText.labelSize,
                                     weight: FontWeight.w500,
                                   ),
                                 ),
                               ),
                             ),
                             if (_isSessionExpired) ...[
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppSpace.lg),
                               Center(
                                 child: OutlinedButton(
                                   onPressed: _signInAgain,
@@ -421,7 +422,7 @@ class _SystemAlertsScreenState extends State<SystemAlertsScreen> {
                         )
                       : ListView.separated(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
                           itemCount: _alerts.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 0),
@@ -473,7 +474,7 @@ class _SystemAlertTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.lgValue),
       onTap: onTap,
       child: Padding(
         padding: EdgeInsets.fromLTRB(
@@ -495,7 +496,7 @@ class _SystemAlertTile extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpace.sm),
                 Expanded(
                   child: Text(
                     alert.summary.isEmpty ? alert.action : alert.summary,
@@ -503,39 +504,39 @@ class _SystemAlertTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 13,
+                      size: AppText.labelSize,
                       weight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpace.sm),
                 Text(
                   timeLabel,
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             Text(
               '${alert.source.toUpperCase()} • ${alert.provider.toUpperCase()} • ${alert.status.toUpperCase()}',
               style: AppTypography.custom(
                 color: statusColor,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpace.sm),
             Text(
               alert.action,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w500,
               ),
             ),
@@ -561,10 +562,10 @@ class _SystemAlertRowWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     if (mode == FeedViewMode.card) {
       return Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: AppSpace.sm),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(
             color: AppColors.borderSubtle,
           ),

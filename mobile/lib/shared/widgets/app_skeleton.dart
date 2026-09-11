@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 
 /// Lightweight pulse skeleton used while list pages load, instead of a bare
@@ -71,28 +72,31 @@ class SkeletonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
         children: [
           const SkeletonBox(width: 40, height: 40, radius: 10),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 SkeletonBox(width: 140, height: 12),
-                SizedBox(height: 8),
+                // xs, not sm: the two lines plus this gap have to fit inside
+                // `height` minus 32px padding and 2px border. At the smallest
+                // height callers pass (60) that leaves exactly 26px.
+                SizedBox(height: AppSpace.xs),
                 SkeletonBox(width: 90, height: 10),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           const SkeletonBox(width: 44, height: 18, radius: 999),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
@@ -38,12 +39,12 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
         backgroundColor: AppColors.bgBase,
         appBar: _appBar(context),
         body: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpace.lg),
           child: Text(
             'Your current role does not allow managing updates.',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 14,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
             ),
           ),
@@ -76,18 +77,18 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                   backgroundColor: AppColors.bgSurface,
                   onRefresh: store.refreshUpdates,
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
                     children: [
                       if (store.lastError != null && store.lastError!.isNotEmpty) ...[
                         Text(
                           store.lastError!,
                           style: AppTypography.custom(
                             color: AppColors.error500,
-                            size: 12,
+                            size: AppText.bodySize,
                             weight: FontWeight.w400,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpace.md),
                       ],
 
                       // Stats Overview
@@ -97,7 +98,7 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                           totalLikes: totalLikes,
                           totalComments: totalComments,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: AppSpace.xl),
                       ],
 
                       // Empty State
@@ -112,7 +113,7 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                               'Your Updates',
                               style: AppTypography.custom(
                                 color: AppColors.textPrimary,
-                                size: 16,
+                                size: AppText.subtitleSize,
                                 weight: FontWeight.w700,
                               ),
                             ),
@@ -120,13 +121,13 @@ class _ManageUpdatesScreenState extends State<ManageUpdatesScreen> {
                               '$totalUpdates ${totalUpdates == 1 ? 'update' : 'updates'}',
                               style: AppTypography.custom(
                                 color: AppColors.textMuted,
-                                size: 13,
+                                size: AppText.labelSize,
                                 weight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpace.md),
 
                         // Updates List
                         ...own.asMap().entries.map(
@@ -171,7 +172,7 @@ class _StatsOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -181,7 +182,7 @@ class _StatsOverview extends StatelessWidget {
             AppColors.bgElevated.withValues(alpha: 0.8),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle.withValues(alpha: 0.5),
           width: 1.5,
@@ -255,24 +256,24 @@ class _StatItem extends StatelessWidget {
       children: [
         Icon(
           icon,
-          size: 20,
+          size: AppIcon.md,
           color: color,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpace.sm),
         Text(
           value,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 18,
+            size: AppText.titleSize,
             weight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSpace.hair),
         Text(
           label,
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w500,
           ),
         ),
@@ -287,7 +288,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpace.xl),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -297,7 +298,7 @@ class _EmptyState extends StatelessWidget {
             AppColors.bgSurface.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle.withValues(alpha: 0.5),
           width: 1.5,
@@ -323,40 +324,40 @@ class _EmptyState extends StatelessWidget {
             ),
             child: Icon(
               Icons.campaign_rounded,
-              size: 32,
+              size: AppIcon.xl,
               color: AppColors.teal400,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           Text(
             'No Updates Yet',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 16,
+              size: AppText.subtitleSize,
               weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'You haven\'t created any updates yet.\nHead to Hunter Hub to create your first update.',
             textAlign: TextAlign.center,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 13,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpace.xl),
           GestureDetector(
             onTap: () => Navigator.of(context).pushNamed(AppRoutes.hunterHub),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl, vertical: AppSpace.md),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.teal400, AppColors.teal500],
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.teal400.withValues(alpha: 0.3),
@@ -370,15 +371,15 @@ class _EmptyState extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.rocket_launch_rounded,
-                    size: 18,
+                    size: AppIcon.md,
                     color: Colors.white,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   Text(
                     'Go to Hunter Hub',
                     style: AppTypography.custom(
                       color: Colors.white,
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -439,7 +440,7 @@ class _UpdateTile extends StatelessWidget {
       onTap: () => _openDetails(context),
       child: Container(
         margin: EdgeInsets.only(bottom: isCardMode ? 12 : 0),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: isCardMode
             ? BoxDecoration(
                 gradient: LinearGradient(
@@ -450,7 +451,7 @@ class _UpdateTile extends StatelessWidget {
                     AppColors.bgSurface.withValues(alpha: 0.85),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lgValue),
                 border: Border.all(
                   color: priorityColor.withValues(alpha: 0.25),
                   width: 1.5,
@@ -472,7 +473,7 @@ class _UpdateTile extends StatelessWidget {
               children: [
                 if (isCardMode)
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(AppSpace.md),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -480,7 +481,7 @@ class _UpdateTile extends StatelessWidget {
                           priorityColor.withValues(alpha: 0.1),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                       border: Border.all(
                         color: priorityColor.withValues(alpha: 0.35),
                         width: 1.5,
@@ -488,17 +489,17 @@ class _UpdateTile extends StatelessWidget {
                     ),
                     child: Icon(
                       Icons.campaign_rounded,
-                      size: 20,
+                      size: AppIcon.md,
                       color: priorityColor,
                     ),
                   )
                 else
                   Icon(
                     Icons.campaign_rounded,
-                    size: 18,
+                    size: AppIcon.md,
                     color: priorityColor,
                   ),
-                const SizedBox(width: 14),
+                const SizedBox(width: AppSpace.lg),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,20 +511,20 @@ class _UpdateTile extends StatelessWidget {
                               update.title,
                               style: AppTypography.custom(
                                 color: AppColors.textPrimary,
-                                size: 15,
+                                size: AppText.bodySize,
                                 weight: FontWeight.w700,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpace.sm),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 3),
+                                horizontal: AppSpace.sm, vertical: AppSpace.hair),
                             decoration: BoxDecoration(
                               color: priorityColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(AppRadius.smValue),
                               border: Border.all(
                                 color: priorityColor.withValues(alpha: 0.35),
                               ),
@@ -539,12 +540,12 @@ class _UpdateTile extends StatelessWidget {
                                     shape: BoxShape.circle,
                                   ),
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: AppSpace.xs),
                                 Text(
                                   update.priority.label.toUpperCase(),
                                   style: AppTypography.custom(
                                     color: priorityColor,
-                                    size: 9,
+                                    size: AppText.captionSize,
                                     weight: FontWeight.w800,
                                     letterSpacing: 0.4,
                                   ),
@@ -554,21 +555,21 @@ class _UpdateTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: AppSpace.sm),
                       Row(
                         children: [
                           Icon(
                             Icons.layers_outlined,
-                            size: 12,
+                            size: AppIcon.xs,
                             color: AppColors.textFaint,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: AppSpace.xs),
                           Expanded(
                             child: Text(
                               update.project?.name ?? 'Gem',
                               style: AppTypography.custom(
                                 color: AppColors.textMuted,
-                                size: 12,
+                                size: AppText.labelSize,
                                 weight: FontWeight.w500,
                               ),
                               maxLines: 1,
@@ -577,14 +578,14 @@ class _UpdateTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: AppSpace.sm),
                       Text(
                         update.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.custom(
                           color: AppColors.textFaint,
-                          size: 12,
+                          size: AppText.bodySize,
                           weight: FontWeight.w400,
                           height: 1.5,
                         ),
@@ -593,16 +594,16 @@ class _UpdateTile extends StatelessWidget {
                   ),
                 ),
                 if (isCardMode) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   Icon(
                     Icons.chevron_right_rounded,
-                    size: 20,
+                    size: AppIcon.md,
                     color: AppColors.textFaint,
                   ),
                 ],
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             // Engagement metrics
             Row(
               children: [
@@ -611,7 +612,7 @@ class _UpdateTile extends StatelessWidget {
                   value: update.likesCount,
                   color: AppColors.primary400,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpace.sm),
                 _MetricChip(
                   icon: Icons.comment_outlined,
                   value: update.commentsCount,
@@ -622,7 +623,7 @@ class _UpdateTile extends StatelessWidget {
                   _formatDate(update.createdAt),
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -640,7 +641,7 @@ class _UpdateTile extends StatelessWidget {
         tile,
         if (showDivider)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
             child: Divider(
               height: 1,
               color: AppColors.borderSubtle.withValues(alpha: 0.5),
@@ -682,10 +683,10 @@ class _MetricChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.smValue),
         border: Border.all(
           color: color.withValues(alpha: 0.25),
         ),
@@ -695,15 +696,15 @@ class _MetricChip extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: 12,
+            size: AppIcon.xs,
             color: color,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpace.xs),
           Text(
             value.toString(),
             style: AppTypography.custom(
               color: color,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w600,
             ),
           ),

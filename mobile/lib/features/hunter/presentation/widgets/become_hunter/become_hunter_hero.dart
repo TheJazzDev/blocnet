@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,7 @@ class BecomeHunterHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -19,7 +20,7 @@ class BecomeHunterHero extends StatelessWidget {
             AppColors.primary500.withValues(alpha: 0.03),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xlValue),
         border: Border.all(color: AppColors.primary500.withValues(alpha: 0.25)),
       ),
       child: Column(
@@ -30,32 +31,32 @@ class BecomeHunterHero extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: AppColors.primary500.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.lgValue),
             ),
-            child: Icon(Icons.radar_rounded, color: AppColors.primary400, size: 22),
+            child: Icon(Icons.radar_rounded, color: AppColors.primary400, size: AppIcon.lg),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Text(
             'Join the Hunter Network',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 17,
+              size: AppText.subtitleSize,
               weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'Hunters are vetted members who post Updates for the Gems they '
             'track and submit new Gems for listing. Followers tip Hunters '
             'in BNP for good calls.',
             style: AppTypography.custom(
               color: AppColors.textSecondary,
-              size: 12,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           const Wrap(
             spacing: 12,
             runSpacing: 6,
@@ -82,13 +83,13 @@ class _Perk extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: AppColors.primary400),
-        const SizedBox(width: 4),
+        Icon(icon, size: AppIcon.xs, color: AppColors.primary400),
+        const SizedBox(width: AppSpace.xs),
         Text(
           label,
           style: AppTypography.custom(
             color: AppColors.primary400,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w600,
           ),
         ),

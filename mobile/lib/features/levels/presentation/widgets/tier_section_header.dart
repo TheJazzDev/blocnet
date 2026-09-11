@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/domain/level_tier.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_status_chip.dart';
@@ -25,7 +26,7 @@ class TierSectionHeader extends StatelessWidget {
     final total = section.levels.length;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(2, 4, 2, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpace.hair, AppSpace.xs, AppSpace.hair, AppSpace.sm),
       child: Row(
         children: [
           Container(
@@ -33,7 +34,7 @@ class TierSectionHeader extends StatelessWidget {
             height: 12,
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadius.smValue),
               boxShadow: [
                 BoxShadow(
                   color: color.withValues(alpha: 0.45),
@@ -43,28 +44,28 @@ class TierSectionHeader extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Text(
             tier.name,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 13,
+              size: AppText.labelSize,
               weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Text(
               '${tier.rangeLabel} · ${tier.shape}',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w500,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpace.sm),
           _statusChip(color: color, unlocked: unlocked, total: total),
         ],
       ),

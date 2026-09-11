@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -17,11 +18,11 @@ class ActivityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpace.sm),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
@@ -37,28 +38,28 @@ class ActivityCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpace.xs),
                 Text(
                   subtitle,
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Text(
             time,
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 10,
+              size: AppText.captionSize,
               weight: FontWeight.w400,
             ),
           ),

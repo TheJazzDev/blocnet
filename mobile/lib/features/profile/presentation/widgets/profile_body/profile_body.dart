@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
@@ -151,17 +152,17 @@ class _ProfileBodyState extends State<ProfileBody> {
             ),
             if (hunterMetrics != null) ...[
               HunterStatsSection(metrics: hunterMetrics),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               CommunityVoiceSection(metrics: hunterMetrics),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpace.xl),
               HunterSignalsSection(updates: hunterMetrics.hunterUpdates),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
             ProfileTabsSection(accent: accent),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
             if (isHunter) ...[
               const HunterContentSection(),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
             ],
             ProfileMoreSection(auth: auth, onSignOut: widget.onSignOut),
             const SizedBox(height: 100),

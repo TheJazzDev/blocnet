@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -41,8 +42,8 @@ class TagCard extends StatelessWidget {
       child: Container(
         width: 120,
         height: 105,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(right: AppSpace.md),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -52,7 +53,7 @@ class TagCard extends StatelessWidget {
               accentColor.withValues(alpha: 0.05),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(
             color: accentColor.withValues(alpha: 0.4),
             width: 1.5,
@@ -82,20 +83,20 @@ class TagCard extends StatelessWidget {
                     accentColor.withValues(alpha: 0.12),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(
                   color: accentColor.withValues(alpha: 0.35),
                   width: 1,
                 ),
               ),
-              child: Icon(iconData, size: 22, color: accentColor),
+              child: Icon(iconData, size: AppIcon.lg, color: accentColor),
             ),
             // Label
             Text(
               label,
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 13,
+                fontSize: AppText.labelSize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w600,
                 height: 1.2,

@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:flutter/material.dart';
 
@@ -19,7 +20,7 @@ class PriorityLabel extends StatelessWidget {
 
     if (isButton) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.sm, horizontal: AppSpace.lg),
         decoration: BoxDecoration(
           color: priorityColor,
           borderRadius: const BorderRadius.all(Radius.circular(30)),
@@ -28,10 +29,10 @@ class PriorityLabel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildDivider(Colors.black),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpace.sm),
             Text(
               '${priority.label[0].toUpperCase()}${priority.label.substring(1).toLowerCase()} Urgency',
-              style: TextStyle(color: Colors.black, fontSize: 10),
+              style: TextStyle(color: Colors.black, fontSize: AppText.captionSize),
             ),
           ],
         ),
@@ -51,10 +52,10 @@ class PriorityLabel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildDivider(priorityColor),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpace.sm),
           Text(
             '${priority.label[0].toUpperCase()}${priority.label.substring(1).toLowerCase()} Urgency',
-            style: TextStyle(color: priorityColor, fontSize: 10),
+            style: TextStyle(color: priorityColor, fontSize: AppText.captionSize),
           ),
         ],
       ),
@@ -65,7 +66,7 @@ class PriorityLabel extends StatelessWidget {
   Widget _buildDivider(Color color) {
     return Center(
       child: Container(
-        margin: const EdgeInsets.only(right: 2),
+        margin: const EdgeInsets.only(right: AppSpace.hair),
         width: 8,
         height: 8,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),

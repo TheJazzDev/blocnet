@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
@@ -31,7 +32,7 @@ class _TrendingScreenState extends State<TrendingScreen> {
     return Scaffold(
       appBar: const CustomAppBar(title: 'Trending', backButton: true),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: Consumer<UpdatesStore>(
           builder: (context, store, _) {
             if (store.isFetching && store.posts.isEmpty) {
@@ -102,7 +103,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.xxl, vertical: 60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -122,26 +123,26 @@ class _EmptyState extends StatelessWidget {
               ),
               child: Icon(
                 Icons.trending_up_rounded,
-                size: 40,
+                size: AppIcon.xxl,
                 color: AppColors.teal400,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             Text(
               'No Trending Updates',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 18,
+                size: AppText.titleSize,
                 weight: FontWeight.w700,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Text(
               'There are no trending updates at the moment.\nCheck back later to see what\'s hot!',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 14,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
                 height: 1.6,
               ),

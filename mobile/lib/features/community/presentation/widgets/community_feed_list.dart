@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/constants/app_routes.dart';
@@ -55,7 +56,7 @@ class CommunityFeedList extends StatelessWidget {
                   'No posts in this section yet.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -77,7 +78,7 @@ class CommunityFeedList extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPad),
         itemCount: posts.length,
         separatorBuilder: (_, __) => isCardMode
-            ? const SizedBox(height: 10)
+            ? const SizedBox(height: AppSpace.md)
             : Divider(
                 height: 1,
                 color: AppColors.borderSubtle.withValues(alpha: 0.8),

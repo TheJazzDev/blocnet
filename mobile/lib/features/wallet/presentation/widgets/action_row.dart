@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/action_button.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
@@ -23,7 +24,7 @@ class ActionRow extends StatelessWidget {
           label: 'Send',
           onTap: () => openSendFlow(context, assetCode: assetCode),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpace.md),
         ActionButton(
           icon: Icons.arrow_downward_rounded,
           label: 'Receive',

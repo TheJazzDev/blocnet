@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -97,7 +98,7 @@ class FeedTabItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
@@ -112,7 +113,7 @@ class FeedTabItem extends StatelessWidget {
           label,
           style: AppTypography.custom(
             color: isActive ? accentColor : AppColors.textFaint,
-            size: 13,
+            size: AppText.bodySize,
             weight: isActive ? FontWeight.w600 : FontWeight.w500,
           ),
         ),

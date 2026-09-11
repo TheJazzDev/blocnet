@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -20,23 +21,23 @@ class QuickActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
         decoration: BoxDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
         ),
         child: Column(
           children: [
             Icon(
               icon,
               color: Colors.black,
-              size: 22,
+              size: AppIcon.lg,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpace.sm),
             Text(
               label,
               style: AppTypography.custom(
-                size: 12,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
                 color: Colors.black,
               ),

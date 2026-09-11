@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_hourly_history_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -49,17 +50,17 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
             onRefresh: () => store.loadSnapshot(force: true),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               children: [
                 Text(
                   'Last 48 hourly checkpoints from your mining sessions.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpace.md),
                 MiningHourlyHistoryCard(
                   entries: entries,
                   isLoading: store.isLoadingSnapshot,

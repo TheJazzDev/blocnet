@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
@@ -104,7 +105,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             AuthInputField(
               controller: _confirmPasswordController,
               label: 'Confirm password',
@@ -126,7 +127,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
 
             Row(
               children: [

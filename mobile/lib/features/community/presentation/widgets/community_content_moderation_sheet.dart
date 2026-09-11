@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +29,7 @@ Future<CommunityContentModerationDecision?> showCommunityContentModerationSheet(
       return SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,32 +40,32 @@ Future<CommunityContentModerationDecision?> showCommunityContentModerationSheet(
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               Text(
                 '$targetLabel actions',
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 17,
+                  size: AppText.subtitleSize,
                   weight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpace.sm),
               Text(
                 canArchive
                     ? 'Hide, restore, or archive this content.'
                     : 'Hide or restore this content. Archive is reserved for community admins and governance roles.',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               _ActionTile(
                 icon: Icons.visibility_off_outlined,
                 label: 'Hide $targetLabel',
@@ -73,7 +74,7 @@ Future<CommunityContentModerationDecision?> showCommunityContentModerationSheet(
                   CommunityContentModerationStatus.hidden,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               _ActionTile(
                 icon: Icons.visibility_outlined,
                 label: 'Restore $targetLabel',
@@ -83,7 +84,7 @@ Future<CommunityContentModerationDecision?> showCommunityContentModerationSheet(
                 ),
               ),
               if (canArchive) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 _ActionTile(
                   icon: Icons.archive_outlined,
                   label: 'Archive $targetLabel',
@@ -141,7 +142,7 @@ Future<String?> _showModerationReasonDialog(
           '${status.label} $targetLabel',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -152,14 +153,14 @@ Future<String?> _showModerationReasonDialog(
           maxLines: 5,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 13,
+            size: AppText.labelSize,
             weight: FontWeight.w500,
           ),
           decoration: InputDecoration(
             hintText: 'Add moderation reason',
             hintStyle: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
             ),
           ),
@@ -171,7 +172,7 @@ Future<String?> _showModerationReasonDialog(
               'Cancel',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 12,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -182,7 +183,7 @@ Future<String?> _showModerationReasonDialog(
               'Confirm',
               style: AppTypography.custom(
                 color: AppColors.primary400,
-                size: 12,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -213,12 +214,12 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lgValue),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
         decoration: BoxDecoration(
           color: tone.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(color: tone.withValues(alpha: 0.22)),
         ),
         child: Row(
@@ -228,17 +229,17 @@ class _ActionTile extends StatelessWidget {
               height: 34,
               decoration: BoxDecoration(
                 color: tone.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
               ),
-              child: Icon(icon, size: 18, color: tone),
+              child: Icon(icon, size: AppIcon.md, color: tone),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Text(
                 label,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 13,
+                  size: AppText.labelSize,
                   weight: FontWeight.w700,
                 ),
               ),

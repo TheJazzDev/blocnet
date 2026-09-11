@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/profile_hunter_metrics.dart';
 import 'package:flutter/material.dart';
@@ -40,16 +41,16 @@ class CommunityVoiceSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, 0, AppSpace.lg, AppSpace.xs),
           child: Row(
             children: [
-              Icon(Icons.forum_outlined, size: 14, color: AppColors.textFaint),
-              const SizedBox(width: 6),
+              Icon(Icons.forum_outlined, size: AppIcon.sm, color: AppColors.textFaint),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 'COMMUNITY VOICE',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w600,
                   letterSpacing: 1.0,
                 ),
@@ -57,14 +58,14 @@ class CommunityVoiceSection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         SizedBox(
           height: 118,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
             itemBuilder: (_, index) => cards[index],
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpace.md),
             itemCount: cards.length,
           ),
         ),
@@ -90,10 +91,10 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 220,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -101,34 +102,34 @@ class _MetricCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: AppColors.primary400),
-              const SizedBox(width: 6),
+              Icon(icon, size: AppIcon.sm, color: AppColors.primary400),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 label,
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             value,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 22,
+              size: AppText.headlineSize,
               weight: FontWeight.w700,
               height: 1,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             text,
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 10,
+              size: AppText.captionSize,
               weight: FontWeight.w400,
               height: 1.4,
             ),

@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/widgets/profile_tile.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
@@ -12,12 +13,12 @@ class HunterContentSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final navigator = Navigator.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SectionLabel('Content'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           ProfileTile(
             icon: Icons.send_outlined,
             title: 'Submit New Gem',

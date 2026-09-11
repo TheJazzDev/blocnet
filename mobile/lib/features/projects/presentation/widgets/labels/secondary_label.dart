@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/secondary_tag_model.dart';
 import 'package:flutter/material.dart';
 
@@ -15,10 +16,10 @@ class SecondaryLabel extends StatelessWidget {
         (useDisplayText && raw.length > 8) ? '${raw.substring(0, 8)}…' : raw;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.hair, horizontal: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.primary500.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xlValue),
         border: Border.all(
           color: AppColors.primary500.withValues(alpha: 0.2),
           width: 1,
@@ -28,7 +29,7 @@ class SecondaryLabel extends StatelessWidget {
         useDisplayText ? displayText : raw,
         style: TextStyle(
           color: AppColors.primary300,
-          fontSize: 11,
+          fontSize: AppText.captionSize,
           fontFamily: 'Geist',
           fontWeight: FontWeight.w500,
         ),

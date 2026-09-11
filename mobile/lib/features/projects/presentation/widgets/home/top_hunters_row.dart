@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
@@ -33,7 +34,7 @@ class TopHuntersRow extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(0, 12, 0, 12),
+      padding: const EdgeInsets.fromLTRB(0, AppSpace.md, 0, AppSpace.md),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.borderSubtle, width: 1),
@@ -49,7 +50,7 @@ class TopHuntersRow extends StatelessWidget {
                 'TOP HUNTERS',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w600,
                   letterSpacing: 0.9,
                 ),
@@ -62,14 +63,14 @@ class TopHuntersRow extends StatelessWidget {
                   'View All',
                   style: AppTypography.custom(
                     color: AppColors.teal400,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           SizedBox(
             height: 74,
             child: ListView(
@@ -94,10 +95,10 @@ class TopHuntersRow extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppSpace.lg),
                 // Real hunters
                 ...admins.map((admin) => Padding(
-                      padding: const EdgeInsets.only(right: 16),
+                      padding: const EdgeInsets.only(right: AppSpace.lg),
                       child: _HunterAvatar(
                         imageUrl: admin.imageUrl,
                         name: admin.name,
@@ -167,7 +168,7 @@ class _HunterAvatar extends StatelessWidget {
                 child: Icon(
                   Icons.add_rounded,
                   color: AppColors.teal400,
-                  size: 20,
+                  size: AppIcon.md,
                 ),
               )
             else if (hasRing)
@@ -182,13 +183,13 @@ class _HunterAvatar extends StatelessWidget {
                     colors: [AppColors.teal400, AppColors.primary500],
                   ),
                 ),
-                padding: const EdgeInsets.all(2),
+                padding: const EdgeInsets.all(AppSpace.hair),
                 child: Container(
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.bgBase,
                   ),
-                  padding: const EdgeInsets.all(2),
+                  padding: const EdgeInsets.all(AppSpace.hair),
                   child: _buildAvatarCircle(),
                 ),
               )
@@ -200,16 +201,16 @@ class _HunterAvatar extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.borderMuted, width: 1),
                 ),
-                padding: const EdgeInsets.all(2),
+                padding: const EdgeInsets.all(AppSpace.hair),
                 child: _buildAvatarCircle(),
               ),
-            const SizedBox(height: 5),
+            const SizedBox(height: AppSpace.xs),
             if (isCreate)
               Text(
                 'My Updates',
                 style: AppTypography.custom(
                   color: AppColors.teal400,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.center,
@@ -224,7 +225,7 @@ class _HunterAvatar extends StatelessWidget {
                 iconSpacing: 3,
                 textStyle: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w500,
                 ),
               ),
@@ -238,7 +239,7 @@ class _HunterAvatar extends StatelessWidget {
     return AppAvatar(
       radius: 20,
       imageUrl: imageUrl,
-      fallback: Icon(Icons.person, size: 16, color: AppColors.textMuted),
+      fallback: Icon(Icons.person, size: AppIcon.sm, color: AppColors.textMuted),
     );
   }
 }

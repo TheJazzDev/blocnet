@@ -35,7 +35,7 @@
 //               ),
 //               child: const Icon(
 //                 Icons.wifi_off_rounded,
-//                 size: 14,
+//                 size: AppIcon.sm,
 //                 color: Colors.black,
 //               ),
 //             ),

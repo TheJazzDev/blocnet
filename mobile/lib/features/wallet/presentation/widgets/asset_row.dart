@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
@@ -32,7 +33,7 @@ class AssetRow extends StatelessWidget {
             ? '\$${formatUsd(asset.usdValue)}'
             : 'Pre-launch');
     return InkWell(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.mdValue),
       onTap: () {
         Navigator.of(context).pushNamed(
           AppRoutes.walletAssetDetail,
@@ -42,7 +43,7 @@ class AssetRow extends StatelessWidget {
       child: Container(
         width: double.infinity,
         margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.md, horizontal: AppSpace.md),
         decoration: isCardMode
             ? BoxDecoration(
                 gradient: LinearGradient(
@@ -53,7 +54,7 @@ class AssetRow extends StatelessWidget {
                     AppColors.bgSurface.withValues(alpha: 0.82),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.lgValue),
                 border: Border.all(
                   color: AppColors.borderSubtle.withValues(alpha: 0.75),
                   width: 1.2,
@@ -85,12 +86,12 @@ class AssetRow extends StatelessWidget {
                 asset.symbol,
                 style: AppTypography.custom(
                   color: accent,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w800,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,37 +100,37 @@ class AssetRow extends StatelessWidget {
                     asset.name,
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 15,
+                      size: AppText.bodySize,
                       weight: FontWeight.w700,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: AppSpace.hair),
                   Row(
                     children: [
                       Text(
                         asset.asset,
                         style: AppTypography.custom(
                           color: AppColors.textFaint,
-                          size: 11,
+                          size: AppText.captionSize,
                           weight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpace.sm),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 5,
-                          vertical: 2,
+                          horizontal: AppSpace.xs,
+                          vertical: AppSpace.hair,
                         ),
                         decoration: BoxDecoration(
                           color: accent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.smValue),
                         ),
                         child: Text(
                           assetBadgeText(asset),
                           style: AppTypography.custom(
                             color: accent,
-                            size: 8,
+                            size: AppText.captionSize,
                             weight: FontWeight.w700,
                           ),
                         ),
@@ -139,7 +140,7 @@ class AssetRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -147,16 +148,16 @@ class AssetRow extends StatelessWidget {
                   amountText,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 14,
+                    size: AppText.bodySize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   usdText,
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                 ),

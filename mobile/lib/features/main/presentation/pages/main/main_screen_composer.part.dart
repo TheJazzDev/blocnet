@@ -18,17 +18,17 @@ extension _MainScreenComposerSheet on _MainScreenState {
         return SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   width: 40,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
+                  margin: const EdgeInsets.only(bottom: AppSpace.xl),
                   decoration: BoxDecoration(
                     color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                 ),
                 Align(
@@ -36,14 +36,14 @@ extension _MainScreenComposerSheet on _MainScreenState {
                   child: Text(
                     'CREATE',
                     style: AppTypography.custom(
-                      size: 10,
+                      size: AppText.captionSize,
                       weight: FontWeight.w600,
                       color: AppColors.textFaint,
                       letterSpacing: 1.2,
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 if (canCreate) ...[
                   _ComposerTile(
                     title: 'Post Hunter Update',
@@ -55,7 +55,7 @@ extension _MainScreenComposerSheet on _MainScreenState {
                       Navigator.of(context).pushNamed(AppRoutes.createUpdate);
                     },
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpace.sm),
                   _ComposerTile(
                     title: 'Submit New Gem',
                     subtitle: 'Propose a gem to be listed on Blocnet',
@@ -108,10 +108,10 @@ class _ComposerTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(color: AppColors.borderSubtle),
         ),
         child: Row(
@@ -121,11 +121,11 @@ class _ComposerTile extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
               ),
-              child: Icon(icon, color: iconColor, size: 20),
+              child: Icon(icon, color: iconColor, size: AppIcon.md),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppSpace.lg),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,16 +133,16 @@ class _ComposerTile extends StatelessWidget {
                   Text(
                     title,
                     style: AppTypography.custom(
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpace.hair),
                   Text(
                     subtitle,
                     style: AppTypography.custom(
-                      size: 12,
+                      size: AppText.bodySize,
                       weight: FontWeight.w400,
                       color: AppColors.textMuted,
                     ),
@@ -153,7 +153,7 @@ class _ComposerTile extends StatelessWidget {
             Icon(
               Icons.arrow_forward_ios_rounded,
               color: AppColors.textFaint,
-              size: 13,
+              size: AppIcon.xs,
             ),
           ],
         ),

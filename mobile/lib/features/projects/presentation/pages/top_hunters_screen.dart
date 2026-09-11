@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
@@ -52,7 +53,7 @@ class _TopHuntersScreenState extends State<TopHuntersScreen> {
                 'No hunter data available yet.',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                 ),
               ),
@@ -60,7 +61,7 @@ class _TopHuntersScreenState extends State<TopHuntersScreen> {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
             itemCount: entries.length,
             separatorBuilder: (_, __) =>
                 Divider(color: AppColors.borderSubtle, height: 1),
@@ -143,7 +144,7 @@ class _HunterListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+      contentPadding: const EdgeInsets.symmetric(vertical: AppSpace.xs, horizontal: 0),
       onTap: () => PublicProfileScreen.showSheet(context, entry.admin),
       leading: Row(
         mainAxisSize: MainAxisSize.min,
@@ -154,19 +155,19 @@ class _HunterListTile extends StatelessWidget {
               '#$rank',
               style: AppTypography.custom(
                 color: AppColors.textFaint,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w600,
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.md),
           AppAvatar(
             radius: 20,
             imageUrl: entry.admin.imageUrl,
             fallback: Icon(
               Icons.person_rounded,
               color: AppColors.textMuted,
-              size: 16,
+              size: AppIcon.sm,
             ),
           ),
         ],
@@ -177,7 +178,7 @@ class _HunterListTile extends StatelessWidget {
         levelBadgeSize: LevelBadgeSize.tiny,
         textStyle: AppTypography.custom(
           color: AppColors.textPrimary,
-          size: 13,
+          size: AppText.labelSize,
           weight: FontWeight.w600,
         ),
       ),
@@ -185,14 +186,14 @@ class _HunterListTile extends StatelessWidget {
         '${entry.updatesCount} updates',
         style: AppTypography.custom(
           color: AppColors.textMuted,
-          size: 11,
+          size: AppText.captionSize,
           weight: FontWeight.w500,
         ),
       ),
       trailing: Icon(
         Icons.chevron_right_rounded,
         color: AppColors.textFaint,
-        size: 18,
+        size: AppIcon.md,
       ),
     );
   }

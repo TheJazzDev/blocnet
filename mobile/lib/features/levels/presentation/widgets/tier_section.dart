@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/domain/level_tier.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_card_item.dart';
@@ -47,7 +48,7 @@ class TierSection extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: section.color.withValues(alpha: 0.18)),
       ),
       child: Column(

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
@@ -34,30 +35,30 @@ class DownlineList extends StatelessWidget {
               'YOUR DOWNLINE',
               style: AppTypography.custom(
                 color: AppColors.textFaint,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w700,
                 letterSpacing: 1.2,
               ),
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
               decoration: BoxDecoration(
                 color: AppColors.primary500.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.fullValue),
               ),
               child: Text(
                 formatGroupedNumber(items.length, maxDecimals: 0),
                 style: AppTypography.custom(
                   color: AppColors.primary400,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w700,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         if (isLoading && items.isEmpty)
           Center(
             child: SizedBox(
@@ -71,12 +72,12 @@ class DownlineList extends StatelessWidget {
           )
         else if (items.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
             child: Text(
               'Your referral downline will appear here when people join with your code.',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w500,
                 height: 1.5,
               ),
@@ -85,7 +86,7 @@ class DownlineList extends StatelessWidget {
         else
           ...visibleItems.map(
             (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: AppSpace.md),
               child: _DownlineTile(item: item),
             ),
           ),
@@ -119,13 +120,13 @@ class _DownlineTile extends StatelessWidget {
             AppColors.bgSurface.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle.withValues(alpha: 0.5),
           width: 1.5,
         ),
       ),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       child: Row(
         children: [
           Container(
@@ -142,7 +143,7 @@ class _DownlineTile extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(AppSpace.hair),
             child: AppAvatar(
               radius: 20,
               imageUrl: item.avatarUrl,
@@ -150,13 +151,13 @@ class _DownlineTile extends StatelessWidget {
                 _initials(item),
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w700,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,28 +169,28 @@ class _DownlineTile extends StatelessWidget {
                   iconSpacing: 4,
                   textStyle: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   '${formatGroupedNumber(item.claimedTotalPoints, maxDecimals: 0)} claimed BNP',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.md),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -197,7 +198,7 @@ class _DownlineTile extends StatelessWidget {
                       statusColor.withValues(alpha: 0.12),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border: Border.all(
                     color: statusColor.withValues(alpha: 0.3),
                     width: 1,
@@ -207,16 +208,16 @@ class _DownlineTile extends StatelessWidget {
                   item.status.toUpperCase(),
                   style: AppTypography.custom(
                     color: statusColor,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               SizedBox(
                 width: 62,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   child: LinearProgressIndicator(
                     minHeight: 6,
                     value: item.progressPct.clamp(0, 1),

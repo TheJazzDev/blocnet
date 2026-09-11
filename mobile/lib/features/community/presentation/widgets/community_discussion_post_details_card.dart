@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
@@ -66,7 +67,7 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
         roleLabel == 'HUNTER' ? const Color(0xFFC084FC) : AppColors.primary400;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -83,13 +84,13 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
                     adminName[0].toUpperCase(),
                     style: AppTypography.custom(
                       color: AppColors.primary400,
-                      size: 15,
+                      size: AppText.bodySize,
                       weight: FontWeight.w700,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,13 +107,13 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
                               levelBadgeSize: LevelBadgeSize.small,
                               textStyle: AppTypography.custom(
                                 color: AppColors.textPrimary,
-                                size: 14,
+                                size: AppText.bodySize,
                                 weight: FontWeight.w700,
                               ),
                             ),
                           ),
                           if (admin?.primaryBadge != null) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSpace.sm),
                             BadgeIcon(
                               badge: admin!.primaryBadge!,
                               size: BadgeSize.small,
@@ -120,19 +121,19 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
                             ),
                           ],
                           if (roleLabel != null) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSpace.sm),
                             RoleChip(label: roleLabel, color: roleColor),
                           ],
                           if (onModerate != null) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSpace.sm),
                             GestureDetector(
                               onTap: () => _openModerationActions(context),
                               behavior: HitTestBehavior.opaque,
                               child: Padding(
-                                padding: const EdgeInsets.all(2),
+                                padding: const EdgeInsets.all(AppSpace.hair),
                                 child: Icon(
                                   Icons.more_horiz_rounded,
-                                  size: 18,
+                                  size: AppIcon.md,
                                   color: AppColors.textMuted,
                                 ),
                               ),
@@ -141,12 +142,12 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.hair),
                     Text(
                       username,
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 12,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                       ),
                     ),
@@ -154,7 +155,7 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
                       getTimeStamp(post.createdAt),
                       style: AppTypography.custom(
                         color: AppColors.textFaint,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w400,
                       ),
                     ),
@@ -163,12 +164,12 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           MentionText(
             text: post.content,
             style: AppTypography.custom(
               color: AppColors.textSecondary,
-              size: 14,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               height: 1.55,
             ),
@@ -179,7 +180,7 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -230,7 +231,7 @@ class CommunityDiscussionPostDetailsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Divider(
             height: 1,
             color: AppColors.borderSubtle.withValues(alpha: 0.8),
@@ -275,18 +276,18 @@ class _DiscussionAction extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.sm, horizontal: AppSpace.hair),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: color),
+            Icon(icon, size: AppIcon.md, color: color),
             if (value.isNotEmpty) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 value,
                 style: AppTypography.custom(
                   color: color,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w600,
                 ),
               ),

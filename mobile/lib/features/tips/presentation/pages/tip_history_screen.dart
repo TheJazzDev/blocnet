@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/tips/presentation/models/tip_history_mode.dart';
@@ -71,7 +72,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                 : store.loadSentHistory(force: true, limit: 100),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               children: [
                 Text(
                   isReceived
@@ -79,29 +80,29 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                       : 'All tips you have sent to hunters.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   isReceived ? '$total tips received' : '$total tips sent',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpace.md),
                 if (isLoading && rows.isEmpty)
                   const SkeletonList(items: 4, itemHeight: 64)
                 else if (rows.isEmpty)
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(AppSpace.lg),
                     decoration: BoxDecoration(
                       color: AppColors.bgSurface,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: Column(
@@ -115,17 +116,17 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                                   : 'No tips sent yet.',
                           style: AppTypography.custom(
                             color: AppColors.textMuted,
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w500,
                           ),
                         ),
                         if (hasError) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: AppSpace.sm),
                           Text(
                             "Couldn't load tips. ${store.lastError}",
                             style: AppTypography.custom(
                               color: AppColors.warning500,
-                              size: 11,
+                              size: AppText.captionSize,
                               weight: FontWeight.w500,
                             ),
                           ),

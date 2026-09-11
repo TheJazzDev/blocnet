@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
@@ -23,17 +24,17 @@ class CommunityDiscussionEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Text(
         'No comments yet. Start the discussion.',
         style: AppTypography.custom(
           color: AppColors.textMuted,
-          size: 13,
+          size: AppText.bodySize,
           weight: FontWeight.w400,
         ),
       ),
@@ -111,7 +112,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
           'Block $authorName?',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -119,7 +120,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
           'You won\'t see their posts or comments anymore.',
           style: AppTypography.custom(
             color: AppColors.textSecondary,
-            size: 13,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),
@@ -130,7 +131,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
               'Cancel',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -141,7 +142,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
               'Block',
               style: AppTypography.custom(
                 color: AppColors.error500,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -193,11 +194,11 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
             children: [
               if (isModerator && onModerate != null)
                 ListTile(
-                  leading: Icon(Icons.shield_outlined, size: 20, color: AppColors.textSecondary),
+                  leading: Icon(Icons.shield_outlined, size: AppIcon.md, color: AppColors.textSecondary),
                   title: Text(
                     'Moderate',
                     style: AppTypography.custom(
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),
@@ -209,11 +210,11 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                 ),
               if (!isOwnComment) ...[
                 ListTile(
-                  leading: Icon(Icons.flag_outlined, size: 20, color: AppColors.error500),
+                  leading: Icon(Icons.flag_outlined, size: AppIcon.md, color: AppColors.error500),
                   title: Text(
                     'Report Comment',
                     style: AppTypography.custom(
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w500,
                       color: AppColors.error500,
                     ),
@@ -224,11 +225,11 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.block, size: 20, color: AppColors.error500),
+                  leading: Icon(Icons.block, size: AppIcon.md, color: AppColors.error500),
                   title: Text(
                     'Block User',
                     style: AppTypography.custom(
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w500,
                       color: AppColors.error500,
                     ),
@@ -239,7 +240,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                   },
                 ),
               ],
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
             ],
           ),
         ),
@@ -275,7 +276,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
             fallback: _avatarFallback(name),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,7 +296,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                               levelBadgeSize: LevelBadgeSize.small,
                               textStyle: AppTypography.custom(
                                 color: AppColors.textPrimary,
-                                size: 14,
+                                size: AppText.bodySize,
                                 weight: FontWeight.w700,
                               ),
                             ),
@@ -305,53 +306,53 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                     ),
                   ),
                   if (roleLabel != null) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpace.sm),
                     RoleChip(label: roleLabel, color: roleColor),
                   ],
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   Text(
                     getTimeStamp(comment.createdAt),
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSpace.xs),
                   GestureDetector(
                     onTap: () => _showMoreOptions(context),
                     behavior: HitTestBehavior.opaque,
                     child: Padding(
-                      padding: const EdgeInsets.all(2),
+                      padding: const EdgeInsets.all(AppSpace.hair),
                       child: Icon(
                         Icons.more_horiz_rounded,
-                        size: 18,
+                        size: AppIcon.md,
                         color: AppColors.textMuted,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpace.hair),
               Row(
                 children: [
                   Text(
                     username,
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 12,
+                      size: AppText.bodySize,
                       weight: FontWeight.w400,
                     ),
                   ),
                   if (comment.status != CommunityContentModerationStatus.active) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpace.sm),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                       decoration: BoxDecoration(
                         color: comment.status == CommunityContentModerationStatus.hidden
                             ? AppColors.warning500.withValues(alpha: 0.15)
                             : AppColors.error500.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(AppRadius.smValue),
                         border: Border.all(
                           color: comment.status == CommunityContentModerationStatus.hidden
                               ? AppColors.warning500.withValues(alpha: 0.4)
@@ -363,7 +364,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                             ? 'HIDDEN'
                             : 'ARCHIVED',
                         style: AppTypography.custom(
-                          size: 9,
+                          size: AppText.captionSize,
                           weight: FontWeight.w700,
                           color: comment.status == CommunityContentModerationStatus.hidden
                               ? AppColors.warning500
@@ -375,17 +376,17 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               if (!isNestedReply && comment.replyToData != null) ...[
                 GestureDetector(
                   onTap: () {
                     // TODO: Scroll to original comment
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(AppSpace.sm),
                     decoration: BoxDecoration(
                       color: AppColors.bgBase,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppRadius.smValue),
                       border: Border.all(
                         color: AppColors.borderSubtle.withValues(alpha: 0.5),
                         width: 1,
@@ -398,15 +399,15 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                           children: [
                             Icon(
                               Icons.subdirectory_arrow_right,
-                              size: 12,
+                              size: AppIcon.xs,
                               color: AppColors.textMuted,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: AppSpace.xs),
                             Text(
                               'Replying to ',
                               style: AppTypography.custom(
                                 color: AppColors.textMuted,
-                                size: 11,
+                                size: AppText.captionSize,
                                 weight: FontWeight.w400,
                               ),
                             ),
@@ -414,18 +415,18 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                               '@${_formatReplyUsername(comment.replyToData!)}',
                               style: AppTypography.custom(
                                 color: AppColors.primary400,
-                                size: 11,
+                                size: AppText.captionSize,
                                 weight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpace.xs),
                         Text(
                           _truncateContent(comment.replyToData!.content, 50),
                           style: AppTypography.custom(
                             color: AppColors.textFaint,
-                            size: 11,
+                            size: AppText.captionSize,
                             weight: FontWeight.w400,
                             height: 1.4,
                           ),
@@ -436,13 +437,13 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
               ],
               MentionText(
                 text: comment.content,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 13,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                   height: 1.6,
                 ),
@@ -453,7 +454,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               Row(
                 children: [
                   if (onLike != null) ...[
@@ -467,26 +468,26 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                             comment.isLiked
                                 ? Icons.favorite_rounded
                                 : Icons.favorite_border,
-                            size: 14,
+                            size: AppIcon.sm,
                             color: comment.isLiked
                                 ? AppColors.primary400
                                 : AppColors.textMuted,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: AppSpace.xs),
                           Text(
                             comment.likesCount.toString(),
                             style: AppTypography.custom(
                               color: comment.isLiked
                                   ? AppColors.primary400
                                   : AppColors.textMuted,
-                              size: 12,
+                              size: AppText.labelSize,
                               weight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: AppSpace.lg),
                   ],
                   if (onReply != null)
                     GestureDetector(
@@ -496,7 +497,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
                         'Reply',
                         style: AppTypography.custom(
                           color: AppColors.textMuted,
-                          size: 12,
+                          size: AppText.labelSize,
                           weight: FontWeight.w600,
                         ),
                       ),
@@ -512,13 +513,13 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(
-        top: 12,
-        bottom: 12,
+        top: AppSpace.md,
+        bottom: AppSpace.md,
         left: isNestedReply ? 20 : 0,
       ),
       child: isNestedReply
           ? Container(
-              padding: const EdgeInsets.only(left: 10),
+              padding: const EdgeInsets.only(left: AppSpace.md),
               decoration: BoxDecoration(
                 border: Border(
                   left: BorderSide(
@@ -556,7 +557,7 @@ class CommunityDiscussionCommentCard extends StatelessWidget {
       firstChar,
       style: AppTypography.custom(
         color: AppColors.primary400,
-        size: 15,
+        size: AppText.bodySize,
         weight: FontWeight.w700,
       ),
     );

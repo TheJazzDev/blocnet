@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
@@ -263,7 +264,7 @@ class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
             isRefreshing: _isLoading,
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 2),
+            padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.hair),
             child: _StaffOverviewCard(
               openCount: openCount,
               contentCount: contentCount,
@@ -281,13 +282,13 @@ class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
                 : _error != null && _reports.isEmpty
                     ? Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
                           child: Text(
                             _error!,
                             textAlign: TextAlign.center,
                             style: AppTypography.custom(
                               color: AppColors.error500,
-                              size: 13,
+                              size: AppText.labelSize,
                               weight: FontWeight.w500,
                             ),
                           ),
@@ -299,13 +300,13 @@ class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
                               'No reports found',
                               style: AppTypography.custom(
                                 color: AppColors.textMuted,
-                                size: 13,
+                                size: AppText.labelSize,
                                 weight: FontWeight.w500,
                               ),
                             ),
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                            padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.sm, AppSpace.md, AppSpace.md),
                             itemBuilder: (context, index) {
                               final report = _reports[index];
                               return _ReportCard(
@@ -336,7 +337,7 @@ class _ReportsQueueScreenState extends State<ReportsQueueScreen> {
                               );
                             },
                             separatorBuilder: (_, __) =>
-                                const SizedBox(height: 10),
+                                const SizedBox(height: AppSpace.md),
                             itemCount: _reports.length,
                           ),
           ),
@@ -385,7 +386,7 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -406,33 +407,33 @@ class _FilterBar extends StatelessWidget {
             'Queue Filters',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w700,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           SizedBox(
             height: 46,
             child: TextField(
               controller: searchController,
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w500,
               ),
               decoration: InputDecoration(
                 hintText: 'Search reports',
                 hintStyle: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                 ),
-                prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppColors.textMuted),
+                prefixIcon: Icon(Icons.search_rounded, size: AppIcon.md, color: AppColors.textMuted),
                 prefixIconConstraints: const BoxConstraints(minWidth: 40),
                 suffixIcon: isRefreshing
                     ? Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpace.md),
                         child: SizedBox(
                           width: 14,
                           height: 14,
@@ -443,12 +444,12 @@ class _FilterBar extends StatelessWidget {
                         ),
                       )
                     : null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
                 isDense: true,
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -474,7 +475,7 @@ class _FilterBar extends StatelessWidget {
                   onChanged: onStatusChanged,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.sm),
               Expanded(
                 child: _DropdownField<CommunityReportTargetType?>(
                   value: targetTypeFilter,
@@ -497,14 +498,14 @@ class _FilterBar extends StatelessWidget {
                   onChanged: onTargetTypeChanged,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.sm),
               SizedBox(
                 height: 40,
                 width: 40,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: AppColors.bgElevated,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     border: Border.all(
                       color: AppColors.borderSubtle.withValues(alpha: 0.75),
                     ),
@@ -514,7 +515,7 @@ class _FilterBar extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     icon: Icon(
                       Icons.refresh_rounded,
-                      size: 18,
+                      size: AppIcon.md,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -547,12 +548,12 @@ class _DropdownField<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 4),
+          padding: const EdgeInsets.only(left: AppSpace.hair, bottom: AppSpace.xs),
           child: Text(
             label,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 10,
+              size: AppText.captionSize,
               weight: FontWeight.w700,
               letterSpacing: 0.3,
             ),
@@ -560,10 +561,10 @@ class _DropdownField<T> extends StatelessWidget {
         ),
         Container(
           height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
           decoration: BoxDecoration(
             color: AppColors.bgElevated,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.lgValue),
             border: Border.all(
               color: AppColors.borderSubtle.withValues(alpha: 0.8),
             ),
@@ -577,7 +578,7 @@ class _DropdownField<T> extends StatelessWidget {
               onChanged: onChanged,
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 12,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
               iconSize: 18,
@@ -657,7 +658,7 @@ class _ReportCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle.withValues(alpha: 0.75),
           width: 1,
@@ -670,7 +671,7 @@ class _ReportCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -683,17 +684,17 @@ class _ReportCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   border: Border.all(
                     color: statusColor.withValues(alpha: 0.35),
                   ),
@@ -702,7 +703,7 @@ class _ReportCard extends StatelessWidget {
                   report.status.label.toUpperCase(),
                   style: AppTypography.custom(
                     color: statusColor,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w700,
                     letterSpacing: 0.4,
                   ),
@@ -710,7 +711,7 @@ class _ReportCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -728,13 +729,13 @@ class _ReportCard extends StatelessWidget {
             ],
           ),
           if ((report.details ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(AppSpace.md),
               decoration: BoxDecoration(
                 color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.lgValue),
                 border: Border.all(
                   color: AppColors.borderSubtle.withValues(alpha: 0.65),
                 ),
@@ -745,14 +746,14 @@ class _ReportCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w500,
                   height: 1.4,
                 ),
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           LayoutBuilder(
             builder: (context, constraints) {
               final width = (constraints.maxWidth - 8) / 2;
@@ -785,9 +786,9 @@ class _StaffOverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -808,17 +809,17 @@ class _StaffOverviewCard extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: AppColors.primary400.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
                 child: Center(
                   child: Icon(
                     Icons.gavel_rounded,
-                    size: 16,
+                    size: AppIcon.sm,
                     color: AppColors.primary400,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,16 +828,16 @@ class _StaffOverviewCard extends StatelessWidget {
                       'Community moderation queue',
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 13,
+                        size: AppText.labelSize,
                         weight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.hair),
                     Text(
                       'Review reports, hide content, and take action.',
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w400,
                         height: 1.3,
                       ),
@@ -846,7 +847,7 @@ class _StaffOverviewCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               Expanded(
@@ -856,7 +857,7 @@ class _StaffOverviewCard extends StatelessWidget {
                   color: AppColors.warning500,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: _OverviewStat(
                   label: 'Content',
@@ -864,7 +865,7 @@ class _StaffOverviewCard extends StatelessWidget {
                   color: AppColors.primary400,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: _OverviewStat(
                   label: 'Total',
@@ -894,10 +895,10 @@ class _OverviewStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -907,7 +908,7 @@ class _OverviewStat extends StatelessWidget {
             value,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 16,
+              size: AppText.subtitleSize,
               weight: FontWeight.w700,
             ),
           ),
@@ -916,7 +917,7 @@ class _OverviewStat extends StatelessWidget {
             label,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 10,
+              size: AppText.captionSize,
               weight: FontWeight.w500,
             ),
           ),
@@ -940,10 +941,10 @@ class _MetaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: AppColors.bgElevated,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: AppColors.borderSubtle.withValues(alpha: 0.65),
         ),
@@ -951,13 +952,13 @@ class _MetaPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.textMuted),
-          const SizedBox(width: 6),
+          Icon(icon, size: AppIcon.sm, color: AppColors.textMuted),
+          const SizedBox(width: AppSpace.sm),
           Text(
             '$label: $value',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w600,
             ),
           ),
@@ -1010,19 +1011,19 @@ class _ReportActionButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         child: Ink(
           height: 48,
           decoration: BoxDecoration(
             color: fillColor,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.lgValue),
             border: Border.all(color: borderColor),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: textColor),
-              const SizedBox(width: 8),
+              Icon(icon, size: AppIcon.sm, color: textColor),
+              const SizedBox(width: AppSpace.sm),
               Flexible(
                 child: Text(
                   label,
@@ -1030,7 +1031,7 @@ class _ReportActionButton extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.custom(
                     color: textColor,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
@@ -1065,7 +1066,7 @@ class _PaginationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.sm, AppSpace.md, AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
         border: Border(
@@ -1079,7 +1080,7 @@ class _PaginationBar extends StatelessWidget {
               'Showing $from-$to of $total',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w500,
               ),
             ),
@@ -1283,10 +1284,10 @@ class _CommunityUserActionsSheetState
       top: false,
       child: Padding(
         padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 14,
-          bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+          left: AppSpace.lg,
+          right: AppSpace.lg,
+          top: AppSpace.lg,
+          bottom: AppSpace.lg + MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1298,23 +1299,23 @@ class _CommunityUserActionsSheetState
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.borderMuted,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Text(
               'User Actions',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 16,
+                size: AppText.subtitleSize,
                 weight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             if (_loading)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
                 child: Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
@@ -1324,12 +1325,12 @@ class _CommunityUserActionsSheetState
               )
             else if (_error != null)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                 child: Text(
                   _error!,
                   style: AppTypography.custom(
                     color: AppColors.error500,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -1337,10 +1338,10 @@ class _CommunityUserActionsSheetState
             else if (state != null) ...[
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(AppSpace.md),
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Column(
@@ -1350,25 +1351,25 @@ class _CommunityUserActionsSheetState
                       state.bestLabel,
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 13,
+                        size: AppText.labelSize,
                         weight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.hair),
                     Text(
                       state.email,
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpace.sm),
                     Text(
                       'Warnings: ${state.communityWarnCount}',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -1376,7 +1377,7 @@ class _CommunityUserActionsSheetState
                       'Muted until: ${_formatTime(state.communityMutedUntil)}',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -1384,7 +1385,7 @@ class _CommunityUserActionsSheetState
                       'Suspended until: ${_formatTime(state.communitySuspendedUntil)}',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -1392,7 +1393,7 @@ class _CommunityUserActionsSheetState
                       'Post restricted until: ${_formatTime(state.communityPostingRestrictedUntil)}',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -1400,14 +1401,14 @@ class _CommunityUserActionsSheetState
                       'Comment restricted until: ${_formatTime(state.communityCommentingRestrictedUntil)}',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -1438,19 +1439,19 @@ class _CommunityUserActionsSheetState
                 ],
               ),
               if (!widget.canEscalate) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   'You can issue warnings and mutes. Suspension/restrictions are limited to community admins and governance.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                     height: 1.35,
                   ),
                 ),
               ],
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
           ],
         ),
       ),
@@ -1506,12 +1507,12 @@ Future<String?> _showReasonDialog({
                   decoration: InputDecoration(hintText: hint),
                 ),
                 if (inlineError != null) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpace.sm),
                   Text(
                     inlineError!,
                     style: AppTypography.custom(
                       color: AppColors.error500,
-                      size: 12,
+                      size: AppText.labelSize,
                       weight: FontWeight.w500,
                     ),
                   ),
@@ -1574,7 +1575,7 @@ Future<_DurationReasonInput?> _showDurationReasonDialog({
                     labelText: 'Duration (hours)',
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 TextField(
                   controller: reasonController,
                   minLines: 2,
@@ -1582,12 +1583,12 @@ Future<_DurationReasonInput?> _showDurationReasonDialog({
                   decoration: InputDecoration(hintText: hint),
                 ),
                 if (inlineError != null) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpace.sm),
                   Text(
                     inlineError!,
                     style: AppTypography.custom(
                       color: AppColors.error500,
-                      size: 12,
+                      size: AppText.labelSize,
                       weight: FontWeight.w500,
                     ),
                   ),
@@ -1656,7 +1657,7 @@ Future<_RestrictionInput?> _showRestrictionDialog(BuildContext context) async {
                       labelText: 'Posting hours (optional)',
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpace.sm),
                   TextField(
                     controller: commentHoursController,
                     keyboardType: TextInputType.number,
@@ -1664,7 +1665,7 @@ Future<_RestrictionInput?> _showRestrictionDialog(BuildContext context) async {
                       labelText: 'Commenting hours (optional)',
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpace.sm),
                   TextField(
                     controller: reasonController,
                     minLines: 2,
@@ -1674,12 +1675,12 @@ Future<_RestrictionInput?> _showRestrictionDialog(BuildContext context) async {
                     ),
                   ),
                   if (inlineError != null) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpace.sm),
                     Text(
                       inlineError!,
                       style: AppTypography.custom(
                         color: AppColors.error500,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w500,
                       ),
                     ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/profile_hunter_metrics.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
@@ -22,12 +23,12 @@ class HunterStatsSection extends StatelessWidget {
     final median = metrics.medianHoursBetweenUpdates;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SectionLabel('Hunter stats'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Row(
             children: [
               _HunterStatCard(
@@ -39,7 +40,7 @@ class HunterStatsSection extends StatelessWidget {
                     ? 'No signals yet'
                     : '${updates.length} updates tracked',
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               _HunterStatCard(
                 icon: Icons.thumb_up_alt_outlined,
                 iconColor: const Color(0xFF4ADE80),
@@ -50,7 +51,7 @@ class HunterStatsSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -96,7 +97,7 @@ class _HunterStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -106,7 +107,7 @@ class _HunterStatCard extends StatelessWidget {
               AppColors.bgSurface.withValues(alpha: 0.8),
             ],
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(
             color: iconColor.withValues(alpha: 0.25),
             width: 1.2,
@@ -136,9 +137,9 @@ class _HunterStatCard extends StatelessWidget {
                   width: 1.1,
                 ),
               ),
-              child: Icon(icon, color: iconColor, size: 14),
+              child: Icon(icon, color: iconColor, size: AppIcon.sm),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,12 +148,12 @@ class _HunterStatCard extends StatelessWidget {
                     label.toUpperCase(),
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 9,
+                      size: AppText.captionSize,
                       weight: FontWeight.w700,
                       letterSpacing: 0.55,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpace.hair),
                   Text(
                     value,
                     style: AppTypography.custom(
@@ -168,7 +169,7 @@ class _HunterStatCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 9,
+                      size: AppText.captionSize,
                       weight: FontWeight.w500,
                     ),
                   ),

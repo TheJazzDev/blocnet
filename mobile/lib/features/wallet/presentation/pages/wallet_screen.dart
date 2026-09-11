@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/assets_section.dart';
@@ -80,7 +81,7 @@ class _WalletScreenState extends State<WalletScreen> {
           title: Text(
             'Transactions',
             style: AppTypography.custom(
-              size: 18,
+              size: AppText.titleSize,
               weight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
@@ -93,7 +94,7 @@ class _WalletScreenState extends State<WalletScreen> {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               child: TransactionsList(),
             ),
           ),
@@ -110,37 +111,37 @@ class _WalletScreenState extends State<WalletScreen> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpace.xl),
                 const BalanceCard(),
                 if (_showWalletOnboardingBanner) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpace.lg),
                   WalletOnboardingBanner(
                     onDismiss: () {
                       _dismissWalletOnboardingBanner();
                     },
                   ),
                 ],
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpace.xl),
                 const QuickActions(),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpace.xl),
                 const SectionHeader(label: 'Assets'),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 const AssetsSection(),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpace.xl),
                 const SectionHeader(
                   label: 'Recent Activity',
                   actionLabel: 'View all',
                   actionRoute: AppRoutes.walletTransactions,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 const TransactionsList(limit: 6),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpace.lg),
                 const DisclaimerText(),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpace.xxl),
               ],
             ),
           ),

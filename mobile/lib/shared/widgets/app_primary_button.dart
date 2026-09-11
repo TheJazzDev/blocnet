@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -32,7 +33,7 @@ class PrimaryButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpace.lg),
           decoration: BoxDecoration(
             gradient: isEnabled
                 ? LinearGradient(
@@ -45,7 +46,7 @@ class PrimaryButton extends StatelessWidget {
                   )
                 : null,
             color: isEnabled ? null : AppColors.bgElevated,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lgValue),
             border: Border.all(
               color: isEnabled
                   ? startColor.withValues(alpha: 0.3)
@@ -85,7 +86,7 @@ class PrimaryButton extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isEnabled ? onAccent : AppColors.textMuted,
-                    fontSize: 15,
+                    fontSize: AppText.bodySize,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Geist',
                     letterSpacing: 0.3,

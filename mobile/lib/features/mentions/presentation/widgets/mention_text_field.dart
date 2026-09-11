@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/theme.dart';
@@ -245,20 +246,20 @@ class _MentionTextFieldState extends State<MentionTextField> {
           offset: const Offset(0, 50),
           child: Material(
             elevation: 8,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             color: AppColors.bgSurface,
             child: Container(
               constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
                 color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(
                   color: AppColors.borderSubtle,
                   width: 1,
                 ),
               ),
               child: ListView.builder(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppSpace.sm),
                 shrinkWrap: true,
                 itemCount: _suggestions.length,
                 itemBuilder: (context, index) {
@@ -335,42 +336,42 @@ class _MentionTextFieldState extends State<MentionTextField> {
               ],
         style: AppTypography.custom(
           color: AppColors.textPrimary,
-          size: 14,
+          size: AppText.bodySize,
           weight: FontWeight.w400,
         ),
         decoration: InputDecoration(
           hintText: widget.hintText,
           hintStyle: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 14,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
           filled: true,
           fillColor: AppColors.bgBase,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             borderSide: BorderSide(
               color: AppColors.borderSubtle,
               width: 1,
             ),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             borderSide: BorderSide(
               color: AppColors.borderSubtle,
               width: 1,
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             borderSide: BorderSide(
               color: focusedBorderColor,
               width: focusedBorderWidth,
             ),
           ),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
+            horizontal: AppSpace.lg,
+            vertical: AppSpace.md,
           ),
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/widgets/profile_tile.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
@@ -29,12 +30,12 @@ class ProfileMoreSection extends StatelessWidget {
         context.watch<HunterApplicationStore>().isPending;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SectionLabel('More'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           if (!isHunter)
             ProfileTile(
               icon: Icons.radar_rounded,
@@ -104,9 +105,9 @@ class ProfileMoreSection extends StatelessWidget {
             showDivider: false,
             onTap: () => navigator.pushNamed(AppRoutes.helpSupport),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           const SectionLabel('Account'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           // Backend allows only owner/dev on /audit-log/system-alerts.
           if (auth.isOwner || auth.isDev)
             ProfileTile(

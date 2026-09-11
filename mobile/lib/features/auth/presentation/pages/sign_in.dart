@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
@@ -123,9 +124,9 @@ class _SignInScreenState extends State<SignInScreen> {
               isLoading: _isGoogleSigningIn,
               onPressed: _continueWithGoogle,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             const _OrDivider(label: 'or sign in with email'),
-            const SizedBox(height: 18),
+            const SizedBox(height: AppSpace.lg),
             AuthInputField(
               controller: _emailController,
               label: 'Email address',
@@ -143,7 +144,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             AuthInputField(
               controller: _passwordController,
               label: 'Password',
@@ -164,7 +165,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpace.xs),
 
             // Forgot password — right-aligned link
             Align(
@@ -178,8 +179,8 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
+                    horizontal: AppSpace.xs,
+                    vertical: AppSpace.sm,
                   ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -188,7 +189,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   'Forgot password?',
                   style: TextStyle(
                     color: AppColors.teal400,
-                    fontSize: 12,
+                    fontSize: AppText.labelSize,
                     fontFamily: 'Geist',
                     fontWeight: FontWeight.w500,
                   ),
@@ -196,7 +197,7 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
 
             // Primary CTA — full width
             Row(
@@ -209,7 +210,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpace.xl),
 
             // Sign up link — centered below divider
             Center(
@@ -220,11 +221,11 @@ class _SignInScreenState extends State<SignInScreen> {
                     "Don't have an account?",
                     style: TextStyle(
                       color: AppColors.textMuted,
-                      fontSize: 13,
+                      fontSize: AppText.bodySize,
                       fontFamily: 'Geist',
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSpace.xs),
                   GestureDetector(
                     onTap: isAnyBusy
                         ? null
@@ -233,7 +234,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       'Create account',
                       style: TextStyle(
                         color: AppColors.teal400,
-                        fontSize: 13,
+                        fontSize: AppText.labelSize,
                         fontFamily: 'Geist',
                         fontWeight: FontWeight.w600,
                       ),
@@ -275,7 +276,7 @@ class _GoogleAuthButton extends StatelessWidget {
           elevation: 3,
           shadowColor: Colors.black.withValues(alpha: 0.35),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
           ),
         ),
         child: isLoading
@@ -295,12 +296,12 @@ class _GoogleAuthButton extends StatelessWidget {
                     width: 22,
                     height: 22,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpace.md),
                   Text(
                     label,
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 14,
+                      fontSize: AppText.bodySize,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w700,
                     ),
@@ -317,10 +318,10 @@ class _ConfigWarning extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.warning900.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: AppColors.warning500.withValues(alpha: 0.5),
           width: 1,
@@ -330,7 +331,7 @@ class _ConfigWarning extends StatelessWidget {
         'Supabase config missing. Add SUPABASE_URL and PUBLISHABLE_KEY via --dart-define.',
         style: TextStyle(
           color: AppColors.warning500,
-          fontSize: 11,
+          fontSize: AppText.captionSize,
           fontFamily: 'Geist',
           height: 1.5,
         ),
@@ -355,12 +356,12 @@ class _OrDivider extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
           child: Text(
             label,
             style: TextStyle(
               color: AppColors.textFaint,
-              fontSize: 12,
+              fontSize: AppText.bodySize,
               fontFamily: 'Geist',
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
@@ -32,10 +33,10 @@ class ProjectDetailsInfo extends StatelessWidget {
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(AppSpace.lg),
           decoration: BoxDecoration(
             color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.xlValue),
             border: Border.all(color: AppColors.borderSubtle, width: 1),
           ),
           child: Stack(
@@ -64,9 +65,9 @@ class ProjectDetailsInfo extends StatelessWidget {
                             AppColors.primary700
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(AppRadius.xlValue),
                       ),
-                      padding: const EdgeInsets.all(2),
+                      padding: const EdgeInsets.all(AppSpace.hair),
                       child: Container(
                         decoration: BoxDecoration(
                           color: AppColors.bgSurface,
@@ -79,19 +80,19 @@ class ProjectDetailsInfo extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpace.lg),
                   Text(
                     project.name,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 24,
+                      fontSize: AppText.headlineSize,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w700,
                       height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpace.sm),
                   Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
                     spacing: 8,
@@ -103,7 +104,7 @@ class ProjectDetailsInfo extends StatelessWidget {
                         '•',
                         style: TextStyle(
                           color: AppColors.textFaint,
-                          fontSize: 12,
+                          fontSize: AppText.bodySize,
                           fontFamily: 'Geist',
                         ),
                       ),
@@ -111,14 +112,14 @@ class ProjectDetailsInfo extends StatelessWidget {
                         formatDateWithSuffix(project.createdAt),
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 12,
+                          fontSize: AppText.labelSize,
                           fontFamily: 'Geist',
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpace.lg),
                   Row(
                     children: [
                       Expanded(
@@ -126,19 +127,19 @@ class ProjectDetailsInfo extends StatelessWidget {
                             label: 'Followers',
                             value: '${project.followersCount}'),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpace.sm),
                       Expanded(
                         child:
                             _StatCard(label: 'Updates', value: '$postsCount'),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpace.sm),
                       Expanded(
                         child:
                             _StatCard(label: 'Hunters', value: '$hunterCount'),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
                   Row(
                     children: [
                       Expanded(
@@ -152,7 +153,7 @@ class ProjectDetailsInfo extends StatelessWidget {
                               child: Container(
                                 height: 46,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(AppRadius.lgValue),
                                   gradient: LinearGradient(
                                     colors: [
                                       AppColors.primary500,
@@ -169,7 +170,7 @@ class ProjectDetailsInfo extends StatelessWidget {
                                     isFollowed ? 'Following' : 'Follow Gem',
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 13,
+                                      fontSize: AppText.labelSize,
                                       fontFamily: 'Geist',
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -180,7 +181,7 @@ class ProjectDetailsInfo extends StatelessWidget {
                           },
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpace.sm),
                       Consumer<ProjectsStore>(
                         builder: (context, store, _) {
                           final isFollowed =
@@ -200,13 +201,13 @@ class ProjectDetailsInfo extends StatelessWidget {
                                   projectName: project.name,
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppSpace.sm),
                             ],
                           );
                         },
                       ),
                       _ActionIcon(icon: Icons.share_outlined),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpace.sm),
                       _ActionIcon(icon: Icons.bookmark_border),
                     ],
                   ),
@@ -215,18 +216,18 @@ class ProjectDetailsInfo extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         Text(
           project.description,
           style: TextStyle(
             color: AppColors.textSecondary,
-            fontSize: 13,
+            fontSize: AppText.bodySize,
             fontFamily: 'Geist',
             fontWeight: FontWeight.w400,
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -244,7 +245,7 @@ class ProjectDetailsInfo extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpace.xs),
       ],
     );
   }
@@ -285,10 +286,10 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.md, horizontal: AppSpace.sm),
       decoration: BoxDecoration(
         color: AppColors.bgBase.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle, width: 1),
       ),
       child: Column(
@@ -297,17 +298,17 @@ class _StatCard extends StatelessWidget {
             value,
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 17,
+              fontSize: AppText.subtitleSize,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpace.hair),
           Text(
             label,
             style: TextStyle(
               color: AppColors.textMuted,
-              fontSize: 10,
+              fontSize: AppText.captionSize,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w600,
             ),
@@ -332,10 +333,10 @@ class _DetailChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.xs, horizontal: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgElevated,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xlValue),
         border: Border.all(color: AppColors.borderSubtle, width: 1),
       ),
       child: Row(
@@ -345,7 +346,7 @@ class _DetailChip extends StatelessWidget {
             '$label: ',
             style: TextStyle(
               color: AppColors.textFaint,
-              fontSize: 11,
+              fontSize: AppText.captionSize,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w400,
             ),
@@ -358,7 +359,7 @@ class _DetailChip extends StatelessWidget {
               iconSpacing: 4,
               textStyle: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 11,
+                fontSize: AppText.captionSize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w600,
               ),
@@ -368,7 +369,7 @@ class _DetailChip extends StatelessWidget {
               value,
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 11,
+                fontSize: AppText.captionSize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w600,
               ),
@@ -397,10 +398,10 @@ class _ActionIcon extends StatelessWidget {
         height: 46,
         decoration: BoxDecoration(
           color: AppColors.bgBase.withValues(alpha: 0.72),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(color: AppColors.borderSubtle, width: 1),
         ),
-        child: Icon(icon, size: 20, color: AppColors.textSecondary),
+        child: Icon(icon, size: AppIcon.md, color: AppColors.textSecondary),
       ),
     );
   }

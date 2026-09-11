@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
@@ -114,7 +115,7 @@ class _CommunityReportSubmissionSheetState
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpace.lg),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -131,13 +132,13 @@ class _CommunityReportSubmissionSheetState
                       Icon(
                         Icons.flag_outlined,
                         color: AppColors.error500,
-                        size: 20,
+                        size: AppIcon.md,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpace.sm),
                       Text(
                         'Report ${widget.targetType.label}',
                         style: AppTypography.custom(
-                          size: 16,
+                          size: AppText.subtitleSize,
                           weight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
@@ -149,7 +150,7 @@ class _CommunityReportSubmissionSheetState
                             : () => Navigator.of(context).pop(),
                         icon: Icon(
                           Icons.close,
-                          size: 20,
+                          size: AppIcon.md,
                           color: AppColors.textMuted,
                         ),
                         padding: EdgeInsets.zero,
@@ -158,12 +159,12 @@ class _CommunityReportSubmissionSheetState
                     ],
                   ),
                   if (widget.contentPreview.isNotEmpty) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpace.sm),
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(AppSpace.sm),
                       decoration: BoxDecoration(
                         color: AppColors.bgBase,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.smValue),
                         border: Border.all(
                           color: AppColors.borderSubtle.withValues(alpha: 0.5),
                         ),
@@ -171,7 +172,7 @@ class _CommunityReportSubmissionSheetState
                       child: Text(
                         widget.contentPreview,
                         style: AppTypography.custom(
-                          size: 12,
+                          size: AppText.bodySize,
                           weight: FontWeight.w400,
                           color: AppColors.textMuted,
                           height: 1.4,
@@ -187,19 +188,19 @@ class _CommunityReportSubmissionSheetState
 
             // Content
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpace.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Why are you reporting this?',
                     style: AppTypography.custom(
-                      size: 15,
+                      size: AppText.bodySize,
                       weight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
 
                   // Reason options
                   ...CommunityReportReason.values.map((reason) {
@@ -217,48 +218,48 @@ class _CommunityReportSubmissionSheetState
                     );
                   }),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpace.lg),
 
                   // Details field
                   Text(
                     'Additional details ${_selectedReason == CommunityReportReason.other ? "(required)" : "(optional)"}',
                     style: AppTypography.custom(
-                      size: 15,
+                      size: AppText.bodySize,
                       weight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpace.sm),
                   TextField(
                     controller: _detailsController,
                     enabled: !_isSubmitting,
                     maxLines: 4,
                     maxLength: 1000,
                     style: AppTypography.custom(
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w400,
                       color: AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Provide any additional context...',
                       hintStyle: AppTypography.custom(
-                        size: 14,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                         color: AppColors.textMuted.withValues(alpha: 0.6),
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
                         borderSide: BorderSide(color: AppColors.borderSubtle),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
                         borderSide: BorderSide(color: AppColors.borderSubtle),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
                         borderSide: BorderSide(color: AppColors.primary400, width: 1.5),
                       ),
-                      contentPadding: const EdgeInsets.all(12),
+                      contentPadding: const EdgeInsets.all(AppSpace.md),
                     ),
                     onChanged: (_) {
                       if (_errorMessage != null) {
@@ -270,12 +271,12 @@ class _CommunityReportSubmissionSheetState
                   ),
 
                   if (_errorMessage != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpace.md),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(AppSpace.md),
                       decoration: BoxDecoration(
                         color: AppColors.error500.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.smValue),
                         border: Border.all(
                           color: AppColors.error500.withValues(alpha: 0.3),
                         ),
@@ -285,14 +286,14 @@ class _CommunityReportSubmissionSheetState
                           Icon(
                             Icons.error_outline,
                             color: AppColors.error500,
-                            size: 18,
+                            size: AppIcon.md,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpace.sm),
                           Expanded(
                             child: Text(
                               _errorMessage!,
                               style: AppTypography.custom(
-                                size: 13,
+                                size: AppText.labelSize,
                                 weight: FontWeight.w500,
                                 color: AppColors.error500,
                               ),
@@ -303,14 +304,14 @@ class _CommunityReportSubmissionSheetState
                     ),
                   ],
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpace.lg),
 
                   // Info box
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(AppSpace.md),
                     decoration: BoxDecoration(
                       color: AppColors.bgBase,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.smValue),
                       border: Border.all(
                         color: AppColors.borderSubtle.withValues(alpha: 0.5),
                       ),
@@ -320,15 +321,15 @@ class _CommunityReportSubmissionSheetState
                       children: [
                         Icon(
                           Icons.info_outline,
-                          size: 16,
+                          size: AppIcon.sm,
                           color: AppColors.primary400,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpace.sm),
                         Expanded(
                           child: Text(
                             'Your report will be reviewed by our moderation team. Reports are confidential.',
                             style: AppTypography.custom(
-                              size: 12,
+                              size: AppText.bodySize,
                               weight: FontWeight.w400,
                               color: AppColors.textSecondary,
                               height: 1.4,
@@ -339,7 +340,7 @@ class _CommunityReportSubmissionSheetState
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpace.lg),
 
                   // Submit button
                   SizedBox(
@@ -350,12 +351,12 @@ class _CommunityReportSubmissionSheetState
                               ? null
                               : _submitReport,
                       style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
                         backgroundColor: AppColors.error500,
                         disabledBackgroundColor:
                             AppColors.error500.withValues(alpha: 0.3),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.mdValue),
                         ),
                       ),
                       child: _isSubmitting
@@ -371,14 +372,14 @@ class _CommunityReportSubmissionSheetState
                           : Text(
                               'Submit Report',
                               style: AppTypography.custom(
-                                size: 15,
+                                size: AppText.bodySize,
                                 weight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpace.sm),
                 ],
               ),
             ),
@@ -403,12 +404,12 @@ class _ReasonOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpace.md),
           decoration: BoxDecoration(
             border: Border.all(
               color: isSelected
@@ -416,7 +417,7 @@ class _ReasonOption extends StatelessWidget {
                   : AppColors.borderSubtle,
               width: isSelected ? 2 : 1,
             ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             color: isSelected
                 ? AppColors.primary400.withValues(alpha: 0.05)
                 : null,
@@ -427,7 +428,7 @@ class _ReasonOption extends StatelessWidget {
               Container(
                 width: 20,
                 height: 20,
-                margin: const EdgeInsets.only(top: 2),
+                margin: const EdgeInsets.only(top: AppSpace.hair),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -438,7 +439,7 @@ class _ReasonOption extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,18 +447,18 @@ class _ReasonOption extends StatelessWidget {
                     Text(
                       reason.label,
                       style: AppTypography.custom(
-                        size: 14,
+                        size: AppText.bodySize,
                         weight: isSelected ? FontWeight.w600 : FontWeight.w500,
                         color: isSelected
                             ? AppColors.primary400
                             : AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.hair),
                     Text(
                       reason.description,
                       style: AppTypography.custom(
-                        size: 12,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                         color: AppColors.textMuted,
                         height: 1.3,

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:flutter/material.dart';
@@ -30,10 +31,10 @@ class ReceiveAddressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -42,26 +43,26 @@ class ReceiveAddressCard extends StatelessWidget {
             'YOUR WALLET ADDRESS',
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w700,
               letterSpacing: 1.2,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpace.xs),
           Text(
             networkLabel,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpace.md),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
             ),
             child: QrImageView(
               data: address,
@@ -79,16 +80,16 @@ class ReceiveAddressCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           GestureDetector(
             onTap: () => _copy(context),
             behavior: HitTestBehavior.opaque,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.md),
               decoration: BoxDecoration(
                 color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
               child: SelectableText(
@@ -96,14 +97,14 @@ class ReceiveAddressCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w600,
                   height: 1.5,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               Expanded(
@@ -115,14 +116,14 @@ class ReceiveAddressCard extends StatelessWidget {
                     minimumSize: const Size.fromHeight(44),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     ),
                   ),
-                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  icon: const Icon(Icons.copy_rounded, size: AppIcon.sm),
                   label: const Text('Copy'),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onShare,
@@ -131,10 +132,10 @@ class ReceiveAddressCard extends StatelessWidget {
                     minimumSize: const Size.fromHeight(44),
                     side: BorderSide(color: AppColors.borderMuted),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     ),
                   ),
-                  icon: const Icon(Icons.ios_share_rounded, size: 16),
+                  icon: const Icon(Icons.ios_share_rounded, size: AppIcon.sm),
                   label: const Text('Share'),
                 ),
               ),

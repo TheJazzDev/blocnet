@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
@@ -33,7 +34,7 @@ class UpdateDetailsInfo extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               UpdateProjectLogo(logoUrl: post.project?.logo ?? '', size: 44),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Flexible(
                 child: UpdateProjectTitle(
                   projectTitle: post.project?.name ?? '',
@@ -44,19 +45,19 @@ class UpdateDetailsInfo extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpace.lg),
         // Title
         Text(
           post.title,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 20,
+            fontSize: AppText.titleSize,
             fontFamily: 'Geist',
             fontWeight: FontWeight.w700,
             height: 1.3,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         // Meta row
         Wrap(
           spacing: 10,
@@ -168,8 +169,8 @@ class _MetaChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: AppColors.textFaint),
-          const SizedBox(width: 4),
+          Icon(icon, size: AppIcon.xs, color: AppColors.textFaint),
+          const SizedBox(width: AppSpace.xs),
           if (currentLevel != null)
             UserNameWithLevelIcon(
               name: label,
@@ -177,7 +178,7 @@ class _MetaChip extends StatelessWidget {
               levelBadgeSize: LevelBadgeSize.tiny,
               textStyle: TextStyle(
                 color: AppColors.textMuted,
-                fontSize: 12,
+                fontSize: AppText.bodySize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w400,
               ),
@@ -187,17 +188,17 @@ class _MetaChip extends StatelessWidget {
               label,
               style: TextStyle(
                 color: AppColors.textMuted,
-                fontSize: 12,
+                fontSize: AppText.bodySize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w400,
               ),
             ),
           if (roleLabel != null) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpace.xs),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs, vertical: 1),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.smValue),
                 border: Border.all(
                   color: (roleLabel == 'HUNTER'
                           ? const Color(0xFFC084FC)
@@ -212,7 +213,7 @@ class _MetaChip extends StatelessWidget {
                   color: roleLabel == 'HUNTER'
                       ? const Color(0xFFC084FC)
                       : AppColors.primary400,
-                  fontSize: 9,
+                  fontSize: AppText.captionSize,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w700,
                 ),

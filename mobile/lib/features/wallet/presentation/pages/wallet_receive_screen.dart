@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/receive_address_card.dart';
@@ -48,13 +49,13 @@ class WalletReceiveScreen extends StatelessWidget {
           'Receive',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 18,
+            size: AppText.titleSize,
             weight: FontWeight.w700,
           ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -66,12 +67,12 @@ class WalletReceiveScreen extends StatelessWidget {
               )
             else
               _WalletNotReadyCard(message: walletNotReadyMessage(walletStore)),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSpace.md),
               decoration: BoxDecoration(
                 color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Row(
@@ -79,10 +80,10 @@ class WalletReceiveScreen extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.info_outline_rounded,
-                    size: 16,
+                    size: AppIcon.sm,
                     color: AppColors.textMuted,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   Expanded(
                     child: Text(
                       'Only send BNB and BEP-20 tokens on $networkLabel to '
@@ -90,7 +91,7 @@ class WalletReceiveScreen extends StatelessWidget {
                       'be recovered.',
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w500,
                         height: 1.4,
                       ),
@@ -114,35 +115,35 @@ class _WalletNotReadyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: 28),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
         children: [
           Icon(
             Icons.hourglass_top_rounded,
-            size: 32,
+            size: AppIcon.xl,
             color: AppColors.textMuted,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Text(
             'Address not ready',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 15,
+              size: AppText.bodySize,
               weight: FontWeight.w700,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             message,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w500,
               height: 1.4,
             ),

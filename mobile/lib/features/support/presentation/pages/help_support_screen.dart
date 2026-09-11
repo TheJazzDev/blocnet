@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -19,16 +20,16 @@ class HelpSupportScreen extends StatelessWidget {
         showFilter: false,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _HeaderSection(),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             _QuickHelpSection(),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             _ContactSection(),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             _ResourcesSection(),
           ],
         ),
@@ -47,16 +48,16 @@ class _HeaderSection extends StatelessWidget {
           'How can we help?',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 22,
+            size: AppText.headlineSize,
             weight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         Text(
           'Get assistance with your account, explore FAQs, or reach out to our support team.',
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 14,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),
@@ -75,11 +76,11 @@ class _QuickHelpSection extends StatelessWidget {
           'Quick Help',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         _HelpTile(
           icon: Icons.question_answer_outlined,
           title: 'FAQs',
@@ -114,11 +115,11 @@ class _ContactSection extends StatelessWidget {
           'Contact Us',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         _ContactTile(
           icon: Icons.email_outlined,
           title: 'Email Support',
@@ -145,11 +146,11 @@ class _ResourcesSection extends StatelessWidget {
           'Resources',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         _ResourceTile(
           icon: Icons.article_outlined,
           title: 'Documentation',
@@ -203,11 +204,11 @@ class _HelpTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: AppSpace.md),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(
             color: AppColors.borderSubtle,
             width: 1,
@@ -220,15 +221,15 @@ class _HelpTile extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: AppColors.primary500.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
               ),
               child: Icon(
                 icon,
                 color: AppColors.primary400,
-                size: 22,
+                size: AppIcon.lg,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,16 +238,16 @@ class _HelpTile extends StatelessWidget {
                     title,
                     style: AppTypography.custom(
                       color: AppColors.textSecondary,
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpace.hair),
                   Text(
                     subtitle,
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 12,
+                      size: AppText.bodySize,
                       weight: FontWeight.w400,
                     ),
                   ),
@@ -256,7 +257,7 @@ class _HelpTile extends StatelessWidget {
             Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textFaint,
-              size: 20,
+              size: AppIcon.md,
             ),
           ],
         ),
@@ -283,11 +284,11 @@ class _ContactTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: AppSpace.md),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(
             color: AppColors.borderSubtle,
             width: 1,
@@ -300,15 +301,15 @@ class _ContactTile extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: AppColors.teal500.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
               ),
               child: Icon(
                 icon,
                 color: AppColors.teal400,
-                size: 22,
+                size: AppIcon.lg,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,16 +318,16 @@ class _ContactTile extends StatelessWidget {
                     title,
                     style: AppTypography.custom(
                       color: AppColors.textSecondary,
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpace.hair),
                   Text(
                     subtitle,
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 12,
+                      size: AppText.bodySize,
                       weight: FontWeight.w400,
                     ),
                   ),
@@ -336,7 +337,7 @@ class _ContactTile extends StatelessWidget {
             Icon(
               Icons.open_in_new_rounded,
               color: AppColors.textFaint,
-              size: 18,
+              size: AppIcon.md,
             ),
           ],
         ),
@@ -361,11 +362,11 @@ class _ResourceTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        margin: const EdgeInsets.only(bottom: AppSpace.md),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(
             color: AppColors.borderSubtle,
             width: 1,
@@ -376,15 +377,15 @@ class _ResourceTile extends StatelessWidget {
             Icon(
               icon,
               color: AppColors.textMuted,
-              size: 20,
+              size: AppIcon.md,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Text(
                 title,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w500,
                 ),
               ),
@@ -392,7 +393,7 @@ class _ResourceTile extends StatelessWidget {
             Icon(
               Icons.open_in_new_rounded,
               color: AppColors.textFaint,
-              size: 18,
+              size: AppIcon.md,
             ),
           ],
         ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -40,11 +41,11 @@ class SettingSwitchTile extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: iconColor),
-              const SizedBox(width: 12),
+              Icon(icon, size: AppIcon.md, color: iconColor),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,24 +56,24 @@ class SettingSwitchTile extends StatelessWidget {
                         color: isEnabled
                             ? AppColors.textPrimary
                             : AppColors.textPrimary.withValues(alpha: 0.7),
-                        size: 14,
+                        size: AppText.bodySize,
                         weight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.hair),
                     subtitleWidget ??
                         Text(
                           subtitle,
                           style: AppTypography.custom(
                             color: subtitleColor,
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w500,
                           ),
                         ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Switch(
                 value: value,
                 onChanged: onChanged,

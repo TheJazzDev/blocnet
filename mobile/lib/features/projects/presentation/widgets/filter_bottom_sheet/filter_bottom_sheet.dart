@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
@@ -147,11 +148,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: ClipRRect(
           borderRadius: const BorderRadius.all(Radius.circular(16)),
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpace.xl),
             color: AppColors.bgSurface,
             child: SingleChildScrollView(
               child: Column(
@@ -160,12 +161,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     'Filters',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 15,
+                      fontSize: AppText.bodySize,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpace.lg),
                   FilterDropdownSection(
                     title: 'Primary Tag',
                     icon: Symbols.bookmark_star,
@@ -187,7 +188,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     unselectedPriorities: _unselectedPriorities,
                     onPriorityToggle: _togglePriority,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpace.lg),
                   Row(
                     children: [
                       SecondaryButton(
@@ -195,7 +196,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         title: 'Clear All Filters',
                         isEnabled: _hasSelection,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpace.md),
                       PrimaryButton(
                         onPressed: _applyFilters,
                         title: 'Apply Filters',

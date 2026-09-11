@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
@@ -127,30 +128,30 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
 
         if (store.projects.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpace.xl),
             child: Column(
               children: [
                 Icon(
                   Icons.diamond_outlined,
-                  size: 40,
+                  size: AppIcon.xxl,
                   color: AppColors.textFaint,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpace.md),
                 Text(
                   'No gems found',
                   style: AppTypography.custom(
                     color: AppColors.textSecondary,
-                    size: 15,
+                    size: AppText.bodySize,
                     weight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   'Gems will appear here once they are listed.',
                   textAlign: TextAlign.center,
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 12,
+                    size: AppText.bodySize,
                     weight: FontWeight.w400,
                     height: 1.5,
                   ),
@@ -162,30 +163,30 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
 
         if (visibleProjects.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpace.xl),
             child: Column(
               children: [
                 Icon(
                   Icons.filter_alt_off_outlined,
-                  size: 38,
+                  size: AppIcon.xl,
                   color: AppColors.textFaint,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 Text(
                   'No gems match this filter',
                   style: AppTypography.custom(
                     color: AppColors.textSecondary,
-                    size: 14,
+                    size: AppText.bodySize,
                     weight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   'Adjust your filters to see more gems.',
                   textAlign: TextAlign.center,
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 12,
+                    size: AppText.bodySize,
                     weight: FontWeight.w400,
                   ),
                 ),
@@ -199,7 +200,7 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
           children: [
             // Section header
             Padding(
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 12),
+              padding: const EdgeInsets.fromLTRB(0, AppSpace.lg, 0, AppSpace.md),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -207,24 +208,24 @@ class _DiscoverProjectsSectionState extends State<DiscoverProjectsSection> {
                     'CURATED FEED',
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 10,
+                      size: AppText.captionSize,
                       weight: FontWeight.w600,
                       letterSpacing: 0.9,
                     ),
                   ),
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                     decoration: BoxDecoration(
                       color: AppColors.bgSurface,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppRadius.smValue),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: Text(
                       'Sort: Hype Score',
                       style: AppTypography.custom(
                         color: AppColors.textFaint,
-                        size: 10,
+                        size: AppText.captionSize,
                         weight: FontWeight.w400,
                       ),
                     ),

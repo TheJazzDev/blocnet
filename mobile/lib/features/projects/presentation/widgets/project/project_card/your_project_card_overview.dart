@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/follow_bottom_sheet/follow_bottom_sheet.dart';
 import 'package:flutter/material.dart';
@@ -39,18 +40,18 @@ class _YourProjectCardOverviewState extends State<YourProjectCardOverview> {
     return Row(
       children: [
         UpdateProjectLogo(logoUrl: widget.project.logo, size: 44),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               PrimaryLabel(primaryTag: widget.project.primaryTag),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               Text(
                 widget.project.name,
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 15,
+                  fontSize: AppText.bodySize,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w600,
                 ),
@@ -60,7 +61,7 @@ class _YourProjectCardOverviewState extends State<YourProjectCardOverview> {
             ],
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpace.sm),
         GestureDetector(
           onTap: _showOptions,
           child: Container(
@@ -68,12 +69,12 @@ class _YourProjectCardOverviewState extends State<YourProjectCardOverview> {
             height: 32,
             decoration: BoxDecoration(
               color: AppColors.bgElevated,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.smValue),
               border: Border.all(color: AppColors.borderSubtle, width: 1),
             ),
             child: Icon(
               Icons.more_horiz,
-              size: 16,
+              size: AppIcon.sm,
               color: AppColors.textMuted,
             ),
           ),

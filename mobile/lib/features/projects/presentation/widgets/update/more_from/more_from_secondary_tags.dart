@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/secondary_label.dart';
@@ -33,12 +34,12 @@ class _MoreFromSecondaryTagsState
               'More From',
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 13,
+                fontSize: AppText.labelSize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             Flexible(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -46,7 +47,7 @@ class _MoreFromSecondaryTagsState
                   children: List.generate(
                     secondaryTags.length,
                     (index) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
                       child: SecondaryLabel(
                         secondaryTags[index],
                         useDisplayText: false,
@@ -58,13 +59,13 @@ class _MoreFromSecondaryTagsState
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpace.lg),
         morePosts.isEmpty
             ? Text(
                 'No updates available for this secondary tag!',
                 style: TextStyle(
                   color: AppColors.textFaint,
-                  fontSize: 12,
+                  fontSize: AppText.bodySize,
                   fontFamily: 'Geist',
                 ),
               )

@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_switcher_sheet.dart';
@@ -50,10 +51,10 @@ class SpaceSwitcher extends StatelessWidget {
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
             height: 30,
-            padding: const EdgeInsets.only(left: 8, right: 6),
+            padding: const EdgeInsets.only(left: AppSpace.sm, right: AppSpace.sm),
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.fullValue),
               border: Border.all(
                 color: accent.withValues(alpha: 0.38),
                 width: 1,
@@ -72,21 +73,21 @@ class SpaceSwitcher extends StatelessWidget {
                     ),
                   )
                 else
-                  Icon(current.icon, size: 15, color: accent),
-                const SizedBox(width: 5),
+                  Icon(current.icon, size: AppIcon.sm, color: accent),
+                const SizedBox(width: AppSpace.xs),
                 Text(
                   current.label,
                   style: AppTypography.custom(
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w700,
                     color: accent,
                     letterSpacing: 0.2,
                   ),
                 ),
-                const SizedBox(width: 2),
+                const SizedBox(width: AppSpace.hair),
                 Icon(
                   Icons.expand_more_rounded,
-                  size: 15,
+                  size: AppIcon.sm,
                   color: accent.withValues(alpha: 0.85),
                 ),
               ],

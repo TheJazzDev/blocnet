@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/become_hunter/become_hunter_form.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/become_hunter/become_hunter_hero.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/become_hunter/become_hunter_status_card.dart';
@@ -44,12 +45,12 @@ class BecomeHunterScreen extends StatelessWidget {
         showSpaceSwitcher: false,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
+        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.xl, AppSpace.lg, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const BecomeHunterHero(),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             body,
           ],
         ),

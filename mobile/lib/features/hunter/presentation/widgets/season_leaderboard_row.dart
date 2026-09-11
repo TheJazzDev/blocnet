@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
@@ -43,7 +44,7 @@ class SeasonLeaderboardRow extends StatelessWidget {
       color: entry.isCurrentUser
           ? AppColors.primary500.withValues(alpha: 0.06)
           : Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
       child: Row(
         children: [
           SizedBox(
@@ -52,12 +53,12 @@ class SeasonLeaderboardRow extends StatelessWidget {
               '#${entry.rank}',
               style: AppTypography.custom(
                 color: rankColor,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: UserNameWithLevelIcon(
               name: entry.isCurrentUser
@@ -70,26 +71,26 @@ class SeasonLeaderboardRow extends StatelessWidget {
                 color: entry.isCurrentUser
                     ? AppColors.textPrimary
                     : AppColors.textSecondary,
-                size: 12,
+                size: AppText.bodySize,
                 weight: entry.isCurrentUser ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Text(
             entry.updatesCount.toString(),
             style: AppTypography.custom(
               color: valueColor,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(width: 18),
+          const SizedBox(width: AppSpace.lg),
           Text(
             _formatTipsReceived(entry.totalTipsReceived),
             style: AppTypography.custom(
               color: valueColor,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w600,
             ),
           ),

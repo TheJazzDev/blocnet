@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 
 class AuthScreenShell extends StatelessWidget {
@@ -40,7 +41,7 @@ class AuthScreenShell extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                    padding: const EdgeInsets.fromLTRB(AppSpace.sm, AppSpace.sm, AppSpace.sm, 0),
                     child: Row(
                       children: [
                         SizedBox(
@@ -54,7 +55,7 @@ class AuthScreenShell extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: AppColors.textPrimary,
-                              fontSize: 18,
+                              fontSize: AppText.titleSize,
                               fontFamily: 'Geist',
                               fontWeight: FontWeight.w700,
                             ),
@@ -66,7 +67,7 @@ class AuthScreenShell extends StatelessWidget {
                   ),
 
                   const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: AppSpace.lg),
                     child: _LogoMark(),
                   ),
 
@@ -77,32 +78,32 @@ class AuthScreenShell extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         _GradientHeading(heading),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpace.sm),
                         Text(
                           subtitle,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: 12,
+                            fontSize: AppText.bodySize,
                             fontFamily: 'Geist',
                             fontWeight: FontWeight.w400,
                             height: 1.55,
                           ),
                         ),
                         if (notice != null) ...[
-                          const SizedBox(height: 12),
+                          const SizedBox(height: AppSpace.md),
                           notice!,
                         ],
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpace.xl),
 
                   // Form card — frosted dark panel
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                       child: _FormCard(child: child),
                     ),
                   ),
@@ -268,7 +269,7 @@ class _LogoMark extends StatelessWidget {
             height: 62,
             decoration: BoxDecoration(
               color: AppColors.bgSurface,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(AppRadius.lgValue),
               border: Border.all(
                 color: AppColors.primary500.withValues(alpha: 0.35),
                 width: 1.5,
@@ -286,7 +287,7 @@ class _LogoMark extends StatelessWidget {
                 ),
               ],
             ),
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(AppSpace.md),
             child: Image.asset(
               'assets/img/logo.png',
               fit: BoxFit.contain,
@@ -324,7 +325,7 @@ class _GradientHeading extends StatelessWidget {
         textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 24,
+          fontSize: AppText.headlineSize,
           fontWeight: FontWeight.w700,
           fontFamily: 'Britti',
           letterSpacing: -0.3,
@@ -366,7 +367,7 @@ class _FormCard extends StatelessWidget {
               ),
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+              padding: const EdgeInsets.fromLTRB(AppSpace.xl, 28, AppSpace.xl, AppSpace.xxl),
               child: child,
             ),
           ),
@@ -410,14 +411,14 @@ class _BackButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xlValue),
         onTap: () => Navigator.pop(context),
         child: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(AppSpace.md),
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.textSecondary,
-            size: 17,
+            size: AppIcon.sm,
           ),
         ),
       ),

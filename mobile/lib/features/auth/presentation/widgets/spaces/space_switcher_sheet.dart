@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -42,7 +43,7 @@ class SpaceSwitcherSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              margin: const EdgeInsets.only(top: AppSpace.md, bottom: AppSpace.sm),
               width: 40,
               height: 4,
               decoration: BoxDecoration(
@@ -51,19 +52,19 @@ class SpaceSwitcherSheet extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl, vertical: AppSpace.md),
               child: Row(
                 children: [
                   Icon(
                     Icons.swap_horiz_rounded,
-                    size: 20,
+                    size: AppIcon.md,
                     color: AppColors.textSecondary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   Text(
                     'Switch Space',
                     style: AppTypography.custom(
-                      size: 16,
+                      size: AppText.subtitleSize,
                       weight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -83,7 +84,7 @@ class SpaceSwitcherSheet extends StatelessWidget {
                   auth.switchSpaceWithTransition(space.id);
                 },
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
           ],
         ),
       ),
@@ -110,14 +111,14 @@ class _SpaceOptionTile extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: space.accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
         ),
-        child: Icon(space.icon, size: 22, color: space.accent),
+        child: Icon(space.icon, size: AppIcon.lg, color: space.accent),
       ),
       title: Text(
         space.label,
         style: AppTypography.custom(
-          size: 15,
+          size: AppText.bodySize,
           weight: isCurrent ? FontWeight.w600 : FontWeight.w500,
           color: AppColors.textPrimary,
         ),
@@ -125,13 +126,13 @@ class _SpaceOptionTile extends StatelessWidget {
       subtitle: Text(
         space.description,
         style: AppTypography.custom(
-          size: 13,
+          size: AppText.bodySize,
           weight: FontWeight.w400,
           color: AppColors.textSecondary,
         ),
       ),
       trailing: isCurrent
-          ? Icon(Icons.check_circle_rounded, color: space.accent, size: 22)
+          ? Icon(Icons.check_circle_rounded, color: space.accent, size: AppIcon.lg)
           : null,
       onTap: onTap,
     );

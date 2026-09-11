@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -31,7 +32,7 @@ class TipsLoadErrorRow extends StatelessWidget {
               size: size + 4,
               color: AppColors.warning500,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpace.sm),
             Flexible(
               child: Text(
                 "Couldn't load tips. Tap to retry.",

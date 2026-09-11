@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
@@ -28,7 +29,7 @@ class MiningHourlyHistoryCard extends StatelessWidget {
     if (isLoading && visibleEntries.isEmpty) {
       return const Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(vertical: AppSpace.lg),
           child: SizedBox(
             width: 20,
             height: 20,
@@ -40,11 +41,11 @@ class MiningHourlyHistoryCard extends StatelessWidget {
 
     if (visibleEntries.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
         child: Text(
           'No hourly checkpoints yet. Start mining to generate hourly records.',
           style: AppTypography.custom(
-            size: 12,
+            size: AppText.labelSize,
             weight: FontWeight.w500,
             color: AppColors.textMuted,
             height: 1.5,
@@ -96,7 +97,7 @@ class _HistoryRow extends StatelessWidget {
     final estimatedHourlyPoints = _estimateHourlyPoints();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -107,16 +108,16 @@ class _HistoryRow extends StatelessWidget {
                 Text(
                   rangeLabel,
                   style: AppTypography.custom(
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   'Hour ${item.hourIndex} · Boost ${_formatBoost(item.boostBpsSnapshot)}% · ${item.activeReferralsSnapshot} refs',
                   style: AppTypography.custom(
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                     color: AppColors.textMuted,
                   ),
@@ -124,33 +125,33 @@ class _HistoryRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 '+${formatGroupedNumber(estimatedHourlyPoints, maxDecimals: 2, minDecimals: 2)} BNP',
                 style: AppTypography.custom(
-                  size: 13,
+                  size: AppText.labelSize,
                   weight: FontWeight.w800,
                   color: AppColors.successColor,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpace.hair),
               Text(
                 'settled ${formatGroupedNumber(item.points, maxDecimals: 0)}',
                 style: AppTypography.custom(
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w500,
                   color: AppColors.textFaint,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   border: Border.all(
                     color: statusColor.withValues(alpha: 0.35),
                     width: 1,
@@ -159,7 +160,7 @@ class _HistoryRow extends StatelessWidget {
                 child: Text(
                   statusLabel,
                   style: AppTypography.custom(
-                    size: 9,
+                    size: AppText.captionSize,
                     weight: FontWeight.w800,
                     color: statusColor,
                   ),

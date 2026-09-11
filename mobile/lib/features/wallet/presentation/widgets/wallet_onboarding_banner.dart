@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -14,10 +15,10 @@ class WalletOnboardingBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.primary500.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: AppColors.primary500.withValues(alpha: 0.32),
         ),
@@ -28,9 +29,9 @@ class WalletOnboardingBanner extends StatelessWidget {
           Icon(
             Icons.lightbulb_outline_rounded,
             color: AppColors.primary400,
-            size: 18,
+            size: AppIcon.md,
           ),
-          const SizedBox(width: 9),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,16 +40,16 @@ class WalletOnboardingBanner extends StatelessWidget {
                   'Wallet quick start',
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   'Use Receive for your address, Send for transfers, and Swap to prepare conversion flow.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                     height: 1.35,
                   ),
@@ -56,7 +57,7 @@ class WalletOnboardingBanner extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           GestureDetector(
             onTap: onDismiss,
             child: Container(
@@ -64,12 +65,12 @@ class WalletOnboardingBanner extends StatelessWidget {
               height: 24,
               decoration: BoxDecoration(
                 color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.smValue),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Icon(
                 Icons.close_rounded,
-                size: 15,
+                size: AppIcon.sm,
                 color: AppColors.textMuted,
               ),
             ),

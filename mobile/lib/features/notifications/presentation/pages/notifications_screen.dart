@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
@@ -87,21 +88,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 GestureDetector(
                   onTap: () => _openInsights(digest),
                   child: Container(
-                    margin: const EdgeInsets.only(right: 8),
+                    margin: const EdgeInsets.only(right: AppSpace.sm),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.sm,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.bgElevated,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.smValue),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: Text(
                       'Insights',
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -111,21 +112,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 GestureDetector(
                   onTap: store.markAllRead,
                   child: Container(
-                    margin: const EdgeInsets.only(right: 8),
+                    margin: const EdgeInsets.only(right: AppSpace.sm),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.sm,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.bgElevated,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.smValue),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: Text(
                       'Mark all read',
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -165,12 +166,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ),
                             child: ListView.builder(
                               controller: _scrollController,
-                              padding: const EdgeInsets.fromLTRB(16, 6, 16, 96),
+                              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, 96),
                               itemBuilder: (context, index) {
                                 final itemCount = store.notifications.length;
                                 if (index >= itemCount) {
                                   return const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    padding: EdgeInsets.symmetric(vertical: AppSpace.lg),
                                     child: Center(
                                       child: SizedBox(
                                         width: 18,
@@ -350,7 +351,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       builder: (_) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,58 +362,58 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Text(
                 destination,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 17,
+                  size: AppText.subtitleSize,
                   weight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               Text(
                 item.title,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 13,
+                  size: AppText.labelSize,
                   weight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               Text(
                 item.body,
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(AppSpace.md),
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Text(
                   '$helperText You are in $currentSpaceLabel space, so this opens as an inline preview only.',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                     height: 1.35,
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
@@ -420,7 +421,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary500,
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                   ),
                   child: const Text('Close'),
                 ),
@@ -577,30 +578,30 @@ class _NotificationTile extends StatelessWidget {
               Container(
                 width: 7,
                 height: 7,
-                margin: const EdgeInsets.only(top: 6),
+                margin: const EdgeInsets.only(top: AppSpace.sm),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isUnread ? style.color : Colors.transparent,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Container(
                 width: 30,
                 height: 30,
                 decoration: BoxDecoration(
                   color: style.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border: Border.all(
                     color: style.color.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Icon(
                   style.icon,
-                  size: 15,
+                  size: AppIcon.sm,
                   color: style.color,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,35 +612,35 @@ class _NotificationTile extends StatelessWidget {
                         color: isUnread
                             ? AppColors.textPrimary
                             : AppColors.textSecondary,
-                        size: 12.5,
+                        size: AppText.bodySize,
                         weight: isUnread ? FontWeight.w700 : FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: AppSpace.hair),
                     Text(
                       item.body,
                       style: AppTypography.custom(
                         color: isUnread
                             ? AppColors.textSecondary
                             : AppColors.textMuted,
-                        size: 11.5,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpace.sm),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                          horizontal: AppSpace.sm, vertical: AppSpace.hair),
                       decoration: BoxDecoration(
                         color: style.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.circular(AppRadius.fullValue),
                       ),
                       child: Text(
                         style.label,
                         style: AppTypography.custom(
                           color: style.color,
-                          size: 10,
+                          size: AppText.captionSize,
                           weight: FontWeight.w600,
                         ),
                       ),
@@ -647,12 +648,12 @@ class _NotificationTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 _timeLabel(),
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 10.5,
+                  size: AppText.captionSize,
                   weight: FontWeight.w400,
                 ),
               ),
@@ -679,10 +680,10 @@ class _NotificationRowWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     if (mode == FeedViewMode.card) {
       return Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: AppSpace.sm),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
         ),
         child: child,
       );
@@ -711,7 +712,7 @@ class _NotificationCategoryFilterBar extends StatelessWidget {
     return SizedBox(
       height: 48,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.sm),
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
           final option = options[index];
@@ -720,12 +721,12 @@ class _NotificationCategoryFilterBar extends StatelessWidget {
             onTap: () => onSelect(option.key),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: 7),
               decoration: BoxDecoration(
                 color: isSelected
                     ? option.color.withValues(alpha: 0.18)
                     : AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.fullValue),
                 border: Border.all(
                   color: isSelected
                       ? option.color.withValues(alpha: 0.6)
@@ -736,14 +737,14 @@ class _NotificationCategoryFilterBar extends StatelessWidget {
                 option.label,
                 style: AppTypography.custom(
                   color: isSelected ? option.color : AppColors.textMuted,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 ),
               ),
             ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpace.sm),
         itemCount: options.length,
       ),
     );
@@ -761,7 +762,7 @@ class _EmptyNotificationsState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -770,31 +771,31 @@ class _EmptyNotificationsState extends StatelessWidget {
               height: 56,
               decoration: BoxDecoration(
                 color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lgValue),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Icon(
                 Symbols.notifications_off,
-                size: 24,
+                size: AppIcon.lg,
                 color: AppColors.textFaint,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             Text(
               'No notifications yet',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 15,
+                size: AppText.bodySize,
                 weight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'Follow gems to receive priority and update alerts.',
               textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 12,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
                 height: 1.5,
               ),

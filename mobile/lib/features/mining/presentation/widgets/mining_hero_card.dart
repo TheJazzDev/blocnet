@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:flutter/material.dart';
@@ -188,7 +189,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
+          padding: const EdgeInsets.fromLTRB(0, AppSpace.xs, 0, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -197,9 +198,9 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                   Icon(
                     Icons.bolt_rounded,
                     color: AppColors.primary400,
-                    size: 20,
+                    size: AppIcon.md,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpace.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +208,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                         Text(
                           statusSubtext,
                           style: AppTypography.custom(
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w500,
                             color: AppColors.textMuted,
                           ),
@@ -225,7 +226,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               Center(
                 child: AnimatedBuilder(
                   animation: Listenable.merge([
@@ -243,14 +244,14 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               // Main earning display
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpace.lg),
                 decoration: BoxDecoration(
                   color: AppColors.primary500.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.xlValue),
                   border: Border.all(
                     color: AppColors.primary500.withValues(alpha: 0.2),
                   ),
@@ -260,13 +261,13 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                     Text(
                       'EARNING PER HOUR',
                       style: AppTypography.custom(
-                        size: 10,
+                        size: AppText.captionSize,
                         weight: FontWeight.w700,
                         color: AppColors.textFaint,
                         letterSpacing: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpace.sm),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -275,26 +276,26 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                         Text(
                           _formatDecimal(hourlyReward),
                           style: AppTypography.custom(
-                            size: 42,
+                            size: AppText.displayXlSize,
                             weight: FontWeight.w800,
                             color: AppColors.primary400,
                             height: 1,
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpace.sm),
                         Text(
                           'BNP/h',
                           style: AppTypography.custom(
-                            size: 16,
+                            size: AppText.subtitleSize,
                             weight: FontWeight.w600,
                             color: AppColors.textMuted,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpace.md),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.fullValue),
                       child: LinearProgressIndicator(
                         minHeight: 6,
                         value: progressPct,
@@ -304,11 +305,11 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                             : AppColors.primary500,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpace.sm),
                     Text(
                       '${_formatDecimal(cycleMinedDisplay)} BNP earned • Claim after ${cycleHours}h',
                       style: AppTypography.custom(
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                         color: AppColors.textSecondary,
                       ),
@@ -316,7 +317,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               // Stats grid
               Row(
                 children: [
@@ -329,7 +330,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                       color: AppColors.primary400,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   Expanded(
                     child: _CompactStat(
                       label: 'Total Earned',
@@ -341,7 +342,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               Row(
                 children: [
                   Expanded(
@@ -353,7 +354,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                       color: AppColors.successColor,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   Expanded(
                     child: _CompactStat(
                       label: 'Referrals',
@@ -364,7 +365,7 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _MiningActionButton(
                 label: actionState.label,
                 color: actionState.color,
@@ -492,16 +493,16 @@ class _StatusTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: 7),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.fullValue),
         color: color.withValues(alpha: 0.14),
         border: Border.all(color: color.withValues(alpha: 0.38)),
       ),
       child: Text(
         label.toUpperCase(),
         style: AppTypography.custom(
-          size: 10,
+          size: AppText.captionSize,
           weight: FontWeight.w800,
           color: color,
           letterSpacing: 0.8,
@@ -527,9 +528,9 @@ class _CompactStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         color: AppColors.bgElevated.withValues(alpha: 0.5),
         border:
             Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.5)),
@@ -541,11 +542,11 @@ class _CompactStat extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.smValue),
             ),
-            child: Icon(icon, size: 16, color: color),
+            child: Icon(icon, size: AppIcon.sm, color: color),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,16 +554,16 @@ class _CompactStat extends StatelessWidget {
                 Text(
                   label,
                   style: AppTypography.custom(
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w600,
                     color: AppColors.textFaint,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   value,
                   style: AppTypography.custom(
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
@@ -615,7 +616,7 @@ class _MiningActionButton extends StatelessWidget {
             width: 1.1,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.lgValue),
           ),
           padding: const EdgeInsets.symmetric(vertical: 13),
         ),
@@ -634,15 +635,15 @@ class _MiningActionButton extends StatelessWidget {
                   if (showLockIcon) ...[
                     Icon(
                       Icons.lock_rounded,
-                      size: 15,
+                      size: AppIcon.sm,
                       color: textColor.withValues(alpha: 0.9),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpace.sm),
                   ],
                   Text(
                     label,
                     style: AppTypography.custom(
-                      size: 13,
+                      size: AppText.labelSize,
                       weight: FontWeight.w800,
                       color: textColor,
                       letterSpacing: 0.2,
@@ -740,7 +741,7 @@ class _MiningCoreVisual extends StatelessWidget {
               width: 82,
               height: 82,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.xlValue),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -760,7 +761,7 @@ class _MiningCoreVisual extends StatelessWidget {
               ),
               child: Icon(
                 Icons.bolt_rounded,
-                size: 38,
+                size: AppIcon.xl,
                 color: primary,
               ),
             ),
@@ -831,14 +832,14 @@ class _SignalBars extends StatelessWidget {
             : (4 + ((index % 2) * 2)).toDouble();
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.hair),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOut,
             width: 5,
             height: height,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.fullValue),
               color: active
                   ? AppColors.primary400.withValues(alpha: 0.92)
                   : AppColors.textFaint.withValues(alpha: 0.65),

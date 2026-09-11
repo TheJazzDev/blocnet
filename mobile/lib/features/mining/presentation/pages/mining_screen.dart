@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_hero_card.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
@@ -46,9 +47,9 @@ class _MiningScreenState extends State<MiningScreen> {
           onRefresh: store.refreshAll,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, 110),
             children: [
-              const SizedBox(height: 5),
+              const SizedBox(height: AppSpace.xs),
               MiningHeroCard(
                 snapshot: store.snapshot,
                 onStart: () => _onStart(store),
@@ -57,7 +58,7 @@ class _MiningScreenState extends State<MiningScreen> {
                 isClaiming: store.isClaiming,
                 isLoadingSnapshot: store.isLoadingSnapshot,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               _MiningSectionEntryCard(
                 icon: Icons.leaderboard_rounded,
                 title: 'Mining Leaderboard',
@@ -71,7 +72,7 @@ class _MiningScreenState extends State<MiningScreen> {
                 height: 1,
                 color: AppColors.borderSubtle.withValues(alpha: 0.8),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               _MiningSectionEntryCard(
                 icon: Icons.schedule_rounded,
                 title: 'Hourly Mining History',
@@ -81,7 +82,7 @@ class _MiningScreenState extends State<MiningScreen> {
                 onTap: () => Navigator.of(context)
                     .pushNamed(AppRoutes.miningHourlyHistory),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               if (store.isLoadingSnapshot && store.snapshot == null)
                 Center(
                   child: SizedBox(
@@ -140,7 +141,7 @@ class _MiningScreenState extends State<MiningScreen> {
         content: Text(
           message,
           style: AppTypography.custom(
-            size: 12,
+            size: AppText.labelSize,
             weight: FontWeight.w600,
             color: isError ? AppColors.darkGrey900 : Colors.black,
           ),
@@ -148,7 +149,7 @@ class _MiningScreenState extends State<MiningScreen> {
         backgroundColor: isError ? AppColors.error500 : AppColors.successColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
         ),
         duration: const Duration(seconds: 2),
       ),
@@ -175,15 +176,15 @@ class _MiningSectionEntryCard extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
         child: Row(
           children: [
             Icon(
               icon,
               color: AppColors.primary400,
-              size: 20,
+              size: AppIcon.md,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,16 +193,16 @@ class _MiningSectionEntryCard extends StatelessWidget {
                     title,
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 13,
+                      size: AppText.labelSize,
                       weight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: AppSpace.hair),
                   Text(
                     subtitle,
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w500,
                     ),
                   ),
@@ -211,7 +212,7 @@ class _MiningSectionEntryCard extends StatelessWidget {
             Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textFaint,
-              size: 20,
+              size: AppIcon.md,
             ),
           ],
         ),

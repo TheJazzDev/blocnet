@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
 import 'package:flutter/material.dart';
@@ -53,16 +54,16 @@ class TrustChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: RichText(
         text: TextSpan(
           style: AppTypography.custom(
-            size: 10,
+            size: AppText.captionSize,
             weight: FontWeight.w400,
             color: AppColors.textFaint,
           ),

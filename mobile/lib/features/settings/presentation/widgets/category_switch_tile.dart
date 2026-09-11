@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/notifications/data/models/notification_preferences_model.dart';
 import 'package:blocnet/features/settings/presentation/utils/humanize_notification_type.dart';
@@ -63,7 +64,7 @@ class _CategorySwitchTileState extends State<CategorySwitchTile> {
                   text: '$_collapsedSubtitle ',
                   style: AppTypography.custom(
                     color: mutedColor,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                   children: [
@@ -71,7 +72,7 @@ class _CategorySwitchTileState extends State<CategorySwitchTile> {
                       text: _expanded ? 'show less' : '+ $extra more',
                       style: AppTypography.custom(
                         color: AppColors.teal400,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w700,
                       ),
                     ),
@@ -82,7 +83,7 @@ class _CategorySwitchTileState extends State<CategorySwitchTile> {
           : null,
       footer: canExpand && _expanded
           ? Padding(
-              padding: const EdgeInsets.only(left: 32, bottom: 10),
+              padding: const EdgeInsets.only(left: AppSpace.xxl, bottom: AppSpace.md),
               child: Wrap(
                 spacing: 6,
                 runSpacing: 6,
@@ -90,19 +91,19 @@ class _CategorySwitchTileState extends State<CategorySwitchTile> {
                     .map(
                       (type) => Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: AppSpace.sm,
+                          vertical: AppSpace.xs,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.bgElevated,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.smValue),
                           border: Border.all(color: AppColors.borderSubtle),
                         ),
                         child: Text(
                           humanizeNotificationType(type),
                           style: AppTypography.custom(
                             color: mutedColor,
-                            size: 11,
+                            size: AppText.captionSize,
                             weight: FontWeight.w500,
                           ),
                         ),

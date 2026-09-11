@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
@@ -419,9 +420,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTabChanged: _onTabChanged,
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                const SliverToBoxAdapter(child: SizedBox(height: AppSpace.md)),
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                   sliver: SliverToBoxAdapter(
                     child: AlphaRadarCard(
                       radar: _radarSummary,
@@ -430,10 +431,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                const SliverToBoxAdapter(child: SizedBox(height: AppSpace.md)),
                 if (_activeSection == Sections.forYou) ...[
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                     sliver: SliverToBoxAdapter(
                       child: EdgeBriefTeaserCard(
                         brief: edgeStore.brief,
@@ -443,14 +444,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  const SliverToBoxAdapter(child: SizedBox(height: AppSpace.md)),
                 ],
                 if (_activeSection == Sections.forYou) ...[
                   const SliverPadding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: AppSpace.lg),
                     sliver: SliverToBoxAdapter(child: TopHuntersRow()),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  const SliverToBoxAdapter(child: SizedBox(height: AppSpace.md)),
                 ],
                 HomeFeedSliver(
                   activeSection: _activeSection,

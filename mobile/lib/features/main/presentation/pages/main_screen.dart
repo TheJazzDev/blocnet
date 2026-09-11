@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/spaces_explainer_sheet.dart';
@@ -270,7 +271,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.bgElevated,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
           ),
         ),
       );
@@ -491,7 +492,7 @@ class _SpaceSwitchOverlay extends StatelessWidget {
             child: SizedBox(
               width: 160,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.fullValue),
                 child: LinearProgressIndicator(
                   minHeight: 4,
                   color: AppColors.primary400,
@@ -528,7 +529,7 @@ class _HunterOnboardingDialog extends StatelessWidget {
     return Dialog(
       elevation: 0,
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: AppSpace.xl),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
@@ -553,7 +554,7 @@ class _HunterOnboardingDialog extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,34 +577,34 @@ class _HunterOnboardingDialog extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.workspace_premium_rounded,
-                    size: 22,
+                    size: AppIcon.lg,
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Text(
                     'Hunter role unlocked',
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 17,
+                      size: AppText.subtitleSize,
                       weight: FontWeight.w800,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Text(
               'You now have access to Hunter Hub, management tools, and hunter rankings.',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 12,
+                size: AppText.labelSize,
                 weight: FontWeight.w500,
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -611,9 +612,9 @@ class _HunterOnboardingDialog extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary500,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   ),
                 ),
                 child: const Text('Continue'),
@@ -650,10 +651,10 @@ class _ReferralPromptSheetState extends State<_ReferralPromptSheet> {
       top: false,
       child: Padding(
         padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 14,
-          bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+          left: AppSpace.lg,
+          right: AppSpace.lg,
+          top: AppSpace.lg,
+          bottom: AppSpace.lg + MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -665,35 +666,35 @@ class _ReferralPromptSheetState extends State<_ReferralPromptSheet> {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.borderMuted,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Text(
               'Got a referral code?',
               style: AppTypography.custom(
-                size: 18,
+                size: AppText.titleSize,
                 weight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'Bind once to activate referral boost tracking.',
               style: AppTypography.custom(
-                size: 12,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
                 color: AppColors.textMuted,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             TextField(
               controller: _controller,
               maxLength: 8,
               textCapitalization: TextCapitalization.characters,
               style: AppTypography.custom(
-                size: 14,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
                 color: AppColors.textPrimary,
               ),
@@ -703,17 +704,17 @@ class _ReferralPromptSheetState extends State<_ReferralPromptSheet> {
               ),
             ),
             if (_error != null) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               Text(
                 _error!,
                 style: AppTypography.custom(
-                  size: 12,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                   color: Colors.redAccent,
                 ),
               ),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Row(
               children: [
                 Expanded(
@@ -722,14 +723,14 @@ class _ReferralPromptSheetState extends State<_ReferralPromptSheet> {
                     child: Text(
                       'Skip',
                       style: AppTypography.custom(
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
@@ -753,7 +754,7 @@ class _ReferralPromptSheetState extends State<_ReferralPromptSheet> {
                     child: Text(
                       'Bind',
                       style: AppTypography.custom(
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w700,
                         color: Colors.black,
                       ),

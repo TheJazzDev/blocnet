@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class YourProjectCardInfo extends StatelessWidget {
           label: '${project.followersCount} followers',
         ),
         if (lastEdited != null) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           _InfoChip(
             icon: Symbols.update,
             label: formatDateWithSuffix(lastEdited),
@@ -42,22 +43,22 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.xs, horizontal: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgElevated,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xlValue),
         border: Border.all(color: AppColors.borderSubtle, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: AppColors.textFaint),
-          const SizedBox(width: 5),
+          Icon(icon, size: AppIcon.xs, color: AppColors.textFaint),
+          const SizedBox(width: AppSpace.xs),
           Text(
             label,
             style: TextStyle(
               color: AppColors.textMuted,
-              fontSize: 11,
+              fontSize: AppText.captionSize,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w500,
             ),

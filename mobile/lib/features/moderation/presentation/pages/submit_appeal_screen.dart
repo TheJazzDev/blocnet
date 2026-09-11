@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/moderation/data/models/community_report_model.dart';
 import 'package:blocnet/services/api/api_client.dart';
@@ -80,22 +81,22 @@ class _SubmitAppealScreenState extends State<SubmitAppealScreen> {
           'Submit Appeal',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Report details card
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(AppSpace.lg),
               decoration: BoxDecoration(
                 color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Column(
@@ -105,41 +106,41 @@ class _SubmitAppealScreenState extends State<SubmitAppealScreen> {
                     'Report Details',
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 13,
+                      size: AppText.labelSize,
                       weight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpace.md),
                   _InfoRow(
                     label: 'Report Type',
                     value: widget.report.targetTypeLabel,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpace.sm),
                   _InfoRow(
                     label: 'Category',
                     value: widget.report.category,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpace.sm),
                   _InfoRow(
                     label: 'Status',
                     value: widget.report.statusLabel,
                   ),
                   if (widget.report.reviewNotes != null) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpace.md),
                     Text(
                       'Review Notes:',
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpace.xs),
                     Text(
                       widget.report.reviewNotes!,
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 12,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                       ),
                     ),
@@ -147,28 +148,28 @@ class _SubmitAppealScreenState extends State<SubmitAppealScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpace.xl),
 
             // Appeal reason input
             Text(
               'Reason for Appeal',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'Explain why you believe this decision should be reconsidered. Be clear and specific.',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w400,
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             TextField(
               controller: _reasonController,
               maxLines: 8,
@@ -176,57 +177,57 @@ class _SubmitAppealScreenState extends State<SubmitAppealScreen> {
               enabled: !_isSubmitting,
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 13,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
               ),
               decoration: InputDecoration(
                 hintText: 'Provide a detailed explanation...',
                 hintStyle: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 13,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                 ),
                 filled: true,
                 fillColor: AppColors.bgSurface,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   borderSide: const BorderSide(color: AppColors.borderSubtle),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   borderSide: const BorderSide(color: AppColors.borderSubtle),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   borderSide: BorderSide(color: AppColors.primary400, width: 2),
                 ),
-                contentPadding: const EdgeInsets.all(14),
+                contentPadding: const EdgeInsets.all(AppSpace.lg),
               ),
             ),
 
             if (_errorMessage != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpace.md),
                 decoration: BoxDecoration(
                   color: AppColors.error500.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border: Border.all(color: AppColors.error500.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.error_outline,
-                      size: 18,
+                      size: AppIcon.md,
                       color: AppColors.error500,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpace.sm),
                     Expanded(
                       child: Text(
                         _errorMessage!,
                         style: AppTypography.custom(
                           color: AppColors.error500,
-                          size: 12,
+                          size: AppText.labelSize,
                           weight: FontWeight.w500,
                         ),
                       ),
@@ -236,7 +237,7 @@ class _SubmitAppealScreenState extends State<SubmitAppealScreen> {
               ),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
 
             // Submit button
             SizedBox(
@@ -246,9 +247,9 @@ class _SubmitAppealScreenState extends State<SubmitAppealScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary400,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   ),
                   elevation: 0,
                 ),
@@ -265,7 +266,7 @@ class _SubmitAppealScreenState extends State<SubmitAppealScreen> {
                         'Submit Appeal',
                         style: AppTypography.custom(
                           color: Colors.white,
-                          size: 14,
+                          size: AppText.bodySize,
                           weight: FontWeight.w700,
                         ),
                       ),
@@ -296,7 +297,7 @@ class _InfoRow extends StatelessWidget {
           label,
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w500,
           ),
         ),
@@ -304,7 +305,7 @@ class _InfoRow extends StatelessWidget {
           value,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 12,
+            size: AppText.labelSize,
             weight: FontWeight.w600,
           ),
         ),

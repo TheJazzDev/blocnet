@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -22,7 +23,7 @@ class _FilterLabelState extends State<FilterLabel> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 12, bottom: 16),
+      padding: const EdgeInsets.only(top: AppSpace.md, bottom: AppSpace.lg),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -75,12 +76,12 @@ class TagButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: AppSpace.lg),
         decoration: BoxDecoration(
           border: Border.all(
             color: isSelected ? AppColors.teal500 : AppColors.borderSubtle,
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           color: isSelected
               ? AppColors.teal500.withValues(alpha: 0.12)
               : Colors.transparent,
@@ -92,7 +93,7 @@ class TagButton extends StatelessWidget {
               tag,
               style: TextStyle(
                 color: isSelected ? AppColors.teal400 : AppColors.textMuted,
-                fontSize: 10,
+                fontSize: AppText.captionSize,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'Geist',
               ),

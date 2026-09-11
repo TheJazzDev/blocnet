@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
@@ -42,12 +43,12 @@ class BalanceCard extends StatelessWidget {
               'TOTAL BALANCE',
               style: AppTypography.custom(
                 color: AppColors.textFaint,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w700,
                 letterSpacing: 1.2,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpace.sm),
             IconButton(
               onPressed: visibilityStore.toggle,
               splashRadius: 18,
@@ -64,37 +65,37 @@ class BalanceCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         Text(
           balanceText,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 44,
+            size: AppText.displayXlSize,
             weight: FontWeight.w800,
             height: 1.0,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpace.xs),
         Text(
           'BSC Network',
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 12,
+            size: AppText.labelSize,
             weight: FontWeight.w500,
           ),
         ),
         if (!isBalanceHidden && !hasLivePricing) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'Balances go live when BNT launches on BSC.',
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w500,
             ),
           ),
         ],
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpace.lg),
         GestureDetector(
           onTap: () {
             if (address == null || address.isEmpty) {
@@ -114,7 +115,7 @@ class BalanceCard extends StatelessWidget {
           },
           behavior: HitTestBehavior.opaque,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
             child: Row(
               children: [
                 Expanded(
@@ -122,17 +123,17 @@ class BalanceCard extends StatelessWidget {
                     addressText,
                     style: AppTypography.custom(
                       color: AppColors.textSecondary,
-                      size: 12,
+                      size: AppText.labelSize,
                       weight: FontWeight.w600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpace.md),
                 Icon(
                   Icons.copy_rounded,
-                  size: 16,
+                  size: AppIcon.sm,
                   color: AppColors.teal400,
                 ),
               ],

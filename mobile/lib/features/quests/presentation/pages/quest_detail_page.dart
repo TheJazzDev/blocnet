@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -77,24 +78,24 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
       body: Consumer<QuestsStore>(
         builder: (context, store, child) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpace.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildQuestHeader(),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpace.xl),
                 _buildQuestInfo(),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpace.xl),
                 _buildRewardsSection(),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpace.xl),
                 if (_resolvedTargetUrl != null) ...[
                   _buildTargetSection(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpace.xl),
                 ],
                 if (widget.quest.requiresManualVerification &&
                     !_isCompleted) ...[
                   _buildProofSubmissionSection(store),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpace.xl),
                 ],
                 _buildActionSection(store),
               ],
@@ -107,10 +108,10 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
 
   Widget _buildQuestHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpace.xl),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1,
@@ -119,38 +120,38 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpace.lg),
             decoration: BoxDecoration(
               color: Color(_status.color).withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               widget.quest.type.iconData,
-              size: 48,
+              size: AppIcon.xxl,
               color: Color(_status.color),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           Text(
             widget.quest.title,
             textAlign: TextAlign.center,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 20,
+              size: AppText.titleSize,
               weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               BadgeCategoryChip(category: widget.quest.category),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               _QuestTypeChip(type: widget.quest.type),
             ],
           ),
           if (_status != QuestStatus.notStarted) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             _QuestStatusChip(status: _status),
           ],
         ],
@@ -160,10 +161,10 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
 
   Widget _buildQuestInfo() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1,
@@ -176,55 +177,55 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
             'Description',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 15,
+              size: AppText.bodySize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             widget.quest.description,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 13,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
             ),
           ),
           if (widget.quest.requiredProof != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
             Text(
               'Required Proof',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 15,
+                size: AppText.bodySize,
                 weight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             Text(
               widget.quest.requiredProof!,
               style: AppTypography.custom(
                 color: AppColors.textSecondary,
-                size: 13,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           Row(
             children: [
               Icon(
                 widget.quest.isAutoVerified ? Icons.verified : Icons.fact_check,
-                size: 16,
+                size: AppIcon.sm,
                 color: AppColors.textFaint,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 widget.quest.isAutoVerified
                     ? 'Auto-verified quest'
                     : 'Manual verification required',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w400,
                 ),
               ),
@@ -237,10 +238,10 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
 
   Widget _buildRewardsSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1,
@@ -253,19 +254,19 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
             'Rewards',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 15,
+              size: AppText.bodySize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               Icon(
                 Icons.stars,
-                size: 32,
+                size: AppIcon.xl,
                 color: AppColors.warning500,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -273,7 +274,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                     '${widget.quest.rewardPoints} BNP',
                     style: AppTypography.custom(
                       color: AppColors.warning500,
-                      size: 16,
+                      size: AppText.subtitleSize,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -281,7 +282,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                     'Boost your mining earnings',
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w400,
                     ),
                   ),
@@ -290,17 +291,17 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
             ],
           ),
           if (widget.quest.rewardBadgeId != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Divider(color: AppColors.borderSubtle),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Row(
               children: [
                 Icon(
                   Icons.emoji_events,
-                  size: 32,
+                  size: AppIcon.xl,
                   color: AppColors.tagAirdrop,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpace.md),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -308,7 +309,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                       'Exclusive Badge',
                       style: AppTypography.custom(
                         color: AppColors.tagAirdrop,
-                        size: 16,
+                        size: AppText.subtitleSize,
                         weight: FontWeight.w700,
                       ),
                     ),
@@ -316,7 +317,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                       'Unlock a special achievement badge',
                       style: AppTypography.custom(
                         color: AppColors.textFaint,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w400,
                       ),
                     ),
@@ -333,10 +334,10 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   Widget _buildTargetSection() {
     final targetUrl = _resolvedTargetUrl!;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1,
@@ -349,16 +350,16 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
             'How to Complete',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 15,
+              size: AppText.bodySize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpace.md),
             decoration: BoxDecoration(
               color: AppColors.bgBase,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.smValue),
               border: Border.all(
                 color: AppColors.borderSubtle,
                 width: 1,
@@ -370,13 +371,13 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
                   Icons.link,
                   color: AppColors.primary500,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Text(
                     targetUrl,
                     style: AppTypography.custom(
                       color: AppColors.primary500,
-                      size: 12,
+                      size: AppText.bodySize,
                       weight: FontWeight.w400,
                     ),
                     maxLines: 2,
@@ -386,7 +387,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -407,10 +408,10 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   Widget _buildProofSubmissionSection(QuestsStore store) {
     if (_isPending) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.warning500.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(
             color: AppColors.warning500.withValues(alpha: 0.3),
             width: 1,
@@ -420,25 +421,25 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
           children: [
             Icon(
               Icons.pending,
-              size: 48,
+              size: AppIcon.xxl,
               color: AppColors.warning500,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Text(
               'Proof Submitted',
               style: AppTypography.custom(
                 color: AppColors.warning500,
-                size: 16,
+                size: AppText.subtitleSize,
                 weight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'Your submission is pending admin verification. You will be notified once reviewed.',
               textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textSecondary,
-                size: 12,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
               ),
             ),
@@ -448,10 +449,10 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1,
@@ -464,20 +465,20 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
             'Submit Proof',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 15,
+              size: AppText.bodySize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'Provide proof that you completed this quest. Admin will review and verify your submission.',
             style: AppTypography.custom(
               color: AppColors.textSecondary,
-              size: 12,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -491,9 +492,9 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
             ),
           ),
           if (_selectedScreenshot != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
               child: Stack(
                 children: [
                   Image.file(
@@ -519,7 +520,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           TextField(
             controller: _proofTextController,
             onChanged: (_) => setState(() {}),
@@ -530,7 +531,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
             ),
             maxLines: 3,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -561,10 +562,10 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
   Widget _buildActionSection(QuestsStore store) {
     if (_isCompleted) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.successColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(
             color: AppColors.successColor.withValues(alpha: 0.3),
             width: 1,
@@ -574,35 +575,35 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
           children: [
             Icon(
               Icons.check_circle,
-              size: 48,
+              size: AppIcon.xxl,
               color: AppColors.successColor,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Text(
               'Quest Completed!',
               style: AppTypography.custom(
                 color: AppColors.successColor,
-                size: 16,
+                size: AppText.subtitleSize,
                 weight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'You have successfully completed this quest and received your rewards.',
               textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textSecondary,
-                size: 12,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
               ),
             ),
             if (widget.userQuest?.completedAt != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               Text(
                 'Completed ${_formatDate(widget.userQuest!.completedAt!)}',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w400,
                 ),
               ),
@@ -630,7 +631,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
               : const Icon(Icons.verified_outlined),
           label: Text(store.isClaiming ? 'Verifying...' : 'Verify Quest'),
           style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
             backgroundColor: AppColors.primary500,
             foregroundColor: Colors.white,
           ),
@@ -640,17 +641,17 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Text(
         'Submit your proof above to send this quest for admin review.',
         style: AppTypography.custom(
           color: AppColors.textSecondary,
-          size: 12,
+          size: AppText.bodySize,
           weight: FontWeight.w400,
         ),
       ),
@@ -787,13 +788,13 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
               isSuccess ? Icons.check_circle : Icons.info_outline,
               color: isSuccess ? AppColors.successColor : AppColors.warning500,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             Expanded(
               child: Text(
                 title,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 16,
+                  size: AppText.subtitleSize,
                   weight: FontWeight.w700,
                 ),
               ),
@@ -805,7 +806,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
             message,
             style: AppTypography.custom(
               color: AppColors.textSecondary,
-              size: 13,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               height: 1.5,
             ),
@@ -821,7 +822,7 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
               closeLabel,
               style: AppTypography.custom(
                 color: AppColors.primary500,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -867,10 +868,10 @@ class _QuestTypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: AppColors.bgBase,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1,
@@ -881,15 +882,15 @@ class _QuestTypeChip extends StatelessWidget {
         children: [
           Icon(
             type.iconData,
-            size: 14,
+            size: AppIcon.sm,
             color: AppColors.textMuted,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpace.xs),
           Text(
             type.displayName,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w500,
             ),
           ),
@@ -909,10 +910,10 @@ class _QuestStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: Color(status.color).withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: Color(status.color).withValues(alpha: 0.5),
           width: 1.5,
@@ -923,14 +924,14 @@ class _QuestStatusChip extends StatelessWidget {
         children: [
           Icon(
             _getStatusIcon(status),
-            size: 16,
+            size: AppIcon.sm,
             color: Color(status.color),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpace.sm),
           Text(
             status.displayName,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppText.labelSize,
               fontWeight: FontWeight.bold,
               color: Color(status.color),
             ),

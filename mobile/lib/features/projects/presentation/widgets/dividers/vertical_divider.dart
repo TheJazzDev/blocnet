@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 
 class CustomVerticalDivider extends StatelessWidget {
@@ -16,7 +17,7 @@ class CustomVerticalDivider extends StatelessWidget {
     return Wrap(
       children: [
         _buildDivider(),
-        if (!single) const SizedBox(width: 4),
+        if (!single) const SizedBox(width: AppSpace.xs),
         if (!single) _buildDivider(),
       ],
     );

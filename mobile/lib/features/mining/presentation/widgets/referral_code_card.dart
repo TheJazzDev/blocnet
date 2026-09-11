@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -30,15 +31,15 @@ class ReferralCodeCard extends StatelessWidget {
           'REFERRAL',
           style: AppTypography.custom(
             color: AppColors.textFaint,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w700,
             letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.xlValue),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -49,7 +50,7 @@ class ReferralCodeCard extends StatelessWidget {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -64,16 +65,16 @@ class ReferralCodeCard extends StatelessWidget {
                             'Your code',
                             style: AppTypography.custom(
                               color: AppColors.textMuted,
-                              size: 11,
+                              size: AppText.captionSize,
                               weight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpace.xs),
                           Text(
                             referral?.code ?? '--------',
                             style: AppTypography.custom(
                               color: AppColors.textPrimary,
-                              size: 20,
+                              size: AppText.titleSize,
                               height: 1,
                               weight: FontWeight.w700,
                               letterSpacing: 1.8,
@@ -87,20 +88,20 @@ class ReferralCodeCard extends StatelessWidget {
                       icon: Icon(
                         Icons.copy_rounded,
                         color: AppColors.primary400,
-                        size: 16,
+                        size: AppIcon.sm,
                       ),
                       label: Text(
                         'Copy',
                         style: AppTypography.custom(
                           color: AppColors.primary400,
-                          size: 12,
+                          size: AppText.labelSize,
                           weight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpace.md),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -117,7 +118,7 @@ class ReferralCodeCard extends StatelessWidget {
                   ],
                 ),
                 if (isBound && referral?.referredBy != null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpace.md),
                   Builder(
                     builder: (context) {
                       final referrer = referral!.referredBy!;
@@ -132,7 +133,7 @@ class ReferralCodeCard extends StatelessWidget {
                         'You are under $referrerLabel.',
                         style: AppTypography.custom(
                           color: AppColors.textSecondary,
-                          size: 11,
+                          size: AppText.captionSize,
                           weight: FontWeight.w500,
                         ),
                       );
@@ -140,7 +141,7 @@ class ReferralCodeCard extends StatelessWidget {
                   ),
                 ],
                 if (canBind) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -150,9 +151,9 @@ class ReferralCodeCard extends StatelessWidget {
                           color: AppColors.primary500.withValues(alpha: 0.45),
                         ),
                         foregroundColor: AppColors.primary400,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.mdValue),
                         ),
                       ),
                       icon: isBinding
@@ -167,26 +168,26 @@ class ReferralCodeCard extends StatelessWidget {
                           : Icon(
                               Icons.link_rounded,
                               color: AppColors.primary400,
-                              size: 16,
+                              size: AppIcon.sm,
                             ),
                       label: Text(
                         'Bind Referrer Code',
                         style: AppTypography.custom(
                           color: AppColors.textPrimary,
                           weight: FontWeight.w700,
-                          size: 12,
+                          size: AppText.labelSize,
                         ),
                       ),
                     ),
                   ),
                 ],
                 if (!canBind && !isBound) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpace.md),
                   Text(
                     'Referral bind window is closed for this account.',
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w500,
                     ),
                   ),
@@ -208,16 +209,16 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: AppColors.bgElevated,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.fullValue),
       ),
       child: Text(
         label,
         style: AppTypography.custom(
           color: AppColors.textSecondary,
-          size: 11,
+          size: AppText.captionSize,
           weight: FontWeight.w600,
         ),
       ),

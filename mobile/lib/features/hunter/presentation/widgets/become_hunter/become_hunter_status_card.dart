@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -37,10 +38,10 @@ class BecomeHunterStatusCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: accent.withValues(alpha: 0.35)),
       ),
       child: Column(
@@ -53,35 +54,35 @@ class BecomeHunterStatusCard extends StatelessWidget {
                 height: 34,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
-                child: Icon(_icon, size: 18, color: accent),
+                child: Icon(_icon, size: AppIcon.md, color: accent),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Text(
                   _title,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 14,
+                    size: AppText.bodySize,
                     weight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Text(
             _body,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               height: 1.5,
             ),
           ),
           if (_actionLabel != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -89,15 +90,15 @@ class BecomeHunterStatusCard extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary500,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   ),
                 ),
                 child: Text(
                   _actionLabel,
                   style: AppTypography.custom(
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                     color: Colors.black,
                   ),

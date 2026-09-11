@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/notifications/data/models/notification_preferences_model.dart';
@@ -65,12 +66,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             showFilter: false,
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpace.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SettingsHeader(),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpace.xl),
                 if (settingsStore.isLoading && !settingsStore.hasLoaded) ...[
                   const SkeletonList(items: 5, itemHeight: 56),
                 ] else if (prefs == null || catalog == null) ...[
@@ -83,18 +84,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     settingsStore: settingsStore,
                     prefs: prefs,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpace.xl),
                   _buildDisplaySection(feedViewModeStore),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpace.xl),
                   _buildCategoriesSection(
                     context: context,
                     settingsStore: settingsStore,
                     prefs: prefs,
                     catalog: catalog,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpace.xl),
                   _buildPrivacySection(context),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpace.xl),
                 ],
               ],
             ),
@@ -110,7 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _SectionLabel('Privacy & Security'),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         _SettingsNavigationTile(
           mode: viewMode,
           icon: Icons.flag_outlined,
@@ -154,7 +155,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _SectionLabel('Notifications'),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         SettingSwitchTile(
           icon: Icons.notifications_outlined,
           title: 'Push notifications',
@@ -206,7 +207,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _SectionLabel('Notification Categories'),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         ...categories.indexed.map(
           (entry) {
             final index = entry.$1;
@@ -233,7 +234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _SectionLabel('Display'),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         _FeedViewSelector(
           mode: feedViewModeStore.mode,
           onChanged: (nextMode) {
@@ -284,7 +285,7 @@ class _SettingsHeader extends StatelessWidget {
           'Notifications, display and account preferences.',
           style: TextStyle(
             color: AppColors.textMuted,
-            fontSize: 13,
+            fontSize: AppText.bodySize,
             fontFamily: 'Geist',
             fontWeight: FontWeight.w400,
           ),
@@ -307,7 +308,7 @@ class _SectionLabel extends StatelessWidget {
       label.toUpperCase(),
       style: TextStyle(
         color: AppColors.textFaint,
-        fontSize: 10,
+        fontSize: AppText.captionSize,
         fontFamily: 'Geist',
         fontWeight: FontWeight.w600,
         letterSpacing: 1.0,
@@ -332,17 +333,17 @@ class _CadenceSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
       child: Row(
         children: [
           Icon(
             Icons.schedule_outlined,
-            size: 20,
+            size: AppIcon.md,
             color: disabled
                 ? AppColors.textMuted.withValues(alpha: 0.7)
                 : AppColors.textMuted,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Text(
               'Digest cadence',
@@ -350,7 +351,7 @@ class _CadenceSelector extends StatelessWidget {
                 color: disabled
                     ? AppColors.textPrimary.withValues(alpha: 0.7)
                     : AppColors.textPrimary,
-                size: 14,
+                size: AppText.bodySize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -392,21 +393,21 @@ class _FeedViewSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
       child: Row(
         children: [
           Icon(
             Icons.view_stream_outlined,
-            size: 20,
+            size: AppIcon.md,
             color: AppColors.textMuted,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Text(
               'App layout',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 14,
+                size: AppText.bodySize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -450,10 +451,10 @@ class _SettingsRetryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -463,20 +464,20 @@ class _SettingsRetryCard extends StatelessWidget {
             'Unable to load notification settings.',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 14,
+              size: AppText.bodySize,
               weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'Tap retry to fetch your latest preferences.',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           FilledButton.tonal(
             onPressed: () {
               onRetry();
@@ -523,17 +524,17 @@ class _SettingsNavigationTile extends StatelessWidget {
                   AppColors.textMuted.withValues(alpha: 0.08),
                 ],
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
               border: Border.all(
                 color: AppColors.textMuted.withValues(alpha: 0.2),
                 width: 1.5,
               ),
             ),
-            child: Icon(icon, size: 20, color: AppColors.textMuted),
+            child: Icon(icon, size: AppIcon.md, color: AppColors.textMuted),
           )
         else
-          Icon(icon, size: 20, color: AppColors.textMuted),
-        const SizedBox(width: 14),
+          Icon(icon, size: AppIcon.md, color: AppColors.textMuted),
+        const SizedBox(width: AppSpace.lg),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,27 +543,27 @@ class _SettingsNavigationTile extends StatelessWidget {
                 title,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpace.hair),
               Text(
                 subtitle,
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpace.sm),
         Icon(
           Icons.chevron_right,
           color: AppColors.textMuted,
-          size: 20,
+          size: AppIcon.md,
         ),
       ],
     );
@@ -571,8 +572,8 @@ class _SettingsNavigationTile extends StatelessWidget {
       onTap: onTap,
       child: mode == FeedViewMode.card
           ? Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: AppSpace.md),
+              padding: const EdgeInsets.all(AppSpace.lg),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -582,7 +583,7 @@ class _SettingsNavigationTile extends StatelessWidget {
                     AppColors.bgSurface.withValues(alpha: 0.85),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lgValue),
                 border: Border.all(
                   color: AppColors.borderSubtle,
                   width: 1.5,
@@ -591,7 +592,7 @@ class _SettingsNavigationTile extends StatelessWidget {
               child: content,
             )
           : Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
               child: content,
             ),
     );

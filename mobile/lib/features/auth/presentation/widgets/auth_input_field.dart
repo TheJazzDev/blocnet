@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
@@ -44,7 +45,7 @@ class AuthInputField extends StatelessWidget {
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
       style: AppTypography.custom(
         color: AppColors.textSecondary,
-        size: 14,
+        size: AppText.bodySize,
         weight: FontWeight.w400,
       ),
       validator: validator,
@@ -52,50 +53,50 @@ class AuthInputField extends StatelessWidget {
         labelText: label,
         labelStyle: AppTypography.custom(
           color: AppColors.textMuted,
-          size: 13,
+          size: AppText.labelSize,
           weight: FontWeight.w500,
         ),
         floatingLabelStyle: AppTypography.custom(
           color: AppColors.primary400,
-          size: 12,
+          size: AppText.labelSize,
           weight: FontWeight.w600,
         ),
         filled: true,
         fillColor: AppColors.bgSurface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+          horizontal: AppSpace.lg,
+          vertical: AppSpace.lg,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           borderSide: BorderSide(
             color: AppColors.borderSubtle.withValues(alpha: 0.5),
             width: 1.5,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           borderSide: BorderSide(
             color: AppColors.borderSubtle.withValues(alpha: 0.5),
             width: 1.5,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           borderSide: BorderSide(
             color: AppColors.primary400,
             width: 2,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           borderSide: BorderSide(
             color: AppColors.error500,
             width: 1.5,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           borderSide: BorderSide(
             color: AppColors.error500,
             width: 2,
@@ -103,7 +104,7 @@ class AuthInputField extends StatelessWidget {
         ),
         errorStyle: AppTypography.custom(
           color: AppColors.error500,
-          size: 11,
+          size: AppText.captionSize,
           weight: FontWeight.w500,
         ),
         suffixIcon: suffixIcon,
@@ -129,7 +130,7 @@ class PasswordVisibilityToggle extends StatelessWidget {
       icon: Icon(
         isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
         color: AppColors.textMuted,
-        size: 18,
+        size: AppIcon.md,
       ),
       onPressed: onTap,
     );

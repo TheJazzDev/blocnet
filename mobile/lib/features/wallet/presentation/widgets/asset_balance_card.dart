@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
@@ -29,12 +30,12 @@ class AssetBalanceCard extends StatelessWidget {
     if (asset == null) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
         child: Text(
           'Loading $assetCode balance...',
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 13,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),
@@ -43,7 +44,7 @@ class AssetBalanceCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.md, horizontal: AppSpace.md),
       decoration: isCardMode
           ? BoxDecoration(
               gradient: LinearGradient(
@@ -54,7 +55,7 @@ class AssetBalanceCard extends StatelessWidget {
                   AppColors.primary500.withValues(alpha: 0.1),
                 ],
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lgValue),
               border: Border.all(color: accent.withValues(alpha: 0.45)),
             )
           : null,
@@ -67,44 +68,44 @@ class AssetBalanceCard extends StatelessWidget {
                 asset.name,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 17,
+                  size: AppText.subtitleSize,
                   weight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   color:
                       (isCardMode ? AppColors.bgSurface : AppColors.bgElevated)
                           .withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lgValue),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Text(
                   assetBadgeText(asset),
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Text(
             isBalanceHidden
                 ? '•••••• ${asset.asset}'
                 : '${formatTokenAmount(asset.available)} ${asset.asset}',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 32,
+              size: AppText.displaySize,
               weight: FontWeight.w800,
               height: 1,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             isBalanceHidden
                 ? '\$•••• • Price \$••••'
@@ -113,7 +114,7 @@ class AssetBalanceCard extends StatelessWidget {
                     : 'Pre-launch · no market value yet'),
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w500,
             ),
           ),

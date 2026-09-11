@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -83,11 +84,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
             // Success confirmation card
             if (_linkSent) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               _SuccessCard(email: _emailController.text.trim()),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
 
             Row(
               children: [
@@ -100,7 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpace.xl),
 
             Center(
               child: GestureDetector(
@@ -109,7 +110,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   'Back to sign in',
                   style: TextStyle(
                     color: AppColors.teal400,
-                    fontSize: 13,
+                    fontSize: AppText.labelSize,
                     fontFamily: 'Geist',
                     fontWeight: FontWeight.w500,
                   ),
@@ -132,10 +133,10 @@ class _SuccessCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.successColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: AppColors.successColor.withValues(alpha: 0.25),
           width: 1,
@@ -147,15 +148,15 @@ class _SuccessCard extends StatelessWidget {
           Icon(
             Icons.check_circle_outline_rounded,
             color: AppColors.successColor,
-            size: 16,
+            size: AppIcon.sm,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Text(
               'If an account exists for $email, a reset link has been sent.',
               style: TextStyle(
                 color: AppColors.successColor,
-                fontSize: 12,
+                fontSize: AppText.bodySize,
                 fontFamily: 'Geist',
                 height: 1.5,
               ),

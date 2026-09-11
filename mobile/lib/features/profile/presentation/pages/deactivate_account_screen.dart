@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -35,7 +36,7 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
           'Deactivate account?',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -43,7 +44,7 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
           'You will be logged out and your profile will be hidden until reactivated.',
           style: AppTypography.custom(
             color: AppColors.textSecondary,
-            size: 13,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),
@@ -54,7 +55,7 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
               'Cancel',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -65,7 +66,7 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
               'Deactivate',
               style: AppTypography.custom(
                 color: AppColors.error500,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -115,13 +116,13 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
         showFilter: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(AppSpace.lg),
             decoration: BoxDecoration(
               color: AppColors.bgSurface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
               border: Border.all(color: AppColors.borderSubtle),
             ),
             child: Column(
@@ -131,16 +132,16 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
                   'Before you continue',
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 14,
+                    size: AppText.bodySize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   'Your profile is hidden from other users.\nYou can no longer sign in until your account is reactivated.\nYour data is preserved.',
                   style: AppTypography.custom(
                     color: AppColors.textSecondary,
-                    size: 13,
+                    size: AppText.bodySize,
                     weight: FontWeight.w400,
                     height: 1.5,
                   ),
@@ -148,16 +149,16 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpace.lg),
           Text(
             'Reason (optional)',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           TextField(
             controller: _reasonController,
             maxLines: 4,
@@ -165,33 +166,33 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
             maxLength: 500,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 14,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
             ),
             decoration: InputDecoration(
               hintText: 'Tell us why you are leaving (optional)',
               hintStyle: AppTypography.custom(
                 color: AppColors.textFaint,
-                size: 13,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
               ),
               filled: true,
               fillColor: AppColors.bgSurface,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 borderSide: BorderSide(color: AppColors.borderSubtle),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 borderSide: BorderSide(color: AppColors.borderSubtle),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 borderSide: BorderSide(color: AppColors.primary400),
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpace.lg),
           SizedBox(
             height: 46,
             child: ElevatedButton(
@@ -201,7 +202,7 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
               ),
               child: _isSubmitting
@@ -217,7 +218,7 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
                       'Deactivate Account',
                       style: AppTypography.custom(
                         color: Colors.white,
-                        size: 13,
+                        size: AppText.labelSize,
                         weight: FontWeight.w700,
                       ),
                     ),

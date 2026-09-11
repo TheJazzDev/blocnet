@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
@@ -21,11 +22,11 @@ class _FollowBottomSheetState extends State<FollowBottomSheet> {
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: ClipRRect(
           borderRadius: const BorderRadius.all(Radius.circular(16)),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.lg, horizontal: AppSpace.xl),
             color: AppColors.bgSurface,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -35,19 +36,19 @@ class _FollowBottomSheetState extends State<FollowBottomSheet> {
                   splashColor: AppColors.teal500.withValues(alpha: 0.1),
                   highlightColor: AppColors.bgElevated,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
                     child: Row(
                       children: [
                         Icon(
                           Symbols.adaptive_audio_mic_off,
                           color: AppColors.textMuted,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpace.sm),
                         Text(
                           'Unfollow',
                           style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: 13,
+                            fontSize: AppText.labelSize,
                             fontFamily: 'Geist',
                             fontWeight: FontWeight.w500,
                           ),

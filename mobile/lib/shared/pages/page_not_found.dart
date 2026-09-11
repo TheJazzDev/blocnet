@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:flutter/material.dart';
 
@@ -22,7 +23,7 @@ class PageNotFoundScreen extends StatelessWidget {
             color: AppColors.textPrimary,
             fontFamily: 'Geist',
             fontWeight: FontWeight.w600,
-            fontSize: 16,
+            fontSize: AppText.subtitleSize,
           ),
         ),
         leading: IconButton(
@@ -41,7 +42,7 @@ class PageNotFoundScreen extends StatelessWidget {
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -50,11 +51,11 @@ class PageNotFoundScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.textMuted,
-                  fontSize: 14,
+                  fontSize: AppText.bodySize,
                   fontFamily: 'Geist',
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpace.xl),
               SizedBox(
                 width: double.infinity,
                 child: GestureDetector(
@@ -70,14 +71,14 @@ class PageNotFoundScreen extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [AppColors.teal500, AppColors.primary500],
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     ),
                     child: Text(
                       'Go to Home',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 14,
+                        fontSize: AppText.bodySize,
                         fontFamily: 'Geist',
                         fontWeight: FontWeight.w600,
                       ),
@@ -85,7 +86,7 @@ class PageNotFoundScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               SizedBox(
                 width: double.infinity,
                 child: GestureDetector(
@@ -99,7 +100,7 @@ class PageNotFoundScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     decoration: BoxDecoration(
                       color: AppColors.bgElevated,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: Text(
@@ -107,7 +108,7 @@ class PageNotFoundScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppColors.textSecondary,
-                        fontSize: 14,
+                        fontSize: AppText.bodySize,
                         fontFamily: 'Geist',
                         fontWeight: FontWeight.w500,
                       ),

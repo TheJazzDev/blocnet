@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
@@ -30,30 +31,30 @@ class MiningLeaderboardList extends StatelessWidget {
               'GLOBAL LEADERBOARD',
               style: AppTypography.custom(
                 color: AppColors.textFaint,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w700,
                 letterSpacing: 1.2,
               ),
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
               decoration: BoxDecoration(
                 color: AppColors.primary500.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.fullValue),
               ),
               child: Text(
                 formatGroupedNumber(items.length, maxDecimals: 0),
                 style: AppTypography.custom(
                   color: AppColors.primary400,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w700,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         if (isLoading && items.isEmpty)
           Center(
             child: SizedBox(
@@ -67,12 +68,12 @@ class MiningLeaderboardList extends StatelessWidget {
           )
         else if (items.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
             child: Text(
               'No mining leaderboard entries yet.',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w500,
                 height: 1.5,
               ),
@@ -81,7 +82,7 @@ class MiningLeaderboardList extends StatelessWidget {
         else
           ...items.take(20).map(
                 (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: AppSpace.md),
                   child: _LeaderboardTile(item: item),
                 ),
               ),
@@ -110,7 +111,7 @@ class _LeaderboardTile extends StatelessWidget {
             AppColors.bgSurface.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: isTop3
               ? AppColors.warning500.withValues(alpha: 0.3)
@@ -126,7 +127,7 @@ class _LeaderboardTile extends StatelessWidget {
               ]
             : null,
       ),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       child: Row(
         children: [
           Container(
@@ -143,7 +144,7 @@ class _LeaderboardTile extends StatelessWidget {
                   : null,
               color:
                   isTop3 ? null : AppColors.bgElevated.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
               border: Border.all(
                 color: isTop3
                     ? AppColors.warning500.withValues(alpha: 0.4)
@@ -158,13 +159,13 @@ class _LeaderboardTile extends StatelessWidget {
                   color: item.rank == 1
                       ? AppColors.warning500
                       : AppColors.textPrimary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w800,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -179,7 +180,7 @@ class _LeaderboardTile extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(AppSpace.hair),
             child: AppAvatar(
               radius: 18,
               imageUrl: item.avatarUrl,
@@ -187,13 +188,13 @@ class _LeaderboardTile extends StatelessWidget {
                 _initials(item),
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w700,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,13 +209,13 @@ class _LeaderboardTile extends StatelessWidget {
                         iconSpacing: 4,
                         textStyle: AppTypography.custom(
                           color: AppColors.textPrimary,
-                          size: 13,
+                          size: AppText.labelSize,
                           weight: FontWeight.w700,
                         ),
                       ),
                     ),
                     if (item.primaryBadge != null) ...[
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpace.xs),
                       BadgeIcon(
                         badge: BadgeModel.fromApi(item.primaryBadge),
                         size: BadgeSize.tiny,
@@ -222,24 +223,24 @@ class _LeaderboardTile extends StatelessWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   '${formatGroupedNumber(item.lifetimeEarnedPoints, maxDecimals: 0)} lifetime BNP',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.md),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -247,7 +248,7 @@ class _LeaderboardTile extends StatelessWidget {
                       statusColor.withValues(alpha: 0.12),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border: Border.all(
                     color: statusColor.withValues(alpha: 0.3),
                     width: 1,
@@ -257,16 +258,16 @@ class _LeaderboardTile extends StatelessWidget {
                   item.sessionStatus.toUpperCase(),
                   style: AppTypography.custom(
                     color: statusColor,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               SizedBox(
                 width: 62,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   child: LinearProgressIndicator(
                     minHeight: 6,
                     value: item.sessionProgressPct.clamp(0, 1),

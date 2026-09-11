@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/theme.dart';
@@ -26,14 +27,14 @@ class MentionText extends StatelessWidget {
     final defaultStyle = style ??
         AppTypography.custom(
           color: AppColors.textSecondary,
-          size: 13,
+          size: AppText.bodySize,
           weight: FontWeight.w400,
         );
 
     final defaultMentionStyle = mentionStyle ??
         AppTypography.custom(
           color: AppColors.primary400,
-          size: 13,
+          size: AppText.labelSize,
           weight: FontWeight.w600,
         );
 

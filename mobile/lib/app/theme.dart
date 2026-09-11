@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 
@@ -161,7 +162,7 @@ ThemeData buildPrimaryTheme({required Color accent}) {
       color: AppColors.bgSurface,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xlValue),
         side: BorderSide(color: AppColors.borderSubtle, width: 1),
       ),
     ),
@@ -211,11 +212,11 @@ ThemeData buildPrimaryTheme({required Color accent}) {
       backgroundColor: AppColors.bgSurface,
       contentTextStyle: AppTypography.custom(
         color: AppColors.textPrimary,
-        size: 12,
+        size: AppText.labelSize,
         weight: FontWeight.w500,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         side: BorderSide(color: AppColors.borderSubtle),
       ),
     ),
@@ -228,26 +229,26 @@ ThemeData buildPrimaryTheme({required Color accent}) {
       floatingLabelStyle: AppTypography.labelLarge(accent),
       hintStyle: AppTypography.bodyMedium(AppColors.textFaint),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(color: accent, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(color: AppColors.error500),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(color: AppColors.error500, width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
     ),
 
     // Text theme — using centralized AppTypography

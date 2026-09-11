@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/season_leaderboard_row.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
@@ -139,31 +140,31 @@ class SeasonLeaderboard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.sm),
             child: Row(
               children: [
                 Text(
                   'RANK',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 9,
+                    size: AppText.captionSize,
                     weight: FontWeight.w600,
                     letterSpacing: 1.0,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: AppSpace.lg),
                 Expanded(
                   child: Text(
                     'USERNAME',
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 9,
+                      size: AppText.captionSize,
                       weight: FontWeight.w600,
                       letterSpacing: 1.0,
                     ),
@@ -171,22 +172,22 @@ class SeasonLeaderboard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpace.sm),
                 Text(
                   'UPDATES',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 9,
+                    size: AppText.captionSize,
                     weight: FontWeight.w600,
                     letterSpacing: 1.0,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpace.md),
                 Text(
                   'TIPS',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 9,
+                    size: AppText.captionSize,
                     weight: FontWeight.w600,
                     letterSpacing: 1.0,
                   ),
@@ -209,7 +210,7 @@ class SeasonLeaderboard extends StatelessWidget {
             onTap: onViewFullLeaderboard ??
                 () => Navigator.of(context).pushNamed(AppRoutes.topHunters),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 11, 14, 12),
+              padding: const EdgeInsets.fromLTRB(AppSpace.lg, 11, AppSpace.lg, AppSpace.md),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -217,14 +218,14 @@ class SeasonLeaderboard extends StatelessWidget {
                     'View Full Leaderboard',
                     style: AppTypography.custom(
                       color: AppColors.primary400,
-                      size: 12,
+                      size: AppText.labelSize,
                       weight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: AppSpace.xs),
                   Icon(
                     Icons.arrow_forward_rounded,
-                    size: 15,
+                    size: AppIcon.sm,
                     color: AppColors.primary400,
                   ),
                 ],

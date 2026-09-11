@@ -8,6 +8,7 @@
 /// runtime via `AppColors.applySpaceAccent`.
 library;
 
+export 'icon.dart';
 export 'radius.dart';
 export 'space.dart';
 export 'text.dart';

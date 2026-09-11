@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
@@ -143,7 +144,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 ),
                 // Content
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                   sliver: SliverToBoxAdapter(
                     child: _activeSection == Sections.yourProjects
                         ? _YourGemsWrapper(viewMode: feedViewMode)
@@ -165,16 +166,16 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   behavior: HitTestBehavior.opaque,
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
                     decoration: BoxDecoration(
                       color: accent,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.fullValue),
                     ),
                     child: Text(
                       '${_pendingNewProjectIds.length} new gems',
                       style: AppTypography.custom(
                         color: AppColors.onAccentForSpace(isHunterSpace),
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w700,
                       ),
                     ),
@@ -245,7 +246,7 @@ class _DiscoverTabBar extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.only(top: 2),
+        padding: const EdgeInsets.only(top: AppSpace.hair),
         child: Row(
           children: [
             _Tab(
@@ -285,7 +286,7 @@ class _Tab extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
@@ -300,7 +301,7 @@ class _Tab extends StatelessWidget {
           label,
           style: AppTypography.custom(
             color: isActive ? accentColor : AppColors.textFaint,
-            size: 13,
+            size: AppText.bodySize,
             weight: isActive ? FontWeight.w600 : FontWeight.w500,
           ),
         ),

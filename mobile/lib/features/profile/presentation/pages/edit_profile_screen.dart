@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
@@ -158,14 +159,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
         behavior: HitTestBehavior.translucent,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _FieldLabel('Avatar'),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Row(
                   children: [
                     Container(
@@ -193,7 +194,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 )
                               : Icon(Icons.person, color: AppColors.textMuted)),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpace.md),
                     Expanded(
                       child: SizedBox(
                         height: 40,
@@ -202,14 +203,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: AppColors.borderSubtle),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.mdValue),
                             ),
                           ),
                           child: Text(
                             _isPickingImage ? 'Opening...' : 'Choose image',
                             style: AppTypography.custom(
                               color: AppColors.textSecondary,
-                              size: 12,
+                              size: AppText.labelSize,
                               weight: FontWeight.w600,
                             ),
                           ),
@@ -218,45 +219,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpace.lg),
                 _FieldLabel('Username'),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Container(
                   width: double.infinity,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
                   decoration: BoxDecoration(
                     color: AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     border: Border.all(color: AppColors.borderSubtle),
                   ),
                   child: Text(
                     auth.username ?? '@set-at-signup',
                     style: AppTypography.custom(
                       color: AppColors.textSecondary,
-                      size: 13,
+                      size: AppText.bodySize,
                       weight: FontWeight.w400,
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   'Username is unique and cannot be changed after signup.',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpace.lg),
                 _FieldLabel('Display Name'),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 _Input(ctrl: _displayNameCtrl),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpace.lg),
                 _FieldLabel('Bio'),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 _Input(ctrl: _bioCtrl, minLines: 3, maxLines: 5),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpace.xl),
                 SizedBox(
                   width: double.infinity,
                   height: 44,
@@ -269,7 +270,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       disabledBackgroundColor:
                           AppColors.primary500.withValues(alpha: 0.5),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
                       ),
                     ),
                     child: _isSubmitting
@@ -284,7 +285,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         : Text(
                             'Save Profile',
                             style: AppTypography.custom(
-                              size: 13,
+                              size: AppText.labelSize,
                               color: Colors.black,
                               weight: FontWeight.w700,
                             ),
@@ -311,7 +312,7 @@ class _FieldLabel extends StatelessWidget {
       text,
       style: AppTypography.custom(
         color: AppColors.textMuted,
-        size: 11,
+        size: AppText.captionSize,
         weight: FontWeight.w600,
       ),
     );
@@ -338,26 +339,26 @@ class _Input extends StatelessWidget {
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
       style: AppTypography.custom(
         color: AppColors.textSecondary,
-        size: 13,
+        size: AppText.bodySize,
         weight: FontWeight.w400,
       ),
       decoration: InputDecoration(
         filled: true,
         fillColor: AppColors.bgSurface,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           borderSide: BorderSide(color: AppColors.borderSubtle),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           borderSide: BorderSide(color: AppColors.borderSubtle),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           borderSide: BorderSide(color: AppColors.primary400, width: 1.4),
         ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
       ),
     );
   }

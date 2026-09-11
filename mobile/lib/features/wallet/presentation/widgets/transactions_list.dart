@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
@@ -254,32 +255,32 @@ class TransactionsList extends StatelessWidget {
                       height: 4,
                       decoration: BoxDecoration(
                         color: AppColors.borderMuted,
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.circular(AppRadius.fullValue),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
                   Text(
                     title,
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 18,
+                      size: AppText.titleSize,
                       weight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
                   ...fields.map((field) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(bottom: AppSpace.md),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                          horizontal: AppSpace.md,
+                          vertical: AppSpace.md,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.bgElevated,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.mdValue),
                           border: Border.all(color: AppColors.borderSubtle),
                         ),
                         child: Row(
@@ -293,16 +294,16 @@ class TransactionsList extends StatelessWidget {
                                     field.label,
                                     style: AppTypography.custom(
                                       color: AppColors.textFaint,
-                                      size: 11,
+                                      size: AppText.captionSize,
                                       weight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(height: 3),
+                                  const SizedBox(height: AppSpace.hair),
                                   Text(
                                     field.value,
                                     style: AppTypography.custom(
                                       color: AppColors.textSecondary,
-                                      size: 12,
+                                      size: AppText.labelSize,
                                       weight: FontWeight.w600,
                                     ),
                                   ),
@@ -310,7 +311,7 @@ class TransactionsList extends StatelessWidget {
                               ),
                             ),
                             if (field.copyable) ...[
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppSpace.sm),
                               GestureDetector(
                                 onTap: () {
                                   Clipboard.setData(
@@ -326,13 +327,13 @@ class TransactionsList extends StatelessWidget {
                                   height: 30,
                                   decoration: BoxDecoration(
                                     color: AppColors.bgSurface,
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(AppRadius.smValue),
                                     border: Border.all(
                                         color: AppColors.borderSubtle),
                                   ),
                                   child: Icon(
                                     Icons.copy_rounded,
-                                    size: 15,
+                                    size: AppIcon.sm,
                                     color: AppColors.textMuted,
                                   ),
                                 ),
@@ -344,7 +345,7 @@ class TransactionsList extends StatelessWidget {
                     );
                   }),
                   if (explorerTxUrl != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpace.xs),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
@@ -357,10 +358,10 @@ class TransactionsList extends StatelessWidget {
                           foregroundColor: Colors.black,
                           minimumSize: const Size.fromHeight(44),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.mdValue),
                           ),
                         ),
-                        icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                        icon: const Icon(Icons.open_in_new_rounded, size: AppIcon.md),
                         label: const Text('Verify on block explorer'),
                       ),
                     ),
@@ -480,7 +481,7 @@ class TransactionsList extends StatelessWidget {
 
     if (isLoading && rows.isEmpty) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
+        padding: EdgeInsets.symmetric(vertical: AppSpace.xl),
         child: Center(
           child: SizedBox(
             width: 20,
@@ -500,29 +501,29 @@ class TransactionsList extends StatelessWidget {
           Icon(
             Icons.receipt_long_outlined,
             color: AppColors.textFaint,
-            size: 22,
+            size: AppIcon.lg,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             title,
             style: AppTypography.custom(
               color: AppColors.textSecondary,
-              size: 14,
+              size: AppText.bodySize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpace.xs),
           Text(
             'Your wallet activity will appear here after your first transaction.',
             textAlign: TextAlign.center,
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 12,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Divider(
             height: 1,
             color: AppColors.borderSubtle.withValues(alpha: 0.8),
@@ -543,13 +544,13 @@ class TransactionsList extends StatelessWidget {
           key: ValueKey(row.id),
           children: [
             InkWell(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
               onTap:
                   canOpenDetails ? () => _showTransactionDetails(context, row) : null,
               child: Container(
                 width: double.infinity,
                 margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                padding: const EdgeInsets.symmetric(vertical: AppSpace.md, horizontal: AppSpace.md),
                 decoration: isCardMode
                     ? BoxDecoration(
                         gradient: LinearGradient(
@@ -560,7 +561,7 @@ class TransactionsList extends StatelessWidget {
                             AppColors.bgSurface.withValues(alpha: 0.82),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppRadius.lgValue),
                         border: Border.all(
                           color: AppColors.borderSubtle.withValues(alpha: 0.75),
                           width: 1.2,
@@ -582,7 +583,7 @@ class TransactionsList extends StatelessWidget {
                       ),
                       child: Icon(
                         row.icon,
-                        size: 16,
+                        size: AppIcon.sm,
                         color: row.isIncoming
                             ? AppColors.successColor
                             : row.isOutgoing
@@ -590,7 +591,7 @@ class TransactionsList extends StatelessWidget {
                                 : AppColors.textMuted,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpace.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -602,7 +603,7 @@ class TransactionsList extends StatelessWidget {
                                   row.title,
                                   style: AppTypography.custom(
                                     color: AppColors.textPrimary,
-                                    size: 12.5,
+                                    size: AppText.labelSize,
                                     weight: FontWeight.w600,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -610,21 +611,21 @@ class TransactionsList extends StatelessWidget {
                               ),
                               if (row.badgeLabel != null &&
                                   badgeColor != null) ...[
-                                const SizedBox(width: 6),
+                                const SizedBox(width: AppSpace.sm),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 5,
-                                    vertical: 2,
+                                    horizontal: AppSpace.xs,
+                                    vertical: AppSpace.hair,
                                   ),
                                   decoration: BoxDecoration(
                                     color: badgeColor.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(AppRadius.smValue),
                                   ),
                                   child: Text(
                                     row.badgeLabel!,
                                     style: AppTypography.custom(
                                       color: badgeColor,
-                                      size: 8,
+                                      size: AppText.captionSize,
                                       weight: FontWeight.w700,
                                     ),
                                   ),
@@ -632,12 +633,12 @@ class TransactionsList extends StatelessWidget {
                               ],
                             ],
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: AppSpace.hair),
                           Text(
                             row.subtitle,
                             style: AppTypography.custom(
                               color: AppColors.textFaint,
-                              size: 11,
+                              size: AppText.captionSize,
                               weight: FontWeight.w500,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -645,7 +646,7 @@ class TransactionsList extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpace.sm),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -653,7 +654,7 @@ class TransactionsList extends StatelessWidget {
                           row.amountLabel,
                           style: AppTypography.custom(
                             color: row.amountColor,
-                            size: 13,
+                            size: AppText.labelSize,
                             weight: FontWeight.w700,
                           ),
                         ),

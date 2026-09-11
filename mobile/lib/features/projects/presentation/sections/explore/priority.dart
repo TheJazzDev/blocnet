@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/viewmodels/priority_screen_view_model.dart';
@@ -53,7 +54,7 @@ class _PriorityScreensState extends State<PriorityScreens> {
       backgroundColor: AppColors.bgBase,
       appBar: CustomAppBar(title: title, backButton: true),
       body: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: Consumer<UpdatesStore>(
           builder: (context, postsStore, _) {
             viewModel.setPosts(postsStore.posts);
@@ -74,7 +75,7 @@ class _PriorityScreensState extends State<PriorityScreens> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpace.lg),
                 Expanded(
                   child: viewModel.filteredPosts.isEmpty
                       ? _EmptyState(priority: priority)
@@ -140,7 +141,7 @@ class _EmptyState extends StatelessWidget {
     final color = _getColor();
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.xxl, vertical: 60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -160,26 +161,26 @@ class _EmptyState extends StatelessWidget {
               ),
               child: Icon(
                 _getIcon(),
-                size: 40,
+                size: AppIcon.xxl,
                 color: color,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             Text(
               _getTitle(),
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 18,
+                size: AppText.titleSize,
                 weight: FontWeight.w700,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Text(
               _getMessage(),
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 14,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
                 height: 1.6,
               ),

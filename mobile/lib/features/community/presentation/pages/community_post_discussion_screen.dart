@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
@@ -372,7 +373,7 @@ class _CommunityPostDiscussionScreenState
                             ListView(
                               controller: _threadScrollController,
                               padding:
-                                  const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                                  const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.md),
                               children: [
                                 CommunityDiscussionPostDetailsCard(
                                   post: post,
@@ -385,7 +386,7 @@ class _CommunityPostDiscussionScreenState
                                       canModerateContent ? _moderatePost : null,
                                   canArchiveModeration: canArchiveModeration,
                                 ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: AppSpace.lg),
                                 _DiscussionHeader(
                                   commentsCount: comments.length,
                                   isLoadingComments: isLoadingComments,
@@ -393,7 +394,7 @@ class _CommunityPostDiscussionScreenState
                                   onLoadOlder: () =>
                                       store.loadOlderComments(postId),
                                 ),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: AppSpace.md),
                                 if (comments.isEmpty)
                                   const CommunityDiscussionEmpty()
                                 else ...[
@@ -450,19 +451,19 @@ class _CommunityPostDiscussionScreenState
                                     behavior: HitTestBehavior.opaque,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8,
+                                        horizontal: AppSpace.md,
+                                        vertical: AppSpace.sm,
                                       ),
                                       decoration: BoxDecoration(
                                         color: AppColors.primary500,
                                         borderRadius:
-                                            BorderRadius.circular(999),
+                                            BorderRadius.circular(AppRadius.fullValue),
                                       ),
                                       child: Text(
                                         '${_pendingNewCommentIds.length} new comments',
                                         style: AppTypography.custom(
                                           color: Colors.black,
-                                          size: 12,
+                                          size: AppText.labelSize,
                                           weight: FontWeight.w700,
                                         ),
                                       ),
@@ -574,7 +575,7 @@ class _DiscussionHeader extends StatelessWidget {
           'DISCUSSION ($commentsCount)',
           style: AppTypography.custom(
             color: AppColors.textFaint,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w600,
             letterSpacing: 0.8,
           ),
@@ -587,7 +588,7 @@ class _DiscussionHeader extends StatelessWidget {
               isLoadingComments ? 'Loading…' : 'Load older',
               style: AppTypography.custom(
                 color: AppColors.primary400,
-                size: 12,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/project_proposal_model.dart';
@@ -77,7 +78,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
         backgroundColor: AppColors.bgBase,
         appBar: _buildAppBar(context, showAdd: false),
         body: const Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpace.lg),
           child: _AccessDenied(
             message: 'Your current role does not allow managing gems.',
           ),
@@ -122,7 +123,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                     ]);
                   },
                   child: ListView(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppSpace.lg),
                     children: [
                       if (projectsStore.lastError != null &&
                           projectsStore.lastError!.isNotEmpty) ...[
@@ -130,39 +131,39 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                           projectsStore.lastError!,
                           style: AppTypography.custom(
                             color: AppColors.error500,
-                            size: 12,
+                            size: AppText.bodySize,
                             weight: FontWeight.w400,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: AppSpace.md),
                       ],
                       _SectionLabel('Created by you'),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpace.sm),
                       if (owned.isEmpty)
                         _EmptyHint('No approved gems created by you yet.')
                       else
                         ..._buildProjectRows(owned, viewMode),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpace.xl),
                       _SectionLabel('Gems you contribute to'),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpace.sm),
                       if (contributed.isEmpty)
                         _EmptyHint('No contribution gems yet.')
                       else
                         ..._buildProjectRows(contributed, viewMode),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpace.xl),
                       _SectionLabel('Submitted for Review'),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpace.sm),
                       if (_proposalError != null && _proposalError!.isNotEmpty)
                         Text(
                           _proposalError!,
                           style: AppTypography.custom(
                             color: AppColors.error500,
-                            size: 12,
+                            size: AppText.bodySize,
                             weight: FontWeight.w400,
                           ),
                         ),
                       if (_isLoadingProposals && _proposals.isEmpty) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpace.sm),
                         Center(
                           child: SizedBox(
                             width: 18,
@@ -247,11 +248,11 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                 Navigator.of(context).pushNamed(AppRoutes.submitProject),
             behavior: HitTestBehavior.opaque,
             child: Container(
-              margin: const EdgeInsets.only(right: 16),
+              margin: const EdgeInsets.only(right: AppSpace.lg),
               width: 34,
               height: 34,
               alignment: Alignment.center,
-              child: Icon(Icons.add, size: 22, color: AppColors.textSecondary),
+              child: Icon(Icons.add, size: AppIcon.lg, color: AppColors.textSecondary),
             ),
           ),
       ],
@@ -260,8 +261,8 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
 
   Widget _buildProjectTile(Project project) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -271,7 +272,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
             AppColors.bgSurface.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.primary500.withValues(alpha: 0.2),
           width: 1.5,
@@ -296,7 +297,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                   AppColors.primary500.withValues(alpha: 0.1),
                 ],
               ),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.lgValue),
               border: Border.all(
                 color: AppColors.primary500.withValues(alpha: 0.3),
                 width: 1.5,
@@ -304,24 +305,24 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
             ),
             child: project.logo.isNotEmpty
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     child: Image.network(
                       project.logo,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Icon(
                         Icons.layers_outlined,
-                        size: 24,
+                        size: AppIcon.lg,
                         color: AppColors.primary400,
                       ),
                     ),
                   )
                 : Icon(
                     Icons.layers_outlined,
-                    size: 24,
+                    size: AppIcon.lg,
                     color: AppColors.primary400,
                   ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpace.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,36 +331,36 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                   project.name,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 15,
+                    size: AppText.bodySize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpace.xs),
                 Row(
                   children: [
                     Icon(
                       Icons.tag_rounded,
-                      size: 12,
+                      size: AppIcon.xs,
                       color: AppColors.textFaint,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpace.xs),
                     Text(
                       project.primaryTag.name,
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                   decoration: BoxDecoration(
                     color: AppColors.primary500.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                     border: Border.all(
                       color: AppColors.primary500.withValues(alpha: 0.25),
                     ),
@@ -369,15 +370,15 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                     children: [
                       Icon(
                         Icons.people_outline,
-                        size: 12,
+                        size: AppIcon.xs,
                         color: AppColors.primary400,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpace.xs),
                       Text(
                         '${project.followersCount} followers',
                         style: AppTypography.custom(
                           color: AppColors.primary400,
-                          size: 11,
+                          size: AppText.captionSize,
                           weight: FontWeight.w600,
                         ),
                       ),
@@ -387,10 +388,10 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Icon(
             Icons.chevron_right_rounded,
-            size: 20,
+            size: AppIcon.md,
             color: AppColors.textFaint,
           ),
         ],
@@ -405,10 +406,10 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
         children: [
           Icon(
             Icons.layers_outlined,
-            size: 18,
+            size: AppIcon.md,
             color: AppColors.primary400,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -417,16 +418,16 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                   project.name,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 14,
+                    size: AppText.bodySize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   '${project.primaryTag.name} • ${project.followersCount} followers',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -435,7 +436,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
           ),
           Icon(
             Icons.chevron_right_rounded,
-            size: 20,
+            size: AppIcon.md,
             color: AppColors.textFaint,
           ),
         ],
@@ -453,11 +454,11 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     };
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -471,17 +472,17 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                   proposal.name,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 14,
+                    size: AppText.bodySize,
                     weight: FontWeight.w700,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   border:
                       Border.all(color: statusColor.withValues(alpha: 0.35)),
                 ),
@@ -489,48 +490,48 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                   proposal.statusLabel,
                   style: AppTypography.custom(
                     color: statusColor,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'Submitted ${_formatDate(proposal.createdAt)}',
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w500,
             ),
           ),
           if (proposal.isApproved && proposal.createdProjectId != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'Approved and converted to a live gem.',
               style: AppTypography.custom(
                 color: AppColors.successColor,
-                size: 12,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
           ],
           if (hasReviewNote) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(AppSpace.md),
               decoration: BoxDecoration(
                 color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Text(
                 'Admin note: $reviewNote',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                   height: 1.4,
                 ),
@@ -554,10 +555,10 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
         children: [
           Icon(
             Icons.hourglass_top_rounded,
-            size: 18,
+            size: AppIcon.md,
             color: statusColor,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -566,16 +567,16 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
                   proposal.name,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 14,
+                    size: AppText.bodySize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   'Submitted ${_formatDate(proposal.createdAt)}',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -583,17 +584,17 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.fullValue),
               border: Border.all(color: statusColor.withValues(alpha: 0.35)),
             ),
             child: Text(
               proposal.statusLabel,
               style: AppTypography.custom(
                 color: statusColor,
-                size: 10,
+                size: AppText.captionSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -635,7 +636,7 @@ class _SectionLabel extends StatelessWidget {
       label.toUpperCase(),
       style: AppTypography.custom(
         color: AppColors.textFaint,
-        size: 10,
+        size: AppText.captionSize,
         weight: FontWeight.w600,
         letterSpacing: 0.8,
       ),
@@ -650,12 +651,12 @@ class _EmptyHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
       child: Text(
         message,
         style: AppTypography.custom(
           color: AppColors.textFaint,
-          size: 13,
+          size: AppText.bodySize,
           weight: FontWeight.w400,
         ),
       ),
@@ -673,7 +674,7 @@ class _AccessDenied extends StatelessWidget {
       message,
       style: AppTypography.custom(
         color: AppColors.textMuted,
-        size: 14,
+        size: AppText.bodySize,
         weight: FontWeight.w400,
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
@@ -76,12 +77,12 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
 
         if (projectsStore.projects.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.only(top: 24),
+            padding: const EdgeInsets.only(top: AppSpace.xl),
             child: Text(
               'No gems available yet.',
               style: TextStyle(
                 color: AppColors.textFaint,
-                fontSize: 13,
+                fontSize: AppText.bodySize,
                 fontFamily: 'Geist',
               ),
             ),
@@ -94,12 +95,12 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
         );
         if (allProjects.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.only(top: 24),
+            padding: const EdgeInsets.only(top: AppSpace.xl),
             child: Text(
               'No followed or managed gems yet.',
               style: TextStyle(
                 color: AppColors.textFaint,
-                fontSize: 13,
+                fontSize: AppText.bodySize,
                 fontFamily: 'Geist',
               ),
             ),
@@ -130,7 +131,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 16),
+            SizedBox(height: AppSpace.lg),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -160,7 +161,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpace.xs),
             FilterLabel(
               selectedTags: _selectedFilters,
               unselectedTags: allPrimaryTags,
@@ -179,7 +180,7 @@ class _YourProjectsSectionState extends State<YourProjectsSection> {
                 });
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
             Column(
               children: _buildProjectRows(filteredProjects),
             ),

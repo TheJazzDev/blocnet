@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
@@ -49,10 +50,10 @@ class YourProjectCardUpdate extends StatelessWidget {
     return GestureDetector(
       onTap: () => _openDetails(context),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
+        margin: const EdgeInsets.only(bottom: AppSpace.sm),
         decoration: BoxDecoration(
           color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(color: AppColors.borderSubtle, width: 1),
         ),
         child: IntrinsicHeight(
@@ -74,8 +75,8 @@ class YourProjectCardUpdate extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 10,
+                    vertical: AppSpace.sm,
+                    horizontal: AppSpace.md,
                   ),
                   child: Row(
                     children: [
@@ -88,19 +89,19 @@ class YourProjectCardUpdate extends StatelessWidget {
                               post.title,
                               style: TextStyle(
                                 color: AppColors.textSecondary,
-                                fontSize: 12,
+                                fontSize: AppText.labelSize,
                                 fontFamily: 'Geist',
                                 fontWeight: FontWeight.w600,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: AppSpace.hair),
                             Text(
                               getTimeStamp(post.createdAt),
                               style: TextStyle(
                                 color: AppColors.textFaint,
-                                fontSize: 10,
+                                fontSize: AppText.captionSize,
                                 fontFamily: 'Geist',
                                 fontWeight: FontWeight.w400,
                               ),
@@ -108,10 +109,10 @@ class YourProjectCardUpdate extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpace.sm),
                       Icon(
                         Icons.chevron_right,
-                        size: 16,
+                        size: AppIcon.sm,
                         color: AppColors.textFaint,
                       ),
                     ],

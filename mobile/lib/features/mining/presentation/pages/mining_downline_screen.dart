@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/mining/presentation/widgets/downline_list.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -41,17 +42,17 @@ class _MiningDownlineScreenState extends State<MiningDownlineScreen> {
             onRefresh: () => store.loadDownline(force: true),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               children: [
                 Text(
                   'People who joined using your referral code.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpace.md),
                 DownlineList(
                   items: store.downline,
                   isLoading: store.isLoadingDownline,

@@ -228,7 +228,7 @@ class _FloatingComposerFab extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [AppColors.primary400, AppColors.primary600],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(
             color: AppColors.bgBase,
             width: 3,
@@ -237,7 +237,7 @@ class _FloatingComposerFab extends StatelessWidget {
         child: const Icon(
           Icons.add_rounded,
           color: Colors.black,
-          size: 24,
+          size: AppIcon.lg,
         ),
       ),
     );
@@ -270,7 +270,7 @@ class _NavContainer extends StatelessWidget {
         child: SizedBox(
           height: 56,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.xs),
             child: child,
           ),
         ),

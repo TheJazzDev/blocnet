@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +48,7 @@ Future<void> showCommunityPostShareSheet(
       return SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,31 +59,31 @@ Future<void> showCommunityPostShareSheet(
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Text(
                 'Share post',
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 16,
+                  size: AppText.subtitleSize,
                   weight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               Text(
                 trimmedContent,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _ShareOptionTile(
                 icon: Icons.copy_all_rounded,
                 title: 'Copy link',
@@ -153,16 +154,16 @@ class _ShareOptionTile extends StatelessWidget {
         height: 34,
         decoration: BoxDecoration(
           color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(color: AppColors.borderSubtle),
         ),
-        child: Icon(icon, color: AppColors.textSecondary, size: 18),
+        child: Icon(icon, color: AppColors.textSecondary, size: AppIcon.md),
       ),
       title: Text(
         title,
         style: AppTypography.custom(
           color: AppColors.textPrimary,
-          size: 13,
+          size: AppText.labelSize,
           weight: FontWeight.w600,
         ),
       ),
@@ -172,7 +173,7 @@ class _ShareOptionTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: AppTypography.custom(
           color: AppColors.textFaint,
-          size: 11,
+          size: AppText.captionSize,
           weight: FontWeight.w400,
         ),
       ),

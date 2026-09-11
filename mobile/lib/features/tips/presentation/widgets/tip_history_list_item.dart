@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
@@ -32,16 +33,16 @@ class TipHistoryListItem extends StatelessWidget {
     final note = row.note?.trim();
     final nameStyle = AppTypography.custom(
       color: AppColors.textPrimary,
-      size: 12.5,
+      size: AppText.labelSize,
       weight: FontWeight.w700,
     );
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
@@ -54,15 +55,15 @@ class TipHistoryListItem extends StatelessWidget {
               color: isReceived
                   ? AppColors.successColor.withValues(alpha: 0.12)
                   : AppColors.error500.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.smValue),
             ),
             child: Icon(
               isReceived ? Icons.south_west_rounded : Icons.north_east_rounded,
-              size: 16,
+              size: AppIcon.sm,
               color: isReceived ? AppColors.successColor : AppColors.error500,
             ),
           ),
-          const SizedBox(width: 9),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,25 +89,25 @@ class TipHistoryListItem extends StatelessWidget {
                       : _contextLabel(row.contextType, isReceived: isReceived),
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 10.5,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   getTimeStamp(row.createdAt),
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.md),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -117,7 +118,7 @@ class TipHistoryListItem extends StatelessWidget {
                 style: AppTypography.custom(
                   color:
                       isReceived ? AppColors.successColor : AppColors.error500,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w700,
                 ),
               ),
@@ -128,7 +129,7 @@ class TipHistoryListItem extends StatelessWidget {
                     : 'Tip ${row.amount} · Fee ${row.fee}',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w400,
                 ),
               ),

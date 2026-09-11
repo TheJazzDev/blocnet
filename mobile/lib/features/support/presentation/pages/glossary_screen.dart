@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/support/data/glossary_content.dart';
@@ -21,7 +22,7 @@ class GlossaryScreen extends StatelessWidget {
         showSpaceSwitcher: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         children: [
           const SupportHeader(
             title: 'Words you will see around Blocnet',
@@ -29,9 +30,9 @@ class GlossaryScreen extends StatelessWidget {
                 'Users find Gems, Hunters post Updates, and BNP becomes BNT '
                 'at launch. Here is what each term means.',
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpace.lg),
           for (final term in glossaryTerms) _GlossaryCard(term: term),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpace.xl),
         ],
       ),
     );
@@ -48,11 +49,11 @@ class _GlossaryCard extends StatelessWidget {
     final expansion = term.expansion;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
@@ -63,11 +64,11 @@ class _GlossaryCard extends StatelessWidget {
             height: 34,
             decoration: BoxDecoration(
               color: AppColors.primary500.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
             ),
-            child: Icon(term.icon, size: 17, color: AppColors.primary400),
+            child: Icon(term.icon, size: AppIcon.sm, color: AppColors.primary400),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,18 +81,18 @@ class _GlossaryCard extends StatelessWidget {
                       term.term,
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 14,
+                        size: AppText.bodySize,
                         weight: FontWeight.w700,
                       ),
                     ),
                     if (expansion != null) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpace.sm),
                       Flexible(
                         child: Text(
                           '= $expansion',
                           style: AppTypography.custom(
                             color: AppColors.primary400,
-                            size: 11,
+                            size: AppText.captionSize,
                             weight: FontWeight.w600,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -100,12 +101,12 @@ class _GlossaryCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   term.definition,
                   style: AppTypography.custom(
                     color: AppColors.textSecondary,
-                    size: 12,
+                    size: AppText.bodySize,
                     weight: FontWeight.w400,
                     height: 1.5,
                   ),

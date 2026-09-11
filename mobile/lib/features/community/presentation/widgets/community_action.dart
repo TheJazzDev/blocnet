@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -21,18 +22,18 @@ class CommunityAction extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.sm, horizontal: AppSpace.hair),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: color),
+            Icon(icon, size: AppIcon.md, color: color),
             if (value.isNotEmpty) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 value,
                 style: AppTypography.custom(
                   color: color,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w600,
                 ),
               ),

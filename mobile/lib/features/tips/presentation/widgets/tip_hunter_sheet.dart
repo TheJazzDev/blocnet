@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -161,25 +162,25 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 10, bottom: 8),
+                  padding: const EdgeInsets.only(top: AppSpace.md, bottom: AppSpace.sm),
                   child: Container(
                     width: 44,
                     height: 4,
                     decoration: BoxDecoration(
                       color: AppColors.borderMuted,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.fullValue),
                     ),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                  padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.xs, AppSpace.md, AppSpace.sm),
                   child: Row(
                     children: [
                       Text(
                         'Tip Hunter',
                         style: AppTypography.custom(
                           color: AppColors.textPrimary,
-                          size: 17,
+                          size: AppText.subtitleSize,
                           weight: FontWeight.w700,
                         ),
                       ),
@@ -206,13 +207,13 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _RecipientHeader(recipient: widget.recipient),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpace.md),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(AppSpace.md),
                           decoration: BoxDecoration(
                             color: AppColors.bgSurface,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.mdValue),
                             border: Border.all(color: AppColors.borderSubtle),
                           ),
                           child: Column(
@@ -222,26 +223,26 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                                 'Your balance: ${balance ?? '0'} ${active?.symbol ?? ''}',
                                 style: AppTypography.custom(
                                   color: AppColors.textSecondary,
-                                  size: 12,
+                                  size: AppText.labelSize,
                                   weight: FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(height: 3),
+                              const SizedBox(height: AppSpace.hair),
                               Text(
                                 'Fee: $feePct% (${feePolicy?.senderPaysFee == false ? 'hunter pays' : 'sender pays'})',
                                 style: AppTypography.custom(
                                   color: AppColors.textMuted,
-                                  size: 11.5,
+                                  size: AppText.bodySize,
                                   weight: FontWeight.w400,
                                 ),
                               ),
                               if (feePolicy?.minTip != null) ...[
-                                const SizedBox(height: 3),
+                                const SizedBox(height: AppSpace.hair),
                                 Text(
                                   'Minimum tip: ${feePolicy!.minTip} ${active?.symbol ?? ''}',
                                   style: AppTypography.custom(
                                     color: AppColors.textMuted,
-                                    size: 11.5,
+                                    size: AppText.bodySize,
                                     weight: FontWeight.w400,
                                   ),
                                 ),
@@ -249,16 +250,16 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpace.md),
                         Text(
                           'Amount (${active?.symbol ?? 'BNP'})',
                           style: AppTypography.custom(
                             color: AppColors.textSecondary,
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpace.sm),
                         TextField(
                           controller: _amountController,
                           keyboardType: const TextInputType.numberWithOptions(
@@ -266,43 +267,43 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                           ),
                           style: AppTypography.custom(
                             color: AppColors.textPrimary,
-                            size: 14,
+                            size: AppText.bodySize,
                             weight: FontWeight.w500,
                           ),
                           decoration: _fieldDecoration('0.0'),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpace.md),
                         Text(
                           'Note (optional)',
                           style: AppTypography.custom(
                             color: AppColors.textSecondary,
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpace.sm),
                         TextField(
                           controller: _noteController,
                           maxLines: 2,
                           style: AppTypography.custom(
                             color: AppColors.textPrimary,
-                            size: 13,
+                            size: AppText.labelSize,
                             weight: FontWeight.w500,
                           ),
                           decoration: _fieldDecoration('Thanks for the alpha.'),
                         ),
                         if (_error != null) ...[
-                          const SizedBox(height: 10),
+                          const SizedBox(height: AppSpace.md),
                           Text(
                             _error!,
                             style: AppTypography.custom(
                               color: AppColors.error500,
-                              size: 12,
+                              size: AppText.labelSize,
                               weight: FontWeight.w500,
                             ),
                           ),
                         ],
-                        const SizedBox(height: 14),
+                        const SizedBox(height: AppSpace.lg),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -315,7 +316,7 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                               foregroundColor: Colors.black,
                               minimumSize: const Size.fromHeight(48),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                               ),
                             ),
                             child: store.isSending
@@ -331,26 +332,26 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                                     'Send Tip',
                                     style: AppTypography.custom(
                                       color: Colors.black,
-                                      size: 13,
+                                      size: AppText.labelSize,
                                       weight: FontWeight.w700,
                                     ),
                                   ),
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: AppSpace.lg),
                         Text(
                           'Recent Tips To This Hunter',
                           style: AppTypography.custom(
                             color: AppColors.textPrimary,
-                            size: 13,
+                            size: AppText.labelSize,
                             weight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpace.sm),
                         if (store.isLoadingSentHistory && history.isEmpty)
                           Center(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                               child: CircularProgressIndicator(
                                 color: AppColors.primary500,
                                 strokeWidth: 2,
@@ -360,17 +361,17 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                         else if (history.isEmpty)
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(AppSpace.md),
                             decoration: BoxDecoration(
                               color: AppColors.bgSurface,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.mdValue),
                               border: Border.all(color: AppColors.borderSubtle),
                             ),
                             child: Text(
                               'No tip history yet for this hunter.',
                               style: AppTypography.custom(
                                 color: AppColors.textMuted,
-                                size: 12,
+                                size: AppText.labelSize,
                                 weight: FontWeight.w500,
                               ),
                             ),
@@ -379,21 +380,21 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                           ...history.take(8).map(
                                 (row) => _TipHistoryRow(item: row),
                               ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: AppSpace.lg),
                         Text(
                           'All Tips Sent',
                           style: AppTypography.custom(
                             color: AppColors.textPrimary,
-                            size: 13,
+                            size: AppText.labelSize,
                             weight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpace.sm),
                         if (store.isLoadingSentHistory &&
                             allSentHistory.isEmpty)
                           Center(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                               child: CircularProgressIndicator(
                                 color: AppColors.primary500,
                                 strokeWidth: 2,
@@ -403,17 +404,17 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
                         else if (allSentHistory.isEmpty)
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(AppSpace.md),
                             decoration: BoxDecoration(
                               color: AppColors.bgSurface,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.mdValue),
                               border: Border.all(color: AppColors.borderSubtle),
                             ),
                             child: Text(
                               'No sent tips yet.',
                               style: AppTypography.custom(
                                 color: AppColors.textMuted,
-                                size: 12,
+                                size: AppText.labelSize,
                                 weight: FontWeight.w500,
                               ),
                             ),
@@ -439,24 +440,24 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
       hintText: hint,
       hintStyle: AppTypography.custom(
         color: AppColors.textFaint,
-        size: 12,
+        size: AppText.bodySize,
         weight: FontWeight.w400,
       ),
       filled: true,
       fillColor: AppColors.bgSurface,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.primary500),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: 11),
     );
   }
 }
@@ -471,10 +472,10 @@ class _RecipientHeader extends StatelessWidget {
     final avatarUrl = recipient.avatarUrl?.trim() ?? '';
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
@@ -482,9 +483,9 @@ class _RecipientHeader extends StatelessWidget {
           AppAvatar(
             radius: 18,
             imageUrl: avatarUrl,
-            fallback: Icon(Icons.person, color: AppColors.textMuted, size: 18),
+            fallback: Icon(Icons.person, color: AppColors.textMuted, size: AppIcon.md),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,16 +494,16 @@ class _RecipientHeader extends StatelessWidget {
                   recipient.label,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 13.5,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   recipient.isHunterHint ? 'Hunter' : 'Hunter candidate',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11.5,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -510,10 +511,10 @@ class _RecipientHeader extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
             decoration: BoxDecoration(
               color: AppColors.primary500.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.fullValue),
               border: Border.all(
                 color: AppColors.primary500.withValues(alpha: 0.45),
               ),
@@ -522,7 +523,7 @@ class _RecipientHeader extends StatelessWidget {
               'TIP',
               style: AppTypography.custom(
                 color: AppColors.primary400,
-                size: 10,
+                size: AppText.captionSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -549,11 +550,11 @@ class _TipHistoryRow extends StatelessWidget {
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: AppSpace.sm),
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
@@ -570,28 +571,28 @@ class _TipHistoryRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 12.5,
+                    size: AppText.labelSize,
                     weight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   dateLabel,
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Text(
             '$prefix${item.amount} ${item.currency.symbol}',
             style: AppTypography.custom(
               color: amountColor,
-              size: 12.5,
+              size: AppText.labelSize,
               weight: FontWeight.w700,
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/moderation/data/models/community_appeal_model.dart';
 import 'package:blocnet/services/api/api_client.dart';
@@ -77,7 +78,7 @@ class _AppealsQueueScreenState extends State<AppealsQueueScreen> {
           'Appeals Queue',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -86,7 +87,7 @@ class _AppealsQueueScreenState extends State<AppealsQueueScreen> {
         children: [
           // Filter bar
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
             decoration: BoxDecoration(
               color: AppColors.bgSurface,
               border: Border(
@@ -99,18 +100,18 @@ class _AppealsQueueScreenState extends State<AppealsQueueScreen> {
                   'Status:',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Container(
                     height: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
                     decoration: BoxDecoration(
                       color: AppColors.bgBase,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.smValue),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -121,16 +122,16 @@ class _AppealsQueueScreenState extends State<AppealsQueueScreen> {
                           'All Statuses',
                           style: AppTypography.custom(
                             color: AppColors.textMuted,
-                            size: 12,
+                            size: AppText.bodySize,
                             weight: FontWeight.w400,
                           ),
                         ),
                         style: AppTypography.custom(
                           color: AppColors.textPrimary,
-                          size: 12,
+                          size: AppText.labelSize,
                           weight: FontWeight.w500,
                         ),
-                        icon: Icon(Icons.arrow_drop_down, size: 18, color: AppColors.textMuted),
+                        icon: Icon(Icons.arrow_drop_down, size: AppIcon.md, color: AppColors.textMuted),
                         items: const [
                           DropdownMenuItem(value: null, child: Text('All Statuses')),
                           DropdownMenuItem(value: 'pending', child: Text('Pending')),
@@ -158,15 +159,15 @@ class _AppealsQueueScreenState extends State<AppealsQueueScreen> {
                           children: [
                             Icon(
                               Icons.gavel_outlined,
-                              size: 48,
+                              size: AppIcon.xxl,
                               color: AppColors.textMuted.withValues(alpha: 0.5),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: AppSpace.md),
                             Text(
                               'No appeals found',
                               style: AppTypography.custom(
                                 color: AppColors.textMuted,
-                                size: 13,
+                                size: AppText.labelSize,
                                 weight: FontWeight.w500,
                               ),
                             ),
@@ -177,7 +178,7 @@ class _AppealsQueueScreenState extends State<AppealsQueueScreen> {
                         onRefresh: _loadAppeals,
                         color: AppColors.moderationAccent,
                         child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppSpace.lg),
                           itemCount: _appeals.length,
                           itemBuilder: (context, index) {
                             return _AppealCard(
@@ -221,10 +222,10 @@ class _AppealCard extends StatelessWidget {
     final statusColor = _getStatusColor();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -232,7 +233,7 @@ class _AppealCard extends StatelessWidget {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpace.md),
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.08),
               borderRadius: const BorderRadius.only(
@@ -243,27 +244,27 @@ class _AppealCard extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                   decoration: BoxDecoration(
                     color: statusColor,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.smValue),
                   ),
                   child: Text(
                     appeal.statusLabel.toUpperCase(),
                     style: AppTypography.custom(
                       color: Colors.black,
-                      size: 9,
+                      size: AppText.captionSize,
                       weight: FontWeight.w800,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpace.sm),
                 Expanded(
                   child: Text(
                     'Appeal #${appeal.id.substring(0, 8)}',
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 12,
+                      size: AppText.labelSize,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -272,7 +273,7 @@ class _AppealCard extends StatelessWidget {
                   DateFormat('MMM d, HH:mm').format(appeal.createdAt.toLocal()),
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                   ),
                 ),
@@ -282,42 +283,42 @@ class _AppealCard extends StatelessWidget {
 
           // Content
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpace.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Appealer info
                 Row(
                   children: [
-                    Icon(Icons.person_outline, size: 14, color: AppColors.textMuted),
-                    const SizedBox(width: 6),
+                    Icon(Icons.person_outline, size: AppIcon.sm, color: AppColors.textMuted),
+                    const SizedBox(width: AppSpace.sm),
                     Text(
                       appeal.appealer?.username ?? 'Unknown',
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
 
                 // Appeal reason
                 Text(
                   'Reason:',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpace.xs),
                 Text(
                   appeal.reason,
                   style: AppTypography.custom(
                     color: AppColors.textSecondary,
-                    size: 12,
+                    size: AppText.bodySize,
                     weight: FontWeight.w400,
                     height: 1.4,
                   ),
@@ -327,12 +328,12 @@ class _AppealCard extends StatelessWidget {
 
                 // Original report info
                 if (appeal.report != null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpace.md),
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(AppSpace.md),
                     decoration: BoxDecoration(
                       color: AppColors.bgBase,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.smValue),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: Column(
@@ -342,16 +343,16 @@ class _AppealCard extends StatelessWidget {
                           'Original Report',
                           style: AppTypography.custom(
                             color: AppColors.textMuted,
-                            size: 10,
+                            size: AppText.captionSize,
                             weight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppSpace.sm),
                         Text(
                           'Category: ${appeal.report!.category}',
                           style: AppTypography.custom(
                             color: AppColors.textSecondary,
-                            size: 11,
+                            size: AppText.captionSize,
                             weight: FontWeight.w400,
                           ),
                         ),
@@ -360,7 +361,7 @@ class _AppealCard extends StatelessWidget {
                             'Notes: ${appeal.report!.reviewNotes}',
                             style: AppTypography.custom(
                               color: AppColors.textSecondary,
-                              size: 11,
+                              size: AppText.captionSize,
                               weight: FontWeight.w400,
                             ),
                             maxLines: 2,
@@ -373,12 +374,12 @@ class _AppealCard extends StatelessWidget {
 
                 // Review info (if reviewed)
                 if (appeal.reviewedBy != null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpace.md),
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(AppSpace.md),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.smValue),
                       border: Border.all(color: statusColor.withValues(alpha: 0.2)),
                     ),
                     child: Column(
@@ -386,36 +387,36 @@ class _AppealCard extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.check_circle_outline, size: 14, color: statusColor),
-                            const SizedBox(width: 6),
+                            Icon(Icons.check_circle_outline, size: AppIcon.sm, color: statusColor),
+                            const SizedBox(width: AppSpace.sm),
                             Text(
                               'Reviewed by ${appeal.reviewedBy!.username}',
                               style: AppTypography.custom(
                                 color: statusColor,
-                                size: 11,
+                                size: AppText.captionSize,
                                 weight: FontWeight.w700,
                               ),
                             ),
                           ],
                         ),
                         if (appeal.decision != null) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpace.xs),
                           Text(
                             'Decision: ${appeal.decisionLabel}',
                             style: AppTypography.custom(
                               color: AppColors.textSecondary,
-                              size: 11,
+                              size: AppText.captionSize,
                               weight: FontWeight.w500,
                             ),
                           ),
                         ],
                         if (appeal.reviewNotes != null) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpace.xs),
                           Text(
                             appeal.reviewNotes!,
                             style: AppTypography.custom(
                               color: AppColors.textSecondary,
-                              size: 11,
+                              size: AppText.captionSize,
                               weight: FontWeight.w400,
                             ),
                           ),
@@ -428,7 +429,7 @@ class _AppealCard extends StatelessWidget {
                 // Action buttons (only for pending/under_review)
                 if (appeal.status == CommunityAppealStatus.pending ||
                     appeal.status == CommunityAppealStatus.underReview) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
                   Row(
                     children: [
                       Expanded(
@@ -437,38 +438,38 @@ class _AppealCard extends StatelessWidget {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.successColor,
                             side: BorderSide(color: AppColors.successColor),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(AppRadius.smValue),
                             ),
                           ),
                           child: Text(
                             'Overturn',
                             style: AppTypography.custom(
                               color: AppColors.successColor,
-                              size: 12,
+                              size: AppText.labelSize,
                               weight: FontWeight.w700,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpace.sm),
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () => _showReviewDialog(context, appeal, 'uphold'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.error500,
                             side: BorderSide(color: AppColors.error500),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(AppRadius.smValue),
                             ),
                           ),
                           child: Text(
                             'Uphold',
                             style: AppTypography.custom(
                               color: AppColors.error500,
-                              size: 12,
+                              size: AppText.labelSize,
                               weight: FontWeight.w700,
                             ),
                           ),
@@ -496,7 +497,7 @@ class _AppealCard extends StatelessWidget {
           decision == 'overturn' ? 'Overturn Appeal' : 'Uphold Original Decision',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 15,
+            size: AppText.bodySize,
             weight: FontWeight.w700,
           ),
         ),
@@ -508,33 +509,33 @@ class _AppealCard extends StatelessWidget {
               'Review Notes (optional)',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 12,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             TextField(
               controller: notesController,
               maxLines: 3,
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 13,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
               ),
               decoration: InputDecoration(
                 hintText: 'Add notes about your decision...',
                 hintStyle: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 13,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                 ),
                 filled: true,
                 fillColor: AppColors.bgBase,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   borderSide: const BorderSide(color: AppColors.borderSubtle),
                 ),
-                contentPadding: const EdgeInsets.all(12),
+                contentPadding: const EdgeInsets.all(AppSpace.md),
               ),
             ),
           ],
@@ -546,7 +547,7 @@ class _AppealCard extends StatelessWidget {
               'Cancel',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -559,16 +560,16 @@ class _AppealCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: decision == 'overturn' ? AppColors.successColor : AppColors.error500,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.smValue),
               ),
             ),
             child: Text(
               'Confirm',
               style: AppTypography.custom(
                 color: Colors.white,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),

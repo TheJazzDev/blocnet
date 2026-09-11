@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/mentions/data/models/mention_user_model.dart';
@@ -21,9 +22,9 @@ class MentionSuggestionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.smValue),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.sm),
         child: Row(
           children: [
             AppAvatar(
@@ -34,12 +35,12 @@ class MentionSuggestionTile extends StatelessWidget {
                 user.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
                 style: AppTypography.custom(
                   color: AppColors.primary400,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w600,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,7 +52,7 @@ class MentionSuggestionTile extends StatelessWidget {
                     iconSpacing: 4,
                     textStyle: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 13,
+                      size: AppText.labelSize,
                       weight: FontWeight.w600,
                     ),
                   ),
@@ -59,7 +60,7 @@ class MentionSuggestionTile extends StatelessWidget {
                     '@${user.username}',
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w400,
                     ),
                   ),

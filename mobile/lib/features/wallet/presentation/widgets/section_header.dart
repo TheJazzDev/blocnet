@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -25,7 +26,7 @@ class SectionHeader extends StatelessWidget {
             label.toUpperCase(),
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w700,
               letterSpacing: 0.9,
             ),
@@ -36,7 +37,7 @@ class SectionHeader extends StatelessWidget {
             onPressed: () => Navigator.of(context).pushNamed(actionRoute!),
             style: TextButton.styleFrom(
               minimumSize: const Size(0, 28),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: 0),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               foregroundColor: AppColors.primary500,
             ),
@@ -44,7 +45,7 @@ class SectionHeader extends StatelessWidget {
               actionLabel!,
               style: AppTypography.custom(
                 color: AppColors.primary500,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w600,
               ),
             ),

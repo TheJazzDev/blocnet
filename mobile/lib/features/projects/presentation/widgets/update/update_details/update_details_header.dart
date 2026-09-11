@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';
@@ -19,7 +20,7 @@ class UpdateDetailsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final headerTitle = title?.trim();
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
       child: Row(
         children: [
           _HeaderIconButton(
@@ -27,7 +28,7 @@ class UpdateDetailsHeader extends StatelessWidget {
             onTap: () => Navigator.of(context).pop(),
           ),
           if (headerTitle != null && headerTitle.isNotEmpty) ...[
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Text(
                 headerTitle,
@@ -35,12 +36,12 @@ class UpdateDetailsHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 14,
+                  fontSize: AppText.bodySize,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
           ] else ...[
             const Spacer(),
             if (showPriority) PriorityLabel(priority: priority),
@@ -67,10 +68,10 @@ class _HeaderIconButton extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(color: AppColors.borderSubtle, width: 1),
         ),
-        child: Icon(icon, size: 18, color: AppColors.textMuted),
+        child: Icon(icon, size: AppIcon.md, color: AppColors.textMuted),
       ),
     );
   }

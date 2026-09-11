@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
@@ -29,7 +30,7 @@ class CommunityDiscussionComposer extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
           border: Border(
@@ -41,26 +42,26 @@ class CommunityDiscussionComposer extends StatelessWidget {
           children: [
             if (replyingToUsername != null) ...[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+                margin: const EdgeInsets.only(bottom: AppSpace.sm),
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.subdirectory_arrow_right,
-                      size: 14,
+                      size: AppIcon.sm,
                       color: AppColors.textMuted,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpace.sm),
                     Expanded(
                       child: Text(
                         'Replying to @$replyingToUsername',
                         style: AppTypography.custom(
                           color: AppColors.textMuted,
-                          size: 12,
+                          size: AppText.labelSize,
                           weight: FontWeight.w500,
                         ),
                       ),
@@ -69,7 +70,7 @@ class CommunityDiscussionComposer extends StatelessWidget {
                       onTap: onCancelReply,
                       child: Icon(
                         Icons.close,
-                        size: 18,
+                        size: AppIcon.md,
                         color: AppColors.textMuted,
                       ),
                     ),
@@ -90,7 +91,7 @@ class CommunityDiscussionComposer extends StatelessWidget {
                     maxLength: 300,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpace.sm),
                 GestureDetector(
                   onTap: isSending ? null : onSendTap,
                   child: Container(
@@ -98,12 +99,12 @@ class CommunityDiscussionComposer extends StatelessWidget {
                     height: 42,
                     decoration: BoxDecoration(
                       color: AppColors.primary500,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     ),
                     child: const Icon(
                       Icons.send_rounded,
                       color: Colors.black,
-                      size: 20,
+                      size: AppIcon.md,
                     ),
                   ),
                 ),

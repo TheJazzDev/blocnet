@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
@@ -20,14 +21,14 @@ class HunterSignalsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
           child: Row(
             children: [
               Text(
                 'HUNTER SIGNALS',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w600,
                   letterSpacing: 1.0,
                 ),
@@ -40,7 +41,7 @@ class HunterSignalsSection extends StatelessWidget {
                   'View All',
                   style: AppTypography.custom(
                     color: AppColors.primary400,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -48,16 +49,16 @@ class HunterSignalsSection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
           child: visible.isEmpty
               ? const _EmptySignalsCard()
               : Column(
                   children: [
                     for (var i = 0; i < visible.length; i++) ...[
                       _SignalCard(update: visible[i]),
-                      if (i != visible.length - 1) const SizedBox(height: 10),
+                      if (i != visible.length - 1) const SizedBox(height: AppSpace.md),
                     ],
                   ],
                 ),
@@ -82,10 +83,10 @@ class _SignalCard extends StatelessWidget {
     final signalColor = _signalColor(priority);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -99,16 +100,16 @@ class _SignalCard extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Icon(
                   Icons.token_outlined,
-                  size: 18,
+                  size: AppIcon.md,
                   color: AppColors.textMuted,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +118,7 @@ class _SignalCard extends StatelessWidget {
                       gemName,
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 13,
+                        size: AppText.labelSize,
                         weight: FontWeight.w700,
                       ),
                     ),
@@ -125,7 +126,7 @@ class _SignalCard extends StatelessWidget {
                       '\$${_deriveTicker(gemName)} · ${getTimeStamp(update.createdAt)}',
                       style: AppTypography.custom(
                         color: AppColors.textFaint,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w400,
                       ),
                     ),
@@ -133,10 +134,10 @@ class _SignalCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   color: signalColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border:
                       Border.all(color: signalColor.withValues(alpha: 0.25)),
                 ),
@@ -144,7 +145,7 @@ class _SignalCard extends StatelessWidget {
                   signalLabel.toUpperCase(),
                   style: AppTypography.custom(
                     color: signalColor,
-                    size: 9,
+                    size: AppText.captionSize,
                     weight: FontWeight.w700,
                     letterSpacing: 0.5,
                   ),
@@ -152,26 +153,26 @@ class _SignalCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Text(
             _signalBody(update),
             style: AppTypography.custom(
               color: AppColors.textSecondary,
-              size: 12,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Divider(color: AppColors.borderSubtle, height: 1),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               _SignalCount(
                 icon: Icons.people_outline_rounded,
                 count: update.project?.followersCount ?? 0,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpace.lg),
               _SignalCount(
                 icon: Icons.sell_outlined,
                 count: update.secondaryTags.length,
@@ -191,31 +192,31 @@ class _EmptySignalsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
         children: [
-          Icon(Icons.post_add_outlined, size: 22, color: AppColors.textFaint),
-          const SizedBox(height: 8),
+          Icon(Icons.post_add_outlined, size: AppIcon.lg, color: AppColors.textFaint),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'No signals posted yet',
             style: AppTypography.custom(
               color: AppColors.textSecondary,
-              size: 13,
+              size: AppText.labelSize,
               weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpace.xs),
           Text(
             'Publish updates to start building your hunter track record.',
             textAlign: TextAlign.center,
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w400,
             ),
           ),
@@ -235,13 +236,13 @@ class _SignalCount extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.textFaint),
-        const SizedBox(width: 4),
+        Icon(icon, size: AppIcon.sm, color: AppColors.textFaint),
+        const SizedBox(width: AppSpace.xs),
         Text(
           '$count',
           style: AppTypography.custom(
             color: AppColors.textFaint,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w400,
           ),
         ),

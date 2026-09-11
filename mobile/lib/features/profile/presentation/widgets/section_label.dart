@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -14,7 +15,7 @@ class SectionLabel extends StatelessWidget {
         label.toUpperCase(),
         style: AppTypography.custom(
           color: AppColors.textFaint,
-          size: 10,
+          size: AppText.captionSize,
           weight: FontWeight.w600,
           letterSpacing: 0.8,
         ),

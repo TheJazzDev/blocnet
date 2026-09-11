@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/users/blocks_store.dart';
@@ -36,7 +37,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           'Unblock user?',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -44,7 +45,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           'You will start seeing their posts and comments again.',
           style: AppTypography.custom(
             color: AppColors.textSecondary,
-            size: 13,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),
@@ -55,7 +56,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
               'Cancel',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -66,7 +67,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
               'Unblock',
               style: AppTypography.custom(
                 color: AppColors.primary400,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -118,7 +119,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           if (store.error != null && blockedUsers.isEmpty) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpace.xl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -127,18 +128,18 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                       textAlign: TextAlign.center,
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 13,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpace.md),
                     TextButton(
                       onPressed: store.fetchBlockedUsers,
                       child: Text(
                         'Retry',
                         style: AppTypography.custom(
                           color: AppColors.primary400,
-                          size: 13,
+                          size: AppText.labelSize,
                           weight: FontWeight.w700,
                         ),
                       ),
@@ -155,7 +156,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                 'No blocked users',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w500,
                 ),
               ),
@@ -165,9 +166,9 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           return RefreshIndicator(
             onRefresh: store.fetchBlockedUsers,
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               itemCount: blockedUsers.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
               itemBuilder: (context, index) {
                 final user = blockedUsers[index];
                 final name =
@@ -183,10 +184,10 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                 final isPending = _pendingUnblockIds.contains(user.blockedId);
 
                 return Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSpace.md),
                   decoration: BoxDecoration(
                     color: AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     border: Border.all(color: AppColors.borderSubtle),
                   ),
                   child: Row(
@@ -198,12 +199,12 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                           name.substring(0, 1).toUpperCase(),
                           style: AppTypography.custom(
                             color: AppColors.primary400,
-                            size: 13,
+                            size: AppText.labelSize,
                             weight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: AppSpace.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,7 +213,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                               name,
                               style: AppTypography.custom(
                                 color: AppColors.textPrimary,
-                                size: 14,
+                                size: AppText.bodySize,
                                 weight: FontWeight.w600,
                               ),
                             ),
@@ -221,7 +222,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                                 username,
                                 style: AppTypography.custom(
                                   color: AppColors.textMuted,
-                                  size: 12,
+                                  size: AppText.bodySize,
                                   weight: FontWeight.w400,
                                 ),
                               ),
@@ -234,7 +235,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                           isPending ? '...' : 'Unblock',
                           style: AppTypography.custom(
                             color: AppColors.primary400,
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w700,
                           ),
                         ),

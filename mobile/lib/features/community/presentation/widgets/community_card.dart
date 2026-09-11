@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
@@ -95,7 +96,7 @@ class CommunityCard extends StatelessWidget {
           'Block $authorName?',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -103,7 +104,7 @@ class CommunityCard extends StatelessWidget {
           'You won\'t see their posts or comments anymore.',
           style: AppTypography.custom(
             color: AppColors.textSecondary,
-            size: 13,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),
@@ -114,7 +115,7 @@ class CommunityCard extends StatelessWidget {
               'Cancel',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -125,7 +126,7 @@ class CommunityCard extends StatelessWidget {
               'Block',
               style: AppTypography.custom(
                 color: AppColors.error500,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -177,11 +178,11 @@ class CommunityCard extends StatelessWidget {
             children: [
               if (isModerator && onModerate != null)
                 ListTile(
-                  leading: Icon(Icons.shield_outlined, size: 20, color: AppColors.textSecondary),
+                  leading: Icon(Icons.shield_outlined, size: AppIcon.md, color: AppColors.textSecondary),
                   title: Text(
                     'Moderate',
                     style: AppTypography.custom(
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),
@@ -193,11 +194,11 @@ class CommunityCard extends StatelessWidget {
                 ),
               if (!isOwnPost) ...[
                 ListTile(
-                  leading: Icon(Icons.flag_outlined, size: 20, color: AppColors.error500),
+                  leading: Icon(Icons.flag_outlined, size: AppIcon.md, color: AppColors.error500),
                   title: Text(
                     'Report Post',
                     style: AppTypography.custom(
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w500,
                       color: AppColors.error500,
                     ),
@@ -208,11 +209,11 @@ class CommunityCard extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.block, size: 20, color: AppColors.error500),
+                  leading: Icon(Icons.block, size: AppIcon.md, color: AppColors.error500),
                   title: Text(
                     'Block User',
                     style: AppTypography.custom(
-                      size: 14,
+                      size: AppText.bodySize,
                       weight: FontWeight.w500,
                       color: AppColors.error500,
                     ),
@@ -223,7 +224,7 @@ class CommunityCard extends StatelessWidget {
                   },
                 ),
               ],
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
             ],
           ),
         ),
@@ -253,7 +254,7 @@ class CommunityCard extends StatelessWidget {
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -269,7 +270,7 @@ class CommunityCard extends StatelessWidget {
                     fallback: _avatarFallback(displayName, roleColor),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,7 +290,7 @@ class CommunityCard extends StatelessWidget {
                                       levelBadgeSize: LevelBadgeSize.small,
                                       textStyle: AppTypography.custom(
                                         color: AppColors.textPrimary,
-                                        size: 14,
+                                        size: AppText.bodySize,
                                         weight: FontWeight.w700,
                                       ),
                                     ),
@@ -299,53 +300,53 @@ class CommunityCard extends StatelessWidget {
                             ),
                           ),
                           if (role != null) ...[
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpace.sm),
                             RoleChip(label: role, color: roleColor),
                           ],
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpace.sm),
                           Text(
                             getTimeStamp(post.createdAt),
                             style: AppTypography.custom(
                               color: AppColors.textFaint,
-                              size: 11,
+                              size: AppText.captionSize,
                               weight: FontWeight.w400,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: AppSpace.xs),
                           GestureDetector(
                             onTap: () => _showMoreOptions(context),
                             behavior: HitTestBehavior.opaque,
                             child: Padding(
-                              padding: const EdgeInsets.all(2),
+                              padding: const EdgeInsets.all(AppSpace.hair),
                               child: Icon(
                                 Icons.more_horiz_rounded,
-                                size: 18,
+                                size: AppIcon.md,
                                 color: AppColors.textMuted,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpace.hair),
                       Row(
                         children: [
                           Text(
                             username,
                             style: AppTypography.custom(
                               color: AppColors.textMuted,
-                              size: 12,
+                              size: AppText.bodySize,
                               weight: FontWeight.w400,
                             ),
                           ),
                           if (post.status != CommunityContentModerationStatus.active) ...[
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpace.sm),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                               decoration: BoxDecoration(
                                 color: post.status == CommunityContentModerationStatus.hidden
                                     ? AppColors.warning500.withValues(alpha: 0.15)
                                     : AppColors.error500.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(AppRadius.smValue),
                                 border: Border.all(
                                   color: post.status == CommunityContentModerationStatus.hidden
                                       ? AppColors.warning500.withValues(alpha: 0.4)
@@ -357,7 +358,7 @@ class CommunityCard extends StatelessWidget {
                                     ? 'HIDDEN'
                                     : 'ARCHIVED',
                                 style: AppTypography.custom(
-                                  size: 9,
+                                  size: AppText.captionSize,
                                   weight: FontWeight.w700,
                                   color: post.status == CommunityContentModerationStatus.hidden
                                       ? AppColors.warning500
@@ -369,12 +370,12 @@ class CommunityCard extends StatelessWidget {
                           ],
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpace.sm),
                       MentionText(
                         text: content,
                         style: AppTypography.custom(
                           color: AppColors.textSecondary,
-                          size: 13,
+                          size: AppText.bodySize,
                           height: 1.6,
                           weight: FontWeight.w400,
                         ),
@@ -390,7 +391,7 @@ class CommunityCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -464,13 +465,13 @@ class CommunityCard extends StatelessWidget {
             AppColors.bgSurface.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle.withValues(alpha: 0.75),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
         child: cardBody,
       ),
     );
@@ -482,7 +483,7 @@ class CommunityCard extends StatelessWidget {
       firstChar,
       style: AppTypography.custom(
         color: color,
-        size: 18,
+        size: AppText.titleSize,
         weight: FontWeight.w800,
       ),
     );

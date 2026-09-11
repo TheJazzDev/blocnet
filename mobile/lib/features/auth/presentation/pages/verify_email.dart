@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -129,7 +130,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           // Resent success notice
           if (_resentSuccess) ...[
             _ResentBanner(),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
           ],
 
           _CodeVerificationCard(
@@ -139,7 +140,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             onVerify: _verifyCode,
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpace.xl),
 
           // Resend code — secondary action
           Center(
@@ -150,11 +151,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   "Didn't receive it?",
                   style: TextStyle(
                     color: AppColors.darkGrey500,
-                    fontSize: 13,
+                    fontSize: AppText.bodySize,
                     fontFamily: 'Geist',
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpace.xs),
                 GestureDetector(
                   onTap: _isResending ? null : _resendCode,
                   child: Text(
@@ -163,7 +164,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       color: _isResending
                           ? AppColors.darkGrey400
                           : AppColors.teal400,
-                      fontSize: 13,
+                      fontSize: AppText.labelSize,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w600,
                     ),
@@ -173,7 +174,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
 
           Center(
             child: TextButton(
@@ -187,7 +188,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 'Back to sign in',
                 style: TextStyle(
                   color: AppColors.darkGrey500,
-                  fontSize: 12,
+                  fontSize: AppText.bodySize,
                   fontFamily: 'Geist',
                 ),
               ),
@@ -216,10 +217,10 @@ class _CodeVerificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.darkGrey100,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.darkGrey200),
       ),
       child: Column(
@@ -229,22 +230,22 @@ class _CodeVerificationCard extends StatelessWidget {
             'Verification code',
             style: TextStyle(
               color: AppColors.darkGrey700,
-              fontSize: 14,
+              fontSize: AppText.bodySize,
               fontWeight: FontWeight.w600,
               fontFamily: 'Geist',
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'Paste the 8-digit code from your email to continue in-app.',
             style: TextStyle(
               color: AppColors.darkGrey400,
-              fontSize: 12,
+              fontSize: AppText.bodySize,
               fontFamily: 'Geist',
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           TextField(
             controller: controller,
             focusNode: focusNode,
@@ -257,7 +258,7 @@ class _CodeVerificationCard extends StatelessWidget {
             ],
             style: TextStyle(
               color: AppColors.darkGrey700,
-              fontSize: 15,
+              fontSize: AppText.bodySize,
               fontFamily: 'Geist',
             ),
             decoration: InputDecoration(
@@ -270,24 +271,24 @@ class _CodeVerificationCard extends StatelessWidget {
               filled: true,
               fillColor: AppColors.bgSurface,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 14,
+                horizontal: AppSpace.lg,
+                vertical: AppSpace.lg,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 borderSide: BorderSide(color: AppColors.darkGrey200),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 borderSide: BorderSide(color: AppColors.darkGrey200),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 borderSide: BorderSide(color: AppColors.teal400),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               PrimaryButton(
@@ -309,10 +310,10 @@ class _ResentBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.successColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: AppColors.successColor.withValues(alpha: 0.25),
         ),
@@ -322,14 +323,14 @@ class _ResentBanner extends StatelessWidget {
           Icon(
             Icons.check_circle_outline_rounded,
             color: AppColors.successColor,
-            size: 15,
+            size: AppIcon.sm,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Text(
             'Verification link resent',
             style: TextStyle(
               color: AppColors.successColor,
-              fontSize: 12,
+              fontSize: AppText.bodySize,
               fontFamily: 'Geist',
             ),
           ),

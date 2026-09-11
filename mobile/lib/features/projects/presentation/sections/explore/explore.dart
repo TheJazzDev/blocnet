@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
@@ -59,12 +60,12 @@ class ExploreSection extends StatelessWidget {
         children: [
           // Filter label
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(AppSpace.lg, 0, AppSpace.lg, AppSpace.md),
             child: Text(
               'FILTER',
               style: TextStyle(
                 color: AppColors.textFaint,
-                fontSize: 10,
+                fontSize: AppText.captionSize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
@@ -73,7 +74,7 @@ class ExploreSection extends StatelessWidget {
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
             child: Row(
               children: [
                 TagCard(
@@ -112,9 +113,9 @@ class ExploreSection extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: AppSpace.xxl),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -122,20 +123,20 @@ class ExploreSection extends StatelessWidget {
                   'Latest News',
                   style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 14,
+                    fontSize: AppText.bodySize,
                     fontFamily: 'Geist',
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 if (rows.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 10),
+                    padding: const EdgeInsets.only(top: AppSpace.md),
                     child: Text(
                       'No updates yet.',
                       style: TextStyle(
                         color: AppColors.textFaint,
-                        fontSize: 12,
+                        fontSize: AppText.labelSize,
                         fontFamily: 'Geist',
                         fontWeight: FontWeight.w500,
                       ),

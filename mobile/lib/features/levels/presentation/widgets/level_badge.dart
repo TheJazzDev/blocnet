@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge_artwork.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +32,7 @@ class LevelBadge extends StatelessWidget {
       children: [
         LevelBadgeArtwork(level: level, size: size.iconSize),
         if (showLevelNumber || showName) ...[
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpace.xs),
           Flexible(child: _buildLevelText()),
         ],
       ],

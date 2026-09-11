@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +45,7 @@ class SpacesExplainerSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,37 +56,37 @@ class SpacesExplainerSheet extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.borderMuted,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             Text(
               _title,
               style: AppTypography.custom(
-                size: 18,
+                size: AppText.titleSize,
                 weight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'A space changes which tools sit in your bottom bar. Your '
               'profile, badges, quests and levels stay the same in every '
               'space. Switch any time from the chip in the top-right corner.',
               style: AppTypography.custom(
-                size: 12,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
                 color: AppColors.textMuted,
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             for (final space in spaces) ...[
               _SpaceRow(space: space),
-              if (space != spaces.last) const SizedBox(height: 8),
+              if (space != spaces.last) const SizedBox(height: AppSpace.sm),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpace.lg),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -93,15 +94,15 @@ class SpacesExplainerSheet extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary500,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   ),
                 ),
                 child: Text(
                   'Got it',
                   style: AppTypography.custom(
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                     color: Colors.black,
                   ),
@@ -123,10 +124,10 @@ class _SpaceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgElevated,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: space.accent.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -137,11 +138,11 @@ class _SpaceRow extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: space.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
             ),
-            child: Icon(space.icon, size: 19, color: space.accent),
+            child: Icon(space.icon, size: AppIcon.md, color: space.accent),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,16 +150,16 @@ class _SpaceRow extends StatelessWidget {
                 Text(
                   '${space.label} space',
                   style: AppTypography.custom(
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   space.purpose,
                   style: AppTypography.custom(
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                     color: AppColors.textMuted,
                     height: 1.4,

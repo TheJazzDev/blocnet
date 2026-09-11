@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -64,11 +65,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
         backgroundColor: AppColors.bgBase,
         appBar: _buildAppBar(),
         body: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpace.lg),
           child: Text(
             'Your current role does not allow project submission.',
             style: AppTypography.custom(color: AppColors.textMuted,
-              size: 13,
+              size: AppText.bodySize,
               weight: FontWeight.w400,),
           ),
         ),
@@ -93,11 +94,11 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
         backgroundColor: AppColors.bgBase,
         appBar: _buildAppBar(),
         body: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpace.lg),
           child: Text(
             'Primary tags are not configured yet. Contact admin.',
             style: AppTypography.custom(color: AppColors.textMuted,
-              size: 13,
+              size: AppText.bodySize,
               weight: FontWeight.w400,),
           ),
         ),
@@ -110,7 +111,7 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpace.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -118,17 +119,17 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                 Text(
                   _submitError!,
                   style: AppTypography.custom(color: AppColors.error500,
-                    size: 12,
+                    size: AppText.bodySize,
                     weight: FontWeight.w400,),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
               ],
               _FieldLabel('Gem name'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _nameController,
                 style: AppTypography.custom(color: AppColors.textSecondary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,),
                 decoration: _fieldDecoration(hintText: 'e.g. Codawoo'),
                 validator: (value) {
@@ -138,35 +139,35 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Symbol (optional)'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _symbolController,
                 style: AppTypography.custom(color: AppColors.textSecondary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,),
                 decoration: _fieldDecoration(hintText: 'e.g. COD'),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Website URL (optional)'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _websiteController,
                 style: AppTypography.custom(color: AppColors.textSecondary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,),
                 decoration: _fieldDecoration(hintText: 'https://example.com'),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Primary tag'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               DropdownButtonFormField<String>(
                 value: _selectedPrimaryTagId,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
                 style: AppTypography.custom(color: AppColors.textSecondary,
-                  size: 13,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,),
                 items: tagsStore.primaryTags
                     .map(
@@ -176,7 +177,7 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                           tag.name,
                           style: AppTypography.custom(
                             color: AppColors.textSecondary,
-                            size: 13,
+                            size: AppText.labelSize,
                             weight: FontWeight.w500,
                           ),
                         ),
@@ -194,15 +195,15 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Description'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _descriptionController,
                 minLines: 6,
                 maxLines: 10,
                 style: AppTypography.custom(color: AppColors.textSecondary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,),
                 decoration: _fieldDecoration(
                   hintText: 'Explain what this gem is about.',
@@ -214,27 +215,27 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Why should we approve? (optional)'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _reasonController,
                 minLines: 3,
                 maxLines: 6,
                 style: AppTypography.custom(color: AppColors.textSecondary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,),
                 decoration: _fieldDecoration(
                   hintText: 'Credibility, risk checks, relevance, etc.',
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpace.xl),
               GestureDetector(
                 onTap: _isSubmitting ? null : _submit,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpace.lg),
                   decoration: BoxDecoration(
                     gradient: _isSubmitting
                         ? null
@@ -247,7 +248,7 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                             ],
                           ),
                     color: _isSubmitting ? AppColors.bgElevated : null,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lgValue),
                     border: Border.all(
                       color: _isSubmitting
                           ? AppColors.borderSubtle
@@ -281,15 +282,15 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
                           children: [
                             Icon(
                               Icons.send_rounded,
-                              size: 18,
+                              size: AppIcon.md,
                               color: Colors.black,
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: AppSpace.md),
                             Text(
                               'Submit For Approval',
                               style: AppTypography.custom(
                                 color: Colors.black,
-                                size: 15,
+                                size: AppText.bodySize,
                                 weight: FontWeight.w800,
                               ),
                             ),
@@ -318,47 +319,47 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
       hintText: hintText,
       hintStyle: AppTypography.custom(
         color: AppColors.textFaint,
-        size: 13,
+        size: AppText.bodySize,
         weight: FontWeight.w400,
       ),
       filled: true,
       fillColor: AppColors.bgSurface,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(
           color: AppColors.borderSubtle.withValues(alpha: 0.5),
           width: 1.5,
         ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(
           color: AppColors.borderSubtle.withValues(alpha: 0.5),
           width: 1.5,
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(
           color: AppColors.teal400,
           width: 2,
         ),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(
           color: AppColors.error500,
           width: 1.5,
         ),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         borderSide: BorderSide(
           color: AppColors.error500,
           width: 2,
         ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
     );
   }
 
@@ -423,7 +424,7 @@ class _FieldLabel extends StatelessWidget {
       label,
       style: AppTypography.custom(
         color: AppColors.textMuted,
-        size: 12,
+        size: AppText.labelSize,
         weight: FontWeight.w500,
       ),
     );

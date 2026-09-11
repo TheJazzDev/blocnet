@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +56,7 @@ class _YourProjectCardState extends State<YourProjectCard> {
       return InkWell(
         onTap: _openDetails,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -64,7 +65,7 @@ class _YourProjectCardState extends State<YourProjectCard> {
                 height: 42,
                 decoration: BoxDecoration(
                   color: AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: widget.project.logo.isNotEmpty
@@ -75,18 +76,18 @@ class _YourProjectCardState extends State<YourProjectCard> {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Icon(
                             Icons.layers_outlined,
-                            size: 18,
+                            size: AppIcon.md,
                             color: AppColors.textFaint,
                           ),
                         ),
                       )
                     : Icon(
                         Icons.layers_outlined,
-                        size: 18,
+                        size: AppIcon.md,
                         color: AppColors.textFaint,
                       ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,32 +98,32 @@ class _YourProjectCardState extends State<YourProjectCard> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 14,
+                        fontSize: AppText.bodySize,
                         fontFamily: 'Geist',
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: AppSpace.hair),
                     Text(
                       '${widget.project.primaryTag.name} • ${widget.project.followersCount} followers • ${widget.project.posts?.length ?? 0} updates',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppColors.textFaint,
-                        fontSize: 11,
+                        fontSize: AppText.captionSize,
                         fontFamily: 'Geist',
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     if (widget.project.description.trim().isNotEmpty) ...[
-                      const SizedBox(height: 5),
+                      const SizedBox(height: AppSpace.xs),
                       Text(
                         widget.project.description.trim(),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 12,
+                          fontSize: AppText.bodySize,
                           fontFamily: 'Geist',
                           fontWeight: FontWeight.w400,
                           height: 1.35,
@@ -132,11 +133,11 @@ class _YourProjectCardState extends State<YourProjectCard> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Icon(
                 Icons.chevron_right,
                 color: AppColors.textMuted,
-                size: 18,
+                size: AppIcon.md,
               ),
             ],
           ),
@@ -147,23 +148,23 @@ class _YourProjectCardState extends State<YourProjectCard> {
     return GestureDetector(
       onTap: _openDetails,
       child: Container(
-        padding: const EdgeInsets.all(16),
-        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(AppSpace.lg),
+        margin: const EdgeInsets.only(bottom: AppSpace.md),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(color: AppColors.borderSubtle, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             YourProjectCardOverview(project: widget.project),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             YourProjectCardInfo(project: widget.project),
             if (recentUpdates.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               _UpdatesDivider(),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               ...recentUpdates
                   .map((update) => YourProjectCardUpdate(post: update)),
             ],
@@ -183,13 +184,13 @@ class _UpdatesDivider extends StatelessWidget {
           'Recent updates',
           style: TextStyle(
             color: AppColors.textFaint,
-            fontSize: 10,
+            fontSize: AppText.captionSize,
             fontFamily: 'Geist',
             fontWeight: FontWeight.w500,
             letterSpacing: 0.4,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpace.sm),
         Expanded(
           child: Container(height: 1, color: AppColors.borderSubtle),
         ),

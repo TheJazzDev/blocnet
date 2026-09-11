@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_progress_card.dart';
@@ -44,7 +45,7 @@ class _Placeholder extends StatelessWidget {
       height: 76,
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Center(
@@ -70,22 +71,22 @@ class _ErrorRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.sm, AppSpace.sm, AppSpace.sm),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.error500.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline_rounded, size: 16, color: AppColors.error500),
-          const SizedBox(width: 8),
+          Icon(Icons.error_outline_rounded, size: AppIcon.sm, color: AppColors.error500),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Text(
               message,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w500,
               ),
               maxLines: 2,
@@ -96,10 +97,10 @@ class _ErrorRow extends StatelessWidget {
             onPressed: onRetry,
             style: TextButton.styleFrom(
               foregroundColor: AppColors.textPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
               minimumSize: const Size(0, 32),
             ),
-            child: const Text('Retry', style: TextStyle(fontSize: 12)),
+            child: const Text('Retry', style: TextStyle(fontSize: AppText.bodySize)),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -89,12 +90,12 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
         backgroundColor: AppColors.bgBase,
         appBar: _buildAppBar(),
         body: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpace.lg),
           child: Text(
             'Your current role does not allow creating updates.',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 13,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
             ),
           ),
@@ -131,7 +132,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpace.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -140,21 +141,21 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                   _submitError!,
                   style: AppTypography.custom(
                     color: AppColors.error500,
-                    size: 12,
+                    size: AppText.bodySize,
                     weight: FontWeight.w400,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
               ],
               _FieldLabel('Project'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               DropdownButtonFormField<String>(
                 value: _selectedProjectId,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 13,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                 ),
                 items: availableProjects
@@ -165,7 +166,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                           project.name,
                           style: AppTypography.custom(
                             color: AppColors.textSecondary,
-                            size: 13,
+                            size: AppText.labelSize,
                             weight: FontWeight.w500,
                           ),
                         ),
@@ -182,16 +183,16 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Urgency'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               DropdownButtonFormField<Priority>(
                 value: _selectedPriority,
                 decoration: _fieldDecoration(),
                 dropdownColor: AppColors.bgElevated,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 13,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                 ),
                 items: Priority.getAll()
@@ -202,7 +203,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                           '${priority.label} Urgency',
                           style: AppTypography.custom(
                             color: AppColors.textSecondary,
-                            size: 13,
+                            size: AppText.labelSize,
                             weight: FontWeight.w500,
                           ),
                         ),
@@ -214,15 +215,15 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                   setState(() => _selectedPriority = value);
                 },
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Secondary tags'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               if (tagsStore.secondaryTags.isEmpty)
                 Text(
                   'No secondary tags available',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 12,
+                    size: AppText.bodySize,
                     weight: FontWeight.w400,
                   ),
                 )
@@ -250,7 +251,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                           color: isSelected
                               ? AppColors.teal400
                               : AppColors.textMuted,
-                          size: 12,
+                          size: AppText.bodySize,
                           weight: FontWeight.w400,
                         ),
                       ),
@@ -265,14 +266,14 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                     );
                   }).toList(),
                 ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Title'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _titleController,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                 ),
                 decoration: _fieldDecoration(hintText: 'Update title'),
@@ -283,16 +284,16 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Content'),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               TextFormField(
                 controller: _contentController,
                 minLines: 7,
                 maxLines: 12,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                 ),
                 decoration: _fieldDecoration(
@@ -305,14 +306,14 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpace.xl),
               SizedBox(
                 width: double.infinity,
                 child: GestureDetector(
                   onTap: _isSubmitting ? null : _submit,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
                     decoration: BoxDecoration(
                       gradient: _isSubmitting
                           ? null
@@ -320,7 +321,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                               colors: [AppColors.teal500, AppColors.primary500],
                             ),
                       color: _isSubmitting ? AppColors.bgElevated : null,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.lgValue),
                     ),
                     child: _isSubmitting
                         ? Center(
@@ -338,7 +339,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                             textAlign: TextAlign.center,
                             style: AppTypography.custom(
                               color: Colors.white,
-                              size: 14,
+                              size: AppText.bodySize,
                               weight: FontWeight.w600,
                             ),
                           ),
@@ -366,32 +367,32 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       hintText: hintText,
       hintStyle: AppTypography.custom(
         color: AppColors.textFaint,
-        size: 13,
+        size: AppText.bodySize,
         weight: FontWeight.w400,
       ),
       filled: true,
       fillColor: AppColors.bgElevated,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.teal500),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.error500),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.error500),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
     );
   }
 
@@ -496,7 +497,7 @@ class _FieldLabel extends StatelessWidget {
       label,
       style: AppTypography.custom(
         color: AppColors.textMuted,
-        size: 12,
+        size: AppText.labelSize,
         weight: FontWeight.w500,
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/shared/update_project_title.dart';
 import 'package:blocnet/shared/styles/app_text_styles.dart';
@@ -37,12 +38,12 @@ class MoreFromProjectName extends StatelessWidget {
         posts.isEmpty
             ? StyledBodyText500("No updates available for this $projectTitle!")
             : Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      margin: const EdgeInsets.only(right: 8),
+                      margin: const EdgeInsets.only(right: AppSpace.sm),
                       child: SvgPicture.asset(
                         "assets/icons/corner_down_right.svg",
                         width: 12,
@@ -56,7 +57,7 @@ class MoreFromProjectName extends StatelessWidget {
                           children: List.generate(posts.length, (index) {
                             final post = posts[index];
                             return Padding(
-                              padding: const EdgeInsets.only(right: 20),
+                              padding: const EdgeInsets.only(right: AppSpace.xl),
                               child: MoreFromProjectNameUpdateCard(post: post),
                             );
                           }),

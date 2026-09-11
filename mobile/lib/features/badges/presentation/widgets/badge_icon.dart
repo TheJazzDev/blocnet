@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -107,12 +108,12 @@ class BadgeIcon extends StatelessWidget {
         message: '${badge.name}\n${badge.description}',
         preferBelow: false,
         textStyle: const TextStyle(
-          fontSize: 12,
+          fontSize: AppText.bodySize,
           color: Colors.white,
         ),
         decoration: BoxDecoration(
           color: Colors.black87,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.smValue),
           border: Border.all(
             color: rarityColor.withValues(alpha: 0.5),
             width: 1,
@@ -176,7 +177,7 @@ class UserBadge extends StatelessWidget {
     if (badge == null) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.only(left: 4),
+      padding: const EdgeInsets.only(left: AppSpace.xs),
       child: BadgeIcon(
         badge: badge!,
         size: size,
@@ -270,11 +271,11 @@ class BadgeRarityChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
-          : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          ? const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair)
+          : const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: Color(rarity.color).withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: Color(rarity.color).withValues(alpha: 0.5),
           width: 1,
@@ -288,7 +289,7 @@ class BadgeRarityChip extends StatelessWidget {
             size: compact ? 12 : 14,
             color: Color(rarity.color),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpace.xs),
           Text(
             rarity.displayName,
             style: TextStyle(
@@ -319,11 +320,11 @@ class BadgeCategoryChip extends StatelessWidget {
     final categoryColor = Color(category.color);
     return Container(
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
-          : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          ? const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair)
+          : const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: categoryColor.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: categoryColor.withValues(alpha: 0.55),
           width: 1,

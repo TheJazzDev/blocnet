@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -36,7 +37,7 @@ class ProfileTabBar extends StatelessWidget {
                 onTap: () => onChanged(i),
                 behavior: HitTestBehavior.opaque,
                 child: Container(
-                  padding: const EdgeInsets.only(bottom: 2),
+                  padding: const EdgeInsets.only(bottom: AppSpace.hair),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
@@ -51,7 +52,7 @@ class ProfileTabBar extends StatelessWidget {
                     tabs[i],
                     style: AppTypography.custom(
                       color: i == activeIndex ? accent : AppColors.textFaint,
-                      size: 13,
+                      size: AppText.bodySize,
                       weight:
                           i == activeIndex ? FontWeight.w600 : FontWeight.w500,
                     ),
@@ -81,30 +82,30 @@ class ProfileTabEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 36, color: AppColors.textFaint),
-            const SizedBox(height: 8),
+            Icon(icon, size: AppIcon.xl, color: AppColors.textFaint),
+            const SizedBox(height: AppSpace.sm),
             Text(
               title,
               textAlign: TextAlign.center,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 12,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
               ),
             ),
             if (hint != null) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               Text(
                 hint!,
                 textAlign: TextAlign.center,
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w400,
                 ),
               ),
@@ -138,11 +139,11 @@ class ProfileTabTileFrame extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpace.md),
         decoration: isCardMode
             ? BoxDecoration(
                 color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(color: AppColors.borderSubtle),
               )
             : null,

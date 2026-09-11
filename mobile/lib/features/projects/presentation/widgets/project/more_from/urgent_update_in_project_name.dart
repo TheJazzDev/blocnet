@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_card/update_card.dart';
@@ -54,7 +55,7 @@ class _UrgentPostInProjectNameState extends State<UrgentPostInProjectName> {
                   'Urgent Update In',
                   style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 13,
+                    fontSize: AppText.labelSize,
                     fontFamily: 'Geist',
                     fontWeight: FontWeight.w600,
                   ),
@@ -67,13 +68,13 @@ class _UrgentPostInProjectNameState extends State<UrgentPostInProjectName> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpace.lg),
         urgentPosts.isEmpty
             ? Text(
                 'No urgent updates for this gem yet.',
                 style: TextStyle(
                   color: AppColors.textFaint,
-                  fontSize: 12,
+                  fontSize: AppText.bodySize,
                   fontFamily: 'Geist',
                 ),
               )

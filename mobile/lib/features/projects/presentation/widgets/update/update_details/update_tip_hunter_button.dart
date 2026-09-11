@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
@@ -51,10 +52,10 @@ class UpdateTipHunterButton extends StatelessWidget {
           minimumSize: const Size.fromHeight(44),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
           ),
         ),
-        icon: const Icon(Icons.volunteer_activism_rounded, size: 18),
+        icon: const Icon(Icons.volunteer_activism_rounded, size: AppIcon.md),
         label: const Text('Tip Hunter'),
       ),
     );

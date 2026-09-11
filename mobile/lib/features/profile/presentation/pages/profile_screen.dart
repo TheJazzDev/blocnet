@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/profile_body.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -55,7 +56,7 @@ class ProfileScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgSurface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xlValue),
           side: BorderSide(
             color: AppColors.borderSubtle.withValues(alpha: 0.5),
             width: 1.5,
@@ -66,14 +67,14 @@ class ProfileScreen extends StatelessWidget {
           style: AppTypography.custom(
             color: AppColors.textPrimary,
             weight: FontWeight.w700,
-            size: 16,
+            size: AppText.subtitleSize,
           ),
         ),
         content: Text(
           'Are you sure you want to sign out?',
           style: AppTypography.custom(
             color: AppColors.textSecondary,
-            size: 14,
+            size: AppText.bodySize,
             weight: FontWeight.w500,
           ),
         ),
@@ -81,13 +82,13 @@ class ProfileScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
             ),
             child: Text(
               'Cancel',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -95,17 +96,17 @@ class ProfileScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
               backgroundColor: AppColors.error500.withValues(alpha: 0.12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
               ),
             ),
             child: Text(
               'Sign Out',
               style: AppTypography.custom(
                 color: AppColors.error500,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -133,7 +134,7 @@ class _ProfileSpaceSwitchOverlay extends StatelessWidget {
             child: SizedBox(
               width: 160,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.fullValue),
                 child: LinearProgressIndicator(
                   minHeight: 4,
                   color: AppColors.primary400,

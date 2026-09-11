@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/pages/send_token_page.dart';
@@ -226,18 +227,18 @@ void showWalletToast(
         bottomInset.clamp(16, 1200).toDouble(),
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         side: BorderSide(color: borderColor),
       ),
       content: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.textPrimary),
-          const SizedBox(width: 10),
+          Icon(icon, size: AppIcon.md, color: AppColors.textPrimary),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Text(
               message,
               style: AppTypography.custom(
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),
@@ -354,7 +355,7 @@ Future<String?> _showAssetPicker(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             border: Border.all(color: AppColors.borderSubtle),
           ),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,27 +366,27 @@ Future<String?> _showAssetPicker(
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Text(
                 'Select Asset To Send',
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 16,
+                  size: AppText.subtitleSize,
                   weight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               ...assets.map((asset) {
                 final accent = assetAccentColor(asset.asset);
                 return InkWell(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   onTap: () => Navigator.of(sheetContext).pop(asset.asset),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                     child: Row(
                       children: [
                         Container(
@@ -400,18 +401,18 @@ Future<String?> _showAssetPicker(
                             asset.symbol,
                             style: AppTypography.custom(
                               color: accent,
-                              size: 11,
+                              size: AppText.captionSize,
                               weight: FontWeight.w800,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: AppSpace.md),
                         Expanded(
                           child: Text(
                             '${asset.name} (${asset.asset})',
                             style: AppTypography.custom(
                               color: AppColors.textPrimary,
-                              size: 13,
+                              size: AppText.labelSize,
                               weight: FontWeight.w600,
                             ),
                           ),
@@ -420,7 +421,7 @@ Future<String?> _showAssetPicker(
                           formatTokenAmount(asset.available),
                           style: AppTypography.custom(
                             color: AppColors.textMuted,
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w600,
                           ),
                         ),

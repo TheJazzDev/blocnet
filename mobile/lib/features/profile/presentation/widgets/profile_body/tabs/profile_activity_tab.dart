@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/profile/data/models/activity_item_model.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/tabs/profile_tab_bar.dart';
@@ -37,7 +38,7 @@ class ProfileActivityTab extends StatelessWidget {
 
     return ListView.builder(
       primary: false,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -47,8 +48,8 @@ class ProfileActivityTab extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.bolt_rounded, size: 16, color: accent),
-              const SizedBox(width: 8),
+              Icon(Icons.bolt_rounded, size: AppIcon.sm, color: accent),
+              const SizedBox(width: AppSpace.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,16 +58,16 @@ class ProfileActivityTab extends StatelessWidget {
                       item.label,
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.hair),
                     Text(
                       getTimeStamp(item.createdAt),
                       style: AppTypography.custom(
                         color: AppColors.textFaint,
-                        size: 10,
+                        size: AppText.captionSize,
                         weight: FontWeight.w400,
                       ),
                     ),

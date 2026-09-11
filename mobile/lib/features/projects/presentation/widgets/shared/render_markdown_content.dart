@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -66,11 +67,11 @@ class RenderMarkdownContent extends StatelessWidget {
           color: AppColors.teal400,
           backgroundColor: AppColors.bgElevated,
           fontFamily: 'monospace',
-          fontSize: 12,
+          fontSize: AppText.bodySize,
         ),
         codeblockDecoration: BoxDecoration(
           color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.smValue),
           border: Border.all(color: AppColors.borderSubtle),
         ),
       ),

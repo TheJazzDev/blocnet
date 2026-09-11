@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -18,16 +19,16 @@ class SupportHeader extends StatelessWidget {
           title,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 20,
+            size: AppText.titleSize,
             weight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpace.sm),
         Text(
           subtitle,
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 13,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
             height: 1.45,
           ),
@@ -64,11 +65,11 @@ class _SupportFaqTileState extends State<SupportFaqTile> {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: AppSpace.md),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(
             color: _expanded
                 ? AppColors.primary500.withValues(alpha: 0.35)
@@ -80,14 +81,14 @@ class _SupportFaqTileState extends State<SupportFaqTile> {
           children: [
             Row(
               children: [
-                Icon(widget.icon, size: 18, color: AppColors.primary400),
-                const SizedBox(width: 10),
+                Icon(widget.icon, size: AppIcon.md, color: AppColors.primary400),
+                const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Text(
                     widget.question,
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 13,
+                      size: AppText.labelSize,
                       weight: FontWeight.w600,
                     ),
                   ),
@@ -96,18 +97,18 @@ class _SupportFaqTileState extends State<SupportFaqTile> {
                   _expanded
                       ? Icons.expand_less_rounded
                       : Icons.expand_more_rounded,
-                  size: 20,
+                  size: AppIcon.md,
                   color: AppColors.textFaint,
                 ),
               ],
             ),
             if (_expanded) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               Text(
                 widget.answer,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 12,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                   height: 1.5,
                 ),
@@ -142,11 +143,11 @@ class SupportStepCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -159,41 +160,41 @@ class SupportStepCard extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.primary500.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
-                child: Icon(icon, size: 18, color: AppColors.primary400),
+                child: Icon(icon, size: AppIcon.md, color: AppColors.primary400),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Text(
                   '$number. $title',
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 14,
+                    size: AppText.bodySize,
                     weight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Text(
             body,
             style: AppTypography.custom(
               color: AppColors.textSecondary,
-              size: 12,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               height: 1.5,
             ),
           ),
           if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: onAction,
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -202,14 +203,14 @@ class SupportStepCard extends StatelessWidget {
                       actionLabel!,
                       style: AppTypography.custom(
                         color: AppColors.primary400,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpace.xs),
                     Icon(
                       Icons.arrow_forward_rounded,
-                      size: 14,
+                      size: AppIcon.sm,
                       color: AppColors.primary400,
                     ),
                   ],

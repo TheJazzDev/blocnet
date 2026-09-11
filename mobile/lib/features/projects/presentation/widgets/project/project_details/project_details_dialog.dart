@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/more_from_project_name.dart';
@@ -55,7 +56,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ProjectDetailsInfo(project: project),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpace.xl),
                     RenderMarkdownContent(content: detailsContent),
                     const SizedBox(height: 28),
                     MoreFromProjectName(

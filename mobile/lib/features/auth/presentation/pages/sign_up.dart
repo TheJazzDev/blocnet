@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
@@ -261,12 +262,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 color: AppColors.textFaint,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpace.sm),
             Text(
               'Checking availability…',
               style: TextStyle(
                 color: AppColors.textFaint,
-                fontSize: 11,
+                fontSize: AppText.captionSize,
                 fontFamily: 'Geist',
               ),
             ),
@@ -276,13 +277,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return Row(
           children: [
             Icon(Icons.check_circle_outline,
-                size: 12, color: AppColors.teal400),
-            const SizedBox(width: 4),
+                size: AppIcon.xs, color: AppColors.teal400),
+            const SizedBox(width: AppSpace.xs),
             Text(
               'Username is available',
               style: TextStyle(
                 color: AppColors.teal400,
-                fontSize: 11,
+                fontSize: AppText.captionSize,
                 fontFamily: 'Geist',
               ),
             ),
@@ -292,13 +293,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return Row(
           children: [
             const Icon(Icons.cancel_outlined,
-                size: 12, color: Colors.redAccent),
-            const SizedBox(width: 4),
+                size: AppIcon.xs, color: Colors.redAccent),
+            const SizedBox(width: AppSpace.xs),
             Text(
               'Username is already taken',
               style: TextStyle(
                 color: Colors.redAccent,
-                fontSize: 11,
+                fontSize: AppText.captionSize,
                 fontFamily: 'Geist',
               ),
             ),
@@ -310,7 +311,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'Username must be unique and cannot be changed later.',
           style: TextStyle(
             color: AppColors.textFaint,
-            fontSize: 11,
+            fontSize: AppText.captionSize,
             fontFamily: 'Geist',
           ),
         );
@@ -361,9 +362,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               isLoading: false,
               onPressed: _continueWithGoogle,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             const _OrDivider(label: 'or sign up with email'),
-            const SizedBox(height: 18),
+            const SizedBox(height: AppSpace.lg),
             AuthInputField(
               controller: _nameController,
               label: 'Username',
@@ -374,9 +375,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   FocusScope.of(context).requestFocus(_emailFocus),
               validator: _validateUsername,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpace.xs),
             _buildUsernameHint(),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             AuthInputField(
               controller: _emailController,
               label: 'Email address',
@@ -393,7 +394,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             AuthInputField(
               controller: _passwordController,
               label: 'Password',
@@ -415,7 +416,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             AuthInputField(
               controller: _confirmPasswordController,
               label: 'Confirm password',
@@ -438,7 +439,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             AuthInputField(
               controller: _referralController,
               label: 'Referral code (optional)',
@@ -448,7 +449,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               onFieldSubmitted: (_) => _submit(),
               validator: _validateReferral,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             Row(
               children: [
                 PrimaryButton(
@@ -459,7 +460,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpace.xl),
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -468,18 +469,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     'Already have an account?',
                     style: TextStyle(
                       color: AppColors.darkGrey500,
-                      fontSize: 13,
+                      fontSize: AppText.bodySize,
                       fontFamily: 'Geist',
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSpace.xs),
                   GestureDetector(
                     onTap: isBusy ? null : () => Navigator.pop(context),
                     child: Text(
                       'Sign in',
                       style: TextStyle(
                         color: AppColors.teal400,
-                        fontSize: 13,
+                        fontSize: AppText.labelSize,
                         fontFamily: 'Geist',
                         fontWeight: FontWeight.w600,
                       ),
@@ -521,7 +522,7 @@ class _GoogleAuthButton extends StatelessWidget {
           elevation: 3,
           shadowColor: Colors.black.withValues(alpha: 0.35),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
           ),
         ),
         child: isLoading
@@ -541,12 +542,12 @@ class _GoogleAuthButton extends StatelessWidget {
                     width: 22,
                     height: 22,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpace.md),
                   Text(
                     label,
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 14,
+                      fontSize: AppText.bodySize,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w700,
                     ),
@@ -574,12 +575,12 @@ class _OrDivider extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
           child: Text(
             label,
             style: TextStyle(
               color: AppColors.textFaint,
-              fontSize: 12,
+              fontSize: AppText.bodySize,
               fontFamily: 'Geist',
             ),
           ),

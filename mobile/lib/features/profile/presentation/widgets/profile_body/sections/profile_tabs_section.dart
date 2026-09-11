@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/tabs/profile_activity_tab.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/tabs/profile_following_tab.dart';
@@ -31,7 +32,7 @@ class _ProfileTabsSectionState extends State<ProfileTabsSection> {
           onChanged: (i) => setState(() => _tabIndex = i),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, 0),
           child: Text(
             switch (_tabIndex) {
               0 => 'Your actions on Blocnet.',
@@ -40,16 +41,16 @@ class _ProfileTabsSectionState extends State<ProfileTabsSection> {
             },
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w400,
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         SizedBox(
           height: 280,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             child: switch (_tabIndex) {
               0 => ProfileActivityTab(accent: widget.accent),
               1 => ProfileFollowingTab(accent: widget.accent),

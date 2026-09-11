@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
 import 'package:blocnet/features/engagement/data/models/edge_explain_model.dart';
@@ -39,7 +40,7 @@ class EdgeEnginePage extends StatelessWidget {
           'Edge Engine',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 18,
+            size: AppText.titleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -50,7 +51,7 @@ class EdgeEnginePage extends StatelessWidget {
         onRefresh: edgeStore.refresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
           children: [
             EdgeBriefCard(
               brief: summary,
@@ -60,7 +61,7 @@ class EdgeEnginePage extends StatelessWidget {
               useCardChrome: false,
             ),
             if (hasNoSignals) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               EdgeEmptyState(onFollowProjects: onFollowProjects),
             ],
           ],
@@ -92,7 +93,7 @@ class EdgeBriefCard extends StatelessWidget {
     if (isLoading) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -102,7 +103,7 @@ class EdgeBriefCard extends StatelessWidget {
               AppColors.bgSurface.withValues(alpha: 0.9),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(
             color: AppColors.borderSubtle.withValues(alpha: 0.5),
             width: 1.5,
@@ -118,12 +119,12 @@ class EdgeBriefCard extends StatelessWidget {
                 color: AppColors.primary400,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Text(
               'Loading edge brief...',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w500,
               ),
             ),
@@ -143,7 +144,7 @@ class EdgeBriefCard extends StatelessWidget {
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(AppSpace.sm),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -151,38 +152,38 @@ class EdgeBriefCard extends StatelessWidget {
                     AppColors.primary500.withValues(alpha: 0.1),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.smValue),
               ),
               child: Icon(
                 Icons.auto_awesome_rounded,
-                size: 16,
+                size: AppIcon.sm,
                 color: AppColors.primary400,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpace.md),
             Text(
               'BLOCNET EDGE ENGINE',
               style: AppTypography.custom(
                 color: AppColors.textFaint,
-                size: 10,
+                size: AppText.captionSize,
                 weight: FontWeight.w800,
                 letterSpacing: 1.2,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         Text(
           summary.headline.trim().isEmpty
               ? 'Edge intelligence is ready.'
               : summary.headline,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 14,
+            size: AppText.bodySize,
             weight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -199,10 +200,10 @@ class EdgeBriefCard extends StatelessWidget {
           ],
         ),
         if (summary.topDecisions.isNotEmpty) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpace.lg),
           ...summary.topDecisions.take(3).map((decision) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: AppSpace.md),
               child: EdgeDecisionRow(
                 decision: decision,
                 onAction: onAction,
@@ -220,7 +221,7 @@ class EdgeBriefCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -230,7 +231,7 @@ class EdgeBriefCard extends StatelessWidget {
             AppColors.bgSurface.withValues(alpha: 0.9),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.primary500.withValues(alpha: 0.25),
           width: 1.5,
@@ -256,7 +257,7 @@ class BriefMetricChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -264,7 +265,7 @@ class BriefMetricChip extends StatelessWidget {
             AppColors.primary500.withValues(alpha: 0.08),
           ],
         ),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.smValue),
         border: Border.all(
           color: AppColors.primary500.withValues(alpha: 0.25),
           width: 1,
@@ -274,7 +275,7 @@ class BriefMetricChip extends StatelessWidget {
         label,
         style: AppTypography.custom(
           color: AppColors.primary400,
-          size: 11,
+          size: AppText.captionSize,
           weight: FontWeight.w700,
         ),
       ),
@@ -301,7 +302,7 @@ class EdgeDecisionRow extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -311,7 +312,7 @@ class EdgeDecisionRow extends StatelessWidget {
             AppColors.bgElevated.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: urgencyColor.withValues(alpha: 0.25),
           width: 1.5,
@@ -326,15 +327,15 @@ class EdgeDecisionRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 13,
+              size: AppText.labelSize,
               weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -342,7 +343,7 @@ class EdgeDecisionRow extends StatelessWidget {
                       urgencyColor.withValues(alpha: 0.12),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border: Border.all(
                     color: urgencyColor.withValues(alpha: 0.3),
                     width: 1,
@@ -352,24 +353,24 @@ class EdgeDecisionRow extends StatelessWidget {
                   decision.urgency.toUpperCase(),
                   style: AppTypography.custom(
                     color: urgencyColor,
-                    size: 9,
+                    size: AppText.captionSize,
                     weight: FontWeight.w800,
                     letterSpacing: 0.3,
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 '${decision.projectName} · ${decision.edgeScore.toStringAsFixed(2)}',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               ActionChip(
@@ -378,14 +379,14 @@ class EdgeDecisionRow extends StatelessWidget {
                 recommendedAction: decision.recommendedAction,
                 onTap: () => onAction(decision, 'act'),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.sm),
               ActionChip(
                 label: 'Watch',
                 action: 'watch',
                 recommendedAction: decision.recommendedAction,
                 onTap: () => onAction(decision, 'watch'),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.sm),
               ActionChip(
                 label: 'Ignore',
                 action: 'ignore',
@@ -397,16 +398,16 @@ class EdgeDecisionRow extends StatelessWidget {
                 onTap: () => onExplain(decision),
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                   decoration: BoxDecoration(
                     color: AppColors.primary500.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.smValue),
                   ),
                   child: Text(
                     'Why?',
                     style: AppTypography.custom(
                       color: AppColors.primary400,
-                      size: 10,
+                      size: AppText.captionSize,
                       weight: FontWeight.w800,
                     ),
                   ),
@@ -453,7 +454,7 @@ class ActionChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
         decoration: BoxDecoration(
           gradient: isRecommended
               ? LinearGradient(
@@ -464,7 +465,7 @@ class ActionChip extends StatelessWidget {
                 )
               : null,
           color: isRecommended ? null : color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.smValue),
           border: Border.all(
             color: color.withValues(alpha: isRecommended ? 0.4 : 0.3),
             width: 1.5,
@@ -474,7 +475,7 @@ class ActionChip extends StatelessWidget {
           label,
           style: AppTypography.custom(
             color: color,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w800,
           ),
         ),
@@ -508,7 +509,7 @@ class EdgeExplainSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -520,44 +521,44 @@ class EdgeExplainSheet extends StatelessWidget {
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Text(
                 'Why BEE ranked this',
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 16,
+                  size: AppText.subtitleSize,
                   weight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               Text(
                 update.title,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 13,
+                  size: AppText.labelSize,
                   weight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpace.sm),
               Text(
                 '${update.projectName} · ${update.urgency.toUpperCase()}',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(AppSpace.md),
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Text(
@@ -566,37 +567,37 @@ class EdgeExplainSheet extends StatelessWidget {
                       : details.narrative,
                   style: AppTypography.custom(
                     color: AppColors.textSecondary,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                     height: 1.45,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: details.reasonCodes.map((reason) {
                   return Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                     decoration: BoxDecoration(
                       color: AppColors.bgElevated,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.fullValue),
                       border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: Text(
                       reason,
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 10,
+                        size: AppText.captionSize,
                         weight: FontWeight.w600,
                       ),
                     ),
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               ExplainMetricRow(label: 'Edge score', value: details.edgeScore),
               ExplainMetricRow(
                   label: 'Urgency component',
@@ -634,7 +635,7 @@ class ExplainMetricRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
       child: Row(
         children: [
           Expanded(
@@ -642,7 +643,7 @@ class ExplainMetricRow extends StatelessWidget {
               label,
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w500,
               ),
             ),
@@ -651,7 +652,7 @@ class ExplainMetricRow extends StatelessWidget {
             value.toStringAsFixed(2),
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w700,
             ),
           ),

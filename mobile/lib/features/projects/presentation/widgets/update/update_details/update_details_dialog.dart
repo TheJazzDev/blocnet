@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/comments/data/models/comment_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
@@ -115,7 +116,7 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                 child: widget.commentsOnly
                     ? SingleChildScrollView(
                         controller: _scrollController,
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xl),
                         child: _CommentsSection(
                           key: _commentsSectionKey,
                           updateId: widget.id,
@@ -131,23 +132,23 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                       )
                     : SingleChildScrollView(
                         controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppSpace.xs),
                             UpdateDetailsInfo(post: post),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpace.lg),
                             _Divider(),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: AppSpace.md),
                             UpdateDetailsTags(post),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: AppSpace.md),
                             _Divider(),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpace.lg),
                             RenderMarkdownContent(content: post.content),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: AppSpace.xl),
                             UpdateTipHunterButton(post: post),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSpace.xl),
                             _CommentsSection(
                               key: _commentsSectionKey,
                               updateId: widget.id,
@@ -159,26 +160,26 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
                               viewMode: viewMode,
                               onSubmit: _createComment,
                             ),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: AppSpace.xxl),
                             _Divider(),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: AppSpace.xl),
                             MoreFromProjectName(
                               label: 'More from',
                               projectTitle: post.project?.name ?? '',
                               posts: post.project?.posts ?? const [],
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpace.lg),
                             _Divider(),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpace.lg),
                             MoreFromUpdatePrimaryTag(
                               primaryTag:
                                   post.project?.primaryTag ?? PrimaryTag.none,
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpace.sm),
                             _Divider(),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpace.sm),
                             MoreFromUpdateSecondaryTags(post: post),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: AppSpace.xxl),
                           ],
                         ),
                       ),
@@ -334,7 +335,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
                     'Comments',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 15,
+                      fontSize: AppText.bodySize,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w700,
                     ),
@@ -343,11 +344,11 @@ class _CommentsSectionState extends State<_CommentsSection> {
                   // page is still loading there is nothing to count yet, so
                   // skip the badge instead of flashing "0".
                   if (!(isLoading && threadedComments.isEmpty)) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpace.sm),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                        horizontal: AppSpace.sm,
+                        vertical: AppSpace.hair,
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -356,7 +357,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
                             AppColors.primary500.withValues(alpha: 0.08),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.smValue),
                         border: Border.all(
                           color: AppColors.primary500.withValues(alpha: 0.25),
                           width: 1.5,
@@ -366,7 +367,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
                         '${threadedComments.length}',
                         style: TextStyle(
                           color: AppColors.primary400,
-                          fontSize: 11,
+                          fontSize: AppText.captionSize,
                           fontFamily: 'Geist',
                           fontWeight: FontWeight.w700,
                         ),
@@ -379,8 +380,8 @@ class _CommentsSectionState extends State<_CommentsSection> {
                   onTap: widget.isSubmitting ? null : widget.onSubmit,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
+                      horizontal: AppSpace.lg,
+                      vertical: AppSpace.sm,
                     ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -388,7 +389,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
                         end: Alignment.bottomRight,
                         colors: [AppColors.teal400, AppColors.primary500],
                       ),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                       border: Border.all(
                         color: AppColors.teal400.withValues(alpha: 0.3),
                         width: 1.5,
@@ -405,7 +406,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
                       widget.isSubmitting ? 'Sending…' : 'Send',
                       style: const TextStyle(
                         color: Colors.black,
-                        fontSize: 13,
+                        fontSize: AppText.labelSize,
                         fontFamily: 'Geist',
                         fontWeight: FontWeight.w700,
                       ),
@@ -414,30 +415,30 @@ class _CommentsSectionState extends State<_CommentsSection> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             if (_replyToUsername != null) ...[
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                margin: const EdgeInsets.only(bottom: 8),
+                    const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+                margin: const EdgeInsets.only(bottom: AppSpace.sm),
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.subdirectory_arrow_right,
-                      size: 14,
+                      size: AppIcon.sm,
                       color: AppColors.textMuted,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpace.sm),
                     Expanded(
                       child: Text(
                         'Replying to @$_replyToUsername',
                         style: TextStyle(
                           color: AppColors.textMuted,
-                          fontSize: 12,
+                          fontSize: AppText.labelSize,
                           fontFamily: 'Geist',
                           fontWeight: FontWeight.w500,
                         ),
@@ -447,7 +448,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
                       onTap: _cancelReply,
                       child: Icon(
                         Icons.close,
-                        size: 18,
+                        size: AppIcon.md,
                         color: AppColors.textMuted,
                       ),
                     ),
@@ -464,17 +465,17 @@ class _CommentsSectionState extends State<_CommentsSection> {
               maxLines: 8,
             ),
             if (widget.error != null && widget.error!.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpace.sm),
               Text(
                 widget.error!,
                 style: TextStyle(
                   color: AppColors.error500,
-                  fontSize: 11,
+                  fontSize: AppText.captionSize,
                   fontFamily: 'Geist',
                 ),
               ),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             if (comments.isNotEmpty && hasMore)
               Align(
                 alignment: Alignment.centerLeft,
@@ -486,17 +487,17 @@ class _CommentsSectionState extends State<_CommentsSection> {
                     isLoading ? 'Loading…' : 'Load older comments',
                     style: TextStyle(
                       color: AppColors.primary400,
-                      fontSize: 12,
+                      fontSize: AppText.labelSize,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-            if (comments.isNotEmpty && hasMore) const SizedBox(height: 8),
+            if (comments.isNotEmpty && hasMore) const SizedBox(height: AppSpace.sm),
             if (isLoading && comments.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                 child: SizedBox(
                   width: 16,
                   height: 16,
@@ -511,7 +512,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
                 'No comments yet',
                 style: TextStyle(
                   color: AppColors.textFaint,
-                  fontSize: 12,
+                  fontSize: AppText.bodySize,
                   fontFamily: 'Geist',
                 ),
               )
@@ -647,7 +648,7 @@ class _CommentTile extends StatelessWidget {
                   AppColors.bgElevated.withValues(alpha: 0.85),
                 ],
               ),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.lgValue),
               border: Border.all(
                 color: AppColors.borderSubtle.withValues(alpha: 0.5),
                 width: 1.5,
@@ -669,7 +670,7 @@ class _CommentTile extends StatelessWidget {
                         levelBadgeSize: LevelBadgeSize.small,
                         textStyle: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 13,
+                          fontSize: AppText.labelSize,
                           fontFamily: 'Geist',
                           fontWeight: FontWeight.w700,
                         ),
@@ -679,12 +680,12 @@ class _CommentTile extends StatelessWidget {
                 ),
               ),
               if (roleLabel != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpace.sm),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.smValue),
                     border: Border.all(
                       color: roleColor.withValues(alpha: 0.8),
                       width: 0.8,
@@ -695,19 +696,19 @@ class _CommentTile extends StatelessWidget {
                     roleLabel,
                     style: TextStyle(
                       color: roleColor,
-                      fontSize: 9,
+                      fontSize: AppText.captionSize,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ],
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   color: AppColors.primary500.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border: Border.all(
                     color: AppColors.primary500.withValues(alpha: 0.2),
                     width: 1,
@@ -717,25 +718,25 @@ class _CommentTile extends StatelessWidget {
                   _relativeTime(comment.createdAt),
                   style: TextStyle(
                     color: AppColors.textFaint,
-                    fontSize: 10,
+                    fontSize: AppText.captionSize,
                     fontFamily: 'Geist',
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
               if (canEdit) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpace.xs),
                 PopupMenuButton<_CommentAction>(
                   tooltip: 'Comment actions',
                   position: PopupMenuPosition.under,
                   icon: Icon(
                     Icons.more_vert,
-                    size: 18,
+                    size: AppIcon.md,
                     color: AppColors.textMuted,
                   ),
                   color: AppColors.bgSurface,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     side: BorderSide(
                       color: AppColors.borderSubtle.withValues(alpha: 0.4),
                       width: 1,
@@ -749,15 +750,15 @@ class _CommentTile extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.edit_outlined,
-                            size: 16,
+                            size: AppIcon.sm,
                             color: AppColors.textSecondary,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpace.sm),
                           Text(
                             'Edit',
                             style: TextStyle(
                               color: AppColors.textSecondary,
-                              fontSize: 12,
+                              fontSize: AppText.labelSize,
                               fontFamily: 'Geist',
                               fontWeight: FontWeight.w600,
                             ),
@@ -771,15 +772,15 @@ class _CommentTile extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.delete_outline,
-                            size: 16,
+                            size: AppIcon.sm,
                             color: AppColors.error500,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpace.sm),
                           Text(
                             'Delete',
                             style: TextStyle(
                               color: AppColors.error500,
-                              fontSize: 12,
+                              fontSize: AppText.labelSize,
                               fontFamily: 'Geist',
                               fontWeight: FontWeight.w600,
                             ),
@@ -792,27 +793,27 @@ class _CommentTile extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpace.xs),
           Text(
             displayUsername,
             style: TextStyle(
               color: AppColors.textMuted,
-              fontSize: 11,
+              fontSize: AppText.captionSize,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           if (!isNestedReply && comment.replyToData != null) ...[
             GestureDetector(
               onTap: () {
                 // TODO: Scroll to original comment
               },
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppSpace.sm),
                 decoration: BoxDecoration(
                   color: AppColors.bgBase,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border: Border.all(
                     color: AppColors.borderSubtle.withValues(alpha: 0.5),
                     width: 1,
@@ -825,15 +826,15 @@ class _CommentTile extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.subdirectory_arrow_right,
-                          size: 12,
+                          size: AppIcon.xs,
                           color: AppColors.textMuted,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpace.xs),
                         Text(
                           'Replying to ',
                           style: TextStyle(
                             color: AppColors.textMuted,
-                            fontSize: 11,
+                            fontSize: AppText.captionSize,
                             fontFamily: 'Geist',
                             fontWeight: FontWeight.w500,
                           ),
@@ -842,19 +843,19 @@ class _CommentTile extends StatelessWidget {
                           '@${_formatReplyUsername(comment.replyToData!)}',
                           style: TextStyle(
                             color: AppColors.primary400,
-                            fontSize: 11,
+                            fontSize: AppText.captionSize,
                             fontFamily: 'Geist',
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpace.xs),
                     Text(
                       _truncateContent(comment.replyToData!.content, 50),
                       style: TextStyle(
                         color: AppColors.textFaint,
-                        fontSize: 11,
+                        fontSize: AppText.captionSize,
                         fontFamily: 'Geist',
                         fontWeight: FontWeight.w400,
                         fontStyle: FontStyle.italic,
@@ -866,13 +867,13 @@ class _CommentTile extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpace.sm),
           ],
           MentionText(
             text: comment.content,
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 13,
+              fontSize: AppText.labelSize,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w500,
               height: 1.6,
@@ -884,7 +885,7 @@ class _CommentTile extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Row(
             children: [
               if (onLike != null) ...[
@@ -898,19 +899,19 @@ class _CommentTile extends StatelessWidget {
                         comment.isLiked
                             ? Icons.favorite_rounded
                             : Icons.favorite_border,
-                        size: 14,
+                        size: AppIcon.sm,
                         color: comment.isLiked
                             ? AppColors.primary400
                             : AppColors.textMuted,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpace.xs),
                       Text(
                         comment.likesCount.toString(),
                         style: TextStyle(
                           color: comment.isLiked
                               ? AppColors.primary400
                               : AppColors.textMuted,
-                          fontSize: 12,
+                          fontSize: AppText.labelSize,
                           fontFamily: 'Geist',
                           fontWeight: FontWeight.w600,
                         ),
@@ -918,7 +919,7 @@ class _CommentTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppSpace.lg),
               ],
               if (onReply != null)
                 GestureDetector(
@@ -928,7 +929,7 @@ class _CommentTile extends StatelessWidget {
                     'Reply',
                     style: TextStyle(
                       color: AppColors.textMuted,
-                      fontSize: 12,
+                      fontSize: AppText.labelSize,
                       fontFamily: 'Geist',
                       fontWeight: FontWeight.w600,
                     ),
@@ -945,9 +946,9 @@ class _CommentTile extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(left: 20),
+      padding: const EdgeInsets.only(left: AppSpace.xl),
       child: Container(
-        padding: const EdgeInsets.only(left: 10),
+        padding: const EdgeInsets.only(left: AppSpace.md),
         decoration: BoxDecoration(
           border: Border(
             left: BorderSide(
@@ -987,7 +988,7 @@ class _CommentTile extends StatelessWidget {
         return AlertDialog(
           backgroundColor: AppColors.bgSurface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xlValue),
             side: BorderSide(
               color: AppColors.borderSubtle.withValues(alpha: 0.5),
               width: 1.5,
@@ -999,7 +1000,7 @@ class _CommentTile extends StatelessWidget {
               color: AppColors.textPrimary,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w700,
-              fontSize: 16,
+              fontSize: AppText.subtitleSize,
             ),
           ),
           content: TextField(
@@ -1010,7 +1011,7 @@ class _CommentTile extends StatelessWidget {
             style: TextStyle(
               color: AppColors.textSecondary,
               fontFamily: 'Geist',
-              fontSize: 13,
+              fontSize: AppText.labelSize,
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
@@ -1018,25 +1019,25 @@ class _CommentTile extends StatelessWidget {
               hintStyle: TextStyle(
                 color: AppColors.textFaint,
                 fontFamily: 'Geist',
-                fontSize: 13,
+                fontSize: AppText.bodySize,
                 fontWeight: FontWeight.w400,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.lgValue),
                 borderSide: BorderSide(
                   color: AppColors.borderSubtle.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.lgValue),
                 borderSide: BorderSide(
                   color: AppColors.borderSubtle.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.lgValue),
                 borderSide: BorderSide(
                   color: AppColors.borderSubtle.withValues(alpha: 0.5),
                   width: 1.5,
@@ -1044,7 +1045,7 @@ class _CommentTile extends StatelessWidget {
               ),
               fillColor: AppColors.bgElevated,
               filled: true,
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.all(AppSpace.lg),
             ),
           ),
           actions: [
@@ -1052,14 +1053,14 @@ class _CommentTile extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
               ),
               child: Text(
                 'Cancel',
                 style: TextStyle(
                   color: AppColors.textMuted,
                   fontFamily: 'Geist',
-                  fontSize: 13,
+                  fontSize: AppText.labelSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1078,10 +1079,10 @@ class _CommentTile extends StatelessWidget {
               },
               style: TextButton.styleFrom(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
                 backgroundColor: AppColors.teal400.withValues(alpha: 0.12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
               ),
               child: Text(
@@ -1090,7 +1091,7 @@ class _CommentTile extends StatelessWidget {
                   color: AppColors.teal400,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                  fontSize: AppText.labelSize,
                 ),
               ),
             ),
@@ -1144,7 +1145,7 @@ class _CommentTile extends StatelessWidget {
         return AlertDialog(
           backgroundColor: AppColors.bgSurface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lgValue),
             side: BorderSide(
               color: AppColors.borderSubtle.withValues(alpha: 0.4),
               width: 1,
@@ -1154,7 +1155,7 @@ class _CommentTile extends StatelessWidget {
             'Delete comment?',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 16,
+              fontSize: AppText.subtitleSize,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w700,
             ),
@@ -1163,7 +1164,7 @@ class _CommentTile extends StatelessWidget {
             'This action cannot be undone.',
             style: TextStyle(
               color: AppColors.textMuted,
-              fontSize: 13,
+              fontSize: AppText.labelSize,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w500,
             ),
@@ -1175,7 +1176,7 @@ class _CommentTile extends StatelessWidget {
                 'Cancel',
                 style: TextStyle(
                   color: AppColors.textMuted,
-                  fontSize: 12,
+                  fontSize: AppText.labelSize,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w600,
                 ),
@@ -1187,7 +1188,7 @@ class _CommentTile extends StatelessWidget {
                 'Delete',
                 style: TextStyle(
                   color: AppColors.error500,
-                  fontSize: 12,
+                  fontSize: AppText.labelSize,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w700,
                 ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/presentation/widgets/dividers/vertical_divider.dart';
 import 'package:flutter/material.dart';
 
@@ -31,13 +32,13 @@ class _TagSelectorState extends State<TagSelector> {
         tilePadding: EdgeInsets.zero,
         title: Row(
           children: [
-            Icon(widget.icon, color: AppColors.textMuted, size: 16),
-            const SizedBox(width: 8),
+            Icon(widget.icon, color: AppColors.textMuted, size: AppIcon.sm),
+            const SizedBox(width: AppSpace.sm),
             Text(
               widget.title,
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 13,
+                fontSize: AppText.labelSize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w500,
               ),
@@ -47,7 +48,7 @@ class _TagSelectorState extends State<TagSelector> {
         trailing: Icon(
           Icons.arrow_drop_down,
           color: AppColors.textMuted,
-          size: 20,
+          size: AppIcon.md,
         ),
         children: [
           SizedBox(
@@ -73,7 +74,7 @@ class _TagSelectorState extends State<TagSelector> {
       return GestureDetector(
         onTap: () => widget.onTagToggle(tag),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 12),
+          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: AppSpace.md),
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.teal500.withValues(alpha: 0.12)
@@ -81,7 +82,7 @@ class _TagSelectorState extends State<TagSelector> {
             border: Border.all(
               color: isSelected ? AppColors.teal500 : AppColors.borderSubtle,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xlValue),
           ),
           child: Wrap(
             spacing: 6,
@@ -90,13 +91,13 @@ class _TagSelectorState extends State<TagSelector> {
                 Icon(
                   Icons.check_circle,
                   color: AppColors.teal400,
-                  size: 14,
+                  size: AppIcon.sm,
                 ),
               Text(
                 tag,
                 style: TextStyle(
                   color: isSelected ? AppColors.teal400 : AppColors.textMuted,
-                  fontSize: 12,
+                  fontSize: AppText.labelSize,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w500,
                 ),

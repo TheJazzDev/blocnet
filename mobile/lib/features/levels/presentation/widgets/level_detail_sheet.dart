@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/domain/level_requirement.dart';
@@ -61,7 +62,7 @@ class LevelDetailSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 10),
+              margin: const EdgeInsets.only(top: AppSpace.md),
               width: 36,
               height: 4,
               decoration: BoxDecoration(
@@ -71,7 +72,7 @@ class LevelDetailSheet extends StatelessWidget {
             ),
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -82,10 +83,10 @@ class LevelDetailSheet extends StatelessWidget {
                       isCurrent: isCurrent,
                       isLocked: isLocked,
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppSpace.lg),
                     if (level.description.isNotEmpty) ...[
                       _DescriptionBox(text: level.description),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpace.lg),
                     ],
                     _RequirementsTitle(
                       isCurrent: isCurrent,
@@ -94,7 +95,7 @@ class LevelDetailSheet extends StatelessWidget {
                       total: requirements.length,
                       tierColor: tierColor,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpace.md),
                     if (requirements.isEmpty)
                       const _NoRequirements()
                     else
@@ -103,7 +104,7 @@ class LevelDetailSheet extends StatelessWidget {
                           requirement: requirement,
                           tierColor: tierColor,
                         ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpace.md),
                     _CloseButton(tierColor: tierColor),
                   ],
                 ),
@@ -142,7 +143,7 @@ class _Header extends StatelessWidget {
             showLevelNumber: false,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,22 +152,22 @@ class _Header extends StatelessWidget {
                 level.name,
                 style: AppTypography.custom(
                   color: isLocked ? AppColors.textMuted : AppColors.textPrimary,
-                  size: 15,
+                  size: AppText.bodySize,
                   weight: FontWeight.w700,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpace.hair),
               Text(
                 'Level ${level.level} · ${level.tier.name} tier',
                 style: AppTypography.custom(
                   color: tierColor,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpace.sm),
               _statusChip(),
             ],
           ),
@@ -205,16 +206,16 @@ class _DescriptionBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgBase,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
       ),
       child: Text(
         text,
         style: AppTypography.custom(
           color: AppColors.textSecondary,
-          size: 12,
+          size: AppText.bodySize,
           weight: FontWeight.w400,
           height: 1.45,
         ),
@@ -253,7 +254,7 @@ class _RequirementsTitle extends StatelessWidget {
             title,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 13,
+              size: AppText.labelSize,
               weight: FontWeight.w700,
             ),
           ),
@@ -263,7 +264,7 @@ class _RequirementsTitle extends StatelessWidget {
             '$metCount/$total met',
             style: AppTypography.custom(
               color: metCount >= total ? tierColor : AppColors.textMuted,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w600,
             ),
           ),
@@ -279,17 +280,17 @@ class _NoRequirements extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgBase,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Text(
         'No requirements — this is where everyone starts.',
         style: AppTypography.custom(
           color: AppColors.textMuted,
-          size: 12,
+          size: AppText.labelSize,
           weight: FontWeight.w500,
         ),
       ),
@@ -313,16 +314,16 @@ class _CloseButton extends StatelessWidget {
           backgroundColor: tierColor,
           foregroundColor: foreground,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
           ),
         ),
         child: Text(
           'Close',
           style: AppTypography.custom(
             color: foreground,
-            size: 13,
+            size: AppText.labelSize,
             weight: FontWeight.w600,
           ),
         ),

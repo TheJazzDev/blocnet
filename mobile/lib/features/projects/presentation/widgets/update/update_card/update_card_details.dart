@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ class UpdateCardDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         UpdateProjectLogo(logoUrl: post.project?.logo ?? '', size: 36),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,13 +39,13 @@ class UpdateCardDetails extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: AppSpace.xs),
               // Description
               Text(
                 post.description,
                 style: TextStyle(
                   color: AppColors.textMuted,
-                  fontSize: 12,
+                  fontSize: AppText.bodySize,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w400,
                   height: 1.5,
@@ -52,13 +53,13 @@ class UpdateCardDetails extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               // Date
               Text(
                 formatDateWithSuffix(post.createdAt),
                 style: TextStyle(
                   color: AppColors.textFaint,
-                  fontSize: 11,
+                  fontSize: AppText.captionSize,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w400,
                 ),

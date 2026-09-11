@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -24,10 +25,10 @@ class AlphaRadarCard extends StatelessWidget {
     if (isLoading) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(color: AppColors.borderSubtle),
         ),
         child: Row(
@@ -40,12 +41,12 @@ class AlphaRadarCard extends StatelessWidget {
                 color: accent,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpace.md),
             Text(
               'Loading alpha radar...',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 12,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
               ),
             ),
@@ -65,10 +66,10 @@ class AlphaRadarCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -76,13 +77,13 @@ class AlphaRadarCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.radar_rounded, size: 16, color: accent),
-              const SizedBox(width: 8),
+              Icon(Icons.radar_rounded, size: AppIcon.sm, color: accent),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 'ALPHA RADAR',
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w700,
                   letterSpacing: 1.0,
                 ),
@@ -95,7 +96,7 @@ class AlphaRadarCard extends StatelessWidget {
                     'Catch up now',
                     style: AppTypography.custom(
                       color: accent,
-                      size: 12,
+                      size: AppText.labelSize,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -106,29 +107,29 @@ class AlphaRadarCard extends StatelessWidget {
             subtitle,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 14,
+              size: AppText.bodySize,
               weight: FontWeight.w500,
             ),
           ),
           if (summary.activeProjects.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: summary.activeProjects.take(3).map((project) {
                 return Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                   decoration: BoxDecoration(
                     color: AppColors.bgElevated,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                     border: Border.all(color: AppColors.borderSubtle),
                   ),
                   child: Text(
                     '${project.projectName} · ${project.newCount}',
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 10,
+                      size: AppText.captionSize,
                       weight: FontWeight.w600,
                     ),
                   ),

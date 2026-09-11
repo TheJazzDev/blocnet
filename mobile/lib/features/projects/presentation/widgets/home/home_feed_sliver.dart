@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
@@ -70,12 +71,12 @@ class HomeFeedSliver extends StatelessWidget {
           }
           if (rankedFeedPosts.isEmpty) {
             return const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: AppSpace.lg),
               sliver: SliverToBoxAdapter(child: EmptyFeed()),
             );
           }
           return SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 if (showCatchupFilter) CatchUpBanner(onClear: onClearCatchup),

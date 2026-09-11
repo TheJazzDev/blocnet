@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/domain/level_number_format.dart';
@@ -32,14 +33,14 @@ class LevelProgressCard extends StatelessWidget {
 
     return Material(
       color: AppColors.bgSurface,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.lgValue),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpace.md),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.lgValue),
             border: Border.all(color: tierColor.withValues(alpha: 0.3)),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -65,11 +66,11 @@ class LevelProgressCard extends StatelessWidget {
                   color: tierColor,
                 )
               else ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 Divider(height: 1, color: tierColor.withValues(alpha: 0.2)),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 _NextLevelRow(next: next, tierColor: tierColor),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 _ProgressBars(
                   progressToNext: progress.progressToNext,
                   tierColor: tierColor,
@@ -105,7 +106,7 @@ class _CurrentLevelRow extends StatelessWidget {
           showName: false,
           showLevelNumber: false,
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,18 +115,18 @@ class _CurrentLevelRow extends StatelessWidget {
                 level.name,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w700,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpace.hair),
               Text(
                 'Level ${level.level} · ${level.tier.name} tier',
                 style: AppTypography.custom(
                   color: tierColor,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w600,
                 ),
               ),
@@ -133,7 +134,7 @@ class _CurrentLevelRow extends StatelessWidget {
           ),
         ),
         if (showChevron)
-          Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textMuted),
+          Icon(Icons.chevron_right_rounded, size: AppIcon.md, color: AppColors.textMuted),
       ],
     );
   }
@@ -149,14 +150,14 @@ class _NextLevelRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(Icons.flag_outlined, size: 14, color: tierColor),
-        const SizedBox(width: 6),
+        Icon(Icons.flag_outlined, size: AppIcon.sm, color: tierColor),
+        const SizedBox(width: AppSpace.sm),
         Expanded(
           child: Text(
             'Next: ${next.name} · Level ${next.level}',
             style: AppTypography.custom(
               color: AppColors.textSecondary,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w600,
             ),
             maxLines: 1,
@@ -200,7 +201,7 @@ class _ProgressBars extends StatelessWidget {
       children: [
         for (final metric in shown)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpace.sm),
             child: _MetricBar(metric: metric, tierColor: tierColor),
           ),
         if (hidden > 0)
@@ -210,7 +211,7 @@ class _ProgressBars extends StatelessWidget {
               '+$hidden more requirement${hidden == 1 ? '' : 's'}',
               style: AppTypography.custom(
                 color: AppColors.textFaint,
-                size: 10,
+                size: AppText.captionSize,
                 weight: FontWeight.w500,
               ),
             ),
@@ -248,14 +249,14 @@ class _MetricBar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(metric.metric.icon, size: 13, color: AppColors.textMuted),
-            const SizedBox(width: 6),
+            Icon(metric.metric.icon, size: AppIcon.xs, color: AppColors.textMuted),
+            const SizedBox(width: AppSpace.sm),
             Expanded(
               child: Text(
                 metric.metric.shortLabel,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w500,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -265,13 +266,13 @@ class _MetricBar extends StatelessWidget {
               '${formatCompactRaw(value.current)} / ${formatCompactRaw(value.required)}',
               style: AppTypography.custom(
                 color: AppColors.textMuted,
-                size: 10,
+                size: AppText.captionSize,
                 weight: FontWeight.w600,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpace.xs),
         ClipRRect(
           borderRadius: BorderRadius.circular(3),
           child: LinearProgressIndicator(
@@ -300,23 +301,23 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.only(top: AppSpace.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
+          Icon(icon, size: AppIcon.sm, color: color),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Text(
               text,
               style: AppTypography.custom(
                 color: AppColors.textSecondary,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w600,
               ),
             ),

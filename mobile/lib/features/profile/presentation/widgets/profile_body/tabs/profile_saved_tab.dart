@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/tabs/profile_tab_bar.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
@@ -96,7 +97,7 @@ class _ProfileSavedTabState extends State<ProfileSavedTab> {
 
     return ListView.builder(
       primary: false,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
       itemCount: bookmarks.length,
       itemBuilder: (context, index) {
         final update = bookmarks[index];
@@ -143,7 +144,7 @@ class _SavedUpdate extends StatelessWidget {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.smValue),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -155,11 +156,11 @@ class _SavedUpdate extends StatelessWidget {
           ),
           child: Icon(
             Icons.auto_awesome_rounded,
-            size: 22,
+            size: AppIcon.lg,
             color: AppColors.textFaint,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpace.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,44 +173,44 @@ class _SavedUpdate extends StatelessWidget {
                       update.title,
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 13,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.sm),
                   Text(
                     getTimeStamp(update.createdAt),
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 10,
+                      size: AppText.captionSize,
                       weight: FontWeight.w400,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpace.sm),
               Text(
                 preview,
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w400,
                   height: 1.4,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
               Row(
                 children: [
                   Text(
                     gemName,
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 10,
+                      size: AppText.captionSize,
                       weight: FontWeight.w500,
                     ),
                   ),
@@ -219,7 +220,7 @@ class _SavedUpdate extends StatelessWidget {
                     behavior: HitTestBehavior.opaque,
                     child: Icon(
                       Icons.bookmark_remove_outlined,
-                      size: 16,
+                      size: AppIcon.sm,
                       color: AppColors.textMuted,
                     ),
                   ),
@@ -229,10 +230,10 @@ class _SavedUpdate extends StatelessWidget {
           ),
         ),
         if (isCardMode) ...[
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpace.xs),
           Icon(
             Icons.chevron_right_rounded,
-            size: 18,
+            size: AppIcon.md,
             color: AppColors.textFaint,
           ),
         ],

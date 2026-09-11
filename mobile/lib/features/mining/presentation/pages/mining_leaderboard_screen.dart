@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mining_leaderboard_list.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
@@ -41,7 +42,7 @@ class _MiningLeaderboardScreenState extends State<MiningLeaderboardScreen> {
             onRefresh: () => store.loadLeaderboard(force: true),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
               children: [
                 MiningLeaderboardList(
                   items: store.leaderboard,

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -118,7 +119,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     content: const Text('Referral code bound successfully.'),
                     backgroundColor: AppColors.successColor,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     ),
                     behavior: SnackBarBehavior.floating,
                     duration: const Duration(seconds: 2),
@@ -137,10 +138,10 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
               top: false,
               child: Padding(
                 padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 16,
-                  bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+                  left: AppSpace.lg,
+                  right: AppSpace.lg,
+                  top: AppSpace.lg,
+                  bottom: AppSpace.lg + MediaQuery.of(context).viewInsets.bottom,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -152,26 +153,26 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         height: 4,
                         decoration: BoxDecoration(
                           color: AppColors.borderMuted,
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(AppRadius.fullValue),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpace.md),
                     Text(
                       'Bind Referral Code',
                       style: AppTypography.custom(
-                        size: 18,
+                        size: AppText.titleSize,
                         weight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpace.sm),
                     TextField(
                       controller: controller,
                       maxLength: 8,
                       textCapitalization: TextCapitalization.characters,
                       style: AppTypography.custom(
-                        size: 14,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                         color: AppColors.textPrimary,
                       ),
@@ -181,17 +182,17 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                       ),
                     ),
                     if (error != null) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpace.sm),
                       Text(
                         error!,
                         style: AppTypography.custom(
-                          size: 12,
+                          size: AppText.bodySize,
                           weight: FontWeight.w400,
                           color: Colors.redAccent,
                         ),
                       ),
                     ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpace.md),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -212,7 +213,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                             : Text(
                                 'Bind Code',
                                 style: AppTypography.custom(
-                                  size: 13,
+                                  size: AppText.labelSize,
                                   weight: FontWeight.w700,
                                   color: Colors.black,
                                 ),
@@ -251,7 +252,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
         showFilter: false,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -259,13 +260,13 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
               displayName: displayName,
               username: username,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             _ReferralCodeCard(
               code: referralCode ?? '--------',
               link: referralLink,
               enabled: referralCode != null,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             _StatsSection(
               totalReferrals: referral?.totalDirectReferrals ?? 0,
               activeReferrals: referral?.activeDirectReferrals ?? 0,
@@ -274,19 +275,19 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
               onRetry: () =>
                   unawaited(miningStore.loadReferralSummary(force: true)),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpace.xl),
             _ReferrerSection(referral: referral),
             if (referral != null &&
                 !referral.isBound &&
                 referral.bindWindowOpen) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpace.xl),
               _BindReferrerCard(
                 isBinding: miningStore.isBindingReferral,
                 onBind: () => _showBindSheet(miningStore),
               ),
             ],
             if ((miningStore.lastError ?? '').isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               _WarningBanner(message: miningStore.lastError!),
             ],
           ],
@@ -314,20 +315,20 @@ class _HeaderSection extends StatelessWidget {
           'Invite Friends',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 22,
+            size: AppText.headlineSize,
             weight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         Text(
           'Share your referral code so new members can join through your profile.',
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 14,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         Row(
           children: [
             Expanded(
@@ -335,7 +336,7 @@ class _HeaderSection extends StatelessWidget {
                 displayName,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w700,
                 ),
               ),
@@ -345,7 +346,7 @@ class _HeaderSection extends StatelessWidget {
                 '@$username',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w600,
                 ),
               ),
@@ -370,7 +371,7 @@ class _ReferralCodeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpace.xl),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -380,7 +381,7 @@ class _ReferralCodeCard extends StatelessWidget {
             AppColors.teal500.withValues(alpha: 0.1),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.primary500.withValues(alpha: 0.3),
           width: 1.5,
@@ -392,17 +393,17 @@ class _ReferralCodeCard extends StatelessWidget {
             'Your Referral Code',
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w600,
               letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl, vertical: AppSpace.md),
             decoration: BoxDecoration(
               color: AppColors.bgElevated,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
               border: Border.all(
                 color: AppColors.borderSubtle,
                 width: 1,
@@ -412,13 +413,13 @@ class _ReferralCodeCard extends StatelessWidget {
               code,
               style: AppTypography.custom(
                 color: AppColors.primary400,
-                size: 28,
+                size: AppText.displaySize,
                 weight: FontWeight.w800,
                 letterSpacing: 2,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           Row(
             children: [
               Expanded(
@@ -442,7 +443,7 @@ class _ReferralCodeCard extends StatelessWidget {
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: _ActionButton(
                   label: 'Copy Link',
@@ -489,14 +490,14 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       onPressed: enabled ? onPressed : null,
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: AppIcon.md),
       label: Text(label),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary500,
         foregroundColor: Colors.black,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
         ),
       ),
     );
@@ -523,10 +524,10 @@ class _StatsSection extends StatelessWidget {
     final hasError = errorMessage != null && errorMessage!.isNotEmpty;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1,
@@ -555,7 +556,7 @@ class _StatsSection extends StatelessWidget {
             ],
           ),
           if (hasError) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             GestureDetector(
               onTap: onRetry,
               behavior: HitTestBehavior.opaque,
@@ -564,16 +565,16 @@ class _StatsSection extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.refresh_rounded,
-                    size: 14,
+                    size: AppIcon.sm,
                     color: AppColors.warning500,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppSpace.sm),
                   Flexible(
                     child: Text(
                       "Couldn't load referral totals. Tap to retry.",
                       style: AppTypography.custom(
                         color: AppColors.warning500,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                       ),
                     ),
@@ -606,23 +607,23 @@ class _StatItem extends StatelessWidget {
         Icon(
           icon,
           color: AppColors.primary400,
-          size: 24,
+          size: AppIcon.lg,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         Text(
           value,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 20,
+            size: AppText.titleSize,
             weight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpace.xs),
         Text(
           label,
           style: AppTypography.custom(
             color: AppColors.textFaint,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w500,
           ),
         ),
@@ -687,10 +688,10 @@ class _BindReferrerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -700,20 +701,20 @@ class _BindReferrerCard extends StatelessWidget {
             'Bind Referrer',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 15,
+              size: AppText.bodySize,
               weight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             'Enter the invite code shared by your referrer.',
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -723,7 +724,7 @@ class _BindReferrerCard extends StatelessWidget {
                   color: AppColors.primary500.withValues(alpha: 0.4),
                 ),
                 foregroundColor: AppColors.textPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
               ),
               icon: isBinding
                   ? SizedBox(
@@ -736,14 +737,14 @@ class _BindReferrerCard extends StatelessWidget {
                     )
                   : Icon(
                       Icons.link_rounded,
-                      size: 16,
+                      size: AppIcon.sm,
                       color: AppColors.primary400,
                     ),
               label: Text(
                 'Bind Referral Code',
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w700,
                 ),
               ),
@@ -777,17 +778,17 @@ class _ReferrerCard extends StatelessWidget {
           title,
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpace.md),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpace.lg),
           decoration: BoxDecoration(
             color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             border: Border.all(color: AppColors.borderSubtle),
           ),
           child: Column(
@@ -797,36 +798,36 @@ class _ReferrerCard extends StatelessWidget {
                 subtitle,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 14,
+                  size: AppText.bodySize,
                   weight: FontWeight.w700,
                 ),
               ),
               if (code != null && code!.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
                   decoration: BoxDecoration(
                     color: AppColors.bgElevated,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                   child: Text(
                     'Code: $code',
                     style: AppTypography.custom(
                       color: AppColors.textSecondary,
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w600,
                     ),
                   ),
                 ),
               ],
               if (detail != null && detail!.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   detail!,
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -848,17 +849,17 @@ class _WarningBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.warning500.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.warning500.withValues(alpha: 0.4)),
       ),
       child: Text(
         message,
         style: AppTypography.custom(
           color: AppColors.warning500,
-          size: 12,
+          size: AppText.labelSize,
           weight: FontWeight.w600,
         ),
       ),

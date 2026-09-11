@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/follow_preference_model.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,7 @@ class _FollowPreferenceSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,27 +52,27 @@ class _FollowPreferenceSheet extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.borderMuted,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             Text(
               'Alert Preferences',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 17,
+                size: AppText.subtitleSize,
                 weight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpace.xs),
             Text(
               projectName,
               style: AppTypography.custom(color: AppColors.textMuted,
-                size: 12,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpace.lg),
             for (final level in FollowAlertLevel.values) ...[
               _PreferenceTile(
                 label: level.label,
@@ -81,9 +82,9 @@ class _FollowPreferenceSheet extends StatelessWidget {
                   alertLevel: level,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.sm),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             _MuteTile(
               mutedUntil: preference.mutedUntil,
               onMute: () => store.updateFollowPreferences(
@@ -118,7 +119,7 @@ class _PreferenceTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
         decoration: BoxDecoration(
           gradient: selected
               ? LinearGradient(
@@ -131,7 +132,7 @@ class _PreferenceTile extends StatelessWidget {
                 )
               : null,
           color: selected ? null : AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(
             color: selected
                 ? AppColors.primary500.withValues(alpha: 0.3)
@@ -153,15 +154,15 @@ class _PreferenceTile extends StatelessWidget {
               selected
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_unchecked_rounded,
-              size: 18,
+              size: AppIcon.md,
               color: selected ? AppColors.primary400 : AppColors.textFaint,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpace.md),
             Text(
               label,
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 14,
+                size: AppText.bodySize,
                 weight: FontWeight.w700,
               ),
             ),
@@ -192,7 +193,7 @@ class _MuteTile extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -202,7 +203,7 @@ class _MuteTile extends StatelessWidget {
             AppColors.bgElevated.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle.withValues(alpha: 0.5),
           width: 1.5,
@@ -211,47 +212,47 @@ class _MuteTile extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSpace.sm),
             decoration: BoxDecoration(
               color: isMuted
                   ? AppColors.error500.withValues(alpha: 0.12)
                   : AppColors.primary500.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
             ),
             child: Icon(
               isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
-              size: 18,
+              size: AppIcon.md,
               color: isMuted ? AppColors.error500 : AppColors.primary400,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Text(
               message,
               style: AppTypography.custom(
                 color: AppColors.textSecondary,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w500,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           TextButton(
             onPressed: isMuted ? onUnmute : onMute,
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
               backgroundColor: isMuted
                   ? AppColors.error500.withValues(alpha: 0.12)
                   : AppColors.primary500.withValues(alpha: 0.12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.smValue),
               ),
             ),
             child: Text(
               isMuted ? 'Unmute' : 'Mute',
               style: AppTypography.custom(
                 color: isMuted ? AppColors.error500 : AppColors.primary400,
-                size: 13,
+                size: AppText.labelSize,
                 weight: FontWeight.w700,
               ),
             ),

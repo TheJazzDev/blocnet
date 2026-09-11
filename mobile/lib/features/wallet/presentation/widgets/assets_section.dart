@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
@@ -33,12 +34,12 @@ class AssetsSection extends StatelessWidget {
 
     if (assets.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
         child: Text(
           'No assets available yet.',
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 12,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
           ),
         ),

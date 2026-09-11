@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -38,7 +39,7 @@ class CustomIconButton extends StatelessWidget {
                 width: svgDimentions,
                 height: svgDimentions,
               )
-            : Icon(iconData, size: 24, color: AppColors.textMuted),
+            : Icon(iconData, size: AppIcon.lg, color: AppColors.textMuted),
         onPressed: onPressed,
       ),
     );

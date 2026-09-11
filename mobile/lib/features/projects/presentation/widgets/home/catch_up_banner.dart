@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -10,24 +11,24 @@ class CatchUpBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
       decoration: BoxDecoration(
         color: AppColors.primary500.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.primary500.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
           Icon(Icons.filter_alt_outlined,
-              size: 14, color: AppColors.primary400),
-          const SizedBox(width: 8),
+              size: AppIcon.sm, color: AppColors.primary400),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Text(
               'Catch-up filter: unseen or high urgency',
               style: AppTypography.custom(
                 color: AppColors.textPrimary,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w600,
               ),
             ),
@@ -38,7 +39,7 @@ class CatchUpBanner extends StatelessWidget {
               'Clear',
               style: AppTypography.custom(
                 color: AppColors.primary400,
-                size: 11,
+                size: AppText.captionSize,
                 weight: FontWeight.w700,
               ),
             ),

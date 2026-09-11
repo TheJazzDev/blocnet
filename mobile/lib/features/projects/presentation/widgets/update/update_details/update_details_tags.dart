@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
@@ -23,7 +24,7 @@ class UpdateDetailsTags extends StatelessWidget {
               primaryTag: post.project?.primaryTag ?? PrimaryTag.none,
             ),
             CustomVerticalDivider(height: 25, single: true),
-            SizedBox(width: 8),
+            SizedBox(width: AppSpace.sm),
           ],
         ),
         Expanded(
@@ -31,7 +32,7 @@ class UpdateDetailsTags extends StatelessWidget {
             runSpacing: 12,
             children: post.secondaryTags.map((tag) {
               return Container(
-                padding: const EdgeInsets.only(right: 4),
+                padding: const EdgeInsets.only(right: AppSpace.xs),
                 child: SecondaryLabel(tag, useDisplayText: false),
               );
             }).toList(),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/priority_label.dart';
 import 'package:flutter/material.dart';
@@ -34,14 +35,14 @@ class _PrioritySelectorState extends State<PrioritySelector> {
             Icon(
               Symbols.e911_emergency,
               color: AppColors.textMuted,
-              size: 16,
+              size: AppIcon.sm,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             Text(
               'Priority Level',
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 13,
+                fontSize: AppText.labelSize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w500,
               ),
@@ -54,7 +55,7 @@ class _PrioritySelectorState extends State<PrioritySelector> {
           child: Icon(
             Icons.arrow_drop_down,
             color: AppColors.textMuted,
-            size: 20,
+            size: AppIcon.md,
           ),
         ),
         onExpansionChanged: (bool expanded) {

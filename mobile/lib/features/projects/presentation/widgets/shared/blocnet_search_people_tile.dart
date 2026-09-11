@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/profile/data/models/profile_search_result_model.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
@@ -33,7 +34,7 @@ class BlocnetSearchPeopleTile extends StatelessWidget {
         fallback: Icon(
           Icons.person_outline_rounded,
           color: AppColors.textMuted,
-          size: 16,
+          size: AppIcon.sm,
         ),
       ),
       title: UserNameWithLevelIcon(
@@ -44,7 +45,7 @@ class BlocnetSearchPeopleTile extends StatelessWidget {
         textStyle: TextStyle(
           color: AppColors.textSecondary,
           fontFamily: 'Geist',
-          fontSize: 14,
+          fontSize: AppText.bodySize,
         ),
       ),
       subtitle: Text(
@@ -52,7 +53,7 @@ class BlocnetSearchPeopleTile extends StatelessWidget {
         style: TextStyle(
           color: AppColors.textFaint,
           fontFamily: 'Geist',
-          fontSize: 12,
+          fontSize: AppText.bodySize,
         ),
       ),
       onTap: onTap,

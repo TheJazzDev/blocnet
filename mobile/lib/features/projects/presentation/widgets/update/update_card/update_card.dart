@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:flutter/material.dart';
@@ -71,10 +72,10 @@ class UpdateCard extends StatelessWidget {
       onTap: () => _openDetails(context),
       child: Container(
         clipBehavior: Clip.antiAlias,
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.only(bottom: AppSpace.md),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(color: AppColors.borderSubtle, width: 1),
         ),
         child: IntrinsicHeight(
@@ -95,7 +96,7 @@ class UpdateCard extends StatelessWidget {
               // Content
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                  padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -106,10 +107,10 @@ class UpdateCard extends StatelessWidget {
                         priorityLabel: post.priority.label,
                         onProjectTap: () => _openProjectDetails(context),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: AppSpace.md),
                       // Tags
                       UpdateTagRow(post: post),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpace.md),
                       // Title + description + meta
                       UpdateCardDetails(post: post, miniCard: miniCard),
                     ],
@@ -143,10 +144,10 @@ class _ProjectHeader extends StatelessWidget {
       children: [
         Icon(
           Icons.workspaces_outlined,
-          size: 13,
+          size: AppIcon.xs,
           color: AppColors.textFaint,
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: AppSpace.xs),
         Expanded(
           child: GestureDetector(
             onTap: onProjectTap,
@@ -155,7 +156,7 @@ class _ProjectHeader extends StatelessWidget {
               projectName,
               style: TextStyle(
                 color: AppColors.textMuted,
-                fontSize: 11,
+                fontSize: AppText.captionSize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.2,
@@ -164,13 +165,13 @@ class _ProjectHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpace.sm),
         // Priority pill — small, right-aligned
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
           decoration: BoxDecoration(
             color: priorityColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xlValue),
             border: Border.all(
               color: priorityColor.withValues(alpha: 0.3),
               width: 1,
@@ -187,12 +188,12 @@ class _ProjectHeader extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpace.xs),
               Text(
                 priorityLabel,
                 style: TextStyle(
                   color: priorityColor,
-                  fontSize: 9,
+                  fontSize: AppText.captionSize,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,

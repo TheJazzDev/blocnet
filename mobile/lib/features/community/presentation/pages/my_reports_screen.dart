@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
@@ -135,7 +136,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
         title: Text(
           'My Reports',
           style: AppTypography.custom(
-            size: 18,
+            size: AppText.titleSize,
             weight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
@@ -173,7 +174,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       itemCount: _reports.length + (_hasMore ? 1 : 0) + 1, // +1 for stats header
       itemBuilder: (context, index) {
         // Statistics header
@@ -186,7 +187,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 
         if (reportIndex >= _reports.length) {
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpace.lg),
             child: Center(
               child: CircularProgressIndicator(
                 color: AppColors.primary500,
@@ -205,12 +206,12 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   Widget _buildEmpty() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpace.xxl),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpace.xl),
           decoration: BoxDecoration(
             color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             border: Border.all(color: AppColors.borderSubtle),
           ),
           child: Column(
@@ -218,25 +219,25 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             children: [
               Icon(
                 Icons.flag_outlined,
-                size: 36,
+                size: AppIcon.xl,
                 color: AppColors.textFaint,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               Text(
                 'No Reports Yet',
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 15,
+                  size: AppText.bodySize,
                   weight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               Text(
                 'Your submitted reports will appear here',
                 textAlign: TextAlign.center,
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                   height: 1.5,
                 ),
@@ -251,12 +252,12 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   Widget _buildError() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpace.xxl),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpace.xl),
           decoration: BoxDecoration(
             color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             border: Border.all(color: AppColors.borderSubtle),
           ),
           child: Column(
@@ -264,44 +265,44 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             children: [
               Icon(
                 Icons.error_outline,
-                size: 36,
+                size: AppIcon.xl,
                 color: AppColors.error500,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               Text(
                 'Error Loading Reports',
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 15,
+                  size: AppText.bodySize,
                   weight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               Text(
                 _errorMessage ?? 'Something went wrong',
                 textAlign: TextAlign.center,
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               ElevatedButton(
                 onPressed: _loadReports,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary500,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                    horizontal: AppSpace.xl,
+                    vertical: AppSpace.md,
                   ),
                 ),
                 child: Text(
                   'Retry',
                   style: AppTypography.custom(
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w600,
                     color: Colors.black,
                   ),
@@ -347,7 +348,7 @@ class _ReportCard extends StatelessWidget {
     final statusColor = _getStatusColor();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -357,13 +358,13 @@ class _ReportCard extends StatelessWidget {
             AppColors.bgSurface.withValues(alpha: 0.85),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.borderSubtle.withValues(alpha: 0.75),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpace.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -372,17 +373,17 @@ class _ReportCard extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: AppSpace.sm,
+                    vertical: AppSpace.xs,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.primary400.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.smValue),
                   ),
                   child: Text(
                     report.targetType.label,
                     style: AppTypography.custom(
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w600,
                       color: AppColors.primary400,
                     ),
@@ -391,14 +392,14 @@ class _ReportCard extends StatelessWidget {
                 const Spacer(),
                 Icon(
                   _getStatusIcon(),
-                  size: 16,
+                  size: AppIcon.sm,
                   color: statusColor,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpace.xs),
                 Text(
                   report.status.label,
                   style: AppTypography.custom(
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w600,
                     color: statusColor,
                   ),
@@ -406,24 +407,24 @@ class _ReportCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
 
             // Reason
             Text(
               report.reason,
               style: AppTypography.custom(
-                size: 14,
+                size: AppText.bodySize,
                 weight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
 
             if (report.details != null && report.details!.trim().isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpace.sm),
               Text(
                 report.details!,
                 style: AppTypography.custom(
-                  size: 13,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                   color: AppColors.textSecondary,
                   height: 1.5,
@@ -433,21 +434,21 @@ class _ReportCard extends StatelessWidget {
               ),
             ],
 
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
 
             // Timestamp
             Row(
               children: [
                 Icon(
                   Icons.access_time,
-                  size: 12,
+                  size: AppIcon.xs,
                   color: AppColors.textFaint,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpace.xs),
                 Text(
                   'Reported ${getTimeStamp(report.createdAt)}',
                   style: AppTypography.custom(
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                     color: AppColors.textFaint,
                   ),
@@ -457,12 +458,12 @@ class _ReportCard extends StatelessWidget {
 
             // Resolution info if resolved/dismissed
             if (report.status != CommunityReportStatus.open) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(AppSpace.md),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.smValue),
                   border: Border.all(
                     color: statusColor.withValues(alpha: 0.3),
                   ),
@@ -474,26 +475,26 @@ class _ReportCard extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.admin_panel_settings_outlined,
-                          size: 14,
+                          size: AppIcon.sm,
                           color: statusColor,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpace.sm),
                         Text(
                           report.status == CommunityReportStatus.resolved
                               ? 'Resolved'
                               : 'Dismissed',
                           style: AppTypography.custom(
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w600,
                             color: statusColor,
                           ),
                         ),
                         if (report.reviewedAt != null) ...[
-                          const SizedBox(width: 4),
+                          const SizedBox(width: AppSpace.xs),
                           Text(
                             '• ${getTimeStamp(report.reviewedAt!)}',
                             style: AppTypography.custom(
-                              size: 11,
+                              size: AppText.captionSize,
                               weight: FontWeight.w400,
                               color: AppColors.textFaint,
                             ),
@@ -503,11 +504,11 @@ class _ReportCard extends StatelessWidget {
                     ),
                     if (report.resolutionNote != null &&
                         report.resolutionNote!.trim().isNotEmpty) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: AppSpace.sm),
                       Text(
                         report.resolutionNote!,
                         style: AppTypography.custom(
-                          size: 12,
+                          size: AppText.bodySize,
                           weight: FontWeight.w400,
                           color: AppColors.textSecondary,
                           height: 1.4,
@@ -541,8 +542,8 @@ class _ReportStatistics extends StatelessWidget {
     final reviewedRate = total > 0 ? (reviewedCount / total * 100).toStringAsFixed(0) : "0";
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: AppSpace.lg),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -552,7 +553,7 @@ class _ReportStatistics extends StatelessWidget {
             AppColors.primary400.withValues(alpha: 0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.primary400.withValues(alpha: 0.2),
         ),
@@ -562,40 +563,40 @@ class _ReportStatistics extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.analytics_outlined, color: AppColors.primary400, size: 20),
-              const SizedBox(width: 8),
-              Text("Report Statistics", style: AppTypography.custom(size: 15, weight: FontWeight.w600, color: AppColors.textPrimary)),
+              Icon(Icons.analytics_outlined, color: AppColors.primary400, size: AppIcon.md),
+              const SizedBox(width: AppSpace.sm),
+              Text("Report Statistics", style: AppTypography.custom(size: AppText.bodySize, weight: FontWeight.w600, color: AppColors.textPrimary)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           Row(
             children: [
               Expanded(child: _StatCard(label: "Total", value: total.toString(), color: AppColors.primary400, icon: Icons.flag_outlined)),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Expanded(child: _StatCard(label: "Pending", value: open.toString(), color: AppColors.warning500, icon: Icons.pending_outlined)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               Expanded(child: _StatCard(label: "Resolved", value: resolved.toString(), color: Colors.green, icon: Icons.check_circle_outline)),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Expanded(child: _StatCard(label: "Dismissed", value: dismissed.toString(), color: AppColors.textMuted, icon: Icons.cancel_outlined)),
             ],
           ),
           if (total > 0) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: AppColors.bgSurface, borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.all(AppSpace.md),
+              decoration: BoxDecoration(color: AppColors.bgSurface, borderRadius: BorderRadius.circular(AppRadius.smValue)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.speed, size: 16, color: AppColors.primary400),
-                  const SizedBox(width: 6),
-                  Text("Review Rate: ", style: AppTypography.custom(size: 12, weight: FontWeight.w500, color: AppColors.textSecondary)),
-                  Text("$reviewedRate%", style: AppTypography.custom(size: 12, weight: FontWeight.w700, color: AppColors.primary400)),
-                  Text(" ($reviewedCount/$total reviewed)", style: AppTypography.custom(size: 11, weight: FontWeight.w400, color: AppColors.textMuted)),
+                  Icon(Icons.speed, size: AppIcon.sm, color: AppColors.primary400),
+                  const SizedBox(width: AppSpace.sm),
+                  Text("Review Rate: ", style: AppTypography.custom(size: AppText.labelSize, weight: FontWeight.w500, color: AppColors.textSecondary)),
+                  Text("$reviewedRate%", style: AppTypography.custom(size: AppText.labelSize, weight: FontWeight.w700, color: AppColors.primary400)),
+                  Text(" ($reviewedCount/$total reviewed)", style: AppTypography.custom(size: AppText.captionSize, weight: FontWeight.w400, color: AppColors.textMuted)),
                 ],
               ),
             ),
@@ -616,15 +617,15 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppColors.bgSurface, borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withValues(alpha: 0.3))),
+      padding: const EdgeInsets.all(AppSpace.md),
+      decoration: BoxDecoration(color: AppColors.bgSurface, borderRadius: BorderRadius.circular(AppRadius.mdValue), border: Border.all(color: color.withValues(alpha: 0.3))),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 6),
-          Text(value, style: AppTypography.custom(size: 22, weight: FontWeight.w700, color: color)),
-          const SizedBox(height: 2),
-          Text(label, style: AppTypography.custom(size: 11, weight: FontWeight.w500, color: AppColors.textMuted)),
+          Icon(icon, color: color, size: AppIcon.md),
+          const SizedBox(height: AppSpace.sm),
+          Text(value, style: AppTypography.custom(size: AppText.headlineSize, weight: FontWeight.w700, color: color)),
+          const SizedBox(height: AppSpace.hair),
+          Text(label, style: AppTypography.custom(size: AppText.captionSize, weight: FontWeight.w500, color: AppColors.textMuted)),
         ],
       ),
     );

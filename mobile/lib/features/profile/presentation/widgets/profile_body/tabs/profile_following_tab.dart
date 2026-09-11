@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/tabs/profile_tab_bar.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
@@ -37,7 +38,7 @@ class ProfileFollowingTab extends StatelessWidget {
 
     return ListView.builder(
       primary: false,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
       itemCount: watchlist.length,
       itemBuilder: (context, index) {
         return ProfileTabTileFrame(
@@ -68,7 +69,7 @@ class _FollowedGem extends StatelessWidget {
                 project.name,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 13,
+                  size: AppText.labelSize,
                   weight: FontWeight.w700,
                 ),
                 maxLines: 1,
@@ -76,45 +77,45 @@ class _FollowedGem extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
               decoration: BoxDecoration(
                 color: isCardMode ? AppColors.bgElevated : AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.smValue),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Text(
                 project.primaryTag.name,
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w600,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpace.sm),
         Text(
           project.description,
           style: AppTypography.custom(
             color: AppColors.textMuted,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w400,
             height: 1.4,
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpace.sm),
         Row(
           children: [
-            Icon(Icons.people_outline, size: 14, color: AppColors.textFaint),
-            const SizedBox(width: 5),
+            Icon(Icons.people_outline, size: AppIcon.sm, color: AppColors.textFaint),
+            const SizedBox(width: AppSpace.xs),
             Text(
               '${project.followersCount} followers',
               style: AppTypography.custom(
                 color: AppColors.textFaint,
-                size: 10,
+                size: AppText.captionSize,
                 weight: FontWeight.w400,
               ),
             ),

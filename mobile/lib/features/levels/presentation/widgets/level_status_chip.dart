@@ -1,3 +1,4 @@
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/domain/level_tier.dart';
 import 'package:flutter/material.dart';
@@ -23,24 +24,30 @@ class LevelStatusChip extends StatelessWidget {
     final foreground = filled ? foregroundOn(color) : color;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      // xs, not sm: this is the smallest component in the system and it sits
+      // inside a grid tile. sm padding overflows the tile once the label is
+      // at caption size.
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.xs,
+        vertical: AppSpace.hair,
+      ),
       decoration: BoxDecoration(
         color: filled ? color : color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: filled ? null : Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 10, color: foreground),
-            const SizedBox(width: 3),
+            Icon(icon, size: AppIcon.xs, color: foreground),
+            const SizedBox(width: AppSpace.hair),
           ],
           Text(
             label,
             style: AppTypography.custom(
               color: foreground,
-              size: 9,
+              size: AppText.captionSize,
               weight: FontWeight.w800,
               letterSpacing: 0.4,
             ),

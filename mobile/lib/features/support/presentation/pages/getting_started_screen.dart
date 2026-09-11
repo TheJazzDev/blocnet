@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/support/data/getting_started_content.dart';
 import 'package:blocnet/features/support/presentation/widgets/support_widgets.dart';
@@ -21,7 +22,7 @@ class GettingStartedScreen extends StatelessWidget {
         showSpaceSwitcher: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpace.lg),
         children: [
           const SupportHeader(
             title: 'Your first week on Blocnet',
@@ -29,7 +30,7 @@ class GettingStartedScreen extends StatelessWidget {
                 'Seven steps, in the order that makes the app click. You '
                 'can do them all in one sitting.',
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpace.lg),
           for (var i = 0; i < gettingStartedSteps.length; i++)
             SupportStepCard(
               number: i + 1,
@@ -42,7 +43,7 @@ class GettingStartedScreen extends StatelessWidget {
                   : () => Navigator.of(context)
                       .pushNamed(gettingStartedSteps[i].route!),
             ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpace.xl),
         ],
       ),
     );

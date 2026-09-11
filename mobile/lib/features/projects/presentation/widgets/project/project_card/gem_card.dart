@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
@@ -88,7 +89,7 @@ class GemCard extends StatelessWidget {
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -102,7 +103,7 @@ class GemCard extends StatelessWidget {
                     AppColors.primary500.withValues(alpha: 0.08),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(
                   color: AppColors.primary500.withValues(alpha: 0.25),
                 ),
@@ -115,18 +116,18 @@ class GemCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Icon(
                           Icons.layers_outlined,
-                          size: 18,
+                          size: AppIcon.md,
                           color: AppColors.primary400,
                         ),
                       ),
                     )
                   : Icon(
                       Icons.layers_outlined,
-                      size: 18,
+                      size: AppIcon.md,
                       color: AppColors.primary400,
                     ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,12 +141,12 @@ class GemCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.custom(
                             color: AppColors.textPrimary,
-                            size: 14,
+                            size: AppText.bodySize,
                             weight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpace.sm),
                       // Label the score so the decimal is not a mystery
                       // number in list mode (grid mode has the HYPE SCORE bar).
                       Column(
@@ -155,7 +156,7 @@ class GemCard extends StatelessWidget {
                             score.toStringAsFixed(1),
                             style: AppTypography.custom(
                               color: scoreColor,
-                              size: 12,
+                              size: AppText.labelSize,
                               weight: FontWeight.w800,
                               height: 1,
                             ),
@@ -164,7 +165,7 @@ class GemCard extends StatelessWidget {
                             'hype',
                             style: AppTypography.custom(
                               color: AppColors.textFaint,
-                              size: 9,
+                              size: AppText.captionSize,
                               weight: FontWeight.w600,
                               letterSpacing: 0.4,
                             ),
@@ -173,33 +174,33 @@ class GemCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpace.xs),
                   Text(
                     '${project.primaryTag.name} • ${project.followersCount} followers • ${project.posts?.length ?? 0} updates',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.custom(
                       color: AppColors.textFaint,
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w500,
                     ),
                   ),
                   if (project.description.trim().isNotEmpty) ...[
-                    const SizedBox(height: 5),
+                    const SizedBox(height: AppSpace.xs),
                     Text(
                       project.description.trim(),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 12,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                         height: 1.4,
                       ),
                     ),
                   ],
                   if (admin != null) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpace.sm),
                     GestureDetector(
                       onTap: () => _openHunterProfile(context),
                       behavior: HitTestBehavior.opaque,
@@ -211,11 +212,11 @@ class GemCard extends StatelessWidget {
                             backgroundColor: AppColors.bgSurface,
                             fallback: Icon(
                               Icons.person,
-                              size: 10,
+                              size: AppIcon.xs,
                               color: AppColors.textFaint,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: AppSpace.sm),
                           Expanded(
                             child: Row(
                               children: [
@@ -223,7 +224,7 @@ class GemCard extends StatelessWidget {
                                   'Hunted by ',
                                   style: AppTypography.custom(
                                     color: AppColors.textMuted,
-                                    size: 11,
+                                    size: AppText.captionSize,
                                     weight: FontWeight.w600,
                                   ),
                                 ),
@@ -234,7 +235,7 @@ class GemCard extends StatelessWidget {
                                     levelBadgeSize: LevelBadgeSize.tiny,
                                     textStyle: AppTypography.custom(
                                       color: AppColors.textMuted,
-                                      size: 11,
+                                      size: AppText.captionSize,
                                       weight: FontWeight.w600,
                                     ),
                                   ),
@@ -249,7 +250,7 @@ class GemCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             GestureDetector(
               onTap: () {},
               behavior: HitTestBehavior.translucent,
@@ -261,14 +262,14 @@ class GemCard extends StatelessWidget {
                   opacity: isLoading ? 0.6 : 1,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.sm,
                     ),
                     decoration: BoxDecoration(
                       color: isFollowed
                           ? AppColors.primary500.withValues(alpha: 0.18)
                           : AppColors.bgElevated,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.fullValue),
                       border: Border.all(
                         color: isFollowed
                             ? AppColors.primary500.withValues(alpha: 0.45)
@@ -281,7 +282,7 @@ class GemCard extends StatelessWidget {
                         color: isFollowed
                             ? AppColors.primary400
                             : AppColors.textFaint,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w700,
                       ),
                     ),
@@ -329,7 +330,7 @@ class GemCard extends StatelessWidget {
           ),
           // Main card
           Container(
-            margin: const EdgeInsets.only(bottom: 14),
+            margin: const EdgeInsets.only(bottom: AppSpace.lg),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -339,14 +340,14 @@ class GemCard extends StatelessWidget {
                   AppColors.bgSurface.withValues(alpha: 0.85),
                 ],
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.xlValue),
               border: Border.all(
                 color: scoreColor.withValues(alpha: 0.25),
                 width: 1.5,
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpace.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -365,7 +366,7 @@ class GemCard extends StatelessWidget {
                               AppColors.primary500.withValues(alpha: 0.12),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.lgValue),
                           border: Border.all(
                             color: AppColors.primary500.withValues(alpha: 0.3),
                             width: 2,
@@ -373,24 +374,24 @@ class GemCard extends StatelessWidget {
                         ),
                         child: project.logo.isNotEmpty
                             ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                                 child: Image.network(
                                   project.logo,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Icon(
                                     Icons.layers_outlined,
-                                    size: 24,
+                                    size: AppIcon.lg,
                                     color: AppColors.primary400,
                                   ),
                                 ),
                               )
                             : Icon(
                                 Icons.layers_outlined,
-                                size: 24,
+                                size: AppIcon.lg,
                                 color: AppColors.primary400,
                               ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpace.md),
                       // Name + tag
                       Expanded(
                         child: Column(
@@ -400,32 +401,32 @@ class GemCard extends StatelessWidget {
                               project.name,
                               style: AppTypography.custom(
                                 color: AppColors.textPrimary,
-                                size: 16,
+                                size: AppText.subtitleSize,
                                 weight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppSpace.xs),
                             Row(
                               children: [
                                 Icon(
                                   Icons.tag_rounded,
-                                  size: 12,
+                                  size: AppIcon.xs,
                                   color: AppColors.textFaint,
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: AppSpace.xs),
                                 Text(
                                   project.primaryTag.name,
                                   style: AppTypography.custom(
                                     color: AppColors.textFaint,
-                                    size: 11,
+                                    size: AppText.captionSize,
                                     weight: FontWeight.w500,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: AppSpace.sm),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 3,
+                                    horizontal: AppSpace.sm,
+                                    vertical: AppSpace.hair,
                                   ),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
@@ -436,7 +437,7 @@ class GemCard extends StatelessWidget {
                                             .withValues(alpha: 0.15),
                                       ],
                                     ),
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(AppRadius.smValue),
                                     border: Border.all(
                                       color: AppColors.teal400
                                           .withValues(alpha: 0.4),
@@ -446,7 +447,7 @@ class GemCard extends StatelessWidget {
                                     'GEM',
                                     style: AppTypography.custom(
                                       color: AppColors.teal400,
-                                      size: 9,
+                                      size: AppText.captionSize,
                                       weight: FontWeight.w800,
                                       letterSpacing: 0.5,
                                     ),
@@ -460,11 +461,11 @@ class GemCard extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpace.lg),
 
                   // ── Hype score bar ──
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(AppSpace.md),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -472,7 +473,7 @@ class GemCard extends StatelessWidget {
                           scoreColor.withValues(alpha: 0.04),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                       border: Border.all(
                         color: scoreColor.withValues(alpha: 0.2),
                       ),
@@ -481,25 +482,25 @@ class GemCard extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.whatshot_rounded,
-                          size: 16,
+                          size: AppIcon.sm,
                           color: scoreColor,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpace.sm),
                         Text(
                           'HYPE SCORE',
                           style: AppTypography.custom(
                             color: AppColors.textFaint,
-                            size: 10,
+                            size: AppText.captionSize,
                             weight: FontWeight.w700,
                             letterSpacing: 0.8,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: AppSpace.md),
                         Expanded(
                           child: SizedBox(
                             height: 8,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius: BorderRadius.circular(AppRadius.fullValue),
                               child: Stack(
                                 children: [
                                   Container(color: AppColors.bgElevated),
@@ -521,12 +522,12 @@ class GemCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: AppSpace.md),
                         Text(
                           score.toStringAsFixed(1),
                           style: AppTypography.custom(
                             color: scoreColor,
-                            size: 14,
+                            size: AppText.bodySize,
                             weight: FontWeight.w800,
                           ),
                         ),
@@ -534,11 +535,11 @@ class GemCard extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
 
                   // ── Hunted by row ──
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(AppSpace.md),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -546,7 +547,7 @@ class GemCard extends StatelessWidget {
                           AppColors.bgElevated.withValues(alpha: 0.5),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                       border: Border.all(
                         color: AppColors.borderSubtle.withValues(alpha: 0.5),
                       ),
@@ -573,13 +574,13 @@ class GemCard extends StatelessWidget {
                               backgroundColor: AppColors.bgSurface,
                               fallback: Icon(
                                 Icons.person,
-                                size: 14,
+                                size: AppIcon.sm,
                                 color: AppColors.textFaint,
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: AppSpace.md),
                         Expanded(
                           child: GestureDetector(
                             onTap: () => _openHunterProfile(context),
@@ -590,7 +591,7 @@ class GemCard extends StatelessWidget {
                                   'Hunted by ',
                                   style: AppTypography.custom(
                                     color: AppColors.textSecondary,
-                                    size: 12,
+                                    size: AppText.labelSize,
                                     weight: FontWeight.w500,
                                   ),
                                 ),
@@ -601,7 +602,7 @@ class GemCard extends StatelessWidget {
                                     levelBadgeSize: LevelBadgeSize.tiny,
                                     textStyle: AppTypography.custom(
                                       color: AppColors.textPrimary,
-                                      size: 12,
+                                      size: AppText.labelSize,
                                       weight: FontWeight.w700,
                                     ),
                                   ),
@@ -612,14 +613,14 @@ class GemCard extends StatelessWidget {
                         ),
                         Icon(
                           Icons.trending_up_rounded,
-                          size: 16,
+                          size: AppIcon.sm,
                           color: AppColors.successColor,
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
 
                   // ── Action row ──
                   GestureDetector(
@@ -633,12 +634,12 @@ class GemCard extends StatelessWidget {
                             onTap: onManageTap,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
+                                horizontal: AppSpace.md,
+                                vertical: AppSpace.md,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.bgElevated,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                                 border: Border.all(
                                   color: AppColors.borderSubtle,
                                 ),
@@ -648,15 +649,15 @@ class GemCard extends StatelessWidget {
                                 children: [
                                   Icon(
                                     Icons.tune_rounded,
-                                    size: 15,
+                                    size: AppIcon.sm,
                                     color: AppColors.textSecondary,
                                   ),
-                                  const SizedBox(width: 5),
+                                  const SizedBox(width: AppSpace.xs),
                                   Text(
                                     'Manage',
                                     style: AppTypography.custom(
                                       color: AppColors.textSecondary,
-                                      size: 12,
+                                      size: AppText.labelSize,
                                       weight: FontWeight.w700,
                                     ),
                                   ),
@@ -664,17 +665,17 @@ class GemCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: AppSpace.md),
                         ],
                         if (isFollowed && onPreferencesTap != null) ...[
                           GestureDetector(
                             onTap: onPreferencesTap,
                             child: Container(
-                              padding: const EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(AppSpace.md),
                               decoration: BoxDecoration(
                                 color:
                                     AppColors.primary500.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                                 border: Border.all(
                                   color: AppColors.primary500
                                       .withValues(alpha: 0.25),
@@ -682,12 +683,12 @@ class GemCard extends StatelessWidget {
                               ),
                               child: Icon(
                                 Icons.notifications_active_outlined,
-                                size: 16,
+                                size: AppIcon.sm,
                                 color: AppColors.primary400,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: AppSpace.md),
                         ],
                         GestureDetector(
                           onTap: isLoading ? null : onFollowToggle,
@@ -696,8 +697,8 @@ class GemCard extends StatelessWidget {
                             opacity: isLoading ? 0.6 : 1,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
+                                horizontal: AppSpace.lg,
+                                vertical: AppSpace.md,
                               ),
                               decoration: BoxDecoration(
                                 gradient: isFollowed
@@ -711,7 +712,7 @@ class GemCard extends StatelessWidget {
                                       )
                                     : null,
                                 color: isFollowed ? null : AppColors.bgElevated,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                                 border: Border.all(
                                   color: isFollowed
                                       ? AppColors.primary500
@@ -727,19 +728,19 @@ class GemCard extends StatelessWidget {
                                     isFollowed
                                         ? Icons.favorite_rounded
                                         : Icons.favorite_border_rounded,
-                                    size: 16,
+                                    size: AppIcon.sm,
                                     color: isFollowed
                                         ? AppColors.primary400
                                         : AppColors.textSecondary,
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: AppSpace.sm),
                                   Text(
                                     isFollowed ? 'Following' : 'Follow',
                                     style: AppTypography.custom(
                                       color: isFollowed
                                           ? AppColors.primary400
                                           : AppColors.textSecondary,
-                                      size: 12,
+                                      size: AppText.labelSize,
                                       weight: FontWeight.w700,
                                     ),
                                   ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -30,12 +31,12 @@ class CommunityTabs extends StatelessWidget {
         indicatorWeight: 3,
         dividerColor: Colors.transparent,
         labelStyle: AppTypography.custom(
-          size: 13,
+          size: AppText.labelSize,
           color: Colors.black,
           weight: FontWeight.w600,
         ),
         unselectedLabelStyle: AppTypography.custom(
-          size: 13,
+          size: AppText.labelSize,
           color: Colors.black,
           weight: FontWeight.w500,
         ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/action_row.dart';
@@ -51,7 +52,7 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
         title: Text(
           asset?.name ?? _assetCode,
           style: AppTypography.custom(
-            size: 18,
+            size: AppText.titleSize,
             weight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
@@ -67,28 +68,28 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpace.xl),
                 AssetBalanceCard(assetCode: _assetCode, mode: viewMode),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpace.lg),
                 ActionRow(assetCode: _assetCode),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpace.xl),
                 const SectionHeader(label: 'Transactions'),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 TransactionsList(assetCode: _assetCode),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpace.xl),
                 if (!walletStore.canTransferAsset(_assetCode) ||
                     !walletStore.canWithdrawAsset(_assetCode))
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(AppSpace.md),
                     decoration: isCardMode
                         ? BoxDecoration(
                             color: AppColors.bgSurface,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.mdValue),
                             border: Border.all(color: AppColors.borderSubtle),
                           )
                         : null,
@@ -96,7 +97,7 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
                       'Send and withdrawal are currently disabled for $_assetCode. '
                       'Receive/deposit is available.',
                       style: AppTypography.custom(
-                        size: 12,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                         color: AppColors.textMuted,
                         height: 1.5,
@@ -110,7 +111,7 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
                     height: 1,
                     color: AppColors.borderSubtle.withValues(alpha: 0.8),
                   ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpace.xl),
               ],
             ),
           ),

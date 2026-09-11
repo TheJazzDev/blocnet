@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -72,11 +73,11 @@ class _QuestsPageState extends State<QuestsPage>
                 labelColor: AppColors.primary400,
                 unselectedLabelColor: AppColors.textMuted,
                 labelStyle: const TextStyle(
-                  fontSize: 11,
+                  fontSize: AppText.captionSize,
                   fontWeight: FontWeight.w700,
                 ),
                 unselectedLabelStyle: const TextStyle(
-                  fontSize: 10.5,
+                  fontSize: AppText.captionSize,
                   fontWeight: FontWeight.w600,
                 ),
                 indicatorColor: AppColors.primary400,
@@ -112,7 +113,7 @@ class _QuestsPageState extends State<QuestsPage>
                     child: SkeletonList(
                       items: 6,
                       itemHeight: 84,
-                      padding: EdgeInsets.all(16),
+                      padding: EdgeInsets.all(AppSpace.lg),
                     ),
                   );
                 }
@@ -125,14 +126,14 @@ class _QuestsPageState extends State<QuestsPage>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.error_outline,
-                            size: 48, color: Colors.red.shade300),
-                        const SizedBox(height: 16),
+                            size: AppIcon.xxl, color: Colors.red.shade300),
+                        const SizedBox(height: AppSpace.lg),
                         Text(
                           store.lastError!,
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.red.shade300),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpace.lg),
                         ElevatedButton(
                           onPressed: _loadQuests,
                           child: const Text('Retry'),
@@ -173,8 +174,8 @@ class _QuestsPageState extends State<QuestsPage>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 13),
-            const SizedBox(width: 4),
+            Icon(icon, size: AppIcon.xs),
+            const SizedBox(width: AppSpace.xs),
             Text('$label ($count)'),
           ],
         ),
@@ -198,17 +199,17 @@ class _QuestsPageState extends State<QuestsPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.explore_off, size: 64, color: Colors.grey.shade600),
-            const SizedBox(height: 16),
+            Icon(Icons.explore_off, size: AppIcon.xxl, color: Colors.grey.shade600),
+            const SizedBox(height: AppSpace.lg),
             Text(
               'No available quests',
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'Check back later for new quests!',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: AppText.bodySize, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -216,7 +217,7 @@ class _QuestsPageState extends State<QuestsPage>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       itemCount: quests.length,
       itemBuilder: (context, index) {
         final quest = quests[index];
@@ -239,17 +240,17 @@ class _QuestsPageState extends State<QuestsPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.pending_actions, size: 64, color: Colors.grey.shade600),
-            const SizedBox(height: 16),
+            Icon(Icons.pending_actions, size: AppIcon.xxl, color: Colors.grey.shade600),
+            const SizedBox(height: AppSpace.lg),
             Text(
               'No quests in progress',
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'Open an available quest and verify when ready.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: AppText.bodySize, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -257,7 +258,7 @@ class _QuestsPageState extends State<QuestsPage>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       itemCount: quests.length,
       itemBuilder: (context, index) {
         final userQuest = quests[index];
@@ -281,17 +282,17 @@ class _QuestsPageState extends State<QuestsPage>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.check_circle_outline,
-                size: 64, color: Colors.grey.shade600),
-            const SizedBox(height: 16),
+                size: AppIcon.xxl, color: Colors.grey.shade600),
+            const SizedBox(height: AppSpace.lg),
             Text(
               'No completed quests yet',
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpace.sm),
             Text(
               'Complete quests to earn rewards!',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: AppText.bodySize, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -299,7 +300,7 @@ class _QuestsPageState extends State<QuestsPage>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       itemCount: quests.length,
       itemBuilder: (context, index) {
         final userQuest = quests[index];
@@ -353,9 +354,9 @@ class _QuestCard extends StatelessWidget {
     if (!isCardMode) {
       return InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
@@ -372,17 +373,17 @@ class _QuestCard extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: Color(status.color).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
                 child: Center(
                   child: Icon(
                     quest.type.iconData,
                     color: Color(status.color),
-                    size: 18,
+                    size: AppIcon.md,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +395,7 @@ class _QuestCard extends StatelessWidget {
                           child: Text(
                             quest.title,
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: AppText.labelSize,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
                             ),
@@ -402,18 +403,18 @@ class _QuestCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpace.sm),
                         _QuestPointsPill(
                           points: quest.rewardPoints,
                           compact: true,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: AppSpace.xs),
                     Text(
                       quest.description,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: AppText.captionSize,
                         color: AppColors.textSecondary,
                         height: 1.35,
                       ),
@@ -427,21 +428,21 @@ class _QuestCard extends StatelessWidget {
                           category: quest.category,
                           compact: true,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpace.sm),
                         _QuestStatusChip(status: status, compact: true),
                         const Spacer(),
                         if (completedAt != null)
                           Text(
                             _formatDate(completedAt!),
                             style: TextStyle(
-                              fontSize: 9,
+                              fontSize: AppText.captionSize,
                               color: Colors.grey.shade500,
                             ),
                           )
                         else
                           Icon(
                             Icons.chevron_right,
-                            size: 18,
+                            size: AppIcon.md,
                             color: Colors.grey.shade600,
                           ),
                       ],
@@ -456,11 +457,11 @@ class _QuestCard extends StatelessWidget {
     }
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdValue)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         child: Padding(
           padding: EdgeInsets.fromLTRB(14, 14, 14, hasFooterMeta ? 14 : 12),
           child: Column(
@@ -474,17 +475,17 @@ class _QuestCard extends StatelessWidget {
                     height: 48,
                     decoration: BoxDecoration(
                       color: Color(status.color).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     ),
                     child: Center(
                       child: Icon(
                         quest.type.iconData,
                         color: Color(status.color),
-                        size: 21,
+                        size: AppIcon.md,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpace.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,36 +493,36 @@ class _QuestCard extends StatelessWidget {
                         Text(
                           quest.title,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppText.labelSize,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: AppSpace.xs),
                         Row(
                           children: [
                             BadgeCategoryChip(
                               category: quest.category,
                               compact: true,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSpace.sm),
                             _QuestStatusChip(status: status, compact: true),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpace.md),
                   _QuestPointsPill(points: quest.rewardPoints),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpace.md),
               Text(
                 quest.description,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppText.captionSize,
                   color: AppColors.textSecondary,
                   height: 1.4,
                 ),
@@ -529,7 +530,7 @@ class _QuestCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               if (hasFooterMeta) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -538,14 +539,14 @@ class _QuestCard extends StatelessWidget {
                       Text(
                         'Completed ${_formatDate(completedAt!)}',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: AppText.captionSize,
                           color: Colors.grey.shade500,
                         ),
                       )
                     else if (status != QuestStatus.notStarted)
                       Icon(
                         Icons.arrow_forward_ios,
-                        size: 16,
+                        size: AppIcon.sm,
                         color: Colors.grey.shade600,
                       ),
                   ],
@@ -583,11 +584,11 @@ class _QuestPointsPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: 6, vertical: 3)
-          : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          ? const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair)
+          : const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: Colors.amber.shade400.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.fullValue),
         border: Border.all(
           color: Colors.amber.shade400.withValues(alpha: 0.45),
         ),
@@ -628,11 +629,11 @@ class _QuestStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: compact
-          ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
-          : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          ? const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair)
+          : const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.xs),
       decoration: BoxDecoration(
         color: Color(status.color).withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(
           color: Color(status.color).withValues(alpha: 0.5),
           width: 1,

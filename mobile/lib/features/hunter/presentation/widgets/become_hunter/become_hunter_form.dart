@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/services/users/hunter_application_store.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +54,7 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
                 : (store.lastError ?? 'Could not send your application.'),
             style: AppTypography.custom(
               color: Colors.white,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w600,
             ),
           ),
@@ -73,12 +74,12 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
           'WHAT WE LOOK FOR',
           style: AppTypography.custom(
             color: AppColors.textFaint,
-            size: 10,
+            size: AppText.captionSize,
             weight: FontWeight.w600,
             letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         const _Criterion(
           icon: Icons.search_rounded,
           text: 'You research projects before you post about them.',
@@ -96,12 +97,12 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
           'WHY DO YOU WANT TO BE A HUNTER?',
           style: AppTypography.custom(
             color: AppColors.textFaint,
-            size: 10,
+            size: AppText.captionSize,
             weight: FontWeight.w600,
             letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         TextField(
           controller: _reason,
           maxLength: BecomeHunterForm.maxReasonLength,
@@ -110,7 +111,7 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
           enabled: !store.isSubmitting,
           textCapitalization: TextCapitalization.sentences,
           style: AppTypography.custom(
-            size: 13,
+            size: AppText.bodySize,
             weight: FontWeight.w400,
             color: AppColors.textPrimary,
           ),
@@ -118,54 +119,54 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
             hintText:
                 'Which chains or sectors do you follow? Share past calls or research if you have any.',
             hintStyle: AppTypography.custom(
-              size: 12,
+              size: AppText.bodySize,
               weight: FontWeight.w400,
               color: AppColors.textFaint,
             ),
             counterStyle: AppTypography.custom(
-              size: 10,
+              size: AppText.captionSize,
               weight: FontWeight.w400,
               color: AppColors.textFaint,
             ),
             filled: true,
             fillColor: AppColors.bgSurface,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
               borderSide: BorderSide(color: AppColors.borderSubtle),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
               borderSide: BorderSide(color: AppColors.borderSubtle),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
               borderSide: BorderSide(color: AppColors.primary500),
             ),
           ),
         ),
         if (error != null) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             error,
             style: AppTypography.custom(
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w500,
               color: AppColors.error500,
             ),
           ),
         ],
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         Text(
           'The Blocnet team reviews applications within a few days. You will '
           'get a notification either way.',
           style: AppTypography.custom(
             color: AppColors.textFaint,
-            size: 11,
+            size: AppText.captionSize,
             weight: FontWeight.w400,
             height: 1.4,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: AppSpace.lg),
         SizedBox(
           width: double.infinity,
           height: 48,
@@ -176,7 +177,7 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
               disabledBackgroundColor: AppColors.bgElevated,
               foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.lgValue),
               ),
             ),
             child: store.isSubmitting
@@ -191,7 +192,7 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
                 : Text(
                     'Apply to become a Hunter',
                     style: AppTypography.custom(
-                      size: 13,
+                      size: AppText.labelSize,
                       color: Colors.black,
                       weight: FontWeight.w700,
                     ),
@@ -212,18 +213,18 @@ class _Criterion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: AppColors.primary400),
-          const SizedBox(width: 10),
+          Icon(icon, size: AppIcon.sm, color: AppColors.primary400),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Text(
               text,
               style: AppTypography.custom(
                 color: AppColors.textSecondary,
-                size: 12,
+                size: AppText.bodySize,
                 weight: FontWeight.w400,
                 height: 1.45,
               ),

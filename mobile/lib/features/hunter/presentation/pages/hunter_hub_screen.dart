@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
@@ -136,13 +137,13 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   const HunterStatsGrid(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpace.xl),
                   _SectionHeader(title: 'Recent Received Tips'),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
                   _RecentReceivedTipsCard(
                     isLoading: tipsStore.isLoadingReceivedHistory &&
                         tipsStore.receivedHistory.isEmpty,
@@ -150,21 +151,21 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
                     error: tipsStore.lastError,
                     onRetry: () => _syncTips(force: true),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpace.xl),
                   _SectionHeader(title: 'Manage My Gems'),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
                   const ProjectInvitesSection(),
                   const ManagedProjectsRow(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpace.xl),
                   _SectionHeader(title: 'Season Ranking'),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpace.md),
                   SeasonLeaderboard(
                     onViewFullLeaderboard: () =>
                         Navigator.of(context).pushNamed(AppRoutes.topHunters),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpace.xl),
                   _EliteHunterBanner(successRate: successRate),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpace.xl),
                   const _CommunityBridgeLink(),
                   const SizedBox(height: 120),
                 ]),
@@ -196,10 +197,10 @@ class _RecentReceivedTipsCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -208,7 +209,7 @@ class _RecentReceivedTipsCard extends StatelessWidget {
           if (isLoading)
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
                 child: SizedBox(
                   width: 18,
                   height: 18,
@@ -225,7 +226,7 @@ class _RecentReceivedTipsCard extends StatelessWidget {
                 'No tips received yet.',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                 ),
               )
@@ -262,15 +263,15 @@ class _RecentReceivedTipRow extends StatelessWidget {
             height: 28,
             decoration: BoxDecoration(
               color: AppColors.successColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.smValue),
             ),
             child: Icon(
               Icons.south_west_rounded,
               color: AppColors.successColor,
-              size: 15,
+              size: AppIcon.sm,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,7 +280,7 @@ class _RecentReceivedTipRow extends StatelessWidget {
                   'From $sender',
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w600,
                   ),
                   maxLines: 1,
@@ -292,7 +293,7 @@ class _RecentReceivedTipRow extends StatelessWidget {
                       : _tipContextLabel(row),
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                   ),
                   maxLines: 1,
@@ -301,7 +302,7 @@ class _RecentReceivedTipRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -309,7 +310,7 @@ class _RecentReceivedTipRow extends StatelessWidget {
                 '+${row.amount} $symbol',
                 style: AppTypography.custom(
                   color: AppColors.successColor,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w700,
                 ),
               ),
@@ -318,7 +319,7 @@ class _RecentReceivedTipRow extends StatelessWidget {
                 _formatTipTimestamp(row.createdAt),
                 style: AppTypography.custom(
                   color: AppColors.textFaint,
-                  size: 10,
+                  size: AppText.captionSize,
                   weight: FontWeight.w400,
                 ),
               ),
@@ -345,7 +346,7 @@ class _SectionHeader extends StatelessWidget {
       title,
       style: AppTypography.custom(
         color: AppColors.textPrimary,
-        size: 15,
+        size: AppText.bodySize,
         weight: FontWeight.w700,
       ),
     );
@@ -364,7 +365,7 @@ class _EliteHunterBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -374,7 +375,7 @@ class _EliteHunterBanner extends StatelessWidget {
             AppColors.primary500.withValues(alpha: 0.04),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(
           color: AppColors.primary500.withValues(alpha: 0.3),
         ),
@@ -386,15 +387,15 @@ class _EliteHunterBanner extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: AppColors.primary500.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.mdValue),
             ),
             child: Icon(
               Icons.verified_rounded,
               color: AppColors.primary400,
-              size: 20,
+              size: AppIcon.md,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,26 +404,26 @@ class _EliteHunterBanner extends StatelessWidget {
                   'Elite Hunter Status',
                   style: AppTypography.custom(
                     color: AppColors.primary400,
-                    size: 13,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   'Maintain 85%+ success rate to keep Elite status',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                     height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   'Current quality rate: $successRate%',
                   style: AppTypography.custom(
                     color: AppColors.textFaint,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                   ),
                 ),
@@ -431,7 +432,7 @@ class _EliteHunterBanner extends StatelessWidget {
           ),
           Icon(
             Icons.chevron_right,
-            size: 18,
+            size: AppIcon.md,
             color: AppColors.primary400.withValues(alpha: 0.6),
           ),
         ],
@@ -513,10 +514,10 @@ class _CommunityBridgeLink extends StatelessWidget {
       onTap: () => _navigateToCommunity(context),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.lg),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.lgValue),
           border: Border.all(color: AppColors.borderSubtle),
         ),
         child: Row(
@@ -524,22 +525,22 @@ class _CommunityBridgeLink extends StatelessWidget {
           children: [
             Icon(
               Icons.forum_outlined,
-              size: 18,
+              size: AppIcon.md,
               color: AppColors.primary400,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             Text(
               'Discuss with the community',
               style: AppTypography.custom(
-                size: 14,
+                size: AppText.bodySize,
                 weight: FontWeight.w600,
                 color: AppColors.primary400,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpace.xs),
             Icon(
               Icons.arrow_forward_rounded,
-              size: 16,
+              size: AppIcon.sm,
               color: AppColors.primary400,
             ),
           ],

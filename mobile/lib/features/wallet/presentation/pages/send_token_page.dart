@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
@@ -64,21 +65,21 @@ class _SendTokenPageState extends State<SendTokenPage> {
       hintText: hint,
       hintStyle: AppTypography.custom(
         color: AppColors.textFaint,
-        size: 12,
+        size: AppText.bodySize,
         weight: FontWeight.w400,
       ),
       filled: true,
       fillColor: AppColors.bgElevated,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.borderSubtle),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         borderSide: BorderSide(color: AppColors.teal500),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
@@ -197,10 +198,10 @@ class _SendTokenPageState extends State<SendTokenPage> {
         : 'Requests admin approval before on-chain send.';
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.mdValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
@@ -210,9 +211,9 @@ class _SendTokenPageState extends State<SendTokenPage> {
                 ? Icons.compare_arrows_rounded
                 : Icons.call_made_rounded,
             color: AppColors.teal400,
-            size: 17,
+            size: AppIcon.sm,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,16 +222,16 @@ class _SendTokenPageState extends State<SendTokenPage> {
                   title,
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 12,
+                    size: AppText.labelSize,
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.hair),
                 Text(
                   subtitle,
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
-                    size: 11,
+                    size: AppText.captionSize,
                     weight: FontWeight.w400,
                   ),
                 ),
@@ -253,7 +254,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
           'Send ${widget.assetCode}',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 18,
+            size: AppText.titleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -271,9 +272,9 @@ class _SendTokenPageState extends State<SendTokenPage> {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpace.lg),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(AppRadius.lgValue),
                   border: Border.all(
                     color: AppColors.teal500.withValues(alpha: 0.28),
                   ),
@@ -300,10 +301,10 @@ class _SendTokenPageState extends State<SendTokenPage> {
                             ? Icons.compare_arrows_rounded
                             : Icons.call_made_rounded,
                         color: AppColors.teal400,
-                        size: 20,
+                        size: AppIcon.md,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpace.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,18 +315,18 @@ class _SendTokenPageState extends State<SendTokenPage> {
                                 : 'External withdrawal',
                             style: AppTypography.custom(
                               color: AppColors.textPrimary,
-                              size: 17,
+                              size: AppText.subtitleSize,
                               weight: FontWeight.w700,
                             ),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: AppSpace.hair),
                           Text(
                             _isInternal
                                 ? 'Instant wallet-to-wallet transfer'
                                 : 'Queued and reviewed before payout',
                             style: AppTypography.custom(
                               color: AppColors.textMuted,
-                              size: 12,
+                              size: AppText.bodySize,
                               weight: FontWeight.w400,
                             ),
                           ),
@@ -335,7 +336,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               if (hasSwitch)
                 Row(
                   children: [
@@ -349,7 +350,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
                             _changeAction(SendFlowAction.internalTransfer),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpace.md),
                     Expanded(
                       child: _SendModeTile(
                         icon: Icons.call_made_rounded,
@@ -364,13 +365,13 @@ class _SendTokenPageState extends State<SendTokenPage> {
                 )
               else
                 _modeHint(),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.lg),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(AppSpace.lg),
                 decoration: BoxDecoration(
                   color: AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.lgValue),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Column(
@@ -382,34 +383,34 @@ class _SendTokenPageState extends State<SendTokenPage> {
                           : 'Recipient wallet address',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpace.sm),
                     TextField(
                       controller: _addressController,
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.next,
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 13,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                       ),
                       decoration: _fieldDecoration(
                         _isInternal ? '@username or 0x...' : '0x...',
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpace.md),
                     Text(
                       'Amount (${widget.assetCode})',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpace.sm),
                     TextField(
                       controller: _amountController,
                       keyboardType:
@@ -417,21 +418,21 @@ class _SendTokenPageState extends State<SendTokenPage> {
                       textInputAction: TextInputAction.next,
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 13,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                       ),
                       decoration: _fieldDecoration('0.0'),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpace.md),
                     Text(
                       _isInternal ? 'Note (optional)' : 'Reason (required)',
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 12,
+                        size: AppText.labelSize,
                         weight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpace.sm),
                     TextField(
                       controller:
                           _isInternal ? _noteController : _reasonController,
@@ -439,7 +440,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
                       textInputAction: TextInputAction.done,
                       style: AppTypography.custom(
                         color: AppColors.textSecondary,
-                        size: 13,
+                        size: AppText.bodySize,
                         weight: FontWeight.w400,
                       ),
                       decoration: _fieldDecoration(
@@ -452,17 +453,17 @@ class _SendTokenPageState extends State<SendTokenPage> {
                 ),
               ),
               if (_error != null) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
                 Text(
                   _error!,
                   style: AppTypography.custom(
                     color: AppColors.error500,
-                    size: 12,
+                    size: AppText.bodySize,
                     weight: FontWeight.w400,
                   ),
                 ),
               ],
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpace.lg),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -475,7 +476,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
                     disabledForegroundColor: AppColors.textFaint,
                     minimumSize: const Size.fromHeight(50),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.lgValue),
                     ),
                   ),
                   child: _submitting
@@ -491,7 +492,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
                           _isInternal ? 'Send now' : 'Submit withdrawal',
                           style: AppTypography.custom(
                             color: Colors.black,
-                            size: 14,
+                            size: AppText.bodySize,
                             weight: FontWeight.w700,
                           ),
                         ),
@@ -530,19 +531,19 @@ class _SendModeTile extends StatelessWidget {
         : AppColors.bgSurface;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.mdValue),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
           border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 17, color: AppColors.teal400),
-            const SizedBox(width: 8),
+            Icon(icon, size: AppIcon.sm, color: AppColors.teal400),
+            const SizedBox(width: AppSpace.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -551,7 +552,7 @@ class _SendModeTile extends StatelessWidget {
                     title,
                     style: AppTypography.custom(
                       color: AppColors.textPrimary,
-                      size: 12,
+                      size: AppText.labelSize,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -559,7 +560,7 @@ class _SendModeTile extends StatelessWidget {
                     subtitle,
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 10,
+                      size: AppText.captionSize,
                       weight: FontWeight.w400,
                     ),
                   ),

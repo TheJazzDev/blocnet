@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
@@ -23,10 +24,10 @@ class ProfileLevelPill extends StatelessWidget {
       onTap: () => Navigator.of(context).pushNamed(AppRoutes.levels),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs, vertical: AppSpace.xs),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.smValue),
           border: Border.all(color: AppColors.borderSubtle),
           boxShadow: [
             BoxShadow(
@@ -40,7 +41,7 @@ class ProfileLevelPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             LevelBadgeIcon(level: level, size: LevelBadgeSize.small),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpace.xs),
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: maxNameWidth),
               child: Text(
@@ -49,15 +50,15 @@ class ProfileLevelPill extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w600,
                 ),
               ),
             ),
-            const SizedBox(width: 2),
+            const SizedBox(width: AppSpace.hair),
             Icon(
               Icons.chevron_right,
-              size: 14,
+              size: AppIcon.sm,
               color: AppColors.textMuted,
             ),
           ],

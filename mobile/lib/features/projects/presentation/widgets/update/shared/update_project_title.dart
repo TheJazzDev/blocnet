@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 
 /// Inline project name badge — used in "more from" horizontal scroll cards.
@@ -18,23 +19,23 @@ class UpdateProjectTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: margin
-          ? const EdgeInsets.only(bottom: 6)
+          ? const EdgeInsets.only(bottom: AppSpace.sm)
           : EdgeInsets.zero,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.workspaces_outlined,
-            size: 12,
+            size: AppIcon.xs,
             color: AppColors.textFaint,
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: AppSpace.xs),
           Flexible(
             child: Text(
               projectTitle,
               style: TextStyle(
                 color: AppColors.textMuted,
-                fontSize: 11,
+                fontSize: AppText.captionSize,
                 fontFamily: 'Geist',
                 fontWeight: FontWeight.w500,
               ),

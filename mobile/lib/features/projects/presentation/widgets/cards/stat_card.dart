@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -26,8 +27,8 @@ class StatCard extends StatelessWidget {
 
     return Container(
       height: 131,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
         borderRadius: const BorderRadius.all(Radius.circular(16)),
@@ -38,12 +39,12 @@ class StatCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            padding: const EdgeInsets.all(9),
+            padding: const EdgeInsets.all(AppSpace.sm),
             decoration: BoxDecoration(
               color: AppColors.bgElevated,
               borderRadius: const BorderRadius.all(Radius.circular(100)),
             ),
-            child: Icon(iconData, size: 18, color: AppColors.textMuted),
+            child: Icon(iconData, size: AppIcon.md, color: AppColors.textMuted),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,18 +55,18 @@ class StatCard extends StatelessWidget {
                   label,
                   style: TextStyle(
                     color: AppColors.textFaint,
-                    fontSize: 10,
+                    fontSize: AppText.captionSize,
                     fontFamily: 'Geist',
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.xs),
               Text(
                 '$value',
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 14,
+                  fontSize: AppText.bodySize,
                   fontFamily: 'Geist',
                   fontWeight: FontWeight.w700,
                 ),

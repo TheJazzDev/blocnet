@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/domain/level_tier.dart';
@@ -55,7 +56,7 @@ class _LevelsPageState extends State<LevelsPage> {
             'Level up! You are now Level ${current.level} · ${current.name}',
             style: AppTypography.custom(
               color: foregroundOn(tierColor),
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w700,
             ),
           ),
@@ -92,7 +93,7 @@ class _LevelsPageState extends State<LevelsPage> {
           'Levels',
           style: AppTypography.custom(
             color: AppColors.textPrimary,
-            size: 16,
+            size: AppText.subtitleSize,
             weight: FontWeight.w700,
           ),
         ),
@@ -125,12 +126,12 @@ class _LevelsPageState extends State<LevelsPage> {
               levelsStore.fetchMyProgress(),
             ]),
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 24),
+              padding: const EdgeInsets.fromLTRB(AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.xl),
               itemCount: sections.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: AppSpace.lg),
                     child: LevelsProgressHeader(
                       progress: myProgress,
                       isLoading: levelsStore.isLoadingProgress,
@@ -145,7 +146,7 @@ class _LevelsPageState extends State<LevelsPage> {
 
                 final section = sections[index - 1];
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.only(bottom: AppSpace.lg),
                   child: TierSection(
                     section: section,
                     currentLevelNumber: currentLevelNumber,
@@ -175,7 +176,7 @@ class _RefreshAction extends StatelessWidget {
 
     if (busy) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
         child: Center(
           child: SizedBox(
             width: 18,

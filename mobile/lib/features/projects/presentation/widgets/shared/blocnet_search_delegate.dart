@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:blocnet/features/profile/data/models/profile_search_result_model.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
@@ -43,7 +44,7 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
         titleLarge: TextStyle(
           color: AppColors.textPrimary,
           fontFamily: 'Geist',
-          fontSize: 16,
+          fontSize: AppText.subtitleSize,
         ),
       ),
     );
@@ -134,14 +135,14 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
         return Container(
           color: AppColors.bgBase,
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
             children: [
               if (isProfileLoading || profileMatches.isNotEmpty) ...[
                 _sectionTitle('Users & Hunters'),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 if (isProfileLoading)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                     child: Center(
                       child: SizedBox(
                         width: 18,
@@ -160,11 +161,11 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                       onTap: () => close(context, _asAdmin(profile)),
                     ),
                   ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
               ],
               if (projectMatches.isNotEmpty) ...[
                 _sectionTitle('Gems'),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 ...projectMatches.map(
                   (project) => ListTile(
                     dense: true,
@@ -172,14 +173,14 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                     leading: Icon(
                       Icons.layers_outlined,
                       color: AppColors.textMuted,
-                      size: 20,
+                      size: AppIcon.md,
                     ),
                     title: Text(
                       project.name,
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontFamily: 'Geist',
-                        fontSize: 14,
+                        fontSize: AppText.bodySize,
                       ),
                     ),
                     subtitle: Text(
@@ -187,16 +188,16 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                       style: TextStyle(
                         color: AppColors.textFaint,
                         fontFamily: 'Geist',
-                        fontSize: 12,
+                        fontSize: AppText.bodySize,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpace.md),
               ],
               if (postMatches.isNotEmpty) ...[
                 _sectionTitle('Updates'),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 ...postMatches.map(
                   (post) => ListTile(
                     dense: true,
@@ -204,14 +205,14 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                     leading: Icon(
                       Icons.article_outlined,
                       color: AppColors.textMuted,
-                      size: 20,
+                      size: AppIcon.md,
                     ),
                     title: Text(
                       post.title,
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontFamily: 'Geist',
-                        fontSize: 14,
+                        fontSize: AppText.bodySize,
                       ),
                     ),
                     subtitle: Text(
@@ -219,7 +220,7 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                       style: TextStyle(
                         color: AppColors.textFaint,
                         fontFamily: 'Geist',
-                        fontSize: 12,
+                        fontSize: AppText.bodySize,
                       ),
                     ),
                   ),
@@ -249,7 +250,7 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
         color: AppColors.textFaint,
         fontFamily: 'Geist',
         fontWeight: FontWeight.w600,
-        fontSize: 11,
+        fontSize: AppText.captionSize,
         letterSpacing: 0.8,
       ),
     );

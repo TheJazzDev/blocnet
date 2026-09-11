@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/shared/update_tag_row.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,7 @@ class MoreFromProjectNameUpdateCard extends StatelessWidget {
     return Container(
       width: 295,
       height: 216,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
         border: Border.all(color: AppColors.borderSubtle),
@@ -26,20 +27,20 @@ class MoreFromProjectNameUpdateCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UpdateTagRow(post: post, moreFrom: true),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Text(
             post.title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 14,
+              fontSize: AppText.bodySize,
               fontFamily: 'Geist',
               fontWeight: FontWeight.w600,
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Expanded(
             child: Text(
               post.description,
@@ -47,7 +48,7 @@ class MoreFromProjectNameUpdateCard extends StatelessWidget {
               maxLines: 3,
               style: TextStyle(
                 color: AppColors.textFaint,
-                fontSize: 12,
+                fontSize: AppText.bodySize,
                 fontFamily: 'Geist',
               ),
             ),
@@ -59,13 +60,13 @@ class MoreFromProjectNameUpdateCard extends StatelessWidget {
                 formatDateWithSuffix(post.createdAt),
                 style: TextStyle(
                   color: AppColors.textFaint,
-                  fontSize: 12,
+                  fontSize: AppText.bodySize,
                   fontFamily: 'Geist',
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               CustomVerticalDivider(height: 20),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               PriorityLabel(priority: post.priority, miniCard: true),
             ],
           ),

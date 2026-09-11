@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/tips_load_error_row.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
@@ -93,7 +94,7 @@ class HunterStatsGrid extends StatelessWidget {
             tipsStore.loadReceivedHistory(force: true, limit: 100),
           ]),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.md),
         Row(
           children: [
             Expanded(
@@ -115,7 +116,7 @@ class HunterStatsGrid extends StatelessWidget {
                         : _TrendTone.negative),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: _StatCard(
                 label: 'Followers',
@@ -161,10 +162,10 @@ class _TipsCard extends StatelessWidget {
     final symbol = currencySymbol.trim().isEmpty ? 'BNP' : currencySymbol;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -177,42 +178,42 @@ class _TipsCard extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: AppColors.primary500.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
                 child: Icon(
                   Icons.volunteer_activism_rounded,
-                  size: 16,
+                  size: AppIcon.sm,
                   color: AppColors.primary400,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Text(
                 'Tip Balance',
                 style: AppTypography.custom(
                   color: AppColors.textMuted,
-                  size: 12,
+                  size: AppText.labelSize,
                   weight: FontWeight.w500,
                 ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   color: AppColors.successColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.xlValue),
                 ),
                 child: Text(
                   '$totalTipsCount tx',
                   style: AppTypography.custom(
                     color: AppColors.successColor,
-                    size: 10,
+                    size: AppText.captionSize,
                     weight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           if (isLoading)
             SizedBox(
               width: 18,
@@ -230,49 +231,49 @@ class _TipsCard extends StatelessWidget {
                   _formatAmount(tipBalance),
                   style: AppTypography.custom(
                     color: AppColors.textPrimary,
-                    size: 28,
+                    size: AppText.displaySize,
                     weight: FontWeight.w800,
                     height: 1,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpace.sm),
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
+                  padding: const EdgeInsets.only(bottom: AppSpace.hair),
                   child: Text(
                     symbol,
                     style: AppTypography.custom(
                       color: AppColors.primary400,
-                      size: 13,
+                      size: AppText.labelSize,
                       weight: FontWeight.w600,
                     ),
                   ),
                 ),
               ],
             ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpace.hair),
           Text(
             'Total received ${_formatAmount(totalTipsReceived)} $symbol from $totalTipsCount tips',
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 10,
+              size: AppText.captionSize,
               weight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpace.hair),
           Text(
             latestTipAt == null
                 ? 'No tips received yet'
                 : 'Last tip ${_formatTipRecency(latestTipAt!)}',
             style: AppTypography.custom(
               color: AppColors.textFaint,
-              size: 10,
+              size: AppText.captionSize,
               weight: FontWeight.w400,
             ),
           ),
           if (!isLoading &&
               totalTipsCount == 0 &&
               (lastError?.trim().isNotEmpty ?? false)) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpace.sm),
             TipsLoadErrorRow(onRetry: onRetry, compact: true),
           ],
         ],
@@ -472,10 +473,10 @@ class _StatCard extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
@@ -483,41 +484,41 @@ class _StatCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: iconColor),
+              Icon(icon, size: AppIcon.sm, color: iconColor),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
                 decoration: BoxDecoration(
                   color: trendColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
                 child: Text(
                   trend,
                   style: AppTypography.custom(
                     color: trendColor,
-                    size: 9,
+                    size: AppText.captionSize,
                     weight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             value,
             style: AppTypography.custom(
               color: AppColors.textPrimary,
-              size: 20,
+              size: AppText.titleSize,
               weight: FontWeight.w700,
               height: 1,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: AppSpace.hair),
           Text(
             label,
             style: AppTypography.custom(
               color: AppColors.textMuted,
-              size: 10,
+              size: AppText.captionSize,
               weight: FontWeight.w400,
             ),
           ),

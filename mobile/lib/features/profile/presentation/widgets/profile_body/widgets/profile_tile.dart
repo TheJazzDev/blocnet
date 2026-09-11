@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
@@ -43,11 +44,11 @@ class ProfileTile extends StatelessWidget {
       child: Container(
         width: double.infinity,
         margin: EdgeInsets.only(bottom: isCardMode ? 8 : 0),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
         decoration: isCardMode
             ? BoxDecoration(
                 color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 border: Border.all(color: AppColors.borderSubtle),
               )
             : null,
@@ -59,18 +60,18 @@ class ProfileTile extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.bgElevated,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Icon(
                   icon,
-                  size: 17,
+                  size: AppIcon.sm,
                   color: iconColor ?? AppColors.textMuted,
                 ),
               )
             else
-              Icon(icon, size: 18, color: iconColor ?? AppColors.textMuted),
-            const SizedBox(width: 12),
+              Icon(icon, size: AppIcon.md, color: iconColor ?? AppColors.textMuted),
+            const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,28 +80,28 @@ class ProfileTile extends StatelessWidget {
                     title,
                     style: AppTypography.custom(
                       color: titleColor ?? AppColors.textPrimary,
-                      size: 13,
+                      size: AppText.labelSize,
                       weight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpace.hair),
                   Text(
                     subtitle,
                     style: AppTypography.custom(
                       color: AppColors.textMuted,
-                      size: 11,
+                      size: AppText.captionSize,
                       weight: FontWeight.w400,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpace.sm),
             if (trailing != null) ...[
               trailing!,
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpace.sm),
             ],
-            Icon(Icons.chevron_right, size: 18, color: AppColors.textFaint),
+            Icon(Icons.chevron_right, size: AppIcon.md, color: AppColors.textFaint),
           ],
         ),
       ),
@@ -131,17 +132,17 @@ class ProfileTilePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: AppSpace.hair),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.fullValue),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
         label,
         style: AppTypography.custom(
           color: color,
-          size: 9,
+          size: AppText.captionSize,
           weight: FontWeight.w700,
           letterSpacing: 0.4,
         ),

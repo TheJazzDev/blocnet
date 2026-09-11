@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/hunter/data/models/project_invite_model.dart';
 import 'package:blocnet/services/projects/project_invites_store.dart';
@@ -44,7 +45,7 @@ class ProjectInvitesSection extends StatelessWidget {
                 : (store.lastError ?? 'Could not respond to the invite.'),
             style: AppTypography.custom(
               color: Colors.white,
-              size: 12,
+              size: AppText.labelSize,
               weight: FontWeight.w600,
             ),
           ),
@@ -63,7 +64,7 @@ class ProjectInvitesSection extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -73,24 +74,24 @@ class ProjectInvitesSection extends StatelessWidget {
                 'Invites',
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: 13,
+                  size: AppText.labelSize,
                   weight: FontWeight.w700,
                 ),
               ),
               if (pending.isNotEmpty) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpace.sm),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: AppSpace.hair),
                   decoration: BoxDecoration(
                     color: AppColors.primary500.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
                   ),
                   child: Text(
                     '${pending.length}',
                     style: AppTypography.custom(
                       color: AppColors.primary400,
-                      size: 10,
+                      size: AppText.captionSize,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -98,7 +99,7 @@ class ProjectInvitesSection extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           if (pending.isEmpty && error != null)
             _InvitesErrorRow(
               message: error,
@@ -136,11 +137,11 @@ class _InviteCard extends StatelessWidget {
     final note = invite.note;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lgValue),
         border: Border.all(color: AppColors.primary500.withValues(alpha: 0.3)),
       ),
       child: Column(
@@ -153,15 +154,15 @@ class _InviteCard extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.primary500.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
                 ),
                 child: Icon(
                   Icons.mail_outline_rounded,
-                  size: 18,
+                  size: AppIcon.md,
                   color: AppColors.primary400,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,18 +171,18 @@ class _InviteCard extends StatelessWidget {
                       invite.projectName,
                       style: AppTypography.custom(
                         color: AppColors.textPrimary,
-                        size: 14,
+                        size: AppText.bodySize,
                         weight: FontWeight.w700,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.hair),
                     Text(
                       'Invited to hunt this gem · ${getTimeStamp(invite.createdAt)}',
                       style: AppTypography.custom(
                         color: AppColors.textMuted,
-                        size: 11,
+                        size: AppText.captionSize,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -191,26 +192,26 @@ class _InviteCard extends StatelessWidget {
             ],
           ),
           if (note != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(AppSpace.md),
               decoration: BoxDecoration(
                 color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdValue),
               ),
               child: Text(
                 note,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 12,
+                  size: AppText.bodySize,
                   weight: FontWeight.w400,
                   height: 1.4,
                 ),
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               Expanded(
@@ -219,31 +220,31 @@ class _InviteCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textSecondary,
                     side: BorderSide(color: AppColors.borderMuted),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     ),
                   ),
                   child: Text(
                     'Decline',
                     style: AppTypography.custom(
-                      size: 12,
+                      size: AppText.labelSize,
                       weight: FontWeight.w600,
                       color: AppColors.textSecondary,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: FilledButton(
                   onPressed: busy ? null : onAccept,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary500,
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
                     ),
                   ),
                   child: busy
@@ -258,7 +259,7 @@ class _InviteCard extends StatelessWidget {
                       : Text(
                           'Accept',
                           style: AppTypography.custom(
-                            size: 12,
+                            size: AppText.labelSize,
                             weight: FontWeight.w700,
                             color: Colors.black,
                           ),
@@ -288,7 +289,7 @@ class _InvitesErrorRow extends StatelessWidget {
             message,
             style: AppTypography.custom(
               color: AppColors.error500,
-              size: 11,
+              size: AppText.captionSize,
               weight: FontWeight.w500,
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
@@ -20,10 +21,10 @@ class ActionButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
           decoration: BoxDecoration(
             color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.mdValue),
             border: Border.all(color: AppColors.borderSubtle),
           ),
           child: Column(
@@ -35,14 +36,14 @@ class ActionButton extends StatelessWidget {
                   color: AppColors.teal500.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: AppColors.teal400, size: 17),
+                child: Icon(icon, color: AppColors.teal400, size: AppIcon.sm),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpace.sm),
               Text(
                 label,
                 style: AppTypography.custom(
                   color: AppColors.textSecondary,
-                  size: 11,
+                  size: AppText.captionSize,
                   weight: FontWeight.w500,
                 ),
               ),
