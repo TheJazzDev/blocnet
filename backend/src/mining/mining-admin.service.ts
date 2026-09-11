@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildLifetimeMiningTotals } from './dto/lifetime-mining-totals.dto';
+import type { MiningAdminMetricsResponse } from './dto/mining-admin-metrics-response.dto';
 import { EffectiveMiningConfig } from './mining-calculator.service';
 import { MiningConfigService } from './mining-config.service';
 
@@ -43,7 +45,7 @@ export class MiningAdminService {
     return config;
   }
 
-  async getAdminMetrics() {
+  async getAdminMetrics(): Promise<MiningAdminMetricsResponse> {
     const asOf = new Date();
     const since24h = new Date(asOf.getTime() - 24 * 60 * 60 * 1000);
     const config = await this.miningConfigService.getEffectiveConfig();
@@ -136,11 +138,9 @@ export class MiningAdminService {
       totalDirectReferrals === 0
         ? 0
         : Number((activeDirectReferrals / totalDirectReferrals).toFixed(4));
-    const lifetimeMinedMcr = lifetimeMinedAggregate._sum.points ?? 0;
-    const lifetimeClaimedMcr = lifetimeClaimedAggregate._sum.points ?? 0;
-    const lifetimeUnclaimedMcr = Math.max(
-      lifetimeMinedMcr - lifetimeClaimedMcr,
-      0,
+    const lifetimeTotals = buildLifetimeMiningTotals(
+      lifetimeMinedAggregate._sum.points,
+      lifetimeClaimedAggregate._sum.points,
     );
 
     return {
@@ -156,9 +156,7 @@ export class MiningAdminService {
       activeReferralRatio,
       totalDirectReferrals,
       activeDirectReferrals,
-      lifetimeMinedMcr,
-      lifetimeClaimedMcr,
-      lifetimeUnclaimedMcr,
+      ...lifetimeTotals,
       totalMiners: lifetimeMinersRows.length,
     };
   }

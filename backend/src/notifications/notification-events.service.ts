@@ -905,17 +905,17 @@ export class NotificationEventsService {
       return [];
     }
 
-    const mcr = this.stringValue(metadata.points) ?? '0';
+    const bnp = this.stringValue(metadata.points) ?? '0';
     return [
       {
         userId: actorId,
         type: NotificationType.mining_claimed,
         actorUserId: actorId,
         title: 'Mining claimed',
-        body: `You claimed ${mcr} BNP.`,
+        body: `You claimed ${bnp} BNP.`,
         payload: {
           sessionId: resourceId,
-          points: mcr,
+          points: bnp,
         } as Prisma.InputJsonValue,
         deeplink: '/mining',
         dedupeKey: this.auditDedupeKey('mining.claim', resourceId),
