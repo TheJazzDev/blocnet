@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/tips_load_error_row.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -87,6 +88,10 @@ class HunterStatsGrid extends StatelessWidget {
           currencySymbol: tipsCurrencySymbol,
           latestTipAt: latestTipAt,
           lastError: tipsStore.lastError,
+          onRetry: () => Future.wait([
+            tipsStore.loadOverview(force: true),
+            tipsStore.loadReceivedHistory(force: true, limit: 100),
+          ]),
         ),
         const SizedBox(height: 10),
         Row(
@@ -129,6 +134,7 @@ class _TipsCard extends StatelessWidget {
     required this.currencySymbol,
     required this.latestTipAt,
     required this.lastError,
+    required this.onRetry,
   });
 
   final bool isLoading;
@@ -138,6 +144,7 @@ class _TipsCard extends StatelessWidget {
   final String currencySymbol;
   final DateTime? latestTipAt;
   final String? lastError;
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -255,15 +262,8 @@ class _TipsCard extends StatelessWidget {
           if (!isLoading &&
               totalTipsCount == 0 &&
               (lastError?.trim().isNotEmpty ?? false)) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Tip sync warning: $lastError',
-              style: AppTypography.custom(
-                color: AppColors.warning500,
-                size: 10,
-                weight: FontWeight.w500,
-              ),
-            ),
+            const SizedBox(height: 6),
+            TipsLoadErrorRow(onRetry: onRetry, compact: true),
           ],
         ],
       ),

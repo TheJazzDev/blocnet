@@ -133,7 +133,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                         if (hasError) ...[
                           const SizedBox(height: 6),
                           Text(
-                            'Tip sync warning: ${store.lastError}',
+                            "Couldn't load tips. ${store.lastError}",
                             style: AppTypography.custom(
                               color: AppColors.warning500,
                               size: 11,

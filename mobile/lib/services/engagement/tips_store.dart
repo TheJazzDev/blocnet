@@ -236,7 +236,11 @@ class TipsStore extends ChangeNotifier {
       }
       return error.message;
     }
-    return error.toString();
+    // Transport-level failures (ClientException, SocketException, timeouts)
+    // carry hosts and stack details that must never reach the UI. Log them
+    // and hand back plain copy instead.
+    debugPrint('[TipsStore] request failed: $error');
+    return 'Network error. Check your connection and try again.';
   }
 
   void clear() {
