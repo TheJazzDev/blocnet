@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { useAdminSession } from "@/components/admin-shell";
+import { canManageGamification } from "@/lib/rbac";
 import { apiFetch } from "@/lib/api-client";
 import { useBadges } from "@/lib/hooks";
 import { BadgeCreateDialog } from "./BadgeCreateDialog";
@@ -16,9 +17,7 @@ import { groupBadgesByCategory } from "./badge-models";
 
 export default function BadgesPage() {
   const session = useAdminSession();
-  const canMutate =
-    session.effectiveRoles.includes("owner") ||
-    session.effectiveRoles.includes("admin");
+  const canMutate = canManageGamification(session.effectiveRoles);
 
   const {
     // Data

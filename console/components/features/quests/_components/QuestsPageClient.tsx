@@ -3,7 +3,9 @@
 import { useMemo } from 'react';
 import { AlertCircle, Loader2, Plus } from 'lucide-react';
 import { useAdminSession } from '@/components/admin-shell';
+import { canManageGamification } from '@/lib/rbac';
 import { PageHeader } from '@/components/page-header';
+import { AccessDeniedCard } from '@/components/shared/AccessDeniedCard';
 import { Button } from '@/components/ui/button';
 import { apiFetch } from '@/lib/api-client';
 import { useQuests } from '@/lib/hooks';
@@ -19,9 +21,7 @@ import {
 
 export default function QuestsPageClient() {
   const session = useAdminSession();
-  const canManageQuests =
-    session.effectiveRoles.includes('owner') ||
-    session.effectiveRoles.includes('admin');
+  const canManageQuests = canManageGamification(session.effectiveRoles);
 
   const {
     quests,
@@ -108,13 +108,10 @@ export default function QuestsPageClient() {
 
   if (!canManageQuests) {
     return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <div className='rounded-lg border border-destructive/35 bg-destructive/10 p-6'>
-          <p className='text-sm text-destructive-foreground'>
-            You do not have permission to manage quests.
-          </p>
-        </div>
-      </div>
+      <AccessDeniedCard
+        title='Quests'
+        requirement='Owner, dev or admin role is required to manage quests.'
+      />
     );
   }
 

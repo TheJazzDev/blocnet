@@ -25,6 +25,7 @@ import {
   Zap,
 } from 'lucide-react';
 import {
+  canManageGamification,
   canManageSocialCredentials,
   canManageTags,
   canMutateSettings,
@@ -102,15 +103,22 @@ export function buildNavItems(userRoles: string[]): NavGroup[] {
     { href: '/tip-settings', label: 'Tip Settings', icon: HandCoins },
   ];
 
+  // One rule: an item is listed only when its page's own gate would let the
+  // role in. Each conditional below mirrors the helper that page calls.
   const gamificationItems: NavItem[] = [
     { href: '/mining', label: 'Mining', icon: Zap },
     { href: '/mining/leaderboard', label: 'Leaderboard', icon: CheckCircle2 },
     { href: '/referrals', label: 'Referrals', icon: UserPlus },
-    { href: '/levels', label: 'Levels', icon: TrendingUp },
-    { href: '/badges', label: 'Badges', icon: Award },
-    { href: '/quests', label: 'Quests', icon: Target },
-    { href: '/quest-submissions', label: 'Quest Reviews', icon: FileCheck },
   ];
+
+  if (canManageGamification(userRoles)) {
+    gamificationItems.push(
+      { href: '/levels', label: 'Levels', icon: TrendingUp },
+      { href: '/badges', label: 'Badges', icon: Award },
+      { href: '/quests', label: 'Quests', icon: Target },
+      { href: '/quest-submissions', label: 'Quest Reviews', icon: FileCheck },
+    );
+  }
 
   const accessItems: NavItem[] = [
     { href: '/users', label: 'Members', icon: Users },

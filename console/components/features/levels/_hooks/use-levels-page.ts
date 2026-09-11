@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAdminSession } from "@/components/admin-shell";
+import { canManageGamification } from "@/lib/rbac";
 import { groupLevelsByTier } from "@/components/shared/levels";
 import {
   getAllLevels,
@@ -39,8 +40,7 @@ export function useLevelsPage() {
   const queryClient = useQueryClient();
   const { editingId, editForm, cancelEdit, patchEditForm } = useLevelsStore();
 
-  const canMutate =
-    session.effectiveRoles.includes("owner") || session.effectiveRoles.includes("admin");
+  const canMutate = canManageGamification(session.effectiveRoles);
 
   const { data: levels = [], isLoading, error } = useQuery({
     queryKey: LEVELS_QUERY_KEY,

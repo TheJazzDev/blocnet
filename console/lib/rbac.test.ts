@@ -5,7 +5,10 @@ import {
   canManageAdmins,
   canManageCommunityAdmins,
   canManageCommunityModerators,
+  canManageGamification,
+  canManageSocialCredentials,
   canMutateWallet,
+  canViewOpsEvents,
   diffRoleCapabilities,
   getRoleViewOptions,
   resolveEffectiveRoles,
@@ -41,6 +44,24 @@ describe('rbac', () => {
     expect(canMutateWallet(['owner'])).toBe(true);
     expect(canMutateWallet(['dev'])).toBe(true);
     expect(canMutateWallet(['admin'])).toBe(true);
+  });
+
+  it('treats dev like owner/admin for gamification pages', () => {
+    expect(canManageGamification(['owner'])).toBe(true);
+    expect(canManageGamification(['dev'])).toBe(true);
+    expect(canManageGamification(['admin'])).toBe(true);
+    expect(canManageGamification(['hunter'])).toBe(false);
+    expect(canManageGamification(['user'])).toBe(false);
+  });
+
+  it('gates ops events to owner/dev and social credentials to owner', () => {
+    expect(canViewOpsEvents(['owner'])).toBe(true);
+    expect(canViewOpsEvents(['dev'])).toBe(true);
+    expect(canViewOpsEvents(['admin'])).toBe(false);
+
+    expect(canManageSocialCredentials(['owner'])).toBe(true);
+    expect(canManageSocialCredentials(['dev'])).toBe(false);
+    expect(canManageSocialCredentials(['admin'])).toBe(false);
   });
 
   it('resolves effective roles for view mode without allowing escalation', () => {

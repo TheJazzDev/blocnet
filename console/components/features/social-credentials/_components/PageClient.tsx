@@ -5,6 +5,7 @@ import { useAdminSession } from "@/components/admin-shell";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AccessDeniedCard } from "@/components/shared/AccessDeniedCard";
 import { CredentialsTable } from "./CredentialsTable";
 import { CredentialFormDialog } from "./CredentialFormDialog";
 import { DeleteCredentialDialog } from "./DeleteCredentialDialog";
@@ -12,7 +13,17 @@ import { useSocialCredentials } from "../_hooks/use-social-credentials";
 
 export default function SocialCredentialsPageClient() {
   const session = useAdminSession();
-  const state = useSocialCredentials(session.effectiveRoles, session.realRoles);
+  const state = useSocialCredentials(session.effectiveRoles);
+
+  if (!state.isOwner) {
+    return (
+      <AccessDeniedCard
+        title="Social Credentials"
+        description="Owner-only encrypted vault for social media account credentials."
+        requirement="Owner role is required to view or mutate social credentials."
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -20,23 +31,13 @@ export default function SocialCredentialsPageClient() {
         title="Social Credentials"
         description="Owner-only encrypted vault for social media account credentials."
       >
-        {state.isOwner && (
-          <Button onClick={state.openCreateDialog}>
-            <Plus className="h-4 w-4" />
-            Add Credential
-          </Button>
-        )}
+        <Button onClick={state.openCreateDialog}>
+          <Plus className="h-4 w-4" />
+          Add Credential
+        </Button>
       </PageHeader>
 
-      {!state.isOwner ? (
-        <Card className="border-amber-500/30 bg-amber-500/5">
-          <CardContent className="pt-6 text-sm text-amber-200">
-            Owner role is required to view or mutate social credentials.
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <Card className="border-primary/20 bg-primary/5">
+      <Card className="border-primary/20 bg-primary/5">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Vault Controls</CardTitle>
               <CardDescription>
@@ -74,8 +75,6 @@ export default function SocialCredentialsPageClient() {
             onEdit={state.openEditDialog}
             onDelete={state.openDeleteDialog}
           />
-        </>
-      )}
 
       <CredentialFormDialog
         mode="create"
