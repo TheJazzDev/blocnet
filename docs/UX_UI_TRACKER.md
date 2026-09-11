@@ -32,7 +32,7 @@ Deferred to the Claude Design system phase (do not spend effort now): F-14 typog
 | ID | P | Surface | Finding | WS | Status | Session / PR | Notes |
 |---|---|---|---|---|---|---|---|
 | F-01 | P1 | mobile | "Space" concept invisible; switcher is an unlabeled logo icon; Hunter profile hides Badges/Quests/Levels | F | open | | decided 2026-09-11: keep spaces, make explicit |
-| F-02 | P1 | mobile | Raw exception strings shown (Hunter Hub tip sync, System Alerts role banner) | A + B | open | | A: friendly error copy; B: decide System Alerts roles |
+| F-02 | P1 | mobile | Raw exception strings shown (Hunter Hub tip sync, System Alerts role banner) | A + B | in-progress | WS-B branch `worktree-agent-a1cf1647e0b009938` | backend done: roles stay owner/dev; 403 body now `"Only owner or dev can view system alerts"` via `@RolesDeniedMessage()`. Mobile copy + menu gating in WS-A |
 | F-03 | P1 | mobile | Referral totals "…" forever — `/referrals/me` never called | A | open | | `referral_code_screen.dart`, `mining_store.dart` |
 | F-04 | P1 | console | Layout scrolls sideways when a dropdown/tab opens | C | open | | `admin-shell/index.tsx`, users/[id] tabs |
 | F-05 | P1 | console | Member detail half placeholder; "Unnamed User" header | C | open | | fallback to username; hide stub tabs or ship them |
@@ -43,7 +43,7 @@ Deferred to the Claude Design system phase (do not spend effort now): F-14 typog
 | F-10 | P2 | mobile | Dead-end "coming soon" entries (Help & Support ×5, Moderation ×2) | F | open | | decided: hide until real; ship static FAQ + Getting Started |
 | F-11 | P2 | console | Sidebar needs scrolling to reach half the nav | C | open | | collapsible groups or move role switcher |
 | F-12 | P2 | console | Role gating disagrees with nav and copy (dev on quests/badges/levels; ops-events copy; social-creds silent redirect) | C | open | | one rule: hide what the role cannot open |
-| F-13 | P2 | console | Recent activity / audit log dominated by page-view events; Export disabled | B + C | open | | B: stop auditing reads or tag them; C: filter + tooltip |
+| F-13 | P2 | console | Recent activity / audit log dominated by page-view events; Export disabled | B + C | in-progress | WS-B branch `worktree-agent-a1cf1647e0b009938` | backend done: `GET /audit-log?includeViews=false` (default true). Schema idea for later: `AuditLogKind` enum column. Console half in WS-C |
 | F-14 | P2 | mobile | Body text small (49× fontSize 9–10); user comment "kinda tiny" | D | deferred | | design system defines the type scale |
 | F-15 | P2 | mobile | Update detail "Comments 0" above real comments; Tip CTA above body | A | open | | `update_details_dialog.dart` |
 | F-16 | P2 | mobile | Levels page shows no requirements/progress | F | open | | `/levels/me` already has progress |
@@ -59,7 +59,7 @@ Deferred to the Claude Design system phase (do not spend effort now): F-14 typog
 | F-26 | P3 | console | "Stage" badge clipped under Next devtools | C | open | | move to header |
 | F-27 | P3 | mobile | Count flashes and bare spinners | A (stretch) | open | | shared skeleton |
 | F-28 | P3 | console | KYC review page is a queue that cannot fill | C | open | | empty state until a client can submit |
-| F-DEACT | P1 | mobile+backend | Self-deactivate calls a path that does not exist | B | open | | move handler to `/me/deactivate` under `UsersController` |
+| F-DEACT | P1 | mobile+backend | Self-deactivate calls a path that does not exist | B (+A) | in-progress | WS-B branch `worktree-agent-a1cf1647e0b009938` | backend done: `POST /me/deactivate`, `POST /me/reactivate` (new `@AllowDeactivated()` so a deactivated session can reactivate). Mobile side (switch to `/me/deactivate`) in WS-A |
 
 ---
 
@@ -81,3 +81,4 @@ Deferred to the Claude Design system phase (do not spend effort now): F-14 typog
 | Date | Session | Workstream | What changed |
 |---|---|---|---|
 | 2026-09-11 | Audit | — | Feature atlas + 28 findings produced. No code changed. Artifact: https://claude.ai/code/artifact/0279da3b-3cb9-475b-a237-330e98e02614 |
+| 2026-09-11 | WS-B agent | B | 4 commits on branch `worktree-agent-a1cf1647e0b009938` (rebased onto stage @ ad49a4a): F-DEACT, F-13 includeViews, F-02 403 message, quests-admin UUID validation + route order. `bun run build` green after `prisma generate`; 5 pre-existing test failures in `mining.service.spec` and `digest-composer.service.spec` untouched. Pending review/merge. |
