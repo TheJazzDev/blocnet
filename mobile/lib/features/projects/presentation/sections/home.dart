@@ -22,6 +22,7 @@ import 'package:blocnet/services/core/home_bootstrap_store.dart';
 import 'package:blocnet/services/core/startup_metrics_service.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_caught_up_card.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
@@ -158,6 +159,15 @@ class _HomeScreenState extends State<HomeScreen>
     unawaited(_scrollToTop());
   }
 
+  /// Updates on the member's board — those belonging to a gem they follow.
+  /// Used by the caught-up receipt, which only ever states numbers the app
+  /// genuinely knows.
+  int _trackedUpdateCount(UpdatesStore store, Set<String> followedIds) {
+    return store.posts
+        .where((post) => followedIds.contains(post.projectId))
+        .length;
+  }
+
   Future<void> _handlePullToRefresh() async {
     await _refreshAllSections();
     if (!mounted) return;
@@ -179,6 +189,15 @@ class _HomeScreenState extends State<HomeScreen>
         ? Sections.following
         : Sections.forYou;
     final isForYou = _section != Sections.explore;
+    // Earned, not idle: only claim this once the radar has actually reported,
+    // the member has a board to be caught up on, and nothing is pending.
+    final radar = _radarSummary;
+    final showCaughtUp = isForYou &&
+        !_isLoadingRadar &&
+        radar != null &&
+        !radar.hasUpdates &&
+        followCount > 0 &&
+        _pendingNewPostIds.isEmpty;
     final feedLoading = !_isFeedReady &&
         updatesStore.posts.isEmpty &&
         (_isBootstrapLoading || updatesStore.isFetching);
@@ -206,11 +225,25 @@ class _HomeScreenState extends State<HomeScreen>
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                   sliver: SliverToBoxAdapter(
-                    child: AlphaRadarCard(
-                      radar: _radarSummary,
-                      isLoading: _isLoadingRadar,
-                      onCatchUp: _onCatchUpTap,
-                    ),
+                    // Being caught up is the product delivering its promise, so
+                    // it gets its own earned card rather than the same grey
+                    // panel that carries a pending count. The radar card stays
+                    // for the case where something *is* waiting.
+                    child: showCaughtUp
+                        ? FeedCaughtUpCard(
+                            accent: accent,
+                            gemsFollowed: followCount,
+                            updatesTracked: _trackedUpdateCount(
+                              updatesStore,
+                              context.read<ProjectsStore>().followedProjectIds,
+                            ),
+                            sweptAt: _radarSummary?.asOf,
+                          )
+                        : AlphaRadarCard(
+                            radar: _radarSummary,
+                            isLoading: _isLoadingRadar,
+                            onCatchUp: _onCatchUpTap,
+                          ),
                   ),
                 ),
                 const SliverToBoxAdapter(child: AppSpace.gapMd),

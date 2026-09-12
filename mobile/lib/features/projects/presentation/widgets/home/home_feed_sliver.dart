@@ -9,6 +9,8 @@ import 'package:blocnet/features/projects/presentation/widgets/home/empty_feed.d
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
+import 'package:blocnet/features/projects/presentation/models/quiet_gem.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_quiet_gem_card.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
@@ -94,7 +96,30 @@ class HomeFeedSliver extends StatelessWidget {
                   followCount: followedIds.length,
                 );
 
-          if (posts.isEmpty) {
+          // A followed gem nobody has touched in two weeks is the product's
+          // real failure mode, and nothing used to surface it. These cards sit
+          // in the stream, above the updates, because a missing update is the
+          // most important thing on the board when it happens.
+          final quiet = QuietGems.detect(
+            projects: projectsStore.projects,
+            followedProjectIds: followedIds,
+            posts: store.posts,
+            now: DateTime.now(),
+          );
+          final quietCards = activeSection == Sections.following
+              ? quiet
+                  .take(3)
+                  .map(
+                    (gem) => FeedQuietGemCard(
+                      gem: gem,
+                      onUnfollow: () =>
+                          projectsStore.toggleFollowProject(gem.project.id),
+                    ),
+                  )
+                  .toList()
+              : const <Widget>[];
+
+          if (posts.isEmpty && quietCards.isEmpty) {
             return const SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: AppSpace.lg),
               sliver: SliverToBoxAdapter(child: EmptyFeed()),
@@ -117,6 +142,7 @@ class HomeFeedSliver extends StatelessWidget {
                     ),
                     child: CatchUpBanner(onClear: onClearCatchup),
                   ),
+                ...quietCards,
                 ..._buildFeedRows(posts, feedViewMode),
               ]),
             ),
