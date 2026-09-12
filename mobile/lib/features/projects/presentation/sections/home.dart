@@ -22,6 +22,7 @@ import 'package:blocnet/services/core/home_bootstrap_store.dart';
 import 'package:blocnet/services/core/startup_metrics_service.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
+import 'package:blocnet/features/projects/presentation/models/quiet_gem.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_caught_up_card.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
@@ -192,7 +193,17 @@ class _HomeScreenState extends State<HomeScreen>
     // Earned, not idle: only claim this once the radar has actually reported,
     // the member has a board to be caught up on, and nothing is pending.
     final radar = _radarSummary;
+    // Computed here rather than in the feed because the caught-up card depends
+    // on it: a board with an unkept gem is not a covered board, whatever the
+    // radar says about new updates.
+    final quietGems = QuietGems.detect(
+      projects: context.watch<ProjectsStore>().projects,
+      followedProjectIds: context.watch<ProjectsStore>().followedProjectIds,
+      posts: updatesStore.posts,
+      now: DateTime.now(),
+    );
     final showCaughtUp = isForYou &&
+        quietGems.isEmpty &&
         !_isLoadingRadar &&
         radar != null &&
         !radar.hasUpdates &&
@@ -273,6 +284,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
                 HomeFeedSliver(
                   activeSection: _section,
+                  quietGems: quietGems,
                   isInitialLoading: feedLoading,
                   showCatchupFilter: _showCatchupFilter,
                   radarSummary: _radarSummary,

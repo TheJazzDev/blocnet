@@ -27,6 +27,7 @@ class HomeFeedSliver extends StatelessWidget {
     required this.radarSummary,
     required this.feedViewMode,
     required this.onClearCatchup,
+    required this.quietGems,
   });
 
   final Section activeSection;
@@ -35,6 +36,11 @@ class HomeFeedSliver extends StatelessWidget {
   final RadarSummary? radarSummary;
   final FeedViewMode feedViewMode;
   final VoidCallback onClearCatchup;
+
+  /// Followed gems whose hunter has gone quiet. Computed once by the screen,
+  /// because the caught-up card has to know about them too — claiming a member
+  /// is covered while a card below says otherwise is a contradiction.
+  final List<QuietGem> quietGems;
 
   @override
   Widget build(BuildContext context) {
@@ -100,17 +106,12 @@ class HomeFeedSliver extends StatelessWidget {
           // real failure mode, and nothing used to surface it. These cards sit
           // in the stream, above the updates, because a missing update is the
           // most important thing on the board when it happens.
-          final quiet = QuietGems.detect(
-            projects: projectsStore.projects,
-            followedProjectIds: followedIds,
-            posts: store.posts,
-            now: DateTime.now(),
-          );
+          //
           // Shown on both feed tabs, not just Following: a gem going quiet is
           // about the member's own board, and it matters wherever they are
           // looking. Capped at three so a neglected board does not bury the
           // feed under warnings.
-          final quietCards = quiet
+          final quietCards = quietGems
               .take(3)
               .map(
                 (gem) => FeedQuietGemCard(
