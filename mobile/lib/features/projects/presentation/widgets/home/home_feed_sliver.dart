@@ -1,5 +1,6 @@
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
+import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
@@ -7,10 +8,13 @@ import 'package:blocnet/features/projects/presentation/sections/explore/explore.
 import 'package:blocnet/features/projects/presentation/widgets/home/catch_up_banner.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/empty_feed.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_day_one.dart';
+import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
 import 'package:blocnet/features/projects/presentation/models/quiet_gem.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_quiet_gem_card.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
@@ -124,7 +128,24 @@ class HomeFeedSliver extends StatelessWidget {
               )
               .toList();
 
-          if (posts.isEmpty && quietCards.isEmpty) {
+          // Day one: no board yet, so Home borrows Discover's job. An intro
+          // saying what a hunter is for, then gems worth starting with, ranked
+          // by the store's own hype score. Disappears at the first follow.
+          final isDayOne = followedIds.isEmpty;
+          final accent = AppColors.accentForSpace(
+            context.read<AuthStore>().isInHunterSpace,
+          );
+          final starters = isDayOne
+              ? ([...projectsStore.projects]..sort(
+                      (a, b) => projectsStore
+                          .hypeScoreForProject(b)
+                          .compareTo(projectsStore.hypeScoreForProject(a)),
+                    ))
+                  .take(4)
+                  .toList()
+              : const <Project>[];
+
+          if (posts.isEmpty && quietCards.isEmpty && starters.isEmpty) {
             return const SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: AppSpace.lg),
               sliver: SliverToBoxAdapter(child: EmptyFeed()),
@@ -147,6 +168,28 @@ class HomeFeedSliver extends StatelessWidget {
                     ),
                     child: CatchUpBanner(onClear: onClearCatchup),
                   ),
+                if (isDayOne) const FeedDayOneIntro(),
+                if (starters.isNotEmpty) ...[
+                  FeedSectionHeading(
+                    icon: Icons.trending_up_rounded,
+                    label: 'Moving right now',
+                    accent: accent,
+                  ),
+                  for (final project in starters)
+                    FeedFollowRow(
+                      project: project,
+                      accent: accent,
+                      isFollowed: projectsStore.isProjectFollowed(project.id),
+                      onToggleFollow: () =>
+                          projectsStore.toggleFollowProject(project.id),
+                      onOpen: () => _openProject(context, project.id),
+                    ),
+                  FeedSectionHeading(
+                    icon: Icons.bolt_rounded,
+                    label: 'Latest from hunters',
+                    accent: accent,
+                  ),
+                ],
                 ...quietCards,
                 ..._buildFeedRows(posts, feedViewMode),
               ]),
@@ -271,5 +314,18 @@ Future<void> _report(
             : 'Reported. A moderator will review ${gem.project.name}.',
       ),
     ),
+  );
+}
+
+/// Opens a gem from a day-one follow row. Tapping the row should read the gem;
+/// only the button follows it.
+void _openProject(BuildContext context, String projectId) {
+  if (projectId.trim().isEmpty) return;
+  showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'Dismiss',
+    pageBuilder: (_, __, ___) => ProjectDetailsDialog(projectId: projectId),
+    transitionDuration: const Duration(milliseconds: 320),
   );
 }
