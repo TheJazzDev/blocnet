@@ -15,6 +15,10 @@ import 'package:blocnet/services/projects/update_likes_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
 import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_role_chip.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_project_chip.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_tag_pill.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_action_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
@@ -404,7 +408,7 @@ class _FeedCardState extends State<FeedCard>
                           ),
                           if (roleLabel != null) ...[
                             const SizedBox(width: AppSpace.sm),
-                            _FeedRoleChip(label: roleLabel, color: roleColor),
+                            FeedRoleChip(label: roleLabel, color: roleColor),
                           ],
                           const SizedBox(width: AppSpace.sm),
                           Text(
@@ -485,7 +489,7 @@ class _FeedCardState extends State<FeedCard>
                           spacing: 6,
                           runSpacing: 6,
                           children: post.secondaryTags.take(3).map((tag) {
-                            return _TagPill(label: tag.name);
+                            return FeedTagPill(label: tag.name);
                           }).toList(),
                         ),
                       ],
@@ -505,7 +509,7 @@ class _FeedCardState extends State<FeedCard>
                       GestureDetector(
                         onTap: () {},
                         behavior: HitTestBehavior.translucent,
-                        child: _ActionRow(
+                        child: FeedActionRow(
                           likeIcon: ScaleTransition(
                             scale: TweenSequence<double>([
                               TweenSequenceItem(
@@ -682,7 +686,7 @@ class _FeedCardState extends State<FeedCard>
                               ),
                               if (roleLabel != null) ...[
                                 const SizedBox(width: AppSpace.sm),
-                                _FeedRoleChip(
+                                FeedRoleChip(
                                   label: roleLabel,
                                   color: roleColor,
                                 ),
@@ -754,7 +758,7 @@ class _FeedCardState extends State<FeedCard>
                 const SizedBox(height: AppSpace.lg),
 
                 // ── Project chip with gradient ──
-                _ModernProjectChip(
+                FeedProjectChip(
                   project: project,
                   onTap: () => _openProjectDetails(context),
                 ),
@@ -767,7 +771,7 @@ class _FeedCardState extends State<FeedCard>
                     spacing: 6,
                     runSpacing: 6,
                     children: post.secondaryTags.take(3).map((tag) {
-                      return _TagPill(label: tag.name);
+                      return FeedTagPill(label: tag.name);
                     }).toList(),
                   ),
                   const SizedBox(height: AppSpace.md),
@@ -792,7 +796,7 @@ class _FeedCardState extends State<FeedCard>
                 GestureDetector(
                   onTap: () {},
                   behavior: HitTestBehavior.translucent,
-                  child: _ActionRow(
+                  child: FeedActionRow(
                     likeIcon: ScaleTransition(
                       scale: TweenSequence<double>([
                         TweenSequenceItem(
@@ -839,325 +843,5 @@ class _FeedCardState extends State<FeedCard>
       return normalizedRaw.startsWith('@') ? normalizedRaw : '@$normalizedRaw';
     }
     return '@${fallbackName.toLowerCase().replaceAll(' ', '_')}';
-  }
-}
-
-class _FeedRoleChip extends StatelessWidget {
-  const _FeedRoleChip({
-    required this.label,
-    required this.color,
-  });
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.sm, vertical: AppSpace.hair),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: color.withValues(alpha: 0.85), width: 0.8),
-        color: color.withValues(alpha: 0.12),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.custom(
-          color: color,
-          size: AppText.captionSize,
-          weight: FontWeight.w700,
-          letterSpacing: 0.2,
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Modern project chip with gradient and enhanced visuals
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ModernProjectChip extends StatelessWidget {
-  const _ModernProjectChip({
-    required this.project,
-    required this.onTap,
-  });
-
-  final Project project;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppSpace.md),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.bgElevated.withValues(alpha: 0.9),
-              AppColors.bgElevated.withValues(alpha: 0.6),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(
-            color: AppColors.primary500.withValues(alpha: 0.15),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary500.withValues(alpha: 0.25),
-                    AppColors.primary500.withValues(alpha: 0.12),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                border: Border.all(
-                  color: AppColors.primary500.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: project.logo.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.smValue),
-                      child: Image.network(
-                        project.logo,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.layers_outlined,
-                          size: AppIcon.sm,
-                          color: AppColors.primary400,
-                        ),
-                      ),
-                    )
-                  : Icon(
-                      Icons.layers_outlined,
-                      size: AppIcon.sm,
-                      color: AppColors.primary400,
-                    ),
-            ),
-            const SizedBox(width: AppSpace.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    project.name,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: AppText.labelSize,
-                      weight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpace.hair),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.tag_rounded,
-                        size: AppIcon.xs,
-                        color: AppColors.textFaint,
-                      ),
-                      const SizedBox(width: AppSpace.xs),
-                      Expanded(
-                        child: Text(
-                          project.primaryTag.name,
-                          style: AppTypography.custom(
-                            color: AppColors.textFaint,
-                            size: AppText.captionSize,
-                            weight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: AppIcon.xs,
-              color: AppColors.textFaint,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tag pill
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _TagPill extends StatelessWidget {
-  const _TagPill({required this.label});
-
-  final String label;
-
-  Color _colorForLabel(String lbl) {
-    final lower = lbl.toLowerCase();
-    if (lower.contains('alpha') || lower.contains('launch')) {
-      return AppColors.tagAlpha;
-    }
-    if (lower.contains('partner')) {
-      return AppColors.tagPartnership;
-    }
-    if (lower.contains('warning') || lower.contains('rug')) {
-      return AppColors.tagWarning;
-    }
-    if (lower.contains('airdrop')) {
-      return AppColors.tagAirdrop;
-    }
-    return AppColors.tagGeneral;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _colorForLabel(label);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.sm, vertical: AppSpace.hair),
-      decoration: BoxDecoration(
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-        borderRadius: BorderRadius.circular(AppRadius.smValue),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: AppTypography.custom(
-          color: color,
-          size: AppText.captionSize,
-          weight: FontWeight.w700,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Modern action row with subtle backgrounds
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.likeIcon,
-    required this.onLikeTap,
-    required this.onCommentTap,
-    required this.onShareTap,
-    required this.onBookmarkTap,
-    required this.isBookmarked,
-    required this.isCommented,
-    required this.likeCount,
-    required this.commentCount,
-    required this.bookmarkCount,
-  });
-
-  final Widget likeIcon;
-  final VoidCallback onLikeTap;
-  final VoidCallback onCommentTap;
-  final VoidCallback onShareTap;
-  final VoidCallback onBookmarkTap;
-  final bool isBookmarked;
-  final bool isCommented;
-  final int likeCount;
-  final int commentCount;
-  final int bookmarkCount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _ActionButton(
-          icon: likeIcon,
-          onTap: onLikeTap,
-          count: likeCount,
-        ),
-        _ActionButton(
-          icon: Icon(
-            Icons.chat_bubble_outline_rounded,
-            size: AppIcon.md,
-            color: isCommented ? AppColors.primary400 : AppColors.textMuted,
-          ),
-          onTap: onCommentTap,
-          count: commentCount,
-        ),
-        _ActionButton(
-          icon: Icon(
-            isBookmarked
-                ? Icons.bookmark_rounded
-                : Icons.bookmark_border_rounded,
-            size: AppIcon.md,
-            color: isBookmarked ? AppColors.primary400 : AppColors.textMuted,
-          ),
-          onTap: onBookmarkTap,
-          count: bookmarkCount > 0 ? bookmarkCount : null,
-        ),
-        _ActionButton(
-          icon: Icon(
-            Icons.share_outlined,
-            size: AppIcon.md,
-            color: AppColors.teal400,
-          ),
-          onTap: onShareTap,
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    required this.onTap,
-    this.count,
-  });
-
-  final Widget icon;
-  final VoidCallback onTap;
-  final int? count;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 64,
-        height: 26,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            if (count != null) ...[
-              const SizedBox(width: AppSpace.xs),
-              Text(
-                '${count!}',
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.captionSize,
-                  weight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 }
