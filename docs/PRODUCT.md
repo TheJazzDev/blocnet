@@ -25,6 +25,12 @@ months of work evaporates. Nobody can hold that.
 
 **The thing Blocnet sells is not discovery. It is not missing anything.**
 
+> **A note for anyone briefing design from this sentence.** It is a reason to use
+> Blocnet, not the shape of a screen. Three design rounds took it literally, turned Home
+> into a board of obligations, and had to be thrown away: the product is a social feed of
+> people covering gems, and *not missing anything* is a quality the feed should have, not
+> a structure to replace it with. See [`design-briefs/home-feed-r5.md`](design-briefs/home-feed-r5.md).
+
 ## The mechanism
 
 A **hunter** finds a project, does the diligence, and posts it. That part looks like an
@@ -120,14 +126,34 @@ Consequences that follow from the thesis, and that the current app does not refl
 
 Both sit directly under the premise, and neither exists today.
 
-1. **No lifecycle stage on a project.** `ProjectStatus` is `active`/`paused`/`hidden`/
-   `archived` — moderation states. There is nothing for mining, KYC, IDO, snapshot,
-   ended. The app cannot currently say where a gem is in its life.
-2. **No deadline on anything.** No `expiresAt`, `endsAt` or action window on `Update`.
+1. **No deadline on anything.** No `expiresAt`, `endsAt` or action window on `Update`.
    The product exists so people do not miss deadlines, and a deadline is not a concept
-   the schema has.
+   the schema has. This is the larger of the two.
+2. **No way to say what an update is about in one word.** An update has a title, a body
+   and an urgency, but nothing short enough to sit on a row — no `KYC`, `Snapshot`,
+   `App update`. A nullable free-text label on `Update`, typed by the hunter as they
+   post, would close it.
 
 Everything else the design needs is already there.
+
+### What is *not* a gap: a lifecycle stage on a project
+
+An earlier draft of this document listed one, and a design round was briefed from it. It
+was wrong, and the reasoning is worth keeping so it is not re-derived.
+
+A hunter does not run the project. They observe a third-party project from the outside
+and report what they find, after it happens. So no one on Blocnet can say how many stages
+a project has, or what comes next — a denominator like *"step 2 of 6"* is a claim about
+the future that nobody here is positioned to make. There is no stage vocabulary either:
+secondary tags are categories (Airdrops, IDO, Mining, Farming, Staking…), not stages, and
+a project carries up to twenty of them at once, so one gem is legitimately Airdrop *and*
+Mining *and* Staking and fits on no single rail. Most updates are not stages in any case —
+*"update your app to get the new feature"* is urgent, board-worthy, and sits nowhere on a
+lifecycle.
+
+**The unit of state is the update, not a position on a rail.** A gem's situation is its
+newest update and whether that update still needs you. See
+[`design-briefs/home-feed-r4.md`](design-briefs/home-feed-r4.md).
 
 ## Open questions
 

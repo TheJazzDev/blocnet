@@ -18,6 +18,35 @@
 - **Rotate/transform utilities** are safelisted in `tailwind/entry.css` (`rotate-*`, `group-data-[state=closed]:*`, `data-[state=open]:*`). Radix components signal state through `data-state`, so a design that animates a chevron or caret needs those variants present.
 - **Brand accent is Signal Cyan** as of 2026-09-11: mobile `userAccent` #0891B2 / `hunterAccent` #22D3EE, console `--primary` `oklch(0.609 0.111 221.5)`. Both flow into the design system automatically through `globals.css` → `build-css.mjs`. `--chart-1` is deliberately left periwinkle: categorical data colour is independent of the accent.
 
+## Known false positive: the `--tw-*` token count
+
+The project's self-check reports **568 tokens** where Blocnet has **33**. Breakdown: 387
+Tailwind bookkeeping vars (`--tw-translate-*`, `--tw-scale-*`, `--tw-border-style`,
+`--tw-divide-*-reverse`, `--tw-outline-style`), 148 Tailwind default-theme vars, and the
+33 real ones. Every one is attributed to `_ds_bundle.css`; none to `tokens/tokens.css`.
+
+**Ignore it.** Confirmed with Claude Design 2026-09-12: the internals are correctly scoped
+to their utility classes, carry no design meaning, and the design system renders and works
+correctly as shipped. Blocnet's real tokens are the 33 under `:root` in `tokens/tokens.css`,
+which the `@blocnet/console-tokens` pseudo-package already isolates (that fix cleaned up
+the README index; it does not reach this scanner).
+
+**Not fixable from either side.**
+
+- *In the design project* — `styles.css` and `_ds_bundle.css` are synced source and
+  read-only there. Standing rule from the user: **no changes to the synced files.**
+- *Here* — `_ds_bundle.css` is the converter's copy of `cfg.cssEntry`, and the compiled
+  utilities must be in it or no design renders. Splitting them into a file "the scanner
+  doesn't read" means guessing which paths it scans, and a wrong guess drops CSS out of
+  the `@import` closure and breaks every rendered design. Not worth it.
+- *Upstream* — the classifier is in the bundled `design-sync` skill
+  (`bundled-skills/<version>/…/design-sync`), which is versioned and replaced on upgrade,
+  so a local edit there would not survive. The real fix is to exclude `--tw-*` from token
+  extraction in that skill. Reported through `/feedback`.
+
+Expect this check to fire on **every** run until that ships. It is not a regression and
+needs no action.
+
 ## Re-sync risks
 
 - `console/app/globals.css` is the single source of tokens, fonts and the body canvas; any change there flows through `build-css.mjs` automatically, but a rename of `--font-sans` family names must be mirrored in `.design-sync/fonts/geist.css`.

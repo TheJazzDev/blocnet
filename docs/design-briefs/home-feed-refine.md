@@ -45,31 +45,32 @@ proves the work happened. Take it.
 
 ## 2 · Fix the lifecycle track — the real problem
 
+> **⚠️ WITHDRAWN 2026-09-12. This section was wrong. Do not build from it.**
+>
+> It asked for a track reading `Step 2 of 6 · KYC`, built from an ordered set of named
+> phases a hunter defines per gem. Claude Design built exactly that, correctly, and the
+> result is in the round-three artifact. The premise underneath it does not hold.
+>
+> A hunter does not run the project. They observe a third-party crypto project from the
+> outside and report what they find, after it happens. So the denominator is a claim about
+> the future that nobody on Blocnet is positioned to make. There is also no phase
+> vocabulary in the system to draw from: secondary tags are categories (Airdrops, IDO,
+> Mining, Farming, Staking…), not stages, and nothing anywhere knows the words KYC,
+> Snapshot or Distribution. Secondary tags are a list of up to twenty besides, so one gem
+> is legitimately Airdrop *and* Mining *and* Staking at once, which no single linear rail
+> can hold. And most updates are not stages at all — "update your app to get the new
+> feature" is a real urgent update that sits nowhere on a lifecycle.
+>
+> The correction and its replacement are in
+> [`home-feed-r4.md`](home-feed-r4.md). The rest of this brief still stands.
+
+*Original text, kept for the record:*
+
 B's track reads **Mining → KYC → Snapshot → IDO → Distribution** for every gem. That is
-wrong. An airdrop, a mining project and an IDO do not share phases:
-
-| Gem type | Roughly |
-|---|---|
-| Airdrop | Announced → Farming → Snapshot → Claim → Distributed |
-| Mining | Mining → KYC → Allocation → Distribution → Listed |
-| IDO / launch | Whitelist → KYC → Sale → Vesting → Listed |
-| Testnet | Live → Incentivised → Ended → Rewards |
-
-A fixed five-step track is wrong for most gems, and the track is the heart of B.
-
-**Our proposal, and what we want you to design against:** a hunter defines an **ordered
-set of named phases** for their gem, starting from a template chosen by gem type and
-editable from there, then marks which one is current. The track renders *N* segments
-with the current one lit. That keeps tracks comparable across gems (always "step 2 of 5")
-while letting each gem name its own phases.
-
-**Show the track in three situations:**
-
-1. A **4-phase airdrop** mid-way through.
-2. A **6-phase mining project** near the end.
-3. **A gem whose hunter has not defined any phases.** This is the real-world default —
-   every gem on the platform today is in this state, and the design has to degrade
-   honestly rather than show a fake track.
+wrong. An airdrop, a mining project and an IDO do not share phases. ~~A hunter defines an
+ordered set of named phases for their gem, starting from a template chosen by gem type and
+editable from there, then marks which one is current.~~ *(This is the part that does not
+work. See the withdrawal note above.)*
 
 ## 3 · Solve two things neither direction attempted
 
