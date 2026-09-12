@@ -55,6 +55,34 @@ class ProjectsApiRepository {
     }
   }
 
+  /// Asks this gem's hunter for an update.
+  ///
+  /// Followers only, once per member per gem per week. However many members
+  /// ask, the hunter is notified once per gem per week with the count, so this
+  /// is a way to reach a hunter rather than a way to pile on one.
+  ///
+  /// Returns how many members are waiting, or null when the call failed.
+  Future<int?> requestUpdate(String projectId) async {
+    final response = await _apiClient.post(
+      '/projects/$projectId/request-update',
+    );
+    if (response is! Map<String, dynamic>) return null;
+    return int.tryParse(response['membersWaiting']?.toString() ?? '');
+  }
+
+  /// Reports that this gem has been abandoned.
+  ///
+  /// Raises it to moderators; it does not reassign the gem, because taking
+  /// coverage away from a hunter is a decision a person makes. Returns the
+  /// number of open reports.
+  Future<int?> reportInactive(String projectId) async {
+    final response = await _apiClient.post(
+      '/projects/$projectId/report-inactive',
+    );
+    if (response is! Map<String, dynamic>) return null;
+    return int.tryParse(response['openReports']?.toString() ?? '');
+  }
+
   Future<Map<String, dynamic>?> updateFollowPreferences(
     String projectId, {
     String? alertMinUrgency,

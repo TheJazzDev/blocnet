@@ -5,6 +5,7 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/app_network_image.dart';
 import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -111,10 +112,10 @@ class GemCard extends StatelessWidget {
               child: project.logo.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(11),
-                      child: Image.network(
-                        project.logo,
+                      child: AppNetworkImage(
+                        url: project.logo,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
+                        fallback: Icon(
                           Icons.layers_outlined,
                           size: AppIcon.md,
                           color: AppColors.primary400,
@@ -377,10 +378,10 @@ class GemCard extends StatelessWidget {
                             ? ClipRRect(
                                 borderRadius:
                                     BorderRadius.circular(AppRadius.mdValue),
-                                child: Image.network(
-                                  project.logo,
+                                child: AppNetworkImage(
+                                  url: project.logo,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Icon(
+                                  fallback: Icon(
                                     Icons.layers_outlined,
                                     size: AppIcon.lg,
                                     color: AppColors.primary400,

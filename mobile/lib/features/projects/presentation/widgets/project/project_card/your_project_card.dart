@@ -1,6 +1,7 @@
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/shared/widgets/app_network_image.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import '../project_details/project_details_dialog.dart';
@@ -67,10 +68,10 @@ class _YourProjectCardState extends State<YourProjectCard> {
                 child: widget.project.logo.isNotEmpty
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(11),
-                        child: Image.network(
-                          widget.project.logo,
+                        child: AppNetworkImage(
+                          url: widget.project.logo,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
+                          fallback: Icon(
                             Icons.layers_outlined,
                             size: AppIcon.md,
                             color: AppColors.textFaint,

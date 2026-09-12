@@ -9,6 +9,7 @@ import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:blocnet/services/projects/tags_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_deadline_line.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +27,10 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
   final TextEditingController _contentController = TextEditingController();
 
   Priority _selectedPriority = Priority.mid;
+
+  /// When the window this update describes closes. Optional, and null for most
+  /// updates: a hunter only sets it when there is a real window to miss.
+  DateTime? _deadlineAt;
   String? _selectedProjectId;
   final Set<String> _selectedSecondaryTagIds = <String>{};
   bool _isSubmitting = false;
@@ -216,6 +221,14 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
                 },
               ),
               const SizedBox(height: AppSpace.lg),
+              _FieldLabel('Closing window (optional)'),
+              const SizedBox(height: AppSpace.sm),
+              _DeadlineField(
+                value: _deadlineAt,
+                onPick: _pickDeadline,
+                onClear: () => setState(() => _deadlineAt = null),
+              ),
+              const SizedBox(height: AppSpace.lg),
               _FieldLabel('Secondary tags'),
               const SizedBox(height: AppSpace.sm),
               if (tagsStore.secondaryTags.isEmpty)
@@ -397,6 +410,38 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
     );
   }
 
+  /// Date then time. Two steps rather than one, because a window that "closes
+  /// Friday" and one that "closes Friday 18:00 UTC" are different promises and
+  /// the hunter should have to state which they mean.
+  Future<void> _pickDeadline() async {
+    final now = DateTime.now();
+    final seed = _deadlineAt ?? now.add(const Duration(days: 1));
+    final date = await showDatePicker(
+      context: context,
+      initialDate: seed,
+      // A past window is legitimate to report, so yesterday is selectable.
+      firstDate: now.subtract(const Duration(days: 30)),
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(seed),
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _deadlineAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time?.hour ?? 23,
+        time?.minute ?? 59,
+      );
+    });
+  }
+
   Future<void> _submit() async {
     final formState = _formKey.currentState;
     if (formState == null || !formState.validate()) return;
@@ -418,6 +463,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
         content: _contentController.text.trim(),
         priority: _selectedPriority,
         secondaryTagIds: _selectedSecondaryTagIds.toList(),
+        deadlineAt: _deadlineAt,
       );
       if (created == null) {
         throw Exception('Could not create update. Please try again.');
@@ -501,6 +547,96 @@ class _FieldLabel extends StatelessWidget {
         size: AppText.labelSize,
         weight: FontWeight.w500,
       ),
+    );
+  }
+}
+
+/// Picks the moment a window closes, and shows it back in the same words the
+/// feed will use, so a hunter sees what members will read.
+class _DeadlineField extends StatelessWidget {
+  const _DeadlineField({
+    required this.value,
+    required this.onPick,
+    required this.onClear,
+  });
+
+  final DateTime? value;
+  final VoidCallback onPick;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final at = value;
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: onPick,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 48),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.sm,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: AppRadius.md,
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: AppIcon.sm,
+                    color: at == null
+                        ? AppColors.textFaint
+                        : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: Text(
+                      at == null
+                          ? 'No closing window'
+                          : describeDeadline(at, DateTime.now()).label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.custom(
+                        color: at == null
+                            ? AppColors.textFaint
+                            : AppColors.textSecondary,
+                        size: AppText.bodySize,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (at != null) ...[
+          const SizedBox(width: AppSpace.sm),
+          GestureDetector(
+            onTap: onClear,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.md,
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                size: AppIcon.sm,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

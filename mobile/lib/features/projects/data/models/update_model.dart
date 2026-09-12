@@ -15,6 +15,13 @@ class Update {
   final String description;
   final DateTime createdAt;
   final DateTime? lastEditedAt;
+
+  /// When the window this update describes closes.
+  ///
+  /// Null for most updates. May be in the past: a hunter can report a window
+  /// that has already shut, and the card states that rather than hiding it.
+  /// Rendered as a time the hunter stated, never as a live clock.
+  final DateTime? deadlineAt;
   final int likesCount;
   final int commentsCount;
   final int bookmarksCount;
@@ -26,6 +33,7 @@ class Update {
     this.admin,
     this.project,
     this.lastEditedAt,
+    this.deadlineAt,
     required this.id,
     required this.title,
     required this.content,
@@ -54,6 +62,7 @@ class Update {
       createdAt: createdAt,
       description: description,
       lastEditedAt: lastEditedAt,
+      deadlineAt: deadlineAt,
       likesCount: likesCount,
       commentsCount: commentsCount,
       bookmarksCount: bookmarksCount,
@@ -145,6 +154,7 @@ class Update {
           (json['priority'] ?? json['urgency'] ?? 'low').toString()),
       createdAt: DateTime.tryParse(createdAtValue ?? '') ?? DateTime.now(),
       lastEditedAt: DateTime.tryParse(editedAtValue ?? ''),
+      deadlineAt: DateTime.tryParse(json['deadlineAt']?.toString() ?? ''),
       secondaryTagIds: secondaryTagIds,
       secondaryTags: secondaryTags,
       admin: admin,

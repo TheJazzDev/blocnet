@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/shared/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 
@@ -60,10 +61,10 @@ class FeedProjectChip extends StatelessWidget {
               child: project.logo.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.smValue),
-                      child: Image.network(
-                        project.logo,
+                      child: AppNetworkImage(
+                        url: project.logo,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
+                        fallback: Icon(
                           Icons.layers_outlined,
                           size: AppIcon.sm,
                           color: AppColors.primary400,

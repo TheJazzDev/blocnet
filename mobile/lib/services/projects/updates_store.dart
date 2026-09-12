@@ -125,6 +125,7 @@ class UpdatesStore extends ChangeNotifier {
     required String content,
     required Priority priority,
     List<String>? secondaryTagIds,
+    DateTime? deadlineAt,
   }) async {
     try {
       final created = await _updatesRepository.createUpdate(
@@ -133,6 +134,7 @@ class UpdatesStore extends ChangeNotifier {
         content: content,
         priority: priority,
         secondaryTagIds: secondaryTagIds,
+        deadlineAt: deadlineAt,
       );
 
       if (created != null) {

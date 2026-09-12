@@ -110,9 +110,31 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
     _isFetching = true;
     notifyListeners();
 
+    Object? meError;
+
     try {
-      final projects = await _projectsRepository.fetchProjects(limit: 500);
-      final posts = await _postsRepository.fetchPosts(limit: 500);
+      // None of these three depends on another's result, so they go out
+      // together rather than as three consecutive round trips.
+      final projectsFuture = _projectsRepository.fetchProjects(limit: 500);
+      final postsFuture = _postsRepository.fetchPosts(limit: 500);
+      // Started here so it overlaps the other two, but its failure has to stay
+      // isolated (it falls back to cached follows below), so it is captured
+      // now rather than thrown into the outer catch.
+      final meFuture = _usersRepository
+          .fetchMe(forceRefresh: forceRefresh)
+          .then<Map<String, dynamic>?>(
+        (value) => value,
+        onError: (Object error) {
+          meError = error;
+          return null;
+        },
+      );
+
+      // Future.wait listens to both immediately, so one failing cannot leave
+      // the other's error unhandled.
+      final fetched = await Future.wait([projectsFuture, postsFuture]);
+      final projects = fetched[0] as List<Project>;
+      final posts = fetched[1] as List<Update>;
 
       final postsByProject = <String, List<Update>>{};
       for (final post in posts) {
@@ -134,7 +156,11 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
         );
 
       try {
-        final me = await _usersRepository.fetchMe(forceRefresh: forceRefresh);
+        final me = await meFuture;
+        if (meError != null) {
+          // Route into the cached-follows fallback below, as before.
+          throw meError!;
+        }
         final followedIds =
             (me?['followedProjectIds'] as List<dynamic>? ?? const [])
                 .map((value) => value.toString())
@@ -236,6 +262,33 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
     _discoverSecondaryTagFilters.clear();
     _discoverPriorityFilters.clear();
     notifyListeners();
+  }
+
+  /// Asks a gem's hunter for an update.
+  ///
+  /// Returns how many members are now waiting, or null when the request was
+  /// refused — most often because the member already asked this week, which
+  /// the caller should show as a note rather than an error.
+  Future<int?> requestUpdateOn(String projectId) async {
+    try {
+      return await _projectsRepository.requestUpdate(projectId);
+    } catch (error) {
+      _lastError = error.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Reports a gem as unmaintained. Returns the open-report count, or null on
+  /// failure.
+  Future<int?> reportProjectInactive(String projectId) async {
+    try {
+      return await _projectsRepository.reportInactive(projectId);
+    } catch (error) {
+      _lastError = error.toString();
+      notifyListeners();
+      return null;
+    }
   }
 
   Future<void> toggleFollowProject(String projectId) async {

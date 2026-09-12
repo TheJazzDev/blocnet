@@ -10,6 +10,7 @@ import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/shared/widgets/app_network_image.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
@@ -308,10 +309,10 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
             child: project.logo.isNotEmpty
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                    child: Image.network(
-                      project.logo,
+                    child: AppNetworkImage(
+                      url: project.logo,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
+                      fallback: Icon(
                         Icons.layers_outlined,
                         size: AppIcon.lg,
                         color: AppColors.primary400,

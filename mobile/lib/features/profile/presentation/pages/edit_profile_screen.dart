@@ -8,6 +8,7 @@ import 'package:blocnet/services/community/community_posts_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
+import 'package:blocnet/shared/widgets/app_network_image.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -186,10 +187,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             )
                           : (auth.avatarUrl != null &&
                                   auth.avatarUrl!.trim().isNotEmpty
-                              ? Image.network(
-                                  auth.avatarUrl!.trim(),
+                              ? AppNetworkImage(
+                                  url: auth.avatarUrl!.trim(),
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Icon(
+                                  fallback: Icon(
                                     Icons.person,
                                     color: AppColors.textMuted,
                                   ),

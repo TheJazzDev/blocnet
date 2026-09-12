@@ -25,9 +25,19 @@ class ApiException implements Exception {
 
 class ApiClient {
   ApiClient({http.Client? httpClient})
-      : _httpClient = httpClient ?? http.Client();
+      : _httpClient = httpClient ?? _sharedHttpClient;
+
+  /// One transport for the whole app. Each `http.Client` owns a separate
+  /// `HttpClient` and therefore a separate connection pool, so a client per
+  /// store meant every screen's first request paid a fresh DNS + TCP + TLS
+  /// handshake. Sharing one keeps connections alive between them.
+  static final http.Client _sharedHttpClient = http.Client();
 
   final http.Client _httpClient;
+
+  /// The transport this client sends through.
+  http.Client get httpClient => _httpClient;
+
   static const Duration _requestTimeout = Duration(seconds: 15);
 
   static String? _authToken;

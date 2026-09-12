@@ -7,6 +7,7 @@ import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_level_pill.dart';
+import 'package:blocnet/shared/widgets/app_network_image.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
@@ -235,10 +236,10 @@ class _Avatar extends StatelessWidget {
               child: Container(
                 color: AppColors.bgElevated,
                 child: hasAvatar
-                    ? Image.network(
-                        avatarUrl!.trim(),
+                    ? AppNetworkImage(
+                        url: avatarUrl!.trim(),
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Center(child: fallback()),
+                        fallback: Center(child: fallback()),
                       )
                     : Center(child: fallback()),
               ),

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/shared/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 
 class UpdateProjectLogo extends StatelessWidget {
@@ -43,12 +44,12 @@ class UpdateProjectLogo extends StatelessWidget {
                     size: size / 2.8,
                   ),
                 )
-              : Image.network(
-                  logoUrl,
+              : AppNetworkImage(
+                  url: logoUrl,
                   width: size,
                   height: size,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  fallback: Container(
                     width: size,
                     height: size,
                     color: AppColors.bgElevated,

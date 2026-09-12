@@ -12,6 +12,7 @@ import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/shared/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
@@ -298,10 +299,10 @@ class _ProfileAvatarButton extends StatelessWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: hasAvatar
-            ? Image.network(
-                avatarUrl,
+            ? AppNetworkImage(
+                url: avatarUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Center(child: fallbackAvatar()),
+                fallback: Center(child: fallbackAvatar()),
               )
             : Center(child: fallbackAvatar()),
       ),

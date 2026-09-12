@@ -118,6 +118,8 @@ class HomeFeedSliver extends StatelessWidget {
                   gem: gem,
                   onUnfollow: () =>
                       projectsStore.toggleFollowProject(gem.project.id),
+                  onAsk: () => _ask(context, projectsStore, gem),
+                  onReport: () => _report(context, projectsStore, gem),
                 ),
               )
               .toList();
@@ -198,4 +200,76 @@ List<Widget> _buildFeedRows(List<Update> posts, FeedViewMode viewMode) {
     }
   }
   return rows;
+}
+
+/// Asks a gem's hunter for an update and says what happened.
+///
+/// The server aggregates, so the useful confirmation is how many members are
+/// waiting rather than "sent" — it tells the member their tap joined a count
+/// the hunter will actually see.
+Future<void> _ask(
+  BuildContext context,
+  ProjectsStore store,
+  QuietGem gem,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final waiting = await store.requestUpdateOn(gem.project.id);
+  if (!context.mounted) return;
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(
+        waiting == null
+            ? 'You have already asked about this gem recently.'
+            : waiting == 1
+                ? 'Asked. You are the first waiting on ${gem.project.name}.'
+                : 'Asked. $waiting members are waiting on ${gem.project.name}.',
+      ),
+    ),
+  );
+}
+
+/// Reports a gem as unmaintained, after confirming.
+///
+/// Confirmed because it puts another member's standing in question, and the
+/// copy says plainly what happens next so nobody expects an instant handover.
+Future<void> _report(
+  BuildContext context,
+  ProjectsStore store,
+  QuietGem gem,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: AppColors.bgSurface,
+      title: Text('Report ${gem.project.name}?'),
+      content: const Text(
+        'A moderator will review whether this gem needs a new hunter. '
+        'It is not reassigned automatically.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: const Text('Report'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+
+  final open = await store.reportProjectInactive(gem.project.id);
+  if (!context.mounted) return;
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(
+        open == null
+            ? 'Could not send that report. Try again shortly.'
+            : 'Reported. A moderator will review ${gem.project.name}.',
+      ),
+    ),
+  );
 }

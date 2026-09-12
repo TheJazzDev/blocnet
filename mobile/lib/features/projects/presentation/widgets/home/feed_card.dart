@@ -20,6 +20,7 @@ import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/fe
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_tag_pill.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_action_row.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_card_emphasis.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_deadline_line.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
 import 'package:flutter/material.dart';
@@ -516,6 +517,16 @@ class _FeedCardState extends State<FeedCard>
                             ),
                           ),
                         ],
+                        // Stated once, under the body. See [FeedDeadlineLine]:
+                        // never a live clock, because nobody outside a project
+                        // knows a window's total length.
+                        if (post.deadlineAt != null)
+                          FeedDeadlineLine(deadlineAt: post.deadlineAt!),
+                        // Stated once, under the body. See [FeedDeadlineLine]:
+                        // never a live clock, because nobody outside a project
+                        // knows a window's total length.
+                        if (post.deadlineAt != null)
+                          FeedDeadlineLine(deadlineAt: post.deadlineAt!),
                         if (previewText.isNotEmpty) ...[
                           SizedBox(
                             height: showTitle ? AppSpace.xs : AppSpace.md,

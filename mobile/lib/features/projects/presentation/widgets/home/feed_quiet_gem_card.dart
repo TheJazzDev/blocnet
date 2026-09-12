@@ -19,19 +19,28 @@ import 'package:flutter/material.dart';
 /// moderation event. It also claims only what is knowable — that nothing has
 /// come through, never that the project is dead.
 ///
-/// **Read-only for now.** The design also offers *Ask for an update* and
-/// *Report inactive*, and neither endpoint exists in the backend (F-42), so
-/// they are absent rather than present and dead. Unfollow ships because
-/// `ProjectsStore.toggleFollowProject` is real.
+/// All three actions are live. *Ask* is a nudge to the hunter, aggregated
+/// server-side so thirty-one members asking reaches them as one notification
+/// carrying the count. *Report* is an escalation to a moderator and does not
+/// reassign the gem — taking coverage from a hunter stays a decision a person
+/// makes. *Unfollow* is the member's own exit.
+///
+/// Report is separated from the other two and coloured, because it is the one
+/// that puts another member's standing in question. It is the only red on an
+/// otherwise deliberately grey card.
 class FeedQuietGemCard extends StatelessWidget {
   const FeedQuietGemCard({
     super.key,
     required this.gem,
     required this.onUnfollow,
+    required this.onAsk,
+    required this.onReport,
   });
 
   final QuietGem gem;
   final VoidCallback onUnfollow;
+  final VoidCallback onAsk;
+  final VoidCallback onReport;
 
   @override
   Widget build(BuildContext context) {
@@ -125,11 +134,45 @@ class FeedQuietGemCard extends StatelessWidget {
               _LastWords(update: last, daysAgo: gem.daysSilent),
             ],
             const SizedBox(height: AppSpace.md),
-            // One action, because one action is real. See the class doc.
             _GhostButton(
-              icon: Icons.visibility_off_outlined,
-              label: 'Unfollow ${gem.project.name}',
-              onTap: onUnfollow,
+              icon: Icons.campaign_outlined,
+              label: handle == null
+                  ? 'Ask for an update'
+                  : 'Ask $handle for an update',
+              onTap: onAsk,
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: _GhostButton(
+                    icon: Icons.visibility_off_outlined,
+                    label: 'Unfollow',
+                    onTap: onUnfollow,
+                  ),
+                ),
+                const SizedBox(width: AppSpace.sm),
+                Expanded(
+                  child: _GhostButton(
+                    icon: Icons.flag_outlined,
+                    label: 'Report inactive',
+                    onTap: onReport,
+                    danger: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              'Reported gems go to a moderator, who decides whether to '
+              'reassign them.',
+              textAlign: TextAlign.center,
+              style: AppTypography.custom(
+                color: AppColors.textFaint,
+                size: AppText.captionSize,
+                weight: FontWeight.w400,
+                height: 1.4,
+              ),
             ),
           ],
         ),
@@ -195,11 +238,15 @@ class _GhostButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.danger = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+
+  /// Marks the one action that puts another member's standing in question.
+  final bool danger;
 
   @override
   Widget build(BuildContext context) {
@@ -212,12 +259,20 @@ class _GhostButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: AppRadius.md,
-          border: Border.all(color: AppColors.borderSubtle),
+          border: Border.all(
+            color: danger
+                ? AppColors.priorityHigh.withValues(alpha: 0.28)
+                : AppColors.borderSubtle,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: AppIcon.sm, color: AppColors.textSecondary),
+            Icon(
+              icon,
+              size: AppIcon.sm,
+              color: danger ? AppColors.priorityHigh : AppColors.textSecondary,
+            ),
             const SizedBox(width: AppSpace.sm),
             Flexible(
               child: Text(
@@ -225,7 +280,8 @@ class _GhostButton extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.custom(
-                  color: AppColors.textSecondary,
+                  color:
+                      danger ? AppColors.priorityHigh : AppColors.textSecondary,
                   size: AppText.labelSize,
                   weight: FontWeight.w600,
                 ),

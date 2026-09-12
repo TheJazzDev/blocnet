@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:blocnet/app/blocnet_app.dart';
 import 'package:blocnet/app/router.dart';
 import 'package:blocnet/app/config.dart';
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/badges_store.dart';
 import 'package:blocnet/services/users/blocks_store.dart';
@@ -32,7 +32,6 @@ import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
 import 'package:flutter/material.dart';
 import 'constants/app_routes.dart';
-import 'package:blocnet/shared/pages/page_not_found.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -249,20 +248,11 @@ void main() async {
           },
         ),
       ],
-      child: Consumer<AuthStore>(
-        builder: (context, auth, _) => MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: buildPrimaryTheme(
-            accent: AppColors.accentForSpace(auth.isInHunterSpace),
-          ),
-          navigatorKey: _navigatorKey,
-          onGenerateRoute: CustomAppRouter.generateRoute,
-          onGenerateInitialRoutes: CustomAppRouter.generateInitialRoutes,
-          initialRoute: initialRoute,
-          onUnknownRoute: (settings) => MaterialPageRoute(
-            builder: (context) => const PageNotFoundScreen(),
-          ),
-        ),
+      child: BlocnetApp(
+        navigatorKey: _navigatorKey,
+        initialRoute: initialRoute,
+        onGenerateRoute: CustomAppRouter.generateRoute,
+        onGenerateInitialRoutes: CustomAppRouter.generateInitialRoutes,
       ),
     ),
   );

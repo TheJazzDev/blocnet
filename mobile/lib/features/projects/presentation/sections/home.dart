@@ -22,6 +22,7 @@ import 'package:blocnet/services/core/home_bootstrap_store.dart';
 import 'package:blocnet/services/core/startup_metrics_service.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/models/quiet_gem.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_caught_up_card.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
@@ -180,8 +181,13 @@ class _HomeScreenState extends State<HomeScreen>
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
     final edgeStore = context.watch<EdgeEngineStore>();
     final updatesStore = context.watch<UpdatesStore>();
-    final feedViewMode = context.watch<FeedViewModeStore>().mode;
-    final isInHunterSpace = context.watch<AuthStore>().isInHunterSpace;
+    // select, not watch: this screen needs one field from each of these, and
+    // AuthStore in particular notifies from ~56 places that cannot change the
+    // feed. watch() rebuilt the whole feed on every one of them.
+    final feedViewMode =
+        context.select<FeedViewModeStore, FeedViewMode>((store) => store.mode);
+    final isInHunterSpace =
+        context.select<AuthStore, bool>((auth) => auth.isInHunterSpace);
     final accent = AppColors.accentForSpace(isInHunterSpace);
     // Choose the opening tab the first time we know the follow count.
     final followCount =

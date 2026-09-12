@@ -33,6 +33,7 @@ class UpdatesApiRepository {
     required String content,
     required Priority priority,
     List<String>? secondaryTagIds,
+    DateTime? deadlineAt,
   }) async {
     final response = await _apiClient.post(
       '/projects/$projectId/updates',
@@ -41,6 +42,8 @@ class UpdatesApiRepository {
         'contentMd': content,
         'urgency': _priorityToUrgency(priority),
         'secondaryTagIds': secondaryTagIds ?? const [],
+        // Sent as UTC so the server stores an instant, not a wall clock.
+        'deadlineAt': deadlineAt?.toUtc().toIso8601String(),
       },
     );
 
@@ -58,6 +61,7 @@ class UpdatesApiRepository {
         'title': update.title,
         'contentMd': update.content,
         'urgency': _priorityToUrgency(update.priority),
+        'deadlineAt': update.deadlineAt?.toUtc().toIso8601String(),
         'secondaryTagIds': update.secondaryTagIds,
       },
     );

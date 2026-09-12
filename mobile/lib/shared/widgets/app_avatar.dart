@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class AppAvatar extends StatelessWidget {
@@ -32,10 +33,18 @@ class AppAvatar extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: hasImage
-          ? Image.network(
-              normalized,
+          ? CachedNetworkImage(
+              imageUrl: normalized,
               fit: fit,
-              errorBuilder: (_, __, ___) => Center(child: fallback),
+              // Decode at the size actually drawn. Without this a large upload
+              // is decoded at full resolution into memory to fill a tiny
+              // circle, and that decode lands on the UI isolate mid-scroll.
+              memCacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
+                  .round(),
+              memCacheHeight: (size * MediaQuery.devicePixelRatioOf(context))
+                  .round(),
+              placeholder: (_, __) => Center(child: fallback),
+              errorWidget: (_, __, ___) => Center(child: fallback),
             )
           : Center(child: fallback),
     );
