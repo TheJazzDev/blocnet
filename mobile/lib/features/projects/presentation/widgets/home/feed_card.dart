@@ -19,6 +19,7 @@ import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/fe
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_project_chip.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_tag_pill.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_action_row.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_card_emphasis.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
@@ -566,6 +567,12 @@ class _FeedCardState extends State<FeedCard>
     final previewText = post.description.trim().isEmpty
         ? post.content.trim()
         : post.description.trim();
+    final title = post.title.trim();
+    // Some updates carry a title that just restates the opening of the body.
+    // Showing both then reads as a stutter, so the title wins and the body is
+    // left to the detail view.
+    final showTitle = title.isNotEmpty &&
+        !previewText.toLowerCase().startsWith(title.toLowerCase());
 
     if (widget.layout == FeedCardLayout.list) {
       return _buildListLayout(
@@ -580,48 +587,42 @@ class _FeedCardState extends State<FeedCard>
       );
     }
 
+    // Priority drives the whole card, not a pill in its corner. See
+    // [FeedCardEmphasis]: an urgent update keeps its chronological place and
+    // simply becomes a heavier object.
+    final emphasis = FeedCardEmphasis.of(post.priority);
+
     return GestureDetector(
       onTap: () => _openDetails(context),
-      child: Stack(
-        children: [
-          // Subtle glow effect on left side based on priority
-          Positioned(
-            left: -20,
-            top: 20,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    priorityColor.withValues(alpha: 0.08),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
+      child: DecoratedBox(
+        // A card is a row in a stream, not a floating panel: full-bleed, its
+        // own padding, and a hairline to the next one.
+        decoration: BoxDecoration(
+          gradient: emphasis.ground,
+          border: const Border(
+            bottom: BorderSide(color: AppColors.borderFaint),
           ),
-          // Main card content
-          Container(
-            margin: const EdgeInsets.only(bottom: AppSpace.md),
-            padding: const EdgeInsets.all(AppSpace.lg),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.bgSurface,
-                  AppColors.bgSurface.withValues(alpha: 0.85),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.lgValue),
-              border: Border.all(
-                color: priorityColor.withValues(alpha: 0.2),
-                width: 1.5,
-              ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // The card's only signal red. 3px, full height, so it reads as
+            // mass rather than as a badge.
+            SizedBox(
+              width: 3,
+              child: emphasis.edgeColor == null
+                  ? null
+                  : ColoredBox(color: emphasis.edgeColor!),
             ),
-            child: Column(
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg - 3,
+                  AppSpace.lg,
+                  AppSpace.lg,
+                  AppSpace.lg,
+                ),
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Header: avatar + author + timestamp + priority pill ──
@@ -763,32 +764,55 @@ class _FeedCardState extends State<FeedCard>
                   onTap: () => _openProjectDetails(context),
                 ),
 
-                const SizedBox(height: AppSpace.md),
-
-                // ── Secondary tags ──
-                if (post.secondaryTags.isNotEmpty) ...[
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: post.secondaryTags.take(3).map((tag) {
-                      return FeedTagPill(label: tag.name);
-                    }).toList(),
-                  ),
+                // ── Title ──
+                // The feed used to throw the title away and show only the
+                // body. It is the most informative line an update has, so it
+                // now leads, and it is the thing that grows with priority.
+                if (showTitle) ...[
                   const SizedBox(height: AppSpace.md),
+                  Text(
+                    title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.custom(
+                      color: AppColors.textPrimary,
+                      size: emphasis.titleSize,
+                      weight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
                 ],
 
-                // ── Update text ──
-                Text(
-                  previewText,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.custom(
-                    color: AppColors.textSecondary,
-                    size: AppText.bodySize,
-                    weight: FontWeight.w400,
-                    height: 1.6,
+                // ── Body ──
+                if (previewText.isNotEmpty) ...[
+                  SizedBox(height: showTitle ? AppSpace.xs : AppSpace.md),
+                  Text(
+                    previewText,
+                    maxLines: showTitle ? 3 : 4,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.custom(
+                      color: AppColors.textSecondary,
+                      size: AppText.bodySize,
+                      weight: FontWeight.w400,
+                      height: 1.55,
+                    ),
                   ),
-                ),
+                ],
+
+                // ── Secondary tags ──
+                // Below the body, not above it: they are how an update is
+                // classified, which matters after reading it, not before.
+                if (post.secondaryTags.isNotEmpty) ...[
+                  const SizedBox(height: AppSpace.md),
+                  Wrap(
+                    spacing: AppSpace.xs + 2,
+                    runSpacing: AppSpace.xs + 2,
+                    children: post.secondaryTags
+                        .take(3)
+                        .map((tag) => FeedTagPill(label: tag.name))
+                        .toList(),
+                  ),
+                ],
 
                 const SizedBox(height: AppSpace.lg),
 
@@ -830,9 +854,11 @@ class _FeedCardState extends State<FeedCard>
                   ),
                 ),
               ],
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

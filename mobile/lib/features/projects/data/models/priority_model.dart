@@ -12,6 +12,13 @@ class Priority {
   static final mid = Priority._('Medium', AppColors.priorityMid);
   static final low = Priority._('Low', AppColors.priorityLow);
 
+  /// Identity checks. The three levels are singletons, so `==` is identity;
+  /// these exist so call sites read as intent rather than as a comparison
+  /// against a static field.
+  bool get isHigh => this == high;
+  bool get isMid => this == mid;
+  bool get isLow => this == low;
+
   /// Get all priority levels
   static List<Priority> getAll() {
     return [low, mid, high];

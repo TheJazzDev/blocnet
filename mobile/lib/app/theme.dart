@@ -66,6 +66,11 @@ class AppColors {
   /// Inputs, nested elements — zinc-800 (#27272a)
   static const Color bgElevated = Color(0xFF27272a);
 
+  /// Feed separators — the hairline between two rows in a stream (#1b1b1f).
+  /// Fainter than [borderSubtle] on purpose: it divides without drawing a box,
+  /// which is what lets a feed read as one list rather than a stack of cards.
+  static const Color borderFaint = Color(0xFF1b1b1f);
+
   /// Subtle borders — zinc-800 (#27272a)
   static const Color borderSubtle = Color(0xFF27272a);
 
