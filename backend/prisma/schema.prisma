@@ -110,6 +110,8 @@ model Profile {
   @@index([referredById])
   @@index([primaryBadgeId])
   @@index([currentLevelId])
+  projectUpdateRequests   ProjectUpdateRequest[]
+  projectInactivityReports ProjectInactivityReport[]
 }
 
 model UserBlock {
@@ -161,6 +163,8 @@ model Project {
   ownerAdmin       Profile               @relation("OwnedProjects", fields: [ownerAdminId], references: [id])
   primaryTag       PrimaryTag            @relation(fields: [primaryTagId], references: [id])
   follows          ProjectFollow[]
+  updateRequests   ProjectUpdateRequest[]
+  inactivityReports ProjectInactivityReport[]
   hunters          ProjectHunter[]
   invites          ProjectHunterInvite[]
   proposals        ProjectProposal[]
@@ -241,6 +245,15 @@ model Update {
   title            String
   contentMd        String
   status           UpdateStatus         @default(published)
+  /// When the window this update describes closes. Null for most updates, and
+  /// deliberately allowed to be in the past: a hunter may report a window that
+  /// has already shut, and the app states that rather than hiding it.
+  ///
+  /// Stored as a timestamp so expiry is computable and a reminder can fire
+  /// ahead of it, but rendered as a stated time ("Closes Friday 18:00 UTC"),
+  /// never as a live clock. Nobody outside a project knows a window's total
+  /// length, so a countdown bar would claim knowledge we do not have.
+  deadlineAt       DateTime?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   moderatedBy      String?              @db.Uuid
@@ -257,6 +270,10 @@ model Update {
   @@index([projectId, urgency])
   @@index([authorId])
   @@index([status, createdAt])
+  // Supports "closing soon": published updates with a live deadline, soonest
+  // first. That list is what the day-one home screen offers a member who
+  // follows nothing.
+  @@index([status, deadlineAt])
 }
 
 model PrimaryTag {
@@ -341,6 +358,47 @@ model CommentReaction {
   @@unique([commentId, userId, kind])
   @@index([userId, createdAt])
   @@index([commentId, kind])
+}
+
+/// A member asking the hunter of a gem they follow for an update.
+///
+/// Rows are per member so the count is real ("31 members are waiting"), but
+/// the *notification* is aggregated: one per gem per week, via the dedupeKey
+/// unique on Notification. Thirty-one members tapping the button must not send
+/// a hunter thirty-one notifications.
+model ProjectUpdateRequest {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  memberId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  member    Profile  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Counting who is waiting on a gem, and rate-limiting one member to one
+  // nudge per gem per week.
+  @@index([projectId, createdAt])
+  @@index([memberId, projectId, createdAt])
+}
+
+/// A member reporting that a gem's hunter has abandoned it.
+///
+/// One standing report per member per gem, so the count is people rather than
+/// taps. Deliberately does NOT reassign the gem: taking coverage away from a
+/// hunter is a moderation decision with a person behind it, so this raises the
+/// signal and a moderator acts on it.
+model ProjectInactivityReport {
+  id         String    @id @default(uuid()) @db.Uuid
+  projectId  String    @db.Uuid
+  reporterId String    @db.Uuid
+  createdAt  DateTime  @default(now())
+  /// Set when a moderator has dealt with it, so a handled gem stops counting.
+  resolvedAt DateTime?
+  resolvedBy String?   @db.Uuid
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reporter   Profile   @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, reporterId])
+  @@index([projectId, resolvedAt])
 }
 
 model ProjectFollow {
@@ -1469,6 +1527,8 @@ enum NotificationType {
   project_invite_received
   project_invite_responded
   project_assignment_changed
+  project_update_requested
+  project_reported_inactive
   role_changed
   wallet_transfer_sent
   wallet_transfer_received

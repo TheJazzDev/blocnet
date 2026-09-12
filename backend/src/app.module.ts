@@ -24,6 +24,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { UpdatesModule } from './updates/updates.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProjectAssignmentsModule } from './project-assignments/project-assignments.module';
+import { ProjectAttentionModule } from './project-attention/project-attention.module';
 import { ProjectProposalsModule } from './project-proposals/project-proposals.module';
 import { ProjectsModule } from './projects/projects.module';
 import { ReferralsModule } from './referrals/referrals.module';
@@ -69,6 +70,7 @@ import { envValidationSchema } from './config/env.validation';
     QuestsModule,
     ProjectsModule,
     ProjectAssignmentsModule,
+    ProjectAttentionModule,
     ProjectProposalsModule,
     TagsModule,
     UpdatesModule,

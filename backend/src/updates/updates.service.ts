@@ -13,6 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUpdateDto } from './dto/create-update.dto';
 import { UpdateUpdateDto } from './dto/update-update.dto';
 import { ListUpdatesQuery } from './dto/list-updates.query';
+import { parseDeadline } from './parse-deadline';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
@@ -55,6 +56,7 @@ export class UpdatesService {
         title: dto.title,
         contentMd: dto.contentMd,
         urgency: dto.urgency,
+        deadlineAt: parseDeadline(dto.deadlineAt),
         secondaryTags: dto.secondaryTagIds?.length
           ? {
               createMany: {
@@ -210,6 +212,10 @@ export class UpdatesService {
         contentMd: dto.contentMd,
         urgency: dto.urgency,
         status: dto.status,
+        // undefined leaves the deadline alone; explicit null clears it, which
+        // is how a hunter says "that window is no longer a thing".
+        deadlineAt:
+          dto.deadlineAt === undefined ? undefined : parseDeadline(dto.deadlineAt),
         secondaryTags: dto.secondaryTagIds
           ? {
               deleteMany: {},
