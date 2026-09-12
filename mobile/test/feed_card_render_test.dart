@@ -5,6 +5,7 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/secondary_tag_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_deadline_line.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/comments_store.dart';
 import 'package:blocnet/services/engagement/levels_store.dart';
@@ -30,8 +31,11 @@ void main() {
   // iPhone-class logical width, which is what the design is drawn at.
   const phone = Size(390, 844);
 
-  Update updateWith(Priority priority,
-      {String title = 'KYC opens for Phase 2'}) {
+  Update updateWith(
+    Priority priority, {
+    String title = 'KYC opens for Phase 2',
+    DateTime? deadlineAt,
+  }) {
     final admin = Admin(
       id: 'author-1',
       name: 'Jazzdev',
@@ -62,6 +66,7 @@ void main() {
       projectId: 'project-1',
       priority: priority,
       createdAt: DateTime(2026, 9, 12),
+      deadlineAt: deadlineAt,
       admin: admin,
       project: project,
       likesCount: 412,
@@ -157,6 +162,24 @@ void main() {
         // before any word is read. The title grows from 15 to 20px, so the
         // card cannot be the same height.
         expect(highHeight, greaterThan(lowHeight));
+      });
+
+      testWidgets('shows the deadline exactly once when there is one',
+          (tester) async {
+        // Both layouts once rendered it twice, because the insertion anchor
+        // for one was a substring of the other's. One per card, always.
+        await pumpCard(
+          tester,
+          updateWith(Priority.high, deadlineAt: DateTime(2026, 12, 1, 18)),
+          layout: layout,
+        );
+        expect(find.byType(FeedDeadlineLine), findsOneWidget);
+      });
+
+      testWidgets('draws no deadline line when the update has none',
+          (tester) async {
+        await pumpCard(tester, updateWith(Priority.high), layout: layout);
+        expect(find.byType(FeedDeadlineLine), findsNothing);
       });
 
       testWidgets('offers Tip when the reader is not the author',

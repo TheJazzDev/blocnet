@@ -517,12 +517,7 @@ class _FeedCardState extends State<FeedCard>
                             ),
                           ),
                         ],
-                        // Stated once, under the body. See [FeedDeadlineLine]:
-                        // never a live clock, because nobody outside a project
-                        // knows a window's total length.
-                        if (post.deadlineAt != null)
-                          FeedDeadlineLine(deadlineAt: post.deadlineAt!),
-                        // Stated once, under the body. See [FeedDeadlineLine]:
+                        // Stated once, under the title. See [FeedDeadlineLine]:
                         // never a live clock, because nobody outside a project
                         // knows a window's total length.
                         if (post.deadlineAt != null)
@@ -829,6 +824,11 @@ class _FeedCardState extends State<FeedCard>
               ],
 
               // ── Body ──
+              // Stated once, under the title. See [FeedDeadlineLine]:
+              // never a live clock, because nobody outside a project knows a
+              // window's total length.
+              if (post.deadlineAt != null)
+                FeedDeadlineLine(deadlineAt: post.deadlineAt!),
               if (previewText.isNotEmpty) ...[
                 SizedBox(height: showTitle ? AppSpace.xs : AppSpace.md),
                 Text(
