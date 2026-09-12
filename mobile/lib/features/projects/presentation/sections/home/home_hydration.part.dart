@@ -65,7 +65,10 @@ mixin _HomeHydration on State<HomeScreen> {
 
     final remote = await bootstrap.fetchRemote(
       userId: userId,
-      feedLimit: 100,
+      // First paint only. The refresh below pulls the full set moments later,
+      // so asking for 100 here just makes the member wait longer to see
+      // anything; 30 is already several screens of scroll.
+      feedLimit: 30,
       windowDays: 7,
     );
     if (!mounted) return;

@@ -135,6 +135,11 @@ export class UpdatesService {
       skip: offset,
       take: limit,
       include: updateInclude,
+      // updateInclude spans author (+roles, +primaryBadge, +currentLevel),
+      // project (+primaryTag) and secondaryTags. Under the default strategy
+      // that is eight round trips for one feed page; as a lateral join it is
+      // one, and the payload is identical.
+      relationLoadStrategy: 'join',
     });
 
     const commentedUpdateIds = await this.listCommentedUpdateIds(
@@ -161,6 +166,8 @@ export class UpdatesService {
           : {}),
       },
       include: updateInclude,
+      // Same eight-relation fan-out as the feed, for a single row.
+      relationLoadStrategy: 'join',
     });
 
     if (!update) {

@@ -77,8 +77,15 @@ class UpdatesStore extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final projects = await _projectsRepository.fetchProjects(limit: 500);
-      final updates = await _updatesRepository.fetchUpdates(limit: 500);
+      // Neither read depends on the other, so they go out together rather than
+      // as two consecutive round trips. Future.wait listens to both
+      // immediately, so one failing cannot leave the other's error unhandled.
+      final fetched = await Future.wait([
+        _projectsRepository.fetchProjects(limit: 500),
+        _updatesRepository.fetchUpdates(limit: 500),
+      ]);
+      final projects = fetched[0] as List<Project>;
+      final updates = fetched[1] as List<Update>;
 
       final groupedUpdates = <String, List<Update>>{};
       for (final update in updates) {
