@@ -106,18 +106,20 @@ class HomeFeedSliver extends StatelessWidget {
             posts: store.posts,
             now: DateTime.now(),
           );
-          final quietCards = activeSection == Sections.following
-              ? quiet
-                  .take(3)
-                  .map(
-                    (gem) => FeedQuietGemCard(
-                      gem: gem,
-                      onUnfollow: () =>
-                          projectsStore.toggleFollowProject(gem.project.id),
-                    ),
-                  )
-                  .toList()
-              : const <Widget>[];
+          // Shown on both feed tabs, not just Following: a gem going quiet is
+          // about the member's own board, and it matters wherever they are
+          // looking. Capped at three so a neglected board does not bury the
+          // feed under warnings.
+          final quietCards = quiet
+              .take(3)
+              .map(
+                (gem) => FeedQuietGemCard(
+                  gem: gem,
+                  onUnfollow: () =>
+                      projectsStore.toggleFollowProject(gem.project.id),
+                ),
+              )
+              .toList();
 
           if (posts.isEmpty && quietCards.isEmpty) {
             return const SliverPadding(

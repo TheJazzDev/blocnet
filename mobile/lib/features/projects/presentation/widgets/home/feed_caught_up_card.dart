@@ -66,7 +66,8 @@ class FeedCaughtUpCard extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: accent.withValues(alpha: 0.28), width: 2),
+              border:
+                  Border.all(color: accent.withValues(alpha: 0.28), width: 2),
             ),
             child: Icon(
               Icons.check_rounded,
@@ -106,8 +107,14 @@ class FeedCaughtUpCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _Stat(value: '$gemsFollowed', label: 'gems'),
-                _Stat(value: '$updatesTracked', label: 'updates'),
+                _Stat(
+                  value: '$gemsFollowed',
+                  label: gemsFollowed == 1 ? 'gem' : 'gems',
+                ),
+                _Stat(
+                  value: '$updatesTracked',
+                  label: updatesTracked == 1 ? 'update' : 'updates',
+                ),
                 _Stat(
                   value: sweptAt == null ? '—' : getTimeStamp(sweptAt!),
                   label: 'last sweep',
@@ -121,8 +128,11 @@ class FeedCaughtUpCard extends StatelessWidget {
   }
 
   String get _subtitle {
-    final gems = gemsFollowed == 1 ? 'gem' : 'gems';
-    return 'Nothing needs you across the $gemsFollowed $gems on your board. '
+    if (gemsFollowed == 1) {
+      return 'Nothing needs you on the one gem you follow. '
+          'Its hunter is keeping it current.';
+    }
+    return 'Nothing needs you across the $gemsFollowed gems on your board. '
         'A hunter is keeping each one current.';
   }
 }
