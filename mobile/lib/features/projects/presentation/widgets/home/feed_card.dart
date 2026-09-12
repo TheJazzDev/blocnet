@@ -432,20 +432,16 @@ class _FeedCardState extends State<FeedCard>
                               const SizedBox(width: AppSpace.sm),
                               FeedRoleChip(label: roleLabel, color: roleColor),
                             ],
-                            const SizedBox(width: AppSpace.sm),
-                            Text(
-                              getTimeStamp(post.createdAt),
-                              style: AppTypography.custom(
-                                color: AppColors.textFaint,
-                                size: AppText.captionSize,
-                                weight: FontWeight.w400,
-                              ),
-                            ),
                           ],
                         ),
                         const SizedBox(height: AppSpace.hair),
+                        // The timestamp belongs on the byline, not in the name
+                        // row. Crammed up there beside the role chip and the
+                        // priority pill it overflowed whenever the priority
+                        // label was a long word ("Medium" by 34px), and it
+                        // reads better here anyway: "@jazzdev · 2h".
                         Text(
-                          displayUsername,
+                          '$displayUsername · ${getTimeStamp(post.createdAt)}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.custom(
@@ -735,20 +731,16 @@ class _FeedCardState extends State<FeedCard>
                                 color: roleColor,
                               ),
                             ],
-                            const SizedBox(width: AppSpace.sm),
-                            Text(
-                              getTimeStamp(post.createdAt),
-                              style: AppTypography.custom(
-                                color: AppColors.textFaint,
-                                size: AppText.captionSize,
-                                weight: FontWeight.w400,
-                              ),
-                            ),
                           ],
                         ),
                         const SizedBox(height: AppSpace.hair),
+                        // The timestamp belongs on the byline, not in the name
+                        // row. Crammed up there beside the role chip and the
+                        // priority pill it overflowed whenever the priority
+                        // label was a long word ("Medium" by 34px), and it
+                        // reads better here anyway: "@jazzdev · 2h".
                         Text(
-                          displayUsername,
+                          '$displayUsername · ${getTimeStamp(post.createdAt)}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.custom(
