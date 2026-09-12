@@ -20,6 +20,8 @@ import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/fe
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_tag_pill.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_action_row.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_card_emphasis.dart';
+import 'package:blocnet/features/tips/data/models/tip_models.dart';
+import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
@@ -851,6 +853,7 @@ class _FeedCardState extends State<FeedCard>
                     likeCount: _likeCount,
                     commentCount: _commentCount,
                     bookmarkCount: _bookmarkCount,
+                    onTipTap: _tipHandler(context),
                   ),
                 ),
               ],
@@ -861,6 +864,29 @@ class _FeedCardState extends State<FeedCard>
         ),
       ),
     );
+  }
+
+  /// Opens the tip sheet for this update's author, or returns null when there
+  /// is nobody to tip: no resolvable author, or the reader is the author. The
+  /// action row omits the pill rather than showing a dead one.
+  VoidCallback? _tipHandler(BuildContext context) {
+    final recipientId = post.adminId.toString();
+    if (recipientId.trim().isEmpty) return null;
+    final myId = context.read<AuthStore>().userId;
+    if (myId != null && myId == recipientId) return null;
+
+    return () => TipHunterSheet.show(
+          context,
+          recipient: TipRecipient(
+            userId: recipientId,
+            username: post.admin?.username,
+            displayName: post.admin?.name,
+            avatarUrl: post.admin?.imageUrl,
+            isHunterHint: true,
+          ),
+          contextType: 'update',
+          contextId: post.id.toString(),
+        );
   }
 
   String _displayUsername(String raw, String fallbackName) {
