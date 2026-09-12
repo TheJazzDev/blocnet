@@ -116,6 +116,23 @@ prisma db push  # Bypasses migration history
 - `DIRECT_URL` = direct connection (migrations only)
 - Migration files are immutable once created
 
+**Preview feature in use: `relationJoins`** (`previewFeatures` in `schema.prisma`)
+
+`updateInclude` spans author (+roles, +primaryBadge, +currentLevel), project (+primaryTag)
+and secondaryTags. Under Prisma's default relation strategy that is **8 separate queries** for
+one feed page; `relationLoadStrategy: 'join'` in `updates.service.ts` (`listUpdates` and
+`getUpdate`) collapses them into **1**. Measured, and both strategies return byte-identical
+payloads.
+
+Still preview as of Prisma 7.4.0 — the flag is required, verified. If a future Prisma upgrade
+changes or drops it, **the build fails loudly** (`TS2322: Type 'string' is not assignable to
+type 'never'` on the `relationLoadStrategy` lines), so `./scripts/predeploy-check.sh` catches
+it before deploy. It cannot break silently at runtime.
+
+If you ever have to drop it, the feed read goes back to ~10 round trips per request. That is
+invisible against a co-located database and very expensive against a distant one — so re-measure
+before assuming it does not matter.
+
 ### 5. BigInt Serialization Pattern
 
 - Database: `BigInt` for token amounts (native precision)
