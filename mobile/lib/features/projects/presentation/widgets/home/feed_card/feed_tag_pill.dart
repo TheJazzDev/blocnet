@@ -6,8 +6,7 @@ import 'package:flutter/material.dart';
 /// A single category pill (`AIRDROPS`, `MINING`, …) under a feed card's body.
 /// These come from an update's secondary tags and carry categorical colour.
 class FeedTagPill extends StatelessWidget {
-  const FeedTagPill({
-    super.key,required this.label});
+  const FeedTagPill({super.key, required this.label});
 
   final String label;
 

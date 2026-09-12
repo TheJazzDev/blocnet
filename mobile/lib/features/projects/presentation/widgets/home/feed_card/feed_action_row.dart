@@ -49,7 +49,7 @@ class FeedActionRow extends StatelessWidget {
           onTap: onLikeTap,
           count: likeCount,
         ),
-        const SizedBox(width: AppSpace.xl),
+        const SizedBox(width: AppSpace.sm),
         _ActionButton(
           icon: Icon(
             Icons.chat_bubble_outline_rounded,
@@ -59,7 +59,7 @@ class FeedActionRow extends StatelessWidget {
           onTap: onCommentTap,
           count: commentCount,
         ),
-        const SizedBox(width: AppSpace.xl),
+        const SizedBox(width: AppSpace.sm),
         _ActionButton(
           icon: Icon(
             Icons.share_outlined,
@@ -155,10 +155,14 @@ class _ActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 64,
-        height: 26,
+      // Sized to its content with a 44px minimum touch target, not a fixed
+      // width. The old fixed 64px was invisible while four buttons shared the
+      // row under spaceBetween; adding Tip as a fifth element pushed the row
+      // 62px past the screen.
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 44, minHeight: 32),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             icon,

@@ -348,6 +348,9 @@ class _FeedCardState extends State<FeedCard>
     required BuildContext context,
     required Project project,
     required String previewText,
+    required String title,
+    required bool showTitle,
+    required FeedCardEmphasis emphasis,
     required String? roleLabel,
     required Color roleColor,
     required Color priorityColor,
@@ -355,202 +358,240 @@ class _FeedCardState extends State<FeedCard>
     required UserLevelModel? authorLevel,
   }) {
     final author = post.admin!;
-    return InkWell(
-      onTap: () => _openDetails(context),
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () => _openAuthorProfile(context),
-                  behavior: HitTestBehavior.opaque,
-                  child: AppAvatar(
-                    radius: 20,
-                    imageUrl: author.imageUrl,
-                    fallback: Icon(
-                      Icons.person,
-                      size: AppIcon.md,
-                      color: AppColors.textMuted,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: emphasis.ground,
+        border: Border(
+          left: BorderSide(
+            color: emphasis.edgeColor ?? Colors.transparent,
+            width: 3,
+          ),
+          bottom: const BorderSide(color: AppColors.borderFaint),
+        ),
+      ),
+      child: InkWell(
+        onTap: () => _openDetails(context),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpace.md - 3,
+            AppSpace.md,
+            AppSpace.md,
+            AppSpace.md,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () => _openAuthorProfile(context),
+                    behavior: HitTestBehavior.opaque,
+                    child: AppAvatar(
+                      radius: 20,
+                      imageUrl: author.imageUrl,
+                      fallback: Icon(
+                        Icons.person,
+                        size: AppIcon.md,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => _openAuthorProfile(context),
-                              behavior: HitTestBehavior.opaque,
-                              child: Row(
-                                children: [
-                                  Flexible(
-                                    child: UserNameWithLevelIcon(
-                                      name: author.name,
-                                      currentLevel: authorLevel,
-                                      levelBadgeSize: LevelBadgeSize.small,
-                                      textStyle: AppTypography.custom(
-                                        color: AppColors.textPrimary,
-                                        size: AppText.bodySize,
-                                        weight: FontWeight.w700,
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => _openAuthorProfile(context),
+                                behavior: HitTestBehavior.opaque,
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      child: UserNameWithLevelIcon(
+                                        name: author.name,
+                                        currentLevel: authorLevel,
+                                        levelBadgeSize: LevelBadgeSize.small,
+                                        textStyle: AppTypography.custom(
+                                          color: AppColors.textPrimary,
+                                          size: AppText.bodySize,
+                                          weight: FontWeight.w700,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          if (roleLabel != null) ...[
+                            if (roleLabel != null) ...[
+                              const SizedBox(width: AppSpace.sm),
+                              FeedRoleChip(label: roleLabel, color: roleColor),
+                            ],
                             const SizedBox(width: AppSpace.sm),
-                            FeedRoleChip(label: roleLabel, color: roleColor),
+                            Text(
+                              getTimeStamp(post.createdAt),
+                              style: AppTypography.custom(
+                                color: AppColors.textFaint,
+                                size: AppText.captionSize,
+                                weight: FontWeight.w400,
+                              ),
+                            ),
                           ],
-                          const SizedBox(width: AppSpace.sm),
+                        ),
+                        const SizedBox(height: AppSpace.hair),
+                        Text(
+                          displayUsername,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.custom(
+                            color: AppColors.textMuted,
+                            size: AppText.labelSize,
+                            weight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpace.sm),
+                        GestureDetector(
+                          onTap: () => _openProjectDetails(context),
+                          behavior: HitTestBehavior.opaque,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.layers_outlined,
+                                size: AppIcon.xs,
+                                color: AppColors.textFaint,
+                              ),
+                              const SizedBox(width: AppSpace.sm),
+                              Expanded(
+                                child: Text(
+                                  'in ${project.name}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.custom(
+                                    color: AppColors.textMuted,
+                                    size: AppText.labelSize,
+                                    weight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpace.md),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: AppSpace.hair,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: priorityColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(
+                                      AppRadius.fullValue),
+                                  border: Border.all(
+                                    color:
+                                        priorityColor.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: Text(
+                                  post.priority.label.toUpperCase(),
+                                  style: AppTypography.custom(
+                                    color: priorityColor,
+                                    size: AppText.captionSize,
+                                    weight: FontWeight.w700,
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (showTitle) ...[
+                          const SizedBox(height: AppSpace.md),
                           Text(
-                            getTimeStamp(post.createdAt),
+                            title,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
                             style: AppTypography.custom(
-                              color: AppColors.textFaint,
-                              size: AppText.captionSize,
-                              weight: FontWeight.w400,
+                              color: AppColors.textPrimary,
+                              size: emphasis.titleSize,
+                              weight: FontWeight.w600,
+                              height: 1.3,
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: AppSpace.hair),
-                      Text(
-                        displayUsername,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.custom(
-                          color: AppColors.textMuted,
-                          size: AppText.labelSize,
-                          weight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpace.sm),
-                      GestureDetector(
-                        onTap: () => _openProjectDetails(context),
-                        behavior: HitTestBehavior.opaque,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.layers_outlined,
-                              size: AppIcon.xs,
-                              color: AppColors.textFaint,
-                            ),
-                            const SizedBox(width: AppSpace.sm),
-                            Expanded(
-                              child: Text(
-                                'in ${project.name}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.custom(
-                                  color: AppColors.textMuted,
-                                  size: AppText.labelSize,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppSpace.md),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpace.sm,
-                                vertical: AppSpace.hair,
-                              ),
-                              decoration: BoxDecoration(
-                                color: priorityColor.withValues(alpha: 0.12),
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.fullValue),
-                                border: Border.all(
-                                  color: priorityColor.withValues(alpha: 0.35),
-                                ),
-                              ),
-                              child: Text(
-                                post.priority.label.toUpperCase(),
-                                style: AppTypography.custom(
-                                  color: priorityColor,
-                                  size: AppText.captionSize,
-                                  weight: FontWeight.w700,
-                                  letterSpacing: 0.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (post.secondaryTags.isNotEmpty) ...[
-                        const SizedBox(height: AppSpace.md),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: post.secondaryTags.take(3).map((tag) {
-                            return FeedTagPill(label: tag.name);
-                          }).toList(),
-                        ),
-                      ],
-                      const SizedBox(height: AppSpace.md),
-                      Text(
-                        previewText,
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.custom(
-                          color: AppColors.textSecondary,
-                          size: AppText.bodySize,
-                          weight: FontWeight.w400,
-                          height: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpace.md),
-                      GestureDetector(
-                        onTap: () {},
-                        behavior: HitTestBehavior.translucent,
-                        child: FeedActionRow(
-                          likeIcon: ScaleTransition(
-                            scale: TweenSequence<double>([
-                              TweenSequenceItem(
-                                tween: Tween<double>(begin: 1, end: 1.28),
-                                weight: 45,
-                              ),
-                              TweenSequenceItem(
-                                tween: Tween<double>(begin: 1.28, end: 1),
-                                weight: 55,
-                              ),
-                            ]).animate(_likePulseController),
-                            child: Icon(
-                              _isLiked
-                                  ? Icons.favorite_rounded
-                                  : Icons.favorite_border_rounded,
-                              size: AppIcon.md,
-                              color: _isLiked
-                                  ? AppColors.primary400
-                                  : AppColors.textMuted,
+                        if (previewText.isNotEmpty) ...[
+                          SizedBox(
+                            height: showTitle ? AppSpace.xs : AppSpace.md,
+                          ),
+                          Text(
+                            previewText,
+                            maxLines: showTitle ? 3 : 4,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.custom(
+                              color: AppColors.textSecondary,
+                              size: AppText.bodySize,
+                              weight: FontWeight.w400,
+                              height: 1.55,
                             ),
                           ),
-                          onLikeTap: () => _handleLikeTap(context),
-                          onCommentTap: () => _handleCommentTap(context),
-                          onShareTap: () => _handleShareTap(context),
-                          onBookmarkTap: _handleBookmarkTap,
-                          isBookmarked: _isBookmarked,
-                          isCommented: _isCommented,
-                          likeCount: _likeCount,
-                          commentCount: _commentCount,
-                          bookmarkCount: _bookmarkCount,
+                        ],
+                        if (post.secondaryTags.isNotEmpty) ...[
+                          const SizedBox(height: AppSpace.md),
+                          Wrap(
+                            spacing: AppSpace.xs + 2,
+                            runSpacing: AppSpace.xs + 2,
+                            children: post.secondaryTags
+                                .take(3)
+                                .map((tag) => FeedTagPill(label: tag.name))
+                                .toList(),
+                          ),
+                        ],
+                        const SizedBox(height: AppSpace.md),
+                        GestureDetector(
+                          onTap: () {},
+                          behavior: HitTestBehavior.translucent,
+                          child: FeedActionRow(
+                            likeIcon: ScaleTransition(
+                              scale: TweenSequence<double>([
+                                TweenSequenceItem(
+                                  tween: Tween<double>(begin: 1, end: 1.28),
+                                  weight: 45,
+                                ),
+                                TweenSequenceItem(
+                                  tween: Tween<double>(begin: 1.28, end: 1),
+                                  weight: 55,
+                                ),
+                              ]).animate(_likePulseController),
+                              child: Icon(
+                                _isLiked
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                size: AppIcon.md,
+                                color: _isLiked
+                                    ? AppColors.primary400
+                                    : AppColors.textMuted,
+                              ),
+                            ),
+                            onLikeTap: () => _handleLikeTap(context),
+                            onCommentTap: () => _handleCommentTap(context),
+                            onShareTap: () => _handleShareTap(context),
+                            onBookmarkTap: _handleBookmarkTap,
+                            isBookmarked: _isBookmarked,
+                            isCommented: _isCommented,
+                            likeCount: _likeCount,
+                            commentCount: _commentCount,
+                            bookmarkCount: _bookmarkCount,
+                            onTipTap: _tipHandler(context),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -575,12 +616,19 @@ class _FeedCardState extends State<FeedCard>
     // left to the detail view.
     final showTitle = title.isNotEmpty &&
         !previewText.toLowerCase().startsWith(title.toLowerCase());
+    // Priority drives the whole card, not a pill in its corner. See
+    // [FeedCardEmphasis]: an urgent update keeps its chronological place and
+    // simply becomes a heavier object. Both layouts read the same rule.
+    final emphasis = FeedCardEmphasis.of(post.priority);
 
     if (widget.layout == FeedCardLayout.list) {
       return _buildListLayout(
         context: context,
         project: project,
         previewText: previewText,
+        title: title,
+        showTitle: showTitle,
+        emphasis: emphasis,
         roleLabel: roleLabel,
         roleColor: roleColor,
         priorityColor: priorityColor,
@@ -589,278 +637,266 @@ class _FeedCardState extends State<FeedCard>
       );
     }
 
-    // Priority drives the whole card, not a pill in its corner. See
-    // [FeedCardEmphasis]: an urgent update keeps its chronological place and
-    // simply becomes a heavier object.
-    final emphasis = FeedCardEmphasis.of(post.priority);
-
     return GestureDetector(
       onTap: () => _openDetails(context),
       child: DecoratedBox(
         // A card is a row in a stream, not a floating panel: full-bleed, its
         // own padding, and a hairline to the next one.
+        //
+        // The urgency edge is a *border*, not a child. As a stretched Row child
+        // it had no height of its own to stretch to inside a sliver, which
+        // collapsed the whole feed to nothing. It is always 3px and merely
+        // transparent when there is no signal, so body text keeps the same left
+        // margin at every priority instead of shifting between rows.
         decoration: BoxDecoration(
           gradient: emphasis.ground,
-          border: const Border(
-            bottom: BorderSide(color: AppColors.borderFaint),
+          border: Border(
+            left: BorderSide(
+              color: emphasis.edgeColor ?? Colors.transparent,
+              width: 3,
+            ),
+            bottom: const BorderSide(color: AppColors.borderFaint),
           ),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // The card's only signal red. 3px, full height, so it reads as
-            // mass rather than as a badge.
-            SizedBox(
-              width: 3,
-              child: emphasis.edgeColor == null
-                  ? null
-                  : ColoredBox(color: emphasis.edgeColor!),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpace.lg - 3,
-                  AppSpace.lg,
-                  AppSpace.lg,
-                  AppSpace.lg,
-                ),
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header: avatar + author + timestamp + priority pill ──
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () => _openAuthorProfile(context),
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        width: 42,
-                        height: 42,
-                        padding: const EdgeInsets.all(AppSpace.hair),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              priorityColor.withValues(alpha: 0.3),
-                              priorityColor.withValues(alpha: 0.15),
-                            ],
-                          ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg - 3,
+            AppSpace.lg,
+            AppSpace.lg,
+            AppSpace.lg,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header: avatar + author + timestamp + priority pill ──
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () => _openAuthorProfile(context),
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      padding: const EdgeInsets.all(AppSpace.hair),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            priorityColor.withValues(alpha: 0.3),
+                            priorityColor.withValues(alpha: 0.15),
+                          ],
                         ),
-                        child: AppAvatar(
-                          radius: 20,
-                          imageUrl: author.imageUrl,
-                          fallback: Icon(
-                            Icons.person,
-                            size: AppIcon.md,
-                            color: AppColors.textMuted,
-                          ),
+                      ),
+                      child: AppAvatar(
+                        radius: 20,
+                        imageUrl: author.imageUrl,
+                        fallback: Icon(
+                          Icons.person,
+                          size: AppIcon.md,
+                          color: AppColors.textMuted,
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppSpace.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => _openAuthorProfile(context),
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Row(
-                                    children: [
-                                      Flexible(
-                                        child: UserNameWithLevelIcon(
-                                          name: author.name,
-                                          currentLevel: authorLevel,
-                                          levelBadgeSize: LevelBadgeSize.small,
-                                          textStyle: AppTypography.custom(
-                                            color: AppColors.textPrimary,
-                                            size: AppText.bodySize,
-                                            weight: FontWeight.w700,
-                                          ),
+                  ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => _openAuthorProfile(context),
+                                behavior: HitTestBehavior.opaque,
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      child: UserNameWithLevelIcon(
+                                        name: author.name,
+                                        currentLevel: authorLevel,
+                                        levelBadgeSize: LevelBadgeSize.small,
+                                        textStyle: AppTypography.custom(
+                                          color: AppColors.textPrimary,
+                                          size: AppText.bodySize,
+                                          weight: FontWeight.w700,
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              if (roleLabel != null) ...[
-                                const SizedBox(width: AppSpace.sm),
-                                FeedRoleChip(
-                                  label: roleLabel,
-                                  color: roleColor,
-                                ),
-                              ],
+                            ),
+                            if (roleLabel != null) ...[
                               const SizedBox(width: AppSpace.sm),
-                              Text(
-                                getTimeStamp(post.createdAt),
-                                style: AppTypography.custom(
-                                  color: AppColors.textFaint,
-                                  size: AppText.captionSize,
-                                  weight: FontWeight.w400,
-                                ),
+                              FeedRoleChip(
+                                label: roleLabel,
+                                color: roleColor,
                               ),
                             ],
-                          ),
-                          const SizedBox(height: AppSpace.hair),
-                          Text(
-                            displayUsername,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.custom(
-                              color: AppColors.textMuted,
-                              size: AppText.labelSize,
-                              weight: FontWeight.w500,
+                            const SizedBox(width: AppSpace.sm),
+                            Text(
+                              getTimeStamp(post.createdAt),
+                              style: AppTypography.custom(
+                                color: AppColors.textFaint,
+                                size: AppText.captionSize,
+                                weight: FontWeight.w400,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Priority pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpace.md, vertical: AppSpace.xs),
-                      decoration: BoxDecoration(
-                        color: priorityColor.withValues(alpha: 0.12),
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.fullValue),
-                        border: Border.all(
-                          color: priorityColor.withValues(alpha: 0.35),
+                          ],
                         ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: priorityColor,
-                              shape: BoxShape.circle,
-                            ),
+                        const SizedBox(height: AppSpace.hair),
+                        Text(
+                          displayUsername,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.custom(
+                            color: AppColors.textMuted,
+                            size: AppText.labelSize,
+                            weight: FontWeight.w500,
                           ),
-                          const SizedBox(width: AppSpace.xs),
-                          Text(
-                            post.priority.label.toUpperCase(),
-                            style: AppTypography.custom(
-                              color: priorityColor,
-                              size: AppText.captionSize,
-                              weight: FontWeight.w700,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Priority pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.md, vertical: AppSpace.xs),
+                    decoration: BoxDecoration(
+                      color: priorityColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.fullValue),
+                      border: Border.all(
+                        color: priorityColor.withValues(alpha: 0.35),
                       ),
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSpace.lg),
-
-                // ── Project chip with gradient ──
-                FeedProjectChip(
-                  project: project,
-                  onTap: () => _openProjectDetails(context),
-                ),
-
-                // ── Title ──
-                // The feed used to throw the title away and show only the
-                // body. It is the most informative line an update has, so it
-                // now leads, and it is the thing that grows with priority.
-                if (showTitle) ...[
-                  const SizedBox(height: AppSpace.md),
-                  Text(
-                    title,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: emphasis.titleSize,
-                      weight: FontWeight.w600,
-                      height: 1.3,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: priorityColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        Text(
+                          post.priority.label.toUpperCase(),
+                          style: AppTypography.custom(
+                            color: priorityColor,
+                            size: AppText.captionSize,
+                            weight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
+              ),
 
-                // ── Body ──
-                if (previewText.isNotEmpty) ...[
-                  SizedBox(height: showTitle ? AppSpace.xs : AppSpace.md),
-                  Text(
-                    previewText,
-                    maxLines: showTitle ? 3 : 4,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.custom(
-                      color: AppColors.textSecondary,
-                      size: AppText.bodySize,
-                      weight: FontWeight.w400,
-                      height: 1.55,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: AppSpace.lg),
 
-                // ── Secondary tags ──
-                // Below the body, not above it: they are how an update is
-                // classified, which matters after reading it, not before.
-                if (post.secondaryTags.isNotEmpty) ...[
-                  const SizedBox(height: AppSpace.md),
-                  Wrap(
-                    spacing: AppSpace.xs + 2,
-                    runSpacing: AppSpace.xs + 2,
-                    children: post.secondaryTags
-                        .take(3)
-                        .map((tag) => FeedTagPill(label: tag.name))
-                        .toList(),
-                  ),
-                ],
+              // ── Project chip with gradient ──
+              FeedProjectChip(
+                project: project,
+                onTap: () => _openProjectDetails(context),
+              ),
 
-                const SizedBox(height: AppSpace.lg),
-
-                // ── Action row: like · comment · share | bookmark ──
-                GestureDetector(
-                  onTap: () {},
-                  behavior: HitTestBehavior.translucent,
-                  child: FeedActionRow(
-                    likeIcon: ScaleTransition(
-                      scale: TweenSequence<double>([
-                        TweenSequenceItem(
-                          tween: Tween<double>(begin: 1, end: 1.28),
-                          weight: 45,
-                        ),
-                        TweenSequenceItem(
-                          tween: Tween<double>(begin: 1.28, end: 1),
-                          weight: 55,
-                        ),
-                      ]).animate(_likePulseController),
-                      child: Icon(
-                        _isLiked
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        size: AppIcon.md,
-                        color: _isLiked
-                            ? AppColors.primary400
-                            : AppColors.textMuted,
-                      ),
-                    ),
-                    onLikeTap: () => _handleLikeTap(context),
-                    onCommentTap: () => _handleCommentTap(context),
-                    onShareTap: () => _handleShareTap(context),
-                    onBookmarkTap: _handleBookmarkTap,
-                    isBookmarked: _isBookmarked,
-                    isCommented: _isCommented,
-                    likeCount: _likeCount,
-                    commentCount: _commentCount,
-                    bookmarkCount: _bookmarkCount,
-                    onTipTap: _tipHandler(context),
+              // ── Title ──
+              // The feed used to throw the title away and show only the
+              // body. It is the most informative line an update has, so it
+              // now leads, and it is the thing that grows with priority.
+              if (showTitle) ...[
+                const SizedBox(height: AppSpace.md),
+                Text(
+                  title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.custom(
+                    color: AppColors.textPrimary,
+                    size: emphasis.titleSize,
+                    weight: FontWeight.w600,
+                    height: 1.3,
                   ),
                 ),
               ],
+
+              // ── Body ──
+              if (previewText.isNotEmpty) ...[
+                SizedBox(height: showTitle ? AppSpace.xs : AppSpace.md),
+                Text(
+                  previewText,
+                  maxLines: showTitle ? 3 : 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.custom(
+                    color: AppColors.textSecondary,
+                    size: AppText.bodySize,
+                    weight: FontWeight.w400,
+                    height: 1.55,
+                  ),
+                ),
+              ],
+
+              // ── Secondary tags ──
+              // Below the body, not above it: they are how an update is
+              // classified, which matters after reading it, not before.
+              if (post.secondaryTags.isNotEmpty) ...[
+                const SizedBox(height: AppSpace.md),
+                Wrap(
+                  spacing: AppSpace.xs + 2,
+                  runSpacing: AppSpace.xs + 2,
+                  children: post.secondaryTags
+                      .take(3)
+                      .map((tag) => FeedTagPill(label: tag.name))
+                      .toList(),
+                ),
+              ],
+
+              const SizedBox(height: AppSpace.lg),
+
+              // ── Action row: like · comment · share | bookmark ──
+              GestureDetector(
+                onTap: () {},
+                behavior: HitTestBehavior.translucent,
+                child: FeedActionRow(
+                  likeIcon: ScaleTransition(
+                    scale: TweenSequence<double>([
+                      TweenSequenceItem(
+                        tween: Tween<double>(begin: 1, end: 1.28),
+                        weight: 45,
+                      ),
+                      TweenSequenceItem(
+                        tween: Tween<double>(begin: 1.28, end: 1),
+                        weight: 55,
+                      ),
+                    ]).animate(_likePulseController),
+                    child: Icon(
+                      _isLiked
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      size: AppIcon.md,
+                      color:
+                          _isLiked ? AppColors.primary400 : AppColors.textMuted,
+                    ),
+                  ),
+                  onLikeTap: () => _handleLikeTap(context),
+                  onCommentTap: () => _handleCommentTap(context),
+                  onShareTap: () => _handleShareTap(context),
+                  onBookmarkTap: _handleBookmarkTap,
+                  isBookmarked: _isBookmarked,
+                  isCommented: _isCommented,
+                  likeCount: _likeCount,
+                  commentCount: _commentCount,
+                  bookmarkCount: _bookmarkCount,
+                  onTipTap: _tipHandler(context),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
