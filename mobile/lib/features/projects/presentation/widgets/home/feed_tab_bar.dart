@@ -59,20 +59,18 @@ class FeedTabBar extends StatelessWidget {
           bottom: BorderSide(color: AppColors.borderSubtle, width: 1),
         ),
       ),
+      // One tab set, used in every state. Round six settled this: the canvas
+      // had been showing three different sets, and "Updates", "For you" and
+      // "Following" were being used interchangeably for different things.
       child: Row(
         children: [
-          FeedTabItem(
-            label: 'Updates',
-            isActive: activeSection == Sections.forYou,
-            accentColor: accent,
-            onTap: () => onTabChanged(Sections.forYou),
-          ),
-          FeedTabItem(
-            label: 'General',
-            isActive: activeSection == Sections.explore,
-            accentColor: accent,
-            onTap: () => onTabChanged(Sections.explore),
-          ),
+          for (final section in Sections.homeTabs)
+            FeedTabItem(
+              label: section.label,
+              isActive: activeSection == section,
+              accentColor: accent,
+              onTap: () => onTabChanged(section),
+            ),
         ],
       ),
     );

@@ -8,7 +8,9 @@ import 'package:blocnet/features/projects/presentation/widgets/home/catch_up_ban
 import 'package:blocnet/features/projects/presentation/widgets/home/empty_feed.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
+import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
@@ -34,8 +36,8 @@ class HomeFeedSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<UpdatesStore, EdgeEngineStore>(
-      builder: (context, store, edgeStore, _) {
+    return Consumer3<UpdatesStore, EdgeEngineStore, ProjectsStore>(
+      builder: (context, store, edgeStore, projectsStore, _) {
         final enrichedPosts = store.posts
             .where((post) => post.project != null && post.admin != null)
             .toList();
@@ -64,14 +66,35 @@ class HomeFeedSliver extends StatelessWidget {
             return b.createdAt.compareTo(a.createdAt);
           });
 
-        if (activeSection == Sections.forYou) {
+        if (activeSection == Sections.forYou ||
+            activeSection == Sections.following) {
           if (isInitialLoading && enrichedPosts.isEmpty) {
             return const _FeedLoadingPlaceholder();
           }
           if (store.isFetching && store.posts.isEmpty) {
             return const _FeedLoadingPlaceholder();
           }
-          if (rankedFeedPosts.isEmpty) {
+
+          // Following shows only the member's own gems. For you mixes theirs
+          // with curated ones, in a proportion that shifts as their board
+          // fills, so Home is worth scrolling on day one and is almost all
+          // theirs by the tenth follow. See [FeedBlend].
+          final followedIds = projectsStore.followedProjectIds;
+          final followed = rankedFeedPosts
+              .where((post) => followedIds.contains(post.projectId))
+              .toList();
+          final curated = rankedFeedPosts
+              .where((post) => !followedIds.contains(post.projectId))
+              .toList();
+          final posts = activeSection == Sections.following
+              ? followed
+              : FeedBlend.blend(
+                  followed: followed,
+                  curated: curated,
+                  followCount: followedIds.length,
+                );
+
+          if (posts.isEmpty) {
             return const SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: AppSpace.lg),
               sliver: SliverToBoxAdapter(child: EmptyFeed()),
@@ -94,7 +117,7 @@ class HomeFeedSliver extends StatelessWidget {
                     ),
                     child: CatchUpBanner(onClear: onClearCatchup),
                   ),
-                ..._buildFeedRows(rankedFeedPosts, feedViewMode),
+                ..._buildFeedRows(posts, feedViewMode),
               ]),
             ),
           );

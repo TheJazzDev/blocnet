@@ -21,6 +21,7 @@ import 'package:blocnet/services/core/home_bootstrap_payload.dart';
 import 'package:blocnet/services/core/home_bootstrap_store.dart';
 import 'package:blocnet/services/core/startup_metrics_service.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
+import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
@@ -39,7 +40,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with _HomeHydration, _HomeEdgeActions {
-  Section _activeSection = Sections.forYou;
+  /// Null until the first build knows how many gems the member follows, so
+  /// the opening tab can be chosen rather than guessed. See
+  /// [FeedBlend.defaultsToFollowing]: a thin board opens on *For you*, which
+  /// mixes in curated gems, and a full one opens on *Following*.
+  Section? _activeSection;
+  Section get _section => _activeSection ?? Sections.forYou;
   final ScrollController _scrollController = ScrollController();
   final Set<String> _pendingNewPostIds = <String>{};
   final FeedSyncController _feedSyncController =
@@ -81,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (_activeSection == section) return;
     setState(() {
       _activeSection = section;
-      if (section != Sections.forYou) {
+      if (section == Sections.explore) {
         _pendingNewPostIds.clear();
         _showCatchupFilter = false;
       }
@@ -99,7 +105,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _checkForNewPosts() async {
-    if (!mounted || _activeSection != Sections.forYou) {
+    // Both feed tabs care about new posts; only General does not.
+    if (!mounted || _section == Sections.explore) {
       return;
     }
 
@@ -145,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen>
   void _onCatchUpTap() {
     if (!mounted) return;
     setState(() {
-      _activeSection = Sections.forYou;
+      _activeSection = Sections.following;
       _showCatchupFilter = true;
     });
     unawaited(_scrollToTop());
@@ -165,7 +172,13 @@ class _HomeScreenState extends State<HomeScreen>
     final feedViewMode = context.watch<FeedViewModeStore>().mode;
     final isInHunterSpace = context.watch<AuthStore>().isInHunterSpace;
     final accent = AppColors.accentForSpace(isInHunterSpace);
-    final isForYou = _activeSection == Sections.forYou;
+    // Choose the opening tab the first time we know the follow count.
+    final followCount =
+        context.watch<ProjectsStore>().followedProjectIds.length;
+    _activeSection ??= FeedBlend.defaultsToFollowing(followCount)
+        ? Sections.following
+        : Sections.forYou;
+    final isForYou = _section != Sections.explore;
     final feedLoading = !_isFeedReady &&
         updatesStore.posts.isEmpty &&
         (_isBootstrapLoading || updatesStore.isFetching);
@@ -185,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen>
                 SliverPersistentHeader(
                   pinned: true,
                   delegate: FeedTabDelegate(
-                    activeSection: _activeSection,
+                    activeSection: _section,
                     onTabChanged: _onTabChanged,
                   ),
                 ),
@@ -226,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen>
                   const SliverToBoxAdapter(child: AppSpace.gapMd),
                 ],
                 HomeFeedSliver(
-                  activeSection: _activeSection,
+                  activeSection: _section,
                   isInitialLoading: feedLoading,
                   showCatchupFilter: _showCatchupFilter,
                   radarSummary: _radarSummary,
