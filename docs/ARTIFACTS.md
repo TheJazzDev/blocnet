@@ -8,6 +8,13 @@ survives independently of the hosting.
 The URLs are stable: republishing an artifact updates it in place and keeps the same
 link. They are private to the account unless shared from the artifact's own share menu.
 
+**Last cross-checked 2026-09-12** against a live listing of the account. All 8 Blocnet
+artifacts below are indexed and snapshotted, and every snapshot on disk appears here —
+nothing orphaned in either direction. The account also holds artifacts for Settrium
+(*Session Handoff*), Asiko (*API Ledger*, *Asiko Wholesale Audit*, *Asiko Admin Audit*,
+*Catalogue App Audit*), COZA, OHC FC and others. Those are deliberately **not** listed
+here; this index is Blocnet only.
+
 | Artifact | Link | Snapshot | What it is |
 |---|---|---|---|
 | **Blocnet Accent Directions** | [open](https://claude.ai/code/artifact/9b62ac43-9070-4093-ac8b-6ab32c14b08b) | [`blocnet-accent-directions.html`](artifacts/blocnet-accent-directions.html) | Four accent directions on the real mobile home screen, with a User / Hunter / Moderation toggle and WCAG contrast per colour. The study behind the Signal Cyan decision. |
@@ -30,6 +37,18 @@ agent builds with the real components rather than generic ones.
 | Source | `console/components/ui` — 19 components, 76 bundle exports |
 | Sync inputs | [`.design-sync/`](../.design-sync/) — config, notes, conventions, per-component docs, previews |
 | Re-sync | See [`.design-sync/NOTES.md`](../.design-sync/NOTES.md) |
+
+## Related documents
+
+The design work these artifacts belong to is written down, not just drawn:
+
+| | |
+|---|---|
+| What Blocnet is | [`PRODUCT.md`](PRODUCT.md) |
+| What people do in it | [`USE_CASES.md`](USE_CASES.md) |
+| Home feed brief, round two | [`design-briefs/home-feed.md`](design-briefs/home-feed.md) |
+| Home feed brief, round three (refine B) | [`design-briefs/home-feed-refine.md`](design-briefs/home-feed-refine.md) |
+| Screenshots handed to the designer | [`design-briefs/reference/`](design-briefs/reference/) |
 
 ## Adding to this list
 
