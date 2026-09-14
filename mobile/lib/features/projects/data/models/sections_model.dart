@@ -27,7 +27,10 @@ class Sections {
   static const discoverProjects = Section("discover_projects", "Discover Gems");
 
   /// The tabs Home shows, in order.
-  static const List<Section> homeTabs = [forYou, following, explore];
+  /// Order per the approved design: Following leads, because for a member
+  /// with a board it is the tab that matters. On day one it is dimmed and
+  /// For you opens instead.
+  static const List<Section> homeTabs = [following, forYou, explore];
 
   static const List<Section> all = [
     forYou,

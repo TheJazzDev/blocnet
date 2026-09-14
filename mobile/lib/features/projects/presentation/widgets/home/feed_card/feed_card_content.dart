@@ -192,9 +192,8 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roleLabel = author.displayRoleLabel as String?;
-    final roleColor = roleLabel == 'HUNTER'
-        ? AppColors.primary400
-        : const Color(0xFFA78BFA);
+    final roleColor =
+        roleLabel == 'HUNTER' ? AppColors.primary400 : const Color(0xFFA78BFA);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,6 +264,8 @@ class _Header extends StatelessWidget {
 
 String _handle(String raw, String id) {
   final trimmed = raw.trim().replaceAll('@', '');
-  if (trimmed.isEmpty) return '@${id.substring(0, id.length >= 6 ? 6 : id.length)}';
+  if (trimmed.isEmpty) {
+    return '@${id.substring(0, id.length >= 6 ? 6 : id.length)}';
+  }
   return '@$trimmed';
 }

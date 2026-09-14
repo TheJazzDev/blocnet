@@ -10,10 +10,12 @@ class FeedTabDelegate extends SliverPersistentHeaderDelegate {
   const FeedTabDelegate({
     required this.activeSection,
     required this.onTabChanged,
+    required this.dimFollowing,
   });
 
   final Section activeSection;
   final ValueChanged<Section> onTabChanged;
+  final bool dimFollowing;
 
   static const double _height = 44.0;
 
@@ -25,7 +27,8 @@ class FeedTabDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(FeedTabDelegate oldDelegate) =>
-      oldDelegate.activeSection != activeSection;
+      oldDelegate.activeSection != activeSection ||
+      oldDelegate.dimFollowing != dimFollowing;
 
   @override
   Widget build(
@@ -33,6 +36,7 @@ class FeedTabDelegate extends SliverPersistentHeaderDelegate {
     return FeedTabBar(
       activeSection: activeSection,
       onTabChanged: onTabChanged,
+      dimFollowing: dimFollowing,
     );
   }
 }
@@ -42,10 +46,12 @@ class FeedTabBar extends StatelessWidget {
     super.key,
     required this.activeSection,
     required this.onTabChanged,
+    required this.dimFollowing,
   });
 
   final Section activeSection;
   final ValueChanged<Section> onTabChanged;
+  final bool dimFollowing;
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +71,16 @@ class FeedTabBar extends StatelessWidget {
       child: Row(
         children: [
           for (final section in Sections.homeTabs)
-            FeedTabItem(
-              label: section.label,
-              isActive: activeSection == section,
-              accentColor: accent,
-              onTap: () => onTabChanged(section),
+            Opacity(
+              // Following is dimmed while there is nothing to follow, so the
+              // tab is visibly there without inviting an empty screen.
+              opacity: section == Sections.following && dimFollowing ? 0.45 : 1,
+              child: FeedTabItem(
+                label: section.label,
+                isActive: activeSection == section,
+                accentColor: accent,
+                onTap: () => onTabChanged(section),
+              ),
             ),
         ],
       ),

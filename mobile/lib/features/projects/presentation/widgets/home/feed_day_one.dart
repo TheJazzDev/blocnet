@@ -268,3 +268,167 @@ class _FollowButton extends StatelessWidget {
     );
   }
 }
+
+/// The hunters worth following right now, shown on the day-one screen only.
+///
+/// Reference: `.hunters` in `docs/artifacts/blocnet-home-feed-v2.html`.
+///
+/// Three things differ from the rail the screen used to carry on every tab.
+/// It appears **only at zero follows**, because once a member has a board the
+/// people they follow are the feed and a row of strangers above it is noise.
+/// It has no *View All* and no *My Updates* entry — the design's rail is five
+/// hunters and nothing else, so the eye runs along one row of equal things.
+/// And the avatars are lettered monograms rather than photos, which is what
+/// makes the row read as a set instead of five unrelated pictures.
+class FeedTopHunters extends StatelessWidget {
+  const FeedTopHunters({
+    super.key,
+    required this.hunters,
+    required this.onOpen,
+  });
+
+  /// Handle and display name per hunter, already ranked and capped by the
+  /// caller.
+  final List<({String handle, String name})> hunters;
+  final void Function(String handle) onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (hunters.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding:
+          const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, 0, AppSpace.lg),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.borderFaint)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.verified_outlined,
+                size: AppIcon.xs,
+                color: AppColors.textFaint,
+              ),
+              const SizedBox(width: AppSpace.xs + 2),
+              Text(
+                'TOP HUNTERS THIS WEEK',
+                style: AppTypography.custom(
+                  color: AppColors.textFaint,
+                  size: AppText.captionSize,
+                  weight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
+          SizedBox(
+            height: 76,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: AppSpace.lg),
+              itemCount: hunters.length,
+              separatorBuilder: (_, __) => const SizedBox(width: AppSpace.lg),
+              itemBuilder: (context, i) {
+                final hunter = hunters[i];
+                return _Hunter(
+                  handle: hunter.handle,
+                  name: hunter.name,
+                  seed: i,
+                  onTap: () => onOpen(hunter.handle),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Hunter extends StatelessWidget {
+  const _Hunter({
+    required this.handle,
+    required this.name,
+    required this.seed,
+    required this.onTap,
+  });
+
+  final String handle;
+  final String name;
+  final int seed;
+  final VoidCallback onTap;
+
+  /// The design gives each hunter in the rail its own gradient, so five
+  /// monograms read as five people rather than one repeated shape.
+  static const _gradients = <List<Color>>[
+    [Color(0xFF0891B2), Color(0xFF155E75)],
+    [Color(0xFF7C3AED), Color(0xFF4C1D95)],
+    [Color(0xFFEA580C), Color(0xFF7C2D12)],
+    [Color(0xFF0D9488), Color(0xFF134E4A)],
+    [Color(0xFFBE185D), Color(0xFF701A75)],
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _gradients[seed % _gradients.length];
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 56,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: colors,
+                ),
+              ),
+              child: Text(
+                _initials(name, handle),
+                style: AppTypography.custom(
+                  color: Colors.white,
+                  size: AppText.bodySize,
+                  weight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpace.xs + 2),
+            Text(
+              handle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: AppText.captionSize,
+                weight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _initials(String name, String handle) {
+    final words =
+        name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.length >= 2) {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    }
+    final source = words.isNotEmpty ? words.first : handle.replaceAll('@', '');
+    if (source.isEmpty) return '?';
+    return source.substring(0, source.length >= 2 ? 2 : 1).toUpperCase();
+  }
+}

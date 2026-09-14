@@ -4,17 +4,11 @@ import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
-import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
-import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
-import 'package:blocnet/features/projects/presentation/pages/edge_engine_page.dart';
-import 'package:blocnet/features/projects/presentation/widgets/home/alpha_radar_card.dart';
-import 'package:blocnet/features/projects/presentation/widgets/home/edge_brief_teaser_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_tab_bar.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/home_feed_sliver.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/new_updates_pill.dart';
-import 'package:blocnet/features/projects/presentation/widgets/home/top_hunters_row.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/core/home_bootstrap_payload.dart';
@@ -25,13 +19,14 @@ import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/models/quiet_gem.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_caught_up_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_day_one.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_radar_strip.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-part 'home/home_edge_actions.part.dart';
 part 'home/home_hydration.part.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -41,8 +36,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with _HomeHydration, _HomeEdgeActions {
+class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
   /// Set only when the member taps a tab themselves. Null means "follow the
   /// data".
   Section? _pickedSection;
@@ -160,14 +154,24 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => _pendingNewPostIds.clear());
   }
 
-  void _onCatchUpTap() {
-    if (!mounted) return;
-    setState(() {
-      _pickedSection = Sections.following;
-      _section = Sections.following;
-      _showCatchupFilter = true;
-    });
-    unawaited(_scrollToTop());
+  /// The hunters worth showing a member who follows nothing, ranked by how
+  /// much they have posted. Five, because the design's rail is five.
+  List<({String handle, String name})> _topHunters(UpdatesStore store) {
+    final counts = <String, int>{};
+    final names = <String, ({String handle, String name})>{};
+    for (final post in store.posts) {
+      final admin = post.admin;
+      if (admin == null) continue;
+      final raw = admin.username.trim().replaceAll('@', '');
+      final handle = raw.isEmpty
+          ? '@${admin.id.substring(0, admin.id.length >= 6 ? 6 : admin.id.length)}'
+          : '@$raw';
+      counts[handle] = (counts[handle] ?? 0) + 1;
+      names[handle] = (handle: handle, name: admin.name);
+    }
+    final ranked = counts.keys.toList()
+      ..sort((a, b) => counts[b]!.compareTo(counts[a]!));
+    return ranked.take(5).map((h) => names[h]!).toList();
   }
 
   /// Updates on the member's board — those belonging to a gem they follow.
@@ -188,7 +192,6 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
-    final edgeStore = context.watch<EdgeEngineStore>();
     final updatesStore = context.watch<UpdatesStore>();
     // select, not watch: this screen needs one field from each of these, and
     // AuthStore in particular notifies from ~56 places that cannot change the
@@ -246,58 +249,47 @@ class _HomeScreenState extends State<HomeScreen>
                   delegate: FeedTabDelegate(
                     activeSection: _section,
                     onTabChanged: _onTabChanged,
+                    dimFollowing: followCount == 0,
                   ),
                 ),
                 const SliverToBoxAdapter(child: AppSpace.gapMd),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-                  sliver: SliverToBoxAdapter(
-                    // Being caught up is the product delivering its promise, so
-                    // it gets its own earned card rather than the same grey
-                    // panel that carries a pending count. The radar card stays
-                    // for the case where something *is* waiting.
-                    child: showCaughtUp
-                        ? FeedCaughtUpCard(
-                            accent: accent,
-                            gemsFollowed: followCount,
-                            updatesTracked: _trackedUpdateCount(
-                              updatesStore,
-                              context.read<ProjectsStore>().followedProjectIds,
-                            ),
-                            sweptAt: _radarSummary?.asOf,
-                          )
-                        : AlphaRadarCard(
-                            radar: _radarSummary,
-                            isLoading: _isLoadingRadar,
-                            onCatchUp: _onCatchUpTap,
-                          ),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: AppSpace.gapMd),
-                if (isForYou) ...[
+                // The approved design has neither an Alpha Radar card nor a
+                // Blocnet Edge Engine card: between them they pushed the first
+                // real post most of a screen down, which is the problem the
+                // redesign started from. One 13px strip, or the caught-up card
+                // in its place when nothing is waiting.
+                if (showCaughtUp)
                   SliverPadding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                     sliver: SliverToBoxAdapter(
-                      child: EdgeBriefTeaserCard(
-                        brief: edgeStore.brief,
-                        isLoading:
-                            (edgeStore.isFetching || _isBootstrapLoading) &&
-                                edgeStore.brief == null,
-                        onOpen: _openEdgeEnginePage,
+                      child: FeedCaughtUpCard(
+                        accent: accent,
+                        gemsFollowed: followCount,
+                        updatesTracked: _trackedUpdateCount(
+                          updatesStore,
+                          context.read<ProjectsStore>().followedProjectIds,
+                        ),
+                        sweptAt: radar.asOf,
                       ),
                     ),
+                  )
+                else if (isForYou && radar != null)
+                  SliverToBoxAdapter(
+                    child: FeedRadarStrip(radar: radar, accent: accent),
                   ),
-                  const SliverToBoxAdapter(child: AppSpace.gapMd),
-                  SliverPadding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-                    sliver: SliverToBoxAdapter(
-                      child: TopHuntersRow(isLoading: feedLoading),
+                // Top hunters is a day-one affordance only. Once a member has
+                // a board, the people they follow *are* the feed, and a rail of
+                // strangers above it is noise. The Edge brief teaser is gone
+                // entirely: Edge now speaks on the card it applies to, which is
+                // where the design puts it.
+                if (isForYou && followCount == 0)
+                  SliverToBoxAdapter(
+                    child: FeedTopHunters(
+                      hunters: _topHunters(updatesStore),
+                      onOpen: (_) {},
                     ),
                   ),
-                  const SliverToBoxAdapter(child: AppSpace.gapMd),
-                ],
                 HomeFeedSliver(
                   activeSection: _section,
                   quietGems: quietGems,
