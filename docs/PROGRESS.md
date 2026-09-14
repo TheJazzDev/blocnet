@@ -67,17 +67,17 @@ Workstream **WS-Q**, branch `feature/home-feed-redesign`.
 
 ### Phase A — the feed itself
 
-- **Priority drives the whole card.** Before, every card carried the same faint
-  tinted border, so a high-priority update looked like a low one. Now: red edge
-  and warmed ground on high, darkened amber edge on medium, neither on low —
-  which is what makes the other two legible.
+- **Priority is legible.** Before, every card carried the same faint tinted
+  border, so a high-priority update looked like a low one. It now shows in the
+  priority tag and the title size. The red edge and warmed ground that round six
+  specified were built and then removed — see §4b.
 - **The update title is no longer discarded.** The feed rendered only the body.
   The title is the most informative line an update has.
 - **Cards became rows in a stream**, full-bleed with a hairline, not floating
   panels.
 - **Tip moved into the action row**, where value is realised, instead of a
   profile.
-- **Tabs settled to For you / Following / General**, and this was not a rename:
+- **Tabs settled to Following / For you / General**, and this was not a rename:
   what the app called "Updates" is Following, and "For you" is a blended feed
   mode that did not exist. `FeedBlend` shifts the mix with the follow count and
   never drops a followed post.
