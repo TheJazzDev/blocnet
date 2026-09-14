@@ -43,12 +43,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with _HomeHydration, _HomeEdgeActions {
-  /// Null until the first build knows how many gems the member follows, so
-  /// the opening tab can be chosen rather than guessed. See
-  /// [FeedBlend.defaultsToFollowing]: a thin board opens on *For you*, which
-  /// mixes in curated gems, and a full one opens on *Following*.
-  Section? _activeSection;
-  Section get _section => _activeSection ?? Sections.forYou;
+  /// Set only when the member taps a tab themselves. Null means "follow the
+  /// data".
+  Section? _pickedSection;
+
+  /// The tab on screen.
+  ///
+  /// Until the member picks one this tracks the follow count every build
+  /// rather than being locked in once. Follows arrive from the network after
+  /// the first frame, so a default decided on build one always saw zero and
+  /// pinned every member to *For you*, including someone with a full board.
+  /// See [FeedBlend.defaultsToFollowing]: a thin board opens on *For you*,
+  /// which mixes in curated gems, and a filled one opens on *Following*.
+  Section _section = Sections.forYou;
   final ScrollController _scrollController = ScrollController();
   final Set<String> _pendingNewPostIds = <String>{};
   final FeedSyncController _feedSyncController =
@@ -87,9 +94,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _onTabChanged(Section section) {
-    if (_activeSection == section) return;
+    if (_section == section) return;
     setState(() {
-      _activeSection = section;
+      _pickedSection = section;
+      _section = section;
       if (section == Sections.explore) {
         _pendingNewPostIds.clear();
         _showCatchupFilter = false;
@@ -155,7 +163,8 @@ class _HomeScreenState extends State<HomeScreen>
   void _onCatchUpTap() {
     if (!mounted) return;
     setState(() {
-      _activeSection = Sections.following;
+      _pickedSection = Sections.following;
+      _section = Sections.following;
       _showCatchupFilter = true;
     });
     unawaited(_scrollToTop());
@@ -192,9 +201,10 @@ class _HomeScreenState extends State<HomeScreen>
     // Choose the opening tab the first time we know the follow count.
     final followCount =
         context.watch<ProjectsStore>().followedProjectIds.length;
-    _activeSection ??= FeedBlend.defaultsToFollowing(followCount)
-        ? Sections.following
-        : Sections.forYou;
+    _section = _pickedSection ??
+        (FeedBlend.defaultsToFollowing(followCount)
+            ? Sections.following
+            : Sections.forYou);
     final isForYou = _section != Sections.explore;
     // Earned, not idle: only claim this once the radar has actually reported,
     // the member has a board to be caught up on, and nothing is pending.
