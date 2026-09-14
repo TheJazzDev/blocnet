@@ -8,6 +8,7 @@ import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.da
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_deadline_line.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/comments_store.dart';
+import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/services/engagement/levels_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -100,6 +101,7 @@ void main() {
           ),
           ChangeNotifierProvider(create: (_) => CommentsStore()),
           ChangeNotifierProvider(create: (_) => LevelsStore()),
+          ChangeNotifierProvider(create: (_) => EdgeEngineStore()),
         ],
         child: MaterialApp(
           home: Scaffold(
