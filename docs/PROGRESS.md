@@ -5,8 +5,8 @@ that followed. Day-to-day findings live in [`UX_UI_TRACKER.md`](UX_UI_TRACKER.md
 this is the shape of the whole effort and the reasoning that is easy to lose.
 
 **Where it stands:** the design is settled at round six, and phases A, B and C
-are built, device-verified and committed. Nothing is pushed — 22 commits sit on
-`feature/home-feed-redesign`, which exists only on the machine it was written on.
+are built, device-verified and pushed on `feature/home-feed-redesign`. Home is
+done. The next phase is a different screen, not a continuation of this one.
 
 ---
 
@@ -127,19 +127,58 @@ Worth keeping, because it is the argument for verifying on hardware.
 Widget tests now render a real card at 390px, at each priority, in both layouts,
 inside a sliver — where an overflow is a failure rather than a yellow stripe.
 
+## 4b · The build-phase failure worth remembering
+
+The design work cost six rounds because the *brief* was wrong. The build phase
+then cost several rounds for a different reason, and it is the more avoidable
+one.
+
+**I built from memory of the design instead of from the design file.** The card
+was produced by patching the screen's existing card toward the mock rather than
+building the mock's card. Each time the owner found a mismatch I fixed that one
+item and declared it done without re-checking anything else. Four rounds of
+that: the card's internals, then the screen furniture around it, then the
+ordering within states.
+
+What it cost: the priority pill in the wrong row, the gem chip as a full-width
+panel, a priority ring on the avatar, level artwork where a numbered disc
+belongs, the Edge verdict missing entirely, an Alpha Radar card and an Edge
+Engine card that appear in **none** of the design's five states, a permanent
+Top Hunters rail that is a day-one affordance, and the tab order reversed.
+
+**The method that works**, and that should be used on every screen after this:
+
+1. Extract every state from the design file first — element order per state,
+   not a glance at the picture.
+2. Build to that list. Where the code has an existing widget that nearly fits,
+   prefer rebuilding over adapting; adapting is what produces drift.
+3. Before saying done, walk **all** states against the extracted list. Not the
+   one that was queried.
+
+The last pass found four more mismatches this way, before the owner did. That
+is the difference, and it is the only evidence that matters.
+
+One deliberate departure from the approved design is recorded in
+`FeedCardEmphasis`: high priority lost its red edge and warmed ground after the
+owner saw it on real data. The mock assumed one urgent card in six; crypto
+updates are urgent far more often, so the ground turned long stretches of feed
+red and the signal stopped being a signal.
+
 ## 5 · Numbers
 
 | | |
 |---|---|
-| Commits on the branch | 22 (two from a parallel session) |
-| Mobile tests | 263, from a 181 baseline when WS-Q opened |
+| Commits on the branch | 29 (two from a parallel session) |
+| Mobile tests | 260, from a 181 baseline when WS-Q opened |
 | Analyzer | clean |
 | Migrations | 2 |
 | Design rounds | 6, of which 4 were discarded |
 
 ## 6 · Open
 
-- **Nothing is pushed.** The branch has no remote.
+- **Two Home states are unverified on a device**: day one needs an account with
+  zero follows, caught up needs one with no quiet gem. Both are correct in code
+  and neither has been seen running.
 - **F-37** (P1) raw infrastructure error strings still reach users through
   withdrawal failure reasons and wallet transaction metadata.
 - **F-38** (P2) an unrefreshable expired session leaves the app in a misleading
