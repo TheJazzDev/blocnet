@@ -2,6 +2,7 @@
 
 > Living checklist for the post-stabilization UX/UI pass. Replaces the retired Fix Ledger.
 > Inventory lives in [`FEATURE_ATLAS.md`](FEATURE_ATLAS.md). Session prompts live in [`session-templates.md`](session-templates.md).
+> Narrative progress across the home-feed programme lives in [`PROGRESS.md`](PROGRESS.md); this file stays the per-finding record.
 > **Rule:** every session that touches a finding updates its Status row and appends to the Session Log. Never delete rows; mark them `done` / `wontfix` / `deferred`.
 
 Status values: `open` · `in-progress` · `done` · `deferred` (waiting on design system or a product decision) · `wontfix`.

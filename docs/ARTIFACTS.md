@@ -68,6 +68,7 @@ components rather than generic ones.
 | Home feed brief (**current**) | [`design-briefs/home-feed-r6.md`](design-briefs/home-feed-r6.md) |
 | Earlier briefs, with their withdrawal notes | [`design-briefs/`](design-briefs/) |
 | Screenshots of the shipping app | [`design-briefs/reference/`](design-briefs/reference/) |
+| Progress log | [`PROGRESS.md`](PROGRESS.md) |
 | Implementation tracking | [`UX_UI_TRACKER.md`](UX_UI_TRACKER.md) |
 
 ## Adding to this list
