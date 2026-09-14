@@ -32,6 +32,8 @@ class HomeFeedSliver extends StatelessWidget {
     required this.feedViewMode,
     required this.onClearCatchup,
     required this.quietGems,
+    required this.topHunters,
+    required this.showCaughtUp,
   });
 
   final Section activeSection;
@@ -45,6 +47,14 @@ class HomeFeedSliver extends StatelessWidget {
   /// because the caught-up card has to know about them too — claiming a member
   /// is covered while a card below says otherwise is a contradiction.
   final List<QuietGem> quietGems;
+
+  /// Day-one only. Ranked and capped by the screen; rendered after the intro,
+  /// which is the order the design has.
+  final List<({String handle, String name})> topHunters;
+
+  /// When the caught-up card is showing, everything below it is curated, so it
+  /// gets the design's "From hunters you don't follow" heading.
+  final bool showCaughtUp;
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +181,10 @@ class HomeFeedSliver extends StatelessWidget {
                     ),
                     child: CatchUpBanner(onClear: onClearCatchup),
                   ),
-                if (isDayOne) const FeedDayOneIntro(),
+                if (isDayOne) ...[
+                  const FeedDayOneIntro(),
+                  FeedTopHunters(hunters: topHunters, onOpen: (_) {}),
+                ],
                 if (starters.isNotEmpty) ...[
                   FeedSectionHeading(
                     icon: Icons.trending_up_rounded,
@@ -194,6 +207,14 @@ class HomeFeedSliver extends StatelessWidget {
                   ),
                 ],
                 ...quietCards,
+                // Caught up does not dead-end: the design follows the card with
+                // posts from hunters the member does not follow yet.
+                if (showCaughtUp)
+                  FeedSectionHeading(
+                    icon: Icons.explore_outlined,
+                    label: "From hunters you don't follow",
+                    accent: accent,
+                  ),
                 ..._buildFeedRows(posts, feedViewMode),
               ]),
             ),

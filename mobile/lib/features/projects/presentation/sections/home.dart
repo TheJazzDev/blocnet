@@ -19,7 +19,6 @@ import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/models/quiet_gem.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_caught_up_card.dart';
-import 'package:blocnet/features/projects/presentation/widgets/home/feed_day_one.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_radar_strip.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
@@ -274,25 +273,18 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
                       ),
                     ),
                   )
-                else if (isForYou && radar != null)
+                // Not on day one: "0 new across 0 gems" is noise on a screen
+                // whose whole job is to get the member their first follow. The
+                // design goes straight from the tabs to the intro there.
+                else if (isForYou && radar != null && followCount > 0)
                   SliverToBoxAdapter(
                     child: FeedRadarStrip(radar: radar, accent: accent),
-                  ),
-                // Top hunters is a day-one affordance only. Once a member has
-                // a board, the people they follow *are* the feed, and a rail of
-                // strangers above it is noise. The Edge brief teaser is gone
-                // entirely: Edge now speaks on the card it applies to, which is
-                // where the design puts it.
-                if (isForYou && followCount == 0)
-                  SliverToBoxAdapter(
-                    child: FeedTopHunters(
-                      hunters: _topHunters(updatesStore),
-                      onOpen: (_) {},
-                    ),
                   ),
                 HomeFeedSliver(
                   activeSection: _section,
                   quietGems: quietGems,
+                  topHunters: _topHunters(updatesStore),
+                  showCaughtUp: showCaughtUp,
                   isInitialLoading: feedLoading,
                   showCatchupFilter: _showCatchupFilter,
                   radarSummary: _radarSummary,
