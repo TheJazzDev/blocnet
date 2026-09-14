@@ -111,22 +111,25 @@ class HomeFeedSliver extends StatelessWidget {
           // in the stream, above the updates, because a missing update is the
           // most important thing on the board when it happens.
           //
-          // Shown on both feed tabs, not just Following: a gem going quiet is
-          // about the member's own board, and it matters wherever they are
-          // looking. Capped at three so a neglected board does not bury the
-          // feed under warnings.
-          final quietCards = quietGems
-              .take(3)
-              .map(
-                (gem) => FeedQuietGemCard(
-                  gem: gem,
-                  onUnfollow: () =>
-                      projectsStore.toggleFollowProject(gem.project.id),
-                  onAsk: () => _ask(context, projectsStore, gem),
-                  onReport: () => _report(context, projectsStore, gem),
-                ),
-              )
-              .toList();
+          // Following only. I had these on both tabs, which was wrong twice
+          // over: a board-maintenance warning is off-message on the discovery
+          // tab, and an identical card at the top of both made the two tabs
+          // look like the same screen. Capped at three so a neglected board
+          // does not bury the feed under warnings.
+          final quietCards = activeSection != Sections.following
+              ? const <Widget>[]
+              : quietGems
+                  .take(3)
+                  .map(
+                    (gem) => FeedQuietGemCard(
+                      gem: gem,
+                      onUnfollow: () =>
+                          projectsStore.toggleFollowProject(gem.project.id),
+                      onAsk: () => _ask(context, projectsStore, gem),
+                      onReport: () => _report(context, projectsStore, gem),
+                    ),
+                  )
+                  .toList();
 
           // Day one: no board yet, so Home borrows Discover's job. An intro
           // saying what a hunter is for, then gems worth starting with, ranked

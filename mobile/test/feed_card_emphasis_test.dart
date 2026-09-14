@@ -1,4 +1,3 @@
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_card_emphasis.dart';
@@ -50,34 +49,22 @@ void main() {
       );
     });
 
-    test('only high priority is raised off the feed ground', () {
-      expect(FeedCardEmphasis.high.isRaised, isTrue);
-      expect(FeedCardEmphasis.medium.isRaised, isFalse);
-      expect(FeedCardEmphasis.low.isRaised, isFalse);
-    });
-
-    test('most of the feed carries no urgency edge at all', () {
-      // This is what makes the other two legible. If low ever gains an edge,
-      // every row shouts and none of them do.
-      expect(FeedCardEmphasis.low.edgeColor, isNull);
-      expect(FeedCardEmphasis.medium.edgeColor, isNotNull);
-      expect(FeedCardEmphasis.high.edgeColor, isNotNull);
-    });
-
-    test('signal red is spent on high priority only', () {
-      // Red is also the moderation and destructive colour, and a Ruby level
-      // badge is red too. Keeping it off medium is what stops a card from
-      // stacking three reds in one header line.
-      expect(FeedCardEmphasis.high.edgeColor, AppColors.priorityHigh);
-      expect(FeedCardEmphasis.medium.edgeColor, isNot(AppColors.priorityHigh));
-    });
-
-    test('the medium edge is darkened so it marks rather than warns', () {
-      final edge = FeedCardEmphasis.medium.edgeColor!;
-      expect(
-        edge.computeLuminance(),
-        lessThan(AppColors.priorityMid.computeLuminance()),
-      );
+    test('no card tints its ground or carries an urgency edge', () {
+      // Decided 2026-09-14 after seeing it on real data: crypto updates are
+      // urgent far more often than the mock assumed, so a red edge and a
+      // red-warmed ground turned long stretches of the feed red and scrolling
+      // became tiring. Colour now lives on the priority tag alone.
+      //
+      // If this ever regresses, the feed goes back to shouting on most rows.
+      for (final e in [
+        FeedCardEmphasis.high,
+        FeedCardEmphasis.medium,
+        FeedCardEmphasis.low,
+      ]) {
+        expect(e.edgeColor, isNull);
+        expect(e.ground, isNull);
+        expect(e.isRaised, isFalse);
+      }
     });
   });
 }
