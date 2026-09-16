@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { TipsService } from './tips.service';
+import { TipBootstrapService } from './tip-bootstrap';
+import { TipsAdminService } from './tips-admin.service';
 
 function currencyRow(code: string, overrides: Record<string, unknown> = {}) {
   return {
@@ -20,7 +20,7 @@ function currencyRow(code: string, overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe('TipsService (admin settings, retired currencies)', () => {
+describe('TipsAdminService (admin settings, retired currencies)', () => {
   const prisma = {
     $transaction: jest.fn(),
     tipCurrency: {
@@ -43,11 +43,7 @@ describe('TipsService (admin settings, retired currencies)', () => {
     create: jest.fn(),
   } as unknown as AuditLogService;
 
-  const notificationsService = {
-    notifyMany: jest.fn(),
-  } as unknown as NotificationsService;
-
-  let service: TipsService;
+  let service: TipsAdminService;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -62,10 +58,10 @@ describe('TipsService (admin settings, retired currencies)', () => {
     prisma.tipAccount.upsert.mockResolvedValue({});
     prisma.tipCurrency.findMany.mockResolvedValue([]);
 
-    service = new TipsService(
+    service = new TipsAdminService(
       prisma as any,
       auditLogService,
-      notificationsService,
+      new TipBootstrapService(prisma as any),
     );
   });
 
