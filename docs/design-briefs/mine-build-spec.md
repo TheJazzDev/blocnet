@@ -252,3 +252,17 @@ motion and while the tab is hidden (TickerMode / Visibility).
   is hidden with no history.
 - **D10 · Leaderboard preview.** Top 3 plus your row (when ranked below 3). The whole block
   opens the full board; the header's right label is `You · #{rank}`.
+- **D11 · App bar.** As Hub D5: the shared bar stays (search, bell, space chip), titled
+  `Mine`, with `history` and `help` added for the Mine tab only. This is the one edit to the
+  main shell.
+- **D12 · Copy the design does not draw.** Kept to the minimum and in the same voice:
+  `Code copied` (after Copy), `Friend linked` (after a code is entered), the bind sheet
+  (`Enter a friend's code`, `Link code`, `Codes are 8 characters.`, `That code doesn't
+  exist.`), `No one has claimed BNP yet.`, `No hours mined yet.`,
+  `Couldn't load your friends. Pull to retry.`, the `INACTIVE` pill for a friend who never
+  mined, and `Inactive friends' +5% counts again when they mine.` for more than one.
+- **D13 · Pushes (state 12)** are backend copy and were not changed here. The design reads
+  `132 BNP ready to claim` / `Tap to claim and start your next cycle.` and `132 BNP expires
+  in 3h` / `Claim it before it's gone.`; `mining-reminder.messages.ts` still sends
+  `Your BNP is ready` / `Claim 132 BNP and start your next cycle.` and
+  `132 BNP expires in 3 hours` / `Claim now or your 132 BNP is forfeited.`
