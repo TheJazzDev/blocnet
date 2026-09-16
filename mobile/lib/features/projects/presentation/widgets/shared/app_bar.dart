@@ -4,6 +4,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/space_switcher.dart';
+import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/blocnet_search_delegate.dart';
 import 'package:blocnet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
@@ -117,7 +118,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                         icon: Icons.person_outline_rounded,
                         minimal: minimalActionIcons,
                         onTap: () {
-                          Navigator.of(context).pushNamed(AppRoutes.profile);
+                          MainTabNavigator.openRoute(context, AppRoutes.profile);
                         },
                       ),
                     ],
@@ -287,7 +288,7 @@ class _ProfileAvatarButton extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushNamed(AppRoutes.profile);
+        MainTabNavigator.openRoute(context, AppRoutes.profile);
       },
       child: Container(
         width: 38,

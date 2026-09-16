@@ -13,10 +13,14 @@ class MainTabScope extends InheritedWidget {
     required super.child,
   });
 
-  /// Bottom-tab indices shared by every space. Discover is 1 in the user,
-  /// hunter and moderation shells alike.
+  /// Bottom-tab indices shared by every space. Only tab 2 differs between
+  /// them (Community, Hunter Hub or Moderation).
   static const int homeTab = 0;
   static const int discoverTab = 1;
+  static const int hubTab = 2;
+  static const int miningTab = 3;
+  static const int walletTab = 4;
+  static const int profileTab = 5;
 
   final ValueChanged<int> selectTab;
 

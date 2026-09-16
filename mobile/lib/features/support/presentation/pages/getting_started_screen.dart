@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/support/data/getting_started_content.dart';
 import 'package:blocnet/features/support/presentation/widgets/support_widgets.dart';
@@ -39,8 +40,11 @@ class GettingStartedScreen extends StatelessWidget {
               actionLabel: gettingStartedSteps[i].actionLabel,
               onAction: gettingStartedSteps[i].route == null
                   ? null
-                  : () => Navigator.of(context)
-                      .pushNamed(gettingStartedSteps[i].route!),
+                  // Mining and Wallet are tabs: land on them, don't stack.
+                  : () => MainTabNavigator.openRoute(
+                        context,
+                        gettingStartedSteps[i].route!,
+                      ),
             ),
           const SizedBox(height: AppSpace.xl),
         ],

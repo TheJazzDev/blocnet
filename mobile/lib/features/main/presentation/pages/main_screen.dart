@@ -4,6 +4,7 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/spaces_explainer_sheet.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
+import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_screen.dart';
 import 'package:blocnet/features/moderation/presentation/pages/moderation_hub_screen.dart';
@@ -94,6 +95,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    MainTabNavigator.detach(this);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -107,6 +109,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Lets routes pushed above this shell come back to one of its tabs.
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      MainTabNavigator.attach(this, route, _selectTabInActiveSpace);
+    }
     final authStore = context.watch<AuthStore>();
     final activeSpace = authStore.activeSpace;
 
