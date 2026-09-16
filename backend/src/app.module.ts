@@ -18,6 +18,7 @@ import { DeviceTokensModule } from './device-tokens/device-tokens.module';
 import { EdgeEngineModule } from './edge-engine/edge-engine.module';
 import { FollowsModule } from './follows/follows.module';
 import { HealthModule } from './health/health.module';
+import { HunterReliabilityModule } from './hunter-reliability/hunter-reliability.module';
 import { MeRadarModule } from './me-radar/me-radar.module';
 import { MiningModule } from './mining/mining.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -71,6 +72,7 @@ import { envValidationSchema } from './config/env.validation';
     ProjectsModule,
     ProjectAssignmentsModule,
     ProjectAttentionModule,
+    HunterReliabilityModule,
     ProjectProposalsModule,
     TagsModule,
     UpdatesModule,

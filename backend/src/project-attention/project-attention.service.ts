@@ -8,6 +8,8 @@ import { NotificationType, RoleName } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { dayKey, isoWeekKey } from '../common/utils/iso-week.util';
+import { ownersOf } from '../hunter-reliability/reliability.calc';
 
 /**
  * How often one member may nudge one gem.
@@ -91,7 +93,11 @@ export class ProjectAttentionService {
       );
     }
 
-    return { ok: true, membersWaiting: waiting, hunterNotified: hunterIds.length > 0 };
+    return {
+      ok: true,
+      membersWaiting: waiting,
+      hunterNotified: hunterIds.length > 0,
+    };
   }
 
   /**
@@ -184,20 +190,17 @@ export class ProjectAttentionService {
     return project;
   }
 
-  /** Assigned hunters, falling back to the owning admin when none are set. */
+  /**
+   * Who keeps this gem: assigned hunters, falling back to the owning admin.
+   * The rule itself is `ownersOf`, shared with reliability so the person a
+   * nudge reaches is the person whose reliability it counts against.
+   */
   private async hunterIdsFor(projectId: string): Promise<string[]> {
-    const hunters = await this.prisma.projectHunter.findMany({
-      where: { projectId },
-      select: { hunterId: true },
-    });
-    if (hunters.length > 0) {
-      return hunters.map((row) => row.hunterId);
-    }
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { ownerAdminId: true },
+      select: { ownerAdminId: true, hunters: { select: { hunterId: true } } },
     });
-    return project?.ownerAdminId ? [project.ownerAdminId] : [];
+    return project ? ownersOf(project) : [];
   }
 
   private async moderatorIds(): Promise<string[]> {
@@ -207,11 +210,7 @@ export class ProjectAttentionService {
     const rows = await this.prisma.userRole.findMany({
       where: {
         role: {
-          in: [
-            RoleName.community_moderator,
-            RoleName.admin,
-            RoleName.owner,
-          ],
+          in: [RoleName.community_moderator, RoleName.admin, RoleName.owner],
         },
         user: { isDeactivated: false },
       },
@@ -222,20 +221,5 @@ export class ProjectAttentionService {
   }
 }
 
-/** `2026-W37`. Stable within a week, so a dedupeKey rolls over on Monday. */
-export function isoWeekKey(date: Date): string {
-  const d = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-  );
-  // ISO weeks run Monday to Sunday and belong to the year of their Thursday.
-  const day = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
-}
-
-/** `2026-09-12`. */
-export function dayKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
+// Kept importable from here for existing callers; the helpers live in common.
+export { dayKey, isoWeekKey } from '../common/utils/iso-week.util';
