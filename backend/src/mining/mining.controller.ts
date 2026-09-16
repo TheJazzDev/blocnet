@@ -44,6 +44,7 @@ export class MiningController {
       limit: query.limit,
       offset: query.offset,
       includePrivateFields: false,
+      viewerId: user.id,
     });
   }
 
