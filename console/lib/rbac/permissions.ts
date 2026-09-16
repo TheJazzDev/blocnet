@@ -59,6 +59,23 @@ export function canManageSocialCredentials(roles: string[]): boolean {
   return hasRole(roles, 'owner');
 }
 
+/** True when any of the roles is granted the capability in the catalog. */
+export function hasCapability(roles: string[], capabilityKey: string): boolean {
+  const capability = ROLE_CAPABILITIES.find((entry) => entry.key === capabilityKey);
+  if (!capability) return false;
+  return capability.roles.some((role) => hasRole(roles, role));
+}
+
+/** Mining config and metrics (`engagement.mining.view`). */
+export function canViewMining(roles: string[]): boolean {
+  return hasCapability(roles, 'engagement.mining.view');
+}
+
+/** Editing mining config (`engagement.mining.mutate`). */
+export function canMutateMining(roles: string[]): boolean {
+  return hasCapability(roles, 'engagement.mining.mutate');
+}
+
 export function getRoleCapabilities(role: AdminPanelRole | null): RoleCapabilityDefinition[] {
   if (!role) return [];
   return ROLE_CAPABILITIES.filter((entry) => entry.roles.includes(role));

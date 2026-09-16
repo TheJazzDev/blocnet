@@ -30,6 +30,7 @@ import {
   canManageTags,
   canMutateSettings,
   canSendNotifications,
+  canViewMining,
   canViewOpsEvents,
 } from '@/lib/rbac';
 
@@ -106,7 +107,9 @@ export function buildNavItems(userRoles: string[]): NavGroup[] {
   // One rule: an item is listed only when its page's own gate would let the
   // role in. Each conditional below mirrors the helper that page calls.
   const gamificationItems: NavItem[] = [
-    { href: '/mining', label: 'Mining', icon: Zap },
+    ...(canViewMining(userRoles)
+      ? [{ href: '/mining', label: 'Mining', icon: Zap }]
+      : []),
     { href: '/mining/leaderboard', label: 'Leaderboard', icon: CheckCircle2 },
     { href: '/referrals', label: 'Referrals', icon: UserPlus },
   ];

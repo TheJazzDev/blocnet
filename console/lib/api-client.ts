@@ -7,6 +7,7 @@ export type {
   AdminStats,
   AdminUser,
   AdminUserDetail,
+  AdminMiningSessionStatus,
   AdminDeleteUserResponse,
   AdminReactivateUserResponse,
   AdminHardDeleteUserResponse,

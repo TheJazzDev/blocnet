@@ -24,6 +24,10 @@ import { AdminDeleteUserDto } from './dto/admin-delete-user.dto';
 import { AdminHardDeleteUserDto } from './dto/admin-hard-delete-user.dto';
 import { AdminReactivateUserDto } from './dto/admin-reactivate-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
+import {
+  DEFAULT_CLAIM_WINDOW_HOURS,
+  deriveAdminMiningSessionStatus,
+} from './users-admin-mining-status';
 
 @Injectable()
 export class UsersAdminService {
@@ -333,6 +337,7 @@ export class UsersAdminService {
         select: {
           cycleHours: true,
           activeReferralWindowHours: true,
+          claimWindowHours: true,
         },
       }),
       this.prisma.miningSession.findFirst({
@@ -368,6 +373,7 @@ export class UsersAdminService {
           startsAt: true,
           endsAt: true,
           claimedAt: true,
+          expiredAt: true,
           basePointsPerCycle: true,
           effectivePointsPerCycle: true,
           boostBpsSnapshot: true,
@@ -531,11 +537,11 @@ export class UsersAdminService {
       const progressPct = Number(
         ((elapsedMs / sessionDurationMs) * 100).toFixed(2),
       );
-      const status = session.claimedAt
-        ? 'claimed'
-        : session.endsAt.getTime() <= asOf.getTime()
-          ? 'claimable'
-          : 'running';
+      const status = deriveAdminMiningSessionStatus(
+        session,
+        asOf,
+        miningConfig?.claimWindowHours ?? DEFAULT_CLAIM_WINDOW_HOURS,
+      );
 
       return {
         id: session.id,

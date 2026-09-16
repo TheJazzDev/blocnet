@@ -3,7 +3,7 @@
 import { Pickaxe, TrendingUp, Users, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AdminUserDetail } from "@/lib/api-client";
+import type { AdminMiningSessionStatus, AdminUserDetail } from "@/lib/api-client";
 
 type MiningSectionProps = {
   user: AdminUserDetail;
@@ -27,12 +27,15 @@ function fmtPoints(value: string | number) {
   return Number.isFinite(num) ? num.toLocaleString() : String(value);
 }
 
-function sessionStatusBadge(status: "running" | "claimable" | "claimed") {
+function sessionStatusBadge(status: AdminMiningSessionStatus) {
   if (status === "running") {
     return <Badge className="bg-sky-500/15 text-sky-300 text-xs">Running</Badge>;
   }
   if (status === "claimable") {
     return <Badge className="bg-amber-500/15 text-amber-300 text-xs">Claimable</Badge>;
+  }
+  if (status === "expired") {
+    return <Badge className="bg-rose-500/15 text-rose-300 text-xs">Expired</Badge>;
   }
   return <Badge className="bg-emerald-500/15 text-emerald-300 text-xs">Claimed</Badge>;
 }
