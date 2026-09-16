@@ -47,6 +47,13 @@ type CurrencyWithFeeConfig = TipCurrency & {
   feeConfig: TipFeeConfig | null;
 };
 
+/**
+ * Only real tips count as tips. The same ledger also carries member-to-member
+ * BNP transfers (`type: transfer`), which must never show up in tip history,
+ * tip totals or anything derived from them.
+ */
+const TIPS_ONLY = { type: TipTransactionType.tip } as const;
+
 @Injectable()
 export class TipsService {
   private readonly logger = new Logger(TipsService.name);
@@ -81,7 +88,7 @@ export class TipsService {
         }),
         this.prisma.tipTransaction.groupBy({
           by: ['currencyCode'],
-          where: { senderUserId: userId },
+          where: { senderUserId: userId, ...TIPS_ONLY },
           _count: { _all: true },
           _sum: {
             amountAtomic: true,
@@ -91,7 +98,7 @@ export class TipsService {
         }),
         this.prisma.tipTransaction.groupBy({
           by: ['currencyCode'],
-          where: { recipientUserId: userId },
+          where: { recipientUserId: userId, ...TIPS_ONLY },
           _count: { _all: true },
           _sum: { amountAtomic: true },
         }),
@@ -395,6 +402,7 @@ export class TipsService {
     const direction = query.direction ?? 'all';
 
     const where: Prisma.TipTransactionWhereInput = {
+      ...TIPS_ONLY,
       ...(query.currencyCode
         ? { currencyCode: query.currencyCode.trim().toUpperCase() }
         : {}),
