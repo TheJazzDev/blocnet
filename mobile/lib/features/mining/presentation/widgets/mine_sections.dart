@@ -107,11 +107,18 @@ class MineBalanceCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                MineFormat.points(balance),
-                style: AppText.display(MinePalette.white)
-                    .merge(AppText.tabular)
-                    .copyWith(height: 1),
+              // Large balances shrink rather than overflow.
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    MineFormat.points(balance),
+                    style: AppText.display(MinePalette.white)
+                        .merge(AppText.tabular)
+                        .copyWith(height: 1),
+                  ),
+                ),
               ),
               const SizedBox(width: AppSpace.sm),
               Text('BNP', style: AppText.body(MinePalette.muted)),

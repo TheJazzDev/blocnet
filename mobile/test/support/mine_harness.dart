@@ -207,8 +207,12 @@ Widget mineHost({
 
 /// Phone-sized surface (390 wide) that is tall enough to lay out the whole
 /// tab without scrolling.
-void usePhone(WidgetTester tester, {double height = 2400}) {
-  tester.view.physicalSize = Size(390, height);
+void usePhone(
+  WidgetTester tester, {
+  double height = 2400,
+  double width = 390,
+}) {
+  tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 }

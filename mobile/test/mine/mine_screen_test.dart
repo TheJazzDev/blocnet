@@ -13,8 +13,9 @@ Future<MiningStore> _pumpScreen(
   FakeMineRepo repo, {
   required DateTime now,
   MemoryMineCache? cache,
+  double width = 390,
 }) async {
-  usePhone(tester);
+  usePhone(tester, width: width);
   final memory = cache ?? MemoryMineCache();
   final store = mineStore(repo, now: now, cache: memory);
   final settings = await loadedSettings(FakeNotificationsRepo());
@@ -308,5 +309,40 @@ void main() {
     await _pumpScreen(tester, repo, now: runningNow);
     expect(find.text("Can't reach Blocnet"), findsOneWidget);
     expect(find.textContaining('Last balance'), findsNothing);
+  });
+
+  testWidgets('every state lays out at 375 px (iPhone SE)', (tester) async {
+    final states = <(DateTime, Map<String, dynamic>)>[
+      (runningNow, mineSnapshotJson(balance: 1234567)),
+      (
+        runningNow,
+        mineSnapshotJson(session: runningSession(), activeFriends: 20)
+      ),
+      (
+        readyNow,
+        mineSnapshotJson(
+            asOf: readyNow, session: claimableSession(points: 2400))
+      ),
+      (
+        soonNow,
+        mineSnapshotJson(asOf: soonNow, session: claimableSession(points: 2400))
+      ),
+      (runningNow, mineSnapshotJson(enabled: false, activeFriends: 2)),
+    ];
+    for (final (now, json) in states) {
+      final repo = FakeMineRepo(json)
+        ..leaderboardRows = [
+          {
+            ...leaderboardRow(1, status: 'running', points: 12345678),
+            'displayName': 'A very long display name for a member',
+            'username': 'averyveryverylonghandle',
+          },
+        ]
+        ..leaderboardMe = leaderboardRow(1234, userId: 'me', points: 99999);
+      await tester.pumpWidget(const SizedBox());
+      await _pumpScreen(tester, repo, now: now, width: 375);
+      final error = tester.takeException();
+      expect(error, isNull, reason: '$now ${json['session']} $error');
+    }
   });
 }

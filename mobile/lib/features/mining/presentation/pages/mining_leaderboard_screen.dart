@@ -81,7 +81,9 @@ class _MiningLeaderboardScreenState extends State<MiningLeaderboardScreen> {
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (_) {
-                _measureMe();
+                // Positions settle in the next layout; measure after it.
+                WidgetsBinding.instance
+                    .addPostFrameCallback((_) => _measureMe());
                 return false;
               },
               child: RefreshIndicator(
