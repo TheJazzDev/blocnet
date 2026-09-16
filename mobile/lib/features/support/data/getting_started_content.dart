@@ -31,10 +31,10 @@ const List<GettingStartedStep> gettingStartedSteps = [
   GettingStartedStep(
     icon: Icons.home_outlined,
     title: 'Read your feed',
-    body: 'Home shows Updates from your Gems, posted by Hunters. Alpha Radar '
-        'at the top tells you which Gems are moving; the Edge card turns the '
-        'latest Updates into short briefs. Use the High / Medium / Low chips '
-        'to focus on what matters.',
+    body: 'Home shows Updates from your Gems, posted by Hunters. Following '
+        'is only the Gems you follow; For you mixes in Hunters you do not '
+        'follow yet. The Alpha Radar line at the top tells you how much is '
+        'new since you last looked.',
   ),
   GettingStartedStep(
     icon: Icons.memory_rounded,
