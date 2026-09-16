@@ -10,7 +10,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, TipAccountType } from '@prisma/client';
+import { Prisma, TipAccountType, TipTransactionType } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
 import { normalizePagination } from '../common/utils/pagination.util';
@@ -53,7 +53,11 @@ export class TipsAdminService {
     const direction = query.direction ?? 'all';
     const userId = query.userId?.trim();
 
-    const and: Prisma.TipTransactionWhereInput[] = [];
+    // Minted BNP (mining claims, quest rewards) is not a member-to-member
+    // movement and would drown the tips list (F-63).
+    const and: Prisma.TipTransactionWhereInput[] = [
+      { type: { not: TipTransactionType.reward } },
+    ];
     if (query.currencyCode) {
       and.push({ currencyCode: query.currencyCode.trim().toUpperCase() });
     }

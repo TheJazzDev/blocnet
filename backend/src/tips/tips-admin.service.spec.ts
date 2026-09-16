@@ -37,6 +37,10 @@ describe('TipsAdminService (admin settings, retired currencies)', () => {
     tipAccount: {
       upsert: jest.fn(),
     },
+    tipTransaction: {
+      findMany: jest.fn(),
+      count: jest.fn(),
+    },
   };
 
   const auditLogService = {
@@ -63,6 +67,19 @@ describe('TipsAdminService (admin settings, retired currencies)', () => {
       auditLogService,
       new TipBootstrapService(prisma as any),
     );
+  });
+
+  describe('listAdminTransactions', () => {
+    it('leaves minted BNP reward rows out of the tips list (F-63)', async () => {
+      prisma.tipTransaction.findMany.mockResolvedValue([]);
+      prisma.tipTransaction.count.mockResolvedValue(0);
+
+      await service.listAdminTransactions({} as any);
+
+      const where = prisma.tipTransaction.findMany.mock.calls[0][0].where;
+      expect(where.AND).toContainEqual({ type: { not: 'reward' } });
+      expect(prisma.tipTransaction.count).toHaveBeenCalledWith({ where });
+    });
   });
 
   describe('getAdminSettings', () => {
