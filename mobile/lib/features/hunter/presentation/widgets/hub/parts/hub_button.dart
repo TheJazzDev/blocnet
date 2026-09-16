@@ -2,9 +2,11 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
 
-enum HubButtonTone { filled, outline }
+/// `filled` cyan · `outline` zinc (`.btn.w`) · `warn` orange outline
+/// (`.btn.o`, used by *Hand over*).
+enum HubButtonTone { filled, outline, warn }
 
-/// The Hub's 40px (or 34px small) button: filled cyan, or a zinc outline.
+/// The Hub's 40px (or 34px small) button.
 class HubButton extends StatelessWidget {
   const HubButton({
     super.key,
@@ -23,10 +25,17 @@ class HubButton extends StatelessWidget {
   final bool small;
   final bool busy;
 
+  /// `#fb923c4d` — the warn tone's 1px outline.
+  static const Color warnOutline = Color(0x4DFB923C);
+
   @override
   Widget build(BuildContext context) {
     final filled = tone == HubButtonTone.filled;
-    final foreground = filled ? Colors.white : AppColors.zincStrong;
+    final (foreground, outline) = switch (tone) {
+      HubButtonTone.filled => (Colors.white, null),
+      HubButtonTone.outline => (AppColors.zincStrong, AppColors.borderSubtle),
+      HubButtonTone.warn => (AppColors.quietOrange, warnOutline),
+    };
     return Semantics(
       button: true,
       child: GestureDetector(
@@ -39,7 +48,7 @@ class HubButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: filled ? AppColors.hunterFill : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
-            border: filled ? null : Border.all(color: AppColors.borderSubtle),
+            border: outline == null ? null : Border.all(color: outline),
           ),
           child: busy
               ? SizedBox(
