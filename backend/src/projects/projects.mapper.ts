@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import type { OwnerReliabilityDto } from '../hunter-reliability/dto/hunter-reliability-response.dto';
 import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 
 export const projectInclude = {
@@ -32,6 +33,12 @@ export const projectInclude = {
       },
     },
   },
+  // Who keeps the gem, for the owner's reliability on the card. Ordered so
+  // the earliest-assigned hunter is the one a card names.
+  hunters: {
+    select: { hunterId: true },
+    orderBy: { createdAt: 'asc' },
+  },
   _count: {
     select: {
       follows: true,
@@ -44,8 +51,24 @@ export type ProjectWithRelations = Prisma.ProjectGetPayload<{
   include: typeof projectInclude;
 }>;
 
-export function toProjectResponse(project: ProjectWithRelations) {
-  const { _count, ownerAdmin, primaryTag, secondaryTags, ...rest } = project;
+/**
+ * [ownerReliability] is attached by the list and detail reads, which batch it;
+ * other callers leave it null rather than pay for it.
+ */
+export function toProjectResponse(
+  project: ProjectWithRelations,
+  ownerReliability: OwnerReliabilityDto | null = null,
+) {
+  const {
+    _count,
+    ownerAdmin,
+    primaryTag,
+    secondaryTags,
+    // Ownership is used for ownerReliability, not echoed to clients.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    hunters: _hunters,
+    ...rest
+  } = project;
   const rawUsername = (ownerAdmin.username ?? '').replaceAll('@', '').trim();
   const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
   const username = `@${normalized || ownerAdmin.id.slice(0, 6)}`;
@@ -67,5 +90,6 @@ export function toProjectResponse(project: ProjectWithRelations) {
       followers: _count.follows,
       currentLevel: toCurrentLevelDto(ownerAdmin.currentLevel),
     },
+    ownerReliability,
   };
 }

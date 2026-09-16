@@ -42,6 +42,14 @@ export interface ReliabilityFacts {
   tips: TipTotals;
 }
 
+interface EventRow {
+  projectId: string;
+  createdAt: Date;
+}
+
+const NO_EVENTS: EventRow[] = [];
+const NO_COUNTS: { projectId: string; _count: { _all: number } }[] = [];
+
 export interface LastUpdateRow {
   id: string;
   projectId: string;
@@ -158,27 +166,27 @@ export class ReliabilityLoader {
               },
               select: { projectId: true, createdAt: true },
             })
-          : Promise.resolve([]),
+          : Promise.resolve(NO_EVENTS),
         hasGems
           ? this.prisma.projectUpdateRequest.findMany({
               where: { ...inGems, createdAt: { gte: windowStart } },
               select: { projectId: true, createdAt: true },
             })
-          : Promise.resolve([]),
+          : Promise.resolve(NO_EVENTS),
         hasGems
           ? this.prisma.projectInactivityReport.groupBy({
               by: ['projectId'],
               where: { ...inGems, resolvedAt: null },
               _count: { _all: true },
             })
-          : Promise.resolve([]),
+          : Promise.resolve(NO_COUNTS),
         hasGems
           ? this.prisma.projectFollow.groupBy({
               by: ['projectId'],
               where: inGems,
               _count: { _all: true },
             })
-          : Promise.resolve([]),
+          : Promise.resolve(NO_COUNTS),
         this.loadTips(hunterIds),
       ]);
 
