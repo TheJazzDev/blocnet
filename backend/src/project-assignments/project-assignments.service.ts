@@ -3,13 +3,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InviteStatus, RoleName, UpdateStatus } from '@prisma/client';
+import {
+  InviteStatus,
+  ProjectInviteKind,
+  RoleName,
+  UpdateStatus,
+} from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
 import { PrismaService } from '../prisma/prisma.service';
 import type { MyInviteDto } from './dto/my-invite-response.dto';
+import { ProjectHandoverService } from './project-handover.service';
 
 interface InviteProjectStats {
   followersCount: number;
@@ -22,6 +28,7 @@ export class ProjectAssignmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
+    private readonly handover: ProjectHandoverService,
   ) {}
 
   async assignHunter(
@@ -130,6 +137,7 @@ export class ProjectAssignmentsService {
         },
       },
       update: {
+        kind: ProjectInviteKind.co_own,
         invitedBy: actor.id,
         note,
         status: InviteStatus.pending,
@@ -328,6 +336,10 @@ export class ProjectAssignmentsService {
 
     if (invite.hunterId !== actor.id) {
       throw new ForbiddenException('You can only respond to your own invites');
+    }
+
+    if (invite.kind === ProjectInviteKind.handover) {
+      return this.handover.respond(actor, invite, status);
     }
 
     const updatedInvite = await this.prisma.projectHunterInvite.update({

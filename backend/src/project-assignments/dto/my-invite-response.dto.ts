@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { InviteStatus } from '@prisma/client';
+import { InviteStatus, ProjectInviteKind } from '@prisma/client';
 
 export class MyInviteProjectDto {
   @ApiProperty() id!: string;
@@ -24,13 +24,21 @@ export class MyInviteInviterDto {
   @ApiProperty({ nullable: true, type: String }) displayName!: string | null;
 }
 
-/** An invite to co-own a gem, as its invited hunter sees it. */
+/** An invite to co-own or take over a gem, as its invited hunter sees it. */
 export class MyInviteDto {
   @ApiProperty() id!: string;
   @ApiProperty() projectId!: string;
   @ApiProperty() hunterId!: string;
   @ApiProperty() invitedBy!: string;
   @ApiProperty({ nullable: true, type: String }) note!: string | null;
+
+  @ApiProperty({
+    enum: ProjectInviteKind,
+    description:
+      'co_own: join the gem’s owners. handover: the inviter’s ownership becomes yours on accept.',
+  })
+  kind!: ProjectInviteKind;
+
   @ApiProperty({ enum: InviteStatus }) status!: InviteStatus;
   @ApiProperty({ nullable: true, type: String }) reviewedBy!: string | null;
   @ApiProperty({ nullable: true, type: Date }) reviewedAt!: Date | null;

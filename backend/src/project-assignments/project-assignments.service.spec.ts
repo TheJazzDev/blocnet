@@ -9,6 +9,7 @@ function invite(id: string, projectId: string) {
     hunterId: HUNTER.id,
     invitedBy: 'admin-1',
     note: null,
+    kind: 'co_own',
     status: 'pending',
     reviewedBy: null,
     reviewedAt: null,
@@ -25,7 +26,7 @@ function createService() {
     projectFollow: { groupBy: jest.fn().mockResolvedValue([]) },
     update: { groupBy: jest.fn().mockResolvedValue([]) },
   } as any;
-  const service = new ProjectAssignmentsService(prisma, {} as any);
+  const service = new ProjectAssignmentsService(prisma, {} as any, {} as any);
   return { service, prisma };
 }
 
@@ -51,6 +52,7 @@ describe('ProjectAssignmentsService.listMyInvites', () => {
 
     expect(result[0]).toMatchObject({
       id: 'i1',
+      kind: 'co_own',
       project: {
         id: 'p1',
         name: 'p1',
