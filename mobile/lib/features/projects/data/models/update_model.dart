@@ -74,6 +74,45 @@ class Update {
     );
   }
 
+  /// This update with the fields the composer can change replaced, ready to
+  /// send as a `PATCH /updates/:id`. [deadlineAt] null clears the window.
+  Update withEdits({
+    required String title,
+    required String content,
+    required Priority priority,
+    required DateTime? deadlineAt,
+    required List<String> secondaryTagIds,
+  }) {
+    return Update(
+      id: id,
+      title: title,
+      content: content,
+      adminId: adminId,
+      priority: priority,
+      projectId: projectId,
+      createdAt: createdAt,
+      description: description,
+      lastEditedAt: lastEditedAt,
+      deadlineAt: deadlineAt,
+      likesCount: likesCount,
+      commentsCount: commentsCount,
+      bookmarksCount: bookmarksCount,
+      isCommented: isCommented,
+      secondaryTagIds: secondaryTagIds,
+      admin: admin,
+      secondaryTags: secondaryTags
+          .where((tag) => secondaryTagIds.contains(tag.id))
+          .toList(),
+      project: project,
+    );
+  }
+
+  /// Every secondary tag id this update carries, from either field.
+  Set<String> get allSecondaryTagIds => {
+        ...secondaryTagIds,
+        ...secondaryTags.map((tag) => tag.id),
+      }..removeWhere((id) => id.isEmpty);
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

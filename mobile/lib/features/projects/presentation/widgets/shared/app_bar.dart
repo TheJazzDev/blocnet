@@ -118,7 +118,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                         icon: Icons.person_outline_rounded,
                         minimal: minimalActionIcons,
                         onTap: () {
-                          MainTabNavigator.openRoute(context, AppRoutes.profile);
+                          MainTabNavigator.openRoute(
+                              context, AppRoutes.profile);
                         },
                       ),
                     ],

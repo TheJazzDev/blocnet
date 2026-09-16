@@ -62,6 +62,34 @@ void main() {
     expect(model.isPending, isTrue);
   });
 
+  test('ProjectInviteModel reads the handover summary when sent', () {
+    final model = ProjectInviteModel.fromApi({
+      ..._invite('y'),
+      'project': {
+        'id': 'proj-y',
+        'name': 'Nebula Swap',
+        'slug': 'nebula-swap',
+        'primaryTag': {'name': 'Solana'},
+        'followersCount': 12740,
+        'updatesCount': 34,
+        'lastUpdateAt': '2026-09-14T09:00:00Z',
+      },
+      'inviter': {'username': 'abtoonzz', 'displayName': 'Abtoon'},
+    });
+    expect(model.primaryTag, 'Solana');
+    expect(model.followersCount, 12740);
+    expect(model.updatesCount, 34);
+    expect(model.lastUpdateAt, DateTime.utc(2026, 9, 14, 9));
+    expect(model.inviterUsername, 'abtoonzz');
+    expect(model.inviterDisplayName, 'Abtoon');
+
+    final plain = ProjectInviteModel.fromApi(_invite('z'));
+    expect(plain.followersCount, isNull);
+    expect(plain.inviterUsername, isNull);
+    // Survives a respond round trip.
+    expect(model.copyWith(status: 'accepted').followersCount, 12740);
+  });
+
   test('loadMine keeps only pending invites in pendingInvites', () async {
     final api = _FakeApiClient();
     final store = ProjectInvitesStore(

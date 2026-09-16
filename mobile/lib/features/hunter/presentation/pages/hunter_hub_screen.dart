@@ -1,458 +1,165 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/projects/data/models/update_model.dart';
-import 'package:blocnet/features/tips/data/models/tip_models.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/elite_hunter_banner.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hunter_stats_grid.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/managed_projects_row.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/project_invites_section.dart';
+import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
+import 'package:blocnet/features/hunter/data/models/project_invite_model.dart';
+import 'package:blocnet/features/hunter/presentation/hub_navigation.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/board/hub_identity_row.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/hub_app_bar_actions.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/hub_board_view.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/hub_fab_host.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/season_leaderboard.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/tips_load_error_row.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/services/hunter/hunter_board_store.dart';
 import 'package:blocnet/services/projects/project_invites_store.dart';
-import 'package:blocnet/services/projects/projects_store.dart';
-import 'package:blocnet/services/engagement/tips_store.dart';
-import 'package:blocnet/services/projects/updates_store.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+/// The Hunter Hub: which of my gems need me right now, and who is waiting.
+///
+/// Embedded as tab 3 of the hunter space, where the shell supplies the app
+/// bar and FAB; pushed standalone at `/hunter-hub` (e.g. from a
+/// notification), where it supplies its own.
 class HunterHubScreen extends StatefulWidget {
-  const HunterHubScreen({super.key});
+  const HunterHubScreen({super.key, this.clock});
+
+  /// Injectable "now" for tests.
+  final DateTime Function()? clock;
 
   @override
   State<HunterHubScreen> createState() => _HunterHubScreenState();
 }
 
 class _HunterHubScreenState extends State<HunterHubScreen> {
-  DateTime? _lastTipsSyncAt;
-  bool _tipsSyncQueued = false;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _primeInitialData();
+      if (mounted) _load(force: false);
     });
   }
 
-  Future<void> _primeInitialData() async {
-    final auth = context.read<AuthStore>();
-    final projectsStore = context.read<ProjectsStore>();
-    final updatesStore = context.read<UpdatesStore>();
-    context.read<TipsStore>().ensureUserScope(auth.userId);
+  Future<void> _load({required bool force}) async {
+    final board = context.read<HunterBoardStore>();
+    final invites = context.read<ProjectInvitesStore>();
     await Future.wait([
-      projectsStore.fetchProjectsOnce(),
-      updatesStore.fetchUpdatesOnce(),
-      context.read<ProjectInvitesStore>().loadMine(),
-      _syncTips(force: true),
+      board.loadBoard(),
+      invites.loadMine(force: force),
+      board.loadPendingProposals(),
     ]);
   }
 
-  Future<void> _syncTips({required bool force}) async {
-    final tipsStore = context.read<TipsStore>();
-    tipsStore.ensureUserScope(context.read<AuthStore>().userId);
-    await Future.wait([
-      tipsStore.loadOverview(force: force),
-      tipsStore.loadReceivedHistory(force: force, limit: 100),
-    ]);
-    _lastTipsSyncAt = DateTime.now();
+  Future<void> _respond(ProjectInviteModel invite, bool accept) async {
+    final invites = context.read<ProjectInvitesStore>();
+    final board = context.read<HunterBoardStore>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final ok = await invites.respond(invite.id, accept: accept);
+    if (!ok) {
+      messenger?.showSnackBar(SnackBar(
+        content: Text(invites.lastError ?? 'Could not answer the invite.'),
+      ));
+      return;
+    }
+    if (accept) await board.loadBoard();
   }
 
-  void _scheduleTipsSyncIfStale() {
-    if (_tipsSyncQueued) return;
-    final now = DateTime.now();
-    final isFresh = _lastTipsSyncAt != null &&
-        now.difference(_lastTipsSyncAt!).inSeconds < 45;
-    if (isFresh) return;
-
-    _tipsSyncQueued = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _tipsSyncQueued = false;
-      if (!mounted) return;
-      await _syncTips(force: true);
-    });
+  HubIdentity _identity(AuthStore auth, HunterBoard board) {
+    final r = board.reliability;
+    return HubIdentity(
+      name: r.displayName ?? auth.displayName ?? r.username ?? 'Hunter',
+      handle: r.username ?? auth.username,
+      avatarUrl: r.avatarUrl ?? auth.avatarUrl,
+      level: r.level?.level,
+      levelName: r.level?.name,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
-    final updates = context.watch<UpdatesStore>().updates;
-    final tipsStore = context.watch<TipsStore>();
-    final userId = auth.userId ?? '';
-    final username = auth.username ?? auth.displayName ?? '';
-
-    _scheduleTipsSyncIfStale();
-
-    final hunterUpdates = updates
-        .where(
-          (update) => _belongsToCurrentHunter(
-            update: update,
-            userId: userId,
-            username: username,
-          ),
-        )
-        .toList();
-
-    final qualitySignals = hunterUpdates.where((update) {
-      final label = update.priority.label.toLowerCase();
-      return label == 'high' || label == 'mid' || label == 'medium';
-    }).length;
-    final qualityRate = hunterUpdates.isEmpty
-        ? 0
-        : ((qualitySignals / hunterUpdates.length) * 100).round();
-
-    // Embedded in the main shell the shell's app bar applies; when pushed
-    // standalone (e.g. from an invite notification) supply our own.
+    final store = context.watch<HunterBoardStore>();
+    final invites = context.watch<ProjectInvitesStore>();
+    final board = store.board;
     final isStandalone = Navigator.of(context).canPop();
 
+    final Widget body;
+    if (board == null) {
+      body = _BoardStatus(
+        error: store.isLoadingBoard ? null : store.boardError,
+        onRetry: () => _load(force: true),
+      );
+    } else {
+      body = HubBoardView(
+        board: board,
+        identity: _identity(auth, board),
+        invites: invites.pendingInvites,
+        proposals: store.pendingProposals,
+        now: (widget.clock ?? DateTime.now)(),
+        onRefresh: () => _load(force: true),
+        actions: HubBoardActions(
+          onOpenGem: (gem) => HubNavigation.openGem(context, gem),
+          onPostUpdate: (gem) =>
+              HubNavigation.openComposer(context, projectId: gem.projectId),
+          onSubmitGem: () => HubNavigation.openSubmit(context),
+          onRespondToInvite: _respond,
+          isResponding: invites.isResponding,
+        ),
+      );
+    }
+
+    if (!isStandalone) return body;
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      appBar: isStandalone
-          ? const CustomAppBar(
-              title: 'Hunter Hub',
-              backButton: true,
-              showSearch: false,
-              showFilter: false,
-              showSpaceSwitcher: false,
-            )
-          : null,
-      body: RefreshIndicator(
-        color: AppColors.primary500,
-        backgroundColor: AppColors.bgSurface,
-        onRefresh: () async {
-          final projectsStore = context.read<ProjectsStore>();
-          final updatesStore = context.read<UpdatesStore>();
-          await Future.wait([
-            projectsStore.refreshProjects(),
-            updatesStore.refreshUpdates(),
-            context.read<ProjectInvitesStore>().loadMine(force: true),
-            _syncTips(force: true),
-          ]);
-        },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpace.lg, AppSpace.lg, AppSpace.lg, 0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const HunterStatsGrid(),
-                  const SizedBox(height: AppSpace.xl),
-                  _SectionHeader(title: 'Recent Received Tips'),
-                  const SizedBox(height: AppSpace.md),
-                  _RecentReceivedTipsCard(
-                    isLoading: tipsStore.isLoadingReceivedHistory &&
-                        tipsStore.receivedHistory.isEmpty,
-                    rows: tipsStore.receivedHistory,
-                    error: tipsStore.lastError,
-                    onRetry: () => _syncTips(force: true),
-                  ),
-                  const SizedBox(height: AppSpace.xl),
-                  _SectionHeader(title: 'Manage My Gems'),
-                  const SizedBox(height: AppSpace.md),
-                  const ProjectInvitesSection(),
-                  const ManagedProjectsRow(),
-                  const SizedBox(height: AppSpace.xl),
-                  _SectionHeader(title: 'Season Ranking'),
-                  const SizedBox(height: AppSpace.md),
-                  SeasonLeaderboard(
-                    onViewFullLeaderboard: () =>
-                        Navigator.of(context).pushNamed(AppRoutes.topHunters),
-                  ),
-                  const SizedBox(height: AppSpace.xl),
-                  EliteHunterBanner(
-                    qualityRate: qualityRate,
-                    hasSignals: hunterUpdates.isNotEmpty,
-                  ),
-                  const SizedBox(height: AppSpace.xl),
-                  const _CommunityBridgeLink(),
-                  const SizedBox(height: 120),
-                ]),
-              ),
-            ),
-          ],
-        ),
+      appBar: const CustomAppBar(
+        title: 'Hub',
+        backButton: true,
+        showSearch: false,
+        showFilter: false,
+        showSpaceSwitcher: false,
+        actions: [HubHistoryAction()],
       ),
+      body: body,
+      floatingActionButton: const HubFabHost(),
     );
   }
 }
 
-class _RecentReceivedTipsCard extends StatelessWidget {
-  const _RecentReceivedTipsCard({
-    required this.isLoading,
-    required this.rows,
-    required this.error,
-    required this.onRetry,
-  });
+class _BoardStatus extends StatelessWidget {
+  const _BoardStatus({required this.error, required this.onRetry});
 
-  final bool isLoading;
-  final List<TipTransaction> rows;
   final String? error;
-  final Future<void> Function() onRetry;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final visibleRows = rows.take(6).toList(growable: false);
-
-    return AppSurface(
-      radius: AppRadius.lg,
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpace.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isLoading)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary500,
-                    strokeWidth: 2,
-                  ),
-                ),
-              ),
-            )
-          else if (visibleRows.isEmpty) ...[
-            if (error == null || error!.trim().isEmpty)
-              Text(
-                'No tips received yet.',
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w500,
-                ),
-              )
-            else
-              TipsLoadErrorRow(onRetry: onRetry),
-          ] else ...[
-            ...visibleRows.map((row) => _RecentReceivedTipRow(row: row)),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _RecentReceivedTipRow extends StatelessWidget {
-  const _RecentReceivedTipRow({required this.row});
-
-  final TipTransaction row;
-
-  @override
-  Widget build(BuildContext context) {
-    final symbol = row.currency.symbol.trim().isEmpty
-        ? row.currency.code
-        : row.currency.symbol;
-    final sender = _tipSenderLabel(row);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: AppColors.successColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppRadius.smValue),
-            ),
-            child: Icon(
-              Icons.south_west_rounded,
-              color: AppColors.successColor,
-              size: AppIcon.sm,
-            ),
+    if (error == null) {
+      return const Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.hunterFill,
           ),
-          const SizedBox(width: AppSpace.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'From $sender',
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: AppText.labelSize,
-                    weight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  row.note?.trim().isNotEmpty == true
-                      ? row.note!.trim()
-                      : _tipContextLabel(row),
-                  style: AppTypography.custom(
-                    color: AppColors.textFaint,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w400,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpace.sm),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '+${row.amount} $symbol',
-                style: AppTypography.custom(
-                  color: AppColors.successColor,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                _formatTipTimestamp(row.createdAt),
-                style: AppTypography.custom(
-                  color: AppColors.textFaint,
-                  size: AppText.captionSize,
-                  weight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Section header
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: AppTypography.custom(
-        color: AppColors.textPrimary,
-        size: AppText.bodySize,
-        weight: FontWeight.w700,
-      ),
-    );
-  }
-}
-
-bool _belongsToCurrentHunter({
-  required Update update,
-  required String userId,
-  required String username,
-}) {
-  if (userId.isNotEmpty &&
-      (update.adminId == userId || update.admin?.id == userId)) {
-    return true;
-  }
-
-  final normalizedCurrent = _normalizeHunterIdentity(username);
-  if (normalizedCurrent.isEmpty) return false;
-
-  final normalizedUpdate = _normalizeHunterIdentity(
-    update.admin?.username ?? update.admin?.name ?? '',
-  );
-  return normalizedUpdate == normalizedCurrent;
-}
-
-String _normalizeHunterIdentity(String value) {
-  return value.replaceAll('@', '').trim().toLowerCase();
-}
-
-String _tipSenderLabel(TipTransaction row) {
-  final displayName = row.sender.displayName?.trim();
-  if (displayName != null && displayName.isNotEmpty) {
-    return displayName;
-  }
-
-  final username = row.sender.username?.trim();
-  if (username != null && username.isNotEmpty) {
-    return username.startsWith('@') ? username : '@$username';
-  }
-
-  return row.sender.id.isNotEmpty ? row.sender.id : 'User';
-}
-
-String _tipContextLabel(TipTransaction row) {
-  final context = row.contextType?.trim();
-  if (context == null || context.isEmpty) {
-    return 'Tip received';
-  }
-  return context.replaceAll('_', ' ');
-}
-
-String _formatTipTimestamp(DateTime date) {
-  final now = DateTime.now();
-  final diff = now.difference(date);
-  if (diff.inMinutes < 1) return 'just now';
-  if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-  if (diff.inDays < 1) return '${diff.inHours}h ago';
-  if (diff.inDays < 7) return '${diff.inDays}d ago';
-  final month = date.month.toString().padLeft(2, '0');
-  final day = date.day.toString().padLeft(2, '0');
-  return '$month/$day';
-}
-
-class _CommunityBridgeLink extends StatelessWidget {
-  const _CommunityBridgeLink();
-
-  void _navigateToCommunity(BuildContext context) async {
-    final authStore = context.read<AuthStore>();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('navigate_to_tab_after_switch', 2);
-    await authStore.switchSpaceWithTransition('user');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _navigateToCommunity(context),
-      child: AppSurface(
-        radius: AppRadius.lg,
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.lg, vertical: AppSpace.lg),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        ),
+      );
+    }
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.forum_outlined,
-              size: AppIcon.md,
-              color: AppColors.primary400,
-            ),
-            const SizedBox(width: AppSpace.sm),
             Text(
-              'Discuss with the community',
-              style: AppTypography.custom(
-                size: AppText.bodySize,
-                weight: FontWeight.w600,
-                color: AppColors.primary400,
-              ),
+              error!,
+              textAlign: TextAlign.center,
+              style: HubType.body(AppColors.zincMuted),
             ),
-            const SizedBox(width: AppSpace.xs),
-            Icon(
-              Icons.arrow_forward_rounded,
-              size: AppIcon.sm,
-              color: AppColors.primary400,
+            const SizedBox(height: 12),
+            HubButton(
+              label: 'Try again',
+              tone: HubButtonTone.outline,
+              onTap: onRetry,
             ),
           ],
         ),

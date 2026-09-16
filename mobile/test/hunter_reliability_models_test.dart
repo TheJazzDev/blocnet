@@ -1,4 +1,5 @@
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
+import 'package:blocnet/features/hunter/data/models/hunter_gem_detail_model.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_leaderboard_model.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -171,6 +172,49 @@ void main() {
       expect(GemState.fromApi('archived'), GemState.unknown);
     });
 
+    test('falls back when the newer gem fields are absent', () {
+      final board = HunterBoard.fromApi(json);
+      final quiet = board.gems.first;
+      expect(quiet.neverUpdated, isTrue, reason: 'no lastUpdate');
+      expect(quiet.chain, 'DeFi', reason: 'chain falls back to primaryTag');
+      expect(quiet.updatesCount, 0);
+      expect(quiet.escalatesAtWaiting, 50);
+      expect(board.gems.last.neverUpdated, isFalse);
+      expect(board.reliability.responseAsked, isNull);
+      expect(board.reliability.escalatesAtWaiting, 50);
+    });
+
+    test('reads the newer gem and reliability fields when sent', () {
+      final board = HunterBoard.fromApi({
+        'reliability': {
+          ...reliabilityJson(),
+          'responseAnswered': 4,
+          'responseAsked': 5,
+          'escalatesAtWaiting': 40,
+        },
+        'gems': [
+          {
+            'projectId': 'p',
+            'name': 'Halo Points',
+            'primaryTag': 'Ethereum',
+            'chain': 'Base',
+            'updatesCount': 34,
+            'neverUpdated': false,
+            'escalatesAtWaiting': 40,
+            'state': 'quiet',
+          },
+        ],
+      });
+      final gem = board.gems.single;
+      expect(gem.chain, 'Base');
+      expect(gem.updatesCount, 34);
+      expect(gem.neverUpdated, isFalse);
+      expect(gem.escalatesAtWaiting, 40);
+      expect(board.reliability.responseAnswered, 4);
+      expect(board.reliability.responseAsked, 5);
+      expect(board.reliability.escalatesAtWaiting, 40);
+    });
+
     test('an empty board has no gems', () {
       final board = HunterBoard.fromApi({
         'reliability': reliabilityJson(standing: 'new', coverage: null),
@@ -219,6 +263,51 @@ void main() {
       expect(owner?.standing, ReliabilityStanding.reliable);
       expect(owner?.coverage, 0.9);
       expect(OwnerReliability.fromApi(null), isNull);
+    });
+  });
+
+  group('HunterGemDetail.fromApi', () {
+    test('reads the gem, its updates newest first, and the gap', () {
+      final detail = HunterGemDetail.fromApi({
+        'gem': {'projectId': 'p', 'name': 'Halo Points', 'state': 'quiet'},
+        'updates': [
+          {
+            'id': 'u2',
+            'title': 'Farming round 2 is live',
+            'priority': 'HIGH',
+            'createdAt': '2026-08-20T10:00:00Z',
+            'editedAt': null,
+            'likesCount': 412,
+            'commentsCount': 38,
+            'tipsAtomic': '2100000000000000000000',
+            'tipsCurrencyCode': 'BNP',
+            'tipsCurrencyDecimals': 18,
+          },
+          {'id': 'u1', 'title': 'Listed', 'createdAt': '2026-07-28T10:00:00Z'},
+        ],
+        'gapDays': 19,
+      });
+      expect(detail.gem.name, 'Halo Points');
+      expect(detail.gapDays, 19);
+      expect(detail.updates.map((u) => u.id), ['u2', 'u1']);
+      final first = detail.updates.first;
+      expect(first.priority, 'high');
+      expect(first.tipsAtomic, BigInt.parse('2100000000000000000000'));
+      expect(first.tipsCurrencyDecimals, 18);
+      final last = detail.updates.last;
+      expect(last.priority, 'low');
+      expect(last.tipsAtomic, BigInt.zero);
+      expect(last.editedAt, isNull);
+    });
+
+    test('a gem that is not quiet has no gap', () {
+      final detail = HunterGemDetail.fromApi({
+        'gem': {'projectId': 'p'},
+        'updates': <Object>[],
+        'gapDays': null,
+      });
+      expect(detail.gapDays, isNull);
+      expect(detail.updates, isEmpty);
     });
   });
 }

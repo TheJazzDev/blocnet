@@ -1,4 +1,5 @@
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
+import 'package:blocnet/features/hunter/data/models/hunter_gem_detail_model.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_leaderboard_model.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dart';
 import 'package:blocnet/features/hunter/data/models/reliability_json.dart';
@@ -15,6 +16,14 @@ class HunterReliabilityApiRepository {
   Future<HunterBoard> fetchBoard() async {
     final response = await _apiClient.get('/me/hunter/board');
     return HunterBoard.fromApi(jsonMap(response));
+  }
+
+  /// `GET /me/hunter/gems/:projectId` — one of the caller's own gems with
+  /// their updates on it.
+  Future<HunterGemDetail> fetchGem(String projectId) async {
+    final response =
+        await _apiClient.get('/me/hunter/gems/${projectId.trim()}');
+    return HunterGemDetail.fromApi(jsonMap(response));
   }
 
   /// `GET /hunters/:profileId/reliability`.

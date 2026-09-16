@@ -27,6 +27,13 @@ class UpdatesApiRepository {
         .toList();
   }
 
+  /// `GET /updates/:id`.
+  Future<Update?> fetchUpdate(String id) async {
+    final response = await _apiClient.get('/updates/${id.trim()}');
+    if (response is! Map<String, dynamic>) return null;
+    return Update.fromApi(response);
+  }
+
   Future<Update?> createUpdate({
     required String projectId,
     required String title,

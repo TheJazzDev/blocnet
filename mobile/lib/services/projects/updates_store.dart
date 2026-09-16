@@ -165,6 +165,20 @@ class UpdatesStore extends ChangeNotifier {
     );
   }
 
+  /// The update with [id]: the loaded copy when there is one, otherwise
+  /// fetched. Null when it cannot be read.
+  Future<Update?> loadUpdate(String id) async {
+    for (final update in _updates) {
+      if (update.id == id) return update;
+    }
+    try {
+      return await _updatesRepository.fetchUpdate(id);
+    } catch (error) {
+      debugPrint('Failed to load update $id: $error');
+      return null;
+    }
+  }
+
   Update getUpdateById(String id) {
     return _updates.firstWhere((update) => update.id == id);
   }

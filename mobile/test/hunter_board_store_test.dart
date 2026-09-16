@@ -1,4 +1,5 @@
 import 'package:blocnet/features/hunter/data/repositories/hunter_reliability_api_repository.dart';
+import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/hunter/hunter_board_store.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +43,25 @@ class _FakeApiClient extends ApiClient {
         ],
       };
     }
+    if (path.startsWith('/me/hunter/gems/')) {
+      return {
+        'gem': {'projectId': path.split('/').last, 'name': 'Gem'},
+        'updates': [
+          {'id': 'u1', 'title': 'Hello', 'createdAt': '2026-09-01T00:00:00Z'},
+        ],
+        'gapDays': 12,
+      };
+    }
+    if (path == '/project-proposals/mine') {
+      return [
+        {
+          'id': 'pp1',
+          'name': 'Lumen Pay',
+          'status': 'pending',
+          'createdAt': '2026-09-14T00:00:00Z',
+        },
+      ];
+    }
     if (path.startsWith('/hunters/') && path.endsWith('/reliability')) {
       final id = path.split('/')[2];
       return _reliability(id, standing: 'quiet');
@@ -75,6 +95,7 @@ void main() {
     api = _FakeApiClient();
     store = HunterBoardStore(
       repository: HunterReliabilityApiRepository(apiClient: api),
+      proposalsRepository: ProjectProposalsApiRepository(apiClient: api),
     );
   });
 
@@ -135,13 +156,40 @@ void main() {
     expect(store.leaderboard.length, 2);
   });
 
+  test('loadGem caches one gem and keeps it through a failed refresh',
+      () async {
+    await store.loadGem('g1');
+    expect(api.paths.last, '/me/hunter/gems/g1');
+    expect(store.gemFor('g1')?.updates.single.id, 'u1');
+    expect(store.gemFor('g1')?.gapDays, 12);
+    expect(store.isLoadingGem('g1'), isFalse);
+
+    api.failures['/me/hunter/gems/g1'] =
+        ApiException('Not Found', statusCode: 404);
+    await store.loadGem('g1');
+    expect(store.gemFor('g1'), isNotNull);
+    expect(store.gemErrorFor('g1'), isNotNull);
+  });
+
+  test('loadPendingProposals asks for pending submissions only', () async {
+    await store.loadPendingProposals();
+    expect(api.paths.last, '/project-proposals/mine');
+    expect(api.queries.last?['status'], 'pending');
+    expect(store.pendingProposals.single.name, 'Lumen Pay');
+    expect(store.hasLoadedProposals, isTrue);
+  });
+
   test('clear drops all state', () async {
     await store.loadBoard();
+    await store.loadGem('g1');
+    await store.loadPendingProposals();
     await store.loadLeaderboard();
     store.clear();
     expect(store.board, isNull);
     expect(store.leaderboard, isEmpty);
     expect(store.hasLoadedLeaderboard, isFalse);
     expect(store.reliabilityFor('me'), isNull);
+    expect(store.gemFor('g1'), isNull);
+    expect(store.pendingProposals, isEmpty);
   });
 }

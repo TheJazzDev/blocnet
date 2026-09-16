@@ -61,7 +61,12 @@ class HunterBoardGem {
     this.logoUrl,
     this.lastUpdate,
     this.nextDeadlineAt,
-  });
+    this.updatesCount = 0,
+    bool? neverUpdated,
+    String? chain,
+    this.escalatesAtWaiting = HunterReliability.defaultEscalatesAtWaiting,
+  })  : neverUpdated = neverUpdated ?? lastUpdate == null,
+        chain = chain ?? primaryTag;
 
   final String projectId;
   final String name;
@@ -79,7 +84,21 @@ class HunterBoardGem {
   final int openReports;
   final DateTime? nextDeadlineAt;
 
+  /// Published updates on this gem, all time.
+  final int updatesCount;
+
+  /// True when the gem has never had a published update. Falls back to a
+  /// missing [lastUpdate] on a backend that does not send the flag.
+  final bool neverUpdated;
+
+  /// The chain the gem runs on. Falls back to [primaryTag].
+  final String chain;
+
+  /// Members waiting at which this gem is queued for reassignment.
+  final int escalatesAtWaiting;
+
   factory HunterBoardGem.fromApi(Map<String, dynamic> json) {
+    final never = json['neverUpdated'];
     return HunterBoardGem(
       projectId: jsonString(json['projectId']),
       name: jsonString(json['name']),
@@ -94,6 +113,13 @@ class HunterBoardGem {
       membersWaiting: jsonInt(json['membersWaiting']),
       openReports: jsonInt(json['openReports']),
       nextDeadlineAt: jsonDateOrNull(json['nextDeadlineAt']),
+      updatesCount: jsonInt(json['updatesCount']),
+      neverUpdated: never is bool ? never : null,
+      chain: jsonStringOrNull(json['chain']),
+      escalatesAtWaiting: jsonInt(
+        json['escalatesAtWaiting'],
+        fallback: HunterReliability.defaultEscalatesAtWaiting,
+      ),
     );
   }
 }

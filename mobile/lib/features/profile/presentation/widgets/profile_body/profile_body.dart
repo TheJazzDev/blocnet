@@ -3,12 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/profile_hunter_metrics.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/community_voice_section.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_content_section.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_first_run_section.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_signals_section.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_stats_section.dart';
+import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_hub_link_section.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/profile_hero_section.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/profile_more_section.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/profile_stats_section.dart';
@@ -17,7 +12,6 @@ import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/badges_store.dart';
 import 'package:blocnet/services/engagement/levels_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
-import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:flutter/material.dart';
@@ -25,10 +19,11 @@ import 'package:provider/provider.dart';
 
 /// The single profile body for every space.
 ///
-/// Sections are role-aware, not space-aware: hunter blocks appear for
+/// Sections are role-aware, not space-aware: the Hunter Hub row appears for
 /// anyone holding the hunter / admin / owner / dev role no matter which
 /// space is active, and the shared sections (hero, tabs, More, Account)
-/// appear for everyone. Nothing disappears when the user switches space.
+/// appear for everyone. Hunter stats, signals and content shortcuts live on
+/// the Hub, not here.
 class ProfileBody extends StatefulWidget {
   const ProfileBody({
     super.key,
@@ -62,9 +57,6 @@ class _ProfileBodyState extends State<ProfileBody> {
       context.read<UpdatesStore>().fetchUpdatesOnce();
       levelsStore.fetchMyProgress();
       levelsStore.fetchAllLevels();
-      if (widget.auth.hasHunterSpace) {
-        context.read<ProjectsStore>().fetchProjectsOnce();
-      }
     });
   }
 
@@ -76,8 +68,6 @@ class _ProfileBodyState extends State<ProfileBody> {
       context.read<BadgesStore>().loadMyBadges(force: true),
       context.read<UpdatesStore>().refreshUpdates(),
       context.read<LevelsStore>().fetchMyProgress(),
-      if (widget.auth.hasHunterSpace)
-        context.read<ProjectsStore>().refreshProjects(),
     ];
     await Future.wait(futures);
   }
@@ -113,16 +103,6 @@ class _ProfileBodyState extends State<ProfileBody> {
         ? auth.displayName!.trim()
         : (auth.email ?? '').split('@').first;
 
-    HunterProfileMetrics? hunterMetrics;
-    if (isHunter) {
-      hunterMetrics = HunterProfileMetrics.compute(
-        projects: context.watch<ProjectsStore>().projects,
-        updates: context.watch<UpdatesStore>().updates,
-        userId: auth.userId ?? '',
-        username: auth.username ?? auth.displayName ?? '',
-      );
-    }
-
     return RefreshIndicator(
       color: AppColors.primary500,
       backgroundColor: AppColors.bgSurface,
@@ -151,26 +131,11 @@ class _ProfileBodyState extends State<ProfileBody> {
               badgeCount: earnedBadges.length,
               accent: accent,
             ),
-            // Every hunter metric below is derived from posted updates. With
-            // none posted the whole block is zeroes and N/As, so it is
-            // replaced by a single first-run state rather than shown empty.
-            if (hunterMetrics != null)
-              if (hunterMetrics.hunterUpdates.isEmpty)
-                HunterFirstRunSection(
-                  hasManagedProject: hunterMetrics.managedProjects.isNotEmpty,
-                )
-              else ...[
-                HunterStatsSection(metrics: hunterMetrics),
-                const SizedBox(height: AppSpace.lg),
-                CommunityVoiceSection(metrics: hunterMetrics),
-                const SizedBox(height: AppSpace.xl),
-                HunterSignalsSection(updates: hunterMetrics.hunterUpdates),
-              ],
             const SizedBox(height: AppSpace.lg),
             ProfileTabsSection(accent: accent),
             const SizedBox(height: AppSpace.lg),
             if (isHunter) ...[
-              const HunterContentSection(),
+              HunterHubLinkSection(inHunterSpace: auth.isInHunterSpace),
               const SizedBox(height: AppSpace.md),
             ],
             ProfileMoreSection(auth: auth, onSignOut: widget.onSignOut),

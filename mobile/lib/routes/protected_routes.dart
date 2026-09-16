@@ -5,6 +5,7 @@ import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dar
 import 'package:blocnet/features/levels/presentation/pages/levels_page.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_hourly_history_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_leaderboard_screen.dart';
+import 'package:blocnet/features/projects/presentation/pages/create_update_args.dart';
 import 'package:blocnet/features/projects/presentation/pages/create_update_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/manage_updates_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/manage_projects_screen.dart';
@@ -135,7 +136,15 @@ class ProtectedRoutes {
       glossary: (context) => const GlossaryScreen(),
       blockedUsers: (context) => const BlockedUsersScreen(),
       deactivateAccount: (context) => const DeactivateAccountScreen(),
-      createUpdate: (context) => const CreateUpdateScreen(),
+      createUpdate: (context) {
+        final args = CreateUpdateArgs.from(
+          ModalRoute.of(context)?.settings.arguments,
+        );
+        return CreateUpdateScreen(
+          projectId: args.projectId,
+          updateId: args.updateId,
+        );
+      },
       submitProject: (context) => const SubmitProjectScreen(),
       manageProjects: (context) => const ManageProjectsScreen(),
       manageUpdates: (context) => const ManageUpdatesScreen(),
