@@ -8,17 +8,14 @@ import {
   daysSince,
   gemState,
   lastActivityAt,
+  membersWaitingByGem,
   responseCounts,
   shareOf,
   standing,
   type OwnedGemFacts,
   type ReliabilityStanding,
 } from './reliability.calc';
-import {
-  DAY_MS,
-  MEMBERS_WAITING_DAYS,
-  RECENT_UPDATES_DAYS,
-} from './reliability.constants';
+import { DAY_MS, RECENT_UPDATES_DAYS } from './reliability.constants';
 import type {
   GemRow,
   LastUpdateRow,
@@ -77,7 +74,6 @@ export function assembleReliability(input: {
   const updates = mine(facts.updates);
   const asks = mine(facts.asks);
   const recentFrom = now.getTime() - RECENT_UPDATES_DAYS * DAY_MS;
-  const waitingFrom = now.getTime() - MEMBERS_WAITING_DAYS * DAY_MS;
   const response = responseCounts(asks, updates, now);
 
   return {
@@ -98,24 +94,24 @@ export function assembleReliability(input: {
     tipsReceivedTotal: (facts.tips.byHunter.get(hunterId) ?? 0n).toString(),
     tipsCurrencyCode: facts.tips.currencyCode,
     tipsCurrencyDecimals: facts.tips.decimals,
-    membersWaiting: asks.filter((a) => a.at.getTime() >= waitingFrom).length,
+    membersWaiting: sumBy(
+      ids,
+      membersWaitingByGem(asks, facts.lastUpdateAtByGem, now),
+    ),
     openReports: sumBy(ids, facts.openReportsByGem),
     computedAt: now.toISOString(),
   };
 }
 
-/** Members waiting per gem over the last week. */
+/**
+ * Members waiting per gem: asks in the last week made after the gem's latest
+ * published update.
+ */
 export function waitingByGem(
   facts: ReliabilityFacts,
   now: Date,
 ): Map<string, number> {
-  const from = now.getTime() - MEMBERS_WAITING_DAYS * DAY_MS;
-  const map = new Map<string, number>();
-  for (const ask of facts.asks) {
-    if (ask.at.getTime() < from) continue;
-    map.set(ask.projectId, (map.get(ask.projectId) ?? 0) + 1);
-  }
-  return map;
+  return membersWaitingByGem(facts.asks, facts.lastUpdateAtByGem, now);
 }
 
 export function assembleBoardGem(input: {

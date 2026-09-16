@@ -6,7 +6,7 @@ import {
   UpdateStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { ownersOf, type GemEvent } from './reliability.calc';
+import { ownersOf, waitingWindow, type GemEvent } from './reliability.calc';
 import { DAY_MS, RELIABILITY_WINDOW_DAYS } from './reliability.constants';
 
 /**
@@ -77,6 +77,23 @@ export const profileSummarySelect = {
 export type ProfileSummaryRow = Prisma.ProfileGetPayload<{
   select: typeof profileSummarySelect;
 }>;
+
+/**
+ * The asks on one gem that still count as members waiting (`waitingWindow`),
+ * as a Prisma filter — for reads that count in the database rather than load
+ * the asks.
+ */
+export function waitingAsksWhere(
+  projectId: string,
+  clearedAt: Date | null,
+  now: Date,
+): Prisma.ProjectUpdateRequestWhereInput {
+  const { from, after } = waitingWindow(clearedAt, now);
+  return {
+    projectId,
+    createdAt: after ? { gt: after } : { gte: from },
+  };
+}
 
 /**
  * Only `active` gems count against a hunter. A paused, archived or hidden gem

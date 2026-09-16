@@ -7,12 +7,15 @@ import {
   gemState,
   groupAsks,
   lastActivityAt,
+  isStillWaiting,
   median,
+  membersWaitingByGem,
   ownersOf,
   responseCounts,
   responseRate,
   shareOf,
   standing,
+  waitingWindow,
   type BoardGemSortable,
   type GemEvent,
   type LeaderboardSortable,
@@ -235,6 +238,44 @@ describe('reliability.calc', () => {
       });
       expect(shareOf({ answered: 0, asked: 0 })).toBeNull();
       expect(shareOf({ answered: 1, asked: 4 })).toBe(0.25);
+    });
+  });
+
+  describe('waitingWindow / isStillWaiting / membersWaitingByGem', () => {
+    it('counts asks inside the cooldown when the gem has no recent update', () => {
+      expect(isStillWaiting(daysAgo(6.9), null, NOW)).toBe(true);
+      expect(isStillWaiting(daysAgo(7), null, NOW)).toBe(true); // edge
+      expect(isStillWaiting(daysAgo(7.1), null, NOW)).toBe(false);
+      // An update older than the cooldown clears nothing inside it.
+      expect(isStillWaiting(daysAgo(5), daysAgo(20), NOW)).toBe(true);
+      expect(waitingWindow(daysAgo(20), NOW)).toEqual({
+        from: daysAgo(7),
+        after: null,
+      });
+    });
+
+    it('clears asks made at or before the latest update', () => {
+      const posted = daysAgo(2);
+      expect(waitingWindow(posted, NOW)).toEqual({
+        from: daysAgo(7),
+        after: posted,
+      });
+      expect(isStillWaiting(daysAgo(3), posted, NOW)).toBe(false);
+      expect(isStillWaiting(posted, posted, NOW)).toBe(false);
+      expect(isStillWaiting(daysAgo(1), posted, NOW)).toBe(true);
+    });
+
+    it('counts per gem against that gem’s own update', () => {
+      const asks = [
+        ev('a', daysAgo(3)),
+        ev('a', daysAgo(1)),
+        ev('b', daysAgo(3)),
+        ev('b', daysAgo(1)),
+        ev('c', daysAgo(10)),
+      ];
+      const cleared = new Map([['a', daysAgo(2)]]);
+      const waiting = membersWaitingByGem(asks, cleared, NOW);
+      expect(Object.fromEntries(waiting)).toEqual({ a: 1, b: 2 });
     });
   });
 

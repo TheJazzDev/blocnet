@@ -195,6 +195,7 @@ describe('HunterReliabilityService', () => {
           { projectId: 'mine', createdAt: daysAgo(3) },
           { projectId: 'shared', createdAt: daysAgo(20) },
           { projectId: 'theirs', createdAt: daysAgo(2) },
+          { projectId: 'unassigned-mine', createdAt: daysAgo(2) },
         ],
         openReports: { shared: 2, theirs: 5 },
         followers: { mine: 10, shared: 5, theirs: 100 },
@@ -216,6 +217,8 @@ describe('HunterReliabilityService', () => {
         responseAsked: 2,
         updates30d: 3,
         followersTotal: 15,
+        // mine's ask was cleared by the update that followed it; the ask on
+        // never-updated unassigned-mine still waits.
         membersWaiting: 1,
         openReports: 2,
         tipsReceivedTotal: '123456789012345678901234567890',
@@ -333,6 +336,8 @@ describe('HunterReliabilityService', () => {
           { projectId: 'quiet-b', createdAt: daysAgo(1) },
           { projectId: 'quiet-b', createdAt: daysAgo(2) },
           { projectId: 'current', createdAt: daysAgo(30) },
+          // Asked three days ago, answered by the post two days ago.
+          { projectId: 'current', createdAt: daysAgo(3) },
         ],
         openReports: { 'quiet-a': 1 },
         followers: { current: 7 },

@@ -84,7 +84,10 @@ export class HunterReliabilityDto {
   @ApiProperty({ nullable: true, type: Number })
   tipsCurrencyDecimals!: number | null;
 
-  @ApiProperty({ description: 'Member asks on owned gems in the last 7 days.' })
+  @ApiProperty({
+    description:
+      'Members waiting across owned gems: asks in the last 7 days made after each gem’s latest published update. Posting on a gem clears its waiting.',
+  })
   membersWaiting!: number;
 
   @ApiProperty({ description: 'Unresolved inactivity reports on owned gems.' })
@@ -134,7 +137,12 @@ export class HunterBoardGemDto {
 
   @ApiProperty() daysQuiet!: number;
   @ApiProperty({ enum: GEM_STATES }) state!: GemState;
-  @ApiProperty() membersWaiting!: number;
+  @ApiProperty({
+    description:
+      'Asks in the last 7 days made after this gem’s latest published update. A count only — no member names.',
+  })
+  membersWaiting!: number;
+
   @ApiProperty() openReports!: number;
 
   @ApiProperty({ nullable: true, type: String })

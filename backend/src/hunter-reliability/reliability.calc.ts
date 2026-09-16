@@ -2,6 +2,7 @@ import { isoWeekKey } from '../common/utils/iso-week.util';
 import {
   DAY_MS,
   DUE_AFTER_DAYS,
+  MEMBERS_WAITING_DAYS,
   NEW_HUNTER_DAYS,
   QUIET_AFTER_DAYS,
   RELIABILITY_WINDOW_DAYS,
@@ -217,6 +218,53 @@ export function responseRate(
 /** `answered / asked`, or null when nothing is decided. */
 export function shareOf(counts: ResponseCounts): number | null {
   return counts.asked === 0 ? null : counts.answered / counts.asked;
+}
+
+/**
+ * The instant from which a member ask still counts as waiting on a gem.
+ *
+ * An ask counts while it is inside the nudge cooldown **and** newer than the
+ * gem's latest published update: posting clears the wait, because the update
+ * is what the members asked for. `after` is exclusive (an ask at the same
+ * instant as the update was answered by it), `from` inclusive.
+ */
+export function waitingWindow(
+  clearedAt: Date | null,
+  now: Date,
+): { from: Date; after: Date | null } {
+  const from = new Date(now.getTime() - MEMBERS_WAITING_DAYS * DAY_MS);
+  const after =
+    clearedAt && clearedAt.getTime() >= from.getTime() ? clearedAt : null;
+  return { from, after };
+}
+
+export function isStillWaiting(
+  askAt: Date,
+  clearedAt: Date | null,
+  now: Date,
+): boolean {
+  const { from, after } = waitingWindow(clearedAt, now);
+  if (after) return askAt.getTime() > after.getTime();
+  return askAt.getTime() >= from.getTime();
+}
+
+/**
+ * Members currently waiting, per gem. [clearedAtByGem] is normally each gem's
+ * latest published update; the moderation queue passes a later instant when a
+ * moderator has already dealt with the wait.
+ */
+export function membersWaitingByGem(
+  asks: GemEvent[],
+  clearedAtByGem: Map<string, Date>,
+  now: Date,
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const ask of asks) {
+    const clearedAt = clearedAtByGem.get(ask.projectId) ?? null;
+    if (!isStillWaiting(ask.at, clearedAt, now)) continue;
+    map.set(ask.projectId, (map.get(ask.projectId) ?? 0) + 1);
+  }
+  return map;
 }
 
 export function standing(

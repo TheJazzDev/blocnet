@@ -7,7 +7,11 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { normalizePagination } from '../common/utils/pagination.util';
 import { HunterReliabilityService } from '../hunter-reliability/hunter-reliability.service';
-import { daysSince, ownersOf } from '../hunter-reliability/reliability.calc';
+import {
+  daysSince,
+  membersWaitingByGem,
+  ownersOf,
+} from '../hunter-reliability/reliability.calc';
 import {
   DAY_MS,
   MEMBERS_WAITING_DAYS,
@@ -90,13 +94,12 @@ export class InactiveGemsModerationService {
         },
       }),
       this.loader.loadLastUpdateAt(projectIds),
-      this.prisma.projectUpdateRequest.groupBy({
-        by: ['projectId'],
+      this.prisma.projectUpdateRequest.findMany({
         where: {
           projectId: { in: projectIds },
           createdAt: { gte: waitingFrom },
         },
-        _count: { _all: true },
+        select: { projectId: true, createdAt: true },
       }),
     ]);
 
@@ -107,8 +110,10 @@ export class InactiveGemsModerationService {
     ]);
     const profileById = new Map(profiles.map((p) => [p.id, p]));
     const reportsByGem = new Map(reportRows.map((r) => [r.projectId, r]));
-    const waitingByGem = new Map(
-      waitingRows.map((r) => [r.projectId, r._count._all]),
+    const waitingByGem = membersWaitingByGem(
+      waitingRows.map((r) => ({ projectId: r.projectId, at: r.createdAt })),
+      lastUpdateAt,
+      now,
     );
 
     const items: InactiveGemQueueItemDto[] = projects.map((project) => {

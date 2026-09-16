@@ -36,7 +36,10 @@ function createService() {
       update: jest.fn(),
     },
     projectHunter: { deleteMany: jest.fn(), create: jest.fn() },
-    projectUpdateRequest: { groupBy: jest.fn().mockResolvedValue([]) },
+    projectUpdateRequest: {
+      groupBy: jest.fn().mockResolvedValue([]),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
   } as any;
   const auditLog = { create: jest.fn().mockResolvedValue(undefined) } as any;
   const reliability = { standingsFor: jest.fn() } as any;
@@ -109,8 +112,14 @@ describe('InactiveGemsModerationService', () => {
           currentLevel: null,
         },
       ]);
-      prisma.projectUpdateRequest.groupBy.mockResolvedValue([
-        { projectId: 'p1', _count: { _all: 6 } },
+      // p1 last posted 20 days ago, so its 6 asks this week all wait; p2's
+      // lone ask is older than the cooldown and does not.
+      prisma.projectUpdateRequest.findMany.mockResolvedValue([
+        ...Array.from({ length: 6 }, () => ({
+          projectId: 'p1',
+          createdAt: daysAgo(2),
+        })),
+        { projectId: 'p2', createdAt: daysAgo(8) },
       ]);
       reliability.standingsFor.mockResolvedValue(
         new Map([
@@ -149,6 +158,7 @@ describe('InactiveGemsModerationService', () => {
         daysQuiet: 20,
         membersWaiting: 6,
       });
+      expect(beta.membersWaiting).toBe(0);
 
       expect(reliability.standingsFor).toHaveBeenCalledWith([
         'hunter-1',
@@ -159,6 +169,39 @@ describe('InactiveGemsModerationService', () => {
       expect(prisma.project.findMany.mock.calls[0][0].where).toEqual({
         id: { in: ['p1', 'p2'] },
       });
+    });
+
+    it('counts only asks made after the gem’s latest update as waiting', async () => {
+      const { service, prisma, reliability, loader } = createService();
+      prisma.projectInactivityReport.groupBy.mockResolvedValue([
+        {
+          projectId: 'p1',
+          _count: { _all: 1 },
+          _min: { createdAt: daysAgo(3) },
+        },
+      ]);
+      prisma.project.findMany.mockResolvedValue([
+        {
+          id: 'p1',
+          name: 'Alpha',
+          slug: 'alpha',
+          status: 'active',
+          createdAt: daysAgo(100),
+          ownerAdminId: 'admin-1',
+          primaryTag: { name: 'DeFi' },
+          hunters: [],
+        },
+      ]);
+      loader.loadLastUpdateAt.mockResolvedValue(new Map([['p1', daysAgo(2)]]));
+      prisma.projectUpdateRequest.findMany.mockResolvedValue([
+        { projectId: 'p1', createdAt: daysAgo(5) }, // before the post: cleared
+        { projectId: 'p1', createdAt: daysAgo(2) }, // same instant: cleared
+        { projectId: 'p1', createdAt: daysAgo(1) }, // after: waiting
+      ]);
+      reliability.standingsFor.mockResolvedValue(new Map());
+
+      const result = await service.listQueue({});
+      expect(result.data[0].membersWaiting).toBe(1);
     });
 
     it('pages after sorting', async () => {
