@@ -96,12 +96,6 @@ class ProfileMoreSection extends StatelessWidget {
               ),
             ),
           ProfileTile(
-            icon: Icons.redeem_outlined,
-            title: 'Referral Code',
-            subtitle: 'View and manage your referral code',
-            onTap: () => navigator.pushNamed(AppRoutes.referralCode),
-          ),
-          ProfileTile(
             icon: Icons.settings_outlined,
             title: 'Settings',
             subtitle: 'Account preferences',

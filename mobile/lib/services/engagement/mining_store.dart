@@ -1,4 +1,5 @@
 import 'package:blocnet/features/mining/data/mining_error_copy.dart';
+import 'package:blocnet/features/mining/data/mine_local_cache.dart';
 import 'package:blocnet/features/mining/data/mining_expiry_copy.dart';
 import 'package:blocnet/features/mining/data/models/mining_claim_models.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
@@ -10,7 +11,7 @@ part 'mining_store_data.part.dart';
 /// Mine tab store: cached data and reads come from [_MiningStoreData]; this
 /// class adds what a member does (start, claim, bind a referral) and sign-out.
 class MiningStore extends _MiningStoreData {
-  MiningStore({super.repository, super.deviceClock});
+  MiningStore({super.repository, super.deviceClock, super.localCache});
 
   Future<MiningStartResult?> startMining() async {
     if (_isStarting) return null;
@@ -151,6 +152,12 @@ class MiningStore extends _MiningStoreData {
     _referralError = null;
     _downline = const [];
     _leaderboard = const [];
+    _leaderboardTop = const [];
+    _leaderboardMe = null;
+    _leaderboardPage = 1;
+    _leaderboardTotal = 0;
+    _cachedBalance = null;
+    _localCache.clearBalance();
     _snapshotError = null;
     _leaderboardError = null;
     _downlineError = null;

@@ -10,6 +10,7 @@ import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator
 import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/main/presentation/widgets/space_bottom_nav.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_screen.dart';
+import 'package:blocnet/features/mining/presentation/widgets/help/mine_header_actions.dart';
 import 'package:blocnet/features/moderation/presentation/pages/moderation_hub_screen.dart';
 import 'package:blocnet/features/projects/presentation/sections/home.dart';
 import 'package:blocnet/features/projects/presentation/sections/projects/discover.dart';

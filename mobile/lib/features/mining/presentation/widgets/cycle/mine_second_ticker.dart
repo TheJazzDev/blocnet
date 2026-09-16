@@ -15,13 +15,13 @@ bool isMiningTabVisible(BuildContext context) {
   return visibility?.visible ?? true;
 }
 
-/// A one-second clock for the Mine hero (F-55).
+/// A one-second clock for the Mine cycle card (F-55).
 ///
 /// The timer only exists while [shouldTick] is true, the app is in the
 /// foreground and tickers are enabled. While the tab is hidden behind another
 /// tab the timer keeps a cheap heartbeat but does no work: no rebuild, no
 /// animation. Nothing in the shell tells a tab it was hidden, so the heartbeat
-/// is how the hero notices it is back.
+/// is how the card notices it is back.
 mixin MiningSecondTicker<T extends StatefulWidget> on State<T> {
   Timer? _secondTimer;
   ValueListenable<bool>? _tickerMode;
@@ -29,7 +29,7 @@ mixin MiningSecondTicker<T extends StatefulWidget> on State<T> {
   bool _appInForeground = true;
   bool _lastVisible = true;
 
-  /// Whether the hero needs a clock at all, e.g. a cycle is live.
+  /// Whether the card needs a clock at all, e.g. a cycle is live.
   bool get shouldTick;
 
   /// Called once a second while the tab is on screen.

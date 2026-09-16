@@ -3,6 +3,7 @@ import 'package:blocnet/features/badges/presentation/pages/badge_gallery_page.da
 import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
 import 'package:blocnet/features/levels/presentation/pages/levels_page.dart';
+import 'package:blocnet/features/mining/presentation/pages/earn_faster_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_hourly_history_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_leaderboard_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/create_update_args.dart';
@@ -20,7 +21,6 @@ import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
 import 'package:blocnet/features/main/presentation/widgets/main_tab_redirect.dart';
 import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
-import 'package:blocnet/features/mining/presentation/pages/referral_code_screen.dart';
 import 'package:blocnet/features/notifications/presentation/pages/notifications_screen.dart';
 import 'package:blocnet/features/system_alerts/presentation/pages/system_alerts_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/blocked_users_screen.dart';
@@ -47,6 +47,7 @@ class ProtectedRoutes {
   static const String mining = AppRoutes.mining;
   static const String miningLeaderboard = AppRoutes.miningLeaderboard;
   static const String miningHourlyHistory = AppRoutes.miningHourlyHistory;
+  static const String miningEarnFaster = AppRoutes.miningEarnFaster;
   static const String notifications = AppRoutes.notifications;
   static const String systemAlerts = AppRoutes.systemAlerts;
   static const String badges = AppRoutes.badges;
@@ -119,6 +120,7 @@ class ProtectedRoutes {
       mining: (context) => const MainTabRedirect(tab: MainTabScope.miningTab),
       miningLeaderboard: (context) => const MiningLeaderboardScreen(),
       miningHourlyHistory: (context) => const MiningHourlyHistoryScreen(),
+      miningEarnFaster: (context) => const EarnFasterScreen(),
       // Notifications is now a push route (not a main tab)
       notifications: (context) {
         final args = ModalRoute.of(context)?.settings.arguments;
@@ -129,7 +131,8 @@ class ProtectedRoutes {
       badges: (context) => const BadgeGalleryPage(),
       levels: (context) => const LevelsPage(),
       quests: (context) => const QuestsPage(),
-      referralCode: (context) => const ReferralCodeScreen(),
+      // Alias: the referral code screen became Earn faster.
+      referralCode: (context) => const EarnFasterScreen(),
       helpSupport: (context) => const HelpSupportScreen(),
       faq: (context) => const FaqScreen(),
       gettingStarted: (context) => const GettingStartedScreen(),
@@ -176,6 +179,7 @@ class ProtectedRoutes {
     mining,
     miningLeaderboard,
     miningHourlyHistory,
+    miningEarnFaster,
     notifications,
     systemAlerts,
     badges,

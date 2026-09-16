@@ -1,9 +1,7 @@
 import 'package:blocnet/features/mining/data/models/mining_claim_models.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/mining/data/repositories/mining_api_repository.dart';
-import 'package:blocnet/features/mining/presentation/widgets/mining_hourly_history_card.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Fake client standing in for `POST /mining/claim`, which answers 200 both
@@ -250,7 +248,7 @@ void main() {
     });
   });
 
-  group('MiningHourlyHistoryCard', () {
+  group('MiningHourlyCheckpointModel', () {
     MiningHourlyCheckpointModel checkpoint({
       required String id,
       required String status,
@@ -271,44 +269,6 @@ void main() {
         'status': status,
       });
     }
-
-    testWidgets('renders claimed, unclaimed and the third expired state',
-        (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: MiningHourlyHistoryCard(
-                entries: [
-                  checkpoint(
-                    id: 'a',
-                    status: 'claimed',
-                    claimedAt: '2026-09-12T12:00:00.000Z',
-                  ),
-                  checkpoint(
-                    id: 'b',
-                    status: 'expired',
-                    expiredAt: '2026-09-12T12:00:00.000Z',
-                  ),
-                  checkpoint(id: 'c', status: 'unclaimed'),
-                ],
-                isLoading: false,
-                basePointsPerCycle: 120,
-                cycleHours: 24,
-              ),
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('Claimed'), findsOneWidget);
-      expect(find.text('Expired'), findsOneWidget);
-      expect(find.text('Unclaimed'), findsOneWidget);
-
-      // Forfeited accrual is never dressed up as an earning.
-      expect(find.text('forfeited 5'), findsOneWidget);
-      expect(find.text('settled 5'), findsNWidgets(2));
-    });
 
     test('checkpoint models expose the third state', () {
       final expired = checkpoint(

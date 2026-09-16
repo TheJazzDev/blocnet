@@ -1,19 +1,25 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/mining/presentation/widgets/hero/mining_second_ticker.dart';
-import 'package:blocnet/features/mining/presentation/widgets/mining_expired_notice_card.dart';
-import 'package:blocnet/features/mining/presentation/widgets/mining_hero_card.dart';
-import 'package:blocnet/features/mining/presentation/widgets/mining_section_entry_card.dart';
+import 'package:blocnet/features/mining/data/mine_cycle_phase.dart';
+import 'package:blocnet/features/mining/data/mine_local_cache.dart';
+import 'package:blocnet/features/mining/presentation/widgets/cycle/mine_second_ticker.dart';
+import 'package:blocnet/features/mining/presentation/widgets/help/mine_explainer.dart';
+import 'package:blocnet/features/mining/presentation/widgets/mine_load_error.dart';
+import 'package:blocnet/features/mining/presentation/widgets/mine_tab_body.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
+import 'package:blocnet/services/notifications/notification_settings_store.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
-import 'package:blocnet/shared/utils/format_number_utils.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// The Mine tab. The header (`Mine`, history, help) is the shared app bar;
+/// see `MineHeaderActions`.
 class MiningScreen extends StatefulWidget {
-  const MiningScreen({super.key});
+  const MiningScreen({super.key, this.localCache = const MineLocalCache()});
+
+  final MineLocalCache localCache;
 
   @override
   State<MiningScreen> createState() => _MiningScreenState();
@@ -21,21 +27,29 @@ class MiningScreen extends StatefulWidget {
 
 class _MiningScreenState extends State<MiningScreen> {
   String? _lastShownError;
-  String? _lastShownForfeitNotice;
-  String? _dismissedExpiredSessionId;
+  Set<String> _dismissedExpired = const {};
   late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
-    // Coming back to the app after hours away must not show a stale cycle
-    // (F-55). Only while the Mine tab is on screen; a hidden tab catches up
-    // through its own refreshes.
+    // Coming back after hours away must not show a stale cycle (F-55); only
+    // while this tab is on screen.
     _lifecycle = AppLifecycleListener(onResume: _onAppResumed);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<MiningStore>().refreshAll();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _boot());
+  }
+
+  Future<void> _boot() async {
+    if (!mounted) return;
+    final store = context.read<MiningStore>();
+    final settings = context.read<NotificationSettingsStore>();
+    final userId = context.read<AuthStore>().userId;
+    store.refreshAll();
+    settings.fetchInitialOnce(userId: userId);
+    MineExplainer.instance.autoOpenOnce(widget.localCache);
+    final dismissed = await widget.localCache.dismissedExpiredCycles();
+    if (!mounted) return;
+    setState(() => _dismissedExpired = {..._dismissedExpired, ...dismissed});
   }
 
   @override
@@ -50,7 +64,7 @@ class _MiningScreenState extends State<MiningScreen> {
   }
 
   /// A failed action, or a failed refresh while data is already on screen.
-  /// A failed *first* load is shown inside the hero instead.
+  /// A failed first load gets the full couldn't-load state instead.
   String? _feedbackError(MiningStore store) {
     final action = store.actionError;
     if (action != null && action.isNotEmpty) return action;
@@ -59,41 +73,88 @@ class _MiningScreenState extends State<MiningScreen> {
     return (refresh != null && refresh.isNotEmpty) ? refresh : null;
   }
 
+  void _surfaceError(MiningStore store) {
+    final error = _feedbackError(store);
+    if (error == null) {
+      _lastShownError = null;
+      return;
+    }
+    if (error == _lastShownError) return;
+    _lastShownError = error;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, error);
+    });
+  }
+
+  Future<void> _onStart(MiningStore store) async {
+    try {
+      await store.startMining();
+    } catch (_) {
+      // Surfaced through store.actionError.
+    }
+  }
+
+  Future<void> _onClaim(MiningStore store) async {
+    final wallet = context.read<WalletStore>();
+    try {
+      final result = await store.claimMining();
+      if (result == null || !result.isClaimed) return;
+      // The receipt is drawn from store.lastClaimResult; the wallet catch-up
+      // is best effort.
+      await wallet.refreshAll();
+    } catch (_) {
+      // Surfaced through store.actionError.
+    }
+  }
+
+  Future<void> _dismissExpired(String sessionId) async {
+    setState(() => _dismissedExpired = {..._dismissedExpired, sessionId});
+    context.read<MiningStore>().clearForfeitNotice();
+    await widget.localCache.dismissExpiredCycle(sessionId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<MiningStore>(
       builder: (context, store, _) {
-        final error = _feedbackError(store);
-        if (error == null) {
-          _lastShownError = null;
-        } else if (error != _lastShownError) {
-          _lastShownError = error;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            _showFeedback(error, tone: _FeedbackTone.error);
-          });
-        }
+        _surfaceError(store);
+        final snapshot = store.snapshot;
+        final phase = MineCycleClock.resolve(
+          snapshot: snapshot,
+          isLoading: store.isLoadingSnapshot,
+          loadError: store.snapshotError,
+          now: store.serverNow(),
+        );
 
-        // A forfeited cycle is an outcome, not a crash: it gets its own
-        // warning-styled message rather than the red error treatment.
-        final forfeitNotice = store.forfeitNotice;
-        if (forfeitNotice == null || forfeitNotice.isEmpty) {
-          _lastShownForfeitNotice = null;
-        } else if (forfeitNotice != _lastShownForfeitNotice) {
-          // Guard against the several rebuilds `refreshAll` triggers before
-          // the frame callback lands, so the notice is shown exactly once.
-          _lastShownForfeitNotice = forfeitNotice;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            _showFeedback(forfeitNotice, tone: _FeedbackTone.warning);
-            store.clearForfeitNotice();
-          });
+        final Widget child;
+        if (phase == MineCyclePhase.loadError) {
+          child = MineLoadError(
+            lastBalance: store.lastKnownBalance,
+            isRetrying: store.isLoadingSnapshot,
+            onRetry: () => store.loadSnapshot(force: true),
+          );
+        } else if (snapshot == null) {
+          child = const Padding(
+            padding: EdgeInsets.all(AppSpace.xxxl),
+            child: Center(
+              child: SizedBox.square(
+                dimension: AppIcon.lg,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        } else {
+          child = MineTabBody(
+            store: store,
+            snapshot: snapshot,
+            phase: phase,
+            dismissedExpired: _dismissedExpired,
+            onStart: () => _onStart(store),
+            onClaim: () => _onClaim(store),
+            onDismissExpired: _dismissExpired,
+          );
         }
-
-        final expiredCycle = store.snapshot?.lastExpiredCycle;
-        final showExpiredNotice =
-            MiningExpiredNoticeCard.isCurrent(store.snapshot) &&
-                expiredCycle?.sessionId != _dismissedExpiredSessionId;
 
         return RefreshIndicator(
           color: AppColors.primary500,
@@ -101,148 +162,10 @@ class _MiningScreenState extends State<MiningScreen> {
           onRefresh: store.refreshAll,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-                AppSpace.lg, AppSpace.lg, AppSpace.lg, 110),
-            children: [
-              const SizedBox(height: AppSpace.xs),
-              MiningHeroCard(
-                snapshot: store.snapshot,
-                onStart: () => _onStart(store),
-                onClaim: () => _onClaim(store),
-                isStarting: store.isStarting,
-                isClaiming: store.isClaiming,
-                isLoadingSnapshot: store.isLoadingSnapshot,
-                serverNow: store.serverNow,
-                loadError: store.snapshotError,
-                onRetry: () => store.loadSnapshot(force: true),
-                onCycleEnd: store.refreshAtCycleEnd,
-              ),
-              if (showExpiredNotice && expiredCycle != null) ...[
-                const SizedBox(height: AppSpace.md),
-                MiningExpiredNoticeCard(
-                  cycle: expiredCycle,
-                  claimWindowHours:
-                      store.snapshot?.config.claimWindowHours ?? 48,
-                  onDismiss: () => setState(() {
-                    _dismissedExpiredSessionId = expiredCycle.sessionId;
-                  }),
-                ),
-              ],
-              const SizedBox(height: AppSpace.md),
-              MiningSectionEntryCard(
-                icon: Icons.leaderboard_rounded,
-                title: 'Mining Leaderboard',
-                subtitle: _leaderboardSubtitle(store),
-                onTap: () => Navigator.of(context)
-                    .pushNamed(AppRoutes.miningLeaderboard),
-              ),
-              Divider(
-                height: 1,
-                color: AppColors.borderSubtle.withValues(alpha: 0.8),
-              ),
-              const SizedBox(height: AppSpace.xs),
-              MiningSectionEntryCard(
-                icon: Icons.schedule_rounded,
-                title: 'Hourly Mining History',
-                subtitle: store.isLoadingSnapshot
-                    ? 'Loading checkpoints...'
-                    : '${formatGroupedNumber(store.snapshot?.hourlyHistory.length ?? 0, maxDecimals: 0)} checkpoints recorded',
-                onTap: () => Navigator.of(context)
-                    .pushNamed(AppRoutes.miningHourlyHistory),
-              ),
-            ],
+            children: [child],
           ),
         );
       },
     );
   }
-
-  String _leaderboardSubtitle(MiningStore store) {
-    if (store.isLoadingLeaderboard) return 'Loading rankings...';
-    if (store.leaderboard.isEmpty && store.leaderboardError != null) {
-      return "Couldn't load rankings";
-    }
-    return '${formatGroupedNumber(store.leaderboard.length, maxDecimals: 0)} ranked miners';
-  }
-
-  Future<void> _onStart(MiningStore store) async {
-    try {
-      final result = await store.startMining();
-      if (!mounted || result == null) return;
-      // A start that also forfeited older cycles already set the store's
-      // forfeit notice, which the builder surfaces on its own. An unreadable
-      // body is not a start: the refresh shows what really happened.
-      if (result.hasExpiredCycles || !result.isStarted) return;
-      _showFeedback('Mining cycle started.');
-    } catch (_) {
-      // surfaced via store.actionError
-    }
-  }
-
-  Future<void> _onClaim(MiningStore store) async {
-    final walletStore = context.read<WalletStore>();
-    try {
-      final result = await store.claimMining();
-      if (result == null) return;
-
-      // The response body — not the absence of an exception — decides whether
-      // anything was actually paid out. A forfeit is surfaced by the builder
-      // via store.forfeitNotice.
-      if (!result.isClaimed) return;
-
-      try {
-        await walletStore.refreshAll();
-      } catch (_) {
-        // Wallet refresh is best-effort; the claim itself already succeeded.
-      }
-      if (!mounted) return;
-      final claimed = result.claimedPoints;
-      final nextCycle =
-          result.startedNextCycle ? ' New mining session started.' : '';
-      final message = claimed > 0
-          ? 'Claimed ${formatGroupedNumber(claimed, maxDecimals: 0)} BNP.$nextCycle'
-          : 'Rewards claimed.$nextCycle';
-      _showFeedback(message.trim());
-    } catch (_) {
-      // surfaced via store.actionError
-    }
-  }
-
-  void _showFeedback(
-    String message, {
-    _FeedbackTone tone = _FeedbackTone.success,
-  }) {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: AppTypography.custom(
-            size: AppText.labelSize,
-            weight: FontWeight.w600,
-            color: tone == _FeedbackTone.error
-                ? AppColors.darkGrey900
-                : Colors.black,
-          ),
-        ),
-        backgroundColor: switch (tone) {
-          _FeedbackTone.error => AppColors.error500,
-          _FeedbackTone.warning => AppColors.warning500,
-          _FeedbackTone.success => AppColors.successColor,
-        },
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        ),
-        duration: Duration(
-          seconds: tone == _FeedbackTone.warning ? 6 : 2,
-        ),
-      ),
-    );
-  }
 }
-
-/// Success, a forfeited cycle, and a genuine failure are three different
-/// things and must not look alike.
-enum _FeedbackTone { success, warning, error }

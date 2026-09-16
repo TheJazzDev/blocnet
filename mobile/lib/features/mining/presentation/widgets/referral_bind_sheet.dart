@@ -50,7 +50,7 @@ class _ReferralBindSheetState extends State<ReferralBindSheet> {
   Future<void> _submit() async {
     final code = _controller.text.trim().toUpperCase();
     if (code.length != 8) {
-      setState(() => _error = 'Referral code must be 8 characters.');
+      setState(() => _error = 'Codes are 8 characters.');
       return;
     }
 
@@ -66,7 +66,7 @@ class _ReferralBindSheetState extends State<ReferralBindSheet> {
     if (validation == null || !validation.valid) {
       setState(() {
         _validating = false;
-        _error = 'Referral code is invalid.';
+        _error = "That code doesn't exist.";
       });
       return;
     }
@@ -84,7 +84,7 @@ class _ReferralBindSheetState extends State<ReferralBindSheet> {
       if (!mounted) return;
       setState(() {
         _binding = false;
-        _error = store.actionError ?? 'Failed to bind referral code.';
+        _error = store.actionError ?? "Couldn't link that code. Try again.";
       });
     }
   }
@@ -117,7 +117,7 @@ class _ReferralBindSheetState extends State<ReferralBindSheet> {
             ),
             const SizedBox(height: AppSpace.md),
             Text(
-              'Bind Referral Code',
+              "Enter a friend's code",
               style: AppTypography.custom(
                 size: AppText.titleSize,
                 weight: FontWeight.w700,
@@ -135,7 +135,7 @@ class _ReferralBindSheetState extends State<ReferralBindSheet> {
                 color: AppColors.textPrimary,
               ),
               decoration: const InputDecoration(
-                hintText: 'Enter 8-character code',
+                hintText: '8 characters',
                 counterText: '',
               ),
             ),
@@ -146,7 +146,7 @@ class _ReferralBindSheetState extends State<ReferralBindSheet> {
                 style: AppTypography.custom(
                   size: AppText.bodySize,
                   weight: FontWeight.w400,
-                  color: Colors.redAccent,
+                  color: AppColors.dueAmber,
                 ),
               ),
             ],
@@ -169,7 +169,7 @@ class _ReferralBindSheetState extends State<ReferralBindSheet> {
                         ),
                       )
                     : Text(
-                        'Bind Code',
+                        'Link code',
                         style: AppTypography.custom(
                           size: AppText.labelSize,
                           weight: FontWeight.w700,
