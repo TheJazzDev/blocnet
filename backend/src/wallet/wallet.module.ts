@@ -12,6 +12,7 @@ import { WalletProvisioningService } from './wallet-provisioning.service';
 import { WalletSettlementWorkerService } from './wallet-settlement-worker.service';
 import { WalletService } from './wallet.service';
 import { WalletAssetPricingService } from './wallet-asset-pricing.service';
+import { WalletPointsService } from './wallet-points.service';
 import { WalletQueryService } from './wallet-query.service';
 import { WalletTransactionService } from './wallet-transaction.service';
 import { WalletDepositProcessorService } from './wallet-deposit-processor.service';
@@ -33,6 +34,7 @@ import { WalletAdminConfigService } from './wallet-admin-config.service';
     WalletWithdrawalSettlementService,
     WalletProvisioningService,
     WalletAssetPricingService,
+    WalletPointsService,
     WalletQueryService,
     WalletTransactionService,
     WalletService,

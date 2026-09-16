@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { WalletPointsService } from './wallet-points.service';
 import { WalletQueryService } from './wallet-query.service';
 import { WalletAssetPricingService } from './wallet-asset-pricing.service';
 import { WalletConfigService } from './wallet-config.service';
@@ -64,6 +65,7 @@ describe('WalletQueryService.getWalletHealth', () => {
       walletConfigService,
       walletProvisioningService,
       walletAssetPricingService,
+      {} as WalletPointsService,
     );
   });
 
@@ -104,9 +106,7 @@ describe('WalletQueryService.getWalletHealth', () => {
     expect(health.network).not.toHaveProperty('rpcConfigured');
     expect(health.network).not.toHaveProperty('tokenAddressConfigured');
     expect(health.network).not.toHaveProperty('treasuryWalletIdConfigured');
-    expect(health.network).not.toHaveProperty(
-      'treasurySweepAddressConfigured',
-    );
+    expect(health.network).not.toHaveProperty('treasurySweepAddressConfigured');
   });
 
   it('does not expose the custody provider id or provider failure strings', async () => {
