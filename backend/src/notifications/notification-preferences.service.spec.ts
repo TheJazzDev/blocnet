@@ -55,7 +55,24 @@ describe('NotificationPreferencesService', () => {
     ).not.toContain(NotificationType.level_up);
   });
 
-  it('returns defaults when user has no saved preference rows', async () => {
+  it('files hunter-accountability notifications under governance', () => {
+    for (const type of [
+      NotificationType.project_update_requested,
+      NotificationType.project_reported_inactive,
+    ]) {
+      expect(NOTIFICATION_TYPE_TO_CATEGORY[type]).toBe(
+        NotificationCategory.governance,
+      );
+      expect(
+        NOTIFICATION_TYPES_BY_CATEGORY[NotificationCategory.governance],
+      ).toContain(type);
+      expect(
+        NOTIFICATION_TYPES_BY_CATEGORY[NotificationCategory.system],
+      ).not.toContain(type);
+    }
+  });
+
+    it('returns defaults when user has no saved preference rows', async () => {
     const prefs = await service.getPreferences('user-1');
 
     expect(prefs.masterEnabled).toBe(true);

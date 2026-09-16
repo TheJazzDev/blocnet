@@ -47,6 +47,10 @@ export const NOTIFICATION_TYPES_BY_CATEGORY: Record<
     NotificationType.project_invite_received,
     NotificationType.project_invite_responded,
     NotificationType.project_assignment_changed,
+    // Holding hunters to account (F-42): a member asking a hunter for an
+    // update, and a gem reported to moderators as abandoned.
+    NotificationType.project_update_requested,
+    NotificationType.project_reported_inactive,
   ],
   [NotificationCategory.wallet]: [
     NotificationType.wallet_transfer_sent,
