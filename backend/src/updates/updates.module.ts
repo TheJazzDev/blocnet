@@ -5,6 +5,8 @@ import { BlocksModule } from '../blocks/blocks.module';
 import { LevelsModule } from '../levels/levels.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { QuestsModule } from '../quests/quests.module';
+import { UpdateReactionsController } from './update-reactions.controller';
+import { UpdateReactionsService } from './update-reactions.service';
 import { UpdatesController } from './updates.controller';
 import { UpdatesService } from './updates.service';
 
@@ -17,8 +19,8 @@ import { UpdatesService } from './updates.service';
     LevelsModule,
     QuestsModule,
   ],
-  controllers: [UpdatesController],
-  providers: [UpdatesService],
+  controllers: [UpdatesController, UpdateReactionsController],
+  providers: [UpdatesService, UpdateReactionsService],
   exports: [UpdatesService],
 })
 export class UpdatesModule {}
