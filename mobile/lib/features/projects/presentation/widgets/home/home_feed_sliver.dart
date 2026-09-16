@@ -5,6 +5,7 @@ import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/empty_feed.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
+import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_day_one.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/project_details/project_details_dialog.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/home_skeletons.dart';
@@ -41,7 +42,7 @@ class HomeFeedSliver extends StatelessWidget {
 
   /// Day-one only. Ranked and capped by the screen; rendered after the intro,
   /// which is the order the design has.
-  final List<({String handle, String name})> topHunters;
+  final List<FeedHunter> topHunters;
 
   /// When the caught-up card is showing, everything below it is curated, so it
   /// gets the design's "From hunters you don't follow" heading.
@@ -154,7 +155,12 @@ class HomeFeedSliver extends StatelessWidget {
             delegate: SliverChildListDelegate([
               if (isDayOne) ...[
                 const FeedDayOneIntro(),
-                FeedTopHunters(hunters: topHunters, onOpen: (_) {}),
+                // Same sheet a feed card's author tap opens.
+                FeedTopHunters(
+                  hunters: topHunters,
+                  onOpen: (admin) =>
+                      PublicProfileScreen.showSheet(context, admin),
+                ),
               ],
               if (starters.isNotEmpty) ...[
                 FeedSectionHeading(

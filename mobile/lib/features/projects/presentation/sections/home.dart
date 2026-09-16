@@ -19,6 +19,7 @@ import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/models/quiet_gem.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_caught_up_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_day_one.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_radar_strip.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
@@ -148,9 +149,9 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
 
   /// The hunters worth showing a member who follows nothing, ranked by how
   /// much they have posted. Five, because the design's rail is five.
-  List<({String handle, String name})> _topHunters(UpdatesStore store) {
+  List<FeedHunter> _topHunters(UpdatesStore store) {
     final counts = <String, int>{};
-    final names = <String, ({String handle, String name})>{};
+    final names = <String, FeedHunter>{};
     for (final post in store.posts) {
       final admin = post.admin;
       if (admin == null) continue;
@@ -159,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
           ? '@${admin.id.substring(0, admin.id.length >= 6 ? 6 : admin.id.length)}'
           : '@$raw';
       counts[handle] = (counts[handle] ?? 0) + 1;
-      names[handle] = (handle: handle, name: admin.name);
+      names[handle] = (handle: handle, name: admin.name, admin: admin);
     }
     final ranked = counts.keys.toList()
       ..sort((a, b) => counts[b]!.compareTo(counts[a]!));

@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:flutter/material.dart';
 
@@ -280,6 +281,9 @@ class _FollowButton extends StatelessWidget {
 /// hunters and nothing else, so the eye runs along one row of equal things.
 /// And the avatars are lettered monograms rather than photos, which is what
 /// makes the row read as a set instead of five unrelated pictures.
+/// One hunter in the day-one rail. [admin] is what the profile sheet opens.
+typedef FeedHunter = ({String handle, String name, Admin admin});
+
 class FeedTopHunters extends StatelessWidget {
   const FeedTopHunters({
     super.key,
@@ -289,8 +293,8 @@ class FeedTopHunters extends StatelessWidget {
 
   /// Handle and display name per hunter, already ranked and capped by the
   /// caller.
-  final List<({String handle, String name})> hunters;
-  final void Function(String handle) onOpen;
+  final List<FeedHunter> hunters;
+  final void Function(Admin admin) onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -338,7 +342,7 @@ class FeedTopHunters extends StatelessWidget {
                   handle: hunter.handle,
                   name: hunter.name,
                   seed: i,
-                  onTap: () => onOpen(hunter.handle),
+                  onTap: () => onOpen(hunter.admin),
                 );
               },
             ),
