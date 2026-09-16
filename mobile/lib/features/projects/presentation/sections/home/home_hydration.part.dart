@@ -17,7 +17,6 @@ mixin _HomeHydration on State<HomeScreen> {
   RadarSummary? _radarSummary;
   bool _isLoadingRadar = true;
   bool _isAcknowledgingRadar = false;
-  bool _showCatchupFilter = false;
   bool _isFeedReady = false;
   bool _isEdgeReady = false;
   bool _isBootstrapLoading = false;
@@ -198,7 +197,6 @@ mixin _HomeHydration on State<HomeScreen> {
           highUrgencyCount: 0,
           activeProjects: const [],
         );
-        _showCatchupFilter = false;
       });
     } catch (_) {
       // Keep existing radar state; next refresh can recover.
@@ -221,7 +219,6 @@ mixin _HomeHydration on State<HomeScreen> {
 
     if (!mounted) return;
     setState(() {
-      _showCatchupFilter = false;
       _isFeedReady = updatesStore.posts.isNotEmpty;
       _isEdgeReady = edgeStore.brief != null;
     });

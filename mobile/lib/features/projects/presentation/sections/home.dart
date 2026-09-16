@@ -277,12 +277,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
                   topHunters: _topHunters(updatesStore),
                   showCaughtUp: showCaughtUp,
                   isInitialLoading: feedLoading,
-                  showCatchupFilter: _showCatchupFilter,
-                  radarSummary: _radarSummary,
                   feedViewMode: feedViewMode,
-                  onClearCatchup: () {
-                    setState(() => _showCatchupFilter = false);
-                  },
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: bottomPad)),
               ],

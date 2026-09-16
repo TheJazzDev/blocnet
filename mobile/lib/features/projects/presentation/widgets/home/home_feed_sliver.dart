@@ -1,10 +1,8 @@
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
-import 'package:blocnet/features/projects/presentation/widgets/home/catch_up_banner.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/empty_feed.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_day_one.dart';
@@ -26,10 +24,7 @@ class HomeFeedSliver extends StatelessWidget {
     super.key,
     required this.activeSection,
     required this.isInitialLoading,
-    required this.showCatchupFilter,
-    required this.radarSummary,
     required this.feedViewMode,
-    required this.onClearCatchup,
     required this.quietGems,
     required this.topHunters,
     required this.showCaughtUp,
@@ -37,10 +32,7 @@ class HomeFeedSliver extends StatelessWidget {
 
   final Section activeSection;
   final bool isInitialLoading;
-  final bool showCatchupFilter;
-  final RadarSummary? radarSummary;
   final FeedViewMode feedViewMode;
-  final VoidCallback onClearCatchup;
 
   /// Followed gems whose hunter has gone quiet. Computed once by the screen,
   /// because the caught-up card has to know about them too — claiming a member
@@ -62,18 +54,7 @@ class HomeFeedSliver extends StatelessWidget {
         final enrichedPosts = store.posts
             .where((post) => post.project != null && post.admin != null)
             .toList();
-        final radarLastSeenAt = radarSummary?.lastSeenAt;
-        final feedPosts = showCatchupFilter
-            ? enrichedPosts.where((post) {
-                final isUnseen = radarLastSeenAt == null
-                    ? true
-                    : post.createdAt.isAfter(radarLastSeenAt);
-                final isHighPriority =
-                    post.priority.label.toLowerCase() == 'high';
-                return isUnseen || isHighPriority;
-              }).toList()
-            : enrichedPosts;
-        final rankedFeedPosts = [...feedPosts]..sort((a, b) {
+        final rankedFeedPosts = [...enrichedPosts]..sort((a, b) {
             final scoreA = edgeStore.edgeScoreForUpdate(a.id);
             final scoreB = edgeStore.edgeScoreForUpdate(b.id);
 
@@ -171,13 +152,6 @@ class HomeFeedSliver extends StatelessWidget {
           ),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              if (showCatchupFilter)
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isFullBleed ? AppSpace.lg : 0,
-                  ),
-                  child: CatchUpBanner(onClear: onClearCatchup),
-                ),
               if (isDayOne) ...[
                 const FeedDayOneIntro(),
                 FeedTopHunters(hunters: topHunters, onOpen: (_) {}),

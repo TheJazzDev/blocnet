@@ -45,51 +45,6 @@ class _Line extends StatelessWidget {
   }
 }
 
-/// Header line + subtitle + two project pills, like [AlphaRadarCard].
-class RadarCardSkeleton extends StatelessWidget {
-  const RadarCardSkeleton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return _SkeletonSurface(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const SkeletonBox(
-                width: AppIcon.sm,
-                height: AppIcon.sm,
-                radius: AppRadius.fullValue,
-              ),
-              AppSpace.wGapSm,
-              const Expanded(child: _Line(widthFactor: 0.35)),
-            ],
-          ),
-          AppSpace.gapSm,
-          const _Line(widthFactor: 0.7, height: AppText.bodySize),
-          AppSpace.gapMd,
-          Row(
-            children: const [
-              SkeletonBox(
-                width: AppSpace.xxxl * 2,
-                height: AppText.titleSize,
-                radius: AppRadius.fullValue,
-              ),
-              SizedBox(width: AppSpace.sm),
-              SkeletonBox(
-                width: AppSpace.xxxl * 1.5,
-                height: AppText.titleSize,
-                radius: AppRadius.fullValue,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Header line + headline + stats line, like [EdgeBriefTeaserCard].
 class EdgeBriefSkeleton extends StatelessWidget {
   const EdgeBriefSkeleton({super.key});
@@ -115,43 +70,6 @@ class EdgeBriefSkeleton extends StatelessWidget {
           const _Line(widthFactor: 0.9, height: AppText.labelSize),
           AppSpace.gapSm,
           const _Line(widthFactor: 0.55),
-        ],
-      ),
-    );
-  }
-}
-
-/// Row of avatar circles with a name line under each, like the hunters in
-/// [TopHuntersRow]. Rendered inside the row after the "My Updates" button.
-class TopHuntersSkeleton extends StatelessWidget {
-  const TopHuntersSkeleton({super.key, this.count = 5});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return SkeletonPulse(
-      child: Row(
-        children: [
-          for (var i = 0; i < count; i++)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpace.lg),
-              child: Column(
-                children: const [
-                  SkeletonBox(
-                    width: AppIcon.xxl,
-                    height: AppIcon.xxl,
-                    radius: AppRadius.fullValue,
-                  ),
-                  SizedBox(height: AppSpace.xs),
-                  SkeletonBox(
-                    width: AppSpace.xxxl,
-                    height: AppText.captionSize,
-                    radius: AppRadius.smValue,
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
