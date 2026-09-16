@@ -26,19 +26,21 @@ type RequestLike = {
  * Per-IP fixed-window limit for the public `GET /referrals/validate` (F-46):
  * 30 requests a minute, in memory, per process.
  *
- * The app runs behind Railway's proxy without `trust proxy`, so `req.ip` is the
- * proxy. The client is keyed on the right-most `X-Forwarded-For` hop, the one
- * the proxy appends. The left-most hops are client-supplied and would let a
- * caller dodge the limit by rotating the header.
+ * The app runs behind Railway's edge proxy without `trust proxy`, so `req.ip`
+ * is the proxy. Railway strips any client-supplied `X-Forwarded-For` at the
+ * edge and writes the connecting IP as the FIRST entry; later entries can be
+ * Railway's own internal hops, so keying on the last one would put every
+ * caller in one bucket. `X-Real-IP` is the fallback (it reports the CDN edge
+ * when the Railway CDN is on, so it is not the primary), then the socket.
+ * Railway staff guidance: station.railway.com threads d78a6f96 (2026-03-09)
+ * and 8fddd775 (2026-06-12).
  */
 @Injectable()
 export class ReferralValidateThrottleGuard implements CanActivate {
   private readonly buckets = new Map<string, Bucket>();
   private readonly now: () => number;
 
-  constructor(
-    @Optional() @Inject(REFERRAL_THROTTLE_CLOCK) now?: () => number,
-  ) {
+  constructor(@Optional() @Inject(REFERRAL_THROTTLE_CLOCK) now?: () => number) {
     this.now = now ?? Date.now;
   }
 
@@ -76,12 +78,18 @@ export class ReferralValidateThrottleGuard implements CanActivate {
   }
 }
 
-function clientKey(request: RequestLike): string {
-  const header = request.headers?.['x-forwarded-for'];
-  const raw = Array.isArray(header) ? header[header.length - 1] : header;
-  const hops = (raw ?? '')
-    .split(',')
+export function clientKey(request: RequestLike): string {
+  const forwarded = firstHeaderValue(request.headers?.['x-forwarded-for']);
+  const firstHop = forwarded
+    ?.split(',')
     .map((hop) => hop.trim())
-    .filter(Boolean);
-  return hops[hops.length - 1] ?? request.ip ?? 'unknown';
+    .find(Boolean);
+  const realIp = firstHeaderValue(request.headers?.['x-real-ip'])?.trim();
+  return firstHop || realIp || request.ip || 'unknown';
+}
+
+function firstHeaderValue(
+  header: string | string[] | undefined,
+): string | undefined {
+  return Array.isArray(header) ? header[0] : header;
 }

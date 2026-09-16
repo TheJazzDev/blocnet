@@ -1,5 +1,8 @@
 import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
-import { ReferralValidateThrottleGuard } from './referral-validate-throttle.guard';
+import {
+  clientKey,
+  ReferralValidateThrottleGuard,
+} from './referral-validate-throttle.guard';
 
 function contextFor(request: {
   ip?: string;
@@ -56,12 +59,14 @@ describe('ReferralValidateThrottleGuard (F-46)', () => {
     expect(hit('1.1.1.1')).toBe(true);
   });
 
-  it('keys on the proxy-appended (right-most) X-Forwarded-For hop, which a client cannot forge', () => {
+  it('keys on the first X-Forwarded-For entry, which Railway sets from the connecting IP', () => {
+    // Railway strips client XFF at the edge and may append its own internal
+    // hops, so the trailing entries are shared by every caller.
     for (let i = 0; i < 30; i += 1) {
       guard.canActivate(
         contextFor({
           ip: '10.0.0.1',
-          headers: { 'x-forwarded-for': `spoof-${i}, 3.3.3.3` },
+          headers: { 'x-forwarded-for': `3.3.3.3, 100.64.0.${i}` },
         }),
       );
     }
@@ -70,18 +75,34 @@ describe('ReferralValidateThrottleGuard (F-46)', () => {
       guard.canActivate(
         contextFor({
           ip: '10.0.0.1',
-          headers: { 'x-forwarded-for': 'another-spoof, 3.3.3.3' },
+          headers: { 'x-forwarded-for': '3.3.3.3, 100.64.0.99' },
         }),
       ),
     ).toThrow(HttpException);
-    // A different real client behind the same proxy is unaffected.
+    // A different client behind the same internal hop is unaffected.
     expect(
       guard.canActivate(
         contextFor({
           ip: '10.0.0.1',
-          headers: { 'x-forwarded-for': '4.4.4.4' },
+          headers: { 'x-forwarded-for': '4.4.4.4, 100.64.0.99' },
         }),
       ),
     ).toBe(true);
+  });
+
+  it('falls back to X-Real-IP, then the socket address', () => {
+    expect(
+      clientKey({ ip: '10.0.0.1', headers: { 'x-real-ip': ' 5.5.5.5 ' } }),
+    ).toBe('5.5.5.5');
+    expect(clientKey({ ip: '10.0.0.1', headers: {} })).toBe('10.0.0.1');
+    expect(
+      clientKey({
+        ip: '10.0.0.1',
+        headers: { 'x-forwarded-for': ['6.6.6.6, 100.64.0.1', '7.7.7.7'] },
+      }),
+    ).toBe('6.6.6.6');
+    expect(clientKey({ headers: { 'x-forwarded-for': ' , ' } })).toBe(
+      'unknown',
+    );
   });
 });
