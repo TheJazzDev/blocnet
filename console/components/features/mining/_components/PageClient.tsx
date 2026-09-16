@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { AccessDeniedCard } from "@/components/shared/AccessDeniedCard";
 import { useAdminSession } from "@/components/admin-shell";
-import { canMutateMining, canViewMining } from "@/lib/rbac";
+import { canMutateMining, canViewMining, canViewMiningHistory } from "@/lib/rbac";
 import { useMiningAdmin } from "../_hooks/use-mining-admin";
 import { MiningConfigCard } from "./MiningConfigCard";
+import { MiningConfigHistoryCard } from "./MiningConfigHistoryCard";
 import { MiningMetricsCard } from "./MiningMetricsCard";
 
 const TITLE = "Mining";
@@ -20,6 +21,7 @@ export default function MiningPageClient() {
   const session = useAdminSession();
   const canView = canViewMining(session.effectiveRoles);
   const canMutate = canMutateMining(session.effectiveRoles);
+  const canViewHistory = canViewMiningHistory(session.effectiveRoles);
   const state = useMiningAdmin({ enabled: canView });
 
   if (!canView) {
@@ -88,6 +90,7 @@ export default function MiningPageClient() {
             onReset={state.reset}
             onSave={state.save}
           />
+          {canViewHistory && <MiningConfigHistoryCard />}
           <MiningMetricsCard metrics={state.metrics} />
         </>
       )}
