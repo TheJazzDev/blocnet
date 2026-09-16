@@ -1,6 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/send_header_card.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/send_mode_tile.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/send_submit_button.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/wallet_form_field.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -59,32 +63,6 @@ class _SendTokenPageState extends State<SendTokenPage> {
     _noteController.dispose();
     _reasonController.dispose();
     super.dispose();
-  }
-
-  InputDecoration _fieldDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: AppTypography.custom(
-        color: AppColors.textFaint,
-        size: AppText.bodySize,
-        weight: FontWeight.w400,
-      ),
-      filled: true,
-      fillColor: AppColors.bgElevated,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        borderSide: BorderSide(color: AppColors.borderSubtle),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        borderSide: BorderSide(color: AppColors.borderSubtle),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        borderSide: BorderSide(color: AppColors.teal500),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
-    );
   }
 
   String? _validate() {
@@ -266,78 +244,22 @@ class _SendTokenPageState extends State<SendTokenPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpace.lg),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.lgValue),
-                  border: Border.all(
-                    color: AppColors.teal500.withValues(alpha: 0.28),
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF0D2628),
-                      const Color(0xFF121922),
-                    ],
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: AppColors.teal500.withValues(alpha: 0.16),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _isInternal
-                            ? Icons.compare_arrows_rounded
-                            : Icons.call_made_rounded,
-                        color: AppColors.teal400,
-                        size: AppIcon.md,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _isInternal
-                                ? 'Internal transfer'
-                                : 'External withdrawal',
-                            style: AppTypography.custom(
-                              color: AppColors.textPrimary,
-                              size: AppText.subtitleSize,
-                              weight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpace.hair),
-                          Text(
-                            _isInternal
-                                ? 'Instant wallet-to-wallet transfer'
-                                : 'Queued and reviewed before payout',
-                            style: AppTypography.custom(
-                              color: AppColors.textMuted,
-                              size: AppText.bodySize,
-                              weight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              SendHeaderCard(
+                icon: _isInternal
+                    ? Icons.compare_arrows_rounded
+                    : Icons.call_made_rounded,
+                title:
+                    _isInternal ? 'Internal transfer' : 'External withdrawal',
+                subtitle: _isInternal
+                    ? 'Instant wallet-to-wallet transfer'
+                    : 'Queued and reviewed before payout',
               ),
               const SizedBox(height: AppSpace.lg),
               if (hasSwitch)
                 Row(
                   children: [
                     Expanded(
-                      child: _SendModeTile(
+                      child: SendModeTile(
                         icon: Icons.compare_arrows_rounded,
                         title: 'Internal',
                         subtitle: 'Instant',
@@ -348,7 +270,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
                     ),
                     const SizedBox(width: AppSpace.md),
                     Expanded(
-                      child: _SendModeTile(
+                      child: SendModeTile(
                         icon: Icons.call_made_rounded,
                         title: 'External',
                         subtitle: 'Approval queue',
@@ -389,7 +311,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
                         size: AppText.bodySize,
                         weight: FontWeight.w400,
                       ),
-                      decoration: _fieldDecoration(
+                      decoration: walletFieldDecoration(
                         _isInternal ? '@username or 0x...' : '0x...',
                       ),
                     ),
@@ -413,7 +335,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
                         size: AppText.bodySize,
                         weight: FontWeight.w400,
                       ),
-                      decoration: _fieldDecoration('0.0'),
+                      decoration: walletFieldDecoration('0.0'),
                     ),
                     const SizedBox(height: AppSpace.md),
                     Text(
@@ -435,7 +357,7 @@ class _SendTokenPageState extends State<SendTokenPage> {
                         size: AppText.bodySize,
                         weight: FontWeight.w400,
                       ),
-                      decoration: _fieldDecoration(
+                      decoration: walletFieldDecoration(
                         _isInternal
                             ? 'Optional transfer note'
                             : 'Why is this withdrawal needed?',
@@ -456,110 +378,13 @@ class _SendTokenPageState extends State<SendTokenPage> {
                 ),
               ],
               const SizedBox(height: AppSpace.lg),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.teal500,
-                    foregroundColor: Colors.black,
-                    disabledBackgroundColor:
-                        AppColors.bgElevated.withValues(alpha: 0.8),
-                    disabledForegroundColor: AppColors.textFaint,
-                    minimumSize: const Size.fromHeight(50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.lgValue),
-                    ),
-                  ),
-                  child: _submitting
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.bgBase,
-                          ),
-                        )
-                      : Text(
-                          _isInternal ? 'Send now' : 'Submit withdrawal',
-                          style: AppTypography.custom(
-                            color: Colors.black,
-                            size: AppText.bodySize,
-                            weight: FontWeight.w700,
-                          ),
-                        ),
-                ),
+              SendSubmitButton(
+                label: _isInternal ? 'Send now' : 'Submit withdrawal',
+                submitting: _submitting,
+                onPressed: _submit,
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SendModeTile extends StatelessWidget {
-  const _SendModeTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = isActive
-        ? AppColors.teal500.withValues(alpha: 0.55)
-        : AppColors.borderSubtle;
-    final bgColor = isActive
-        ? AppColors.teal500.withValues(alpha: 0.1)
-        : AppColors.bgSurface;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.mdValue),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(11),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: AppIcon.sm, color: AppColors.teal400),
-            const SizedBox(width: AppSpace.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: AppText.labelSize,
-                      weight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: AppTypography.custom(
-                      color: AppColors.textMuted,
-                      size: AppText.captionSize,
-                      weight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
