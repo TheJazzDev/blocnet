@@ -5,6 +5,7 @@ import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/project/follow_preference_bottom_sheet.dart';
 import 'package:blocnet/features/projects/presentation/widgets/labels/primary_label.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/share_link.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/shared/update_project_logo.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/shared/utils/format_date_utils.dart';
@@ -204,9 +205,14 @@ class ProjectDetailsInfo extends StatelessWidget {
                           );
                         },
                       ),
-                      _ActionIcon(icon: Icons.share_outlined),
-                      const SizedBox(width: AppSpace.sm),
-                      _ActionIcon(icon: Icons.bookmark_border),
+                      _ActionIcon(
+                        icon: Icons.share_outlined,
+                        onTap: () => shareBlocnetLink(
+                          context,
+                          title: project.name,
+                          deepPath: '/projects/${project.id}',
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -383,11 +389,11 @@ class _DetailChip extends StatelessWidget {
 class _ActionIcon extends StatelessWidget {
   const _ActionIcon({
     required this.icon,
-    this.onTap,
+    required this.onTap,
   });
 
   final IconData icon;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
