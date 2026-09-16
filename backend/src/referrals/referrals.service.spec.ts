@@ -328,4 +328,26 @@ describe('ReferralsService', () => {
       }),
     );
   });
+  it('never selects or returns a referral email on the user downline (F-46)', async () => {
+    prisma.profile.findMany.mockResolvedValue([
+      {
+        id: 'ref-1',
+        username: 'ref1',
+        displayName: 'Ref One',
+        avatarUrl: null,
+        referredAt: new Date('2026-09-01T00:00:00.000Z'),
+        miningClaimedPoints: 10n,
+        currentLevel: null,
+        miningSessions: [],
+      },
+    ]);
+    prisma.profile.count.mockResolvedValue(1);
+
+    const result = await service.listDownline('user-1');
+
+    const [args] = prisma.profile.findMany.mock.calls[0];
+    expect(args.select).not.toHaveProperty('email');
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0]).not.toHaveProperty('email');
+  });
 });

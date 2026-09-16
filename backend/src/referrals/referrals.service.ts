@@ -339,7 +339,6 @@ export class ReferralsService {
         take: boundedLimit,
         select: {
           id: true,
-          email: true,
           username: true,
           displayName: true,
           avatarUrl: true,
@@ -391,7 +390,6 @@ export class ReferralsService {
 
       return {
         id: row.id,
-        email: row.email,
         username: row.username,
         displayName: row.displayName,
         avatarUrl: row.avatarUrl,
