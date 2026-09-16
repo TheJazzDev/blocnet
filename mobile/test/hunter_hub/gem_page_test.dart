@@ -213,6 +213,50 @@ void main() {
       }
     }
 
+    for (final space in NavSpace.values) {
+      testWidgets('${space.name} tabs are findable by semantics label',
+          (tester) async {
+        usePhone(tester, 375);
+        final handle = tester.ensureSemantics();
+        final taps = <int>[];
+        await tester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            bottomNavigationBar: SpaceBottomNav(
+              space: space,
+              currentIndex: 2,
+              onTap: taps.add,
+            ),
+          ),
+        ));
+        final labels =
+            SpaceBottomNav.tabsFor(space).map((t) => t.label).toList();
+        expect(
+            labels[2],
+            switch (space) {
+              NavSpace.user => 'Community',
+              NavSpace.hunter => 'Hub',
+              NavSpace.moderation => 'Moderate',
+            });
+        for (var i = 0; i < labels.length; i++) {
+          final tab = find.bySemanticsLabel(labels[i]);
+          expect(tab, findsOneWidget, reason: labels[i]);
+          expect(
+            tester.getSemantics(tab),
+            matchesSemantics(
+              label: labels[i],
+              isButton: true,
+              isSelected: i == 2,
+              hasTapAction: true,
+            ),
+            reason: labels[i],
+          );
+          await tester.tap(tab);
+        }
+        expect(taps, [0, 1, 2, 3, 4, 5]);
+        handle.dispose();
+      });
+    }
+
     test('icons follow the spec', () {
       final hunter = SpaceBottomNav.tabsFor(NavSpace.hunter);
       expect(hunter.map((t) => t.activeIcon), [

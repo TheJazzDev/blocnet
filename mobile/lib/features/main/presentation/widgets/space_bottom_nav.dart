@@ -109,16 +109,22 @@ class _NavTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active ? accent : AppColors.zincDim;
+    void select() {
+      HapticFeedback.selectionClick();
+      onTap();
+    }
+
+    // One node per tab, named by its visible word, so accessibility tools
+    // and uiautomator (content-desc) see "Hub" rather than an empty button.
+    // The tap is exposed on that node because the gesture below is excluded.
     return Semantics(
       button: true,
       selected: active,
       label: spec.label,
+      onTap: select,
       excludeSemantics: true,
       child: GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
+        onTap: select,
         behavior: HitTestBehavior.opaque,
         child: Padding(
           padding: const EdgeInsets.only(top: 10, left: 2, right: 2),
