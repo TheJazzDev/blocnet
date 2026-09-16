@@ -196,7 +196,7 @@ export interface AdminUserDetail {
       startsAt: string;
       endsAt: string;
       claimedAt: string | null;
-      status: "running" | "claimable" | "claimed";
+      status: AdminMiningSessionStatus;
       progressPct: number;
       basePointsPerCycle: number;
       effectivePointsPerCycle: number;
@@ -209,7 +209,7 @@ export interface AdminUserDetail {
       startsAt: string;
       endsAt: string;
       claimedAt: string | null;
-      status: "running" | "claimable" | "claimed";
+      status: AdminMiningSessionStatus;
       progressPct: number;
       basePointsPerCycle: number;
       effectivePointsPerCycle: number;
@@ -279,3 +279,6 @@ export interface AdminHardDeleteUserResponse {
   userId?: string;
   deletedAt?: string;
 }
+
+/** Session status as derived by the backend; "expired" = forfeited or past the claim window. */
+export type AdminMiningSessionStatus = "running" | "claimable" | "claimed" | "expired";

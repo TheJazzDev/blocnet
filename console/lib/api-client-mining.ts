@@ -4,6 +4,7 @@ import type {
   AdminBindReferralResponse,
   AdminBindUserReferralRequest,
   AdminMiningConfig,
+  AdminMiningConfigPatch,
   AdminMiningLeaderboardResponse,
   AdminMiningMetrics,
 } from "./api";
@@ -11,7 +12,7 @@ import type {
 export const miningApi = {
   getMiningConfig: () => apiFetch<AdminMiningConfig>("/admin/mining/config"),
 
-  updateMiningConfig: (body: Partial<AdminMiningConfig>) =>
+  updateMiningConfig: (body: AdminMiningConfigPatch) =>
     apiFetch<AdminMiningConfig>("/admin/mining/config", {
       method: "PATCH",
       body: JSON.stringify(body),

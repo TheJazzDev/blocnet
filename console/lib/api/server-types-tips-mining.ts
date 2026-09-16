@@ -72,8 +72,11 @@ export interface AdminTipTransactionsResponse {
   offset: number;
 }
 
-export interface AdminMiningConfig {
+/** The nine stored MiningConfig fields an admin can edit. */
+export interface AdminMiningConfigFields {
+  /** Raw stored value; the live state also depends on `runtimeFlags`. */
   enabled: boolean;
+  /** Raw stored value; the live state also depends on `runtimeFlags`. */
   referralsEnabled: boolean;
   cycleHours: number;
   basePointsPerCycle: number;
@@ -81,7 +84,23 @@ export interface AdminMiningConfig {
   maxBoostBps: number;
   activeReferralWindowHours: number;
   referralBindWindowHours: number;
+  claimWindowHours: number;
 }
+
+/** Runtime feature flags (Settings) that gate mining on top of the stored row. */
+export interface AdminMiningRuntimeFlags {
+  miningEnabled: boolean;
+  referralsEnabled: boolean;
+}
+
+export interface AdminMiningConfig extends AdminMiningConfigFields {
+  /** Optional so the page still renders against a backend that predates it. */
+  runtimeFlags?: AdminMiningRuntimeFlags;
+  updatedAt?: string;
+}
+
+/** PATCH /admin/mining/config accepts any subset of the editable fields. */
+export type AdminMiningConfigPatch = Partial<AdminMiningConfigFields>;
 
 export interface AdminMiningMetrics {
   asOf: string;

@@ -7,9 +7,12 @@ import {
   canManageCommunityModerators,
   canManageGamification,
   canManageSocialCredentials,
+  canMutateMining,
   canMutateWallet,
+  canViewMining,
   canViewOpsEvents,
   diffRoleCapabilities,
+  hasCapability,
   getRoleViewOptions,
   resolveEffectiveRoles,
 } from './rbac';
@@ -62,6 +65,17 @@ describe('rbac', () => {
     expect(canManageSocialCredentials(['owner'])).toBe(true);
     expect(canManageSocialCredentials(['dev'])).toBe(false);
     expect(canManageSocialCredentials(['admin'])).toBe(false);
+  });
+
+  it('gates mining on the engagement.mining capabilities, not wallet access', () => {
+    for (const role of ['owner', 'dev', 'admin']) {
+      expect(canViewMining([role])).toBe(true);
+      expect(canMutateMining([role])).toBe(true);
+    }
+    expect(canViewMining(['user', 'hunter'])).toBe(false);
+    expect(canMutateMining(['community_moderator'])).toBe(false);
+    expect(canViewMining(['user', 'admin'])).toBe(true);
+    expect(hasCapability(['owner'], 'engagement.unknown')).toBe(false);
   });
 
   it('resolves effective roles for view mode without allowing escalation', () => {
