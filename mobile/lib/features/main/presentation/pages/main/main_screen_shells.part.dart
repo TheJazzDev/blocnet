@@ -53,7 +53,7 @@ const _hunterTabs = [
     showNotificationBell: true,
   ),
   _TabMeta(
-    title: 'Hunter Hub',
+    title: 'Hub',
     showSearch: true,
     showFilter: false,
     showNotificationBell: true,
@@ -158,7 +158,8 @@ class _UserSpaceShell extends StatelessWidget {
           _profileBuilder,
         ],
       ),
-      bottomNavigationBar: _UserNav(
+      bottomNavigationBar: SpaceBottomNav(
+        space: NavSpace.user,
         currentIndex: currentIndex,
         onTap: onNavTap,
       ),
@@ -184,8 +185,8 @@ class _HunterSpaceShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tab = _hunterTabs[currentIndex];
-    final showComposerFab =
-        currentIndex == 0 || currentIndex == 1 || currentIndex == 2;
+    final isHub = currentIndex == MainTabScope.hubTab;
+    final showComposerFab = currentIndex == 0 || currentIndex == 1;
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -198,6 +199,8 @@ class _HunterSpaceShell extends StatelessWidget {
         showNotificationBell: tab.showNotificationBell,
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
+        // D5: the Hub keeps the shared bar and adds My updates.
+        actions: isHub ? const [HubHistoryAction()] : const [],
       ),
       body: _LazyTabStack(
         index: currentIndex,
@@ -210,12 +213,16 @@ class _HunterSpaceShell extends StatelessWidget {
           _profileBuilder,
         ],
       ),
-      bottomNavigationBar: _HunterNav(
+      bottomNavigationBar: SpaceBottomNav(
+        space: NavSpace.hunter,
         currentIndex: currentIndex,
         onTap: onNavTap,
       ),
-      floatingActionButton:
-          showComposerFab ? _FloatingComposerFab(onPressed: onFabTap) : null,
+      floatingActionButton: isHub
+          ? const HubFabHost()
+          : showComposerFab
+              ? _FloatingComposerFab(onPressed: onFabTap)
+              : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
@@ -258,7 +265,8 @@ class _ModerationSpaceShell extends StatelessWidget {
           _profileBuilder,
         ],
       ),
-      bottomNavigationBar: _ModerationNav(
+      bottomNavigationBar: SpaceBottomNav(
+        space: NavSpace.moderation,
         currentIndex: currentIndex,
         onTap: onNavTap,
       ),
