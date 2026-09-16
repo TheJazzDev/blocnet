@@ -5,7 +5,6 @@ class StartupMetricsService {
   static DateTime? _firstFrameAt;
   static DateTime? _homeShellReadyAt;
   static DateTime? _homeFeedReadyAt;
-  static DateTime? _edgeReadyAt;
   static int _apiCallsInFirst10s = 0;
   static int _apiCallsInFirst30s = 0;
 
@@ -30,13 +29,6 @@ class StartupMetricsService {
     _homeFeedReadyAt = DateTime.now();
     _log('home_feed_ready_ms', _elapsedFromProcess(_homeFeedReadyAt));
     if (source != null) _log('home_feed_source', source);
-  }
-
-  static void markEdgeReady({String? source}) {
-    if (_edgeReadyAt != null) return;
-    _edgeReadyAt = DateTime.now();
-    _log('edge_brief_ready_ms', _elapsedFromProcess(_edgeReadyAt));
-    if (source != null) _log('edge_brief_source', source);
   }
 
   /// Counts requests in the first 10 s after process start. Every call in

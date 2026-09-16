@@ -1,9 +1,10 @@
-import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
-import 'package:blocnet/features/engagement/data/models/edge_explain_model.dart';
 import 'package:blocnet/features/engagement/data/models/edge_feed_model.dart';
 import 'package:blocnet/features/engagement/data/repositories/edge_engine_api_repository.dart';
 import 'package:flutter/material.dart';
 
+/// Edge decisions for the Home feed: the verdict chip on each card and the
+/// score the feed ranks by. The weekly brief, the explain sheet and the
+/// feedback call belonged to the Edge Engine page, which was cut.
 class EdgeEngineStore extends ChangeNotifier {
   EdgeEngineStore({EdgeEngineApiRepository? repository})
       : _repository = repository ?? EdgeEngineApiRepository();
@@ -11,74 +12,28 @@ class EdgeEngineStore extends ChangeNotifier {
   final EdgeEngineApiRepository _repository;
 
   EdgeFeedResponse? _feed;
-  EdgeBriefResponse? _brief;
-  EdgeExplainResponse? _activeExplain;
   bool _isFetching = false;
-  bool _isFetchingExplain = false;
-  bool _isSendingFeedback = false;
   String? _lastError;
 
   EdgeFeedResponse? get feed => _feed;
-  EdgeBriefResponse? get brief => _brief;
-  EdgeExplainResponse? get activeExplain => _activeExplain;
   bool get isFetching => _isFetching;
-  bool get isFetchingExplain => _isFetchingExplain;
-  bool get isSendingFeedback => _isSendingFeedback;
   String? get lastError => _lastError;
   List<EdgeDecision> get decisions => _feed?.items ?? const [];
 
-  /// Applies a brief from the Home bootstrap (cache or network). Returns
-  /// false without notifying when the brief's content is unchanged.
-  bool hydrateBrief(EdgeBriefResponse? brief, {bool notify = true}) {
-    if (brief == null) return false;
-    final current = _brief;
-    if (current != null && current.contentEquals(brief)) return false;
-    _brief = brief;
-    _lastError = null;
-    if (notify) {
-      notifyListeners();
-    }
-    return true;
-  }
-
-  Future<void> fetchOnce() async {
-    if ((_feed != null && _brief != null) || _isFetching) return;
+  /// Loads the decision feed once; later calls are no-ops.
+  Future<void> ensureFeed() async {
+    if (_feed != null) return;
     await refresh();
-  }
-
-  /// Loads only the decision feed. Used after the Home bootstrap already
-  /// delivered the brief, so the brief is not fetched a second time.
-  Future<void> ensureFeed({int limit = 30}) async {
-    if (_feed != null || _isFetching) return;
-
-    _isFetching = true;
-    notifyListeners();
-    try {
-      _feed = await _repository.fetchFeed(limit: limit);
-      _lastError = null;
-    } catch (error) {
-      _lastError = error.toString();
-    } finally {
-      _isFetching = false;
-      notifyListeners();
-    }
   }
 
   Future<void> refresh() async {
     if (_isFetching) return;
 
     _isFetching = true;
-    _lastError = null;
     notifyListeners();
-
     try {
-      final responses = await Future.wait([
-        _repository.fetchFeed(limit: 30),
-        _repository.fetchBrief(windowDays: 7),
-      ]);
-
-      _feed = responses[0] as EdgeFeedResponse?;
-      _brief = responses[1] as EdgeBriefResponse?;
+      _feed = await _repository.fetchFeed(limit: 30);
+      _lastError = null;
     } catch (error) {
       _lastError = error.toString();
     } finally {
@@ -99,51 +54,5 @@ class EdgeEngineStore extends ChangeNotifier {
       }
     }
     return null;
-  }
-
-  Future<EdgeExplainResponse?> fetchExplain(String decisionId) async {
-    if (_isFetchingExplain) return _activeExplain;
-
-    _isFetchingExplain = true;
-    _lastError = null;
-    notifyListeners();
-    try {
-      _activeExplain = await _repository.fetchExplain(decisionId);
-      return _activeExplain;
-    } catch (error) {
-      _lastError = error.toString();
-      return null;
-    } finally {
-      _isFetchingExplain = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> sendFeedback({
-    required String decisionId,
-    required String action,
-    Map<String, dynamic>? context,
-  }) async {
-    if (_isSendingFeedback) return false;
-
-    _isSendingFeedback = true;
-    notifyListeners();
-    try {
-      final ok = await _repository.sendFeedback(
-        decisionId: decisionId,
-        action: action,
-        context: context,
-      );
-      if (ok) {
-        _lastError = null;
-      }
-      return ok;
-    } catch (error) {
-      _lastError = error.toString();
-      return false;
-    } finally {
-      _isSendingFeedback = false;
-      notifyListeners();
-    }
   }
 }
