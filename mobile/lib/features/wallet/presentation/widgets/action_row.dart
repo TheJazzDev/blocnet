@@ -1,10 +1,8 @@
 import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/features/wallet/presentation/pages/wallet_receive_screen.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/action_button.dart';
-import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 
 class ActionRow extends StatelessWidget {
   const ActionRow({super.key, this.assetCode = 'BNT'});
@@ -13,10 +11,6 @@ class ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final walletStore = context.watch<WalletStore>();
-    final address = walletStore.snapshot?.walletAddress;
-    final hasAddress = address != null && address.isNotEmpty;
-
     return Row(
       children: [
         ActionButton(
@@ -28,22 +22,7 @@ class ActionRow extends StatelessWidget {
         ActionButton(
           icon: Icons.arrow_downward_rounded,
           label: 'Receive',
-          onTap: () {
-            if (!hasAddress) {
-              showWalletToast(
-                context,
-                message: walletNotReadyMessage(walletStore),
-                type: WalletToastType.error,
-              );
-              return;
-            }
-            Clipboard.setData(ClipboardData(text: address));
-            showWalletToast(
-              context,
-              message: 'Wallet address copied successfully.',
-              type: WalletToastType.success,
-            );
-          },
+          onTap: () => openWalletReceive(context),
         ),
       ],
     );

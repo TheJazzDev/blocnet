@@ -9,6 +9,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+/// Opens [WalletReceiveScreen]; every Receive entry point uses this.
+Future<void> openWalletReceive(BuildContext context) {
+  return Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (_) => const WalletReceiveScreen()),
+  );
+}
+
 /// Receive view: the wallet's BSC address as a QR code plus copy/share.
 ///
 /// Reads the address straight from the wallet snapshot; when the wallet is
