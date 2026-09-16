@@ -10,6 +10,7 @@ import {
   canMutateMining,
   canMutateWallet,
   canViewMining,
+  canViewMiningHistory,
   canViewOpsEvents,
   diffRoleCapabilities,
   hasCapability,
@@ -76,6 +77,14 @@ describe('rbac', () => {
     expect(canMutateMining(['community_moderator'])).toBe(false);
     expect(canViewMining(['user', 'admin'])).toBe(true);
     expect(hasCapability(['owner'], 'engagement.unknown')).toBe(false);
+  });
+
+  it('shows mining change history only where GET /audit-log is allowed', () => {
+    expect(canViewMiningHistory(['owner'])).toBe(true);
+    expect(canViewMiningHistory(['admin'])).toBe(true);
+    expect(canViewMiningHistory(['dev'])).toBe(false);
+    expect(canViewMiningHistory(['dev', 'admin'])).toBe(true);
+    expect(canViewMiningHistory(['community_moderator'])).toBe(false);
   });
 
   it('resolves effective roles for view mode without allowing escalation', () => {

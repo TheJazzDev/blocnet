@@ -113,6 +113,88 @@ describe('AuditLogController', () => {
       expect(auditLogService.listForUser).not.toHaveBeenCalled();
     });
 
+    it('passes a comma-separated action filter through, trimmed and de-duplicated', async () => {
+      await request(app.getHttpServer())
+        .get(
+          '/audit-log?action=admin.mining.config.update,%20settings.update,admin.mining.config.update&limit=20',
+        )
+        .expect(200);
+
+      expect(auditLogService.listForUser).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'user-1' }),
+        20,
+        0,
+        {
+          includeViews: true,
+          actions: ['admin.mining.config.update', 'settings.update'],
+        },
+      );
+    });
+
+    it('accepts repeated action params', async () => {
+      await request(app.getHttpServer())
+        .get('/audit-log?action=a.one&action=b.two')
+        .expect(200);
+
+      expect(auditLogService.listForUser).toHaveBeenCalledWith(
+        expect.anything(),
+        100,
+        0,
+        { includeViews: true, actions: ['a.one', 'b.two'] },
+      );
+    });
+
+    it('omits actions when no action filter is given', async () => {
+      await request(app.getHttpServer()).get('/audit-log').expect(200);
+
+      const options = auditLogService.listForUser.mock.calls[0]?.[3];
+      expect(options).not.toHaveProperty('actions');
+    });
+
+    it.each([
+      [
+        'more than 10 values',
+        Array.from({ length: 11 }, (_, i) => `a.${i}`).join(','),
+      ],
+      ['a value over 64 chars', 'a'.repeat(65)],
+      ['an empty value', 'admin.mining.config.update,'],
+      ['an empty string', ''],
+      ['disallowed characters', 'admin.mining%20config'],
+      ['wildcard characters', 'admin.%25'],
+    ])('rejects an action filter with %s', async (_label, value) => {
+      await request(app.getHttpServer())
+        .get(`/audit-log?action=${value}`)
+        .expect(400);
+
+      expect(auditLogService.listForUser).not.toHaveBeenCalled();
+    });
+
+    it('accepts exactly 10 values of 64 chars', async () => {
+      const values = Array.from({ length: 10 }, (_, i) =>
+        `${i}`.padEnd(64, 'x'),
+      );
+      await request(app.getHttpServer())
+        .get(`/audit-log?action=${values.join(',')}`)
+        .expect(200);
+
+      expect(auditLogService.listForUser).toHaveBeenCalledWith(
+        expect.anything(),
+        100,
+        0,
+        { includeViews: true, actions: values },
+      );
+    });
+
+    it('still refuses the action filter to non-admin roles', async () => {
+      currentUser.roles = [AppRole.USER];
+
+      await request(app.getHttpServer())
+        .get('/audit-log?action=admin.mining.config.update')
+        .expect(403);
+
+      expect(auditLogService.listForUser).not.toHaveBeenCalled();
+    });
+
     it('rejects a non-numeric limit instead of forwarding NaN', async () => {
       await request(app.getHttpServer())
         .get('/audit-log?limit=abc')

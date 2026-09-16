@@ -35,8 +35,15 @@ export const governanceApi = {
       body: JSON.stringify(body),
     }),
 
-  listAuditLog: (limit = 100, offset = 0) =>
-    apiFetch<AuditLog[]>(`/audit-log${toQuery({ limit, offset })}`),
+  /** `actions` narrows the list to those exact action names (max 10). */
+  listAuditLog: (
+    limit = 100,
+    offset = 0,
+    options?: { actions?: readonly string[] },
+  ) =>
+    apiFetch<AuditLog[]>(
+      `/audit-log${toQuery({ limit, offset, action: options?.actions?.join(",") })}`,
+    ),
 
   listOpsEvents: (params?: {
     q?: string;

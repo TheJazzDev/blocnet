@@ -107,6 +107,8 @@ export const queryKeys = {
     all: ['mining'] as const,
     config: () => [...queryKeys.mining.all, 'config'] as const,
     metrics: () => [...queryKeys.mining.all, 'metrics'] as const,
+    configHistory: (filters: Record<string, unknown>) => [...queryKeys.mining.all, 'config-history', filters] as const,
+    configHistories: () => [...queryKeys.mining.all, 'config-history'] as const,
     leaderboard: (filters: Record<string, unknown>) => [...queryKeys.mining.all, 'leaderboard', filters] as const,
   },
 

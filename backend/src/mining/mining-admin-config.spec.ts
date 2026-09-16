@@ -91,6 +91,31 @@ describe('Mining admin config (F-47)', () => {
     expect(config).toStrictEqual(expectedShape(updatedRow));
   });
 
+  it('PATCH audits the action with a before/after diff of the patched fields (F-65)', async () => {
+    const updatedRow = { ...storedRow, claimWindowHours: 72, enabled: false };
+    prisma.miningConfig.upsert
+      .mockResolvedValueOnce(storedRow)
+      .mockResolvedValueOnce(updatedRow);
+
+    await service.updateAdminConfig('admin-1', {
+      claimWindowHours: 72,
+      enabled: false,
+    });
+
+    expect(auditLogService.create).toHaveBeenCalledWith({
+      actorId: 'admin-1',
+      action: 'admin.mining.config.update',
+      resourceType: 'mining_config',
+      resourceId: 'default',
+      metadata: {
+        claimWindowHours: 72,
+        enabled: false,
+        before: { claimWindowHours: 48, enabled: true },
+        after: { claimWindowHours: 72, enabled: false },
+      },
+    });
+  });
+
   it('the user-facing effective config still ANDs the runtime flags', async () => {
     prisma.miningConfig.upsert.mockResolvedValue(storedRow);
 
@@ -127,9 +152,9 @@ describe('Mining admin config (F-47)', () => {
     });
 
     it.each([1, 168])('accepts claimWindowHours=%p', async (value) => {
-      await expect(errorsFor({ claimWindowHours: value })).resolves.toHaveLength(
-        0,
-      );
+      await expect(
+        errorsFor({ claimWindowHours: value }),
+      ).resolves.toHaveLength(0);
     });
   });
 });

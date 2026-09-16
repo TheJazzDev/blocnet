@@ -179,6 +179,66 @@ describe('AuditLogService', () => {
     expect(call).not.toHaveProperty('where');
   });
 
+  it('filters by exact action names for owner', async () => {
+    prisma.auditLog.findMany.mockResolvedValue([]);
+
+    await service.listForUser(
+      { id: 'owner-1', email: 'owner@test.dev', roles: [AppRole.OWNER] },
+      20,
+      0,
+      { includeViews: true, actions: ['admin.mining.config.update'] },
+    );
+
+    expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { action: { in: ['admin.mining.config.update'] } },
+        take: 20,
+        skip: 0,
+      }),
+    );
+  });
+
+  it('keeps admin visibility rules when filtering by action', async () => {
+    prisma.auditLog.findMany.mockResolvedValue([]);
+
+    await service.listForUser(
+      { id: 'admin-1', email: 'admin@test.dev', roles: [AppRole.ADMIN] },
+      20,
+      0,
+      { actions: ['admin.mining.config.update', 'role.promote.owner'] },
+    );
+
+    const call = prisma.auditLog.findMany.mock.calls[0]?.[0];
+    expect(call.where).toEqual({
+      AND: [
+        {
+          NOT: {
+            action: { in: expect.arrayContaining(['role.promote.owner']) },
+          },
+        },
+        {
+          action: {
+            in: ['admin.mining.config.update', 'role.promote.owner'],
+          },
+        },
+      ],
+    });
+  });
+
+  it('ignores an empty action list', async () => {
+    prisma.auditLog.findMany.mockResolvedValue([]);
+
+    await service.listForUser(
+      { id: 'owner-1', email: 'owner@test.dev', roles: [AppRole.OWNER] },
+      20,
+      0,
+      { actions: [] },
+    );
+
+    const call = prisma.auditLog.findMany.mock.calls[0]?.[0];
+    expect(call).not.toHaveProperty('where');
+  });
+
   it('throws for users without governance role', async () => {
     await expect(
       service.listForUser({

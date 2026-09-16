@@ -76,6 +76,14 @@ export function canMutateMining(roles: string[]): boolean {
   return hasCapability(roles, 'engagement.mining.mutate');
 }
 
+/**
+ * Mining config change history. It is read from `GET /audit-log`, which the
+ * backend only serves to owner and admin, so dev-only sessions cannot see it.
+ */
+export function canViewMiningHistory(roles: string[]): boolean {
+  return hasRole(roles, 'owner') || hasRole(roles, 'admin');
+}
+
 export function getRoleCapabilities(role: AdminPanelRole | null): RoleCapabilityDefinition[] {
   if (!role) return [];
   return ROLE_CAPABILITIES.filter((entry) => entry.roles.includes(role));

@@ -1,6 +1,19 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 const toInt = ({ value }: { value: unknown }) => {
   if (value === undefined || value === null) return undefined;
@@ -18,6 +31,24 @@ const toBool = ({ value }: { value: unknown }) => {
     if (normalized === 'false' || normalized === '0') return false;
   }
   return value;
+};
+
+export const AUDIT_ACTION_FILTER_MAX_VALUES = 10;
+export const AUDIT_ACTION_FILTER_MAX_LENGTH = 64;
+
+/**
+ * `action=a.b,c.d` (or repeated `action=` params) -> trimmed, de-duplicated
+ * string array. Anything that is not a string is passed through so the
+ * validators reject it.
+ */
+const toActionList = ({ value }: { value: unknown }) => {
+  if (value === undefined || value === null) return undefined;
+  const parts = Array.isArray(value) ? value : [value];
+  if (!parts.every((part) => typeof part === 'string')) return value;
+  const values = parts
+    .flatMap((part) => part.split(','))
+    .map((part) => part.trim());
+  return [...new Set(values)];
 };
 
 export class ListAuditLogQuery {
@@ -45,4 +76,24 @@ export class ListAuditLogQuery {
   @Transform(toBool)
   @IsBoolean()
   includeViews?: boolean;
+
+  @ApiPropertyOptional({
+    type: String,
+    example: 'admin.mining.config.update',
+    description: `Exact action names to match, comma-separated (max ${AUDIT_ACTION_FILTER_MAX_VALUES} values, each max ${AUDIT_ACTION_FILTER_MAX_LENGTH} chars). Role visibility rules still apply.`,
+  })
+  @IsOptional()
+  @Transform(toActionList)
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(AUDIT_ACTION_FILTER_MAX_VALUES)
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  @MaxLength(AUDIT_ACTION_FILTER_MAX_LENGTH, { each: true })
+  @Matches(/^[A-Za-z0-9_.:-]+$/, {
+    each: true,
+    message:
+      'each action may only contain letters, digits, ".", "_", ":" and "-"',
+  })
+  action?: string[];
 }

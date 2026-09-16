@@ -29,7 +29,7 @@ export class AuditLogController {
   @ApiOperation({
     summary: 'List audit log entries visible to the caller',
     description:
-      'Pass includeViews=false to exclude read-only admin view events (actions ending in ".view").',
+      'Pass includeViews=false to exclude read-only admin view events (actions ending in ".view"). Pass action=a,b to return only those exact actions.',
   })
   async list(
     @CurrentUser() user: AuthUser | undefined,
@@ -43,7 +43,10 @@ export class AuditLogController {
       user,
       query.limit ?? 100,
       query.offset ?? 0,
-      { includeViews: query.includeViews ?? true },
+      {
+        includeViews: query.includeViews ?? true,
+        ...(query.action ? { actions: query.action } : {}),
+      },
     );
   }
 
