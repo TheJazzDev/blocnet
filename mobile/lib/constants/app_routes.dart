@@ -41,11 +41,7 @@ class AppRoutes {
 
   // Project routes
   static const String home = '/home';
-  static const String trending = '/trending';
   static const String discover = '/discover';
-  static const String midPriority = '/mid-priority';
-  static const String lowPriority = '/low-priority';
-  static const String highPriority = '/high-priority';
   static const String topHunters = '/top-hunters';
   static const String communityCreatePost = '/community-create-post';
   static const String communityDiscussion = '/community-discussion';

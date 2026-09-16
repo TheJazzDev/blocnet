@@ -1,5 +1,4 @@
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/badges/presentation/pages/badge_gallery_page.dart';
 import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
@@ -34,8 +33,6 @@ import 'package:blocnet/features/support/presentation/pages/help_support_screen.
 import 'package:blocnet/features/wallet/presentation/pages/wallet_asset_detail_screen.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_screen.dart';
 import 'package:flutter/material.dart';
-import '../features/projects/presentation/sections/explore/trending.dart';
-import '../features/projects/presentation/sections/explore/priority.dart';
 
 class ProtectedRoutes {
   // Global
@@ -78,10 +75,6 @@ class ProtectedRoutes {
   // Projects
   static const String home = AppRoutes.home;
   static const String discover = AppRoutes.discover;
-  static const String trending = AppRoutes.trending;
-  static const String midPriority = AppRoutes.midPriority;
-  static const String lowPriority = AppRoutes.lowPriority;
-  static const String highPriority = AppRoutes.highPriority;
   static const String topHunters = AppRoutes.topHunters;
 
   static bool isProtectedRoute(String? route) {
@@ -162,10 +155,6 @@ class ProtectedRoutes {
       // Projects
       home: (context) => const MainScreen(initialIndex: 0),
       discover: (context) => const MainScreen(initialIndex: 1),
-      trending: (context) => const TrendingScreen(),
-      midPriority: (context) => PriorityScreens(priority: Priority.mid),
-      lowPriority: (context) => PriorityScreens(priority: Priority.low),
-      highPriority: (context) => PriorityScreens(priority: Priority.high),
       topHunters: (context) => const TopHuntersScreen(),
     };
   }
@@ -206,10 +195,6 @@ class ProtectedRoutes {
     becomeHunter,
     home,
     discover,
-    trending,
-    midPriority,
-    lowPriority,
-    highPriority,
     topHunters,
   };
 
