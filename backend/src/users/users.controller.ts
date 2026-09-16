@@ -35,7 +35,6 @@ import { UsersService } from './users.service';
 import { UsersAdminService } from './users-admin.service';
 import { UserDigestService } from './user-digest.service';
 import { UpdatesService } from '../updates/updates.service';
-import { EdgeEngineService } from '../edge-engine/edge-engine.service';
 import { MeRadarService } from '../me-radar/me-radar.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -73,7 +72,6 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly userDigestService: UserDigestService,
     private readonly updatesService: UpdatesService,
-    private readonly edgeEngineService: EdgeEngineService,
     private readonly meRadarService: MeRadarService,
     private readonly prisma: PrismaService,
   ) {}
@@ -153,11 +151,17 @@ export class UsersController {
     return this.userDigestService.getDigestSummary(user.id, safeWindowDays);
   }
 
+  /**
+   * Everything Home needs in one round trip.
+   *
+   * No longer computes the edge brief: the app stopped reading `edgeBrief`
+   * here, and it was the slowest leg of this request. `windowDays` is still
+   * accepted from older clients and ignored.
+   */
   @Get('home-bootstrap')
   async getHomeBootstrap(
     @CurrentUser() user: AuthUser | undefined,
     @Query('feedLimit') feedLimit?: string,
-    @Query('windowDays') windowDays?: string,
   ) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -168,12 +172,6 @@ export class UsersController {
       Number.isFinite(parsedFeedLimit) && parsedFeedLimit > 0
         ? Math.min(Math.floor(parsedFeedLimit), 200)
         : 80;
-
-    const parsedWindowDays = Number(windowDays);
-    const safeWindowDays =
-      Number.isFinite(parsedWindowDays) && parsedWindowDays > 0
-        ? Math.min(Math.floor(parsedWindowDays), 30)
-        : 7;
 
     let partial = false;
     const timingsMs: Record<string, number> = {};
@@ -197,20 +195,6 @@ export class UsersController {
         });
       } finally {
         timingsMs.feed = Date.now() - t;
-      }
-    })();
-
-    const edgeBriefPromise = (async () => {
-      const t = Date.now();
-      try {
-        return await this.edgeEngineService.getBrief(user.id, {
-          windowDays: safeWindowDays,
-        });
-      } catch (_) {
-        partial = true;
-        return null;
-      } finally {
-        timingsMs.edgeBrief = Date.now() - t;
       }
     })();
 
@@ -243,13 +227,11 @@ export class UsersController {
     const [
       meSummaryResult,
       feedItemsResult,
-      edgeBriefResult,
       radarSummaryResult,
       unreadCountResult,
     ] = await Promise.allSettled([
       mePromise,
       updatesPromise,
-      edgeBriefPromise,
       radarPromise,
       unreadCountPromise,
     ]);
@@ -268,8 +250,6 @@ export class UsersController {
     const meSummary = meSummaryResult.value;
     const feedItems =
       feedItemsResult.status === 'fulfilled' ? feedItemsResult.value : [];
-    const edgeBrief =
-      edgeBriefResult.status === 'fulfilled' ? edgeBriefResult.value : null;
     const radarSummary =
       radarSummaryResult.status === 'fulfilled'
         ? radarSummaryResult.value
@@ -290,7 +270,6 @@ export class UsersController {
         offset: 0,
         items: feedItems,
       },
-      edgeBrief,
       radar: radarSummary,
       notifications: {
         unreadCount,

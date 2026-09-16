@@ -95,4 +95,35 @@ describe('projects.mapper', () => {
 
     expect(toProjectResponse(project).admin.currentLevel).toBeNull();
   });
+
+  it('carries ownerReliability when given and never echoes hunters', () => {
+    const project = {
+      id: 'project-1',
+      primaryTag: { id: 'tag-1', name: 'Layer 1', slug: 'layer-1' },
+      secondaryTags: [],
+      hunters: [{ hunterId: 'hunter-1' }],
+      ownerAdmin: {
+        id: 'user-1',
+        email: 'owner@blocnet.io',
+        username: 'owner',
+        displayName: 'Owner',
+        avatarUrl: null,
+        currentLevel: null,
+      },
+      _count: { follows: 0, updates: 0 },
+    } as unknown as ProjectWithRelations;
+
+    const withReliability = toProjectResponse(project, {
+      profileId: 'hunter-1',
+      standing: 'reliable',
+      coverage: 0.9,
+    });
+    expect(withReliability.ownerReliability).toEqual({
+      profileId: 'hunter-1',
+      standing: 'reliable',
+      coverage: 0.9,
+    });
+    expect(withReliability).not.toHaveProperty('hunters');
+    expect(toProjectResponse(project).ownerReliability).toBeNull();
+  });
 });

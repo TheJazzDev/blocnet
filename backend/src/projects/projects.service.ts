@@ -15,6 +15,7 @@ import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { AppRole } from '../common/enums/role.enum';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { LevelsService } from '../levels/levels.service';
+import { HunterReliabilityService } from '../hunter-reliability/hunter-reliability.service';
 import {
   normalizeName,
   normalizeSymbol,
@@ -31,6 +32,7 @@ export class ProjectsService {
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
     private readonly levelsService: LevelsService,
+    private readonly hunterReliability: HunterReliabilityService,
   ) {}
 
   async createProject(actor: AuthUser, dto: CreateProjectDto) {
@@ -160,7 +162,12 @@ export class ProjectsService {
       include: projectInclude,
     });
 
-    return projects.map((project) => toProjectResponse(project));
+    // Owner reliability for the whole page in two queries, not one per card.
+    const reliability =
+      await this.hunterReliability.ownerReliabilityFor(projects);
+    return projects.map((project) =>
+      toProjectResponse(project, reliability.get(project.id) ?? null),
+    );
   }
 
   async getProject(id: string) {
@@ -176,7 +183,10 @@ export class ProjectsService {
       throw new NotFoundException('Project not found');
     }
 
-    return toProjectResponse(project);
+    const reliability = await this.hunterReliability.ownerReliabilityFor([
+      project,
+    ]);
+    return toProjectResponse(project, reliability.get(project.id) ?? null);
   }
 
   async updateProject(actor: AuthUser, id: string, dto: UpdateProjectDto) {

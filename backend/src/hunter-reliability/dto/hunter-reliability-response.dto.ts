@@ -1,0 +1,145 @@
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  GEM_STATES,
+  RELIABILITY_STANDINGS,
+  type GemState,
+  type ReliabilityStanding,
+} from '../reliability.calc';
+
+export class ReliabilityLevelDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() slug!: string;
+  @ApiProperty() name!: string;
+  @ApiProperty() level!: number;
+  @ApiProperty() iconUrl!: string;
+  @ApiProperty({ nullable: true, type: String }) color!: string | null;
+}
+
+/** A hunter's reliability — the score members judge hunters by. */
+export class HunterReliabilityDto {
+  @ApiProperty() profileId!: string;
+  @ApiProperty({ nullable: true, type: String }) username!: string | null;
+  @ApiProperty({ nullable: true, type: String }) displayName!: string | null;
+  @ApiProperty({ nullable: true, type: String }) avatarUrl!: string | null;
+  @ApiProperty({ nullable: true, type: ReliabilityLevelDto })
+  level!: ReliabilityLevelDto | null;
+
+  @ApiProperty({ enum: RELIABILITY_STANDINGS })
+  standing!: ReliabilityStanding;
+
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    description:
+      'Share (0–1) of owned gems with activity in the last 14 days. Null when the hunter owns none.',
+  })
+  coverage!: number | null;
+
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    description:
+      'Median days between consecutive published updates on the same gem, last 90 days. Null with fewer than 2 intervals.',
+  })
+  cadenceDays!: number | null;
+
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    description:
+      'Share (0–1) of gem-weeks of member asks (last 90 days) answered by an update within 7 days. Null when no ask-week is decided yet.',
+  })
+  response!: number | null;
+
+  @ApiProperty() gemsOwned!: number;
+
+  @ApiProperty({
+    description: 'Published updates on owned gems, last 30 days.',
+  })
+  updates30d!: number;
+
+  @ApiProperty() followersTotal!: number;
+
+  @ApiProperty({
+    description:
+      'Tips received in the active tipping currency, atomic units, as a decimal string.',
+  })
+  tipsReceivedTotal!: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  tipsCurrencyCode!: string | null;
+
+  @ApiProperty({ nullable: true, type: Number })
+  tipsCurrencyDecimals!: number | null;
+
+  @ApiProperty({ description: 'Member asks on owned gems in the last 7 days.' })
+  membersWaiting!: number;
+
+  @ApiProperty({ description: 'Unresolved inactivity reports on owned gems.' })
+  openReports!: number;
+
+  @ApiProperty() computedAt!: string;
+}
+
+export class HunterLeaderboardEntryDto extends HunterReliabilityDto {
+  @ApiProperty({ description: '1-based position in the full ranking.' })
+  rank!: number;
+}
+
+export class HunterLeaderboardResponseDto {
+  @ApiProperty({ type: [HunterLeaderboardEntryDto] })
+  items!: HunterLeaderboardEntryDto[];
+
+  @ApiProperty({ nullable: true, type: String })
+  nextCursor!: string | null;
+}
+
+export class BoardGemLastUpdateDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() title!: string;
+  @ApiProperty() publishedAt!: string;
+}
+
+/** One gem on the hunter's own board. */
+export class HunterBoardGemDto {
+  @ApiProperty() projectId!: string;
+  @ApiProperty() name!: string;
+
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: 'Projects have no stored logo yet; always null for now.',
+  })
+  logoUrl!: string | null;
+
+  @ApiProperty() primaryTag!: string;
+  @ApiProperty() followersCount!: number;
+  @ApiProperty() listedAt!: string;
+  @ApiProperty() lastActivityAt!: string;
+
+  @ApiProperty({ nullable: true, type: BoardGemLastUpdateDto })
+  lastUpdate!: BoardGemLastUpdateDto | null;
+
+  @ApiProperty() daysQuiet!: number;
+  @ApiProperty({ enum: GEM_STATES }) state!: GemState;
+  @ApiProperty() membersWaiting!: number;
+  @ApiProperty() openReports!: number;
+
+  @ApiProperty({ nullable: true, type: String })
+  nextDeadlineAt!: string | null;
+}
+
+export class HunterBoardResponseDto {
+  @ApiProperty({ type: HunterReliabilityDto })
+  reliability!: HunterReliabilityDto;
+
+  @ApiProperty({ type: [HunterBoardGemDto] })
+  gems!: HunterBoardGemDto[];
+}
+
+/** The compact form carried on a gem card. */
+export class OwnerReliabilityDto {
+  @ApiProperty() profileId!: string;
+  @ApiProperty({ enum: RELIABILITY_STANDINGS }) standing!: ReliabilityStanding;
+  @ApiProperty({ nullable: true, type: Number }) coverage!: number | null;
+}

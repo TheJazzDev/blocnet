@@ -5,7 +5,6 @@ import { NotificationDigestWorker } from '../notifications/notification-digest.w
 import { QuestsModule } from '../quests/quests.module';
 import { ReferralsModule } from '../referrals/referrals.module';
 import { UpdatesModule } from '../updates/updates.module';
-import { EdgeEngineModule } from '../edge-engine/edge-engine.module';
 import { MeRadarModule } from '../me-radar/me-radar.module';
 import { ProfilesController } from './profiles.controller';
 import {
@@ -25,7 +24,6 @@ import { UserAvatarService } from './user-avatar.service';
     QuestsModule,
     ReferralsModule,
     UpdatesModule,
-    EdgeEngineModule,
     MeRadarModule,
   ],
   controllers: [
