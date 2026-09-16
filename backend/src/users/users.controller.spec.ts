@@ -7,7 +7,6 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
-import { EdgeEngineService } from '../edge-engine/edge-engine.service';
 import { MeRadarService } from '../me-radar/me-radar.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReferralsService } from '../referrals/referrals.service';
@@ -33,7 +32,11 @@ describe('UsersController (self-service deactivate/reactivate)', () => {
   const usersService = {
     deactivateAccount: jest.fn(),
     reactivateAccount: jest.fn(),
+    getMe: jest.fn(),
   };
+  const updatesService = { listUpdates: jest.fn() };
+  const meRadarService = { getRadar: jest.fn() };
+  const prisma = { notification: { count: jest.fn() } };
 
   let app: INestApplication;
 
@@ -43,10 +46,9 @@ describe('UsersController (self-service deactivate/reactivate)', () => {
       providers: [
         { provide: UsersService, useValue: usersService },
         { provide: UserDigestService, useValue: {} },
-        { provide: UpdatesService, useValue: {} },
-        { provide: EdgeEngineService, useValue: {} },
-        { provide: MeRadarService, useValue: {} },
-        { provide: PrismaService, useValue: {} },
+        { provide: UpdatesService, useValue: updatesService },
+        { provide: MeRadarService, useValue: meRadarService },
+        { provide: PrismaService, useValue: prisma },
         { provide: UsersAdminService, useValue: {} },
         { provide: ReferralsService, useValue: {} },
       ],
@@ -122,6 +124,27 @@ describe('UsersController (self-service deactivate/reactivate)', () => {
     await request(app.getHttpServer()).post('/me/reactivate').expect(201);
 
     expect(usersService.reactivateAccount).toHaveBeenCalledWith('user-1');
+  });
+
+  it('GET /me/home-bootstrap returns Home without computing an edge brief', async () => {
+    usersService.getMe.mockResolvedValue({ id: 'user-1' });
+    updatesService.listUpdates.mockResolvedValue([{ id: 'u-1' }]);
+    meRadarService.getRadar.mockResolvedValue({ items: [] });
+    prisma.notification.count.mockResolvedValue(3);
+
+    const response = await request(app.getHttpServer())
+      .get('/me/home-bootstrap?feedLimit=10&windowDays=7')
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      partial: false,
+      meSummary: { id: 'user-1' },
+      feed: { limit: 10, offset: 0, items: [{ id: 'u-1' }] },
+      radar: { items: [] },
+      notifications: { unreadCount: 3 },
+    });
+    expect(response.body).not.toHaveProperty('edgeBrief');
+    expect(response.body.timingsMs).not.toHaveProperty('edgeBrief');
   });
 
   it('no longer exposes the self-service routes under /admin/users', async () => {
