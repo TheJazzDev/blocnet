@@ -183,17 +183,40 @@ export function groupAsks(
   return [...groups.values()];
 }
 
+/** The decided ask-weeks behind `response`, as counts. */
+export interface ResponseCounts {
+  /** Decided ask-weeks an update answered in time. */
+  answered: number;
+  /** Decided ask-weeks (answered or missed); open ones are not counted. */
+  asked: number;
+}
+
+export function responseCounts(
+  asks: GemEvent[],
+  updates: GemEvent[],
+  now: Date,
+): ResponseCounts {
+  const decided = groupAsks(asks, updates, now).filter(
+    (group) => group.answered !== null,
+  );
+  return {
+    answered: decided.filter((group) => group.answered).length,
+    asked: decided.length,
+  };
+}
+
 /** Share of decided ask-groups the hunter answered. Null when none are decided. */
 export function responseRate(
   asks: GemEvent[],
   updates: GemEvent[],
   now: Date,
 ): number | null {
-  const decided = groupAsks(asks, updates, now).filter(
-    (group) => group.answered !== null,
-  );
-  if (decided.length === 0) return null;
-  return decided.filter((group) => group.answered).length / decided.length;
+  return shareOf(responseCounts(asks, updates, now));
+}
+
+/** `answered / asked`, or null when nothing is decided. */
+export function shareOf(counts: ResponseCounts): number | null {
+  return counts.asked === 0 ? null : counts.answered / counts.asked;
 }
 
 export function standing(

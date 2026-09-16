@@ -51,6 +51,18 @@ export class HunterReliabilityDto {
   })
   response!: number | null;
 
+  @ApiProperty({
+    description:
+      'Decided ask-weeks (last 90 days) an update answered within 7 days — the numerator of `response`.',
+  })
+  responseAnswered!: number;
+
+  @ApiProperty({
+    description:
+      'Decided ask-weeks (last 90 days), answered or missed — the denominator of `response`. Weeks still inside their 7-day window with no update are not counted.',
+  })
+  responseAsked!: number;
+
   @ApiProperty() gemsOwned!: number;
 
   @ApiProperty({

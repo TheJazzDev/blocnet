@@ -159,6 +159,8 @@ describe('HunterReliabilityService', () => {
         coverage: null,
         cadenceDays: null,
         response: null,
+        responseAnswered: 0,
+        responseAsked: 0,
         gemsOwned: 0,
         tipsReceivedTotal: '0',
         tipsCurrencyCode: 'BNP',
@@ -210,6 +212,8 @@ describe('HunterReliabilityService', () => {
         // mine's ask is still open but answered by the update a day ago;
         // shared's ask 20 days ago was never answered.
         response: 0.5,
+        responseAnswered: 1,
+        responseAsked: 2,
         updates30d: 3,
         followersTotal: 15,
         membersWaiting: 1,

@@ -9,7 +9,9 @@ import {
   lastActivityAt,
   median,
   ownersOf,
+  responseCounts,
   responseRate,
+  shareOf,
   standing,
   type BoardGemSortable,
   type GemEvent,
@@ -219,6 +221,20 @@ describe('reliability.calc', () => {
         ev('b', new Date('2026-08-04T10:00:00Z')),
       ];
       expect(responseRate(asks, updates, NOW)).toBe(0.5);
+      // The same decision as counts: 2 of 4 decided weeks answered.
+      expect(responseCounts(asks, updates, NOW)).toEqual({
+        answered: 2,
+        asked: 4,
+      });
+    });
+
+    it('counts nothing when no ask-week is decided', () => {
+      expect(responseCounts([ev('a', daysAgo(1))], [], NOW)).toEqual({
+        answered: 0,
+        asked: 0,
+      });
+      expect(shareOf({ answered: 0, asked: 0 })).toBeNull();
+      expect(shareOf({ answered: 1, asked: 4 })).toBe(0.25);
     });
   });
 

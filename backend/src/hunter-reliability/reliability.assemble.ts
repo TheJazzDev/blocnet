@@ -8,7 +8,8 @@ import {
   daysSince,
   gemState,
   lastActivityAt,
-  responseRate,
+  responseCounts,
+  shareOf,
   standing,
   type OwnedGemFacts,
   type ReliabilityStanding,
@@ -77,6 +78,7 @@ export function assembleReliability(input: {
   const asks = mine(facts.asks);
   const recentFrom = now.getTime() - RECENT_UPDATES_DAYS * DAY_MS;
   const waitingFrom = now.getTime() - MEMBERS_WAITING_DAYS * DAY_MS;
+  const response = responseCounts(asks, updates, now);
 
   return {
     profileId: hunterId,
@@ -87,7 +89,9 @@ export function assembleReliability(input: {
     standing: standing(gemFacts, now),
     coverage: roundShare(coverage(gemFacts, now)),
     cadenceDays: cadenceDays(updates, now),
-    response: roundShare(responseRate(asks, updates, now)),
+    response: roundShare(shareOf(response)),
+    responseAnswered: response.answered,
+    responseAsked: response.asked,
     gemsOwned: owned.length,
     updates30d: updates.filter((u) => u.at.getTime() >= recentFrom).length,
     followersTotal: sumBy(ids, facts.followersByGem),
