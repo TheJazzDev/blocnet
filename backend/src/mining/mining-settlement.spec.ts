@@ -10,6 +10,10 @@ import {
   MiningSessionAlreadySettledError,
   resolveClaimPoints,
 } from './mining-settlement';
+import {
+  miningClaimRewardContext,
+  questRewardRevokedContext,
+} from './bnp-tip-account';
 
 const HOUR = 60 * 60 * 1000;
 const CONFIG = { claimWindowHours: 48 };
@@ -87,6 +91,39 @@ describe('mining settlement', () => {
 
       expect(db.ledger).toHaveLength(1);
       expect(db.profile.miningClaimedPoints).toBe(120n);
+    });
+
+    it('writes exactly one reward row for the claim (F-63)', async () => {
+      const db = createFakeMiningDb({ sessions: [session()] });
+      const input = {
+        userId: 'user-1',
+        session: db.sessions[0],
+        claimedAt: new Date('2026-03-03T00:00:00.000Z'),
+        claimPoints: 120,
+        checkpointCount: 24,
+      };
+
+      await applyClaimSettlement(db.client as never, input);
+      await expect(
+        applyClaimSettlement(db.client as never, input),
+      ).rejects.toBeInstanceOf(MiningSessionAlreadySettledError);
+
+      expect(db.tipTransactions).toEqual([
+        expect.objectContaining({
+          type: 'reward',
+          senderUserId: 'user-1',
+          recipientUserId: 'user-1',
+          senderAccountId: 'tip-account-user-1',
+          recipientAccountId: 'tip-account-user-1',
+          currencyCode: 'BNP',
+          amountAtomic: 120_000n,
+          feeAtomic: 0n,
+          totalDebitAtomic: 0n,
+          contextType: 'mining_claim',
+          contextId: 'session-1',
+          idempotencyKey: 'mining-claim:session-1',
+        }),
+      ]);
     });
   });
 
@@ -173,65 +210,148 @@ describe('mining settlement', () => {
     });
   });
 
-  describe('BNP tip account helpers (F-52)', () => {
+  describe('BNP tip account helpers (F-52, F-63)', () => {
     const key = {
       accountType: 'user',
       ownerRef: 'user-1',
       currencyCode: 'BNP',
     };
+    const claimCtx = miningClaimRewardContext('session-9');
+    const revokeCtx = questRewardRevokedContext('submission-9');
 
     function tipTx() {
+      const rows: Array<Record<string, any>> = [];
       return {
+        rows,
         tipCurrency: { upsert: jest.fn().mockResolvedValue({}) },
         tipAccount: {
-          upsert: jest.fn().mockResolvedValue({}),
+          upsert: jest.fn().mockResolvedValue({ id: 'acct-1' }),
           findUnique: jest.fn(),
           updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+        tipTransaction: {
+          findUnique: jest.fn(async ({ where }: any) =>
+            rows.find((row) => row.idempotencyKey === where.idempotencyKey) ??
+            null,
+          ),
+          create: jest.fn(async ({ data }: any) => {
+            rows.push(data);
+            return data;
+          }),
         },
       };
     }
 
-    it('credits points x 1000 atomic units', async () => {
+    it('credits points x 1000 atomic units and records a reward row', async () => {
       const tx = tipTx();
 
-      await creditBnpTipAccount(tx as never, 'user-1', 7);
+      await expect(
+        creditBnpTipAccount(tx as never, 'user-1', 7, claimCtx),
+      ).resolves.toBe(7000n);
 
       expect(tx.tipAccount.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           update: { userId: 'user-1', balanceAtomic: { increment: 7000n } },
         }),
       );
+      expect(tx.rows).toEqual([
+        expect.objectContaining({
+          type: 'reward',
+          senderAccountId: 'acct-1',
+          recipientAccountId: 'acct-1',
+          amountAtomic: 7000n,
+          totalDebitAtomic: 0n,
+          idempotencyKey: 'mining-claim:session-9',
+        }),
+      ]);
     });
 
-    it('credits nothing for zero points', async () => {
+    it('is idempotent: a repeated credit moves nothing and writes nothing', async () => {
       const tx = tipTx();
 
-      await creditBnpTipAccount(tx as never, 'user-1', 0);
+      await creditBnpTipAccount(tx as never, 'user-1', 7, claimCtx);
+      await expect(
+        creditBnpTipAccount(tx as never, 'user-1', 7, claimCtx),
+      ).resolves.toBe(0n);
+
+      expect(tx.tipAccount.upsert).toHaveBeenCalledTimes(1);
+      expect(tx.rows).toHaveLength(1);
+    });
+
+    it('credits nothing and writes no row for zero points', async () => {
+      const tx = tipTx();
+
+      await creditBnpTipAccount(tx as never, 'user-1', 0, claimCtx);
 
       expect(tx.tipAccount.upsert).not.toHaveBeenCalled();
+      expect(tx.tipTransaction.create).not.toHaveBeenCalled();
     });
 
-    it('debits the full amount when the balance covers it', async () => {
+    it('debits the full amount when the balance covers it, as an adjustment row', async () => {
       const tx = tipTx();
-      tx.tipAccount.findUnique.mockResolvedValue({ balanceAtomic: 90_000n });
+      tx.tipAccount.findUnique.mockResolvedValue({
+        id: 'acct-1',
+        balanceAtomic: 90_000n,
+      });
 
       await expect(
-        debitBnpTipAccount(tx as never, 'user-1', 35),
+        debitBnpTipAccount(tx as never, 'user-1', 35, revokeCtx),
       ).resolves.toBe(35_000n);
       expect(tx.tipAccount.updateMany).toHaveBeenCalledWith({
         where: { ...key, balanceAtomic: { gte: 35_000n } },
         data: { balanceAtomic: { decrement: 35_000n } },
       });
+      expect(tx.rows).toEqual([
+        expect.objectContaining({
+          type: 'adjustment',
+          senderUserId: 'user-1',
+          recipientUserId: 'user-1',
+          amountAtomic: 35_000n,
+          contextType: 'quest_reward_revoked',
+          contextId: 'submission-9',
+          idempotencyKey: 'quest-reward-revoked:submission-9',
+        }),
+      ]);
     });
 
-    it('debits nothing when there is no account', async () => {
+    it('a repeated debit for the same revoke moves nothing', async () => {
+      const tx = tipTx();
+      tx.tipAccount.findUnique.mockResolvedValue({
+        id: 'acct-1',
+        balanceAtomic: 90_000n,
+      });
+
+      await debitBnpTipAccount(tx as never, 'user-1', 35, revokeCtx);
+      await expect(
+        debitBnpTipAccount(tx as never, 'user-1', 35, revokeCtx),
+      ).resolves.toBe(0n);
+
+      expect(tx.tipAccount.updateMany).toHaveBeenCalledTimes(1);
+      expect(tx.rows).toHaveLength(1);
+    });
+
+    it('debits nothing and writes no row when there is no account', async () => {
       const tx = tipTx();
       tx.tipAccount.findUnique.mockResolvedValue(null);
 
       await expect(
-        debitBnpTipAccount(tx as never, 'user-1', 35),
+        debitBnpTipAccount(tx as never, 'user-1', 35, revokeCtx),
       ).resolves.toBe(0n);
       expect(tx.tipAccount.updateMany).not.toHaveBeenCalled();
+      expect(tx.tipTransaction.create).not.toHaveBeenCalled();
+    });
+
+    it('writes no row when the balance is already empty', async () => {
+      const tx = tipTx();
+      tx.tipAccount.findUnique.mockResolvedValue({
+        id: 'acct-1',
+        balanceAtomic: 0n,
+      });
+
+      await expect(
+        debitBnpTipAccount(tx as never, 'user-1', 35, revokeCtx),
+      ).resolves.toBe(0n);
+      expect(tx.tipTransaction.create).not.toHaveBeenCalled();
     });
   });
 });

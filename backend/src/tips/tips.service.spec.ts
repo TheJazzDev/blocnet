@@ -79,4 +79,62 @@ describe('TipsService (transfers are not tips)', () => {
     expect(findArgs.where).toMatchObject({ type: TipTransactionType.tip });
     expect(countArgs.where).toMatchObject({ type: TipTransactionType.tip });
   });
+
+  it('a mining/quest reward row does not change the tip overview (F-63)', async () => {
+    // An in-memory ledger that honours the where clause, so a missing type
+    // filter would leak the reward (sender == recipient == USER) into both
+    // the sent and the received totals.
+    const ledger = [
+      {
+        type: TipTransactionType.tip,
+        senderUserId: 'someone-else',
+        recipientUserId: USER,
+        currencyCode: 'BNP',
+        amountAtomic: 5_000n,
+        feeAtomic: 0n,
+        totalDebitAtomic: 5_000n,
+      },
+      {
+        type: TipTransactionType.reward,
+        senderUserId: USER,
+        recipientUserId: USER,
+        currencyCode: 'BNP',
+        amountAtomic: 120_000n,
+        feeAtomic: 0n,
+        totalDebitAtomic: 0n,
+      },
+    ];
+    prisma.tipTransaction.groupBy.mockImplementation(async ({ where }: any) => {
+      const rows = ledger.filter((row) =>
+        Object.entries(where).every(
+          ([field, value]) => (row as Record<string, unknown>)[field] === value,
+        ),
+      );
+      if (rows.length === 0) return [];
+      const sum = (field: 'amountAtomic' | 'feeAtomic' | 'totalDebitAtomic') =>
+        rows.reduce((total, row) => total + row[field], 0n);
+      return [
+        {
+          currencyCode: 'BNP',
+          _count: { _all: rows.length },
+          _sum: {
+            amountAtomic: sum('amountAtomic'),
+            feeAtomic: sum('feeAtomic'),
+            totalDebitAtomic: sum('totalDebitAtomic'),
+          },
+        },
+      ];
+    });
+
+    const overview = await service.getMyOverview(USER);
+
+    expect(overview.receivedSummary).toMatchObject({
+      transactionCount: 1,
+      amountAtomic: '5000',
+    });
+    expect(overview.sentSummary).toMatchObject({
+      transactionCount: 0,
+      amountAtomic: '0',
+    });
+  });
 });

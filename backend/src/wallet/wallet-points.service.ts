@@ -8,47 +8,22 @@
  * written by `TipTransfersService` (`POST /tips/transfers`).
  */
 import { Injectable } from '@nestjs/common';
-import { TipTransactionType, type TipTransaction } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { formatAtomicAmount } from '../tips/tip-amount.util';
 import { ensureUserTipAccount } from '../tips/tip-ledger.util';
-import { BNP_CURRENCY_CODE, BNP_DECIMALS } from '../tips/tip.constants';
+import { BNP_DECIMALS } from '../tips/tip.constants';
+import {
+  POINTS_ASSET,
+  toPointsTransactionResponse,
+} from './wallet-points.mapper';
 
-export const POINTS_ASSET = BNP_CURRENCY_CODE;
-
-/** Wallet transaction `reason` for each ledger row type. */
-const POINTS_REASON: Record<TipTransactionType, string> = {
-  [TipTransactionType.transfer]: 'bnp_transfer',
-  [TipTransactionType.tip]: 'bnp_tip',
-  [TipTransactionType.conversion]: 'bnp_conversion',
-  [TipTransactionType.adjustment]: 'bnp_adjustment',
-  [TipTransactionType.reward]: 'bnp_reward',
-};
-
-const POINTS_LABEL: Record<TipTransactionType, string> = {
-  [TipTransactionType.transfer]: 'BNP transfer',
-  [TipTransactionType.tip]: 'Tip',
-  [TipTransactionType.conversion]: 'BNP conversion',
-  [TipTransactionType.adjustment]: 'BNP adjustment',
-  [TipTransactionType.reward]: 'BNP reward',
-};
+export { POINTS_ASSET, toPointsTransactionResponse };
 
 const partySelect = {
   id: true,
   username: true,
   displayName: true,
 } as const;
-
-type PointsParty = {
-  id: string;
-  username: string | null;
-  displayName: string | null;
-};
-
-type PointsTxRow = TipTransaction & {
-  sender: PointsParty;
-  recipient: PointsParty;
-};
 
 @Injectable()
 export class WalletPointsService {
@@ -90,8 +65,8 @@ export class WalletPointsService {
   }
 
   /**
-   * The member's BNP movements (transfers in/out, tips sent/received), newest
-   * first, in the `GET /wallet/transactions` row shape. One query.
+   * The member's BNP movements (transfers in/out, tips sent/received, mining
+   * and quest rewards, reward reversals), newest first, in the `GET /wallet/transactions` row shape. One query.
    */
   async listPointsTransactions(
     userId: string,
@@ -112,49 +87,4 @@ export class WalletPointsService {
     });
     return rows.map((row) => toPointsTransactionResponse(userId, row));
   }
-}
-
-export function toPointsTransactionResponse(userId: string, row: PointsTxRow) {
-  const isOutgoing = row.senderUserId === userId;
-  const other = isOutgoing ? row.recipient : row.sender;
-  // Only tips carry a fee. When the sender paid it the recipient got the full
-  // amount; a recipient-pays tip (metadata.senderPaysFee === false) credited
-  // amount minus fee.
-  const recipientPaidFee =
-    !!row.metadata &&
-    typeof row.metadata === 'object' &&
-    !Array.isArray(row.metadata) &&
-    row.metadata.senderPaysFee === false;
-  const feeAtomic = isOutgoing !== recipientPaidFee ? row.feeAtomic : 0n;
-  const amountAtomic =
-    !isOutgoing && recipientPaidFee
-      ? row.amountAtomic - row.feeAtomic
-      : row.amountAtomic;
-
-  return {
-    id: row.id,
-    asset: POINTS_ASSET,
-    direction: isOutgoing ? ('outgoing' as const) : ('incoming' as const),
-    reason: POINTS_REASON[row.type],
-    amount: formatAtomicAmount(amountAtomic, BNP_DECIMALS),
-    feeAmount: formatAtomicAmount(feeAtomic, BNP_DECIMALS),
-    debit: { userId: row.senderUserId, accountType: 'user' },
-    credit: { userId: row.recipientUserId, accountType: 'user' },
-    referenceId: row.id,
-    metadata: {
-      source: 'bnp_ledger',
-      ledgerType: row.type,
-      label: POINTS_LABEL[row.type],
-      note: row.note,
-      contextType: row.contextType,
-      contextId: row.contextId,
-    },
-    counterparty: {
-      userId: other.id,
-      username: other.username,
-      displayName: other.displayName,
-      walletAddress: null,
-    },
-    createdAt: row.createdAt,
-  };
 }
