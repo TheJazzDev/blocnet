@@ -48,6 +48,7 @@ describe('ProjectAttentionService', () => {
       await expect(service.attentionFor('p1')).resolves.toEqual({
         membersWaiting: 3,
         openReports: 2,
+        escalatesAtWaiting: 50,
       });
       expect(prisma.update.aggregate).toHaveBeenCalledWith({
         where: { projectId: 'p1', status: 'published' },
@@ -90,6 +91,7 @@ describe('ProjectAttentionService', () => {
       expect(result).toMatchObject({
         ok: true,
         membersWaiting: 3,
+        escalatesAtWaiting: 50,
         hunterNotified: true,
       });
       expect(prisma.projectUpdateRequest.count).toHaveBeenCalledWith({

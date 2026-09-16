@@ -201,6 +201,10 @@ export class CommunityModerationController {
     'community/moderation/stats',
   ])
   @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
+  @ApiOperation({
+    summary:
+      'Moderation hub counters. `openInactiveGems` counts gems in the inactive-gems queue: reported, or at least 50 members waiting.',
+  })
   async getModerationStats(@CurrentUser() user: AuthUser | undefined) {
     if (!user) {
       throw new UnauthorizedException('User context missing');
@@ -217,7 +221,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
   @ApiOperation({
     summary:
-      'Gems members have reported as abandoned, with open reports, most-reported first.',
+      'Gems awaiting a moderator — open inactivity reports, or at least 50 members waiting — most-reported first, then most members waiting.',
   })
   @ApiOkResponse({ type: InactiveGemQueueResponseDto })
   async listInactiveGems(@Query() query: ListInactiveGemsQuery) {
@@ -228,7 +232,7 @@ export class CommunityModerationController {
   @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
   @ApiOperation({
     summary:
-      'Close every open inactivity report on a gem with an outcome and a note. Does not reassign the gem.',
+      'Close a queued gem with an outcome and a note: closes its open reports and audits the resolution (a waiting-only gem is resolved by the audit entry alone). Does not reassign the gem or delete asks.',
   })
   @ApiOkResponse({ type: ResolveInactiveGemResponseDto })
   async resolveInactiveGem(

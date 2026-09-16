@@ -4,6 +4,10 @@ import {
   RELIABILITY_STANDINGS,
   type ReliabilityStanding,
 } from '../../hunter-reliability/reliability.calc';
+import {
+  INACTIVE_GEM_REASONS,
+  type InactiveGemReason,
+} from '../inactive-gems.waiting';
 import { INACTIVE_GEM_OUTCOMES } from './resolve-inactive-gem.dto';
 import type { InactiveGemOutcome } from './resolve-inactive-gem.dto';
 
@@ -25,7 +29,10 @@ export class InactiveGemHunterDto {
   @ApiProperty({ nullable: true, type: Number }) coverage!: number | null;
 }
 
-/** A gem members have reported as abandoned, awaiting a moderator. */
+/**
+ * A gem awaiting a moderator: members reported it as abandoned, or enough of
+ * them are waiting on it (`escalatesAtWaiting`).
+ */
 export class InactiveGemQueueItemDto {
   @ApiProperty({ type: InactiveGemProjectDto })
   project!: InactiveGemProjectDto;
@@ -33,11 +40,30 @@ export class InactiveGemQueueItemDto {
   @ApiProperty({ type: [InactiveGemHunterDto] })
   hunters!: InactiveGemHunterDto[];
 
+  @ApiProperty({
+    enum: INACTIVE_GEM_REASONS,
+    isArray: true,
+    description:
+      'Why the gem is queued: `reports` (open inactivity reports) and/or `waiting` (at least 50 members waiting since its last update and its last resolution).',
+  })
+  reasons!: InactiveGemReason[];
+
   @ApiProperty() openReports!: number;
-  @ApiProperty() firstReportedAt!: string;
+
+  @ApiProperty({
+    description:
+      'The earliest open report; for a gem queued only for waiting, the earliest ask in that wait.',
+  })
+  firstReportedAt!: string;
+
   @ApiProperty() lastActivityAt!: string;
   @ApiProperty() daysQuiet!: number;
-  @ApiProperty() membersWaiting!: number;
+
+  @ApiProperty({
+    description:
+      'Asks in the last 7 days made after the gem’s latest published update.',
+  })
+  membersWaiting!: number;
 }
 
 export class InactiveGemQueueResponseDto {
@@ -52,6 +78,10 @@ export class InactiveGemQueueResponseDto {
 export class ResolveInactiveGemResponseDto {
   @ApiProperty() ok!: boolean;
   @ApiProperty() projectId!: string;
-  @ApiProperty() resolvedCount!: number;
+  @ApiProperty({
+    description:
+      'Reports closed. 0 for a gem queued only because members are waiting.',
+  })
+  resolvedCount!: number;
   @ApiProperty({ enum: INACTIVE_GEM_OUTCOMES }) outcome!: InactiveGemOutcome;
 }

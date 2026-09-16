@@ -93,6 +93,13 @@ export class HunterReliabilityDto {
   @ApiProperty({ description: 'Unresolved inactivity reports on owned gems.' })
   openReports!: number;
 
+  @ApiProperty({
+    example: 50,
+    description:
+      'Members waiting on one gem at which it enters the moderation queue for reassignment. The same value the member sees.',
+  })
+  escalatesAtWaiting!: number;
+
   @ApiProperty() computedAt!: string;
 }
 
@@ -144,6 +151,13 @@ export class HunterBoardGemDto {
   membersWaiting!: number;
 
   @ApiProperty() openReports!: number;
+
+  @ApiProperty({
+    example: 50,
+    description:
+      'Members waiting on one gem at which it enters the moderation queue for reassignment. The same value the member sees.',
+  })
+  escalatesAtWaiting!: number;
 
   @ApiProperty({ nullable: true, type: String })
   nextDeadlineAt!: string | null;

@@ -43,6 +43,18 @@ export const RESPONSE_WINDOW_DAYS = 7;
 /** "Members waiting" counts asks this recent — the nudge cooldown. */
 export const MEMBERS_WAITING_DAYS = 7;
 
+/**
+ * At this many members waiting on one gem, the gem enters the moderation
+ * queue for reassignment, whether or not anyone has reported it.
+ *
+ * One number for both sides: the hunter's board and the member's gem card
+ * are sent this same value (`escalatesAtWaiting`), so the hunter and the
+ * member see the same threshold. Counted under the waiting rule — asks in
+ * the last week made after the gem's latest update — so posting also takes
+ * the gem back out of reach of the queue.
+ */
+export const ESCALATE_WAITING_AT = 50;
+
 /** `updates30d` looks back this far. */
 export const RECENT_UPDATES_DAYS = 30;
 

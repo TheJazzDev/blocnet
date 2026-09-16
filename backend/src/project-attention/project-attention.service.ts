@@ -10,6 +10,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { dayKey, isoWeekKey } from '../common/utils/iso-week.util';
 import { ownersOf } from '../hunter-reliability/reliability.calc';
+import { ESCALATE_WAITING_AT } from '../hunter-reliability/reliability.constants';
 import { waitingAsksWhere } from '../hunter-reliability/reliability.loader';
 
 /**
@@ -95,6 +96,7 @@ export class ProjectAttentionService {
     return {
       ok: true,
       membersWaiting: waiting,
+      escalatesAtWaiting: ESCALATE_WAITING_AT,
       hunterNotified: hunterIds.length > 0,
     };
   }
@@ -161,7 +163,11 @@ export class ProjectAttentionService {
         where: { projectId, resolvedAt: null },
       }),
     ]);
-    return { membersWaiting, openReports };
+    return {
+      membersWaiting,
+      openReports,
+      escalatesAtWaiting: ESCALATE_WAITING_AT,
+    };
   }
 
   /**

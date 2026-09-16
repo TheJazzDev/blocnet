@@ -370,6 +370,7 @@ describe('HunterReliabilityService', () => {
         state: 'current',
         membersWaiting: 0,
         openReports: 0,
+        escalatesAtWaiting: 50,
         nextDeadlineAt: deadline.toISOString(),
       });
       const neverUpdated = board.gems[0];
@@ -384,6 +385,7 @@ describe('HunterReliabilityService', () => {
         standing: 'slipping',
         membersWaiting: 2,
         openReports: 1,
+        escalatesAtWaiting: 50,
       });
 
       // Newest-update rows are fetched in one query keyed by (gem, timestamp).

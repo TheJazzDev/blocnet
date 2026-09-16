@@ -7,15 +7,7 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { normalizePagination } from '../common/utils/pagination.util';
 import { HunterReliabilityService } from '../hunter-reliability/hunter-reliability.service';
-import {
-  daysSince,
-  membersWaitingByGem,
-  ownersOf,
-} from '../hunter-reliability/reliability.calc';
-import {
-  DAY_MS,
-  MEMBERS_WAITING_DAYS,
-} from '../hunter-reliability/reliability.constants';
+import { daysSince, ownersOf } from '../hunter-reliability/reliability.calc';
 import { ReliabilityLoader } from '../hunter-reliability/reliability.loader';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
@@ -25,16 +17,21 @@ import type {
 } from './dto/inactive-gem-response.dto';
 import type { ListInactiveGemsQuery } from './dto/list-inactive-gems.query';
 import type { ResolveInactiveGemDto } from './dto/resolve-inactive-gem.dto';
+import {
+  INACTIVE_GEMS_RESOLVED_ACTION,
+  loadWaitingFacts,
+  type InactiveGemReason,
+} from './inactive-gems.waiting';
 
-export const INACTIVE_GEMS_RESOLVED_ACTION =
-  'project.inactivity_reports_resolved';
+export { INACTIVE_GEMS_RESOLVED_ACTION } from './inactive-gems.waiting';
 
 /**
- * The moderator side of "report inactive" (F-42).
+ * The moderator side of "report inactive" (F-42), and of the waiting
+ * threshold.
  *
- * Members' reports were written and moderators notified, but no queue showed
- * them. This is that queue, and the one action a moderator takes from it:
- * closing the open reports with an outcome and a note. It never reassigns the
+ * A gem enters the queue for either of two reasons: members reported it, or
+ * `ESCALATE_WAITING_AT` members are waiting on it. The one action a moderator
+ * takes here is closing it with an outcome and a note. It never reassigns the
  * gem — that is a person's decision, made in the console.
  */
 @Injectable()
@@ -52,9 +49,10 @@ export class InactiveGemsModerationService {
   }
 
   /**
-   * Gems with at least one unresolved report, most-reported first.
+   * Gems with an unresolved report or an escalated wait, most-reported first,
+   * then most members waiting.
    *
-   * Seven queries whatever the queue length. Paged in memory: the queue is
+   * Nine queries whatever the queue length. Paged in memory: the queue is
    * sorted on computed values, and it is short by nature.
    */
   async listQueue(
@@ -63,45 +61,36 @@ export class InactiveGemsModerationService {
     const { offset, limit } = normalizePagination(query.offset, query.limit);
     const now = this.now();
 
-    const reportRows = await this.prisma.projectInactivityReport.groupBy({
-      by: ['projectId'],
-      where: { resolvedAt: null },
-      _count: { _all: true },
-      _min: { createdAt: true },
+    const reportRows = await this.openReportRows();
+    const reportsByGem = new Map(reportRows.map((r) => [r.projectId, r]));
+    const waiting = await loadWaitingFacts(this.prisma, this.loader, {
+      projectIds: [...reportsByGem.keys()],
+      now,
     });
-    if (reportRows.length === 0) {
+    const projectIds = [
+      ...new Set([...reportsByGem.keys(), ...waiting.escalated.keys()]),
+    ];
+    if (projectIds.length === 0) {
       return { data: [], total: 0, limit, offset };
     }
-    const projectIds = reportRows.map((row) => row.projectId);
 
-    const waitingFrom = new Date(now.getTime() - MEMBERS_WAITING_DAYS * DAY_MS);
-    const [projects, lastUpdateAt, waitingRows] = await Promise.all([
-      this.prisma.project.findMany({
-        relationLoadStrategy: 'join',
-        where: { id: { in: projectIds } },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          status: true,
-          createdAt: true,
-          ownerAdminId: true,
-          primaryTag: { select: { name: true } },
-          hunters: {
-            select: { hunterId: true },
-            orderBy: { createdAt: 'asc' },
-          },
+    const projects = await this.prisma.project.findMany({
+      relationLoadStrategy: 'join',
+      where: { id: { in: projectIds } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        status: true,
+        createdAt: true,
+        ownerAdminId: true,
+        primaryTag: { select: { name: true } },
+        hunters: {
+          select: { hunterId: true },
+          orderBy: { createdAt: 'asc' },
         },
-      }),
-      this.loader.loadLastUpdateAt(projectIds),
-      this.prisma.projectUpdateRequest.findMany({
-        where: {
-          projectId: { in: projectIds },
-          createdAt: { gte: waitingFrom },
-        },
-        select: { projectId: true, createdAt: true },
-      }),
-    ]);
+      },
+    });
 
     const ownerIds = [...new Set(projects.flatMap((p) => ownersOf(p)))];
     const [profiles, standings] = await Promise.all([
@@ -109,16 +98,14 @@ export class InactiveGemsModerationService {
       this.reliability.standingsFor(ownerIds),
     ]);
     const profileById = new Map(profiles.map((p) => [p.id, p]));
-    const reportsByGem = new Map(reportRows.map((r) => [r.projectId, r]));
-    const waitingByGem = membersWaitingByGem(
-      waitingRows.map((r) => ({ projectId: r.projectId, at: r.createdAt })),
-      lastUpdateAt,
-      now,
-    );
 
     const items: InactiveGemQueueItemDto[] = projects.map((project) => {
       const reports = reportsByGem.get(project.id);
-      const last = lastUpdateAt.get(project.id) ?? project.createdAt;
+      const escalation = waiting.escalated.get(project.id);
+      const last = waiting.lastUpdateAt.get(project.id) ?? project.createdAt;
+      const reasons: InactiveGemReason[] = [];
+      if (reports) reasons.push('reports');
+      if (escalation) reasons.push('waiting');
       return {
         project: {
           id: project.id,
@@ -140,17 +127,23 @@ export class InactiveGemsModerationService {
             coverage: summary?.coverage ?? null,
           };
         }),
+        reasons,
         openReports: reports?._count._all ?? 0,
-        firstReportedAt: (reports?._min.createdAt ?? now).toISOString(),
+        firstReportedAt: (
+          reports?._min.createdAt ??
+          escalation?.since ??
+          now
+        ).toISOString(),
         lastActivityAt: last.toISOString(),
         daysQuiet: daysSince(last, now),
-        membersWaiting: waitingByGem.get(project.id) ?? 0,
+        membersWaiting: waiting.waiting.get(project.id) ?? 0,
       };
     });
 
     items.sort(
       (a, b) =>
         b.openReports - a.openReports ||
+        b.membersWaiting - a.membersWaiting ||
         b.daysQuiet - a.daysQuiet ||
         a.firstReportedAt.localeCompare(b.firstReportedAt) ||
         a.project.id.localeCompare(b.project.id),
@@ -165,8 +158,13 @@ export class InactiveGemsModerationService {
   }
 
   /**
-   * Closes every open report on a gem with the moderator's outcome and note,
-   * and records it in the audit log. Does not touch the gem or its hunters.
+   * Closes a gem in the queue: every open report gets the moderator's outcome
+   * and note, and the resolution is audited. Does not touch the gem, its
+   * hunters or the members' asks.
+   *
+   * A gem queued only for its wait has no reports to close; the audit entry
+   * is then the whole resolution, and it is also what stops those asks from
+   * escalating the gem again (see `loadWaitingFacts`).
    */
   async resolve(
     actor: AuthUser,
@@ -189,13 +187,24 @@ export class InactiveGemsModerationService {
         'A note of at least 3 characters is required',
       );
     }
+    const now = this.now();
+    // Read before closing reports; the resolution itself clears the wait.
+    const waiting = await loadWaitingFacts(this.prisma, this.loader, {
+      projectIds: [],
+      now,
+      scope: [projectId],
+    });
     const { count } = await this.prisma.projectInactivityReport.updateMany({
       where: { projectId, resolvedAt: null },
-      data: { resolvedAt: this.now(), resolvedBy: actor.id },
+      data: { resolvedAt: now, resolvedBy: actor.id },
     });
-    if (count === 0) {
+
+    const reasons: InactiveGemReason[] = [];
+    if (count > 0) reasons.push('reports');
+    if (waiting.escalated.has(projectId)) reasons.push('waiting');
+    if (reasons.length === 0) {
       throw new NotFoundException(
-        'This gem has no open inactivity reports to resolve',
+        'This gem is not in the inactive-gems queue: no open reports and too few members waiting',
       );
     }
 
@@ -207,7 +216,9 @@ export class InactiveGemsModerationService {
       metadata: {
         outcome: dto.outcome,
         note,
+        reasons,
         resolvedCount: count,
+        membersWaiting: waiting.escalated.get(projectId)?.waiting ?? null,
         hunterIds: ownersOf(project),
       },
     });
@@ -215,12 +226,25 @@ export class InactiveGemsModerationService {
     return { ok: true, projectId, resolvedCount: count, outcome: dto.outcome };
   }
 
-  /** Gems with at least one open report, for the hub's tile. */
+  /** Gems in the queue (reported or escalated), for the hub's tile. */
   async countOpen(): Promise<number> {
-    const rows = await this.prisma.projectInactivityReport.groupBy({
+    const reportRows = await this.openReportRows();
+    const waiting = await loadWaitingFacts(this.prisma, this.loader, {
+      projectIds: [],
+      now: this.now(),
+    });
+    return new Set([
+      ...reportRows.map((row) => row.projectId),
+      ...waiting.escalated.keys(),
+    ]).size;
+  }
+
+  private openReportRows() {
+    return this.prisma.projectInactivityReport.groupBy({
       by: ['projectId'],
       where: { resolvedAt: null },
+      _count: { _all: true },
+      _min: { createdAt: true },
     });
-    return rows.length;
   }
 }

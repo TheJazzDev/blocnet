@@ -15,7 +15,11 @@ import {
   type OwnedGemFacts,
   type ReliabilityStanding,
 } from './reliability.calc';
-import { DAY_MS, RECENT_UPDATES_DAYS } from './reliability.constants';
+import {
+  DAY_MS,
+  ESCALATE_WAITING_AT,
+  RECENT_UPDATES_DAYS,
+} from './reliability.constants';
 import type {
   GemRow,
   LastUpdateRow,
@@ -99,6 +103,7 @@ export function assembleReliability(input: {
       membersWaitingByGem(asks, facts.lastUpdateAtByGem, now),
     ),
     openReports: sumBy(ids, facts.openReportsByGem),
+    escalatesAtWaiting: ESCALATE_WAITING_AT,
     computedAt: now.toISOString(),
   };
 }
@@ -143,6 +148,7 @@ export function assembleBoardGem(input: {
     state: gemState(last, now),
     membersWaiting: waiting.get(gem.projectId) ?? 0,
     openReports: facts.openReportsByGem.get(gem.projectId) ?? 0,
+    escalatesAtWaiting: ESCALATE_WAITING_AT,
     nextDeadlineAt: nextDeadlineAt?.toISOString() ?? null,
   };
 }
