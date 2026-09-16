@@ -790,6 +790,7 @@ export class MiningService {
         session.basePointsPerCycle,
         sessionCycleHours,
         boostBpsSnapshot,
+        hourIndex,
       );
 
       missingRows.push({

@@ -287,6 +287,30 @@ describe('MiningService', () => {
     });
   });
 
+  describe('F-48 cycle total', () => {
+    it('accrues and claims exactly the projected cycle points when base does not divide evenly', async () => {
+      const now = new Date();
+      const startsAt = new Date(now.getTime() - 26 * HOUR);
+      const db = createFakeMiningDb({
+        sessions: [
+          session({
+            startsAt,
+            endsAt: new Date(now.getTime() - 2 * HOUR),
+            basePointsPerCycle: 125,
+            effectivePointsPerCycle: 125,
+          }),
+        ],
+      });
+
+      const result = await buildService(db).claim('user-1');
+
+      expect(db.checkpoints).toHaveLength(24);
+      expect(result).toEqual(
+        expect.objectContaining({ status: 'claimed', claimedPoints: 125 }),
+      );
+    });
+  });
+
   describe('F-39 claim-window deadlock', () => {
     function deadlockedDb() {
       const now = new Date();
