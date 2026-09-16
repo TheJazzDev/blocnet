@@ -48,6 +48,7 @@ app.*.map.json
 # Monorepo backend (NestJS)
 /backend/node_modules
 /backend/dist
+/backend/dist-dev
 /backend/.env
 /backend/.env.*
 
