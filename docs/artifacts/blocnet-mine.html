@@ -42,6 +42,15 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
 .a5{background:linear-gradient(140deg,#be123c,#7f1d1d)}.a6{background:linear-gradient(140deg,#3f3f46,#27272a)}
 .a7{background:linear-gradient(140deg,#15803d,#14532d)}.a8{background:linear-gradient(140deg,#b45309,#78350f)}
 /* explainer */
+.scrim{position:absolute;left:0;right:0;top:92px;bottom:0;background:#000000a6;z-index:4}
+.pop{position:absolute;top:98px;right:10px;width:272px;z-index:5;border-radius:14px;padding:14px 14px 12px;background:#18181b;box-shadow:0 0 0 1px #2a2a30,0 18px 40px -12px #000}
+.pop:before{content:"";position:absolute;top:-6px;right:10px;width:12px;height:12px;background:#18181b;transform:rotate(45deg);box-shadow:-1px -1px 0 0 #2a2a30}
+.pop b{display:block;font-size:15px;font-weight:680;color:#fff;margin-bottom:8px}
+.pop li{list-style:none;font-size:13px;color:#c4c4cc;line-height:1.5;display:flex;gap:8px;align-items:flex-start}
+.pop li+li{margin-top:6px}
+.pop li .mi{color:var(--cy2);margin-top:2px}
+.pop .ok{margin-top:12px;height:36px;border-radius:8px;background:#27272a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:650;color:#fff}
+.hdr .mi.act{color:#fff;background:#27272a;border-radius:50%;padding:4px;margin:-4px}
 .expl{margin:4px 16px 12px;border-radius:12px;padding:14px;background:#101012;box-shadow:inset 0 0 0 1px #1f1f23;position:relative}
 .expl .x{position:absolute;right:8px;top:8px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#6b6b73}
 .expl b{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b6b73;display:block;margin-bottom:8px}
@@ -219,42 +228,42 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
 
 <div class="hd">
   <b>Mine — one question, one button</b>
-  <p>The tab answers "is my cycle running, and when do I collect?" before anything else is read. A cycle card leads with the status in words and a stated time, shows the cycle as a single ring filling around the mining core, and offers exactly one primary action whose label changes with the state — Start mining, then Claim. While a cycle runs there is no disabled button standing in for a status; there is a reminder toggle instead. Balance, Earn faster, Leaderboard and Hourly history sit below in that order, because the only way to mine faster is to invite friends who stay.</p>
+  <p>The tab answers "is my cycle running, and when do I collect?" before anything else is read. The cycle card shows a status word, a time and a progress ring, with one button that changes from Start mining to Claim. While a cycle runs there is no disabled button standing in for a status; there is a reminder toggle instead. Balance, Earn faster, Leaderboard and Hourly history sit below in that order, because the only way to mine faster is to invite friends who stay.</p>
   <i><b>Why a progress ring is allowed here:</b> the 24-hour cycle is Blocnet's own system, so the end time is known exactly. The rule against clocks and rails on Home and Hub is about third-party projects whose future nobody knows. Even so the card leads with the stated time and keeps elapsed hours secondary.<br><b>What is gone:</b> mining power in TH/s, the orb and equaliser, the duplicated Total Earned / Claimed tiles, the day-long disabled Claim button, and the referral code's two-tap burial under Profile — it is now the Earn faster section, stated as the one thing that raises the rate.<br><b>Red budget:</b> expiry and a closing claim window take amber, never red. Red stays moderation and destruction. Every state is words plus colour, never colour alone.</i>
 </div>
 
 <!-- 1 -->
 <div class="col" style="left:80px;top:400px">
 <div class="st">1 · First visit, idle</div>
-<div class="sub">Three lines, dismissible, above the card: what BNP is, claim once a day, unclaimed cycles expire after 48 hours. Said before it can cost anything, not after.</div>
+<div class="sub">The ? opens a short explainer that floats over the screen, and it opens once by itself on the first visit. Nothing on the page moves.</div>
 <div class="ph">
   <div class="sb"><span class="mono">9:41</span><u><span class="mi xs f">signal_cellular_alt</span><span class="mi xs f">wifi</span><span class="mi xs f">battery_full</span></u></div>
   <div class="body">
-    <div class="hdr"><span class="t">Mine</span><span class="mi">history</span><span class="mi">help</span></div>
-    <div class="expl">
-      <span class="x"><span class="mi s">close</span></span>
-      <b>How mining works</b>
-      <li><span class="mi xs">bolt</span><span>You mine <em>BNP</em> — Blocnet Points. They convert to BNT at launch.</span></li>
-      <li><span class="mi xs">check_circle</span><span>A cycle runs <em>24 hours</em>. Claim it once, and the next one starts itself.</span></li>
-      <li><span class="mi xs">timer</span><span>Claim within <em>48 hours</em> or the cycle expires and pays nothing.</span></li>
-    </div>
+    <div class="hdr"><span class="t">Mine</span><span class="mi">history</span><span class="mi act">help</span></div>
     <div class="cyc">
       <div class="cs"><i class="of"><span class="mi xs">pause_circle</span>NOT MINING</i><span>Cycle · 24h</span></div>
-      <div class="when">Start your first cycle<em> — it pays 120 BNP over 24 hours.</em></div>
-      <div class="core"><div class="ring off"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/></svg><div class="ctr"><span class="mi xs">bolt</span><em>24h cycle</em></div></div><div class="side"><span>Nothing mined yet</span><span>Fills as the hours pass</span></div></div>
-      <div class="rate"><b>5 BNP an hour</b> · no friends yet, so no boost</div>
+      <div class="when">Start mining<em> · 120 BNP a day</em></div>
+      <div class="core"><div class="ring off"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/></svg><div class="ctr"><span class="mi xs">bolt</span><em>0 BNP</em></div></div><div class="side"><span>5 BNP/hr</span><span>No boost yet</span></div></div>
       <div class="pri"><span class="mi s">bolt</span>Start mining</div>
     </div>
     <div class="sect"><span class="mi xs">account_balance_wallet</span><b>Balance</b></div>
     <div class="bal">
       <div class="n"><b class="mono">0</b><em>BNP</em></div>
       <p>Converts to BNT at launch.</p>
-      <div class="lk"><span class="mi xs">account_balance_wallet</span>See it in Wallet<span class="mi xs">chevron_right</span></div>
+      <div class="lk"><span class="mi xs">account_balance_wallet</span>View in Wallet<span class="mi xs">chevron_right</span></div>
     </div>
     <div class="sect"><span class="mi xs">trending_up</span><b>Earn faster</b></div>
-    <div class="row"><span class="mi">group_add</span><span class="gr"><b>Invite friends, mine faster</b><span>+5% for each active friend, up to +100%</span></span><span class="mi s">chevron_right</span></div>
+    <div class="row"><span class="mi">group_add</span><span class="gr"><b>Invite friends</b><span>+5% per active friend</span></span><span class="mi s">chevron_right</span></div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
+  <div class="scrim"></div>
+  <div class="pop">
+    <b>How mining works</b>
+    <li><span class="mi xs">bolt</span><span>Mine BNP in 24-hour cycles.</span></li>
+    <li><span class="mi xs">check_circle</span><span>Claim within 48 hours, or the cycle expires.</span></li>
+    <li><span class="mi xs">swap_horiz</span><span>BNP converts to BNT at launch.</span></li>
+    <div class="ok">Got it</div>
+  </div>
 </div>
 </div>
 
@@ -268,22 +277,21 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
     <div class="hdr"><span class="t">Mine</span><span class="mi">history</span><span class="mi">help</span></div>
     <div class="cyc run">
       <div class="cs"><i class="on"><span class="mi xs f">bolt</span>MINING</i><span>Hour 9 of 24</span></div>
-      <div class="when">Ready at 09:20 tomorrow<em> — 15 hours left</em></div>
-      <div class="core"><div class="ring live"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/><circle class="fl" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="35.42 100"/></svg><div class="ctr"><span class="mi xs f">bolt</span><b class="mono">49</b><em>BNP so far</em></div></div><div class="side"><span><b>of 132</b> this cycle</span><span>Started 09:20</span><span>Ready 09:20 tomorrow</span></div></div>
-      <div class="rate"><b>5 BNP an hour</b> · <i>+10% from 2 friends</i></div>
-      <div class="rem"><span class="mi s">notifications_active</span>Remind me when it's ready<span class="sw on"></span></div>
+      <div class="when">Ready tomorrow at 09:20<em> · 15h left</em></div>
+      <div class="core"><div class="ring live"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/><circle class="fl" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="35.42 100"/></svg><div class="ctr"><span class="mi xs f">bolt</span><b class="mono">49</b><em>of 132 BNP</em></div></div><div class="side"><span>5 BNP/hr</span><span>+10% from 2 friends</span></div></div>
+      <div class="rem"><span class="mi s">notifications_active</span>Notify me when it's ready<span class="sw on"></span></div>
     </div>
     <div class="sect"><span class="mi xs">account_balance_wallet</span><b>Balance</b></div>
     <div class="bal">
       <div class="n"><b class="mono">8,412</b><em>BNP</em></div>
       <p>Converts to BNT at launch.</p>
-      <div class="lk"><span class="mi xs">account_balance_wallet</span>See it in Wallet<span class="mi xs">chevron_right</span></div>
+      <div class="lk"><span class="mi xs">account_balance_wallet</span>View in Wallet<span class="mi xs">chevron_right</span></div>
     </div>
     <div class="sect"><span class="mi xs">trending_up</span><b>Earn faster</b><em>+10%</em></div>
     <div class="ef">
-      <div class="boost"><b>+10%</b><em>from 2 active friends · +100% max</em></div>
+      <div class="boost"><b>+10%</b><em>2 active friends · max +100%</em></div>
       <div class="bcap"><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="efl">Active = mined in the last 7 days.</div>
+      <div class="efl">Active means mined in the last 7 days.</div>
       <div class="code"><span class="mi s">key</span><b class="mono">BNC4K92X</b></div>
       <div class="ca"><span class="btn"><span class="mi s">ios_share</span>Share code</span><span class="btn w sm">Copy</span></div>
     </div>
@@ -303,20 +311,19 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
     <div class="hdr"><span class="t">Mine</span><span class="mi">history</span><span class="mi">help</span></div>
     <div class="cyc ready">
       <div class="cs"><i class="rd"><span class="mi xs f">check_circle</span>READY TO CLAIM</i><span>Cycle complete</span></div>
-      <div class="when">Claim by 15:20 Friday<em> — 30 hours left</em></div>
-      <div class="core"><div class="ring full"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/><circle class="fl" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="100 100"/></svg><div class="ctr"><span class="mi xs f">check_circle</span><b class="mono">132</b><em>BNP mined</em></div></div><div class="side"><span>24 of 24 hours</span><span>Complete</span></div></div>
-      <div class="rate"><b>5 BNP an hour</b> · <i>+10% from 2 friends</i></div>
+      <div class="when">Ready to claim<em> · expires Fri 15:20</em></div>
+      <div class="core"><div class="ring full"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/><circle class="fl" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="100 100"/></svg><div class="ctr"><span class="mi xs f">check_circle</span><b class="mono">132</b><em>BNP</em></div></div><div class="side"><span>5 BNP/hr</span><span>+10% from 2 friends</span></div></div>
       <div class="pri"><span class="mi s">savings</span>Claim 132 BNP</div>
-      <div class="note2">Claiming adds it to your balance and <b>starts the next cycle</b> straight away.</div>
+      <div class="note2">Claiming starts your next cycle.</div>
     </div>
     <div class="sect"><span class="mi xs">account_balance_wallet</span><b>Balance</b></div>
     <div class="bal">
       <div class="n"><b class="mono">8,412</b><em>BNP</em></div>
       <p>Converts to BNT at launch.</p>
-      <div class="lk"><span class="mi xs">account_balance_wallet</span>See it in Wallet<span class="mi xs">chevron_right</span></div>
+      <div class="lk"><span class="mi xs">account_balance_wallet</span>View in Wallet<span class="mi xs">chevron_right</span></div>
     </div>
     <div class="sect"><span class="mi xs">trending_up</span><b>Earn faster</b><em>+10%</em></div>
-    <div class="row"><span class="mi">group_add</span><span class="gr"><b>2 active friends · +10%</b><span>Each active friend adds +5%, up to +100%</span></span><span class="mi s">chevron_right</span></div>
+    <div class="row"><span class="mi">group_add</span><span class="gr"><b>2 active friends · +10%</b><span>+5% per active friend, max +100%</span></span><span class="mi s">chevron_right</span></div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
 </div>
@@ -332,19 +339,18 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
     <div class="hdr"><span class="t">Mine</span><span class="mi">history</span><span class="mi">help</span></div>
     <div class="cyc soon">
       <div class="cs"><i class="am"><span class="mi xs f">timer</span>CLOSING SOON</i><span>Claim window</span></div>
-      <div class="when">Claim by 15:20 today<em> — 3 hours left</em></div>
-      <div class="core"><div class="ring am"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/><circle class="fl" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="6.25 100"/></svg><div class="ctr"><span class="mi xs f">timer</span><b class="mono">132</b><em>BNP waiting</em></div></div><div class="side"><span>3 of 48 hours left</span><span>Then it expires</span></div></div>
+      <div class="when">Expires in 3h<em> · today at 15:20</em></div>
+      <div class="core"><div class="ring am"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/><circle class="fl" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="6.25 100"/></svg><div class="ctr"><span class="mi xs f">timer</span><b class="mono">132</b><em>BNP</em></div></div><div class="side"><span>Claim before 15:20</span><span>or it's gone</span></div></div>
       <div class="pri am"><span class="mi s">savings</span>Claim 132 BNP</div>
-      <div class="note2">Unclaimed after 15:20 and this cycle pays <b>nothing</b>.</div>
     </div>
     <div class="sect"><span class="mi xs">account_balance_wallet</span><b>Balance</b></div>
     <div class="bal">
       <div class="n"><b class="mono">8,412</b><em>BNP</em></div>
       <p>Converts to BNT at launch.</p>
-      <div class="lk"><span class="mi xs">account_balance_wallet</span>See it in Wallet<span class="mi xs">chevron_right</span></div>
+      <div class="lk"><span class="mi xs">account_balance_wallet</span>View in Wallet<span class="mi xs">chevron_right</span></div>
     </div>
     <div class="sect"><span class="mi xs">trending_up</span><b>Earn faster</b><em>+10%</em></div>
-    <div class="row"><span class="mi">group_add</span><span class="gr"><b>2 active friends · +10%</b><span>Each active friend adds +5%, up to +100%</span></span><span class="mi s">chevron_right</span></div>
+    <div class="row"><span class="mi">group_add</span><span class="gr"><b>2 active friends · +10%</b><span>+5% per active friend, max +100%</span></span><span class="mi s">chevron_right</span></div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
 </div>
@@ -359,24 +365,23 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
   <div class="body">
     <div class="hdr"><span class="t">Mine</span><span class="mi">history</span><span class="mi">help</span></div>
     <div class="ntc ok">
-      <div class="nr"><span class="mi s f">check_circle</span>Claimed +126 BNP</div>
-      <p>Added to your balance and credited to your Wallet. <b>Your next cycle is already running.</b></p>
+      <div class="nr"><span class="mi s f">check_circle</span>+126 BNP claimed</div>
+      <p>Next cycle started.</p>
     </div>
     <div class="cyc run">
       <div class="cs"><i class="on"><span class="mi xs f">bolt</span>MINING</i><span>Hour 1 of 24</span></div>
-      <div class="when">Ready at 09:41 tomorrow<em> — 23 hours left</em></div>
-      <div class="core"><div class="ring live"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/><circle class="fl" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="2.08 100"/></svg><div class="ctr"><span class="mi xs f">bolt</span><b class="mono">5</b><em>BNP so far</em></div></div><div class="side"><span><b>of 126</b> this cycle</span><span>Started 09:41</span><span>Ready 09:41 tomorrow</span></div></div>
-      <div class="rate"><b>5 BNP an hour</b> · <i>+5% from 1 friend</i></div>
-      <div class="rem"><span class="mi s">notifications_active</span>Remind me when it's ready<span class="sw on"></span></div>
+      <div class="when">Ready tomorrow at 09:41<em> · 23h left</em></div>
+      <div class="core"><div class="ring live"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/><circle class="fl" cx="50" cy="50" r="44" pathLength="100" stroke-dasharray="2.08 100"/></svg><div class="ctr"><span class="mi xs f">bolt</span><b class="mono">5</b><em>of 126 BNP</em></div></div><div class="side"><span>5 BNP/hr</span><span>+5% from 1 friend</span></div></div>
+      <div class="rem"><span class="mi s">notifications_active</span>Notify me when it's ready<span class="sw on"></span></div>
     </div>
     <div class="sect"><span class="mi xs">account_balance_wallet</span><b>Balance</b></div>
     <div class="bal">
       <div class="n"><b class="mono">8,538</b><em>BNP</em></div>
       <p>Converts to BNT at launch.</p>
-      <div class="lk"><span class="mi xs">account_balance_wallet</span>See it in Wallet<span class="mi xs">chevron_right</span></div>
+      <div class="lk"><span class="mi xs">account_balance_wallet</span>View in Wallet<span class="mi xs">chevron_right</span></div>
     </div>
     <div class="sect"><span class="mi xs">trending_up</span><b>Earn faster</b><em>+5%</em></div>
-    <div class="row"><span class="mi">group_add</span><span class="gr"><b>1 active friend · +5%</b><span>Each active friend adds +5%, up to +100%</span></span><span class="mi s">chevron_right</span></div>
+    <div class="row"><span class="mi">group_add</span><span class="gr"><b>1 active friend · +5%</b><span>+5% per active friend, max +100%</span></span><span class="mi s">chevron_right</span></div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
 </div>
@@ -391,26 +396,25 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
   <div class="body">
     <div class="hdr"><span class="t">Mine</span><span class="mi">history</span><span class="mi">help</span></div>
     <div class="ntc">
-      <div class="nr"><span class="mi s">timer_off</span>A cycle expired</div>
-      <p>Your cycle ending <b>14 September</b> wasn't claimed within 48 hours, so its <b>132 BNP</b> expired.</p>
+      <div class="nr"><span class="mi s">timer_off</span>132 BNP expired</div>
+      <p>Your 14 Sep cycle wasn't claimed within 48 hours.</p>
       <div class="ds">Dismiss</div>
     </div>
     <div class="cyc">
       <div class="cs"><i class="of"><span class="mi xs">pause_circle</span>NOT MINING</i><span>Cycle · 24h</span></div>
-      <div class="when">Start a new cycle<em> — 132 BNP over the next 24 hours.</em></div>
-      <div class="core"><div class="ring off"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/></svg><div class="ctr"><span class="mi xs">bolt</span><em>24h cycle</em></div></div><div class="side"><span>Nothing mined yet</span><span>Fills as the hours pass</span></div></div>
-      <div class="rate"><b>5 BNP an hour</b> · <i>+10% from 2 friends</i></div>
+      <div class="when">Start mining<em> · 132 BNP a day</em></div>
+      <div class="core"><div class="ring off"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/></svg><div class="ctr"><span class="mi xs">bolt</span><em>0 BNP</em></div></div><div class="side"><span>5 BNP/hr</span><span>+10% from 2 friends</span></div></div>
       <div class="pri"><span class="mi s">bolt</span>Start mining</div>
-      <div class="rem"><span class="mi s">notifications_active</span>Remind me when it's ready<span class="sw"></span></div>
+      <div class="rem"><span class="mi s">notifications_active</span>Notify me when it's ready<span class="sw"></span></div>
     </div>
     <div class="sect"><span class="mi xs">account_balance_wallet</span><b>Balance</b></div>
     <div class="bal">
       <div class="n"><b class="mono">8,412</b><em>BNP</em></div>
       <p>Converts to BNT at launch.</p>
-      <div class="lk"><span class="mi xs">account_balance_wallet</span>See it in Wallet<span class="mi xs">chevron_right</span></div>
+      <div class="lk"><span class="mi xs">account_balance_wallet</span>View in Wallet<span class="mi xs">chevron_right</span></div>
     </div>
     <div class="sect"><span class="mi xs">schedule</span><b>Hourly history</b></div>
-    <div class="row"><span class="mi">history</span><span class="gr"><b>Last 48 hours</b><span>1 cycle claimed · 1 expired</span></span><span class="mi s">chevron_right</span></div>
+    <div class="row"><span class="mi">history</span><span class="gr"><b>Last 2 days</b><span>1 claimed · 1 expired</span></span><span class="mi s">chevron_right</span></div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
 </div>
@@ -425,22 +429,21 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
   <div class="body">
     <div class="hdr"><span class="t">Mine</span><span class="mi">history</span><span class="mi">help</span></div>
     <div class="cyc exp">
-      <div class="cs"><i class="of"><span class="mi xs">pause_circle</span>PAUSED BY BLOCNET</i><span>No cycles running</span></div>
-      <div class="when">Mining is paused for everyone<em> — nothing is accruing, and nothing you have claimed is affected.</em></div>
+      <div class="cs"><i class="of"><span class="mi xs">pause_circle</span>PAUSED BY BLOCNET</i><span>All members</span></div>
+      <div class="when">Mining is paused<em> · your balance is safe</em></div>
       <div class="core"><div class="ring off"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="44"/></svg><div class="ctr"><span class="mi xs">pause_circle</span><em>Paused</em></div></div><div class="side"></div></div>
-      <div class="note2">We'll notify you when cycles resume.</div>
-      <div class="rem"><span class="mi s">notifications_active</span>Remind me when it resumes<span class="sw on"></span></div>
+      <div class="rem"><span class="mi s">notifications_active</span>Notify me when it's back<span class="sw on"></span></div>
     </div>
     <div class="sect"><span class="mi xs">account_balance_wallet</span><b>Balance</b></div>
     <div class="bal">
       <div class="n"><b class="mono">8,412</b><em>BNP</em></div>
       <p>Converts to BNT at launch.</p>
-      <div class="lk"><span class="mi xs">account_balance_wallet</span>See it in Wallet<span class="mi xs">chevron_right</span></div>
+      <div class="lk"><span class="mi xs">account_balance_wallet</span>View in Wallet<span class="mi xs">chevron_right</span></div>
     </div>
     <div class="sect"><span class="mi xs">trending_up</span><b>Earn faster</b><em>+10%</em></div>
-    <div class="row"><span class="mi">group_add</span><span class="gr"><b>2 active friends · +10%</b><span>Boosts apply when cycles resume</span></span><span class="mi s">chevron_right</span></div>
+    <div class="row"><span class="mi">group_add</span><span class="gr"><b>2 active friends · +10%</b><span>Applies when mining is back</span></span><span class="mi s">chevron_right</span></div>
     <div class="sect"><span class="mi xs">schedule</span><b>Hourly history</b></div>
-    <div class="row"><span class="mi">history</span><span class="gr"><b>Last 48 hours</b><span>2 cycles claimed · 264 BNP</span></span><span class="mi s">chevron_right</span></div>
+    <div class="row"><span class="mi">history</span><span class="gr"><b>Last 2 days</b><span>2 claimed · 264 BNP</span></span><span class="mi s">chevron_right</span></div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
 </div>
@@ -456,10 +459,10 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
     <div class="hdr"><span class="t">Mine</span><span class="mi">history</span><span class="mi">help</span></div>
     <div class="mid">
       <span class="ring"><span class="mi l">cloud_off</span></span>
-      <h2>Couldn't load your cycle</h2>
-      <p>We can't reach Blocnet right now, so we won't guess at your mining state. Nothing has been lost — your cycle keeps running on the server.</p>
+      <h2>Can't reach Blocnet</h2>
+      <p>Your cycle keeps running. Try again in a moment.</p>
       <div class="pri" style="width:100%"><span class="mi s">refresh</span>Retry</div>
-      <div class="note2" style="margin-top:16px">Balance last seen <b>8,412 BNP</b> · 9:38</div>
+      <div class="note2" style="margin-top:16px">Last balance <b>8,412 BNP</b></div>
     </div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
@@ -474,7 +477,7 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
   <div class="sb"><span class="mono">9:41</span><u><span class="mi xs f">signal_cellular_alt</span><span class="mi xs f">wifi</span><span class="mi xs f">battery_full</span></u></div>
   <div class="body">
     <div class="hdr"><span class="mi">arrow_back</span><span class="t">Leaderboard</span></div>
-    <div class="sect" style="padding-top:0"><span class="mi xs">leaderboard</span><b>Lifetime claimed BNP</b><em>Page 1 of 9</em></div>
+    <div class="sect" style="padding-top:0"><span class="mi xs">leaderboard</span><b>All-time BNP</b><em>Page 1 of 9</em></div>
     <div class="lb">
       <div class="lr"><span class="rk g1">1</span><span class="av a3">AB</span><span class="nm"><b>Abtoonzz<span class="bdg b-ruby">14</span></b><span>@abtoonzz<u><span class="mi xs f">bolt</span>mining now</u></span></span><span class="am mono">214,880</span></div>
       <div class="lr"><span class="rk g2">2</span><span class="av a2">B5</span><span class="nm"><b>Bless50ing<span class="bdg b-ruby">13</span></b><span>@bless50ing</span></span><span class="am mono">198,210</span></div>
@@ -502,21 +505,20 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
   <div class="sb"><span class="mono">9:41</span><u><span class="mi xs f">signal_cellular_alt</span><span class="mi xs f">wifi</span><span class="mi xs f">battery_full</span></u></div>
   <div class="body">
     <div class="hdr"><span class="mi">arrow_back</span><span class="t">Hourly history</span></div>
-    <div class="ch"><b>Cycle · 16 Sep, in progress</b><i class="wt">WAITING TO CLAIM</i></div>
+    <div class="ch"><b>16 Sep · now</b><i class="wt">NOT CLAIMED</i></div>
     <div class="hr2"><span class="t mono">09:00</span><span class="v mono">5.5 BNP</span><span class="s wt">Waiting</span></div>
     <div class="hr2"><span class="t mono">08:00</span><span class="v mono">5.5 BNP</span><span class="s wt">Waiting</span></div>
     <div class="hr2"><span class="t mono">07:00</span><span class="v mono">5.5 BNP</span><span class="s wt">Waiting</span></div>
-    <div class="ch"><b>Cycle · 15 Sep · 132 BNP</b><i class="cl">CLAIMED</i></div>
+    <div class="ch"><b>15 Sep · 132 BNP</b><i class="cl">CLAIMED</i></div>
     <div class="hr2"><span class="t mono">23:00</span><span class="v mono">5.5 BNP</span><span class="s cl">Claimed</span></div>
     <div class="hr2"><span class="t mono">22:00</span><span class="v mono">5.5 BNP</span><span class="s cl">Claimed</span></div>
     <div class="hr2"><span class="t mono">21:00</span><span class="v mono">5.5 BNP</span><span class="s cl">Claimed</span></div>
     <div class="hr2"><span class="t mono">20:00</span><span class="v mono">5.5 BNP</span><span class="s cl">Claimed</span></div>
-    <div class="ch"><b>Cycle · 14 Sep · 0 BNP</b><i class="ex">EXPIRED</i></div>
+    <div class="ch"><b>14 Sep · 0 BNP</b><i class="ex">EXPIRED</i></div>
     <div class="hr2 ex"><span class="t mono">19:00</span><span class="v mono">5.5 BNP</span><span class="s ex">Expired</span></div>
     <div class="hr2 ex"><span class="t mono">18:00</span><span class="v mono">5.5 BNP</span><span class="s ex">Expired</span></div>
     <div class="hr2 ex"><span class="t mono">17:00</span><span class="v mono">5.5 BNP</span><span class="s ex">Expired</span></div>
     <div class="hr2 ex"><span class="t mono">16:00</span><span class="v mono">5.5 BNP</span><span class="s ex">Expired</span></div>
-    <div class="note2" style="padding:14px 16px 0">Not claimed within 48 hours, so its <b>132 BNP</b> expired.</div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
 </div>
@@ -531,19 +533,19 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
   <div class="body">
     <div class="hdr"><span class="mi">arrow_back</span><span class="t">Earn faster</span></div>
     <div class="ef">
-      <div class="boost"><b>+10%</b><em>from 2 active friends · +100% max</em></div>
+      <div class="boost"><b>+10%</b><em>2 active friends · max +100%</em></div>
       <div class="bcap"><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="efl">Every friend who stays active adds <b style="color:#d4d4d8">+5%</b> to your rate, up to +100%. Active = mined in the last 7 days.</div>
+      <div class="efl"><b style="color:#d4d4d8">+5%</b> per active friend, max +100%. Active means mined in the last 7 days.</div>
       <div class="code"><span class="mi s">key</span><b class="mono">BNC4K92X</b></div>
       <div class="ca"><span class="btn"><span class="mi s">ios_share</span>Share code</span><span class="btn w sm">Copy</span></div>
-      <div class="entr"><span class="mi s">how_to_reg</span>Enter a friend's code<span>Today only</span></div>
+      <div class="entr"><span class="mi s">how_to_reg</span>Have a friend's code?<span>Today only</span></div>
     </div>
     <div class="sect"><span class="mi xs">groups</span><b>Your friends</b><em>2 of 3 active</em></div>
     <div class="ef" style="padding-top:4px">
       <div class="fr2" style="border-top:none"><span class="av a8">TE</span><b>Tenzin<span class="bdg b-jade">5</span></b><i class="ac">ACTIVE</i></div>
       <div class="fr2"><span class="av a2">MI</span><b>Mirae<span class="bdg b-iron">2</span></b><i class="ac">ACTIVE</i></div>
       <div class="fr2"><span class="av a6">DE</span><b>Dexlin<span class="bdg b-iron">1</span></b><i class="in">12 DAYS</i></div>
-      <div class="efl">Dexlin stopped mining 12 days ago, so their +5% isn't counting.</div>
+      <div class="efl">Dexlin's +5% counts again when they mine.</div>
     </div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
@@ -561,18 +563,18 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
     <div class="ef">
       <div class="efz">
         <span class="mi xl">group_add</span>
-        <b>One friend takes you to 126 BNP a cycle</b>
-        <p>Every friend who stays active adds +5% to your rate, up to +100%. Active = mined in the last 7 days.</p>
+        <b>Invite a friend, earn 126 BNP a day</b>
+        <p>+5% per active friend, max +100%.</p>
       </div>
       <div class="code"><span class="mi s">key</span><b class="mono">BNC4K92X</b></div>
       <div class="ca"><span class="btn"><span class="mi s">ios_share</span>Share code</span><span class="btn w sm">Copy</span></div>
-      <div class="entr"><span class="mi s">how_to_reg</span>Enter a friend's code<span>Today only</span></div>
+      <div class="entr"><span class="mi s">how_to_reg</span>Have a friend's code?<span>Today only</span></div>
     </div>
     <div class="sect"><span class="mi xs">bolt</span><b>Your rate now</b></div>
     <div class="ef">
-      <div class="boost"><b style="color:#fff">120 BNP</b><em>a cycle · 5 BNP an hour</em></div>
+      <div class="boost"><b style="color:#fff">120 BNP</b><em>a day · 5 BNP/hr</em></div>
       <div class="bcap"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="efl">No boost yet. Inviting friends is the only way to mine faster.</div>
+      <div class="efl">No boost yet.</div>
     </div>
   </div>
   <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab"><span class="mi">groups</span>Community</span><span class="tab on"><span class="mi f">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
@@ -587,20 +589,20 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
   <div class="lt"><span>Wednesday 16 September</span><b class="mono">9:41</b></div>
   <div class="nf">
     <div class="h"><span class="ic"><span class="mi" style="font-size:11px">bolt</span></span>BLOCNET<em>now</em></div>
-    <b>Your BNP is ready — claim 132 BNP</b>
-    <p>Claim it and your next cycle starts straight away.</p>
+    <b>132 BNP ready to claim</b>
+    <p>Tap to claim and start your next cycle.</p>
   </div>
   <div class="nf">
     <div class="h"><span class="ic"><span class="mi" style="font-size:11px">bolt</span></span>BLOCNET<em>3h ago</em></div>
-    <b>132 BNP expires in 3 hours — claim now</b>
-    <p>Unclaimed cycles pay nothing after 48 hours.</p>
+    <b>132 BNP expires in 3h</b>
+    <p>Claim it before it's gone.</p>
   </div>
 </div>
 </div>
 
 <div class="spec" style="left:550px;top:2480px;width:830px">
   <h3>The cycle card in five states, side by side</h3>
-  <p class="lede">The status word, the stated time and the ring are the same three elements every time. What changes is which of them is doing the work — and there is never more than one primary action.</p>
+  <p class="lede">Every state uses the same three parts: a status word, a time, and the ring. What changes is which of them is doing the work — and there is never more than one primary action.</p>
   <div class="three">
     <div class="mini">
       <div class="ty">Idle</div>
@@ -661,7 +663,7 @@ a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
       <p>Identical screen. Only the accent shifts to <b>#22D3EE</b> and tab slot 3 reads <b>Hub</b> instead of Community. Mining is a member behaviour, not a hunter privilege, so nothing else differs.</p>
     </div>
   </div>
-  <p class="note"><b>Touch targets:</b> primary action 52px, secondary rows 44px, the reminder switch 44×26 in a 44px row. <b>Type:</b> 32px ceiling on the two numbers that earn it — BNP so far, and balance. Body 15, labels 13, track labels 11.</p>
+  <p class="note"><b>Copy:</b> short and plain — numbers and times, no narration. The ? explainer floats over the screen. <b>Touch targets:</b> primary action 52px, secondary rows 44px, the reminder switch 44×26 in a 44px row. <b>Type:</b> 32px ceiling on the two numbers that earn it — BNP so far, and balance. Body 15, labels 13, track labels 11.</p>
 </div>
 
 </body></html>
