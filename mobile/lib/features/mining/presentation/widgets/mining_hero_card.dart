@@ -1,12 +1,15 @@
-import 'dart:async';
-import 'dart:math' as math;
-
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/mining/data/models/mining_models.dart';
-import 'package:blocnet/shared/utils/format_number_utils.dart';
-import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/mining/data/models/mining_models.dart';
+import 'package:blocnet/features/mining/presentation/widgets/hero/mining_core_visual.dart';
+import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_actions.dart';
+import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_notices.dart';
+import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_parts.dart';
+import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_stats.dart';
+import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_view.dart';
+import 'package:blocnet/features/mining/presentation/widgets/hero/mining_second_ticker.dart';
+import 'package:flutter/material.dart';
 
 class MiningHeroCard extends StatefulWidget {
   const MiningHeroCard({
@@ -17,6 +20,10 @@ class MiningHeroCard extends StatefulWidget {
     required this.isStarting,
     required this.isClaiming,
     required this.isLoadingSnapshot,
+    required this.serverNow,
+    this.loadError,
+    this.onRetry,
+    this.onCycleEnd,
   });
 
   final MiningSnapshot? snapshot;
@@ -26,21 +33,40 @@ class MiningHeroCard extends StatefulWidget {
   final bool isClaiming;
   final bool isLoadingSnapshot;
 
+  /// Device clock corrected by the server's `asOf`. Every countdown reads it.
+  final DateTime Function() serverNow;
+
+  /// Why the first load failed. Only shown while there is no snapshot.
+  final String? loadError;
+  final VoidCallback? onRetry;
+
+  /// Fired by the clock once a live cycle reaches its end. The store guards
+  /// it so only one refetch happens per cycle.
+  final VoidCallback? onCycleEnd;
+
   @override
   State<MiningHeroCard> createState() => _MiningHeroCardState();
 }
 
 class _MiningHeroCardState extends State<MiningHeroCard>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, MiningSecondTicker<MiningHeroCard> {
   late final AnimationController _orbitController;
   late final AnimationController _counterOrbitController;
   late final AnimationController _pulseController;
   late final AnimationController _waveController;
-  Timer? _clockTimer;
-  DateTime _now = DateTime.now();
+  late DateTime _now;
+  bool _tabVisible = true;
+
+  List<AnimationController> get _controllers => [
+        _orbitController,
+        _counterOrbitController,
+        _pulseController,
+        _waveController,
+      ];
 
   @override
   void initState() {
+    _now = widget.serverNow();
     super.initState();
     _orbitController = AnimationController(
       vsync: this,
@@ -58,35 +84,47 @@ class _MiningHeroCardState extends State<MiningHeroCard>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     );
-
     _syncAnimationState();
-    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() {
-        _now = DateTime.now();
-      });
-    });
   }
 
   @override
   void didUpdateWidget(covariant MiningHeroCard oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _now = widget.serverNow();
     _syncAnimationState();
+    syncSecondTicker();
   }
 
   @override
   void dispose() {
-    _clockTimer?.cancel();
-    _orbitController.dispose();
-    _counterOrbitController.dispose();
-    _pulseController.dispose();
-    _waveController.dispose();
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
+  bool get _isLive => widget.snapshot?.session.isRunning == true;
+
+  @override
+  bool get shouldTick => _isLive;
+
+  @override
+  void onSecond() {
+    setState(() => _now = widget.serverNow());
+    final endsAt = widget.snapshot?.session.endsAt;
+    if (_isLive && MiningHeroView.hasReachedEnd(endsAt, _now)) {
+      widget.onCycleEnd?.call();
+    }
+  }
+
+  @override
+  void onTabVisibilityChanged(bool visible) {
+    _tabVisible = visible;
+    _syncAnimationState();
+  }
+
   void _syncAnimationState() {
-    final isRunning = widget.snapshot?.session.isRunning == true;
-    if (isRunning) {
+    if (_isLive && _tabVisible) {
       if (!_orbitController.isAnimating) _orbitController.repeat();
       if (!_counterOrbitController.isAnimating) {
         _counterOrbitController.repeat();
@@ -95,150 +133,57 @@ class _MiningHeroCardState extends State<MiningHeroCard>
       if (!_waveController.isAnimating) _waveController.repeat();
       return;
     }
-
-    _orbitController.stop();
-    _counterOrbitController.stop();
-    _pulseController.stop();
-    _waveController.stop();
+    for (final controller in _controllers) {
+      controller.stop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final snapshot = widget.snapshot;
-    final session = snapshot?.session;
-    final referral = snapshot?.referral;
-    final balance = snapshot?.balance;
-    final config = snapshot?.config;
-
-    final busy = widget.isStarting || widget.isClaiming;
-    final cycleHours =
-        (session?.cycleHours ?? config?.cycleHours ?? 24).clamp(1, 168);
-    final activeDirectReferrals = session?.activeReferralsSnapshot ??
-        referral?.activeDirectReferrals ??
-        0;
-    final projectedCyclePoints = session?.projectedCyclePointsNow ??
-        session?.effectivePointsPerCycle ??
-        config?.basePointsPerCycle ??
-        120;
-    final hourlyReward = session?.hourlyRateNow ??
-        (projectedCyclePoints / math.max(cycleHours, 1));
-    final progressPct = (session?.progressPct ?? 0).clamp(0, 1).toDouble();
-    final thisHourMined = session?.currentHourEstimatedPoints ?? 0.0;
-    final cycleMinedDisplay = (session?.pointsMinedSoFar ?? 0) + thisHourMined;
-    final baselineHourly =
-        (config?.basePointsPerCycle ?? 120) / math.max(cycleHours, 1);
-    final miningPower =
-        baselineHourly <= 0 ? 10.0 : 10.0 * (hourlyReward / baselineHourly);
-
-    final hasSession = session != null && !session.isIdle;
-    final isSessionReadyCheck = widget.isLoadingSnapshot && session == null;
-    final canStart = !isSessionReadyCheck && !hasSession;
-    // `claimable` is the ONLY state that earns a Claim button. The local clock
-    // reaching `endsAt` is not enough: a cycle past its claim window is
-    // forfeited server-side and reports `running` -> `idle`, so offering Claim
-    // there is offering a button that cannot succeed (F-39).
-    final canClaim = hasSession && session.isClaimable;
-    final statusLabel = canClaim
-        ? 'Claim Ready'
-        : session?.isRunning == true
-            ? 'Live'
-            : 'Idle';
-    final statusSubtext = _statusSubtext(session, _now, cycleHours);
-    final actionState = _resolveActionState(
-      canStart: canStart,
-      canClaim: canClaim,
-      isSessionReadyCheck: isSessionReadyCheck,
-      session: session,
+    final view = MiningHeroView.resolve(
+      snapshot: snapshot,
+      isLoading: widget.isLoadingSnapshot,
+      loadError: widget.loadError,
       now: _now,
-      busy: busy,
+    );
+
+    if (snapshot == null || !view.hasData) {
+      if (view.phase == MiningHeroPhase.loadError) {
+        return MiningHeroError(
+          message: widget.loadError ?? '',
+          onRetry: widget.onRetry ?? () {},
+        );
+      }
+      return const MiningHeroLoading();
+    }
+
+    final action = resolveMiningAction(
+      view: view,
+      session: snapshot.session,
+      now: _now,
+      isStarting: widget.isStarting,
+      isClaiming: widget.isClaiming,
+      onStart: widget.onStart,
+      onClaim: widget.onClaim,
     );
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Positioned(
-          right: -44,
-          top: -26,
-          child: Container(
-            width: 180,
-            height: 180,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppColors.primary500.withValues(alpha: 0.18),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          left: -34,
-          bottom: -30,
-          child: Container(
-            width: 150,
-            height: 150,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppColors.primary400.withValues(alpha: 0.08),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-        ),
+        const MiningHeroGlows(),
         Padding(
           padding: const EdgeInsets.fromLTRB(0, AppSpace.xs, 0, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.bolt_rounded,
-                    color: AppColors.primary400,
-                    size: AppIcon.md,
-                  ),
-                  const SizedBox(width: AppSpace.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          statusSubtext,
-                          style: AppTypography.custom(
-                            size: AppText.labelSize,
-                            weight: FontWeight.w500,
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _StatusTag(
-                    label: statusLabel,
-                    color: canClaim
-                        ? AppColors.successColor
-                        : session?.isRunning == true
-                            ? AppColors.primary500
-                            : AppColors.textFaint,
-                  ),
-                ],
-              ),
+              _HeroHeader(view: view),
               const SizedBox(height: AppSpace.md),
               Center(
                 child: AnimatedBuilder(
-                  animation: Listenable.merge([
-                    _orbitController,
-                    _counterOrbitController,
-                    _pulseController,
-                    _waveController,
-                  ]),
-                  builder: (context, _) => _MiningCoreVisual(
-                    isRunning: session?.isRunning == true,
+                  animation: Listenable.merge(_controllers),
+                  builder: (context, _) => MiningCoreVisual(
+                    isRunning: _isLive,
                     orbitValue: _orbitController.value,
                     counterOrbitValue: _counterOrbitController.value,
                     pulseValue: _pulseController.value,
@@ -247,620 +192,71 @@ class _MiningHeroCardState extends State<MiningHeroCard>
                 ),
               ),
               const SizedBox(height: AppSpace.lg),
-              // Main earning display
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpace.lg),
-                decoration: BoxDecoration(
-                  color: AppColors.primary500.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(AppRadius.xlValue),
-                  border: Border.all(
-                    color: AppColors.primary500.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'EARNING PER HOUR',
-                      style: AppTypography.custom(
-                        size: AppText.captionSize,
-                        weight: FontWeight.w700,
-                        color: AppColors.textFaint,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.sm),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          _formatDecimal(hourlyReward),
-                          style: AppTypography.custom(
-                            size: AppText.displayXlSize,
-                            weight: FontWeight.w800,
-                            color: AppColors.primary400,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        Text(
-                          'BNP/h',
-                          style: AppTypography.custom(
-                            size: AppText.subtitleSize,
-                            weight: FontWeight.w600,
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpace.md),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                      child: LinearProgressIndicator(
-                        minHeight: 6,
-                        value: progressPct,
-                        backgroundColor: AppColors.bgElevated,
-                        color: canClaim
-                            ? AppColors.successColor
-                            : AppColors.primary500,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.sm),
-                    Text(
-                      '${_formatDecimal(cycleMinedDisplay)} BNP earned • Claim after ${cycleHours}h',
-                      style: AppTypography.custom(
-                        size: AppText.labelSize,
-                        weight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+              MiningEarningPanel(
+                snapshot: snapshot,
+                cycleHours: view.cycleHours,
+                canClaim: view.canClaim,
               ),
               const SizedBox(height: AppSpace.md),
-              // Stats grid
-              Row(
-                children: [
-                  Expanded(
-                    child: _CompactStat(
-                      label: 'Mining Power',
-                      value:
-                          '${formatGroupedNumber(miningPower, maxDecimals: 1, minDecimals: 1)} TH/s',
-                      icon: Icons.speed_rounded,
-                      color: AppColors.primary400,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpace.sm),
-                  Expanded(
-                    child: _CompactStat(
-                      label: 'Total Earned',
-                      value:
-                          '${formatGroupedNumber(balance?.lifetimeEarnedPoints ?? 0, maxDecimals: 0)} BNP',
-                      icon: Icons.stars_rounded,
-                      color: AppColors.warning500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpace.sm),
-              Row(
-                children: [
-                  Expanded(
-                    child: _CompactStat(
-                      label: 'Claimed',
-                      value:
-                          '${formatGroupedNumber(balance?.claimedTotalPoints ?? 0, maxDecimals: 0)} BNP',
-                      icon: Icons.check_circle_rounded,
-                      color: AppColors.successColor,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpace.sm),
-                  Expanded(
-                    child: _CompactStat(
-                      label: 'Referrals',
-                      value: '$activeDirectReferrals active',
-                      icon: Icons.people_rounded,
-                      color: AppColors.teal400,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpace.lg),
-              _MiningActionButton(
-                label: actionState.label,
-                color: actionState.color,
-                textColor: actionState.textColor,
-                onPressed: actionState.onPressed,
-                isLoading: actionState.isLoading,
-                showLockIcon: actionState.showLockIcon,
-              ),
+              MiningStatsGrid(snapshot: snapshot),
+              if (view.isPaused) ...[
+                const SizedBox(height: AppSpace.md),
+                MiningPausedNotice(canClaim: view.canClaim),
+              ],
+              if (action != null) ...[
+                const SizedBox(height: AppSpace.lg),
+                MiningActionButton(
+                  label: action.label,
+                  color: action.color,
+                  textColor: action.textColor,
+                  onPressed: action.onPressed,
+                  isLoading: action.isLoading,
+                  showLockIcon: action.showLockIcon,
+                ),
+              ],
             ],
           ),
         ),
       ],
     );
   }
-
-  _MiningActionState _resolveActionState({
-    required bool canStart,
-    required bool canClaim,
-    required bool isSessionReadyCheck,
-    required MiningSessionModel? session,
-    required DateTime now,
-    required bool busy,
-  }) {
-    if (isSessionReadyCheck) {
-      return _MiningActionState(
-        label: 'Checking mining status...',
-        color: AppColors.bgElevated,
-        textColor: AppColors.textMuted,
-        onPressed: null,
-        isLoading: true,
-      );
-    }
-
-    if (canStart) {
-      return _MiningActionState(
-        label: 'Start Mining',
-        color: AppColors.primary500,
-        textColor: Colors.black,
-        onPressed: busy ? null : widget.onStart,
-        isLoading: widget.isStarting,
-      );
-    }
-
-    if (canClaim) {
-      return _MiningActionState(
-        label: 'Claim Rewards',
-        color: AppColors.successColor,
-        textColor: Colors.black,
-        onPressed: busy ? null : widget.onClaim,
-        isLoading: widget.isClaiming,
-      );
-    }
-
-    final countdown = _formatCountdown(session?.endsAt, now);
-    final label = countdown == null
-        ? 'Claim Locked'
-        : countdown == '00:00'
-            // The device clock hit the end but the server has not marked the
-            // cycle claimable yet. Never label this "Claim" — it would fail.
-            ? 'Wrapping up this cycle...'
-            : 'Claim in $countdown';
-    return _MiningActionState(
-      label: label,
-      color: AppColors.bgElevated,
-      textColor: AppColors.textMuted,
-      onPressed: null,
-      isLoading: false,
-      showLockIcon: true,
-    );
-  }
-
-  String _statusSubtext(
-      MiningSessionModel? session, DateTime now, int cycleHours) {
-    if (session == null || session.isIdle) {
-      return 'Start to begin your ${cycleHours}h cycle.';
-    }
-    if (session.isClaimable) {
-      return 'Cycle complete. You can claim now.';
-    }
-    if (_hasReachedSessionEnd(session.endsAt, now)) {
-      // Ended by the device clock but the server has not said `claimable` yet.
-      // Wait for the refresh rather than promising a Claim that would fail.
-      return 'Cycle finishing up. Pull to refresh in a moment.';
-    }
-    return 'Mining in progress';
-  }
-
-  bool _hasReachedSessionEnd(DateTime? endsAt, DateTime now) {
-    if (endsAt == null) return false;
-    return !endsAt.toUtc().isAfter(now.toUtc());
-  }
-
-  String? _formatCountdown(DateTime? endsAt, DateTime now) {
-    if (endsAt == null) return null;
-    final left = endsAt.toUtc().difference(now.toUtc());
-    if (left.inSeconds <= 0) return '00:00';
-
-    final totalSeconds = left.inSeconds;
-    final hours = totalSeconds ~/ 3600;
-    final minutes = (totalSeconds % 3600) ~/ 60;
-    final seconds = totalSeconds % 60;
-    if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    }
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
-
-  String _formatDecimal(num value) {
-    return formatGroupedNumber(value, maxDecimals: 2);
-  }
 }
 
-class _MiningActionState {
-  const _MiningActionState({
-    required this.label,
-    required this.color,
-    required this.textColor,
-    required this.onPressed,
-    required this.isLoading,
-    this.showLockIcon = false,
-  });
+class _HeroHeader extends StatelessWidget {
+  const _HeroHeader({required this.view});
 
-  final String label;
-  final Color color;
-  final Color textColor;
-  final VoidCallback? onPressed;
-  final bool isLoading;
-  final bool showLockIcon;
-}
-
-class _StatusTag extends StatelessWidget {
-  const _StatusTag({required this.label, required this.color});
-
-  final String label;
-  final Color color;
+  final MiningHeroView view;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: 7),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.fullValue),
-        color: color.withValues(alpha: 0.14),
-        border: Border.all(color: color.withValues(alpha: 0.38)),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: AppTypography.custom(
-          size: AppText.captionSize,
-          weight: FontWeight.w800,
-          color: color,
-          letterSpacing: 0.8,
-        ),
-      ),
-    );
-  }
-}
+    final tagColor = view.canClaim
+        ? AppColors.successColor
+        : view.isPaused
+            ? AppColors.warning500
+            : view.isLive
+                ? AppColors.primary500
+                : AppColors.textFaint;
 
-class _CompactStat extends StatelessWidget {
-  const _CompactStat({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        color: AppColors.bgElevated.withValues(alpha: 0.5),
-        border:
-            Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppRadius.smValue),
-            ),
-            child: Icon(icon, size: AppIcon.sm, color: color),
-          ),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTypography.custom(
-                    size: AppText.captionSize,
-                    weight: FontWeight.w600,
-                    color: AppColors.textFaint,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.hair),
-                Text(
-                  value,
-                  style: AppTypography.custom(
-                    size: AppText.labelSize,
-                    weight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiningActionButton extends StatelessWidget {
-  const _MiningActionButton({
-    required this.label,
-    required this.color,
-    required this.textColor,
-    required this.onPressed,
-    required this.isLoading,
-    this.showLockIcon = false,
-  });
-
-  final String label;
-  final Color color;
-  final Color textColor;
-  final VoidCallback? onPressed;
-  final bool isLoading;
-  final bool showLockIcon;
-
-  @override
-  Widget build(BuildContext context) {
-    final disabled = onPressed == null && !isLoading;
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: color,
-          disabledBackgroundColor: color.withValues(alpha: 0.95),
-          foregroundColor: textColor,
-          disabledForegroundColor: textColor.withValues(alpha: 0.9),
-          side: BorderSide(
-            color: disabled
-                ? AppColors.borderSubtle.withValues(alpha: 0.9)
-                : color.withValues(alpha: 0.2),
-            width: 1.1,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 13),
-        ),
-        child: isLoading
-            ? SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  color: textColor,
-                  strokeWidth: 2,
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (showLockIcon) ...[
-                    Icon(
-                      Icons.lock_rounded,
-                      size: AppIcon.sm,
-                      color: textColor.withValues(alpha: 0.9),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                  ],
-                  Text(
-                    label,
-                    style: AppTypography.custom(
-                      size: AppText.labelSize,
-                      weight: FontWeight.w800,
-                      color: textColor,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-class _MiningCoreVisual extends StatelessWidget {
-  const _MiningCoreVisual({
-    required this.isRunning,
-    required this.orbitValue,
-    required this.counterOrbitValue,
-    required this.pulseValue,
-    required this.waveValue,
-  });
-
-  final bool isRunning;
-  final double orbitValue;
-  final double counterOrbitValue;
-  final double pulseValue;
-  final double waveValue;
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = isRunning ? AppColors.primary500 : AppColors.textFaint;
-    final scale = isRunning ? 0.9 + (pulseValue * 0.22) : 1.0;
-    final glowOpacity = isRunning ? 0.26 + (pulseValue * 0.22) : 0.09;
-    final orbitAngle = orbitValue * 2 * math.pi;
-    final counterAngle = (1 - counterOrbitValue) * 2 * math.pi;
-    final wobble = isRunning ? math.sin(orbitAngle) * 0.14 : 0.0;
-
-    return SizedBox(
-      width: 208,
-      height: 184,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Transform.scale(
-            scale: scale,
-            child: Container(
-              width: 172,
-              height: 172,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primary500.withValues(alpha: glowOpacity),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Container(
-            width: 156,
-            height: 156,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary500.withValues(alpha: 0.2),
-              ),
-            ),
-          ),
-          Container(
-            width: 118,
-            height: 118,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary400.withValues(alpha: 0.16),
-              ),
-            ),
-          ),
-          _OrbitDot(
-            angle: orbitAngle,
-            radius: 78,
-            color: primary,
-            size: 11,
-          ),
-          _OrbitDot(
-            angle: counterAngle,
-            radius: 58,
-            color:
-                AppColors.primary300.withValues(alpha: isRunning ? 0.9 : 0.45),
-            size: 8,
-          ),
-          Transform.rotate(
-            angle: wobble,
-            child: Container(
-              width: 82,
-              height: 82,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.xlValue),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.bgElevated,
-                    AppColors.bgSurface,
-                  ],
-                ),
-                border: Border.all(color: AppColors.borderMuted),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary500.withValues(alpha: 0.24),
-                    blurRadius: 22,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.bolt_rounded,
-                size: AppIcon.xl,
-                color: primary,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 6,
-            child: _SignalBars(
-              active: isRunning,
-              waveValue: waveValue,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OrbitDot extends StatelessWidget {
-  const _OrbitDot({
-    required this.angle,
-    required this.radius,
-    required this.color,
-    required this.size,
-  });
-
-  final double angle;
-  final double radius;
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: Offset(math.cos(angle) * radius, math.sin(angle) * radius),
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.55),
-              blurRadius: 12,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SignalBars extends StatelessWidget {
-  const _SignalBars({required this.active, required this.waveValue});
-
-  final bool active;
-  final double waveValue;
-
-  @override
-  Widget build(BuildContext context) {
     return Row(
-      children: List.generate(6, (index) {
-        final phase = (waveValue * 2 * math.pi) + (index * 0.72);
-        final pulse = (math.sin(phase) + 1) / 2;
-        final height = active
-            ? (5 + (pulse * 15)).toDouble()
-            : (4 + ((index % 2) * 2)).toDouble();
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpace.hair),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            width: 5,
-            height: height,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.fullValue),
-              color: active
-                  ? AppColors.primary400.withValues(alpha: 0.92)
-                  : AppColors.textFaint.withValues(alpha: 0.65),
+      children: [
+        Icon(
+          Icons.bolt_rounded,
+          color: AppColors.primary400,
+          size: AppIcon.md,
+        ),
+        const SizedBox(width: AppSpace.md),
+        Expanded(
+          child: Text(
+            view.statusSubtext,
+            style: AppTypography.custom(
+              size: AppText.labelSize,
+              weight: FontWeight.w500,
+              color: AppColors.textMuted,
             ),
           ),
-        );
-      }),
+        ),
+        MiningStatusTag(label: view.statusLabel, color: tagColor),
+      ],
     );
   }
 }
