@@ -71,14 +71,12 @@ class MiningClaimResult {
       message: json['message']?.toString(),
       sessionId: json['sessionId']?.toString(),
       claimedAt: DateTime.tryParse(json['claimedAt']?.toString() ?? ''),
-      claimedPoints:
-          int.tryParse(json['claimedPoints']?.toString() ?? '') ?? 0,
+      claimedPoints: int.tryParse(json['claimedPoints']?.toString() ?? '') ?? 0,
       forfeitedPoints:
           int.tryParse(json['forfeitedPoints']?.toString() ?? '') ?? 0,
       expiredCycles: MiningExpiredCycle.listFromApi(json['expiredCycles']),
-      balance: balanceRaw == null
-          ? null
-          : MiningBalanceModel.fromApi(balanceRaw),
+      balance:
+          balanceRaw == null ? null : MiningBalanceModel.fromApi(balanceRaw),
       nextSession: nextSessionRaw == null
           ? null
           : MiningSessionModel.fromApi(nextSessionRaw),

@@ -97,12 +97,19 @@ class MineLeaderboardRow extends StatelessWidget {
                       ),
                     if (entry.isMiningNow) ...[
                       const SizedBox(width: AppSpace.sm),
-                      const Icon(Icons.bolt_rounded,
-                          size: AppIcon.xs, color: MinePalette.miningNow),
+                      const Icon(
+                        Icons.bolt_rounded,
+                        size: AppIcon.xs,
+                        color: MinePalette.miningNow,
+                      ),
                       const SizedBox(width: AppSpace.xs),
-                      Text(
-                        'mining now',
-                        style: AppText.label(MinePalette.miningNow),
+                      Flexible(
+                        child: Text(
+                          'mining now',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.label(MinePalette.miningNow),
+                        ),
                       ),
                     ],
                   ],

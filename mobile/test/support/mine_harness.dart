@@ -147,6 +147,13 @@ class MemoryMineCache extends MineLocalCache {
       dismissed.add(sessionId);
 }
 
+class FakeWalletStore extends WalletStore {
+  int refreshes = 0;
+
+  @override
+  Future<void> refreshAll() async => refreshes++;
+}
+
 class TestAuthStore extends AuthStore {
   TestAuthStore()
       : super(
@@ -189,7 +196,7 @@ Widget mineHost({
       ChangeNotifierProvider<MiningStore>.value(value: store),
       ChangeNotifierProvider<NotificationSettingsStore>.value(value: settings),
       ChangeNotifierProvider<AuthStore>(create: (_) => TestAuthStore()),
-      ChangeNotifierProvider<WalletStore>(create: (_) => WalletStore()),
+      ChangeNotifierProvider<WalletStore>(create: (_) => FakeWalletStore()),
     ],
     child: MaterialApp(
       routes: routes,
