@@ -1,24 +1,33 @@
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
+import 'package:blocnet/features/hunter/data/models/hunter_gem_detail_model.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_leaderboard_model.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dart';
 import 'package:blocnet/features/hunter/data/repositories/hunter_reliability_api_repository.dart';
+import 'package:blocnet/features/projects/data/models/project_proposal_model.dart';
+import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
 import 'package:blocnet/services/api/api_error.dart';
 import 'package:flutter/foundation.dart';
 
-/// Hunter reliability state: the signed-in hunter's own board, other hunters'
-/// reliability, and the reliability leaderboard.
+/// Hunter reliability state: the signed-in hunter's own board, one gem at a
+/// time for the gem page, the hunter's submissions still in review, other
+/// hunters' reliability, and the reliability leaderboard.
 ///
 /// A thin client — every number is computed by the backend. Each of the three
 /// reads keeps its own loading and error state, so a failed leaderboard never
 /// blanks a loaded board. A failed refresh keeps the last good data and sets
 /// the error beside it.
 class HunterBoardStore extends ChangeNotifier {
-  HunterBoardStore({HunterReliabilityApiRepository? repository})
-      : _repository = repository ?? HunterReliabilityApiRepository();
+  HunterBoardStore({
+    HunterReliabilityApiRepository? repository,
+    ProjectProposalsApiRepository? proposalsRepository,
+  })  : _repository = repository ?? HunterReliabilityApiRepository(),
+        _proposalsRepository =
+            proposalsRepository ?? ProjectProposalsApiRepository();
 
   static const int leaderboardPageSize = 20;
 
   final HunterReliabilityApiRepository _repository;
+  final ProjectProposalsApiRepository _proposalsRepository;
 
   // Board
   HunterBoard? _board;
@@ -28,6 +37,22 @@ class HunterBoardStore extends ChangeNotifier {
   HunterBoard? get board => _board;
   bool get isLoadingBoard => _isLoadingBoard;
   String? get boardError => _boardError;
+
+  // Gem pages
+  final Map<String, HunterGemDetail> _gems = {};
+  final Set<String> _loadingGems = {};
+  final Map<String, String> _gemErrors = {};
+
+  HunterGemDetail? gemFor(String projectId) => _gems[projectId];
+  bool isLoadingGem(String projectId) => _loadingGems.contains(projectId);
+  String? gemErrorFor(String projectId) => _gemErrors[projectId];
+
+  // Submissions in review
+  List<ProjectProposalModel> _pendingProposals = const [];
+  bool _hasLoadedProposals = false;
+
+  List<ProjectProposalModel> get pendingProposals => _pendingProposals;
+  bool get hasLoadedProposals => _hasLoadedProposals;
 
   // Reliability by profile
   final Map<String, HunterReliability> _reliability = {};
@@ -72,6 +97,41 @@ class HunterBoardStore extends ChangeNotifier {
     } finally {
       _isLoadingBoard = false;
       notifyListeners();
+    }
+  }
+
+  /// Loads one gem for the gem page. A failed refresh keeps the last good
+  /// copy beside the error.
+  Future<void> loadGem(String projectId) async {
+    final id = projectId.trim();
+    if (id.isEmpty || _loadingGems.contains(id)) return;
+    _loadingGems.add(id);
+    _gemErrors.remove(id);
+    notifyListeners();
+    try {
+      _gems[id] = await _repository.fetchGem(id);
+    } catch (error) {
+      _gemErrors[id] = describeApiError(
+        error,
+        fallback: 'Could not load this gem. Please try again.',
+      );
+    } finally {
+      _loadingGems.remove(id);
+      notifyListeners();
+    }
+  }
+
+  /// `GET /project-proposals/mine?status=pending`. A failure leaves the last
+  /// list in place: a review card is a courtesy, not the board.
+  Future<void> loadPendingProposals() async {
+    try {
+      final proposals = await _proposalsRepository.listMine(status: 'pending');
+      _pendingProposals =
+          proposals.where((p) => p.isPending).toList(growable: false);
+      _hasLoadedProposals = true;
+      notifyListeners();
+    } catch (_) {
+      // Keep what we had.
     }
   }
 
@@ -125,6 +185,10 @@ class HunterBoardStore extends ChangeNotifier {
   void clear() {
     _board = null;
     _boardError = null;
+    _gems.clear();
+    _gemErrors.clear();
+    _pendingProposals = const [];
+    _hasLoadedProposals = false;
     _reliability.clear();
     _reliabilityErrors.clear();
     _leaderboard = const [];

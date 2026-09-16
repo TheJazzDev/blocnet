@@ -98,7 +98,14 @@ class HunterReliability {
     this.tipsCurrencyCode,
     this.tipsCurrencyDecimals,
     this.computedAt,
+    this.responseAnswered,
+    this.responseAsked,
+    this.escalatesAtWaiting = defaultEscalatesAtWaiting,
   });
+
+  /// Where the backend puts a gem in the reassignment queue when the field is
+  /// missing from an older payload.
+  static const int defaultEscalatesAtWaiting = 50;
 
   final String profileId;
   final String? username;
@@ -121,6 +128,14 @@ class HunterReliability {
   final int openReports;
   final DateTime? computedAt;
 
+  /// Asks that got an update within a week, and asks in total. Null on a
+  /// backend that predates the fields; [response] is the share either way.
+  final int? responseAnswered;
+  final int? responseAsked;
+
+  /// Members waiting at which a gem is queued for reassignment.
+  final int escalatesAtWaiting;
+
   factory HunterReliability.fromApi(Map<String, dynamic> json) {
     return HunterReliability(
       profileId: jsonString(json['profileId']),
@@ -141,6 +156,12 @@ class HunterReliability {
       membersWaiting: jsonInt(json['membersWaiting']),
       openReports: jsonInt(json['openReports']),
       computedAt: jsonDateOrNull(json['computedAt']),
+      responseAnswered: jsonIntOrNull(json['responseAnswered']),
+      responseAsked: jsonIntOrNull(json['responseAsked']),
+      escalatesAtWaiting: jsonInt(
+        json['escalatesAtWaiting'],
+        fallback: defaultEscalatesAtWaiting,
+      ),
     );
   }
 
