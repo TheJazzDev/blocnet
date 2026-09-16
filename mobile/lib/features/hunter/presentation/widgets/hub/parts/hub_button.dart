@@ -36,49 +36,58 @@ class HubButton extends StatelessWidget {
       HubButtonTone.outline => (AppColors.zincStrong, AppColors.borderSubtle),
       HubButtonTone.warn => (AppColors.quietOrange, warnOutline),
     };
+    // A null onTap (and not busy) reads as disabled.
+    final disabled = onTap == null && !busy;
     return Semantics(
       button: true,
+      enabled: !disabled,
       child: GestureDetector(
         onTap: busy ? null : onTap,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          height: small ? 34 : 40,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: filled ? AppColors.hunterFill : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: outline == null ? null : Border.all(color: outline),
-          ),
-          child: busy
-              ? SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: foreground,
-                  ),
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (icon != null) ...[
-                      Icon(icon, size: 16, color: foreground),
-                      const SizedBox(width: 6),
-                    ],
-                    Flexible(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style:
-                            HubType.meta(foreground, weight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
+        child: Opacity(
+          opacity: disabled ? 0.45 : 1,
+          child: _body(filled, foreground, outline),
         ),
       ),
+    );
+  }
+
+  Widget _body(bool filled, Color foreground, Color? outline) {
+    return Container(
+      height: small ? 34 : 40,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: filled ? AppColors.hunterFill : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        border: outline == null ? null : Border.all(color: outline),
+      ),
+      child: busy
+          ? SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: foreground,
+              ),
+            )
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: foreground),
+                  const SizedBox(width: 6),
+                ],
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: HubType.meta(foreground, weight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
