@@ -9,8 +9,7 @@ import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/comments_store.dart';
 import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/services/engagement/levels_store.dart';
-import 'package:blocnet/services/projects/update_bookmarks_store.dart';
-import 'package:blocnet/services/projects/update_likes_store.dart';
+import 'package:blocnet/services/projects/update_reactions_store.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_card_content.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_card_emphasis.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
@@ -40,33 +39,31 @@ class FeedCard extends StatefulWidget {
 
 class _FeedCardState extends State<FeedCard>
     with SingleTickerProviderStateMixin {
-  bool _isBookmarked = false;
   bool _isCommented = false;
-  bool _isLiked = false;
-  int _likeCount = 0;
   int _commentCount = 0;
-  int _bookmarkCount = 0;
   UserLevelModel? _resolvedAuthorLevel;
   String? _resolvedAuthorId;
   late final AnimationController _likePulseController;
 
   Update get post => widget.post;
 
-  void _syncCountsFromPost({bool? likedOverride}) {
-    final liked = likedOverride ?? _isLiked;
-    final baseLikeCount = post.likesCount;
-    _likeCount = liked && baseLikeCount < 1 ? 1 : baseLikeCount;
+  /// Likes and saves live on the server; this store layers the member's
+  /// in-flight toggles over the post. Null only in previews/tests that do not
+  /// provide it, where the card shows the post as it came.
+  UpdateReactionsStore? _reactionsStore(BuildContext context,
+      {bool listen = false}) {
+    try {
+      return listen
+          ? context.watch<UpdateReactionsStore>()
+          : context.read<UpdateReactionsStore>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _syncCountsFromPost() {
     _commentCount = post.commentsCount;
     _isCommented = _isCommented || post.isCommented;
-    // Don't sync bookmark count from server if we have a local bookmark state
-    // because bookmarks are local-only and server always returns 0
-    final shouldPreserveLocalCount = _isBookmarked && _bookmarkCount > 0;
-    _bookmarkCount = shouldPreserveLocalCount
-        ? _bookmarkCount
-        : UpdateBookmarksStore.resolveBookmarkCount(
-            post.id,
-            post.bookmarksCount,
-          );
   }
 
   @override
@@ -77,8 +74,6 @@ class _FeedCardState extends State<FeedCard>
       duration: const Duration(milliseconds: 280),
     );
     _syncCountsFromPost();
-    _loadBookmarkState();
-    _loadLikeState();
     _syncCommentStateFromStore();
     _ensureAuthorLevel();
   }
@@ -87,20 +82,14 @@ class _FeedCardState extends State<FeedCard>
   void didUpdateWidget(covariant FeedCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     final postChanged = oldWidget.post.id != widget.post.id;
-    final countsChanged = oldWidget.post.likesCount != widget.post.likesCount ||
-        oldWidget.post.commentsCount != widget.post.commentsCount ||
-        oldWidget.post.bookmarksCount != widget.post.bookmarksCount;
+    final countsChanged =
+        oldWidget.post.commentsCount != widget.post.commentsCount;
 
     if (postChanged) {
-      _isLiked = false;
       _isCommented = false;
-      _likeCount = 0;
       _commentCount = 0;
-      _bookmarkCount = 0;
       _resolvedAuthorLevel = null;
       _resolvedAuthorId = null;
-      _loadBookmarkState();
-      _loadLikeState();
       _ensureAuthorLevel();
     }
 
@@ -136,27 +125,6 @@ class _FeedCardState extends State<FeedCard>
 
     _resolvedAuthorId = authorId;
     _resolvedAuthorLevel = cachedLevel;
-  }
-
-  Future<void> _loadBookmarkState() async {
-    final bookmarked = await UpdateBookmarksStore.isBookmarked(post.id);
-    if (!mounted) return;
-    setState(() {
-      _isBookmarked = bookmarked;
-      // Bookmarks are local-only today; preserve a visible count after reload.
-      if (bookmarked && _bookmarkCount < 1) {
-        _bookmarkCount = 1;
-      }
-    });
-  }
-
-  Future<void> _loadLikeState() async {
-    final liked = await UpdateLikesStore.isLiked(post.id);
-    if (!mounted) return;
-    setState(() {
-      _isLiked = liked;
-      _syncCountsFromPost(likedOverride: liked);
-    });
   }
 
   Future<void> _openDetails(
@@ -226,19 +194,18 @@ class _FeedCardState extends State<FeedCard>
   }
 
   Future<void> _handleLikeTap(BuildContext context) async {
-    try {
-      HapticFeedback.selectionClick();
-      final next = await UpdateLikesStore.toggle(post.id);
-      if (!mounted) return;
-      setState(() {
-        _isLiked = next;
-        _likeCount =
-            next ? _likeCount + 1 : (_likeCount > 0 ? _likeCount - 1 : 0);
-      });
+    final store = _reactionsStore(context);
+    if (store == null) return;
+    HapticFeedback.selectionClick();
+    // The store flips the heart and count at once; the pulse plays with it.
+    if (!store.isLiked(post)) {
       _likePulseController
         ..stop()
         ..reset()
         ..forward();
+    }
+    try {
+      await store.toggleLike(post);
     } catch (_) {
       if (!context.mounted) return;
       AppSnackbar.showError(context, 'Could not like update right now');
@@ -279,18 +246,12 @@ class _FeedCardState extends State<FeedCard>
   }
 
   Future<void> _handleBookmarkTap() async {
+    final store = _reactionsStore(context);
+    if (store == null) return;
+    HapticFeedback.selectionClick();
     try {
-      HapticFeedback.selectionClick();
-      final next = await UpdateBookmarksStore.toggle(post.id);
+      final next = await store.toggleBookmark(post);
       if (!mounted) return;
-      final nextCount = next
-          ? _bookmarkCount + 1
-          : (_bookmarkCount > 0 ? _bookmarkCount - 1 : 0);
-      UpdateBookmarksStore.setBookmarkCountOverride(post.id, nextCount);
-      setState(() {
-        _isBookmarked = next;
-        _bookmarkCount = nextCount;
-      });
       AppSnackbar.showSuccess(
         context,
         next ? 'Update bookmarked' : 'Bookmark removed',
@@ -345,6 +306,13 @@ class _FeedCardState extends State<FeedCard>
     // through a cache.
     if (author == null || project == null) return const SizedBox.shrink();
 
+    final reactions = _reactionsStore(context, listen: true);
+    final isLiked = reactions?.isLiked(post) ?? post.likedByMe;
+    final likeCount = reactions?.likesCount(post) ?? post.likesCount;
+    final isBookmarked = reactions?.isBookmarked(post) ?? post.bookmarkedByMe;
+    final bookmarkCount =
+        reactions?.bookmarksCount(post) ?? post.bookmarksCount;
+
     final emphasis = FeedCardEmphasis.of(post.priority);
     final dense = widget.layout == FeedCardLayout.list;
     final pad = dense ? AppSpace.md : AppSpace.lg;
@@ -391,18 +359,18 @@ class _FeedCardState extends State<FeedCard>
                 ),
               ]).animate(_likePulseController),
               child: Icon(
-                _isLiked
+                isLiked
                     ? Icons.favorite_rounded
                     : Icons.favorite_border_rounded,
                 size: AppIcon.md,
-                color: _isLiked ? AppColors.primary400 : AppColors.textMuted,
+                color: isLiked ? AppColors.primary400 : AppColors.textMuted,
               ),
             ),
-            isBookmarked: _isBookmarked,
+            isBookmarked: isBookmarked,
             isCommented: _isCommented,
-            likeCount: _likeCount,
+            likeCount: likeCount,
             commentCount: _commentCount,
-            bookmarkCount: _bookmarkCount,
+            bookmarkCount: bookmarkCount,
             onLike: () => _handleLikeTap(context),
             onComment: () => _handleCommentTap(context),
             onShare: () => _handleShareTap(context),

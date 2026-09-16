@@ -6,13 +6,14 @@ import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
-import 'package:blocnet/services/projects/update_bookmarks_store.dart';
-import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/services/projects/update_reactions_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// "Saved" tab: updates the user bookmarked.
+/// "Saved" tab: updates the member saved, as the server holds them
+/// (`GET /me/bookmarks/updates`), newest save first.
 class ProfileSavedTab extends StatefulWidget {
   const ProfileSavedTab({super.key, required this.accent});
 
@@ -23,31 +24,23 @@ class ProfileSavedTab extends StatefulWidget {
 }
 
 class _ProfileSavedTabState extends State<ProfileSavedTab> {
-  Set<String> _bookmarkedIds = <String>{};
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
-    _loadBookmarkIds();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<UpdatesStore>().fetchUpdatesOnce();
+      // Always re-read on open: saves made elsewhere (another device) count.
+      context.read<UpdateReactionsStore>().refreshSaved();
     });
   }
 
-  Future<void> _loadBookmarkIds() async {
-    final ids = await UpdateBookmarksStore.bookmarkedIds();
-    if (!mounted) return;
-    setState(() {
-      _bookmarkedIds = ids;
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _remove(String updateId) async {
-    await UpdateBookmarksStore.remove(updateId);
-    await _loadBookmarkIds();
+  Future<void> _remove(Update update) async {
+    try {
+      await context.read<UpdateReactionsStore>().toggleBookmark(update);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, 'Could not update bookmark');
+    }
   }
 
   void _openUpdate(Update update) {
@@ -74,17 +67,25 @@ class _ProfileSavedTabState extends State<ProfileSavedTab> {
 
   @override
   Widget build(BuildContext context) {
-    final updatesStore = context.watch<UpdatesStore>();
+    final reactions = context.watch<UpdateReactionsStore>();
     final isCardMode =
         context.watch<FeedViewModeStore>().mode == FeedViewMode.card;
-    final bookmarks = updatesStore.updates
-        .where((update) => _bookmarkedIds.contains(update.id))
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final bookmarks = reactions.savedUpdates;
 
-    if ((_isLoading || updatesStore.isFetching) && bookmarks.isEmpty) {
+    if ((reactions.isLoadingSaved || !reactions.hasLoadedSaved) &&
+        bookmarks.isEmpty &&
+        reactions.savedError == null) {
       return Center(
         child: CircularProgressIndicator(color: widget.accent, strokeWidth: 2),
+      );
+    }
+
+    if (bookmarks.isEmpty && reactions.savedError != null) {
+      // Saying "nothing saved" here would be false; the list did not load.
+      return const ProfileTabEmptyState(
+        icon: Icons.cloud_off_rounded,
+        title: 'Could not load your saved updates',
+        hint: 'Check your connection and open this tab again.',
       );
     }
 
@@ -110,7 +111,7 @@ class _ProfileSavedTabState extends State<ProfileSavedTab> {
             update: update,
             accent: widget.accent,
             isCardMode: isCardMode,
-            onRemove: () => _remove(update.id),
+            onRemove: () => _remove(update),
           ),
         );
       },

@@ -22,8 +22,7 @@ import 'package:blocnet/services/api/api_client.dart';
 /// * signing out or switching user calls [reset], so one account never reads
 ///   another's snapshot.
 ///
-/// Mirrors the static-cache shape already used by `ProjectFollowsStore` and
-/// `UpdateLikesStore`.
+/// Mirrors the static-cache shape already used by `ProjectFollowsStore`.
 class MeSnapshotCache {
   MeSnapshotCache._();
 
