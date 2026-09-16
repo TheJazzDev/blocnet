@@ -32,7 +32,8 @@
     "turnkey:resolve-api-key-id": "tsx scripts/turnkey/resolve-api-key-id.ts",
     "loadtest:comments": "k6 run load-tests/comments-hot-threads.k6.js",
     "levels:sync-icons": "tsx scripts/sync-level-badge-icons.ts",
-    "mining:backfill-expired-claims": "tsx scripts/backfill-expired-mining-claims.ts"
+    "mining:backfill-expired-claims": "tsx scripts/backfill-expired-mining-claims.ts",
+    "bnp:backfill-reward-rows": "tsx scripts/backfill-bnp-reward-rows.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

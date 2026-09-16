@@ -28,7 +28,11 @@ describe('QuestsService.verifyQuestSubmission — race condition on double-appro
     badge: { findUnique: jest.fn() },
     tipCurrency: { upsert: jest.fn() },
     tipAccount: { upsert: jest.fn(), findUnique: jest.fn(), updateMany: jest.fn() },
+    tipTransaction: { findUnique: jest.fn(), create: jest.fn() },
   };
+
+  // In-memory TipTransaction table so idempotency is exercised for real.
+  let tipRows: Array<Record<string, any>> = [];
 
   const prisma = {
     questSubmission: { findUnique: jest.fn() },
@@ -59,7 +63,18 @@ describe('QuestsService.verifyQuestSubmission — race condition on double-appro
     );
     prisma.questSubmission.findUnique.mockResolvedValue(submissionFixture);
     tx.profile.update.mockResolvedValue({});
-    tx.miningPointLedger.create.mockResolvedValue({});
+    tx.miningPointLedger.create.mockResolvedValue({ id: 'ledger-new' });
+    tx.tipAccount.upsert.mockResolvedValue({ id: 'acct-1' });
+    tipRows = [];
+    tx.tipTransaction.findUnique.mockImplementation(
+      async ({ where }: any) =>
+        tipRows.find((row) => row.idempotencyKey === where.idempotencyKey) ??
+        null,
+    );
+    tx.tipTransaction.create.mockImplementation(async ({ data }: any) => {
+      tipRows.push(data);
+      return data;
+    });
   });
 
   it('only the first of two near-simultaneous approve calls succeeds; only one notification is sent', async () => {
@@ -84,6 +99,9 @@ describe('QuestsService.verifyQuestSubmission — race condition on double-appro
 
     const results = await Promise.allSettled([first, second]);
 
+    // One approval, one BNP credit, one reward row.
+    expect(tx.tipAccount.upsert).toHaveBeenCalledTimes(1);
+    expect(tipRows).toHaveLength(1);
     expect(results[0].status).toBe('fulfilled');
     expect(results[1].status).toBe('rejected');
     if (results[1].status === 'rejected') {
@@ -171,7 +189,10 @@ describe('QuestsService.verifyQuestSubmission — race condition on double-appro
     it('revoking a quest debits the tip account, never below zero', async () => {
       tx.miningPointLedger.findFirst.mockResolvedValue({ id: 'ledger-1' });
       tx.profile.findUnique.mockResolvedValue({ miningClaimedPoints: 100n });
-      tx.tipAccount.findUnique.mockResolvedValue({ balanceAtomic: 20_000n });
+      tx.tipAccount.findUnique.mockResolvedValue({
+        id: 'acct-1',
+        balanceAtomic: 20_000n,
+      });
       tx.tipAccount.updateMany.mockResolvedValue({ count: 1 });
 
       await (service as any).revokeQuestRewards(
@@ -192,6 +213,148 @@ describe('QuestsService.verifyQuestSubmission — race condition on double-appro
         },
         data: { balanceAtomic: { decrement: 20_000n } },
       });
+    });
+
+    it('an approved quest writes exactly one reward row keyed by the submission', async () => {
+      tx.questSubmission.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.verifyQuestSubmission(
+        { submissionId: 'submission-1' } as any,
+        'admin-1',
+        true,
+      );
+
+      expect(tipRows).toEqual([
+        expect.objectContaining({
+          type: 'reward',
+          senderUserId: 'user-1',
+          recipientUserId: 'user-1',
+          senderAccountId: 'acct-1',
+          recipientAccountId: 'acct-1',
+          currencyCode: 'BNP',
+          amountAtomic: 35_000n,
+          feeAtomic: 0n,
+          totalDebitAtomic: 0n,
+          contextType: 'quest_reward',
+          contextId: 'submission-1',
+          idempotencyKey: 'quest-reward:submission-1',
+        }),
+      ]);
+    });
+
+    it('a repeated award for the same submission neither credits nor writes again', async () => {
+      const award = () =>
+        (service as any).awardQuestRewards(tx, 'user-1', questFixture, {
+          submissionId: 'submission-1',
+        });
+
+      await award();
+      await award();
+
+      expect(tx.tipAccount.upsert).toHaveBeenCalledTimes(1);
+      expect(tipRows).toHaveLength(1);
+    });
+
+    it('an auto-completed quest keys its reward row by the ledger row', async () => {
+      await (service as any).awardQuestRewards(tx, 'user-1', questFixture);
+
+      expect(tipRows).toEqual([
+        expect.objectContaining({
+          type: 'reward',
+          contextType: 'quest_reward',
+          contextId: 'ledger-new',
+          idempotencyKey: 'quest-reward:ledger:ledger-new',
+        }),
+      ]);
+    });
+
+    it('a revoke writes one adjustment row for the amount actually debited', async () => {
+      tx.miningPointLedger.findFirst.mockResolvedValue({ id: 'ledger-1' });
+      tx.profile.findUnique.mockResolvedValue({ miningClaimedPoints: 100n });
+      tx.tipAccount.findUnique.mockResolvedValue({
+        id: 'acct-1',
+        balanceAtomic: 20_000n,
+      });
+      tx.tipAccount.updateMany.mockResolvedValue({ count: 1 });
+
+      const revoke = () =>
+        (service as any).revokeQuestRewards(
+          tx,
+          'user-1',
+          questFixture,
+          'submission-1',
+          'fraud',
+        );
+      await revoke();
+      await revoke();
+
+      expect(tx.tipAccount.updateMany).toHaveBeenCalledTimes(1);
+      expect(tipRows).toEqual([
+        expect.objectContaining({
+          type: 'adjustment',
+          senderUserId: 'user-1',
+          recipientUserId: 'user-1',
+          amountAtomic: 20_000n,
+          contextType: 'quest_reward_revoked',
+          contextId: 'submission-1',
+          idempotencyKey: 'quest-reward-revoked:submission-1',
+        }),
+      ]);
+    });
+
+    it('a revoke that debits nothing writes no row', async () => {
+      tx.miningPointLedger.findFirst.mockResolvedValue({ id: 'ledger-1' });
+      tx.profile.findUnique.mockResolvedValue({ miningClaimedPoints: 100n });
+      tx.tipAccount.findUnique.mockResolvedValue({
+        id: 'acct-1',
+        balanceAtomic: 0n,
+      });
+
+      await (service as any).revokeQuestRewards(
+        tx,
+        'user-1',
+        questFixture,
+        'submission-1',
+        'fraud',
+      );
+
+      expect(tipRows).toHaveLength(0);
+    });
+
+    it('only one of two concurrent revokes reverses the reward', async () => {
+      prisma.questSubmission.findUnique.mockResolvedValue({
+        ...submissionFixture,
+        verificationStatus: 'approved',
+      });
+      tx.questSubmission.updateMany
+        .mockResolvedValueOnce({ count: 1 })
+        .mockResolvedValueOnce({ count: 0 });
+      tx.userQuest.update.mockResolvedValue({});
+      tx.miningPointLedger.findFirst.mockResolvedValue({ id: 'ledger-1' });
+      tx.profile.findUnique.mockResolvedValue({ miningClaimedPoints: 100n });
+      tx.tipAccount.findUnique.mockResolvedValue({
+        id: 'acct-1',
+        balanceAtomic: 90_000n,
+      });
+      tx.tipAccount.updateMany.mockResolvedValue({ count: 1 });
+
+      const revoke = () =>
+        service.revokeQuestSubmission('submission-1', 'admin-1', {
+          revocationReason: 'fraud',
+        } as any);
+      const results = await Promise.allSettled([revoke(), revoke()]);
+
+      expect(results.map((result) => result.status).sort()).toEqual([
+        'fulfilled',
+        'rejected',
+      ]);
+      expect(tx.questSubmission.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'submission-1', verificationStatus: 'approved' },
+        }),
+      );
+      expect(tx.tipAccount.updateMany).toHaveBeenCalledTimes(1);
+      expect(tipRows).toHaveLength(1);
     });
   });
 });

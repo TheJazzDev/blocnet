@@ -247,6 +247,56 @@ describe('HunterReliabilityService', () => {
     });
   });
 
+  describe('tipsReceivedTotal (F-63)', () => {
+    it('ignores mining/quest reward rows, which also name the hunter as recipient', async () => {
+      const { service, prisma } = createService({
+        profiles: [profile(HUNTER, 'ada')],
+        projects: [],
+      });
+      const ledger = [
+        {
+          type: 'tip',
+          recipientUserId: HUNTER,
+          currencyCode: 'BNP',
+          amountAtomic: 700n,
+        },
+        {
+          type: 'reward',
+          recipientUserId: HUNTER,
+          currencyCode: 'BNP',
+          amountAtomic: 120_000n,
+        },
+      ];
+      prisma.tipTransaction.groupBy.mockImplementation(
+        async ({ where }: any) => {
+          const rows = ledger.filter(
+            (row) =>
+              where.recipientUserId.in.includes(row.recipientUserId) &&
+              row.currencyCode === where.currencyCode &&
+              (where.type === undefined || row.type === where.type),
+          );
+          return rows.length === 0
+            ? []
+            : [
+                {
+                  recipientUserId: HUNTER,
+                  _sum: {
+                    amountAtomic: rows.reduce(
+                      (t, row) => t + row.amountAtomic,
+                      0n,
+                    ),
+                  },
+                },
+              ];
+        },
+      );
+
+      const result = await service.getReliability(HUNTER);
+
+      expect(result.tipsReceivedTotal).toBe('700');
+    });
+  });
+
   describe('getLeaderboard', () => {
     function leaderboardService() {
       return createService({

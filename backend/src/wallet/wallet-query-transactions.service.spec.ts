@@ -144,6 +144,112 @@ describe('WalletQueryService.listWalletTransactions (BNP)', () => {
     });
   });
 
+  describe('minted BNP (F-63)', () => {
+    // Reward and reversal rows name the member on both sides.
+    const selfRow = (overrides: Record<string, unknown>) =>
+      pointsRow({
+        type: TipTransactionType.reward,
+        senderUserId: ME,
+        recipientUserId: ME,
+        sender: party(ME, 'me'),
+        recipient: party(ME, 'me'),
+        amountAtomic: 120_000n,
+        feeAtomic: 0n,
+        totalDebitAtomic: 0n,
+        note: null,
+        ...overrides,
+      });
+
+    it('shows mining and quest rewards as received, with the credited amount', async () => {
+      prisma.tipTransaction.findMany.mockResolvedValue([
+        selfRow({
+          id: 'tt-mine',
+          contextType: 'mining_claim',
+          contextId: 'session-1',
+        }),
+        selfRow({
+          id: 'tt-quest',
+          amountAtomic: 35_000n,
+          contextType: 'quest_reward',
+          contextId: 'submission-1',
+        }),
+      ]);
+
+      const rows = await service.listWalletTransactions(ME, {
+        asset: 'BNP',
+        limit: 10,
+      });
+
+      expect(rows[0]).toEqual({
+        id: 'tt-mine',
+        asset: 'BNP',
+        direction: 'incoming',
+        reason: 'bnp_reward',
+        amount: '120',
+        feeAmount: '0',
+        debit: { userId: null, accountType: 'system' },
+        credit: { userId: ME, accountType: 'user' },
+        referenceId: 'tt-mine',
+        metadata: {
+          source: 'bnp_ledger',
+          ledgerType: 'reward',
+          label: 'Mining reward',
+          note: null,
+          contextType: 'mining_claim',
+          contextId: 'session-1',
+        },
+        counterparty: null,
+        createdAt: new Date('2026-09-16T10:00:00Z'),
+      });
+      expect(rows[1]).toMatchObject({
+        direction: 'incoming',
+        reason: 'bnp_reward',
+        amount: '35',
+        feeAmount: '0',
+        metadata: { label: 'Quest reward' },
+        counterparty: null,
+      });
+    });
+
+    it('never reads a reward amount from totalDebitAtomic', async () => {
+      prisma.tipTransaction.findMany.mockResolvedValue([
+        selfRow({ contextType: 'mining_claim', totalDebitAtomic: 999n }),
+      ]);
+
+      const [row] = await service.listWalletTransactions(ME, {
+        asset: 'BNP',
+      });
+
+      expect(row).toMatchObject({ direction: 'incoming', amount: '120' });
+    });
+
+    it('shows a revoked quest reward as a debit', async () => {
+      prisma.tipTransaction.findMany.mockResolvedValue([
+        selfRow({
+          type: TipTransactionType.adjustment,
+          amountAtomic: 20_000n,
+          contextType: 'quest_reward_revoked',
+          contextId: 'submission-1',
+        }),
+      ]);
+
+      const [row] = await service.listWalletTransactions(ME, {
+        asset: 'BNP',
+      });
+
+      expect(row).toMatchObject({
+        direction: 'outgoing',
+        reason: 'bnp_adjustment',
+        amount: '20',
+        feeAmount: '0',
+        debit: { userId: ME, accountType: 'user' },
+        credit: { userId: null, accountType: 'system' },
+        metadata: { label: 'Quest reward reversed' },
+        counterparty: null,
+      });
+    });
+  });
+
   it('merges on-chain and BNP rows newest-first when no asset is given', async () => {
     prisma.ledgerEntry.findMany.mockResolvedValue([
       ledgerEntry('le-new', '2026-09-16T12:00:00Z'),

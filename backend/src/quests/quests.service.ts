@@ -21,7 +21,9 @@ import { MiningConfigService } from '../mining/mining-config.service';
 import {
   creditBnpTipAccount,
   debitBnpTipAccount,
-} from '../mining/mining-settlement';
+  questRewardContext,
+  questRewardRevokedContext,
+} from '../mining/bnp-tip-account';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestDto } from './dto/create-quest.dto';
@@ -889,8 +891,14 @@ export class QuestsService {
     }
 
     const rewards = await this.prisma.$transaction(async (tx) => {
-      await tx.questSubmission.update({
-        where: { id: submission.id },
+      // Conditional claim, like approval: the status check above runs outside
+      // the transaction, so two concurrent revokes could both pass it. Only
+      // one can flip `approved` -> `rejected`, so rewards reverse once.
+      const claimed = await tx.questSubmission.updateMany({
+        where: {
+          id: submission.id,
+          verificationStatus: QuestVerificationStatus.approved,
+        },
         data: {
           verificationStatus: QuestVerificationStatus.rejected,
           verifiedBy: revokedBy,
@@ -899,6 +907,11 @@ export class QuestsService {
           rejectionReason: reason,
         },
       });
+      if (claimed.count === 0) {
+        throw new BadRequestException(
+          'Only approved submissions can be revoked',
+        );
+      }
 
       await tx.userQuest.update({
         where: { id: submission.userQuestId },
@@ -977,7 +990,7 @@ export class QuestsService {
     },
   ) {
     if (quest.rewardPoints > 0) {
-      await tx.miningPointLedger.create({
+      const rewardLedger = await tx.miningPointLedger.create({
         data: {
           userId,
           source: MiningPointSource.quest_reward,
@@ -1005,7 +1018,24 @@ export class QuestsService {
 
       // Same credit a mining claim makes, so the wallet BNP balance and
       // miningClaimedPoints never drift apart (F-52).
-      await creditBnpTipAccount(tx, userId, quest.rewardPoints);
+      await creditBnpTipAccount(
+        tx,
+        userId,
+        quest.rewardPoints,
+        questRewardContext(
+          options?.submissionId
+            ? { submissionId: options.submissionId }
+            : { ledgerId: rewardLedger.id },
+          {
+            metadata: {
+              questId: quest.id,
+              questSlug: quest.slug,
+              questTitle: quest.title,
+              miningLedgerId: rewardLedger.id,
+            },
+          },
+        ),
+      );
     }
 
     if (quest.rewardBadgeId) {
@@ -1090,7 +1120,20 @@ export class QuestsService {
         },
       });
 
-      await debitBnpTipAccount(tx, userId, quest.rewardPoints);
+      await debitBnpTipAccount(
+        tx,
+        userId,
+        quest.rewardPoints,
+        questRewardRevokedContext(submissionId, {
+          metadata: {
+            questId: quest.id,
+            questSlug: quest.slug,
+            questTitle: quest.title,
+            reason,
+            reversedLedgerId: rewardLedger?.id ?? null,
+          },
+        }),
+      );
 
       pointsReversed = Math.abs(quest.rewardPoints);
     }

@@ -109,6 +109,7 @@ export function createFakeMiningDb(options: FakeMiningDbOptions = {}) {
   };
   const ledger: Array<Record<string, unknown>> = [];
   const tipAccounts: Array<Record<string, unknown>> = [];
+  const tipTransactions: Array<Record<string, any>> = [];
   let sessionSeq = sessions.length;
   let checkpointSeq = checkpoints.length;
 
@@ -302,7 +303,30 @@ export function createFakeMiningDb(options: FakeMiningDbOptions = {}) {
     tipAccount: {
       upsert: jest.fn(async ({ create, update }: any) => {
         tipAccounts.push(update ?? create);
-        return {};
+        return { id: `tip-account-${userId}` };
+      }),
+    },
+    tipTransaction: {
+      findUnique: jest.fn(async ({ where }: any) => {
+        const row = tipTransactions.find(
+          (item) => item.idempotencyKey === where?.idempotencyKey,
+        );
+        return row ? { ...row } : null;
+      }),
+      create: jest.fn(async ({ data }: any) => {
+        if (
+          tipTransactions.some(
+            (item) => item.idempotencyKey === data.idempotencyKey,
+          )
+        ) {
+          // Mirrors TipTransaction.idempotencyKey @unique.
+          throw Object.assign(new Error('Unique constraint failed'), {
+            code: 'P2002',
+          });
+        }
+        const row = { id: `tip-tx-${tipTransactions.length + 1}`, ...data };
+        tipTransactions.push(row);
+        return { ...row };
       }),
     },
     miningConfig: {
@@ -361,5 +385,14 @@ export function createFakeMiningDb(options: FakeMiningDbOptions = {}) {
     return rawSessionCreate(args);
   }) as typeof rawSessionCreate;
 
-  return { client, sessions, checkpoints, ledger, tipAccounts, profile, events };
+  return {
+    client,
+    sessions,
+    checkpoints,
+    ledger,
+    tipAccounts,
+    tipTransactions,
+    profile,
+    events,
+  };
 }
