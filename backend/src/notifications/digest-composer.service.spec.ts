@@ -1,7 +1,14 @@
 import { DigestComposerService } from './digest-composer.service';
+import type { ConfigService } from '@nestjs/config';
+import { buildBlocnetLink } from './utils/blocnet-link.util';
+import { EmailTemplateService } from './email-template.service';
 
 describe('DigestComposerService', () => {
-  const service = new DigestComposerService();
+  const service = new DigestComposerService(
+    new EmailTemplateService({
+      get: () => undefined,
+    } as unknown as ConfigService),
+  );
 
   it('renders digest with capped sections and links', () => {
     const now = new Date('2026-02-25T08:00:00.000Z');
@@ -38,12 +45,12 @@ describe('DigestComposerService', () => {
     expect(result.subject).toContain('Your Blocnet Daily Digest');
     expect(result.html).toContain('Missed High Urgency Updates');
     expect(result.text).toContain(
-      'Open Blocnet App: https://blocnet.app/notifications',
+      `Open Blocnet App: ${buildBlocnetLink('notifications')}`,
     );
 
-    const updateLinks = result.html.match(/\/updates\//g) ?? [];
-    const projectLinks = result.html.match(/\/projects\//g) ?? [];
-    const communityLinks = result.html.match(/\/community\//g) ?? [];
+    const updateLinks = result.html.match(/%2Fupdates%2F/g) ?? [];
+    const projectLinks = result.html.match(/%2Fprojects%2F/g) ?? [];
+    const communityLinks = result.html.match(/%2Fcommunity%2F/g) ?? [];
     expect(updateLinks).toHaveLength(5);
     expect(projectLinks).toHaveLength(5);
     expect(communityLinks).toHaveLength(3);
@@ -88,6 +95,6 @@ describe('DigestComposerService', () => {
     });
 
     expect(result.subject).toContain('Your Blocnet Weekly Digest');
-    expect(result.text).toContain('Here’s what you missed in the last 7 days.');
+    expect(result.text).toContain("Here's what you missed in the last 7 days.");
   });
 });
