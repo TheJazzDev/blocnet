@@ -1,4 +1,5 @@
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
+import 'package:blocnet/features/hunter/data/models/pending_handover_model.dart';
 import 'package:blocnet/features/hunter/data/models/reliability_json.dart';
 
 /// One of the hunter's own updates on a gem, as the gem page lists it.
@@ -54,6 +55,7 @@ class HunterGemDetail {
     required this.gem,
     required this.updates,
     this.gapDays,
+    this.pendingHandover,
   });
 
   final HunterBoardGem gem;
@@ -63,13 +65,18 @@ class HunterGemDetail {
   /// drawing. Null otherwise.
   final int? gapDays;
 
+  /// The caller's open handover of this gem (`gem.pendingHandover`), if any.
+  final PendingHandover? pendingHandover;
+
   factory HunterGemDetail.fromApi(Map<String, dynamic> json) {
+    final gem = jsonMap(json['gem']);
     return HunterGemDetail(
-      gem: HunterBoardGem.fromApi(jsonMap(json['gem'])),
+      gem: HunterBoardGem.fromApi(gem),
       updates: jsonMapList(json['updates'])
           .map(HunterGemEvent.fromApi)
           .toList(growable: false),
       gapDays: jsonIntOrNull(json['gapDays']),
+      pendingHandover: PendingHandover.fromApi(gem['pendingHandover']),
     );
   }
 }
