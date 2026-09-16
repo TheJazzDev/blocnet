@@ -4,6 +4,17 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RuntimeFeatureFlagsService } from '../runtime-flags/runtime-feature-flags.service';
 import { EffectiveMiningConfig } from './mining-calculator.service';
 
+/**
+ * What GET/PATCH /admin/mining/config return (F-47). `enabled` and
+ * `referralsEnabled` are the raw stored values; the env kill-switches travel
+ * separately in `runtimeFlags`, so a console that saves what it loaded can
+ * never persist flag-ANDed values.
+ */
+export type AdminMiningConfig = EffectiveMiningConfig & {
+  runtimeFlags: { miningEnabled: boolean; referralsEnabled: boolean };
+  updatedAt: string;
+};
+
 export const DEFAULT_MINING_CONFIG: EffectiveMiningConfig = {
   enabled: true,
   referralsEnabled: true,
@@ -37,6 +48,25 @@ export class MiningConfigService {
         ...DEFAULT_MINING_CONFIG,
       },
     });
+  }
+
+  toAdminConfig(row: MiningConfig): AdminMiningConfig {
+    return {
+      enabled: row.enabled,
+      referralsEnabled: row.referralsEnabled,
+      cycleHours: row.cycleHours,
+      basePointsPerCycle: row.basePointsPerCycle,
+      perActiveReferralBoostBps: row.perActiveReferralBoostBps,
+      maxBoostBps: row.maxBoostBps,
+      activeReferralWindowHours: row.activeReferralWindowHours,
+      referralBindWindowHours: row.referralBindWindowHours,
+      claimWindowHours: row.claimWindowHours,
+      runtimeFlags: {
+        miningEnabled: this.runtimeFeatureFlagsService.isMiningEnabled(),
+        referralsEnabled: this.runtimeFeatureFlagsService.isReferralsEnabled(),
+      },
+      updatedAt: row.updatedAt.toISOString(),
+    };
   }
 
   withEnvFlagOverrides(config: MiningConfig): EffectiveMiningConfig {
