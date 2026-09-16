@@ -56,6 +56,7 @@ describe('updates.mapper', () => {
       _count: {
         comments: 4,
         likes: 7,
+        bookmarks: 2,
       },
       likes: [{ id: 'like-1' }],
       bookmarks: [],
@@ -68,6 +69,7 @@ describe('updates.mapper', () => {
     expect(result.admin.username).toBe('@hunter');
     expect(result.commentsCount).toBe(4);
     expect(result.likesCount).toBe(7);
+    expect(result.bookmarksCount).toBe(2);
     expect(result.likedByMe).toBe(true);
     expect(result.bookmarkedByMe).toBe(false);
     // The viewer rows only drive the flags; they are not echoed back.
@@ -146,6 +148,7 @@ describe('updates.mapper', () => {
 
     const result = toUpdateResponse(update);
     expect(result.likesCount).toBe(0);
+    expect(result.bookmarksCount).toBe(0);
     expect(result.likedByMe).toBe(false);
     expect(result.bookmarkedByMe).toBe(false);
   });
@@ -158,6 +161,10 @@ describe('updates.mapper', () => {
       take: 1,
     });
     expect(include.bookmarks).toEqual(include.likes);
-    expect(include._count.select).toEqual({ comments: true, likes: true });
+    expect(include._count.select).toEqual({
+      comments: true,
+      likes: true,
+      bookmarks: true,
+    });
   });
 });

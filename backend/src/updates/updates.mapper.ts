@@ -61,6 +61,7 @@ export const updateInclude = {
     select: {
       comments: true,
       likes: true,
+      bookmarks: true,
     },
   },
 } satisfies Prisma.UpdateInclude;
@@ -139,6 +140,7 @@ export function toUpdateResponse(
     secondaryTags: update.secondaryTags.map((row) => row.secondaryTag.name),
     commentsCount: update._count?.comments ?? 0,
     likesCount: update._count?.likes ?? 0,
+    bookmarksCount: update._count?.bookmarks ?? 0,
     likedByMe: (likes?.length ?? 0) > 0,
     bookmarkedByMe: (bookmarks?.length ?? 0) > 0,
     isCommented: options?.isCommented === true,
