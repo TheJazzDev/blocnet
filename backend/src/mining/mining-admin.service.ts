@@ -11,6 +11,38 @@ import {
   MiningConfigService,
 } from './mining-config.service';
 
+type ConfigSnapshot = Record<string, string | number | boolean | null>;
+
+/**
+ * F-65: record what each patched field was and became so the console can show
+ * a before -> after history. Only the keys in the patch are captured.
+ */
+export function buildConfigChangeDiff(
+  before: object,
+  after: object,
+  patch: UpdateMiningConfigDto,
+): { before: ConfigSnapshot; after: ConfigSnapshot } {
+  const pick = (source: object, key: string) => {
+    const value = (source as Record<string, unknown>)[key];
+    if (value instanceof Date) return value.toISOString();
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      return value;
+    }
+    return null;
+  };
+  const keys = Object.keys(patch).filter(
+    (key) => (patch as Record<string, unknown>)[key] !== undefined,
+  );
+  return {
+    before: Object.fromEntries(keys.map((key) => [key, pick(before, key)])),
+    after: Object.fromEntries(keys.map((key) => [key, pick(after, key)])),
+  };
+}
+
 @Injectable()
 export class MiningAdminService {
   constructor(
@@ -43,7 +75,10 @@ export class MiningAdminService {
       action: 'admin.mining.config.update',
       resourceType: 'mining_config',
       resourceId: row.id,
-      metadata: { ...patch },
+      metadata: {
+        ...patch,
+        ...buildConfigChangeDiff(defaultRow, row, patch),
+      },
     });
 
     return this.miningConfigService.toAdminConfig(row);

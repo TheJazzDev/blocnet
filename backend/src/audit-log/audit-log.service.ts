@@ -23,6 +23,8 @@ type AuditInput = {
 type ListAuditLogOptions = {
   /** When false, drop read-only admin view events (actions ending in ".view"). */
   includeViews?: boolean;
+  /** When set, only return entries whose action is one of these exact names. */
+  actions?: string[];
 };
 
 /**
@@ -150,6 +152,9 @@ export class AuditLogService {
     const where = this.combineWhere([
       this.buildVisibilityWhere(user),
       options.includeViews === false ? VIEW_EVENT_EXCLUSION : undefined,
+      options.actions && options.actions.length > 0
+        ? { action: { in: options.actions } }
+        : undefined,
     ]);
 
     return this.prisma.auditLog.findMany({
