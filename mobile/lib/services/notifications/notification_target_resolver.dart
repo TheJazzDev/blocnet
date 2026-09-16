@@ -95,6 +95,8 @@ class NotificationTargetResolver {
       case 'wallet_provision_failed':
         return 'wallet';
       case 'mining_claimed':
+      case 'mining_cycle_ready':
+      case 'mining_claim_expiring':
       case 'referral_bound':
       case 'referral_admin_bound':
         return 'mining_referrals';
@@ -182,7 +184,9 @@ class NotificationTargetResolver {
       return NotificationNavigationDecision.push(AppRoutes.quests);
     }
 
-    if (normalizedType == 'mining_claimed') {
+    if (normalizedType == 'mining_claimed' ||
+        normalizedType == 'mining_cycle_ready' ||
+        normalizedType == 'mining_claim_expiring') {
       return NotificationNavigationDecision.push(AppRoutes.mining);
     }
 

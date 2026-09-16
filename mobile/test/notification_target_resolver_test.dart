@@ -119,6 +119,19 @@ void main() {
     });
 
     test('routes mining claims and /mining deeplinks to mining', () {
+      for (final type in [
+        'mining_claimed',
+        'mining_cycle_ready',
+        'mining_claim_expiring',
+      ]) {
+        final decision = NotificationTargetResolver.resolve(type: type);
+        expect(decision.route, AppRoutes.mining, reason: type);
+        expect(
+          NotificationTargetResolver.categoryForType(type),
+          'mining_referrals',
+          reason: type,
+        );
+      }
       expect(
         NotificationTargetResolver.resolve(
           type: 'mining_claimed',

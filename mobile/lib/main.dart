@@ -135,6 +135,8 @@ void main() async {
         badgesStore.loadMyBadges(force: true);
         break;
       case 'mining_claimed':
+      case 'mining_cycle_ready':
+      case 'mining_claim_expiring':
       case 'referral_bound':
       case 'referral_admin_bound':
         miningStore.loadSnapshot(force: true);
