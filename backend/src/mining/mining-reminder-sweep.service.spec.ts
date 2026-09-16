@@ -105,7 +105,7 @@ describe('MiningReminderSweepService', () => {
       deeplink: '/mining',
       dedupeKey: 'mining.ready:s-1',
     });
-    expect(db.notifications[0].body).toContain('126 BNP');
+    expect(db.notifications[0].title).toBe('126 BNP ready to claim');
     expect(fcmService.sendToUsers).toHaveBeenCalledTimes(1);
     expect(fcmService.sendToUsers.mock.calls[0][0]).toMatchObject({
       userIds: ['user-1'],
@@ -164,7 +164,7 @@ describe('MiningReminderSweepService', () => {
       dedupeKey: 'mining.expiring:s-1',
       deeplink: '/mining',
     });
-    expect(db.notifications[0].title).toContain('126 BNP expires in 3 hours');
+    expect(db.notifications[0].title).toContain('126 BNP expires in 3h');
   });
 
   it('treats exactly 6 hours remaining as expiring and just over as ready', async () => {
@@ -201,7 +201,7 @@ describe('MiningReminderSweepService', () => {
       'mining.ready:s-1',
       'mining.expiring:s-1',
     ]);
-    expect(db.notifications[1].title).toContain('expires in 4 hours');
+    expect(db.notifications[1].title).toContain('expires in 4h');
   });
 
   it('ignores running, claimed, expired and past-window cycles', async () => {

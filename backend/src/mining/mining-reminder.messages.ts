@@ -49,16 +49,16 @@ export function buildReminderEvent(
       : NotificationType.mining_claim_expiring;
   const points = Math.max(candidate.points, 0);
   const hours = hoursLeft(candidate.claimDeadline, asOf);
-  const hourLabel = hours === 1 ? 'hour' : 'hours';
 
+  // Copy matches the approved Mine design (state 12): short, number first.
   const title =
     kind === 'ready'
-      ? 'Your BNP is ready'
-      : `${points} BNP expires in ${hours} ${hourLabel}`;
+      ? `${points} BNP ready to claim`
+      : `${points} BNP expires in ${hours}h`;
   const body =
     kind === 'ready'
-      ? `Claim ${points} BNP and start your next cycle.`
-      : `Claim now or your ${points} BNP is forfeited.`;
+      ? 'Tap to claim and start your next cycle.'
+      : "Claim it before it's gone.";
 
   return {
     userId: candidate.userId,
