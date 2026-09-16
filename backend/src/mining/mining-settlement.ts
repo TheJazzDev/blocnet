@@ -172,45 +172,109 @@ export async function applyClaimSettlement(
     },
   });
 
-  const tipCreditAtomic = BigInt(claimPoints) * BNP_ATOMIC_MULTIPLIER;
-  if (tipCreditAtomic > 0n) {
-    await tx.tipCurrency.upsert({
-      where: { code: BNP_CURRENCY_CODE },
-      update: {},
-      create: {
-        code: BNP_CURRENCY_CODE,
-        name: 'Blocnet Points',
-        symbol: 'BNP',
-        decimals: 3,
-        kind: 'points',
-        isEnabled: true,
-        isActiveTippingCurrency: true,
-      },
-    });
+  await creditBnpTipAccount(tx, userId, claimPoints);
+}
 
-    await tx.tipAccount.upsert({
-      where: {
-        accountType_ownerRef_currencyCode: {
-          accountType: TipAccountType.user,
-          ownerRef: userId,
-          currencyCode: BNP_CURRENCY_CODE,
-        },
-      },
-      update: {
-        userId,
-        balanceAtomic: {
-          increment: tipCreditAtomic,
-        },
-      },
-      create: {
-        accountType: TipAccountType.user,
-        ownerRef: userId,
-        userId,
-        currencyCode: BNP_CURRENCY_CODE,
-        balanceAtomic: tipCreditAtomic,
-      },
-    });
+type TipAccountTx = Pick<Prisma.TransactionClient, 'tipCurrency' | 'tipAccount'>;
+
+function bnpAccountKey(userId: string) {
+  return {
+    accountType: TipAccountType.user,
+    ownerRef: userId,
+    currencyCode: BNP_CURRENCY_CODE,
+  };
+}
+
+/**
+ * Credits mined or earned BNP to the member's BNP tip account, so the wallet
+ * balance and `Profile.miningClaimedPoints` move together. Every BNP payout
+ * uses this: cycle claims and quest rewards (F-52).
+ */
+export async function creditBnpTipAccount(
+  tx: TipAccountTx,
+  userId: string,
+  points: number,
+): Promise<void> {
+  const creditAtomic = BigInt(points) * BNP_ATOMIC_MULTIPLIER;
+  if (creditAtomic <= 0n) {
+    return;
   }
+
+  await tx.tipCurrency.upsert({
+    where: { code: BNP_CURRENCY_CODE },
+    update: {},
+    create: {
+      code: BNP_CURRENCY_CODE,
+      name: 'Blocnet Points',
+      symbol: 'BNP',
+      decimals: 3,
+      kind: 'points',
+      isEnabled: true,
+      isActiveTippingCurrency: true,
+    },
+  });
+
+  await tx.tipAccount.upsert({
+    where: {
+      accountType_ownerRef_currencyCode: bnpAccountKey(userId),
+    },
+    update: {
+      userId,
+      balanceAtomic: {
+        increment: creditAtomic,
+      },
+    },
+    create: {
+      ...bnpAccountKey(userId),
+      userId,
+      balanceAtomic: creditAtomic,
+    },
+  });
+}
+
+/**
+ * Reverses a BNP credit (a revoked quest reward), clamped at the current
+ * balance because the member may already have tipped some of it away. The
+ * `gte` guard means a concurrent spend can never drive the account negative.
+ * Returns the atomic amount actually debited.
+ */
+export async function debitBnpTipAccount(
+  tx: TipAccountTx,
+  userId: string,
+  points: number,
+): Promise<bigint> {
+  const wantedAtomic = BigInt(Math.abs(points)) * BNP_ATOMIC_MULTIPLIER;
+  if (wantedAtomic <= 0n) {
+    return 0n;
+  }
+
+  const account = await tx.tipAccount.findUnique({
+    where: {
+      accountType_ownerRef_currencyCode: bnpAccountKey(userId),
+    },
+    select: { balanceAtomic: true },
+  });
+  if (!account) {
+    return 0n;
+  }
+
+  const debitAtomic =
+    account.balanceAtomic < wantedAtomic ? account.balanceAtomic : wantedAtomic;
+  if (debitAtomic <= 0n) {
+    return 0n;
+  }
+
+  const debited = await tx.tipAccount.updateMany({
+    where: {
+      ...bnpAccountKey(userId),
+      balanceAtomic: { gte: debitAtomic },
+    },
+    data: {
+      balanceAtomic: { decrement: debitAtomic },
+    },
+  });
+
+  return debited.count > 0 ? debitAtomic : 0n;
 }
 
 /**
