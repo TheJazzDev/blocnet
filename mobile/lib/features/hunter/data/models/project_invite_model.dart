@@ -8,6 +8,7 @@ class ProjectInviteModel {
     required this.projectSlug,
     required this.status,
     required this.createdAt,
+    this.kind = kindCoOwn,
     this.note,
     this.reviewedAt,
     this.primaryTag,
@@ -18,10 +19,18 @@ class ProjectInviteModel {
     this.inviterDisplayName,
   });
 
+  /// Backend `ProjectInviteKind`.
+  static const String kindCoOwn = 'co_own';
+  static const String kindHandover = 'handover';
+
   final String id;
   final String projectId;
   final String projectName;
   final String projectSlug;
+
+  /// `co_own`: join the gem's owners. `handover`: the inviting hunter's
+  /// ownership becomes the invited hunter's on accept.
+  final String kind;
 
   /// `pending` | `accepted` | `rejected` | `cancelled` (backend
   /// `InviteStatus`).
@@ -43,6 +52,7 @@ class ProjectInviteModel {
   final String? inviterDisplayName;
 
   bool get isPending => status == 'pending';
+  bool get isHandover => kind == kindHandover;
 
   factory ProjectInviteModel.fromApi(Map<String, dynamic> json) {
     final project = json['project'];
@@ -60,6 +70,7 @@ class ProjectInviteModel {
       projectId: (json['projectId'] ?? projectMap['id'] ?? '').toString(),
       projectName: (projectMap['name'] ?? 'Untitled Gem').toString(),
       projectSlug: (projectMap['slug'] ?? '').toString(),
+      kind: _parseKind(json['kind']),
       status: (json['status'] ?? 'pending').toString().toLowerCase(),
       note: note == null || note.isEmpty ? null : note,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
@@ -91,12 +102,20 @@ class ProjectInviteModel {
     return _textOrNull(raw);
   }
 
+  /// Unknown or missing kinds read as co-own, the only kind older backends
+  /// send.
+  static String _parseKind(Object? raw) {
+    final value = raw?.toString().trim().toLowerCase();
+    return value == kindHandover ? kindHandover : kindCoOwn;
+  }
+
   ProjectInviteModel copyWith({String? status, DateTime? reviewedAt}) {
     return ProjectInviteModel(
       id: id,
       projectId: projectId,
       projectName: projectName,
       projectSlug: projectSlug,
+      kind: kind,
       status: status ?? this.status,
       note: note,
       createdAt: createdAt,

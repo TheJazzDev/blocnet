@@ -87,6 +87,14 @@ export class NotificationEventsService {
         return this.projectInviteReceivedEvents(actorId, resourceId, metadata);
       case 'project.hunter.invite.respond':
         return this.projectInviteRespondedEvents(actorId, resourceId, metadata);
+      case 'project.hunter.handover':
+        return this.projectHandoverReceivedEvents(
+          actorId,
+          resourceId,
+          metadata,
+        );
+      case 'project.ownership.handover':
+        return this.projectOwnershipHandoverEvents(actorId, metadata);
       case 'project.hunter.assign':
         return this.projectAssignmentEvents(actorId, resourceId, metadata);
       case 'admin.user.reactivate':
@@ -540,9 +548,12 @@ export class NotificationEventsService {
       return [];
     }
 
+    const isHandover = this.stringValue(metadata.kind) === 'handover';
     const recipients = new Set<string>();
     if (invite.invitedBy) recipients.add(invite.invitedBy);
-    if (invite.project.ownerAdminId)
+    // A handover's answer is the handing hunter's business; admins hear
+    // about the ownership move separately (project.ownership.handover).
+    if (invite.project.ownerAdminId && !isHandover)
       recipients.add(invite.project.ownerAdminId);
     if (actorId) recipients.delete(actorId);
 
@@ -552,6 +563,35 @@ export class NotificationEventsService {
 
     const status = this.stringValue(metadata.status) ?? invite.status;
     const actorName = actorId ? await this.actorName(actorId) : 'A hunter';
+
+    if (isHandover) {
+      const accepted = status === 'accepted';
+      const round = this.stringValue(metadata.round);
+      return [...recipients].map((userId) => ({
+        userId,
+        type: NotificationType.project_invite_responded,
+        actorUserId: actorId ?? null,
+        projectId: invite.projectId,
+        title: accepted
+          ? `${actorName} took over ${invite.project.name}`
+          : `${actorName} declined to take over ${invite.project.name}`,
+        body: accepted
+          ? 'The gem is theirs now, and so is keeping it updated.'
+          : 'The gem is still yours.',
+        payload: {
+          inviteId: invite.id,
+          projectId: invite.projectId,
+          status,
+          kind: 'handover',
+        } as Prisma.InputJsonValue,
+        deeplink: '/hunter-hub',
+        // Invite rows are reused, so the key carries the answer's time.
+        dedupeKey: this.auditDedupeKey(
+          'project.hunter.handover.respond',
+          round ? `${invite.id}:${round}` : invite.id,
+        ),
+      }));
+    }
 
     return [...recipients].map((userId) => ({
       userId,
@@ -569,6 +609,109 @@ export class NotificationEventsService {
       dedupeKey: this.auditDedupeKey(
         'project.hunter.invite.respond',
         invite.id,
+      ),
+    }));
+  }
+
+  private async projectHandoverReceivedEvents(
+    actorId: string | undefined,
+    resourceId: string | undefined,
+    metadata: Record<string, unknown>,
+  ) {
+    const hunterId = this.stringValue(metadata.hunterId);
+    const projectId = this.stringValue(metadata.projectId);
+    if (!resourceId || !hunterId || !projectId || hunterId === actorId) {
+      return [];
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { name: true },
+    });
+    const actorName = actorId ? await this.actorName(actorId) : 'A hunter';
+    const gemName = project?.name ?? 'a gem';
+    const round = this.stringValue(metadata.round);
+
+    return [
+      {
+        userId: hunterId,
+        type: NotificationType.project_invite_received,
+        actorUserId: actorId ?? null,
+        projectId,
+        title: `${actorName} is handing over ${gemName}`,
+        body: 'Accept and the obligation to keep it updated is yours.',
+        payload: {
+          inviteId: resourceId,
+          projectId,
+          hunterId,
+          kind: 'handover',
+        } as Prisma.InputJsonValue,
+        deeplink: '/hunter-hub',
+        // Invite rows are reused, so the key carries this offer's time.
+        dedupeKey: this.auditDedupeKey(
+          'project.hunter.handover',
+          round ? `${resourceId}:${round}` : resourceId,
+        ),
+      },
+    ];
+  }
+
+  /**
+   * Ownership is a standing matter (PRODUCT.md), so a gem changing hands is
+   * put in front of the people who govern the platform, not left to be found
+   * in the audit log.
+   */
+  private async projectOwnershipHandoverEvents(
+    actorId: string | undefined,
+    metadata: Record<string, unknown>,
+  ) {
+    const projectId = this.stringValue(metadata.projectId);
+    const fromId = this.stringValue(metadata.fromHunterId);
+    const toId = this.stringValue(metadata.toHunterId);
+    const inviteId = this.stringValue(metadata.inviteId);
+    if (!projectId || !fromId || !toId || !inviteId) return [];
+
+    const rows = await this.prisma.userRole.findMany({
+      where: {
+        role: { in: [RoleName.owner, RoleName.dev, RoleName.admin] },
+        user: { isDeactivated: false },
+      },
+      select: { userId: true },
+      distinct: ['userId'],
+    });
+    const recipients = rows
+      .map((row) => row.userId)
+      .filter((id) => id !== actorId && id !== fromId);
+    if (recipients.length === 0) return [];
+
+    const [project, fromName, toName] = await Promise.all([
+      this.prisma.project.findUnique({
+        where: { id: projectId },
+        select: { name: true },
+      }),
+      this.actorName(fromId),
+      this.actorName(toId),
+    ]);
+    const round = this.stringValue(metadata.round);
+
+    return recipients.map((userId) => ({
+      userId,
+      type: NotificationType.project_assignment_changed,
+      actorUserId: actorId ?? null,
+      projectId,
+      title: `${project?.name ?? 'A gem'} changed hands`,
+      body: `${fromName} handed coverage over to ${toName}.`,
+      payload: {
+        projectId,
+        inviteId,
+        fromHunterId: fromId,
+        toHunterId: toId,
+        kind: 'handover',
+      } as Prisma.InputJsonValue,
+      deeplink: `/projects/${projectId}`,
+      dedupeKey: this.auditDedupeKey(
+        'project.ownership.handover',
+        round ? `${inviteId}:${round}` : inviteId,
       ),
     }));
   }

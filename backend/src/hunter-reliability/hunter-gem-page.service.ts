@@ -1,11 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { TipTransactionType, UpdateStatus } from '@prisma/client';
+import {
+  InviteStatus,
+  ProjectInviteKind,
+  TipTransactionType,
+  UpdateStatus,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   GEM_PAGE_UPDATES_DEFAULT_LIMIT,
   type HunterGemPageDto,
   type HunterGemPageQuery,
   type HunterGemUpdateDto,
+  type PendingHandoverDto,
 } from './dto/hunter-gem-page.dto';
 import {
   assembleBoardGem,
@@ -43,9 +49,9 @@ export function editedAtOf(row: {
 /**
  * The hunter's gem page: the board row for one gem, plus its timeline.
  *
- * Eleven queries whatever the gem's history: gems (1), gem facts (6: the
+ * Twelve queries whatever the gem's history: gems (1), gem facts (6: the
  * tips half asks only for the currency), deadline (1), updates count (1),
- * the timeline (1), tips per update (1).
+ * the timeline (1), open handover (1), tips per update (1).
  */
 @Injectable()
 export class HunterGemPageService {
@@ -74,7 +80,7 @@ export class HunterGemPageService {
     if (!gem) throw new NotFoundException('Gem not found');
 
     const ids = [projectId];
-    const [facts, deadlines, updatesCount, rows] = await Promise.all([
+    const [facts, deadlines, updatesCount, rows, handover] = await Promise.all([
       this.loader.loadFacts(ids, [], now),
       this.loader.loadNextDeadlines(ids, now),
       this.loader.loadUpdatesCount(ids),
@@ -92,6 +98,7 @@ export class HunterGemPageService {
           _count: { select: { comments: true } },
         },
       }),
+      this.loadPendingHandover(projectId),
     ]);
     const tipsByUpdate = await this.loadUpdateTips(
       rows.map((row) => row.id),
@@ -111,7 +118,7 @@ export class HunterGemPageService {
     const lastUpdateAt = facts.lastUpdateAtByGem.get(projectId);
 
     return {
-      gem: boardGem,
+      gem: { ...boardGem, pendingHandover: handover },
       updates: rows.map(
         (row): HunterGemUpdateDto => ({
           id: row.id,
@@ -130,6 +137,34 @@ export class HunterGemPageService {
         boardGem.state === 'quiet' && lastUpdateAt
           ? daysSince(lastUpdateAt, now)
           : null,
+    };
+  }
+
+  /** The gem's open handover, if any (at most one is allowed). 1 query. */
+  private async loadPendingHandover(
+    projectId: string,
+  ): Promise<PendingHandoverDto | null> {
+    const invite = await this.prisma.projectHunterInvite.findFirst({
+      relationLoadStrategy: 'join',
+      where: {
+        projectId,
+        kind: ProjectInviteKind.handover,
+        status: InviteStatus.pending,
+      },
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true,
+        updatedAt: true,
+        hunter: { select: { id: true, username: true, displayName: true } },
+      },
+    });
+    if (!invite) return null;
+    return {
+      inviteId: invite.id,
+      hunter: invite.hunter,
+      // The row is reopened for each new offer, so updatedAt is when this
+      // one was made.
+      createdAt: invite.updatedAt.toISOString(),
     };
   }
 

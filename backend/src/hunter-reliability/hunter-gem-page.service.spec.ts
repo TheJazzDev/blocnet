@@ -47,6 +47,7 @@ function createService(data: {
   tips?: Record<string, bigint>;
   currency?: { code: string; decimals: number } | null;
   updatesCount?: number;
+  handover?: object | null;
 }) {
   const newest = data.rows[0]?.createdAt;
   const prisma = {
@@ -87,6 +88,9 @@ function createService(data: {
     },
     projectUpdateRequest: {
       findMany: jest.fn().mockResolvedValue(data.asks ?? []),
+    },
+    projectHunterInvite: {
+      findFirst: jest.fn().mockResolvedValue(data.handover ?? null),
     },
     projectInactivityReport: {
       groupBy: jest
@@ -184,6 +188,7 @@ describe('HunterGemPageService', () => {
         publishedAt: daysAgo(19).toISOString(),
       },
     });
+    expect(page.gem.pendingHandover).toBeNull();
     expect(page.gapDays).toBe(19);
     expect(page.updates).toEqual([
       {
@@ -229,7 +234,7 @@ describe('HunterGemPageService', () => {
       },
       _sum: { amountAtomic: true },
     });
-    expect(totalQueries(prisma)).toBe(11);
+    expect(totalQueries(prisma)).toBe(12);
   });
 
   it('has no gap for a current gem and none for a gem never updated', async () => {
@@ -257,6 +262,29 @@ describe('HunterGemPageService', () => {
     await expect(service.getGem(OTHER, GEM)).resolves.toMatchObject({
       gem: { projectId: GEM },
     });
+  });
+
+  it('shows the gem’s open handover', async () => {
+    const offeredAt = daysAgo(1);
+    const { service, prisma } = createService({
+      hunters: [HUNTER],
+      rows: [row('u1', daysAgo(2))],
+      handover: {
+        id: 'inv-1',
+        updatedAt: offeredAt,
+        hunter: { id: OTHER, username: 'kemi', displayName: 'Kemi' },
+      },
+    });
+    const page = await service.getGem(HUNTER, GEM);
+    expect(page.gem.pendingHandover).toEqual({
+      inviteId: 'inv-1',
+      hunter: { id: OTHER, username: 'kemi', displayName: 'Kemi' },
+      createdAt: offeredAt.toISOString(),
+    });
+    expect(prisma.projectHunterInvite.findFirst.mock.calls[0][0].where).toEqual(
+      { projectId: GEM, kind: 'handover', status: 'pending' },
+    );
+    expect(totalQueries(prisma)).toBe(12);
   });
 
   it('skips tips when no tipping currency is active', async () => {

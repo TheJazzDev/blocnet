@@ -64,10 +64,39 @@ export class HunterGemUpdateDto {
   tipsCurrencyDecimals!: number | null;
 }
 
+export class PendingHandoverHunterDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ nullable: true, type: String }) username!: string | null;
+  @ApiProperty({ nullable: true, type: String }) displayName!: string | null;
+}
+
+/** A handover of the gem still waiting for the receiving hunter's answer. */
+export class PendingHandoverDto {
+  @ApiProperty() inviteId!: string;
+
+  @ApiProperty({
+    type: PendingHandoverHunterDto,
+    description: 'The hunter being asked to take over.',
+  })
+  hunter!: PendingHandoverHunterDto;
+
+  @ApiProperty() createdAt!: string;
+}
+
+export class HunterGemPageGemDto extends HunterBoardGemDto {
+  @ApiProperty({
+    type: PendingHandoverDto,
+    nullable: true,
+    description:
+      'The gem’s open handover (at most one); null when there is none.',
+  })
+  pendingHandover!: PendingHandoverDto | null;
+}
+
 /** The hunter's own view of one gem they keep. */
 export class HunterGemPageDto {
-  @ApiProperty({ type: HunterBoardGemDto })
-  gem!: HunterBoardGemDto;
+  @ApiProperty({ type: HunterGemPageGemDto })
+  gem!: HunterGemPageGemDto;
 
   @ApiProperty({
     type: [HunterGemUpdateDto],

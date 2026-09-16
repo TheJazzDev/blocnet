@@ -94,7 +94,7 @@ export class ProjectAssignmentsController {
   @Get('project-invites/mine')
   @ApiOperation({
     summary:
-      'Invites to co-own a gem sent to the caller, newest first, with each gem’s followers, published updates and last update, and who sent the invite.',
+      'Invites to co-own or take over (kind: handover) a gem sent to the caller, newest first, with each gem’s followers, published updates and last update, and who sent the invite.',
   })
   @ApiOkResponse({ type: [MyInviteDto] })
   async listMyInvites(

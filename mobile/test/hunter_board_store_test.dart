@@ -27,6 +27,7 @@ class _FakeApiClient extends ApiClient {
   final List<String> paths = [];
   final List<Map<String, String>?> queries = [];
   final Map<String, Object> failures = {};
+  final List<Map<String, dynamic>?> bodies = [];
 
   @override
   Future<dynamic> get(String path, {Map<String, String>? query}) async {
@@ -84,6 +85,23 @@ class _FakeApiClient extends ApiClient {
             };
     }
     throw UnimplementedError(path);
+  }
+
+  @override
+  Future<dynamic> post(String path, {Map<String, dynamic>? body}) async {
+    paths.add('POST $path');
+    bodies.add(body);
+    final failure = failures['POST $path'];
+    if (failure != null) throw failure;
+    return {'id': 'inv-1', 'kind': 'handover', 'status': 'pending'};
+  }
+
+  @override
+  Future<dynamic> delete(String path, {Map<String, String>? query}) async {
+    paths.add('DELETE $path');
+    final failure = failures['DELETE $path'];
+    if (failure != null) throw failure;
+    return {'id': 'inv-1', 'status': 'cancelled'};
   }
 }
 
@@ -177,6 +195,48 @@ void main() {
     expect(api.queries.last?['status'], 'pending');
     expect(store.pendingProposals.single.name, 'Lumen Pay');
     expect(store.hasLoadedProposals, isTrue);
+  });
+
+  test('startHandover posts the hunter and a trimmed note', () async {
+    final id =
+        await store.startHandover('g1', ' kemi ', note: '  over to you ');
+
+    expect(id, 'inv-1');
+    expect(api.paths.last, 'POST /projects/g1/handover');
+    expect(api.bodies.last, {'hunter': 'kemi', 'note': 'over to you'});
+    expect(store.isHandoverBusy('g1'), isFalse);
+    expect(store.handoverErrorFor('g1'), isNull);
+
+    await store.startHandover('g1', 'kemi', note: '   ');
+    expect(api.bodies.last, {'hunter': 'kemi'});
+  });
+
+  test('a failed handover records the server’s reason for that gem', () async {
+    api.failures['POST /projects/g1/handover'] = ApiException(
+      'Request failed',
+      statusCode: 409,
+      responseBody:
+          '{"message":"This gem already has a handover waiting for an answer"}',
+    );
+
+    final id = await store.startHandover('g1', 'kemi');
+
+    expect(id, isNull);
+    expect(store.handoverErrorFor('g1'), contains('already has a handover'));
+    expect(store.handoverErrorFor('g2'), isNull);
+    expect(store.isHandoverBusy('g1'), isFalse);
+  });
+
+  test('cancelHandover deletes and clears an earlier error', () async {
+    api.failures['DELETE /projects/g1/handover'] =
+        ApiException('Not Found', statusCode: 404);
+    expect(await store.cancelHandover('g1'), isFalse);
+    expect(store.handoverErrorFor('g1'), isNotNull);
+
+    api.failures.remove('DELETE /projects/g1/handover');
+    expect(await store.cancelHandover('g1'), isTrue);
+    expect(api.paths.last, 'DELETE /projects/g1/handover');
+    expect(store.handoverErrorFor('g1'), isNull);
   });
 
   test('clear drops all state', () async {
