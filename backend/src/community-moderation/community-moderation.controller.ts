@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AppRole } from '../common/enums/role.enum';
@@ -23,11 +24,18 @@ import { ClearCommunityRestrictionsDto } from './dto/clear-community-restriction
 import { CreateCommunityAppealDto } from './dto/create-community-appeal.dto';
 import { CreateCommunityReportDto } from './dto/create-community-report.dto';
 import { IssueCommunityWarningDto } from './dto/issue-community-warning.dto';
+import {
+  InactiveGemQueueResponseDto,
+  ResolveInactiveGemResponseDto,
+} from './dto/inactive-gem-response.dto';
+import { ListInactiveGemsQuery } from './dto/list-inactive-gems.query';
+import { ResolveInactiveGemDto } from './dto/resolve-inactive-gem.dto';
 import { ListCommunityAppealsQuery } from './dto/list-community-appeals.query';
 import { ListCommunityReportsQuery } from './dto/list-community-reports.query';
 import { ReviewCommunityAppealDto } from './dto/review-community-appeal.dto';
 import { ReviewCommunityReportDto } from './dto/review-community-report.dto';
 import { CommunityModerationService } from './community-moderation.service';
+import { InactiveGemsModerationService } from './inactive-gems-moderation.service';
 
 const COMMUNITY_MODERATION_REVIEW_ROLES = [
   AppRole.OWNER,
@@ -49,6 +57,7 @@ const COMMUNITY_MODERATION_ESCALATED_ROLES = [
 export class CommunityModerationController {
   constructor(
     private readonly communityModerationService: CommunityModerationService,
+    private readonly inactiveGems: InactiveGemsModerationService,
   ) {}
 
   @Post('community/reports')
@@ -197,7 +206,41 @@ export class CommunityModerationController {
       throw new UnauthorizedException('User context missing');
     }
 
-    return this.communityModerationService.getModerationStats();
+    const [stats, openInactiveGems] = await Promise.all([
+      this.communityModerationService.getModerationStats(),
+      this.inactiveGems.countOpen(),
+    ]);
+    return { ...stats, openInactiveGems };
+  }
+
+  @Get('community/moderation/inactive-gems')
+  @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
+  @ApiOperation({
+    summary:
+      'Gems members have reported as abandoned, with open reports, most-reported first.',
+  })
+  @ApiOkResponse({ type: InactiveGemQueueResponseDto })
+  async listInactiveGems(@Query() query: ListInactiveGemsQuery) {
+    return this.inactiveGems.listQueue(query);
+  }
+
+  @Post('community/moderation/inactive-gems/:projectId/resolve')
+  @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
+  @ApiOperation({
+    summary:
+      'Close every open inactivity report on a gem with an outcome and a note. Does not reassign the gem.',
+  })
+  @ApiOkResponse({ type: ResolveInactiveGemResponseDto })
+  async resolveInactiveGem(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Body() dto: ResolveInactiveGemDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.inactiveGems.resolve(user, projectId, dto);
   }
 
   @Post(['community/appeals', 'admin/community-moderation/appeals'])
