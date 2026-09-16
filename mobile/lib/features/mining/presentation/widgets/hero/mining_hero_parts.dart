@@ -167,9 +167,12 @@ class MiningActionButton extends StatelessWidget {
             ? SizedBox(
                 width: 16,
                 height: 16,
+                // No visible text while busy: keep the action's name so the
+                // button is never announced unlabelled.
                 child: CircularProgressIndicator(
                   color: textColor,
                   strokeWidth: 2,
+                  semanticsLabel: label,
                 ),
               )
             : Row(
