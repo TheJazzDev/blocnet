@@ -21,6 +21,7 @@ import { Module } from '@nestjs/common';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TipBootstrapService } from './tip-bootstrap';
+import { TipTransfersService } from './tip-transfers.service';
 import { TipsAdminController } from './tips-admin.controller';
 import { TipsAdminService } from './tips-admin.service';
 import { TipsController } from './tips.controller';
@@ -29,7 +30,12 @@ import { TipsService } from './tips.service';
 @Module({
   imports: [AuditLogModule, NotificationsModule],
   controllers: [TipsController, TipsAdminController],
-  providers: [TipBootstrapService, TipsService, TipsAdminService],
-  exports: [TipsService],
+  providers: [
+    TipBootstrapService,
+    TipsService,
+    TipsAdminService,
+    TipTransfersService,
+  ],
+  exports: [TipsService, TipTransfersService],
 })
 export class TipsModule {}

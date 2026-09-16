@@ -31,6 +31,7 @@ export const FinancialAuditActions = {
   WalletUserEnabled: 'wallet.user.enabled',
 
   TipSent: 'tip.sent',
+  TipTransferSent: 'tip.transfer.sent',
   TipCurrencySettingsUpdated: 'tip.currency.settings.updated',
   TipActiveCurrencyUpdated: 'tip.currency.active.updated',
 } as const;
