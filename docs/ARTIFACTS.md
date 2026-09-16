@@ -77,3 +77,4 @@ components rather than generic ones.
 Publish, then add a row with the URL. **Only add a local snapshot if someone would open
 the file to answer a question** — not as an archive. When work is superseded, move its row
 to *Superseded*, drop the snapshot, and say in one line why it was retired.
+| Blocnet Hunter Hub | Claude Design project *Blocnet Design System* · file `Blocnet Hunter Hub.html` · approved 2026-09-16 | [`artifacts/blocnet-hunter-hub.html`](artifacts/blocnet-hunter-hub.html) · build spec [`design-briefs/hunter-hub-build-spec.md`](design-briefs/hunter-hub-build-spec.md) |

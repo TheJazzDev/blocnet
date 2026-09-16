@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Blocnet — Hunter Hub</title>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet">
+<style>
+:root{--bg:#09090b;--s1:#18181b;--s2:#27272a;--bd:#27272a;--cy:#0891B2;--cy2:#22D3EE;--fg:#fafafa;--mut:#a1a1aa;--dim:#71717a;--red:#EF4444;--amb:#F59E0B;--org:#FB923C;--vio:#A78BFA;--grn:#34D399;--blu:#60A5FA}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0c0c0e;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--cy2);text-decoration:none}a:hover{color:#67e8f9}
+.mi{font-family:'Material Symbols Rounded';font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;flex:0 0 auto}
+.mi.f{font-variation-settings:'FILL' 1}
+.mi.s{font-size:16px}.mi.xs{font-size:14px}.mi.l{font-size:28px}.mi.xl{font-size:40px}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.col{position:absolute;width:390px}
+.hd{position:absolute;left:80px;top:48px;width:1120px}
+.hd b{display:block;font-size:32px;font-weight:680;letter-spacing:-.025em;color:#fff}
+.hd p{font-size:15px;line-height:1.6;color:#c4c4cc;margin-top:12px;max-width:820px}
+.hd i{display:block;font-style:normal;font-size:13px;line-height:1.6;color:#8b8b93;margin-top:12px;max-width:820px}
+.hd i b{display:inline;font-size:13px;font-weight:650;color:#c4c4cc}
+.st{color:#6b6b73;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px}
+.sub{color:#8b8b93;font-size:13px;line-height:1.5;margin:-4px 0 12px;min-height:76px}
+.ph{width:390px;height:844px;background:var(--bg);border-radius:20px;overflow:hidden;position:relative;color:var(--fg);box-shadow:0 0 0 1px #232327,0 24px 60px -20px #000}
+.sb{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600}
+.sb u{text-decoration:none;display:flex;gap:4px;align-items:center;color:#d4d4d8}
+.body{position:absolute;top:44px;bottom:84px;left:0;right:0;overflow:hidden}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:84px;background:#0d0d0fe6;backdrop-filter:blur(12px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(6,1fr);align-items:start;padding-top:10px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--dim);font-weight:500}
+.tab.on{color:var(--cy2)}
+.fab{position:absolute;right:16px;bottom:100px;height:56px;border-radius:999px;background:var(--cy);display:flex;align-items:center;justify-content:center;gap:8px;color:#fff;box-shadow:0 8px 24px -6px rgba(8,145,178,.7);z-index:5;padding:0 20px;font-size:15px;font-weight:650}
+/* hub header */
+.hdr{display:flex;align-items:center;gap:12px;height:48px;padding:0 16px}
+.hdr .t{font-size:17px;font-weight:700;letter-spacing:-.02em;flex:1}
+.hdr .mi{color:var(--mut)}
+.idn{display:flex;align-items:center;gap:12px;padding:4px 16px 16px}
+.av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex:0 0 auto}
+.a1{background:linear-gradient(140deg,#0891B2,#155e75)}
+.a2{background:linear-gradient(140deg,#7c3aed,#4c1d95)}
+.a3{background:linear-gradient(140deg,#ea580c,#7c2d12)}
+.a6{background:linear-gradient(140deg,#3f3f46,#27272a)}
+.idn .who{flex:1;min-width:0}
+.idn .wl1{display:flex;align-items:center;gap:6px}
+.idn .wl1 b{font-size:17px;font-weight:680;letter-spacing:-.015em}
+.idn .wl2{font-size:13px;color:var(--dim);margin-top:2px}
+.bdg{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#0b0b0d;flex:0 0 auto;font-variant-numeric:tabular-nums}
+.bdg.lg{width:26px;height:26px;font-size:12px}
+.b-iron{background:#8A96A8;border-radius:50%}
+.b-jade{background:#2AA876;clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)}
+.b-ame{background:#8B5CF6;clip-path:polygon(50% 0,100% 4%,100% 58%,50% 100%,0 58%,0 4%)}
+.b-gold{background:#F0B429;clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%)}
+.b-ruby{background:#E23D4A;clip-path:polygon(50% 0,71.5% 12.8%,93.3% 25%,93% 50%,93.3% 75%,71.5% 87.2%,50% 100%,28.5% 87.2%,6.7% 75%,7% 50%,6.7% 25%,28.5% 12.8%)}
+.role{font-size:11px;font-weight:800;letter-spacing:.1em;padding:3px 7px;border-radius:999px;background:#22d3ee24;color:#22D3EE}
+/* standing / reliability */
+.rel{margin:0 16px;border-radius:16px;padding:16px;background:linear-gradient(180deg,#111a1d,#101113);box-shadow:inset 0 0 0 1px #22d3ee2e}
+.rel.slip{background:linear-gradient(180deg,#1d1710,#121110);box-shadow:inset 0 0 0 1px #fb923c33}
+.rel.new{background:#101012;box-shadow:inset 0 0 0 1px #232327}
+.sc{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.sc i{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.12em;padding:4px 9px;border-radius:999px}
+.sc i.rl{background:#22d3ee1f;color:#67e8f9}
+.sc i.sl{background:#fb923c1f;color:var(--org)}
+.sc i.nw{background:#27272a;color:#a1a1aa}
+.sc span{font-size:11px;color:#6b6b73;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-left:auto}
+.cov{display:flex;align-items:baseline;gap:8px}
+.cov b{font-size:32px;font-weight:700;letter-spacing:-.03em;color:#fff;line-height:1}
+.cov em{font-style:normal;font-size:15px;color:var(--mut)}
+.covl{font-size:13px;color:#8b8b93;margin-top:6px;line-height:1.5}
+.pips{display:flex;gap:4px;margin-top:12px}
+.pips i{height:4px;flex:1;border-radius:2px;background:#27272a}
+.pips i.f{background:var(--cy2)}
+.pips i.w{background:var(--org)}
+.mets{display:flex;gap:24px;margin-top:14px;padding-top:14px;border-top:1px solid #ffffff12}
+.mets div b{display:block;font-size:17px;font-weight:680;letter-spacing:-.015em;color:#e4e4e7}
+.mets div span{font-size:11px;color:#6b6b73;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.reach{display:flex;gap:8px;margin:12px 16px 0}
+.reach div{flex:1;border-radius:12px;padding:12px;background:#101012;box-shadow:inset 0 0 0 1px #1f1f23;display:flex;align-items:center;gap:10px}
+.reach .mi{color:#6b6b73}
+.reach b{display:block;font-size:15px;font-weight:680;color:#d4d4d8;letter-spacing:-.01em}
+.reach span{font-size:11px;color:#6b6b73;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+/* section */
+.sect{padding:24px 16px 10px;display:flex;align-items:center;gap:8px}
+.sect b{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b6b73}
+.sect em{font-style:normal;font-size:11px;font-weight:700;color:#52525b;margin-left:auto;letter-spacing:.06em;text-transform:uppercase}
+.sect .mi{color:#52525b}
+/* gem rows */
+.gem{padding:14px 16px;border-bottom:1px solid #1b1b1f;position:relative}
+.gem.due{box-shadow:inset 3px 0 0 #78350f}
+.gem.quiet{background:linear-gradient(180deg,#1b1510,#121011);box-shadow:inset 3px 0 0 var(--org)}
+.g1{display:flex;align-items:center;gap:12px}
+.lg{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex:0 0 auto}
+.l-core{background:linear-gradient(140deg,#fb923c,#c2410c)}
+.l-tg{background:linear-gradient(140deg,#38bdf8,#0369a1)}
+.l-sol{background:linear-gradient(140deg,#34d399,#047857)}
+.l-eth{background:linear-gradient(140deg,#818cf8,#4338ca)}
+.l-bsc{background:linear-gradient(140deg,#fbbf24,#b45309)}
+.l-ion{background:linear-gradient(140deg,#22d3ee,#0e7490)}
+.gn{flex:1;min-width:0}
+.gn b{font-size:15px;font-weight:650;letter-spacing:-.01em;display:block}
+.gn .m{font-size:13px;color:var(--dim);margin-top:3px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chain{font-size:11px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;flex:0 0 auto}
+.c-core{background:#fb923c1f;color:#FB923C}.c-sol{background:#34d3991f;color:#34D399}.c-eth{background:#818cf81f;color:#818CF8}.c-tg{background:#38bdf81f;color:#38BDF8}.c-bsc{background:#fbbf241f;color:#FBBF24}.c-ion{background:#22d3ee1f;color:#22D3EE}
+.gs{font-size:11px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:999px;flex:0 0 auto}
+.gs.cur{background:#27272a;color:#8b8b93}
+.gs.due{background:#f59e0b26;color:var(--amb)}
+.gs.qt{background:#fb923c26;color:var(--org)}
+.last{font-size:15px;line-height:1.4;color:#d4d4d8;margin-top:10px;font-weight:600;text-wrap:pretty}
+.last em{font-style:normal;color:var(--dim);font-weight:500}
+.last.none{color:#8b8b93;font-weight:500}
+.meta{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:13px;color:#8b8b93;flex-wrap:wrap}
+.meta span{display:flex;align-items:center;gap:5px}
+.meta .w{color:#e4e4e7;font-weight:650}
+.meta .w .mi{color:var(--cy2)}
+.meta .rp{color:#F87171;font-weight:650}
+.dl{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px;color:#d4d4d8;font-weight:600}
+.dl .mi{color:#71717a}
+.gact{display:flex;gap:8px;margin-top:12px}
+.btn{height:40px;border-radius:10px;background:var(--cy);color:#fff;font-size:13px;font-weight:650;display:flex;align-items:center;justify-content:center;gap:6px;flex:1}
+.btn.w{background:none;box-shadow:inset 0 0 0 1px var(--s2);color:#e4e4e7}
+.btn.o{background:none;box-shadow:inset 0 0 0 1px #fb923c4d;color:var(--org)}
+.btn.sm{height:34px;font-size:13px;flex:0 0 auto;padding:0 14px}
+/* current condensed */
+.gem.cur{padding:12px 16px}
+.gem.cur .g1{gap:10px}
+.gem.cur .lg{width:32px;height:32px;border-radius:8px;font-size:11px}
+.gem.cur .gn .m{margin-top:2px}
+.tick{color:#3f9c86;flex:0 0 auto}
+/* fold */
+.fold{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid #1b1b1f;font-size:15px;font-weight:600;color:#a1a1aa}
+.fold .mi{color:#52525b;margin-left:auto}
+.fold .ck{color:#3f9c86;margin-left:0}
+/* invites / review */
+.inv{margin:0 16px 12px;border-radius:12px;padding:14px;background:#101012;box-shadow:inset 0 0 0 1px #22d3ee2e}
+.inv.rev{box-shadow:inset 0 0 0 1px #1f1f23}
+.inv .ir{display:flex;align-items:center;gap:10px}
+.inv .ir b{font-size:15px;font-weight:650;flex:1}
+.inv p{font-size:13px;color:#8b8b93;line-height:1.55;margin-top:8px}
+.inv p b{color:#d4d4d8;font-weight:650}
+.inv .ia{display:flex;gap:8px;margin-top:12px}
+.pend{font-size:11px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:999px;background:#a78bfa24;color:var(--vio)}
+/* day one */
+.zero{margin:8px 16px 0;border-radius:16px;padding:24px 16px;background:linear-gradient(180deg,#111a1d,#101113);box-shadow:inset 0 0 0 1px #22d3ee2e}
+.zero .ring{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--cy2);box-shadow:inset 0 0 0 2px #22d3ee47;margin-bottom:16px}
+.zero h2{font-size:24px;font-weight:680;letter-spacing:-.025em}
+.zero p{font-size:15px;color:var(--mut);margin-top:8px;line-height:1.55}
+.steps{margin-top:20px;display:flex;flex-direction:column;gap:10px}
+.step{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:#0d1214;box-shadow:inset 0 0 0 1px #ffffff0f}
+.step .n{width:24px;height:24px;border-radius:50%;background:#22d3ee1f;color:var(--cy2);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.step b{font-size:15px;font-weight:650;display:block}
+.step span{font-size:13px;color:#8b8b93}
+/* gem page */
+.gpg{padding:16px}
+.gph{display:flex;align-items:center;gap:12px}
+.gph .lg{width:52px;height:52px;border-radius:14px;font-size:17px}
+.gph b{font-size:20px;font-weight:680;letter-spacing:-.02em;display:block}
+.gph .m{font-size:13px;color:var(--dim);margin-top:4px;display:flex;align-items:center;gap:6px}
+.wait{margin-top:16px;border-radius:12px;padding:12px;background:#1b1510;box-shadow:inset 0 0 0 1px #fb923c33}
+.wait .wr{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:650;color:#e4e4e7}
+.wait .wr .mi{color:var(--org)}
+.wait p{font-size:13px;line-height:1.55;color:#8b8b93;margin-top:6px}
+.wait p b{color:#d4d4d8;font-weight:650}
+.rep{margin-top:8px;border-radius:12px;padding:12px;background:#101012;box-shadow:inset 0 0 0 1px #ef444433;display:flex;align-items:center;gap:10px}
+.rep .mi{color:#F87171}
+.rep b{font-size:15px;font-weight:650;color:#e4e4e7;flex:1}
+.rep span{font-size:13px;color:#8b8b93}
+.tl{margin-top:20px;padding-left:20px;position:relative}
+.tl:before{content:"";position:absolute;left:5px;top:6px;bottom:20px;width:1px;background:#232327}
+.ev{position:relative;padding-bottom:20px}
+.ev:before{content:"";position:absolute;left:-19px;top:5px;width:11px;height:11px;border-radius:50%;background:#18181b;box-shadow:inset 0 0 0 2px #3f3f46}
+.ev.hi:before{box-shadow:inset 0 0 0 2px var(--cy2);background:#0b1f24}
+.ev .d{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b6b73;display:flex;align-items:center;gap:8px}
+.ev .d em{font-style:normal;color:#8b8b93;letter-spacing:0;text-transform:none;font-weight:500;margin-left:auto;display:flex;align-items:center;gap:4px}
+.ev b{display:block;font-size:15px;font-weight:650;line-height:1.4;margin-top:6px;letter-spacing:-.01em;text-wrap:pretty}
+.ev p{font-size:13px;color:#8b8b93;line-height:1.55;margin-top:4px}
+.gap{margin:0 0 20px;padding:12px;border-radius:12px;background:#1b1510;box-shadow:inset 0 0 0 1px #fb923c2e;font-size:13px;color:#d4d4d8;line-height:1.5;display:flex;gap:8px;align-items:center}
+.gap .mi{color:var(--org)}
+/* panels */
+.spec{position:absolute;background:#101012;border-radius:16px;padding:24px;box-shadow:inset 0 0 0 1px #1f1f23}
+.spec h3{font-size:20px;font-weight:650;letter-spacing:-.02em;color:#fff}
+.spec .lede{font-size:13px;color:#8b8b93;line-height:1.6;margin-top:8px;max-width:760px}
+.fr{background:var(--bg);border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 1px #1d1d21}
+.fr .ty{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b6b73;padding:14px 16px 4px}
+.note{font-size:11px;color:#6b6b73;line-height:1.55;margin-top:12px}
+.note b{color:#a1a1aa;font-weight:650}
+.rowset{display:grid;grid-template-columns:repeat(2,390px);gap:16px;margin-top:24px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+.mini{background:var(--bg);border-radius:12px;padding:16px;box-shadow:inset 0 0 0 1px #1d1d21}
+.mini .ty{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b6b73;margin-bottom:10px}
+.mini p{font-size:13px;color:#8b8b93;line-height:1.6}
+.mini p b{color:#d4d4d8;font-weight:650}
+</style></head>
+<body>
+
+<div class="hd">
+  <b>Hunter Hub — the obligation, and its receipt</b>
+  <p>The Hub answers one question: which of my gems need me right now, and who is waiting on me. So the gems are the screen. Above them sits reliability as the platform actually observes it — coverage first, as a sentence rather than a score — and reach sits beside it, visibly demoted, because tips and followers are the consequence of the job, not the job. Every gem carries a one-tap route to the composer with itself already selected.</p>
+  <i><b>What changed:</b> season ranking, the Elite Hunter banner, the success-rate tile and the invented ticker are gone. Members' <b>Ask the hunter</b> taps now land here, aggregated per gem, which is the thing that was previously reaching the hunter nowhere.<br><b>Quiet without red:</b> a quiet gem takes orange — an edge, a warmed ground, an orange state chip — because it is the hunter's own slippage, not an alarm raised against them. Red is spent only on open reports, which are a moderation event, and never on the same line as the Ruby badge.<br><b>Reliability is observation only:</b> coverage, response, cadence, standing. No accuracy, no profit, no rank. Deadlines are stated times the hunter typed; no clocks, no lifecycle rails, no denominators about the project.</i>
+</div>
+
+<!-- 1 · all current -->
+<div class="col" style="left:80px;top:360px">
+<div class="st">1 · All current</div>
+<div class="sub">Coverage reads as a sentence, not a gauge. Five gems, all touched this week, nobody waiting — so the board condenses to one line per gem and the screen's job is finished in two seconds. Calm, but with the work shown.</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><u><span class="mi xs f">signal_cellular_alt</span><span class="mi xs f">wifi</span><span class="mi xs f">battery_full</span></u></div>
+  <div class="body">
+    <div class="hdr"><span class="t">Hub</span><span class="mi">history</span><span class="mi">settings</span></div>
+    <div class="idn"><span class="av a1">JD</span><span class="who"><span class="wl1"><b>Jazzdev</b><span class="bdg b-ruby">15</span><span class="role">HUNTER</span></span><span class="wl2">@jazzdev · Ruby · Pioneer</span></span></div>
+    <div class="rel">
+      <div class="sc"><i class="rl">RELIABLE</i><span>Last 14 days</span></div>
+      <div class="cov"><b class="mono">5 of 5</b><em>gems current</em></div>
+      <div class="covl">Every gem you own has an update from the last 14 days.</div>
+      <div class="pips"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></div>
+      <div class="mets"><div><b>4 of 4</b><span>Response</span></div><div><b>5 days</b><span>Cadence</span></div><div><b>0</b><span>Waiting</span></div></div>
+    </div>
+    <div class="reach">
+      <div><span class="mi s">volunteer_activism</span><span><b class="mono">18,240 BNP</b><span>Tips</span></span></div>
+      <div><span class="mi s">groups</span><span><b class="mono">26,465</b><span>Followers</span></span></div>
+    </div>
+    <div class="sect"><span class="mi xs">layers</span><b>Your gems</b><em>5 current</em></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-core">CM</span><span class="gn"><b>Core Mines</b><span class="m"><span class="chain c-core">CORE</span>8,412 · 3h ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-tg">B5</span><span class="gn"><b>Bless50ing</b><span class="m"><span class="chain c-tg">TELEGRAM</span>3,109 · 1d ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-sol">NS</span><span class="gn"><b>Nebula Swap</b><span class="m"><span class="chain c-sol">SOLANA</span>12,740 · 2d ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-eth">OL</span><span class="gn"><b>Orbit Lend</b><span class="m"><span class="chain c-eth">ETHEREUM</span>1,884 · 4d ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-bsc">SR</span><span class="gn"><b>Solar Relay</b><span class="m"><span class="chain c-bsc">BSC</span>2,204 · 6d ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+  </div>
+  <div class="fab"><span class="mi s">edit</span>Post update</div>
+  <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab on"><span class="mi f">shield</span>Hub</span><span class="tab"><span class="mi">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
+</div>
+</div>
+
+<!-- 2 · slipping -->
+<div class="col" style="left:550px;top:360px">
+<div class="st">2 · One gem slipping badly</div>
+<div class="sub">Most in need first. The quiet gem expands: what it last said, how long ago, how many members asked, the reports against it, and the composer one tap away. Reliability inverts to Slipping and names the gem responsible.</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><u><span class="mi xs f">signal_cellular_alt</span><span class="mi xs f">wifi</span><span class="mi xs f">battery_full</span></u></div>
+  <div class="body">
+    <div class="hdr"><span class="t">Hub</span><span class="mi">history</span><span class="mi">settings</span></div>
+    <div class="idn"><span class="av a1">JD</span><span class="who"><span class="wl1"><b>Jazzdev</b><span class="bdg b-ruby">15</span><span class="role">HUNTER</span></span><span class="wl2">@jazzdev · Ruby · Pioneer</span></span></div>
+    <div class="rel slip">
+      <div class="sc"><i class="sl">SLIPPING</i><span>Last 14 days</span></div>
+      <div class="cov"><b class="mono">3 of 5</b><em>gems current</em></div>
+      <div class="covl">Halo Points is quiet at 19 days. Terra Vault is due.</div>
+      <div class="pips"><i class="f"></i><i class="f"></i><i class="f"></i><i class="w"></i><i class="w"></i></div>
+      <div class="mets"><div><b>2 of 5</b><span>Response</span></div><div><b>9 days</b><span>Cadence</span></div><div><b>38</b><span>Waiting</span></div></div>
+    </div>
+    <div class="sect"><span class="mi xs">layers</span><b>Your gems</b><em>2 need you</em></div>
+    <div class="gem quiet">
+      <div class="g1"><span class="lg l-eth">HP</span><span class="gn"><b>Halo Points</b><span class="m"><span class="chain c-eth">ETHEREUM</span>4,730 following</span></span><span class="gs qt">QUIET</span></div>
+      <div class="last">Farming round 2 is live <em>· last update 19 days ago</em></div>
+      <div class="meta"><span class="w"><span class="mi xs f">how_to_vote</span>31 members waiting</span><span class="rp"><span class="mi xs">flag</span>2 reports</span></div>
+      <div class="gact"><span class="btn"><span class="mi s">edit</span>Post update</span><span class="btn w">Open gem</span></div>
+    </div>
+    <div class="gem due">
+      <div class="g1"><span class="lg l-ion">TV</span><span class="gn"><b>Terra Vault</b><span class="m"><span class="chain c-ion">ICE</span>1,402 following</span></span><span class="gs due">DUE</span></div>
+      <div class="last">Vault caps raised to 5M <em>· last update 11 days ago</em></div>
+      <div class="dl"><span class="mi s">schedule</span>Closes Friday 18:00 UTC</div>
+      <div class="meta"><span class="w"><span class="mi xs f">how_to_vote</span>7 members waiting</span></div>
+      <div class="gact"><span class="btn"><span class="mi s">edit</span>Post update</span><span class="btn w">Open gem</span></div>
+    </div>
+    <div class="sect"><b>Current</b><em>3 gems</em></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-core">CM</span><span class="gn"><b>Core Mines</b><span class="m"><span class="chain c-core">CORE</span>8,412 · 3h ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-tg">B5</span><span class="gn"><b>Bless50ing</b><span class="m"><span class="chain c-tg">TELEGRAM</span>3,109 · 1d ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-sol">NS</span><span class="gn"><b>Nebula Swap</b><span class="m"><span class="chain c-sol">SOLANA</span>12,740 · 2d ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+  </div>
+  <div class="fab"><span class="mi s">edit</span>Post update</div>
+  <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab on"><span class="mi f">shield</span>Hub</span><span class="tab"><span class="mi">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
+</div>
+</div>
+
+<!-- 3 · day one -->
+<div class="col" style="left:1020px;top:360px">
+<div class="st">3 · Day one as a hunter</div>
+<div class="sub">No gems, so no board and no zeroed metrics — a hunter with nothing to report has nothing to score. Standing reads New and the screen is two routes: submit a gem, or take one someone has offered you.</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><u><span class="mi xs f">signal_cellular_alt</span><span class="mi xs f">wifi</span><span class="mi xs f">battery_full</span></u></div>
+  <div class="body">
+    <div class="hdr"><span class="t">Hub</span><span class="mi">history</span><span class="mi">settings</span></div>
+    <div class="idn"><span class="av a6">MK</span><span class="who"><span class="wl1"><b>Mikko</b><span class="bdg b-iron">2</span><span class="role">HUNTER</span></span><span class="wl2">@mikko · Iron · Explorer</span></span></div>
+    <div class="zero">
+      <div class="ring"><span class="mi xl f">shield</span></div>
+      <h2>You're a hunter now</h2>
+      <p>A gem is a project you found and now own. You post it, and you keep posting every time it moves — that obligation is what members follow you for.</p>
+      <div class="steps">
+        <div class="step"><span class="n">1</span><span><b>Submit your first gem</b><span>Diligence, then a first update</span></span><span class="mi s" style="color:#52525b">chevron_right</span></div>
+        <div class="step"><span class="n">2</span><span><b>Or accept an invite</b><span>Co-own a gem already running</span></span><span class="mi s" style="color:#52525b">chevron_right</span></div>
+      </div>
+    </div>
+    <div class="sect"><b>Standing</b></div>
+    <div class="rel new">
+      <div class="sc"><i class="nw">NEW</i><span>No gems yet</span></div>
+      <div class="covl" style="margin-top:0">Coverage starts counting once your first gem is two weeks old. Nothing is scored before there is something to report.</div>
+    </div>
+    <div class="sect"><b>How reliability is measured</b></div>
+    <div style="padding:0 16px;font-size:15px;line-height:1.6;color:#a1a1aa">Coverage — gems updated in the last 14 days.<br>Response — asks that got an update within a week.<br>Cadence — your typical days between updates.</div>
+  </div>
+  <div class="fab"><span class="mi s">add</span>Submit a gem</div>
+  <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab on"><span class="mi f">shield</span>Hub</span><span class="tab"><span class="mi">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
+</div>
+</div>
+
+<!-- 4 · invites and reviews -->
+<div class="col" style="left:1490px;top:360px">
+<div class="st">4 · Invites and reviews</div>
+<div class="sub">Both are transient, so they sit above the board and disappear when resolved. An invite names who is handing over and what they are handing over; a submission under review says where it is without inventing a queue position.</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><u><span class="mi xs f">signal_cellular_alt</span><span class="mi xs f">wifi</span><span class="mi xs f">battery_full</span></u></div>
+  <div class="body">
+    <div class="hdr"><span class="t">Hub</span><span class="mi">history</span><span class="mi">settings</span></div>
+    <div class="idn"><span class="av a2">AD</span><span class="who"><span class="wl1"><b>Ada</b><span class="bdg b-ame">9</span><span class="role">HUNTER</span></span><span class="wl2">@ada · Amethyst · Elite</span></span></div>
+    <div class="rel">
+      <div class="sc"><i class="rl">RELIABLE</i><span>Last 14 days</span></div>
+      <div class="cov"><b class="mono">2 of 2</b><em>gems current</em></div>
+      <div class="covl">Both gems have an update from the last 14 days.</div>
+      <div class="pips"><i class="f"></i><i class="f"></i></div>
+      <div class="mets"><div><b>3 of 3</b><span>Response</span></div><div><b>4 days</b><span>Cadence</span></div><div><b>0</b><span>Waiting</span></div></div>
+    </div>
+    <div class="sect"><span class="mi xs">mail</span><b>Needs your answer</b></div>
+    <div class="inv">
+      <div class="ir"><span class="lg l-sol" style="width:32px;height:32px;border-radius:8px;font-size:11px">NS</span><b>Nebula Swap</b><span class="pend">INVITE</span></div>
+      <p><b>@abtoonzz</b> is handing over coverage. 12,740 followers, 34 updates posted, last one 2 days ago. Accept and the obligation is yours.</p>
+      <div class="ia"><span class="btn sm" style="flex:1">Accept</span><span class="btn w sm" style="flex:1">Decline</span></div>
+    </div>
+    <div class="inv rev">
+      <div class="ir"><span class="lg l-bsc" style="width:32px;height:32px;border-radius:8px;font-size:11px">LP</span><b>Lumen Pay</b><span class="pend" style="background:#27272a;color:#a1a1aa">IN REVIEW</span></div>
+      <p>Submitted 2 days ago. A moderator is checking the diligence. You'll get a notification either way.</p>
+    </div>
+    <div class="sect"><span class="mi xs">layers</span><b>Your gems</b><em>2 current</em></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-eth">OL</span><span class="gn"><b>Orbit Lend</b><span class="m"><span class="chain c-eth">ETHEREUM</span>1,884 · 5h ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+    <div class="gem cur"><div class="g1"><span class="lg l-ion">ID</span><span class="gn"><b>Ice Drift</b><span class="m"><span class="chain c-ion">ICE</span>962 · 3d ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+  </div>
+  <div class="fab"><span class="mi s">edit</span>Post update</div>
+  <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab on"><span class="mi f">shield</span>Hub</span><span class="tab"><span class="mi">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
+</div>
+</div>
+
+<!-- 5 · twelve gems -->
+<div class="col" style="left:1960px;top:360px">
+<div class="st">5 · A dozen gems</div>
+<div class="sub">The three that need attention are expanded and above the fold; the nine current ones collapse behind a single line that carries the proof. Nothing that needs the hunter is ever below a scroll, however many gems they own.</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><u><span class="mi xs f">signal_cellular_alt</span><span class="mi xs f">wifi</span><span class="mi xs f">battery_full</span></u></div>
+  <div class="body">
+    <div class="hdr"><span class="t">Hub</span><span class="mi">history</span><span class="mi">settings</span></div>
+    <div class="idn" style="padding-bottom:12px"><span class="av a1">JD</span><span class="who"><span class="wl1"><b>Jazzdev</b><span class="bdg b-ruby">15</span><span class="role">HUNTER</span></span><span class="wl2">@jazzdev · Ruby · Pioneer</span></span></div>
+    <div class="rel slip">
+      <div class="sc"><i class="sl">SLIPPING</i><span>Last 14 days</span></div>
+      <div class="cov"><b class="mono">9 of 12</b><em>gems current</em></div>
+      <div class="covl">Two quiet, one due. Aegis Node is the oldest at 21 days.</div>
+      <div class="pips"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="w"></i><i class="w"></i><i class="w"></i></div>
+      <div class="mets"><div><b>6 of 9</b><span>Response</span></div><div><b>7 days</b><span>Cadence</span></div><div><b>52</b><span>Waiting</span></div></div>
+    </div>
+    <div class="sect"><span class="mi xs">layers</span><b>Your gems</b><em>3 need you</em></div>
+    <div class="gem quiet">
+      <div class="g1"><span class="lg l-bsc">AN</span><span class="gn"><b>Aegis Node</b><span class="m"><span class="chain c-bsc">BSC</span>6,015 following</span></span><span class="gs qt">QUIET</span></div>
+      <div class="last">Node sale allocations sent <em>· 21 days ago</em></div>
+      <div class="meta"><span class="w"><span class="mi xs f">how_to_vote</span>28 waiting</span><span class="rp"><span class="mi xs">flag</span>3 reports</span></div>
+      <div class="gact"><span class="btn"><span class="mi s">edit</span>Post update</span><span class="btn w">Open gem</span></div>
+    </div>
+    <div class="gem quiet">
+      <div class="g1"><span class="lg l-eth">HP</span><span class="gn"><b>Halo Points</b><span class="m"><span class="chain c-eth">ETHEREUM</span>4,730 following</span></span><span class="gs qt">QUIET</span></div>
+      <div class="last">Farming round 2 is live <em>· 19 days ago</em></div>
+      <div class="meta"><span class="w"><span class="mi xs f">how_to_vote</span>19 waiting</span></div>
+      <div class="gact"><span class="btn"><span class="mi s">edit</span>Post update</span><span class="btn w">Open gem</span></div>
+    </div>
+    <div class="gem due">
+      <div class="g1"><span class="lg l-ion">TV</span><span class="gn"><b>Terra Vault</b><span class="m"><span class="chain c-ion">ICE</span>1,402 following</span></span><span class="gs due">DUE</span></div>
+      <div class="last">Vault caps raised to 5M <em>· 11 days ago</em></div>
+      <div class="dl"><span class="mi s">schedule</span>Closes Friday 18:00 UTC</div>
+      <div class="meta"><span class="w"><span class="mi xs f">how_to_vote</span>5 waiting</span></div>
+    </div>
+    <div class="fold"><span class="mi s f ck">check_circle</span>9 current, all posted this week<span class="mi s">expand_more</span></div>
+  </div>
+  <div class="fab"><span class="mi s">edit</span>Post update</div>
+  <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab on"><span class="mi f">shield</span>Hub</span><span class="tab"><span class="mi">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
+</div>
+</div>
+
+<!-- 6 · gem page -->
+<div class="col" style="left:2430px;top:360px">
+<div class="st">6 · The gem page</div>
+<div class="sub">Opened from the quiet gem. The wait and the reports sit at the top because they are what the hunter came to answer; below, the hunter's own updates newest first, each editable. The 19-day gap is drawn as a gap, not hidden.</div>
+<div class="ph">
+  <div class="sb"><span class="mono">9:41</span><u><span class="mi xs f">signal_cellular_alt</span><span class="mi xs f">wifi</span><span class="mi xs f">battery_full</span></u></div>
+  <div class="body">
+    <div class="hdr"><span class="mi">arrow_back</span><span class="t" style="font-size:15px">Your gem</span><span class="mi">more_horiz</span></div>
+    <div class="gpg">
+      <div class="gph"><span class="lg l-eth">HP</span><span class="gn"><b>Halo Points</b><span class="m"><span class="chain c-eth">ETHEREUM</span>4,730 following</span></span><span class="gs qt">QUIET</span></div>
+      <div class="wait">
+        <div class="wr"><span class="mi s f">how_to_vote</span>31 members are waiting</div>
+        <p>They asked for an update this week. One post clears all of them — they're notified the moment you publish.</p>
+      </div>
+      <div class="rep"><span class="mi s">flag</span><b>2 reports</b><span>Unmaintained</span></div>
+      <div class="gact"><span class="btn"><span class="mi s">edit</span>Post update</span><span class="btn o">Hand over</span></div>
+      <div class="tl">
+        <div class="gap"><span class="mi s">more_horiz</span>19 days without an update</div>
+        <div class="ev hi">
+          <div class="d">20 Aug · High<em><span class="mi xs">edit</span>Edit</em></div>
+          <b>Farming round 2 is live — deposit before the cap fills 🌾</b>
+          <p>412 likes · 38 comments · 2,100 BNP tipped</p>
+        </div>
+        <div class="ev">
+          <div class="d">6 Aug · Medium<em><span class="mi xs">edit</span>Edit</em></div>
+          <b>Points multiplier changed for LP positions</b>
+          <p>156 likes · 11 comments</p>
+        </div>
+        <div class="ev">
+          <div class="d">28 Jul · Low<em><span class="mi xs">edit</span>Edit</em></div>
+          <b>Halo Points listed — here's the diligence</b>
+          <p>203 likes · 27 comments · 640 BNP tipped</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tabs"><span class="tab"><span class="mi">home</span>Home</span><span class="tab"><span class="mi">diamond</span>Gems</span><span class="tab on"><span class="mi f">shield</span>Hub</span><span class="tab"><span class="mi">bolt</span>Mine</span><span class="tab"><span class="mi">account_balance_wallet</span>Wallet</span><span class="tab"><span class="mi">person</span>Profile</span></div>
+</div>
+</div>
+
+<!-- row anatomy -->
+<div class="spec" style="left:80px;top:1320px;width:860px">
+  <h3>The gem row, in its three states</h3>
+  <p class="lede">One row, three physiques. Current is a single line — logo, name, chain, followers, when it was last touched, a tick. Due gains an amber edge and opens up to show what it last said and who is waiting. Quiet gains an orange edge and a warmed ground, and is the only state that carries actions inline. The escalation is in mass and warmth, so a hunter can see which gem needs them without reading a word.</p>
+  <div class="rowset">
+    <div class="fr">
+      <div class="ty">Current · touched 3h ago</div>
+      <div class="gem cur" style="border:none"><div class="g1"><span class="lg l-core">CM</span><span class="gn"><b>Core Mines</b><span class="m"><span class="chain c-core">CORE</span>8,412 · 3h ago</span></span><span class="mi s tick f">check_circle</span></div></div>
+      <div class="ty">Never updated · the honest version</div>
+      <div class="gem due" style="border:none">
+        <div class="g1"><span class="lg l-sol">PY</span><span class="gn"><b>Prism Yield</b><span class="m"><span class="chain c-sol">SOLANA</span>88 following</span></span><span class="gs due">DUE</span></div>
+        <div class="last none">No updates yet · listed 12 days ago</div>
+        <div class="gact"><span class="btn"><span class="mi s">edit</span>Post the first update</span></div>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="ty">Due · 11 days, with a stated deadline</div>
+      <div class="gem due" style="border:none">
+        <div class="g1"><span class="lg l-ion">TV</span><span class="gn"><b>Terra Vault</b><span class="m"><span class="chain c-ion">ICE</span>1,402 following</span></span><span class="gs due">DUE</span></div>
+        <div class="last">Vault caps raised to 5M <em>· last update 11 days ago</em></div>
+        <div class="dl"><span class="mi s">schedule</span>Closes Friday 18:00 UTC</div>
+        <div class="meta"><span class="w"><span class="mi xs f">how_to_vote</span>7 members waiting</span></div>
+      </div>
+      <div class="ty">Quiet · 19 days, members waiting, reported</div>
+      <div class="gem quiet" style="border:none">
+        <div class="g1"><span class="lg l-eth">HP</span><span class="gn"><b>Halo Points</b><span class="m"><span class="chain c-eth">ETHEREUM</span>4,730 following</span></span><span class="gs qt">QUIET</span></div>
+        <div class="last">Farming round 2 is live <em>· last update 19 days ago</em></div>
+        <div class="meta"><span class="w"><span class="mi xs f">how_to_vote</span>31 members waiting</span><span class="rp"><span class="mi xs">flag</span>2 reports</span></div>
+        <div class="gact"><span class="btn"><span class="mi s">edit</span>Post update</span><span class="btn w">Open gem</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><b>Waiting and reports render only when non-zero.</b> No "0 waiting", no empty report slot. <b>The deadline is the hunter's own stated time</b>, carried from the update that set it, and shown here because a window the hunter announced is the strongest reason to post again. <b>Red appears once</b>, on the report count, and never in the same row as a tier badge — the badge lives in the header, the row does not carry one.</div>
+</div>
+
+<!-- reliability vs reach -->
+<div class="spec" style="left:980px;top:1320px;width:820px">
+  <h3>Reliability, and why reach sits below it</h3>
+  <p class="lede">Four observed quantities, and a word derived from the first. Coverage is a fraction with a named denominator the platform actually owns — the hunter's own gems — which is the only denominator anywhere in this product that is honest. Everything the old Hub led with has gone.</p>
+  <div class="three">
+    <div class="mini">
+      <div class="ty">Reliable</div>
+      <div class="rel" style="margin:0;padding:12px">
+        <div class="sc" style="margin-bottom:10px"><i class="rl">RELIABLE</i></div>
+        <div class="cov"><b class="mono" style="font-size:24px">5 of 5</b></div>
+        <div class="pips"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></div>
+      </div>
+      <p style="margin-top:12px">All gems inside 14 days. Cyan, the hunter-space accent — the only place on the screen it is used to praise.</p>
+    </div>
+    <div class="mini">
+      <div class="ty">Slipping</div>
+      <div class="rel slip" style="margin:0;padding:12px">
+        <div class="sc" style="margin-bottom:10px"><i class="sl">SLIPPING</i></div>
+        <div class="cov"><b class="mono" style="font-size:24px">3 of 5</b></div>
+        <div class="pips"><i class="f"></i><i class="f"></i><i class="f"></i><i class="w"></i><i class="w"></i></div>
+      </div>
+      <p style="margin-top:12px">One or more gems past 14 days. Orange, and the line underneath names which — a standing that does not say what to fix is just a scold.</p>
+    </div>
+    <div class="mini">
+      <div class="ty">New</div>
+      <div class="rel new" style="margin:0;padding:12px">
+        <div class="sc" style="margin-bottom:10px"><i class="nw">NEW</i></div>
+        <div class="covl" style="margin:0">No gems yet</div>
+      </div>
+      <p style="margin-top:12px">No gems, or a first gem under two weeks old. Grey, and no fraction is drawn — nothing is scored before there is something to report.</p>
+    </div>
+  </div>
+  <div class="three" style="grid-template-columns:1fr 1fr;margin-top:16px">
+    <div class="mini">
+      <div class="ty">Reach — deliberately demoted</div>
+      <div class="reach" style="margin:0">
+        <div><span class="mi s">volunteer_activism</span><span><b class="mono">18,240 BNP</b><span>Tips</span></span></div>
+        <div><span class="mi s">groups</span><span><b class="mono">26,465</b><span>Followers</span></span></div>
+      </div>
+      <p style="margin-top:12px">Flat surfaces, no accent, 15px numbers against coverage's 32. Tips are the reward for the obligation, so they are a receipt — not the headline furniture the old Hub made them.</p>
+    </div>
+    <div class="mini">
+      <div class="ty">Removed, and why</div>
+      <p><b>Season ranking</b> — the full reliability leaderboard belongs on Gems, not in the hunter's own workspace.<br><b>Elite Hunter banner</b> — a tier the level badge already states.<br><b>Success rate</b> — it measured how often the hunter labelled a post urgent, which is not a measure of anything.<br><b>The gem ticker</b> — a price the platform does not have.</p>
+    </div>
+  </div>
+</div>
+
+<!-- the ask, landing -->
+<div class="spec" style="left:80px;top:2100px;width:860px">
+  <h3>Where the member's tap lands</h3>
+  <p class="lede">On Home, a member on a quiet gem taps <em style="font-style:normal;color:#d4d4d8">Ask for an update</em> and joins an aggregated wait. That wait has had nowhere to arrive. It arrives here: one number per gem, on the row and again at the top of the gem page, and it clears the moment the hunter posts.</p>
+  <div class="rowset" style="grid-template-columns:390px 1fr">
+    <div class="fr">
+      <div class="ty">On the board</div>
+      <div class="gem quiet" style="border:none">
+        <div class="g1"><span class="lg l-eth">HP</span><span class="gn"><b>Halo Points</b><span class="m"><span class="chain c-eth">ETHEREUM</span>4,730 following</span></span><span class="gs qt">QUIET</span></div>
+        <div class="last">Farming round 2 is live <em>· last update 19 days ago</em></div>
+        <div class="meta"><span class="w"><span class="mi xs f">how_to_vote</span>31 members waiting</span><span class="rp"><span class="mi xs">flag</span>2 reports</span></div>
+        <div class="gact"><span class="btn"><span class="mi s">edit</span>Post update</span><span class="btn w">Open gem</span></div>
+      </div>
+    </div>
+    <div class="mini" style="border-radius:16px">
+      <div class="ty">The loop, closed</div>
+      <p><b>One nudge, not 31.</b> The member's tap is a vote; the hunter gets a single notification carrying the count, and the count is what appears here.<br><br><b>No member names reach the hunter.</b> The wait is a number on both sides — private in who, public in how many.<br><br><b>Posting clears it.</b> Publishing an update on the gem zeroes the wait and notifies everyone in it, which is also what feeds Response: asks that got an update within a week.<br><br><b>At 50 waiting</b> the gem enters the moderation queue for reassignment. The hunter sees the same threshold the member sees, so escalation is never a surprise — and <em style="font-style:normal;color:#d4d4d8">Hand over</em> on the gem page is the graceful exit before it.</p>
+    </div>
+  </div>
+  <div class="note"><b>Other spaces.</b> A moderator's Hub adds the report queue above the board and shows every hunter's standing, not just their own; the member space has no Hub tab at all. <b>The composer</b> opens from the FAB with no gem selected, and from any row with that gem pre-selected — plus the deadline field, which is what makes the stated time on a row possible. Project monograms stand in for real logos.</div>
+</div>
+
+</body></html>
