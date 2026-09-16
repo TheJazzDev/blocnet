@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -24,7 +25,12 @@ import {
   HunterLeaderboardResponseDto,
   HunterReliabilityDto,
 } from './dto/hunter-reliability-response.dto';
+import {
+  HunterGemPageDto,
+  HunterGemPageQuery,
+} from './dto/hunter-gem-page.dto';
 import { ListHunterLeaderboardQuery } from './dto/list-hunter-leaderboard.query';
+import { HunterGemPageService } from './hunter-gem-page.service';
 import { HunterReliabilityService } from './hunter-reliability.service';
 
 @ApiTags('hunters')
@@ -66,7 +72,10 @@ const HUNTER_CAPABLE_ROLES = [AppRole.OWNER, AppRole.ADMIN, AppRole.HUNTER];
 @Controller('me/hunter')
 @UseGuards(AuthGuard, RolesGuard)
 export class MyHunterBoardController {
-  constructor(private readonly reliability: HunterReliabilityService) {}
+  constructor(
+    private readonly reliability: HunterReliabilityService,
+    private readonly gemPage: HunterGemPageService,
+  ) {}
 
   @Get('board')
   @Roles(...HUNTER_CAPABLE_ROLES)
@@ -78,5 +87,25 @@ export class MyHunterBoardController {
   async board(@CurrentUser() user: AuthUser | undefined) {
     if (!user) throw new UnauthorizedException('User context missing');
     return this.reliability.getBoard(user.id);
+  }
+
+  @Get('gems/:projectId')
+  @Roles(...HUNTER_CAPABLE_ROLES)
+  @ApiOperation({
+    summary:
+      'One of the caller’s own gems: its board row and its published updates, newest first, with comments and tips per update.',
+  })
+  @ApiOkResponse({ type: HunterGemPageDto })
+  @ApiNotFoundResponse({
+    description:
+      'The gem does not exist, is not live, or the caller does not keep it.',
+  })
+  async gem(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Query() query: HunterGemPageQuery,
+  ) {
+    if (!user) throw new UnauthorizedException('User context missing');
+    return this.gemPage.getGem(user.id, projectId, query);
   }
 }
