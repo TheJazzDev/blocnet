@@ -1,7 +1,5 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -70,8 +68,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           });
         }
 
-        final digest = store.digestSummary;
-        final hasInsights = digest?.hasAnyInsight ?? false;
         final hasContent = store.notifications.isNotEmpty;
         final viewMode = context.watch<FeedViewModeStore>().mode;
 
@@ -84,30 +80,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             showFilter: false,
             showNotificationBell: false,
             actions: [
-              if (hasInsights)
-                GestureDetector(
-                  onTap: () => _openInsights(digest),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: AppSpace.sm),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpace.md,
-                      vertical: AppSpace.sm,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgElevated,
-                      borderRadius: BorderRadius.circular(AppRadius.smValue),
-                      border: Border.all(color: AppColors.borderSubtle),
-                    ),
-                    child: Text(
-                      'Insights',
-                      style: AppTypography.custom(
-                        color: AppColors.textMuted,
-                        size: AppText.captionSize,
-                        weight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
               if (store.unreadCount > 0)
                 GestureDetector(
                   onTap: store.markAllRead,
@@ -433,14 +405,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _openInsights(DigestSummary? digest) {
-    if (!mounted) return;
-    Navigator.of(context).pushNamed(
-      AppRoutes.notificationInsights,
-      arguments: {'digest': digest},
     );
   }
 }

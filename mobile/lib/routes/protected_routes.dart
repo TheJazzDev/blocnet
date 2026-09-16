@@ -18,8 +18,6 @@ import 'package:blocnet/features/community/presentation/pages/community_post_dis
 import 'package:blocnet/features/community/presentation/pages/my_reports_screen.dart';
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
 import 'package:blocnet/features/mining/presentation/pages/referral_code_screen.dart';
-import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
-import 'package:blocnet/features/notifications/presentation/pages/notification_insights_screen.dart';
 import 'package:blocnet/features/notifications/presentation/pages/notifications_screen.dart';
 import 'package:blocnet/features/system_alerts/presentation/pages/system_alerts_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/blocked_users_screen.dart';
@@ -50,7 +48,6 @@ class ProtectedRoutes {
   static const String miningLeaderboard = AppRoutes.miningLeaderboard;
   static const String miningHourlyHistory = AppRoutes.miningHourlyHistory;
   static const String notifications = AppRoutes.notifications;
-  static const String notificationInsights = AppRoutes.notificationInsights;
   static const String systemAlerts = AppRoutes.systemAlerts;
   static const String badges = AppRoutes.badges;
   static const String levels = AppRoutes.levels;
@@ -127,14 +124,6 @@ class ProtectedRoutes {
         final category = args is Map ? args['category']?.toString() : null;
         return NotificationsScreen(initialCategory: category);
       },
-      notificationInsights: (context) {
-        final args = ModalRoute.of(context)?.settings.arguments;
-        DigestSummary? digest;
-        if (args is Map && args['digest'] is DigestSummary) {
-          digest = args['digest'] as DigestSummary;
-        }
-        return NotificationInsightsScreen(digest: digest);
-      },
       systemAlerts: (context) => const SystemAlertsScreen(),
       badges: (context) => const BadgeGalleryPage(),
       levels: (context) => const LevelsPage(),
@@ -182,7 +171,6 @@ class ProtectedRoutes {
     miningLeaderboard,
     miningHourlyHistory,
     notifications,
-    notificationInsights,
     systemAlerts,
     badges,
     levels,
