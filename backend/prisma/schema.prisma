@@ -108,6 +108,7 @@ model Profile {
   reviewedWithdrawals                WithdrawalRequest[]                  @relation("WithdrawalReviewer")
   withdrawalRequests                 WithdrawalRequest[]                  @relation("WithdrawalRequester")
 
+  @@index([miningClaimedPoints])
   @@index([referredById])
   @@index([primaryBadgeId])
   @@index([currentLevelId])
@@ -1241,6 +1242,7 @@ model MiningSession {
   ledger                  MiningPointLedger[]
   user                    Profile                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([endsAt])
   @@index([userId, createdAt])
   @@index([userId, claimedAt])
   @@index([userId, expiredAt])
