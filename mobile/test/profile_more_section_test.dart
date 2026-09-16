@@ -1,4 +1,4 @@
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_content_section.dart';
+import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/hunter_hub_link_section.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/sections/profile_more_section.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
@@ -38,7 +38,8 @@ Future<void> _pump(WidgetTester tester, AuthStore auth) async {
           body: SingleChildScrollView(
             child: Column(
               children: [
-                if (auth.hasHunterSpace) const HunterContentSection(),
+                if (auth.hasHunterSpace)
+                  const HunterHubLinkSection(inHunterSpace: false),
                 ProfileMoreSection(auth: auth, onSignOut: () {}),
               ],
             ),
@@ -55,7 +56,8 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('everyone sees badges, quests, levels, tips, referral, settings, '
+  testWidgets(
+      'everyone sees badges, quests, levels, tips, referral, settings, '
       'help and sign out', (tester) async {
     await _pump(tester, _RolesAuthStore());
 
@@ -78,13 +80,15 @@ void main() {
     expect(find.text('Become a Hunter'), findsOneWidget);
   });
 
-  testWidgets('hunters additionally see content shortcuts and received tips',
+  testWidgets('hunters additionally see one Hub row and received tips',
       (tester) async {
     await _pump(tester, _RolesAuthStore(hunter: true));
 
-    expect(find.text('Submit New Gem'), findsOneWidget);
-    expect(find.text('Manage My Gems'), findsOneWidget);
-    expect(find.text('Manage My Updates'), findsOneWidget);
+    expect(find.text('Hunter Hub'), findsOneWidget);
+    // The content shortcuts moved to the Hub.
+    expect(find.text('Submit New Gem'), findsNothing);
+    expect(find.text('Manage My Gems'), findsNothing);
+    expect(find.text('Manage My Updates'), findsNothing);
     expect(find.text('Tip History (Received)'), findsOneWidget);
     // Nothing from the shared list goes away for hunters.
     expect(find.text('Badges'), findsOneWidget);
@@ -92,6 +96,33 @@ void main() {
     expect(find.text('Levels'), findsOneWidget);
     expect(find.text('System Alerts'), findsNothing);
     expect(find.text('Become a Hunter'), findsNothing);
+  });
+
+  testWidgets('the Hub row opens the Hub', (tester) async {
+    final pushed = <String>[];
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => FeedViewModeStore()),
+        ],
+        child: MaterialApp(
+          onGenerateRoute: (settings) {
+            if (settings.name != '/') pushed.add(settings.name!);
+            return MaterialPageRoute<void>(
+              settings: settings,
+              builder: (_) => Scaffold(
+                body: settings.name == '/'
+                    ? const HunterHubLinkSection(inHunterSpace: false)
+                    : const SizedBox(),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('Hunter Hub'));
+    await tester.pumpAndSettle();
+    expect(pushed, ['/hunter-hub']);
   });
 
   testWidgets('system alerts stay owner/dev only', (tester) async {
