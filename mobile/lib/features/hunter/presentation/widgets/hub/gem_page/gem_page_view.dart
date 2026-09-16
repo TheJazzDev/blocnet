@@ -12,9 +12,8 @@ import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_style
 import 'package:flutter/material.dart';
 
 /// The gem page body (design state 6): header, the wait and the reports the
-/// hunter came to answer, *Post update*, then their updates newest first.
-///
-/// No *Hand over* button: there is no hunter-to-hunter handover yet (D4).
+/// hunter came to answer, *Post update* beside *Hand over*, then their
+/// updates newest first.
 class GemPageView extends StatelessWidget {
   const GemPageView({
     super.key,
@@ -24,6 +23,7 @@ class GemPageView extends StatelessWidget {
     required this.error,
     required this.now,
     required this.onPost,
+    required this.onHandover,
     required this.onEdit,
     required this.onRetry,
     required this.onRefresh,
@@ -37,6 +37,9 @@ class GemPageView extends StatelessWidget {
   final String? error;
   final DateTime now;
   final VoidCallback onPost;
+
+  /// Offers a handover, or shows the pending one ([HunterGemDetail.pendingHandover]).
+  final VoidCallback onHandover;
   final ValueChanged<HunterGemEvent> onEdit;
   final VoidCallback onRetry;
   final Future<void> Function() onRefresh;
@@ -75,16 +78,38 @@ class GemPageView extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          HubButton(
-            key: const ValueKey('gem-post'),
-            label: gem.neverUpdated ? 'Post the first update' : 'Post update',
-            icon: Icons.edit_outlined,
-            onTap: onPost,
-          ),
+          _actions(),
           const SizedBox(height: 20),
           _timeline(gapDays),
         ],
       ),
+    );
+  }
+
+  /// `.gact`: *Post update* (filled) and *Hand over* (warn), equal width.
+  Widget _actions() {
+    final pending = detail?.pendingHandover != null;
+    return Row(
+      key: const ValueKey('gem-actions'),
+      children: [
+        Expanded(
+          child: HubButton(
+            key: const ValueKey('gem-post'),
+            label: gem.neverUpdated ? 'First update' : 'Post update',
+            icon: Icons.edit_outlined,
+            onTap: onPost,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: HubButton(
+            key: const ValueKey('gem-handover'),
+            label: pending ? 'Handover pending' : 'Hand over',
+            tone: HubButtonTone.warn,
+            onTap: onHandover,
+          ),
+        ),
+      ],
     );
   }
 
