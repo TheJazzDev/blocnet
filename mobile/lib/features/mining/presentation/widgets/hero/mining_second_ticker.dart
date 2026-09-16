@@ -5,10 +5,10 @@ import 'package:flutter/widgets.dart';
 
 /// Whether the Mine tab holding [context] is on screen.
 ///
-/// The main shell keeps tabs alive in an `IndexedStack`, which wraps each tab
-/// in `Visibility.maintain`: hidden tabs keep their tickers *enabled*, so
-/// `TickerMode` alone cannot tell. The nearest `Visibility` ancestor can.
-/// `TickerMode` still covers the other case — a route pushed over the shell.
+/// The main shell's `LazyTabStack` turns tickers off for hidden tabs, and
+/// `TickerMode` also covers a route pushed over the shell. A bare
+/// `IndexedStack` (`Visibility.maintain`) leaves hidden tabs' tickers
+/// *enabled*, so the nearest `Visibility` ancestor is checked as well.
 bool isMiningTabVisible(BuildContext context) {
   if (!TickerMode.getNotifier(context).value) return false;
   final visibility = context.findAncestorWidgetOfExactType<Visibility>();

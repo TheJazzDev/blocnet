@@ -6,6 +6,7 @@ import 'package:blocnet/features/mining/presentation/widgets/hero/mining_core_vi
 import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_actions.dart';
 import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_notices.dart';
 import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_parts.dart';
+import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_semantics.dart';
 import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_stats.dart';
 import 'package:blocnet/features/mining/presentation/widgets/hero/mining_hero_view.dart';
 import 'package:blocnet/features/mining/presentation/widgets/hero/mining_second_ticker.dart';
@@ -177,25 +178,43 @@ class _MiningHeroCardState extends State<MiningHeroCard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _HeroHeader(view: view),
-              const SizedBox(height: AppSpace.md),
-              Center(
-                child: AnimatedBuilder(
-                  animation: Listenable.merge(_controllers),
-                  builder: (context, _) => MiningCoreVisual(
-                    isRunning: _isLive,
-                    orbitValue: _orbitController.value,
-                    counterOrbitValue: _counterOrbitController.value,
-                    pulseValue: _pulseController.value,
-                    waveValue: _waveController.value,
+              // Read as one summary; the pieces below it would otherwise be
+              // spoken as "0%", "IDLE", ... (F-62).
+              Semantics(
+                container: true,
+                label: miningHeroSemanticsLabel(
+                  context,
+                  view: view,
+                  session: snapshot.session,
+                  now: _now,
+                ),
+                child: ExcludeSemantics(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _HeroHeader(view: view),
+                      const SizedBox(height: AppSpace.md),
+                      Center(
+                        child: AnimatedBuilder(
+                          animation: Listenable.merge(_controllers),
+                          builder: (context, _) => MiningCoreVisual(
+                            isRunning: _isLive,
+                            orbitValue: _orbitController.value,
+                            counterOrbitValue: _counterOrbitController.value,
+                            pulseValue: _pulseController.value,
+                            waveValue: _waveController.value,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.lg),
+                      MiningEarningPanel(
+                        snapshot: snapshot,
+                        cycleHours: view.cycleHours,
+                        canClaim: view.canClaim,
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              MiningEarningPanel(
-                snapshot: snapshot,
-                cycleHours: view.cycleHours,
-                canClaim: view.canClaim,
               ),
               const SizedBox(height: AppSpace.md),
               MiningStatsGrid(snapshot: snapshot),

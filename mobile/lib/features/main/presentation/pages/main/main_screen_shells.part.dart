@@ -147,7 +147,7 @@ class _UserSpaceShell extends StatelessWidget {
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
       ),
-      body: _LazyTabStack(
+      body: LazyTabStack(
         index: currentIndex,
         builders: const [
           _homeBuilder,
@@ -202,7 +202,7 @@ class _HunterSpaceShell extends StatelessWidget {
         // D5: the Hub keeps the shared bar and adds My updates.
         actions: isHub ? const [HubHistoryAction()] : const [],
       ),
-      body: _LazyTabStack(
+      body: LazyTabStack(
         index: currentIndex,
         builders: const [
           _homeBuilder,
@@ -254,7 +254,7 @@ class _ModerationSpaceShell extends StatelessWidget {
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
       ),
-      body: _LazyTabStack(
+      body: LazyTabStack(
         index: currentIndex,
         builders: const [
           _homeBuilder,
@@ -283,43 +283,3 @@ Widget _miningBuilder(BuildContext _) => const MiningScreen();
 Widget _walletBuilder(BuildContext _) => const WalletScreen();
 Widget _profileBuilder(BuildContext _) =>
     const ProfileScreen(embeddedInMainShell: true);
-
-class _LazyTabStack extends StatefulWidget {
-  const _LazyTabStack({
-    required this.index,
-    required this.builders,
-  });
-
-  final int index;
-  final List<WidgetBuilder> builders;
-
-  @override
-  State<_LazyTabStack> createState() => _LazyTabStackState();
-}
-
-class _LazyTabStackState extends State<_LazyTabStack> {
-  late final List<Widget?> _builtChildren =
-      List<Widget?>.filled(widget.builders.length, null, growable: true);
-
-  @override
-  void didUpdateWidget(covariant _LazyTabStack oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.builders.length != widget.builders.length) {
-      _builtChildren
-        ..clear()
-        ..addAll(List<Widget?>.filled(widget.builders.length, null));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    _builtChildren[widget.index] ??= widget.builders[widget.index](context);
-
-    return IndexedStack(
-      index: widget.index,
-      children: List<Widget>.generate(widget.builders.length, (index) {
-        return _builtChildren[index] ?? const SizedBox.shrink();
-      }),
-    );
-  }
-}
