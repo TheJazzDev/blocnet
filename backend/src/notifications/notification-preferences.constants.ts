@@ -68,6 +68,9 @@ export const NOTIFICATION_TYPES_BY_CATEGORY: Record<
   ],
   [NotificationCategory.mining_referrals]: [
     NotificationType.mining_claimed,
+    // Claim reminders from the mining sweep (F-49).
+    NotificationType.mining_cycle_ready,
+    NotificationType.mining_claim_expiring,
     NotificationType.referral_bound,
     NotificationType.referral_admin_bound,
   ],

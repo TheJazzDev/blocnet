@@ -1547,6 +1547,8 @@ enum NotificationType {
   wallet_provision_ready
   wallet_provision_failed
   mining_claimed
+  mining_cycle_ready
+  mining_claim_expiring
   referral_bound
   referral_admin_bound
   badge_earned

@@ -92,6 +92,12 @@ export const envValidationSchema = Joi.object({
   ENABLE_EVENT_NOTIFICATIONS: Joi.boolean().default(true),
   ENABLE_WEEKLY_DIGEST: Joi.boolean().default(true),
   NOTIFICATION_DIGEST_ENABLED: Joi.boolean().default(true),
+  MINING_REMINDERS_ENABLED: Joi.boolean().default(true),
+  MINING_REMINDER_BATCH_SIZE: Joi.number()
+    .integer()
+    .min(10)
+    .max(1000)
+    .default(200),
   NOTIFICATION_DIGEST_SEND_WINDOW_MINUTES: Joi.number()
     .integer()
     .min(1)
