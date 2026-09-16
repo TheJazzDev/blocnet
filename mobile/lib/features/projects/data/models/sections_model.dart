@@ -19,23 +19,19 @@ class Sections {
   /// type rather than whose it was.
   static const following = Section("following", "Following");
 
-  /// Everything on the platform. Labelled "General" in the app, which is the
-  /// name members already know it by.
-  static const explore = Section("explore", "General");
-
   static const yourProjects = Section("your_projects", "My Gems");
   static const discoverProjects = Section("discover_projects", "Discover Gems");
 
   /// The tabs Home shows, in order.
   /// Order per the approved design: Following leads, because for a member
   /// with a board it is the tab that matters. On day one it is dimmed and
-  /// For you opens instead.
-  static const List<Section> homeTabs = [following, forYou, explore];
+  /// For you opens instead. General ("everything, newest first") was cut:
+  /// that job moves to Gems.
+  static const List<Section> homeTabs = [following, forYou];
 
   static const List<Section> all = [
     forYou,
     following,
-    explore,
     yourProjects,
     discoverProjects,
   ];

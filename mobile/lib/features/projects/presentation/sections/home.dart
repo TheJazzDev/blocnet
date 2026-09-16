@@ -91,10 +91,6 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
     setState(() {
       _pickedSection = section;
       _section = section;
-      if (section == Sections.explore) {
-        _pendingNewPostIds.clear();
-        _showCatchupFilter = false;
-      }
     });
   }
 
@@ -109,10 +105,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
   }
 
   Future<void> _checkForNewPosts() async {
-    // Both feed tabs care about new posts; only General does not.
-    if (!mounted || _section == Sections.explore) {
-      return;
-    }
+    if (!mounted) return;
 
     final updatesStore = context.read<UpdatesStore>();
     final existingIds = updatesStore.posts.map((post) => post.id).toSet();
@@ -207,7 +200,6 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
         (FeedBlend.defaultsToFollowing(followCount)
             ? Sections.following
             : Sections.forYou);
-    final isForYou = _section != Sections.explore;
     // Earned, not idle: only claim this once the radar has actually reported,
     // the member has a board to be caught up on, and nothing is pending.
     final radar = _radarSummary;
@@ -220,8 +212,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
       posts: updatesStore.posts,
       now: DateTime.now(),
     );
-    final showCaughtUp = isForYou &&
-        quietGems.isEmpty &&
+    final showCaughtUp = quietGems.isEmpty &&
         !_isLoadingRadar &&
         radar != null &&
         !radar.hasUpdates &&
@@ -276,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
                 // Not on day one: "0 new across 0 gems" is noise on a screen
                 // whose whole job is to get the member their first follow. The
                 // design goes straight from the tabs to the intro there.
-                else if (isForYou && radar != null && followCount > 0)
+                else if (radar != null && followCount > 0)
                   SliverToBoxAdapter(
                     child: FeedRadarStrip(radar: radar, accent: accent),
                   ),
@@ -297,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
               ],
             ),
           ),
-          if (isForYou && _pendingNewPostIds.isNotEmpty)
+          if (_pendingNewPostIds.isNotEmpty)
             NewUpdatesPill(
               count: _pendingNewPostIds.length,
               backgroundColor: accent,

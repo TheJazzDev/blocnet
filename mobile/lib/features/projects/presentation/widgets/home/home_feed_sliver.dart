@@ -4,7 +4,6 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/sections_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
-import 'package:blocnet/features/projects/presentation/sections/explore/explore.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/catch_up_banner.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/empty_feed.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card.dart';
@@ -88,143 +87,133 @@ class HomeFeedSliver extends StatelessWidget {
             return b.createdAt.compareTo(a.createdAt);
           });
 
-        if (activeSection == Sections.forYou ||
-            activeSection == Sections.following) {
-          if (isInitialLoading && enrichedPosts.isEmpty) {
-            return const _FeedLoadingPlaceholder();
-          }
-          if (store.isFetching && store.posts.isEmpty) {
-            return const _FeedLoadingPlaceholder();
-          }
-
-          // Following shows only the member's own gems. For you mixes theirs
-          // with curated ones, in a proportion that shifts as their board
-          // fills, so Home is worth scrolling on day one and is almost all
-          // theirs by the tenth follow. See [FeedBlend].
-          final followedIds = projectsStore.followedProjectIds;
-          final followed = rankedFeedPosts
-              .where((post) => followedIds.contains(post.projectId))
-              .toList();
-          final curated = rankedFeedPosts
-              .where((post) => !followedIds.contains(post.projectId))
-              .toList();
-          final posts = activeSection == Sections.following
-              ? followed
-              : FeedBlend.blend(
-                  followed: followed,
-                  curated: curated,
-                  followCount: followedIds.length,
-                );
-
-          // A followed gem nobody has touched in two weeks is the product's
-          // real failure mode, and nothing used to surface it. These cards sit
-          // in the stream, above the updates, because a missing update is the
-          // most important thing on the board when it happens.
-          //
-          // Following only. I had these on both tabs, which was wrong twice
-          // over: a board-maintenance warning is off-message on the discovery
-          // tab, and an identical card at the top of both made the two tabs
-          // look like the same screen. Capped at three so a neglected board
-          // does not bury the feed under warnings.
-          final quietCards = activeSection != Sections.following
-              ? const <Widget>[]
-              : quietGems
-                  .take(3)
-                  .map(
-                    (gem) => FeedQuietGemCard(
-                      gem: gem,
-                      onUnfollow: () =>
-                          projectsStore.toggleFollowProject(gem.project.id),
-                      onAsk: () => _ask(context, projectsStore, gem),
-                      onReport: () => _report(context, projectsStore, gem),
-                    ),
-                  )
-                  .toList();
-
-          // Day one: no board yet, so Home borrows Discover's job. An intro
-          // saying what a hunter is for, then gems worth starting with, ranked
-          // by the store's own hype score. Disappears at the first follow.
-          final isDayOne = followedIds.isEmpty;
-          final accent = AppColors.accentForSpace(
-            context.read<AuthStore>().isInHunterSpace,
-          );
-          final starters = isDayOne
-              ? ([...projectsStore.projects]..sort(
-                      (a, b) => projectsStore
-                          .hypeScoreForProject(b)
-                          .compareTo(projectsStore.hypeScoreForProject(a)),
-                    ))
-                  .take(4)
-                  .toList()
-              : const <Project>[];
-
-          if (posts.isEmpty && quietCards.isEmpty && starters.isEmpty) {
-            return const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpace.lg),
-              sliver: SliverToBoxAdapter(child: EmptyFeed()),
-            );
-          }
-          // Card rows are full-bleed and carry their own padding, so the feed
-          // reads as one stream rather than a stack of floating panels. The
-          // list layout has not been redesigned and still wants a gutter.
-          final isFullBleed = feedViewMode == FeedViewMode.card;
-          return SliverPadding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isFullBleed ? 0 : AppSpace.lg,
-            ),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                if (showCatchupFilter)
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isFullBleed ? AppSpace.lg : 0,
-                    ),
-                    child: CatchUpBanner(onClear: onClearCatchup),
-                  ),
-                if (isDayOne) ...[
-                  const FeedDayOneIntro(),
-                  FeedTopHunters(hunters: topHunters, onOpen: (_) {}),
-                ],
-                if (starters.isNotEmpty) ...[
-                  FeedSectionHeading(
-                    icon: Icons.trending_up_rounded,
-                    label: 'Moving right now',
-                    accent: accent,
-                  ),
-                  for (final project in starters)
-                    FeedFollowRow(
-                      project: project,
-                      accent: accent,
-                      isFollowed: projectsStore.isProjectFollowed(project.id),
-                      onToggleFollow: () =>
-                          projectsStore.toggleFollowProject(project.id),
-                      onOpen: () => _openProject(context, project.id),
-                    ),
-                  FeedSectionHeading(
-                    icon: Icons.bolt_rounded,
-                    label: 'Latest from hunters',
-                    accent: accent,
-                  ),
-                ],
-                ...quietCards,
-                // Caught up does not dead-end: the design follows the card with
-                // posts from hunters the member does not follow yet.
-                if (showCaughtUp)
-                  FeedSectionHeading(
-                    icon: Icons.explore_outlined,
-                    label: "From hunters you don't follow",
-                    accent: accent,
-                  ),
-                ..._buildFeedRows(posts, feedViewMode),
-              ]),
-            ),
-          );
+        if (isInitialLoading && enrichedPosts.isEmpty) {
+          return const _FeedLoadingPlaceholder();
+        }
+        if (store.isFetching && store.posts.isEmpty) {
+          return const _FeedLoadingPlaceholder();
         }
 
-        return SliverToBoxAdapter(
-          child: ExploreSection(
-            allPosts: store.posts,
-            feedViewMode: feedViewMode,
+        // Following shows only the member's own gems. For you mixes theirs
+        // with curated ones, in a proportion that shifts as their board
+        // fills, so Home is worth scrolling on day one and is almost all
+        // theirs by the tenth follow. See [FeedBlend].
+        final followedIds = projectsStore.followedProjectIds;
+        final followed = rankedFeedPosts
+            .where((post) => followedIds.contains(post.projectId))
+            .toList();
+        final curated = rankedFeedPosts
+            .where((post) => !followedIds.contains(post.projectId))
+            .toList();
+        final posts = activeSection == Sections.following
+            ? followed
+            : FeedBlend.blend(
+                followed: followed,
+                curated: curated,
+                followCount: followedIds.length,
+              );
+
+        // A followed gem nobody has touched in two weeks is the product's
+        // real failure mode, and nothing used to surface it. These cards sit
+        // in the stream, above the updates, because a missing update is the
+        // most important thing on the board when it happens.
+        //
+        // Following only. I had these on both tabs, which was wrong twice
+        // over: a board-maintenance warning is off-message on the discovery
+        // tab, and an identical card at the top of both made the two tabs
+        // look like the same screen. Capped at three so a neglected board
+        // does not bury the feed under warnings.
+        final quietCards = activeSection != Sections.following
+            ? const <Widget>[]
+            : quietGems
+                .take(3)
+                .map(
+                  (gem) => FeedQuietGemCard(
+                    gem: gem,
+                    onUnfollow: () =>
+                        projectsStore.toggleFollowProject(gem.project.id),
+                    onAsk: () => _ask(context, projectsStore, gem),
+                    onReport: () => _report(context, projectsStore, gem),
+                  ),
+                )
+                .toList();
+
+        // Day one: no board yet, so Home borrows Discover's job. An intro
+        // saying what a hunter is for, then gems worth starting with, ranked
+        // by the store's own hype score. Disappears at the first follow.
+        final isDayOne = followedIds.isEmpty;
+        final accent = AppColors.accentForSpace(
+          context.read<AuthStore>().isInHunterSpace,
+        );
+        final starters = isDayOne
+            ? ([...projectsStore.projects]..sort(
+                    (a, b) => projectsStore
+                        .hypeScoreForProject(b)
+                        .compareTo(projectsStore.hypeScoreForProject(a)),
+                  ))
+                .take(4)
+                .toList()
+            : const <Project>[];
+
+        if (posts.isEmpty && quietCards.isEmpty && starters.isEmpty) {
+          return const SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpace.lg),
+            sliver: SliverToBoxAdapter(child: EmptyFeed()),
+          );
+        }
+        // Card rows are full-bleed and carry their own padding, so the feed
+        // reads as one stream rather than a stack of floating panels. The
+        // list layout has not been redesigned and still wants a gutter.
+        final isFullBleed = feedViewMode == FeedViewMode.card;
+        return SliverPadding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isFullBleed ? 0 : AppSpace.lg,
+          ),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              if (showCatchupFilter)
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isFullBleed ? AppSpace.lg : 0,
+                  ),
+                  child: CatchUpBanner(onClear: onClearCatchup),
+                ),
+              if (isDayOne) ...[
+                const FeedDayOneIntro(),
+                FeedTopHunters(hunters: topHunters, onOpen: (_) {}),
+              ],
+              if (starters.isNotEmpty) ...[
+                FeedSectionHeading(
+                  icon: Icons.trending_up_rounded,
+                  label: 'Moving right now',
+                  accent: accent,
+                ),
+                for (final project in starters)
+                  FeedFollowRow(
+                    project: project,
+                    accent: accent,
+                    isFollowed: projectsStore.isProjectFollowed(project.id),
+                    onToggleFollow: () =>
+                        projectsStore.toggleFollowProject(project.id),
+                    onOpen: () => _openProject(context, project.id),
+                  ),
+                FeedSectionHeading(
+                  icon: Icons.bolt_rounded,
+                  label: 'Latest from hunters',
+                  accent: accent,
+                ),
+              ],
+              ...quietCards,
+              // Caught up does not dead-end: the design follows the card with
+              // posts from hunters the member does not follow yet.
+              if (showCaughtUp)
+                FeedSectionHeading(
+                  icon: Icons.explore_outlined,
+                  label: "From hunters you don't follow",
+                  accent: accent,
+                ),
+              ..._buildFeedRows(posts, feedViewMode),
+            ]),
           ),
         );
       },
