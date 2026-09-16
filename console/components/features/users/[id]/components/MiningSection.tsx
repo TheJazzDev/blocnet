@@ -4,9 +4,13 @@ import { Pickaxe, TrendingUp, Users, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AdminMiningSessionStatus, AdminUserDetail } from "@/lib/api-client";
+import { BnpAdjustmentsPanel } from "./bnp-adjustments/BnpAdjustmentsPanel";
 
 type MiningSectionProps = {
   user: AdminUserDetail;
+  /** Owner/admin only (F-66). */
+  canAdjustBnp?: boolean;
+  onBnpAdjusted?: () => void;
 };
 
 function fmtDate(value: string | null) {
@@ -40,7 +44,7 @@ function sessionStatusBadge(status: AdminMiningSessionStatus) {
   return <Badge className="bg-emerald-500/15 text-emerald-300 text-xs">Claimed</Badge>;
 }
 
-export function MiningSection({ user }: MiningSectionProps) {
+export function MiningSection({ user, canAdjustBnp = false, onBnpAdjusted }: MiningSectionProps) {
   const { mining } = user;
 
   return (
@@ -109,6 +113,10 @@ export function MiningSection({ user }: MiningSectionProps) {
             )}
           </div>
         </div>
+
+        <div className="border-t pt-4" />
+
+        <BnpAdjustmentsPanel user={user} canAdjust={canAdjustBnp} onAdjusted={onBnpAdjusted} />
 
         <div className="border-t pt-4" />
 

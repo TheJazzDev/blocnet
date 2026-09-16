@@ -66,6 +66,11 @@ export function hasCapability(roles: string[], capabilityKey: string): boolean {
   return capability.roles.some((role) => hasRole(roles, role));
 }
 
+/** F-66: manual BNP credits/debits on a member. Owner and admin only. */
+export function canAdjustMemberBnp(roles: string[]): boolean {
+  return hasRole(roles, 'owner') || hasRole(roles, 'admin');
+}
+
 /** Mining config and metrics (`engagement.mining.view`). */
 export function canViewMining(roles: string[]): boolean {
   return hasCapability(roles, 'engagement.mining.view');

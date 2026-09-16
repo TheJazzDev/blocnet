@@ -110,6 +110,9 @@ export const queryKeys = {
     configHistory: (filters: Record<string, unknown>) => [...queryKeys.mining.all, 'config-history', filters] as const,
     configHistories: () => [...queryKeys.mining.all, 'config-history'] as const,
     leaderboard: (filters: Record<string, unknown>) => [...queryKeys.mining.all, 'leaderboard', filters] as const,
+    adjustmentsFor: (userId: string) => [...queryKeys.mining.all, 'adjustments', userId] as const,
+    adjustments: (userId: string, filters: Record<string, unknown>) =>
+      [...queryKeys.mining.adjustmentsFor(userId), filters] as const,
   },
 
   // Tags

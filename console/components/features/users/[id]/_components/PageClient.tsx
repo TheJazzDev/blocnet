@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAdminSession } from "@/components/admin-shell";
 import { clientApi } from "@/lib/api-client";
+import { canAdjustMemberBnp } from "@/lib/rbac";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserDetailsHeader } from "../components/UserDetailsHeader";
@@ -134,7 +135,11 @@ export default function UserManagementPageClient() {
         </TabsContent>
 
         <TabsContent value="mining-quests" className={TAB_CONTENT_CLASS}>
-          <MiningSection user={user} />
+          <MiningSection
+            user={user}
+            canAdjustBnp={canAdjustMemberBnp(session.effectiveRoles)}
+            onBnpAdjusted={() => void state.refresh()}
+          />
           <ReferralSupportSection
             user={user}
             canManage={state.canManageAccount}
