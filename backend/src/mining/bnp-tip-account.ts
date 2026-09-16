@@ -17,6 +17,7 @@ export const BNP_REWARD_CONTEXT = {
   miningClaim: 'mining_claim',
   questReward: 'quest_reward',
   questRewardRevoked: 'quest_reward_revoked',
+  adminAdjustment: 'admin_adjustment',
 } as const;
 
 export type BnpLedgerContext = {
@@ -24,6 +25,8 @@ export type BnpLedgerContext = {
   contextId: string;
   idempotencyKey: string;
   metadata?: Prisma.InputJsonObject;
+  /** Shown on the wallet row (admin adjustments carry the reason). */
+  note?: string;
   /** Backfills only: date the row to the event it records. */
   createdAt?: Date;
 };
@@ -134,6 +137,7 @@ function writeLedgerRow(
       contextType: context.contextType,
       contextId: context.contextId,
       idempotencyKey: context.idempotencyKey,
+      ...(context.note ? { note: context.note } : {}),
       ...(context.metadata ? { metadata: context.metadata } : {}),
       ...(context.createdAt ? { createdAt: context.createdAt } : {}),
     },
@@ -266,4 +270,88 @@ export async function debitBnpTipAccount(
   });
 
   return debitAtomic;
+}
+
+/**
+ * F-66: an owner/admin adjustment is keyed by the `MiningPointLedger` row it
+ * wrote, and deduplicated on the client-generated idempotency key.
+ */
+export function adminAdjustmentContext(input: {
+  ledgerId: string;
+  idempotencyKey: string;
+  reason: string;
+  metadata?: Prisma.InputJsonObject;
+}): BnpLedgerContext {
+  return {
+    contextType: BNP_REWARD_CONTEXT.adminAdjustment,
+    contextId: input.ledgerId,
+    idempotencyKey: adminAdjustmentIdempotencyKey(input.idempotencyKey),
+    note: input.reason,
+    metadata: input.metadata,
+  };
+}
+
+export function adminAdjustmentIdempotencyKey(clientKey: string): string {
+  return `admin-adjustment:${clientKey}`;
+}
+
+export class InsufficientBnpBalanceError extends Error {
+  constructor(
+    readonly userId: string,
+    readonly balanceAtomic: bigint,
+  ) {
+    super(`BNP balance of ${userId} is too low for this debit`);
+    this.name = 'InsufficientBnpBalanceError';
+  }
+}
+
+/**
+ * Moves a member's BNP tip account by `points` (positive credits, negative
+ * debits) and writes one `adjustment` row. Unlike `debitBnpTipAccount` it
+ * never clamps: a debit larger than the balance throws
+ * `InsufficientBnpBalanceError`, and the `gte` guard keeps a concurrent spend
+ * from driving the account negative.
+ *
+ * The account must already exist (use `ensureUserTipAccount` first so a new
+ * account is seeded from `Profile.miningClaimedPoints`). Returns the balance
+ * after the move. The caller checks the idempotency key before calling.
+ */
+export async function adjustBnpTipAccount(
+  tx: BnpTipAccountTx,
+  userId: string,
+  points: number,
+  context: BnpLedgerContext,
+): Promise<bigint> {
+  const deltaAtomic = BigInt(points) * BNP_ATOMIC_MULTIPLIER;
+  const absAtomic = deltaAtomic < 0n ? -deltaAtomic : deltaAtomic;
+  const key = bnpAccountKey(userId);
+
+  const moved = await tx.tipAccount.updateMany({
+    where: {
+      ...key,
+      ...(deltaAtomic < 0n ? { balanceAtomic: { gte: absAtomic } } : {}),
+    },
+    data: {
+      balanceAtomic:
+        deltaAtomic < 0n ? { decrement: absAtomic } : { increment: absAtomic },
+    },
+  });
+
+  const account = await tx.tipAccount.findUnique({
+    where: { accountType_ownerRef_currencyCode: key },
+    select: { id: true, balanceAtomic: true },
+  });
+  if (moved.count === 0 || !account) {
+    throw new InsufficientBnpBalanceError(userId, account?.balanceAtomic ?? 0n);
+  }
+
+  await writeLedgerRow(tx, {
+    type: TipTransactionType.adjustment,
+    userId,
+    accountId: account.id,
+    amountAtomic: absAtomic,
+    context,
+  });
+
+  return account.balanceAtomic;
 }

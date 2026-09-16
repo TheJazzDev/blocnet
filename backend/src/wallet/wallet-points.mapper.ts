@@ -3,8 +3,9 @@
  * row shape, from the point of view of `userId`.
  *
  * Rows with a counterparty (transfers, tips) take their direction from sender
- * vs recipient. Minted BNP (`reward`) and its reversal (a quest-revoke
- * `adjustment`) are self rows: sender == recipient == the member. Those are
+ * vs recipient. Minted BNP (`reward`), its reversal (a quest-revoke
+ * `adjustment`) and owner/admin adjustments (F-66) are self rows:
+ * sender == recipient == the member. Those are
  * classified by type/contextType FIRST, so they never fall into the
  * sender-means-sent branch.
  */
@@ -38,6 +39,7 @@ const REWARD_LABEL_BY_CONTEXT: Record<string, string> = {
 };
 
 const QUEST_REWARD_REVERSED_LABEL = 'Quest reward reversed';
+const ADMIN_ADJUSTMENT_LABEL = 'Balance adjustment';
 
 export type PointsParty = {
   id: string;
@@ -69,6 +71,37 @@ function isQuestRewardReversal(row: PointsTxRow): boolean {
     row.type === TipTransactionType.adjustment &&
     row.contextType === BNP_REWARD_CONTEXT.questRewardRevoked
   );
+}
+
+function isAdminAdjustment(row: PointsTxRow): boolean {
+  return (
+    row.type === TipTransactionType.adjustment &&
+    row.contextType === BNP_REWARD_CONTEXT.adminAdjustment
+  );
+}
+
+/**
+ * F-66: an owner/admin adjustment is a self row whose direction lives in
+ * `metadata.direction` ('credit' | 'debit'); the amount is always positive.
+ */
+function viewAdminAdjustment(userId: string, row: PointsTxRow): PointsRowView {
+  const meta =
+    row.metadata &&
+    typeof row.metadata === 'object' &&
+    !Array.isArray(row.metadata)
+      ? row.metadata
+      : {};
+  const member = { userId, accountType: 'user' };
+  const isDebit = meta.direction === 'debit';
+  return {
+    direction: isDebit ? 'outgoing' : 'incoming',
+    label: ADMIN_ADJUSTMENT_LABEL,
+    amountAtomic: row.amountAtomic,
+    feeAtomic: 0n,
+    debit: isDebit ? member : SYSTEM_SIDE,
+    credit: isDebit ? SYSTEM_SIDE : member,
+    counterparty: null,
+  };
 }
 
 /** Minted BNP: always received, the credited amount, no fee, no counterparty. */
@@ -132,6 +165,9 @@ function viewRow(userId: string, row: PointsTxRow): PointsRowView {
   }
   if (isQuestRewardReversal(row)) {
     return viewRewardReversal(userId, row);
+  }
+  if (isAdminAdjustment(row)) {
+    return viewAdminAdjustment(userId, row);
   }
   return viewTwoParty(userId, row);
 }

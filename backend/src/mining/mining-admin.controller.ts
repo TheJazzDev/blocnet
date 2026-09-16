@@ -2,7 +2,10 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseUUIDPipe,
   Patch,
+  Post,
   Query,
   UnauthorizedException,
   UseGuards,
@@ -13,8 +16,11 @@ import { AppRole } from '../common/enums/role.enum';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
+import { CreateBnpAdjustmentDto } from './dto/create-bnp-adjustment.dto';
+import { ListBnpAdjustmentsQuery } from './dto/list-bnp-adjustments.query';
 import { ListMiningLeaderboardQuery } from './dto/list-mining-leaderboard.query';
 import { UpdateMiningConfigDto } from './dto/update-mining-config.dto';
+import { MiningAdjustmentService } from './mining-adjustment.service';
 import { MiningAdminService } from './mining-admin.service';
 import { MiningLeaderboardService } from './mining-leaderboard.service';
 
@@ -25,6 +31,7 @@ export class MiningAdminController {
   constructor(
     private readonly miningAdminService: MiningAdminService,
     private readonly miningLeaderboardService: MiningLeaderboardService,
+    private readonly miningAdjustmentService: MiningAdjustmentService,
   ) {}
 
   @Get('config')
@@ -58,5 +65,29 @@ export class MiningAdminController {
       offset: query.offset,
       includePrivateFields: true,
     });
+  }
+
+  /** F-66: owner/admin manual BNP credit or debit. */
+  @Post('users/:userId/adjustments')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async createAdjustment(
+    @CurrentUser() user: AuthUser | undefined,
+    @Param('userId', new ParseUUIDPipe()) userId: string,
+    @Body() dto: CreateBnpAdjustmentDto,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.miningAdjustmentService.createAdjustment(user.id, userId, dto);
+  }
+
+  @Get('users/:userId/adjustments')
+  @Roles(AppRole.OWNER, AppRole.ADMIN)
+  async listAdjustments(
+    @Param('userId', new ParseUUIDPipe()) userId: string,
+    @Query() query: ListBnpAdjustmentsQuery,
+  ) {
+    return this.miningAdjustmentService.listAdjustments(userId, query);
   }
 }

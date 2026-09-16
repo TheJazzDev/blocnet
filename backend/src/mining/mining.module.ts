@@ -11,6 +11,7 @@ import { MiningCalculatorService } from './mining-calculator.service';
 import { MiningConfigService } from './mining-config.service';
 import { MiningExpiryService } from './mining-expiry.service';
 import { MiningAdminService } from './mining-admin.service';
+import { MiningAdjustmentService } from './mining-adjustment.service';
 import { MiningLeaderboardService } from './mining-leaderboard.service';
 import { MiningReminderSweepService } from './mining-reminder-sweep.service';
 import { MiningReminderWorker } from './mining-reminder.worker';
@@ -30,6 +31,7 @@ import { MiningReminderWorker } from './mining-reminder.worker';
     MiningConfigService,
     MiningExpiryService,
     MiningAdminService,
+    MiningAdjustmentService,
     MiningLeaderboardService,
     MiningReminderSweepService,
     MiningReminderWorker,
