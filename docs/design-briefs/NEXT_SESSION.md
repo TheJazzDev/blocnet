@@ -1,104 +1,60 @@
-# Start here — next screen
+# Start here — next session
 
-Paste this into a new session. It is written for someone who was not here for
-the Home feed work.
+> Rewritten 2026-09-16 at the end of the day. The 09-14 version recommended Discover next;
+> that was superseded the same week by the app-map review. Read this, then
+> [`../APP_MAP.md`](../APP_MAP.md) (the plan) and the last rows of
+> [`../UX_UI_TRACKER.md`](../UX_UI_TRACKER.md) (what happened).
 
 ---
-
-## What just happened
-
-The Home feed was redesigned and rebuilt. Read
-[`PROGRESS.md`](../PROGRESS.md) first — it is short, and §4b is the part that
-will save you the most time.
-
-Two things it records that matter more than the feature list:
-
-**The design phase cost six rounds because the brief was wrong, not the
-drawing.** The brief took a sentence from `PRODUCT.md` describing why Blocnet
-is worth using and turned it into the literal shape of a screen. Four rounds of
-polished, coherent, wrong work came out of that. If a brief is describing
-mechanics rather than what the product means to the person using it, stop and
-fix the brief.
-
-**The build phase then cost four more rounds because I built from memory of the
-design instead of from the design file.** Every correction was reactive — fix
-the item named, declare it done, get corrected again. The owner's words, and
-they are fair: *"When we redesign something, we look at the design and we take
-time to iterate over the design. Once the design has been approved, replicating
-the design should not be a problem because there is an existing design that must
-be followed. It must be followed to the letter."*
-
-## The method, non-negotiable
-
-1. **Extract every state from the design file before writing any code.** Not a
-   glance at the picture — the element order per state. For the Home design that
-   was one script over `docs/artifacts/*.html` producing five lists.
-2. **Build to those lists.** Where the screen has an existing widget that nearly
-   fits, rebuild rather than adapt. Adapting is what produces drift, and the
-   owner has explicitly authorised retiring code: *"If we need to retire existing
-   code and rebuild it based on the new design, we should do that."*
-3. **Walk every state against the list before saying done.** Not just the state
-   you were asked about.
-4. **Verify on the emulator, not only in tests.** Six defects in the Home work
-   passed a clean analyzer and a full suite and only appeared on a device — one
-   of them a blank feed that threw no exception.
-
-## The standing rules
-
-- **Blocked on a backend gap? Build it.** Owner's instruction, 2026-09-12:
-  *"Once we have a design and something is blocking because we need to modify
-  the backend, just add it and report back on the modifications."* Prisma
-  changes go through `bunx prisma migrate dev`, never `db push`, and the schema
-  edit and migration commit together.
-- **Report the decisions you took**, especially the judgement calls. See the
-  `F-41 + F-42` commit for the shape.
-- **Never invent a number to fill a slot in a design.** The caught-up card has
-  no "unread" count because nothing tracks per-update reads.
-- **Never claim knowledge the platform does not have.** A hunter observes a
-  third-party project from outside, so no lifecycle denominators, no "step 2 of
-  6", no progress bar toward an end nobody knows.
-- **Track in [`UX_UI_TRACKER.md`](../UX_UI_TRACKER.md)** — a finding row per item
-  and a session-log line per session. The convention is already there.
 
 ## Where things stand
 
 | | |
 |---|---|
-| Branch | `feature/home-feed-redesign`, pushed, 30 commits |
-| Base | `stage` |
-| Mobile tests | 260, analyzer clean |
-| Current design | [Blocnet Home Feed v2](../ARTIFACTS.md) · brief [`home-feed-r6.md`](home-feed-r6.md) |
-| Open findings | F-37 (raw error strings reach users), F-38 (expired session half-state) |
+| Branch | **`stage`** — all work now merges here. `feature/home-feed-redesign` is fully merged and no longer the working branch. Stage was deployed ~13:24 UTC on 09-16. |
+| The plan | [`APP_MAP.md`](../APP_MAP.md) — every screen judged keep / rebuild / merge / move / cut against the loop, owner-approved (except: **Wallet stays in the bottom bar**). |
+| Done | Step 1 cleanup · step 2 hunter reliability (backend) · step 3 **Hunter Hub** (design → build → device-verified) · Hand over · BNP in the wallet with member transfers · F-70 likes and saves on the server. |
+| In flight elsewhere | A parallel session (**blocnet-34**) owns mining: findings F-44…F-69, workstreams S1–S5, and the **Mine** rebuild (design approved 09-16), which also absorbs the referral screen (APP_MAP step 6). |
+| Next for this lane | **Gems** (APP_MAP step 4): brief ready at [`gems.md`](gems.md) — owner to run it in Claude Design. Then **Profile slim** (step 5). |
+| Open findings (this lane) | F-37 raw withdrawal errors · F-38 expired-session half-state (seen again 09-16 when the emulator lost DNS) · F-71 intermittent levels-leaderboard spec · F-72 seeded dev profiles have no usernames |
 
-**Two Home states have never been seen running**, because they need account
-state the test login does not have: day one needs zero follows, caught up needs
-no quiet gem. Both are correct in code. Verifying them means temporarily
-changing follows in the dev database — ask before doing that.
+## The method (unchanged, and it worked for the Hub)
 
-## The recommended next screen: Discover
+1. **Brief from what the screen is *for***, not a field list.
+2. **Bring the approved design into the repo** (`docs/artifacts/`) and **extract every state
+   element by element into a build spec before code** — see
+   [`hunter-hub-build-spec.md`](hunter-hub-build-spec.md). Record where the design contradicts
+   itself and which reading was built (D1…Dn).
+3. **Build to the list**, rebuilding rather than adapting.
+4. **Walk every state against the list**, then **verify on the emulator**.
+5. Blocked on the backend? **Build it** and report the decisions (owner's standing rule).
 
-Reasons, in order of weight:
+## Working with the parallel session
 
-1. The feed card and the follow row are already built and Discover is the
-   surface that reuses them most directly.
-2. Home's day-one screen already borrows Discover's job, so the two have to
-   agree or the seam shows. They currently do not, because Discover is still on
-   the old design.
-3. It is the second screen a new member sees, so it carries the most traffic of
-   anything still un-redesigned.
+- **One migration at a time** on the shared dev DB (Postgres :5433). Ask blocnet-34 for the
+  slot, tell it when the migration is merged. Never `db push`, never reset.
+- **Merge into the main checkout only when `git status` is clean.**
+- Finding numbers: blocnet-34 uses F-44…F-69; this lane uses **F-70…F-79**.
+- Ask before using **emulator-5554** while the other session is on it.
 
-Leave the console until the mobile vocabulary has settled across two screens
-rather than one.
+## Local dev — things that bit us on 09-16
 
-**Do not design several screens at once.** One at a time keeps a wrong brief
-cheap, which is the whole lesson of the six rounds.
+- **`bun run dev` now compiles to `backend/dist-dev`** (`tsconfig.dev.json`). Before that, every
+  `bun run build` deleted `dist/` under the running server and sign-in failed with *"connection
+  closed before full header"*. If you see that error, check `curl localhost:3080/api/health`
+  first.
+- After pulling a migration: **`bunx prisma generate`** (Prisma 7 `migrate dev` does not do it for
+  you, and the build fails without it).
+- Emulator: `adb reverse tcp:3080 tcp:3080`; run with
+  `flutter run --dart-define-from-file=.env.local.json`. A cold boot drops the session — the
+  owner has to sign in again (the password is not in the repo). If the app shows an empty feed
+  and no space chip, the emulator has lost DNS: toggle its wifi.
+- Dev data the owner chose to keep: `@babsman4all` co-owns Solana Radar, TON Drop Desk and
+  Ethereum Watch; TON Drop Desk has 3 asks and 1 inactivity report; Hunter Sage is
+  `@hunter_sage`.
 
-## First step for Discover
+## Not yet seen on a device
 
-Write the brief before anything else, and write it about what Discover is *for*,
-not what it contains. Home's brief only worked on the fifth attempt, when it
-started from the real screen and the product thesis instead of a field list.
-Read [`PRODUCT.md`](../PRODUCT.md) and [`USE_CASES.md`](../USE_CASES.md) first.
-
-Screenshots of the shipping app live in [`reference/`](reference/) — attach them
-as the thing to build on, explicitly not as a layout to preserve.
+Hub: the Reliable / Slipping standing cards, a Due row, the invite and review cards, the
+12-gem fold (dev gems are all under two weeks old). BNP member transfers. All covered by widget
+tests.
