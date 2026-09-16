@@ -10,17 +10,22 @@ class ActivityCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.time,
+    this.onTap,
   });
 
   final String title;
   final String subtitle;
   final String time;
 
+  /// When null the row is plain text: no ripple and no chevron.
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     return AppSurface(
       margin: const EdgeInsets.only(bottom: AppSpace.sm),
       padding: const EdgeInsets.all(AppSpace.md),
+      onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -59,6 +64,14 @@ class ActivityCard extends StatelessWidget {
               weight: FontWeight.w400,
             ),
           ),
+          if (onTap != null) ...[
+            const SizedBox(width: AppSpace.xs),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: AppIcon.sm,
+              color: AppColors.textFaint,
+            ),
+          ],
         ],
       ),
     );
