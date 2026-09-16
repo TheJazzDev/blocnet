@@ -264,6 +264,29 @@ describe('MiningService', () => {
     });
   });
 
+  describe('F-45 concurrent hourly accrual', () => {
+    it('two concurrent getMe calls write each hourly checkpoint once and never throw', async () => {
+      const now = new Date();
+      const db = createFakeMiningDb({
+        sessions: [
+          session({
+            startsAt: new Date(now.getTime() - 5 * HOUR - 60_000),
+            endsAt: new Date(now.getTime() + 19 * HOUR - 60_000),
+          }),
+        ],
+      });
+      const service = buildService(db);
+
+      await expect(
+        Promise.all([service.getMe('user-1'), service.getMe('user-1')]),
+      ).resolves.toHaveLength(2);
+
+      expect(db.checkpoints.map((row) => row.hourIndex).sort()).toEqual([
+        1, 2, 3, 4, 5,
+      ]);
+    });
+  });
+
   describe('F-39 claim-window deadlock', () => {
     function deadlockedDb() {
       const now = new Date();

@@ -758,6 +758,7 @@ export class MiningService {
     const existingHourIndexes = new Set(
       existingRows.map((row) => row.hourIndex),
     );
+    const missingRows: Prisma.MiningHourlyCheckpointCreateManyInput[] = [];
 
     for (let hourIndex = 1; hourIndex <= maturedHours; hourIndex++) {
       if (existingHourIndexes.has(hourIndex)) {
@@ -791,19 +792,29 @@ export class MiningService {
         boostBpsSnapshot,
       );
 
-      await prisma.miningHourlyCheckpoint.create({
-        data: {
-          userId: session.userId,
-          sessionId: session.id,
-          hourIndex,
-          hourStartAt,
-          hourEndAt,
-          activeReferralsSnapshot,
-          boostBpsSnapshot,
-          points,
-        },
+      missingRows.push({
+        userId: session.userId,
+        sessionId: session.id,
+        hourIndex,
+        hourStartAt,
+        hourEndAt,
+        activeReferralsSnapshot,
+        boostBpsSnapshot,
+        points,
       });
     }
+
+    if (missingRows.length === 0) {
+      return;
+    }
+
+    // Two concurrent reads can both see an hour as missing. The row is
+    // deterministic per (sessionId, hourIndex), so whichever insert lands
+    // first wins and the other is skipped instead of 500ing on P2002 (F-45).
+    await prisma.miningHourlyCheckpoint.createMany({
+      data: missingRows,
+      skipDuplicates: true,
+    });
   }
 
   private async toSessionState(

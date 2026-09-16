@@ -162,6 +162,31 @@ export function createFakeMiningDb(options: FakeMiningDbOptions = {}) {
         matchesDateRange(row.hourEndAt, where.hourEndAt),
     );
 
+  const checkpointExists = (data: any) =>
+    checkpoints.some(
+      (row) =>
+        row.sessionId === data.sessionId && row.hourIndex === data.hourIndex,
+    );
+
+  const insertCheckpoint = (data: any): FakeCheckpointRow => {
+    checkpointSeq += 1;
+    const row: FakeCheckpointRow = {
+      id: `checkpoint-${checkpointSeq}`,
+      userId: data.userId,
+      sessionId: data.sessionId,
+      hourIndex: data.hourIndex,
+      hourStartAt: data.hourStartAt,
+      hourEndAt: data.hourEndAt,
+      points: data.points,
+      activeReferralsSnapshot: data.activeReferralsSnapshot,
+      boostBpsSnapshot: data.boostBpsSnapshot,
+      claimedAt: null,
+      expiredAt: null,
+    };
+    checkpoints.push(row);
+    return row;
+  };
+
   const client = {
     profile: {
       findUnique: jest.fn(async ({ where }: any) =>
@@ -217,22 +242,27 @@ export function createFakeMiningDb(options: FakeMiningDbOptions = {}) {
         return (take ? rows.slice(0, take) : rows).map((row) => ({ ...row }));
       }),
       create: jest.fn(async ({ data }: any) => {
-        checkpointSeq += 1;
-        const row: FakeCheckpointRow = {
-          id: `checkpoint-${checkpointSeq}`,
-          userId: data.userId,
-          sessionId: data.sessionId,
-          hourIndex: data.hourIndex,
-          hourStartAt: data.hourStartAt,
-          hourEndAt: data.hourEndAt,
-          points: data.points,
-          activeReferralsSnapshot: data.activeReferralsSnapshot,
-          boostBpsSnapshot: data.boostBpsSnapshot,
-          claimedAt: null,
-          expiredAt: null,
-        };
-        checkpoints.push(row);
-        return { ...row };
+        if (checkpointExists(data)) {
+          // Mirrors @@unique([sessionId, hourIndex]).
+          throw Object.assign(new Error('Unique constraint failed'), {
+            code: 'P2002',
+          });
+        }
+        return { ...insertCheckpoint(data) };
+      }),
+      createMany: jest.fn(async ({ data, skipDuplicates }: any) => {
+        let count = 0;
+        for (const item of data) {
+          if (checkpointExists(item)) {
+            if (skipDuplicates) continue;
+            throw Object.assign(new Error('Unique constraint failed'), {
+              code: 'P2002',
+            });
+          }
+          insertCheckpoint(item);
+          count += 1;
+        }
+        return { count };
       }),
       aggregate: jest.fn(async ({ where }: any = {}) => {
         const rows = selectCheckpoints(where);
