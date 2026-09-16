@@ -2,24 +2,35 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/moderation/presentation/pages/appeals_queue_screen.dart';
+import 'package:blocnet/features/moderation/presentation/pages/inactive_gems_queue_screen.dart';
 import 'package:blocnet/features/moderation/presentation/pages/reports_queue_screen.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/api/api_error.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class ModerationHubScreen extends StatefulWidget {
-  const ModerationHubScreen({super.key});
+  const ModerationHubScreen({this.apiClient, super.key});
+
+  /// Injectable for tests.
+  final ApiClient? apiClient;
 
   @override
   State<ModerationHubScreen> createState() => _ModerationHubScreenState();
 }
 
 class _ModerationHubScreenState extends State<ModerationHubScreen> {
-  final ApiClient _apiClient = ApiClient();
+  late final ApiClient _apiClient = widget.apiClient ?? ApiClient();
   bool _isLoadingStats = false;
+
+  /// Set when the last stats call failed. The counts are then unknown, not
+  /// zero, so the hub says so instead of showing an empty queue.
+  String? _statsError;
   int _pendingReports = 0;
   int _pendingAppeals = 0;
   int _activeRestrictions = 0;
+  int _openInactiveGems = 0;
 
   @override
   void initState() {
@@ -29,7 +40,10 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
 
   Future<void> _loadStats() async {
     if (_isLoadingStats) return;
-    setState(() => _isLoadingStats = true);
+    setState(() {
+      _isLoadingStats = true;
+      _statsError = null;
+    });
 
     try {
       final stats = await _apiClient.get('/community/moderation/stats');
@@ -40,11 +54,17 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
         _pendingAppeals = (stats['pendingAppeals'] as num?)?.toInt() ?? 0;
         _activeRestrictions =
             (stats['activeRestrictions'] as num?)?.toInt() ?? 0;
+        _openInactiveGems = (stats['openInactiveGems'] as num?)?.toInt() ?? 0;
       });
     } catch (e) {
       if (!mounted) return;
-      // Silently fail - stats will show 0
       debugPrint('Failed to load moderation stats: $e');
+      setState(() {
+        _statsError = describeApiError(
+          e,
+          fallback: 'Queue counts could not be loaded.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoadingStats = false);
@@ -52,8 +72,18 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
     }
   }
 
+  /// Opens a queue and refreshes the counts on the way back, since the
+  /// moderator has probably just changed them.
+  Future<void> _openQueue(Widget screen) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => screen),
+    );
+    if (mounted) _loadStats();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final countsKnown = _statsError == null && !_isLoadingStats;
     return RefreshIndicator(
       onRefresh: _loadStats,
       color: AppColors.primary400,
@@ -84,12 +114,22 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
             const SizedBox(height: AppSpace.xl),
 
             // Stats overview
-            _StatsOverviewSection(
-              isLoading: _isLoadingStats,
-              pendingReports: _pendingReports,
-              pendingAppeals: _pendingAppeals,
-              activeRestrictions: _activeRestrictions,
-            ),
+            if (_statsError != null && !_isLoadingStats)
+              AppSurface.flush(
+                child: AppEmptyState.error(
+                  compact: true,
+                  title: 'Queue counts did not load',
+                  message: _statsError,
+                  onAction: _loadStats,
+                ),
+              )
+            else
+              _StatsOverviewSection(
+                isLoading: _isLoadingStats,
+                pendingReports: _pendingReports,
+                pendingAppeals: _pendingAppeals,
+                activeRestrictions: _activeRestrictions,
+              ),
             const SizedBox(height: AppSpace.xl),
 
             // Quick actions grid
@@ -103,22 +143,15 @@ class _ModerationHubScreenState extends State<ModerationHubScreen> {
             ),
             const SizedBox(height: AppSpace.md),
             _QuickActionsGrid(
-              onReportsQueueTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const ReportsQueueScreen(),
-                  ),
-                );
-              },
-              onAppealsQueueTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const AppealsQueueScreen(),
-                  ),
-                );
-              },
-              pendingReports: _pendingReports,
-              pendingAppeals: _pendingAppeals,
+              onReportsQueueTap: () => _openQueue(const ReportsQueueScreen()),
+              onAppealsQueueTap: () => _openQueue(const AppealsQueueScreen()),
+              onInactiveGemsTap: () => _openQueue(
+                InactiveGemsQueueScreen(apiClient: widget.apiClient),
+              ),
+              // Badges only for counts we actually have.
+              pendingReports: countsKnown ? _pendingReports : 0,
+              pendingAppeals: countsKnown ? _pendingAppeals : 0,
+              openInactiveGems: countsKnown ? _openInactiveGems : 0,
             ),
             const SizedBox(height: AppSpace.xl),
 
@@ -255,20 +288,25 @@ class _QuickActionsGrid extends StatelessWidget {
   const _QuickActionsGrid({
     required this.onReportsQueueTap,
     required this.onAppealsQueueTap,
+    required this.onInactiveGemsTap,
     required this.pendingReports,
     required this.pendingAppeals,
+    required this.openInactiveGems,
   });
 
   final VoidCallback onReportsQueueTap;
   final VoidCallback onAppealsQueueTap;
+  final VoidCallback onInactiveGemsTap;
   final int pendingReports;
   final int pendingAppeals;
+  final int openInactiveGems;
 
   @override
   Widget build(BuildContext context) {
-    // Only actions that exist today: reports and appeals. User Actions and
-    // History return once a mobile client for them ships.
-    return Row(
+    // Only actions that exist today: reports, appeals and reported quiet
+    // gems. User Actions and History return once a mobile client for them
+    // ships. Two per row keeps labels readable at 375px.
+    final reportsRow = Row(
       children: [
         Expanded(
           child: _QuickActionTile(
@@ -294,6 +332,24 @@ class _QuickActionsGrid extends StatelessWidget {
               onAppealsQueueTap();
             },
           ),
+        ),
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        reportsRow,
+        const SizedBox(height: AppSpace.md),
+        _QuickActionTile(
+          icon: Icons.hourglass_empty_rounded,
+          label: 'Quiet gems reported',
+          badge: openInactiveGems > 0 ? '$openInactiveGems' : null,
+          color: AppColors.warning500,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onInactiveGemsTap();
+          },
         ),
       ],
     );
