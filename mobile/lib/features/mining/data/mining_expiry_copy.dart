@@ -1,5 +1,4 @@
 import 'package:blocnet/features/mining/data/models/mining_claim_models.dart';
-import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
 
 /// Plain-English copy for the forfeited-cycle cases.
@@ -10,11 +9,11 @@ import 'package:blocnet/shared/utils/format_number_utils.dart';
 class MiningExpiryCopy {
   const MiningExpiryCopy._();
 
-  static const String noticeTitle = 'You missed a claim window';
-
   /// Shown after a Claim tap that forfeited instead of paying out.
-  static String claimExpired(MiningClaimResult result, {int? claimWindowHours}) {
-    final count = result.expiredCycles.isEmpty ? 1 : result.expiredCycles.length;
+  static String claimExpired(MiningClaimResult result,
+      {int? claimWindowHours}) {
+    final count =
+        result.expiredCycles.isEmpty ? 1 : result.expiredCycles.length;
     final lost = _points(result.forfeitedPoints);
 
     final what = count == 1
@@ -26,25 +25,6 @@ class MiningExpiryCopy {
         : ', so nothing was paid out.';
 
     return '$what$amount ${_whatNext(result, claimWindowHours)}';
-  }
-
-  /// Shown on the mining screen while [cycle] is the account's most recent
-  /// forfeited cycle.
-  static String lastExpiredCycle(
-    MiningExpiredCycle cycle, {
-    required int claimWindowHours,
-  }) {
-    final ended = cycle.endsAt;
-    final when = ended == null ? 'A finished cycle' : 'The cycle that ended ${_date(ended)}';
-    final lost = _points(cycle.forfeitedPoints);
-
-    final amount = cycle.forfeitedPoints > 0
-        ? '$lost BNP was forfeited'
-        : 'its points were forfeited';
-
-    return '$when was never claimed, so $amount. '
-        'Points only reach your balance when you claim, so claim within '
-        '${_hours(claimWindowHours)} of a cycle finishing.';
   }
 
   /// Shown after Start when the backend forfeited older cycles on the way.
@@ -60,13 +40,6 @@ class MiningExpiryCopy {
     }
     return '$cycles $verb past the claim window and $verb closed out. '
         'Your new cycle is running.';
-  }
-
-  /// Row label in the hourly history for the third checkpoint state.
-  static String checkpointStatusLabel(MiningHourlyCheckpointModel item) {
-    if (item.isClaimed) return 'Claimed';
-    if (item.isExpired) return 'Expired';
-    return 'Unclaimed';
   }
 
   static String _whatNext(MiningClaimResult result, int? claimWindowHours) {
@@ -86,25 +59,5 @@ class MiningExpiryCopy {
 
   static String _hours(int hours) {
     return hours == 1 ? '1 hour' : '$hours hours';
-  }
-
-  static String _date(DateTime date) {
-    const months = <String>[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final local = date.toLocal();
-    if (local.month < 1 || local.month > 12) return 'recently';
-    return '${months[local.month - 1]} ${local.day}';
   }
 }

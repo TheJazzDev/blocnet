@@ -107,6 +107,39 @@ class NotificationSettingsStore extends ChangeNotifier {
     );
   }
 
+  /// Whether a notification of [type] would reach this member, resolved the
+  /// way the backend filters: critical types always, then the master switch,
+  /// then a per-type override, then the type's category. Null until loaded.
+  bool? isTypeEnabled(String type) {
+    final prefs = _preferences;
+    if (prefs == null) return null;
+    if (prefs.criticalTypes.contains(type)) return true;
+    if (!prefs.masterEnabled) return false;
+    final override = prefs.typeOverrides[type];
+    if (override != null) return override;
+    final category = _catalog?.categories
+        .where((entry) => entry.types.contains(type))
+        .firstOrNull;
+    return category == null ? true : prefs.isCategoryEnabled(category.key);
+  }
+
+  /// Sets a per-type override (`PATCH typeOverrides`), leaving the category
+  /// and every other type alone.
+  Future<bool> setTypeEnabled(String type, bool enabled) {
+    return _patchPreferences(
+      patchBody: {
+        'typeOverrides': [
+          {'type': type, 'enabled': enabled},
+        ],
+      },
+      optimistic: (prefs) {
+        final next = Map<String, bool>.from(prefs.typeOverrides);
+        next[type] = enabled;
+        return prefs.copyWith(typeOverrides: next);
+      },
+    );
+  }
+
   void clear({bool notify = true}) {
     _catalog = null;
     _preferences = null;

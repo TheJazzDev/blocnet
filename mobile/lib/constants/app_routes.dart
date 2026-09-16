@@ -10,11 +10,14 @@ class AppRoutes {
   static const String mining = '/mining';
   static const String miningLeaderboard = '/mining/leaderboard';
   static const String miningHourlyHistory = '/mining/hourly-history';
+  static const String miningEarnFaster = '/mining/earn-faster';
   static const String notifications = '/notifications';
   static const String systemAlerts = '/system-alerts';
   static const String badges = '/badges';
   static const String levels = '/levels';
   static const String quests = '/quests';
+
+  /// Alias of [miningEarnFaster], kept for old deep links.
   static const String referralCode = '/referral-code';
   static const String helpSupport = '/help-support';
   static const String faq = '/help-support/faq';

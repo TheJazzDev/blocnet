@@ -184,7 +184,7 @@ App bar → the centred error block above. No card, no sections.
    badge · `@handle` + (`bolt` `mining now` in `#3f9c86` when `sessionStatus == running`) ·
    amount (claimed total)
 4. Pager: `chevron_left` · `Page {p} of {n}` · `chevron_right`
-5. **Pinned row** (your row, same anatomy, name as in the data) above the bottom edge while
+5. **Pinned row** (your row, same anatomy, name reads **`You`**) above the bottom edge while
    your row is not on screen. Hidden when the API sends no `me`.
 Tap a row → public profile sheet.
 

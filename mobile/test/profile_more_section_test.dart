@@ -57,7 +57,7 @@ void main() {
   });
 
   testWidgets(
-      'everyone sees badges, quests, levels, tips, referral, settings, '
+      'everyone sees badges, quests, levels, tips, settings, '
       'help and sign out', (tester) async {
     await _pump(tester, _RolesAuthStore());
 
@@ -66,7 +66,6 @@ void main() {
       'Quests',
       'Levels',
       'Tip History',
-      'Referral Code',
       'Settings',
       'Help & Support',
       'Sign Out',
@@ -74,6 +73,8 @@ void main() {
       expect(find.text(title), findsOneWidget, reason: title);
     }
     expect(find.text('Tip History (Received)'), findsNothing);
+    // The referral code moved to Mine > Earn faster.
+    expect(find.text('Referral Code'), findsNothing);
     expect(find.text('System Alerts'), findsNothing);
     expect(find.text('Manage My Gems'), findsNothing);
     // Non-hunters get the entry point into the hunter path.

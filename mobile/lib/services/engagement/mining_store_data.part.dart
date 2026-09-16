@@ -7,16 +7,27 @@ abstract class _MiningStoreData extends ChangeNotifier {
   _MiningStoreData({
     MiningApiRepository? repository,
     DateTime Function()? deviceClock,
+    MineLocalCache? localCache,
   })  : _repository = repository ?? MiningApiRepository(),
-        _deviceClock = deviceClock ?? DateTime.now;
+        _deviceClock = deviceClock ?? DateTime.now,
+        _localCache = localCache ?? const MineLocalCache();
+
+  /// Rows per leaderboard page.
+  static const int leaderboardPageSize = 10;
 
   final MiningApiRepository _repository;
   final DateTime Function() _deviceClock;
+  final MineLocalCache _localCache;
 
   MiningSnapshot? _snapshot;
   ReferralSummaryModel? _referralSummary;
   List<DownlineMember> _downline = const [];
   List<MiningLeaderboardEntry> _leaderboard = const [];
+  List<MiningLeaderboardEntry> _leaderboardTop = const [];
+  MiningLeaderboardEntry? _leaderboardMe;
+  int _leaderboardPage = 1;
+  int _leaderboardTotal = 0;
+  int? _cachedBalance;
   bool _isLoadingSnapshot = false;
   bool _isLoadingReferral = false;
   bool _isLoadingDownline = false;
@@ -45,8 +56,28 @@ abstract class _MiningStoreData extends ChangeNotifier {
   ReferralSummaryModel? get referralSummary =>
       _referralSummary ?? _snapshot?.referral;
   List<DownlineMember> get downline => List.unmodifiable(_downline);
+
+  /// The leaderboard page last loaded, [leaderboardPageSize] rows at most.
   List<MiningLeaderboardEntry> get leaderboard =>
       List.unmodifiable(_leaderboard);
+
+  /// The top three, from the last page-one load. The Mine preview reads this
+  /// so paging the full board does not change it.
+  List<MiningLeaderboardEntry> get leaderboardTop =>
+      List.unmodifiable(_leaderboardTop);
+
+  /// The member's own row, or null when unranked or not sent.
+  MiningLeaderboardEntry? get leaderboardMe => _leaderboardMe;
+  int get leaderboardPage => _leaderboardPage;
+  int get leaderboardPageCount {
+    if (_leaderboardTotal <= 0) return 1;
+    return (_leaderboardTotal + leaderboardPageSize - 1) ~/ leaderboardPageSize;
+  }
+
+  /// The live balance, else the one this device last saw. Shown on the
+  /// couldn't-load screen so a failure does not blank what the member owns.
+  int? get lastKnownBalance =>
+      _snapshot?.balance.claimedTotalPoints ?? _cachedBalance;
   bool get isLoadingSnapshot => _isLoadingSnapshot;
   bool get isLoadingReferral => _isLoadingReferral;
   bool get isLoadingDownline => _isLoadingDownline;
@@ -103,6 +134,11 @@ abstract class _MiningStoreData extends ChangeNotifier {
     _isLoadingSnapshot = true;
     notifyListeners();
 
+    if (_snapshot == null && _cachedBalance == null) {
+      final cached = await _localCache.readBalance();
+      if (generation == _generation) _cachedBalance = cached;
+    }
+
     try {
       final snapshot = await _repository.fetchMiningSnapshot();
       if (generation != _generation) return;
@@ -125,6 +161,8 @@ abstract class _MiningStoreData extends ChangeNotifier {
 
   void _applySnapshot(MiningSnapshot snapshot) {
     _snapshot = snapshot;
+    _cachedBalance = snapshot.balance.claimedTotalPoints;
+    _localCache.writeBalance(snapshot.balance.claimedTotalPoints);
     if (snapshot.hasServerTime) {
       _clockOffset = snapshot.asOf.difference(_deviceClock());
     }
@@ -197,19 +235,30 @@ abstract class _MiningStoreData extends ChangeNotifier {
     }
   }
 
-  Future<void> loadLeaderboard({bool force = false}) async {
+  /// Loads one page of the all-time board. Page one also refreshes the
+  /// top three the Mine preview shows.
+  Future<void> loadLeaderboard({bool force = false, int page = 1}) async {
     if (_isLoadingLeaderboard) return;
-    if (!force && _leaderboard.isNotEmpty) return;
+    final target = page < 1 ? 1 : page;
+    if (!force && target == _leaderboardPage && _leaderboard.isNotEmpty) {
+      return;
+    }
 
     final generation = _generation;
     _isLoadingLeaderboard = true;
     notifyListeners();
 
     try {
-      final response =
-          await _repository.fetchLeaderboard(limit: 20, offset: 0);
+      final response = await _repository.fetchLeaderboard(
+        limit: leaderboardPageSize,
+        offset: (target - 1) * leaderboardPageSize,
+      );
       if (generation != _generation) return;
       _leaderboard = response?.data ?? const [];
+      _leaderboardPage = target;
+      _leaderboardTotal = response?.total ?? _leaderboard.length;
+      _leaderboardMe = response?.me;
+      if (target == 1) _leaderboardTop = _leaderboard.take(3).toList();
       _leaderboardError = null;
     } catch (error) {
       if (generation != _generation) return;

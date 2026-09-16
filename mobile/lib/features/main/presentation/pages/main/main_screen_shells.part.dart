@@ -20,7 +20,7 @@ const _userTabs = [
     showNotificationBell: true,
   ),
   _TabMeta(
-    title: 'Mining',
+    title: 'Mine',
     showSearch: true,
     showFilter: false,
     showNotificationBell: true,
@@ -59,7 +59,7 @@ const _hunterTabs = [
     showNotificationBell: true,
   ),
   _TabMeta(
-    title: 'Mining',
+    title: 'Mine',
     showSearch: true,
     showFilter: false,
     showNotificationBell: true,
@@ -98,7 +98,7 @@ const _moderationTabs = [
     showNotificationBell: true,
   ),
   _TabMeta(
-    title: 'Mining',
+    title: 'Mine',
     showSearch: true,
     showFilter: false,
     showNotificationBell: true,
@@ -146,6 +146,7 @@ class _UserSpaceShell extends StatelessWidget {
         showNotificationBell: tab.showNotificationBell,
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
+        actions: _mineActions(currentIndex),
       ),
       body: LazyTabStack(
         index: currentIndex,
@@ -200,7 +201,8 @@ class _HunterSpaceShell extends StatelessWidget {
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
         // D5: the Hub keeps the shared bar and adds My updates.
-        actions: isHub ? const [HubHistoryAction()] : const [],
+        actions:
+            isHub ? const [HubHistoryAction()] : _mineActions(currentIndex),
       ),
       body: LazyTabStack(
         index: currentIndex,
@@ -253,6 +255,7 @@ class _ModerationSpaceShell extends StatelessWidget {
         showNotificationBell: tab.showNotificationBell,
         showProfileShortcut: false,
         showProfileAvatarLeading: false,
+        actions: _mineActions(currentIndex),
       ),
       body: LazyTabStack(
         index: currentIndex,
@@ -273,6 +276,10 @@ class _ModerationSpaceShell extends StatelessWidget {
     );
   }
 }
+
+/// The Mine tab's history and help icons, in every space.
+List<Widget> _mineActions(int index) =>
+    index == MainTabScope.miningTab ? const [MineHeaderActions()] : const [];
 
 Widget _homeBuilder(BuildContext _) => const HomeScreen();
 Widget _discoverBuilder(BuildContext _) => const DiscoverScreen();
