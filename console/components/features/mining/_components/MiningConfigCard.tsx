@@ -1,153 +1,115 @@
 "use client";
 
-import { Loader2, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { Dispatch, SetStateAction } from "react";
-import type { AdminMiningConfig } from "@/lib/api-client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { AdminMiningConfig, AdminMiningConfigFields } from "@/lib/api-client";
+import { effectiveMiningFlags } from "@/lib/api/mining-config";
+import { MiningConfigActions } from "./MiningConfigActions";
+import { MiningFlagField } from "./MiningFlagField";
+import { MiningNumberField } from "./MiningNumberField";
+import { MiningRuntimeFlagsNotice } from "./MiningRuntimeFlagsNotice";
+
+type NumericField = {
+  [K in keyof AdminMiningConfigFields]: AdminMiningConfigFields[K] extends number ? K : never;
+}[keyof AdminMiningConfigFields];
+
+const NUMBER_FIELDS: Array<{ key: NumericField; label: string; hint?: string }> = [
+  { key: "cycleHours", label: "Cycle Hours" },
+  { key: "basePointsPerCycle", label: "Base BNP / Cycle" },
+  { key: "perActiveReferralBoostBps", label: "Boost per Active Referral (bps)" },
+  { key: "maxBoostBps", label: "Max Boost (bps)" },
+  { key: "activeReferralWindowHours", label: "Active Referral Window (hours)" },
+  { key: "referralBindWindowHours", label: "Referral Bind Window (hours)" },
+  {
+    key: "claimWindowHours",
+    label: "Claim Window (hours)",
+    hint: "How long after a cycle ends it can still be claimed before it is forfeited.",
+  },
+];
 
 type MiningConfigCardProps = {
   config: AdminMiningConfig | null;
+  changedFields: string[];
   canMutate: boolean;
   saving: boolean;
-  onChange: Dispatch<SetStateAction<AdminMiningConfig | null>>;
+  onFieldChange: <K extends keyof AdminMiningConfigFields>(
+    key: K,
+    value: AdminMiningConfigFields[K],
+  ) => void;
+  onReset: () => void;
   onSave: () => Promise<void>;
 };
 
+function formatUpdatedAt(value: string | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleString();
+}
+
 export function MiningConfigCard({
   config,
+  changedFields,
   canMutate,
   saving,
-  onChange,
+  onFieldChange,
+  onReset,
   onSave,
 }: MiningConfigCardProps) {
-  const disabled = !canMutate || !config;
-
-  function updateNumber<K extends keyof AdminMiningConfig>(key: K, value: number) {
-    onChange((prev) => (prev ? { ...prev, [key]: value } : prev));
-  }
+  const disabled = !canMutate || !config || saving;
+  const flags = config ? effectiveMiningFlags(config) : null;
+  const changed = new Set(changedFields);
+  const updatedAt = formatUpdatedAt(config?.updatedAt);
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Mining Configuration</CardTitle>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-sm sm:text-base">Mining Configuration</CardTitle>
+        {updatedAt && (
+          <CardDescription className="text-xs sm:text-sm">Last updated {updatedAt}</CardDescription>
+        )}
       </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="enabled">Mining Enabled</Label>
-          <select
+      <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
+        <MiningRuntimeFlagsNotice runtimeFlags={config?.runtimeFlags} />
+
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+          <MiningFlagField
             id="enabled"
-            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-            value={config?.enabled ? "true" : "false"}
-            onChange={(e) =>
-              onChange((prev) =>
-                prev ? { ...prev, enabled: e.target.value === "true" } : prev,
-              )
-            }
+            label="Mining Enabled"
+            flag={flags?.mining ?? null}
+            changed={changed.has("enabled")}
             disabled={disabled}
-          >
-            <option value="true">Enabled</option>
-            <option value="false">Disabled</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="referralsEnabled">Referrals Enabled</Label>
-          <select
+            onChange={(value) => onFieldChange("enabled", value)}
+          />
+          <MiningFlagField
             id="referralsEnabled"
-            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-            value={config?.referralsEnabled ? "true" : "false"}
-            onChange={(e) =>
-              onChange((prev) =>
-                prev ? { ...prev, referralsEnabled: e.target.value === "true" } : prev,
-              )
-            }
+            label="Referrals Enabled"
+            flag={flags?.referrals ?? null}
+            changed={changed.has("referralsEnabled")}
             disabled={disabled}
-          >
-            <option value="true">Enabled</option>
-            <option value="false">Disabled</option>
-          </select>
+            onChange={(value) => onFieldChange("referralsEnabled", value)}
+          />
+
+          {NUMBER_FIELDS.map((field) => (
+            <MiningNumberField
+              key={field.key}
+              id={field.key}
+              label={field.label}
+              hint={field.hint}
+              value={config?.[field.key]}
+              changed={changed.has(field.key)}
+              disabled={disabled}
+              onChange={(value) => onFieldChange(field.key, value)}
+            />
+          ))}
         </div>
 
-        <ConfigInput
-          id="cycleHours"
-          label="Cycle Hours"
-          value={config?.cycleHours}
-          disabled={disabled}
-          onChange={(value) => updateNumber("cycleHours", value)}
+        <MiningConfigActions
+          changedCount={changed.size}
+          canSave={canMutate && !!config}
+          saving={saving}
+          onReset={onReset}
+          onSave={onSave}
         />
-        <ConfigInput
-          id="basePointsPerCycle"
-          label="Base BNP / Cycle"
-          value={config?.basePointsPerCycle}
-          disabled={disabled}
-          onChange={(value) => updateNumber("basePointsPerCycle", value)}
-        />
-        <ConfigInput
-          id="perActiveReferralBoostBps"
-          label="Boost per Active Referral (bps)"
-          value={config?.perActiveReferralBoostBps}
-          disabled={disabled}
-          onChange={(value) => updateNumber("perActiveReferralBoostBps", value)}
-        />
-        <ConfigInput
-          id="maxBoostBps"
-          label="Max Boost (bps)"
-          value={config?.maxBoostBps}
-          disabled={disabled}
-          onChange={(value) => updateNumber("maxBoostBps", value)}
-        />
-        <ConfigInput
-          id="activeReferralWindowHours"
-          label="Active Referral Window (hours)"
-          value={config?.activeReferralWindowHours}
-          disabled={disabled}
-          onChange={(value) => updateNumber("activeReferralWindowHours", value)}
-        />
-        <ConfigInput
-          id="referralBindWindowHours"
-          label="Referral Bind Window (hours)"
-          value={config?.referralBindWindowHours}
-          disabled={disabled}
-          onChange={(value) => updateNumber("referralBindWindowHours", value)}
-        />
-
-        <div className="flex justify-end md:col-span-2">
-          <Button onClick={() => void onSave()} disabled={disabled || saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save Mining Config
-          </Button>
-        </div>
       </CardContent>
     </Card>
-  );
-}
-
-function ConfigInput({
-  id,
-  label,
-  value,
-  onChange,
-  disabled,
-}: {
-  id: string;
-  label: string;
-  value: number | undefined;
-  onChange: (value: number) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type="number"
-        value={value ?? 0}
-        onChange={(e) => onChange(Number(e.target.value))}
-        disabled={disabled}
-      />
-    </div>
   );
 }

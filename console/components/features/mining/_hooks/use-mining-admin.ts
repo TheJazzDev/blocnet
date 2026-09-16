@@ -1,63 +1,79 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import type { AdminMiningConfig, AdminMiningConfigPatch } from "@/lib/api-client";
+import { diffMiningConfig } from "@/lib/api/mining-config";
 import {
-  clientApi,
-  type AdminMiningConfig,
-  type AdminMiningMetrics,
-} from "@/lib/api-client";
+  useMiningConfigQuery,
+  useMiningMetricsQuery,
+  useUpdateMiningConfigMutation,
+} from "@/lib/hooks/queries";
 
-export function useMiningAdmin() {
-  const [config, setConfig] = useState<AdminMiningConfig | null>(null);
-  const [metrics, setMetrics] = useState<AdminMiningMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function errorMessage(err: unknown, fallback: string): string | null {
+  if (!err) return null;
+  return err instanceof Error ? err.message : fallback;
+}
 
-  async function load() {
-    setLoading(true);
-    setError(null);
-    try {
-      const [cfg, m] = await Promise.all([
-        clientApi.getMiningConfig(),
-        clientApi.getMiningMetrics(),
-      ]);
-      setConfig(cfg);
-      setMetrics(m);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load mining settings");
-    } finally {
-      setLoading(false);
-    }
+/**
+ * Server state comes from TanStack Query; the form keeps only the admin's
+ * pending edits, so saving sends exactly the fields that changed.
+ */
+export function useMiningAdmin(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
+  const configQuery = useMiningConfigQuery({ enabled });
+  const metricsQuery = useMiningMetricsQuery({ enabled });
+  const mutation = useUpdateMiningConfigMutation();
+  const [edits, setEdits] = useState<AdminMiningConfigPatch>({});
+
+  const serverConfig = configQuery.data ?? null;
+  const draft = useMemo<AdminMiningConfig | null>(
+    () => (serverConfig ? { ...serverConfig, ...edits } : null),
+    [serverConfig, edits],
+  );
+  const patch = useMemo(
+    () => (serverConfig && draft ? diffMiningConfig(serverConfig, draft) : {}),
+    [serverConfig, draft],
+  );
+  const dirty = Object.keys(patch).length > 0;
+
+  function setField<K extends keyof AdminMiningConfigPatch>(
+    key: K,
+    value: NonNullable<AdminMiningConfigPatch[K]>,
+  ) {
+    setEdits((prev) => ({ ...prev, [key]: value }));
   }
-
-  useEffect(() => {
-    void load();
-  }, []);
 
   async function save() {
-    if (!config) return;
-    setSaving(true);
-    setError(null);
+    if (!dirty) return;
     try {
-      const next = await clientApi.updateMiningConfig(config);
-      setConfig(next);
-      setMetrics(await clientApi.getMiningMetrics());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save mining settings");
-    } finally {
-      setSaving(false);
+      await mutation.mutateAsync(patch);
+      setEdits({});
+    } catch {
+      // Surfaced through `error` below.
     }
   }
 
+  async function refresh() {
+    await Promise.all([configQuery.refetch(), metricsQuery.refetch()]);
+  }
+
+  const error =
+    errorMessage(mutation.error, "Failed to save mining settings") ??
+    errorMessage(configQuery.error ?? metricsQuery.error, "Failed to load mining settings");
+
   return {
-    config,
-    setConfig,
-    metrics,
-    loading,
-    saving,
+    config: draft,
+    serverConfig,
+    metrics: metricsQuery.data ?? null,
+    loading: configQuery.isLoading || metricsQuery.isLoading,
+    refreshing: configQuery.isFetching || metricsQuery.isFetching,
+    saving: mutation.isPending,
+    dirty,
+    changedFields: Object.keys(patch),
     error,
-    load,
+    setField,
+    reset: () => setEdits({}),
+    refresh,
     save,
   };
 }

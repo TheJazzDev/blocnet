@@ -31,10 +31,10 @@ export default function MiningPageClient() {
         </Button>
         <Button
           variant="outline"
-          onClick={() => void state.load()}
-          disabled={state.loading || state.saving}
+          onClick={() => void state.refresh()}
+          disabled={state.refreshing || state.saving}
         >
-          {state.loading ? (
+          {state.refreshing ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <RefreshCw className="h-4 w-4" />
@@ -67,9 +67,11 @@ export default function MiningPageClient() {
         <>
           <MiningConfigCard
             config={state.config}
+            changedFields={state.changedFields}
             canMutate={canMutate}
             saving={state.saving}
-            onChange={state.setConfig}
+            onFieldChange={state.setField}
+            onReset={state.reset}
             onSave={state.save}
           />
           <MiningMetricsCard metrics={state.metrics} />
