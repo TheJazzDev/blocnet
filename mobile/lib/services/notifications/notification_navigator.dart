@@ -1,4 +1,5 @@
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/notifications/notification_space_target.dart';
@@ -111,8 +112,9 @@ class NotificationNavigator {
     final navigator = Navigator.of(context, rootNavigator: true);
 
     if (auth.activeSpace == target.space) {
-      // Same space: the shell only picks a tab when it is built or when the
-      // space changes, so replace the stack with a shell on that tab.
+      // Same space: return to the open shell on that tab, keeping its state.
+      // Only when no shell is open, replace the stack with one on that tab.
+      if (MainTabNavigator.returnTo(navigator, target.tab)) return;
       navigator.pushAndRemoveUntil(
         MaterialPageRoute<void>(
           settings: const RouteSettings(name: AppRoutes.main),
