@@ -1743,6 +1743,9 @@ enum TipTransactionType {
   conversion
   adjustment
   transfer
+  /// Minted BNP: a mining claim or quest reward. Sender and recipient are the
+  /// same member; readers must key on type, never on sender vs recipient.
+  reward
 }
 
 enum EdgeAction {

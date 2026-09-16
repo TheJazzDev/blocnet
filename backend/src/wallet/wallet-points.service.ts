@@ -22,6 +22,7 @@ const POINTS_REASON: Record<TipTransactionType, string> = {
   [TipTransactionType.tip]: 'bnp_tip',
   [TipTransactionType.conversion]: 'bnp_conversion',
   [TipTransactionType.adjustment]: 'bnp_adjustment',
+  [TipTransactionType.reward]: 'bnp_reward',
 };
 
 const POINTS_LABEL: Record<TipTransactionType, string> = {
@@ -29,6 +30,7 @@ const POINTS_LABEL: Record<TipTransactionType, string> = {
   [TipTransactionType.tip]: 'Tip',
   [TipTransactionType.conversion]: 'BNP conversion',
   [TipTransactionType.adjustment]: 'BNP adjustment',
+  [TipTransactionType.reward]: 'BNP reward',
 };
 
 const partySelect = {
