@@ -60,12 +60,21 @@ function createService(data: {
     createdAt: Date;
   }[];
   tips?: Record<string, bigint>;
+  updatesCount?: Record<string, number>;
 }) {
   const prisma = {
     profile: { findMany: jest.fn().mockResolvedValue(data.profiles) },
     project: { findMany: jest.fn().mockResolvedValue(data.projects) },
     update: {
       groupBy: jest.fn().mockImplementation((args: any) => {
+        if (args._count) {
+          return Promise.resolve(
+            Object.entries(data.updatesCount ?? {}).map(([projectId, n]) => ({
+              projectId,
+              _count: { _all: n },
+            })),
+          );
+        }
         if (args._min) {
           return Promise.resolve(
             Object.entries(data.deadlines ?? {}).map(([projectId, d]) => ({
@@ -159,6 +168,8 @@ describe('HunterReliabilityService', () => {
         coverage: null,
         cadenceDays: null,
         response: null,
+        responseAnswered: 0,
+        responseAsked: 0,
         gemsOwned: 0,
         tipsReceivedTotal: '0',
         tipsCurrencyCode: 'BNP',
@@ -193,6 +204,7 @@ describe('HunterReliabilityService', () => {
           { projectId: 'mine', createdAt: daysAgo(3) },
           { projectId: 'shared', createdAt: daysAgo(20) },
           { projectId: 'theirs', createdAt: daysAgo(2) },
+          { projectId: 'unassigned-mine', createdAt: daysAgo(2) },
         ],
         openReports: { shared: 2, theirs: 5 },
         followers: { mine: 10, shared: 5, theirs: 100 },
@@ -210,8 +222,12 @@ describe('HunterReliabilityService', () => {
         // mine's ask is still open but answered by the update a day ago;
         // shared's ask 20 days ago was never answered.
         response: 0.5,
+        responseAnswered: 1,
+        responseAsked: 2,
         updates30d: 3,
         followersTotal: 15,
+        // mine's ask was cleared by the update that followed it; the ask on
+        // never-updated unassigned-mine still waits.
         membersWaiting: 1,
         openReports: 2,
         tipsReceivedTotal: '123456789012345678901234567890',
@@ -334,10 +350,13 @@ describe('HunterReliabilityService', () => {
           { projectId: 'quiet-b', createdAt: daysAgo(1) },
           { projectId: 'quiet-b', createdAt: daysAgo(2) },
           { projectId: 'current', createdAt: daysAgo(30) },
+          // Asked three days ago, answered by the post two days ago.
+          { projectId: 'current', createdAt: daysAgo(3) },
         ],
         openReports: { 'quiet-a': 1 },
         followers: { current: 7 },
         deadlines: { current: deadline },
+        updatesCount: { current: 12, due: 3, 'quiet-a': 1 },
       });
 
       const board = await service.getBoard(HUNTER);
@@ -354,9 +373,12 @@ describe('HunterReliabilityService', () => {
         name: 'Current',
         logoUrl: null,
         primaryTag: 'DeFi',
+        chain: 'DeFi',
         followersCount: 7,
         listedAt: daysAgo(60).toISOString(),
         lastActivityAt: daysAgo(2).toISOString(),
+        updatesCount: 12,
+        neverUpdated: false,
         lastUpdate: {
           id: 'u-cur',
           title: 'Mainnet',
@@ -366,10 +388,13 @@ describe('HunterReliabilityService', () => {
         state: 'current',
         membersWaiting: 0,
         openReports: 0,
+        escalatesAtWaiting: 50,
         nextDeadlineAt: deadline.toISOString(),
       });
       const neverUpdated = board.gems[0];
       expect(neverUpdated.lastUpdate).toBeNull();
+      expect(neverUpdated.neverUpdated).toBe(true);
+      expect(neverUpdated.updatesCount).toBe(0);
       expect(neverUpdated.daysQuiet).toBe(30);
       expect(neverUpdated.membersWaiting).toBe(2);
 
@@ -380,6 +405,7 @@ describe('HunterReliabilityService', () => {
         standing: 'slipping',
         membersWaiting: 2,
         openReports: 1,
+        escalatesAtWaiting: 50,
       });
 
       // Newest-update rows are fetched in one query keyed by (gem, timestamp).
@@ -387,8 +413,8 @@ describe('HunterReliabilityService', () => {
         (call: any[]) => call[0].where.OR,
       )[0];
       expect(rowsQuery.where.OR).toHaveLength(3);
-      // profile, gems, 7 fact reads, deadlines, newest-update rows.
-      expect(totalQueries(prisma)).toBe(11);
+      // profile, gems, 7 fact reads, deadlines, updates count, newest-update rows.
+      expect(totalQueries(prisma)).toBe(12);
     });
   });
 

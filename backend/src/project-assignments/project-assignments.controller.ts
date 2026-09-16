@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AppRole } from '../common/enums/role.enum';
@@ -17,10 +18,12 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { AssignHunterDto } from './dto/assign-hunter.dto';
 import { InviteHunterDto } from './dto/invite-hunter.dto';
+import { MyInviteDto } from './dto/my-invite-response.dto';
 import { ListInvitesQuery } from './dto/list-invites.query';
 import { RespondInviteDto } from './dto/respond-invite.dto';
 import { ProjectAssignmentsService } from './project-assignments.service';
 
+@ApiTags('project-assignments')
 @Controller()
 @UseGuards(AuthGuard, RolesGuard)
 export class ProjectAssignmentsController {
@@ -89,6 +92,11 @@ export class ProjectAssignmentsController {
   }
 
   @Get('project-invites/mine')
+  @ApiOperation({
+    summary:
+      'Invites to co-own a gem sent to the caller, newest first, with each gem’s followers, published updates and last update, and who sent the invite.',
+  })
+  @ApiOkResponse({ type: [MyInviteDto] })
   async listMyInvites(
     @CurrentUser() user: AuthUser | undefined,
     @Query() query: ListInvitesQuery,

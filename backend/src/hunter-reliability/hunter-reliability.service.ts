@@ -122,9 +122,10 @@ export class HunterReliabilityService {
     const owned = gemsOwnedBy(gems, hunterId);
     const projectIds = owned.map((gem) => gem.projectId);
 
-    const [facts, nextDeadlines] = await Promise.all([
+    const [facts, nextDeadlines, updatesCount] = await Promise.all([
       this.loader.loadFacts(projectIds, [hunterId], now),
       this.loader.loadNextDeadlines(projectIds, now),
+      this.loader.loadUpdatesCount(projectIds),
     ]);
     const lastUpdates = await this.loader.loadLastUpdateRows(
       facts.lastUpdateAtByGem,
@@ -137,6 +138,7 @@ export class HunterReliabilityService {
           gem,
           facts,
           waiting,
+          updatesCount: updatesCount.get(gem.projectId) ?? 0,
           lastUpdate: lastUpdates.get(gem.projectId),
           nextDeadlineAt: nextDeadlines.get(gem.projectId),
           now,

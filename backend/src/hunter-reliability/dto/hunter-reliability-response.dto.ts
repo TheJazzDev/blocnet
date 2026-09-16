@@ -51,6 +51,18 @@ export class HunterReliabilityDto {
   })
   response!: number | null;
 
+  @ApiProperty({
+    description:
+      'Decided ask-weeks (last 90 days) an update answered within 7 days — the numerator of `response`.',
+  })
+  responseAnswered!: number;
+
+  @ApiProperty({
+    description:
+      'Decided ask-weeks (last 90 days), answered or missed — the denominator of `response`. Weeks still inside their 7-day window with no update are not counted.',
+  })
+  responseAsked!: number;
+
   @ApiProperty() gemsOwned!: number;
 
   @ApiProperty({
@@ -72,11 +84,21 @@ export class HunterReliabilityDto {
   @ApiProperty({ nullable: true, type: Number })
   tipsCurrencyDecimals!: number | null;
 
-  @ApiProperty({ description: 'Member asks on owned gems in the last 7 days.' })
+  @ApiProperty({
+    description:
+      'Members waiting across owned gems: asks in the last 7 days made after each gem’s latest published update. Posting on a gem clears its waiting.',
+  })
   membersWaiting!: number;
 
   @ApiProperty({ description: 'Unresolved inactivity reports on owned gems.' })
   openReports!: number;
+
+  @ApiProperty({
+    example: 50,
+    description:
+      'Members waiting on one gem at which it enters the moderation queue for reassignment. The same value the member sees.',
+  })
+  escalatesAtWaiting!: number;
 
   @ApiProperty() computedAt!: string;
 }
@@ -113,17 +135,42 @@ export class HunterBoardGemDto {
   logoUrl!: string | null;
 
   @ApiProperty() primaryTag!: string;
+
+  @ApiProperty({
+    description:
+      'The chain chip: the primary tag name as stored (currently the same value as primaryTag).',
+  })
+  chain!: string;
+
   @ApiProperty() followersCount!: number;
   @ApiProperty() listedAt!: string;
   @ApiProperty() lastActivityAt!: string;
+
+  @ApiProperty({ description: 'Published updates on this gem, any author.' })
+  updatesCount!: number;
+
+  @ApiProperty({ description: 'True when the gem has no published update.' })
+  neverUpdated!: boolean;
 
   @ApiProperty({ nullable: true, type: BoardGemLastUpdateDto })
   lastUpdate!: BoardGemLastUpdateDto | null;
 
   @ApiProperty() daysQuiet!: number;
   @ApiProperty({ enum: GEM_STATES }) state!: GemState;
-  @ApiProperty() membersWaiting!: number;
+  @ApiProperty({
+    description:
+      'Asks in the last 7 days made after this gem’s latest published update. A count only — no member names.',
+  })
+  membersWaiting!: number;
+
   @ApiProperty() openReports!: number;
+
+  @ApiProperty({
+    example: 50,
+    description:
+      'Members waiting on one gem at which it enters the moderation queue for reassignment. The same value the member sees.',
+  })
+  escalatesAtWaiting!: number;
 
   @ApiProperty({ nullable: true, type: String })
   nextDeadlineAt!: string | null;

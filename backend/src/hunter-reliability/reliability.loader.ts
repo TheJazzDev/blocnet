@@ -6,7 +6,7 @@ import {
   UpdateStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { ownersOf, type GemEvent } from './reliability.calc';
+import { ownersOf, waitingWindow, type GemEvent } from './reliability.calc';
 import { DAY_MS, RELIABILITY_WINDOW_DAYS } from './reliability.constants';
 
 /**
@@ -77,6 +77,23 @@ export const profileSummarySelect = {
 export type ProfileSummaryRow = Prisma.ProfileGetPayload<{
   select: typeof profileSummarySelect;
 }>;
+
+/**
+ * The asks on one gem that still count as members waiting (`waitingWindow`),
+ * as a Prisma filter — for reads that count in the database rather than load
+ * the asks.
+ */
+export function waitingAsksWhere(
+  projectId: string,
+  clearedAt: Date | null,
+  now: Date,
+): Prisma.ProjectUpdateRequestWhereInput {
+  const { from, after } = waitingWindow(clearedAt, now);
+  return {
+    projectId,
+    createdAt: after ? { gt: after } : { gte: from },
+  };
+}
 
 /**
  * Only `active` gems count against a hunter. A paused, archived or hidden gem
@@ -281,6 +298,17 @@ export class ReliabilityLoader {
       if (!map.has(row.projectId)) map.set(row.projectId, row);
     }
     return map;
+  }
+
+  /** Published updates per gem, all time, any author. 1 query. */
+  async loadUpdatesCount(projectIds: string[]): Promise<Map<string, number>> {
+    if (projectIds.length === 0) return new Map();
+    const rows = await this.prisma.update.groupBy({
+      by: ['projectId'],
+      where: { projectId: { in: projectIds }, status: UpdateStatus.published },
+      _count: { _all: true },
+    });
+    return countMap(rows);
   }
 
   /** Soonest future deadline among each gem's published updates. 1 query. */

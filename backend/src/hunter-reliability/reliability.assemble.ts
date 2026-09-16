@@ -8,14 +8,16 @@ import {
   daysSince,
   gemState,
   lastActivityAt,
-  responseRate,
+  membersWaitingByGem,
+  responseCounts,
+  shareOf,
   standing,
   type OwnedGemFacts,
   type ReliabilityStanding,
 } from './reliability.calc';
 import {
   DAY_MS,
-  MEMBERS_WAITING_DAYS,
+  ESCALATE_WAITING_AT,
   RECENT_UPDATES_DAYS,
 } from './reliability.constants';
 import type {
@@ -76,7 +78,7 @@ export function assembleReliability(input: {
   const updates = mine(facts.updates);
   const asks = mine(facts.asks);
   const recentFrom = now.getTime() - RECENT_UPDATES_DAYS * DAY_MS;
-  const waitingFrom = now.getTime() - MEMBERS_WAITING_DAYS * DAY_MS;
+  const response = responseCounts(asks, updates, now);
 
   return {
     profileId: hunterId,
@@ -87,51 +89,59 @@ export function assembleReliability(input: {
     standing: standing(gemFacts, now),
     coverage: roundShare(coverage(gemFacts, now)),
     cadenceDays: cadenceDays(updates, now),
-    response: roundShare(responseRate(asks, updates, now)),
+    response: roundShare(shareOf(response)),
+    responseAnswered: response.answered,
+    responseAsked: response.asked,
     gemsOwned: owned.length,
     updates30d: updates.filter((u) => u.at.getTime() >= recentFrom).length,
     followersTotal: sumBy(ids, facts.followersByGem),
     tipsReceivedTotal: (facts.tips.byHunter.get(hunterId) ?? 0n).toString(),
     tipsCurrencyCode: facts.tips.currencyCode,
     tipsCurrencyDecimals: facts.tips.decimals,
-    membersWaiting: asks.filter((a) => a.at.getTime() >= waitingFrom).length,
+    membersWaiting: sumBy(
+      ids,
+      membersWaitingByGem(asks, facts.lastUpdateAtByGem, now),
+    ),
     openReports: sumBy(ids, facts.openReportsByGem),
+    escalatesAtWaiting: ESCALATE_WAITING_AT,
     computedAt: now.toISOString(),
   };
 }
 
-/** Members waiting per gem over the last week. */
+/**
+ * Members waiting per gem: asks in the last week made after the gem's latest
+ * published update.
+ */
 export function waitingByGem(
   facts: ReliabilityFacts,
   now: Date,
 ): Map<string, number> {
-  const from = now.getTime() - MEMBERS_WAITING_DAYS * DAY_MS;
-  const map = new Map<string, number>();
-  for (const ask of facts.asks) {
-    if (ask.at.getTime() < from) continue;
-    map.set(ask.projectId, (map.get(ask.projectId) ?? 0) + 1);
-  }
-  return map;
+  return membersWaitingByGem(facts.asks, facts.lastUpdateAtByGem, now);
 }
 
 export function assembleBoardGem(input: {
   gem: GemRow;
   facts: ReliabilityFacts;
   waiting: Map<string, number>;
+  updatesCount: number;
   lastUpdate: LastUpdateRow | undefined;
   nextDeadlineAt: Date | undefined;
   now: Date;
 }): HunterBoardGemDto {
-  const { gem, facts, waiting, lastUpdate, nextDeadlineAt, now } = input;
+  const { gem, facts, waiting, updatesCount, lastUpdate, nextDeadlineAt, now } =
+    input;
   const last = lastActivityAt(toGemFacts(gem, facts.lastUpdateAtByGem));
   return {
     projectId: gem.projectId,
     name: gem.name,
     logoUrl: null,
     primaryTag: gem.primaryTag,
+    chain: gem.primaryTag,
     followersCount: facts.followersByGem.get(gem.projectId) ?? 0,
     listedAt: gem.listedAt.toISOString(),
     lastActivityAt: last.toISOString(),
+    updatesCount,
+    neverUpdated: !facts.lastUpdateAtByGem.has(gem.projectId),
     lastUpdate: lastUpdate
       ? {
           id: lastUpdate.id,
@@ -143,6 +153,7 @@ export function assembleBoardGem(input: {
     state: gemState(last, now),
     membersWaiting: waiting.get(gem.projectId) ?? 0,
     openReports: facts.openReportsByGem.get(gem.projectId) ?? 0,
+    escalatesAtWaiting: ESCALATE_WAITING_AT,
     nextDeadlineAt: nextDeadlineAt?.toISOString() ?? null,
   };
 }

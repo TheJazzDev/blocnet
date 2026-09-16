@@ -4,12 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { NotificationType, RoleName } from '@prisma/client';
+import { NotificationType, RoleName, UpdateStatus } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { dayKey, isoWeekKey } from '../common/utils/iso-week.util';
 import { ownersOf } from '../hunter-reliability/reliability.calc';
+import { ESCALATE_WAITING_AT } from '../hunter-reliability/reliability.constants';
+import { waitingAsksWhere } from '../hunter-reliability/reliability.loader';
 
 /**
  * How often one member may nudge one gem.
@@ -66,9 +68,7 @@ export class ProjectAttentionService {
       data: { projectId, memberId },
     });
 
-    const waiting = await this.prisma.projectUpdateRequest.count({
-      where: { projectId, createdAt: { gte: since } },
-    });
+    const waiting = await this.countWaiting(projectId);
 
     const hunterIds = await this.hunterIdsFor(projectId);
     if (hunterIds.length > 0) {
@@ -96,6 +96,7 @@ export class ProjectAttentionService {
     return {
       ok: true,
       membersWaiting: waiting,
+      escalatesAtWaiting: ESCALATE_WAITING_AT,
       hunterNotified: hunterIds.length > 0,
     };
   }
@@ -156,16 +157,39 @@ export class ProjectAttentionService {
 
   /** Who is waiting on a gem, for the card that says so. */
   async attentionFor(projectId: string) {
-    const since = new Date(Date.now() - NUDGE_COOLDOWN_MS);
     const [membersWaiting, openReports] = await Promise.all([
-      this.prisma.projectUpdateRequest.count({
-        where: { projectId, createdAt: { gte: since } },
-      }),
+      this.countWaiting(projectId),
       this.prisma.projectInactivityReport.count({
         where: { projectId, resolvedAt: null },
       }),
     ]);
-    return { membersWaiting, openReports };
+    return {
+      membersWaiting,
+      openReports,
+      escalatesAtWaiting: ESCALATE_WAITING_AT,
+    };
+  }
+
+  /**
+   * Members waiting on a gem: asks inside the cooldown made after its latest
+   * published update — the same rule the hunter's board uses, so the member
+   * and the hunter see one number. Two queries.
+   *
+   * The per-member cooldown in `requestUpdate` is deliberately not reset by
+   * an update: it limits how often one member can nudge, not what counts.
+   */
+  private async countWaiting(projectId: string): Promise<number> {
+    const latest = await this.prisma.update.aggregate({
+      where: { projectId, status: UpdateStatus.published },
+      _max: { createdAt: true },
+    });
+    return this.prisma.projectUpdateRequest.count({
+      where: waitingAsksWhere(
+        projectId,
+        latest._max.createdAt ?? null,
+        new Date(),
+      ),
+    });
   }
 
   private async loadFollowedProject(userId: string, projectId: string) {
