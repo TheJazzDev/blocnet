@@ -51,4 +51,11 @@ export class UpdateMiningConfigDto {
   @Min(1)
   @Max(24 * 7)
   referralBindWindowHours?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(24 * 7)
+  claimWindowHours?: number;
 }

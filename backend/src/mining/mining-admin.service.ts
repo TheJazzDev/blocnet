@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { activeReferralWhere } from './active-referral';
 import { buildLifetimeMiningTotals } from './dto/lifetime-mining-totals.dto';
 import type { MiningAdminMetricsResponse } from './dto/mining-admin-metrics-response.dto';
 import { EffectiveMiningConfig } from './mining-calculator.service';
-import { MiningConfigService } from './mining-config.service';
+import { UpdateMiningConfigDto } from './dto/update-mining-config.dto';
+import {
+  type AdminMiningConfig,
+  MiningConfigService,
+} from './mining-config.service';
 
 @Injectable()
 export class MiningAdminService {
@@ -14,35 +19,34 @@ export class MiningAdminService {
     private readonly miningConfigService: MiningConfigService,
   ) {}
 
-  async getAdminConfig() {
-    return this.miningConfigService.getEffectiveConfig();
+  async getAdminConfig(): Promise<AdminMiningConfig> {
+    const row = await this.miningConfigService.getOrCreateConfig();
+    return this.miningConfigService.toAdminConfig(row);
   }
 
   async updateAdminConfig(
     actorId: string,
-    patch: Partial<EffectiveMiningConfig>,
-  ) {
+    patch: UpdateMiningConfigDto,
+  ): Promise<AdminMiningConfig> {
     const defaultRow = await this.miningConfigService.getOrCreateConfig();
     const row = await this.prisma.miningConfig.upsert({
       where: { id: 'default' },
-      update: patch,
+      update: { ...patch },
       create: {
         ...defaultRow,
         ...patch,
       },
     });
 
-    const config = this.miningConfigService.withEnvFlagOverrides(row);
-
     await this.auditLogService.create({
       actorId,
       action: 'admin.mining.config.update',
       resourceType: 'mining_config',
       resourceId: row.id,
-      metadata: patch,
+      metadata: { ...patch },
     });
 
-    return config;
+    return this.miningConfigService.toAdminConfig(row);
   }
 
   async getAdminMetrics(): Promise<MiningAdminMetricsResponse> {
@@ -169,23 +173,12 @@ export class MiningAdminService {
       return 0;
     }
 
-    const cutoff = new Date(
-      asOf.getTime() - config.activeReferralWindowHours * 60 * 60 * 1000,
-    );
-
     return this.prisma.profile.count({
       where: {
         referredById: {
           not: null,
         },
-        miningSessions: {
-          some: {
-            startsAt: {
-              gte: cutoff,
-              lte: asOf,
-            },
-          },
-        },
+        ...activeReferralWhere(asOf, config.activeReferralWindowHours),
       },
     });
   }

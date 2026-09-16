@@ -18,6 +18,7 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import { AppRole } from '../common/enums/role.enum';
 import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
+import { countActiveDirectReferrals } from '../mining/active-referral';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdminDeleteUserDto } from './dto/admin-delete-user.dto';
@@ -492,17 +493,13 @@ export class UsersAdminService {
 
     const activeReferralWindowHours =
       miningConfig?.activeReferralWindowHours ?? 168;
-    const activeReferralWindowStart = new Date(
-      asOf.getTime() - activeReferralWindowHours * 60 * 60 * 1000,
+    // Same rule as the mining boost and /referrals/me (F-50).
+    const activeDirectReferrals = await countActiveDirectReferrals(
+      this.prisma,
+      userId,
+      { referralsEnabled: true, activeReferralWindowHours },
+      asOf,
     );
-    const activeDirectReferrals = await this.prisma.profile.count({
-      where: {
-        referredById: userId,
-        homeFeedLastSeenAt: {
-          gte: activeReferralWindowStart,
-        },
-      },
-    });
 
     // Keep BigInt arithmetic in BigInt space and serialize to string at the
     // response boundary (never as a JS number) to avoid precision loss once

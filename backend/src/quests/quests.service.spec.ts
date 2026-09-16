@@ -23,9 +23,11 @@ describe('QuestsService.verifyQuestSubmission — race condition on double-appro
   const tx = {
     questSubmission: { updateMany: jest.fn() },
     userQuest: { update: jest.fn(), upsert: jest.fn(), updateMany: jest.fn() },
-    miningPointLedger: { create: jest.fn() },
-    profile: { update: jest.fn() },
+    miningPointLedger: { create: jest.fn(), findFirst: jest.fn() },
+    profile: { update: jest.fn(), findUnique: jest.fn() },
     badge: { findUnique: jest.fn() },
+    tipCurrency: { upsert: jest.fn() },
+    tipAccount: { upsert: jest.fn(), findUnique: jest.fn(), updateMany: jest.fn() },
   };
 
   const prisma = {
@@ -130,5 +132,66 @@ describe('QuestsService.verifyQuestSubmission — race condition on double-appro
     expect(notificationsService.notifyMany).toHaveBeenCalledWith([
       expect.objectContaining({ type: 'quest_verified', userId: 'user-1' }),
     ]);
+  });
+
+  describe('F-52 quest BNP reaches the tip account', () => {
+    const accountKey = {
+      accountType_ownerRef_currencyCode: {
+        accountType: 'user',
+        ownerRef: 'user-1',
+        currencyCode: 'BNP',
+      },
+    };
+
+    it('an approved quest credits the BNP tip account by the reward', async () => {
+      tx.questSubmission.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.verifyQuestSubmission(
+        { submissionId: 'submission-1' } as any,
+        'admin-1',
+        true,
+      );
+
+      expect(tx.profile.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { miningClaimedPoints: { increment: 35n } },
+        }),
+      );
+      expect(tx.tipAccount.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: accountKey,
+          update: expect.objectContaining({
+            balanceAtomic: { increment: 35_000n },
+          }),
+          create: expect.objectContaining({ balanceAtomic: 35_000n }),
+        }),
+      );
+    });
+
+    it('revoking a quest debits the tip account, never below zero', async () => {
+      tx.miningPointLedger.findFirst.mockResolvedValue({ id: 'ledger-1' });
+      tx.profile.findUnique.mockResolvedValue({ miningClaimedPoints: 100n });
+      tx.tipAccount.findUnique.mockResolvedValue({ balanceAtomic: 20_000n });
+      tx.tipAccount.updateMany.mockResolvedValue({ count: 1 });
+
+      await (service as any).revokeQuestRewards(
+        tx,
+        'user-1',
+        questFixture,
+        'submission-1',
+        'fraud',
+      );
+
+      // 35 BNP reward, but only 20 BNP left after the member tipped some away.
+      expect(tx.tipAccount.updateMany).toHaveBeenCalledWith({
+        where: {
+          accountType: 'user',
+          ownerRef: 'user-1',
+          currencyCode: 'BNP',
+          balanceAtomic: { gte: 20_000n },
+        },
+        data: { balanceAtomic: { decrement: 20_000n } },
+      });
+    });
   });
 });

@@ -13,6 +13,7 @@ import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { BindReferralDto } from './dto/bind-referral.dto';
 import { ListDownlineQuery } from './dto/list-downline.query';
 import { ValidateReferralQuery } from './dto/validate-referral.query';
+import { ReferralValidateThrottleGuard } from './referral-validate-throttle.guard';
 import { ReferralsService } from './referrals.service';
 
 @Controller('referrals')
@@ -20,6 +21,7 @@ export class ReferralsController {
   constructor(private readonly referralsService: ReferralsService) {}
 
   @Get('validate')
+  @UseGuards(ReferralValidateThrottleGuard)
   async validate(@Query() query: ValidateReferralQuery) {
     return this.referralsService.validateCode(query.code);
   }

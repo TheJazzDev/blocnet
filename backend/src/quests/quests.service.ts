@@ -18,6 +18,10 @@ import { BadgesService } from '../badges/badges.service';
 import { generateUniqueSlug } from '../common/utils/slug.util';
 import { LevelsService } from '../levels/levels.service';
 import { MiningConfigService } from '../mining/mining-config.service';
+import {
+  creditBnpTipAccount,
+  debitBnpTipAccount,
+} from '../mining/mining-settlement';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestDto } from './dto/create-quest.dto';
@@ -998,6 +1002,10 @@ export class QuestsService {
           },
         },
       });
+
+      // Same credit a mining claim makes, so the wallet BNP balance and
+      // miningClaimedPoints never drift apart (F-52).
+      await creditBnpTipAccount(tx, userId, quest.rewardPoints);
     }
 
     if (quest.rewardBadgeId) {
@@ -1081,6 +1089,8 @@ export class QuestsService {
           miningClaimedPoints: nextPoints,
         },
       });
+
+      await debitBnpTipAccount(tx, userId, quest.rewardPoints);
 
       pointsReversed = Math.abs(quest.rewardPoints);
     }

@@ -77,11 +77,23 @@ export class MiningCalculatorService {
     return Math.floor((basePointsPerCycle * (10000 + boostBps)) / 10000);
   }
 
+  /**
+   * Points for one hourly checkpoint. Every hour pays the floor share of the
+   * projected cycle and the final hour also pays the remainder, so a cycle at
+   * a steady boost totals exactly `computeProjectedCyclePoints` (F-48). Before
+   * this, 126/24h floored to 5 an hour and the boost vanished.
+   */
   computeHourlyCheckpointPoints(
     basePointsPerCycle: number,
     cycleHours: number,
     boostBps: number,
+    hourIndex: number,
   ): number {
+    const hours = Math.max(cycleHours, 1);
+    if (hourIndex < 1 || hourIndex > hours) {
+      return 0;
+    }
+
     const projectedCyclePoints = this.computeProjectedCyclePoints(
       basePointsPerCycle,
       boostBps,
@@ -91,6 +103,11 @@ export class MiningCalculatorService {
       return 0;
     }
 
-    return Math.floor(projectedCyclePoints / Math.max(cycleHours, 1));
+    const floorShare = Math.floor(projectedCyclePoints / hours);
+    if (hourIndex < hours) {
+      return floorShare;
+    }
+
+    return projectedCyclePoints - floorShare * (hours - 1);
   }
 }

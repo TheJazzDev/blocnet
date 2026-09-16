@@ -7,7 +7,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { MiningSession, Prisma } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { LevelsService } from '../levels/levels.service';
@@ -17,6 +17,7 @@ import {
   MiningCalculatorService,
   EffectiveMiningConfig,
 } from './mining-calculator.service';
+import { countActiveDirectReferrals } from './active-referral';
 import { MiningConfigService } from './mining-config.service';
 import {
   MiningExpiryService,
@@ -319,22 +320,10 @@ export class MiningService {
       config,
     );
 
-    const unsettledSessions = await this.prisma.miningSession.findMany({
-      where: {
-        userId,
-        ...UNSETTLED,
-      },
-      orderBy: {
-        startsAt: 'desc',
-      },
-      take: 10,
-    });
+    const opened = await this.openSessionIfIdle(userId, config, asOf);
 
-    const running = unsettledSessions.find(
-      (session) => session.endsAt.getTime() > asOf.getTime(),
-    );
-
-    if (running) {
+    if (opened.kind === 'running') {
+      const running = opened.session;
       return {
         ok: true,
         status: 'running',
@@ -349,23 +338,14 @@ export class MiningService {
       };
     }
 
-    const claimable = unsettledSessions.find((session) =>
-      isClaimable(session, asOf, config),
-    );
-
-    if (claimable) {
+    if (opened.kind === 'claimable') {
       throw new ConflictException({
         code: 'claim_required',
         message: 'Claim the previous mining cycle before starting a new one',
       });
     }
 
-    const session = await this.createMiningSession(
-      userId,
-      config,
-      asOf,
-      this.prisma,
-    );
+    const session = opened.session;
 
     await this.auditLogService.create({
       actorId: userId,
@@ -636,39 +616,17 @@ export class MiningService {
     }
 
     const asOf = new Date();
-    const unsettled = await this.prisma.miningSession.findMany({
-      where: {
-        userId,
-        ...UNSETTLED,
-      },
-      orderBy: {
-        startsAt: 'desc',
-      },
-      take: 10,
-    });
+    const opened = await this.openSessionIfIdle(userId, config, asOf);
 
-    const running = unsettled.find(
-      (session) => session.endsAt.getTime() > asOf.getTime(),
-    );
-
-    if (running) {
-      return this.toSessionState(userId, running, asOf, config);
+    if (opened.kind === 'running') {
+      return this.toSessionState(userId, opened.session, asOf, config);
     }
 
-    const stillClaimable = unsettled.find((session) =>
-      isClaimable(session, asOf, config),
-    );
-
-    if (stillClaimable) {
+    if (opened.kind === 'claimable') {
       return null;
     }
 
-    const nextSession = await this.createMiningSession(
-      userId,
-      config,
-      asOf,
-      this.prisma,
-    );
+    const nextSession = opened.session;
 
     await this.auditLogService.create({
       actorId: userId,
@@ -692,6 +650,54 @@ export class MiningService {
       config,
       nextSession.activeReferralsSnapshot,
     );
+  }
+
+  /**
+   * The only place a mining session is created (F-44). The "is anything
+   * unsettled?" check and the insert run in one transaction behind a per-user
+   * advisory lock, so concurrent start/auto-start calls serialise: the second
+   * caller sees the first caller's session and reports it as running instead
+   * of opening an overlapping cycle that pays in full.
+   */
+  private async openSessionIfIdle(
+    userId: string,
+    config: EffectiveMiningConfig,
+    asOf: Date,
+  ): Promise<{
+    kind: 'running' | 'claimable' | 'created';
+    session: MiningSession;
+  }> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`;
+
+      const unsettled = await tx.miningSession.findMany({
+        where: {
+          userId,
+          ...UNSETTLED,
+        },
+        orderBy: {
+          startsAt: 'desc',
+        },
+        take: 10,
+      });
+
+      const running = unsettled.find(
+        (session) => session.endsAt.getTime() > asOf.getTime(),
+      );
+      if (running) {
+        return { kind: 'running' as const, session: running };
+      }
+
+      const claimable = unsettled.find((session) =>
+        isClaimable(session, asOf, config),
+      );
+      if (claimable) {
+        return { kind: 'claimable' as const, session: claimable };
+      }
+
+      const created = await this.createMiningSession(userId, config, asOf, tx);
+      return { kind: 'created' as const, session: created };
+    });
   }
 
   private async syncHourlyAccrualForUser(
@@ -753,6 +759,7 @@ export class MiningService {
     const existingHourIndexes = new Set(
       existingRows.map((row) => row.hourIndex),
     );
+    const missingRows: Prisma.MiningHourlyCheckpointCreateManyInput[] = [];
 
     for (let hourIndex = 1; hourIndex <= maturedHours; hourIndex++) {
       if (existingHourIndexes.has(hourIndex)) {
@@ -784,21 +791,32 @@ export class MiningService {
         session.basePointsPerCycle,
         sessionCycleHours,
         boostBpsSnapshot,
+        hourIndex,
       );
 
-      await prisma.miningHourlyCheckpoint.create({
-        data: {
-          userId: session.userId,
-          sessionId: session.id,
-          hourIndex,
-          hourStartAt,
-          hourEndAt,
-          activeReferralsSnapshot,
-          boostBpsSnapshot,
-          points,
-        },
+      missingRows.push({
+        userId: session.userId,
+        sessionId: session.id,
+        hourIndex,
+        hourStartAt,
+        hourEndAt,
+        activeReferralsSnapshot,
+        boostBpsSnapshot,
+        points,
       });
     }
+
+    if (missingRows.length === 0) {
+      return;
+    }
+
+    // Two concurrent reads can both see an hour as missing. The row is
+    // deterministic per (sessionId, hourIndex), so whichever insert lands
+    // first wins and the other is skipped instead of 500ing on P2002 (F-45).
+    await prisma.miningHourlyCheckpoint.createMany({
+      data: missingRows,
+      skipDuplicates: true,
+    });
   }
 
   private async toSessionState(
@@ -934,53 +952,7 @@ export class MiningService {
     asOf: Date,
     prisma: PrismaLike,
   ) {
-    if (!config.referralsEnabled) {
-      return 0;
-    }
-
-    const windowStart = new Date(
-      asOf.getTime() - config.activeReferralWindowHours * 3600000,
-    );
-
-    const count = await prisma.profile.count({
-      where: {
-        referredById: referrerId,
-        homeFeedLastSeenAt: {
-          gte: windowStart,
-        },
-      },
-    });
-
-    return count;
-  }
-
-  private async countActiveReferralEdges(
-    config: EffectiveMiningConfig,
-    asOf: Date,
-  ): Promise<number> {
-    if (!config.referralsEnabled) {
-      return 0;
-    }
-
-    const cutoff = new Date(
-      asOf.getTime() - config.activeReferralWindowHours * 60 * 60 * 1000,
-    );
-
-    return this.prisma.profile.count({
-      where: {
-        referredById: {
-          not: null,
-        },
-        miningSessions: {
-          some: {
-            startsAt: {
-              gte: cutoff,
-              lte: asOf,
-            },
-          },
-        },
-      },
-    });
+    return countActiveDirectReferrals(prisma, referrerId, config, asOf);
   }
 
   private async triggerSevenDayStreakQuestIfEligible(userId: string) {

@@ -3,6 +3,8 @@ import {
   applyClaimSettlement,
   applyExpirySettlement,
   computeClaimDeadline,
+  creditBnpTipAccount,
+  debitBnpTipAccount,
   isClaimWindowExpired,
   isClaimable,
   MiningSessionAlreadySettledError,
@@ -168,6 +170,68 @@ describe('mining settlement', () => {
       expect(db.sessions[0].expiredAt).toEqual(expiredAt);
       expect(db.sessions[0].claimedAt).toBeNull();
       expect(db.profile.miningClaimedPoints).toBe(0n);
+    });
+  });
+
+  describe('BNP tip account helpers (F-52)', () => {
+    const key = {
+      accountType: 'user',
+      ownerRef: 'user-1',
+      currencyCode: 'BNP',
+    };
+
+    function tipTx() {
+      return {
+        tipCurrency: { upsert: jest.fn().mockResolvedValue({}) },
+        tipAccount: {
+          upsert: jest.fn().mockResolvedValue({}),
+          findUnique: jest.fn(),
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+      };
+    }
+
+    it('credits points x 1000 atomic units', async () => {
+      const tx = tipTx();
+
+      await creditBnpTipAccount(tx as never, 'user-1', 7);
+
+      expect(tx.tipAccount.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: { userId: 'user-1', balanceAtomic: { increment: 7000n } },
+        }),
+      );
+    });
+
+    it('credits nothing for zero points', async () => {
+      const tx = tipTx();
+
+      await creditBnpTipAccount(tx as never, 'user-1', 0);
+
+      expect(tx.tipAccount.upsert).not.toHaveBeenCalled();
+    });
+
+    it('debits the full amount when the balance covers it', async () => {
+      const tx = tipTx();
+      tx.tipAccount.findUnique.mockResolvedValue({ balanceAtomic: 90_000n });
+
+      await expect(
+        debitBnpTipAccount(tx as never, 'user-1', 35),
+      ).resolves.toBe(35_000n);
+      expect(tx.tipAccount.updateMany).toHaveBeenCalledWith({
+        where: { ...key, balanceAtomic: { gte: 35_000n } },
+        data: { balanceAtomic: { decrement: 35_000n } },
+      });
+    });
+
+    it('debits nothing when there is no account', async () => {
+      const tx = tipTx();
+      tx.tipAccount.findUnique.mockResolvedValue(null);
+
+      await expect(
+        debitBnpTipAccount(tx as never, 'user-1', 35),
+      ).resolves.toBe(0n);
+      expect(tx.tipAccount.updateMany).not.toHaveBeenCalled();
     });
   });
 });

@@ -158,6 +158,247 @@ describe('MiningService', () => {
     expect(db.sessions).toHaveLength(2);
   });
 
+  describe('F-44 double start', () => {
+    function sessionEvents(db: ReturnType<typeof createFakeMiningDb>) {
+      return db.events.filter((event) =>
+        [
+          'tx.begin',
+          'executeRaw',
+          'lock.acquired',
+          'miningSession.findMany',
+          'miningSession.create',
+          'tx.end',
+        ].includes(event.op),
+      );
+    }
+
+    it('takes the per-user advisory lock, then checks and creates inside one transaction', async () => {
+      const db = createFakeMiningDb();
+
+      const result = await buildService(db).start('user-1');
+
+      expect(result.status).toBe('started');
+      const createEvent = db.events.find(
+        (event) => event.op === 'miningSession.create',
+      );
+      expect(createEvent?.tx).not.toBeNull();
+      const txId = createEvent!.tx;
+      const inTx = db.events
+        .filter((event) => event.tx === txId)
+        .map((event) => event.op);
+      expect(inTx).toEqual([
+        'tx.begin',
+        'executeRaw',
+        'lock.acquired',
+        'miningSession.findMany',
+        'miningSession.create',
+        'tx.end',
+      ]);
+      const lockCall = db.events.find(
+        (event) => event.op === 'executeRaw' && event.tx === txId,
+      );
+      expect(lockCall?.detail).toEqual({
+        sql: expect.stringContaining('pg_advisory_xact_lock(hashtext('),
+        values: ['user-1'],
+      });
+      // No session is ever created outside the locked transaction.
+      expect(
+        sessionEvents(db).filter(
+          (event) => event.op === 'miningSession.create' && event.tx === null,
+        ),
+      ).toHaveLength(0);
+    });
+
+    it('two concurrent starts open exactly one session; the second reports running', async () => {
+      const db = createFakeMiningDb();
+      const service = buildService(db);
+
+      const results = await Promise.all([
+        service.start('user-1'),
+        service.start('user-1'),
+      ]);
+
+      expect(db.sessions).toHaveLength(1);
+      expect(results.map((result) => result.status).sort()).toEqual([
+        'running',
+        'started',
+      ]);
+      expect(results[0].session.id).toBe(results[1].session.id);
+      expect(
+        auditLogService.create.mock.calls.filter(
+          ([entry]) => entry.action === 'mining.start',
+        ),
+      ).toHaveLength(1);
+    });
+
+    it('auto-start after a claim also creates inside the locked transaction', async () => {
+      const now = new Date();
+      const startsAt = new Date(now.getTime() - 26 * HOUR);
+      const db = createFakeMiningDb({
+        sessions: [
+          session({ startsAt, endsAt: new Date(now.getTime() - 2 * HOUR) }),
+        ],
+        checkpoints: checkpoints('session-1', 24, 5, startsAt),
+      });
+
+      await buildService(db).claim('user-1');
+
+      const createEvents = db.events.filter(
+        (event) => event.op === 'miningSession.create',
+      );
+      expect(createEvents).toHaveLength(1);
+      const txId = createEvents[0].tx;
+      expect(txId).not.toBeNull();
+      expect(
+        db.events
+          .filter((event) => event.tx === txId)
+          .map((event) => event.op),
+      ).toEqual([
+        'tx.begin',
+        'executeRaw',
+        'lock.acquired',
+        'miningSession.findMany',
+        'miningSession.create',
+        'tx.end',
+      ]);
+    });
+  });
+
+  describe('F-45 concurrent hourly accrual', () => {
+    it('two concurrent getMe calls write each hourly checkpoint once and never throw', async () => {
+      const now = new Date();
+      const db = createFakeMiningDb({
+        sessions: [
+          session({
+            startsAt: new Date(now.getTime() - 5 * HOUR - 60_000),
+            endsAt: new Date(now.getTime() + 19 * HOUR - 60_000),
+          }),
+        ],
+      });
+      const service = buildService(db);
+
+      await expect(
+        Promise.all([service.getMe('user-1'), service.getMe('user-1')]),
+      ).resolves.toHaveLength(2);
+
+      expect(db.checkpoints.map((row) => row.hourIndex).sort()).toEqual([
+        1, 2, 3, 4, 5,
+      ]);
+    });
+  });
+
+  describe('F-48 cycle total', () => {
+    it('accrues and claims exactly the projected cycle points when base does not divide evenly', async () => {
+      const now = new Date();
+      const startsAt = new Date(now.getTime() - 26 * HOUR);
+      const db = createFakeMiningDb({
+        sessions: [
+          session({
+            startsAt,
+            endsAt: new Date(now.getTime() - 2 * HOUR),
+            basePointsPerCycle: 125,
+            effectivePointsPerCycle: 125,
+          }),
+        ],
+      });
+
+      const result = await buildService(db).claim('user-1');
+
+      expect(db.checkpoints).toHaveLength(24);
+      expect(result).toEqual(
+        expect.objectContaining({ status: 'claimed', claimedPoints: 125 }),
+      );
+    });
+  });
+
+  describe('F-50 boost uses the shared active-referral rule', () => {
+    it('counts referrals by mining start, not feed visits', async () => {
+      const db = createFakeMiningDb();
+
+      await buildService(db).start('user-1');
+
+      const whereClauses = db.client.profile.count.mock.calls.map(
+        ([args]: any) => args?.where,
+      );
+      expect(whereClauses.length).toBeGreaterThan(0);
+      for (const where of whereClauses) {
+        expect(where).not.toHaveProperty('homeFeedLastSeenAt');
+        expect(where).toEqual({
+          referredById: 'user-1',
+          miningSessions: {
+            some: { startsAt: { gte: expect.any(Date), lte: expect.any(Date) } },
+          },
+        });
+      }
+    });
+  });
+
+  describe('F-51 mining paused (config.enabled=false)', () => {
+    const PAUSED = { ...CONFIG, enabled: false, referralsEnabled: false };
+
+    beforeEach(() => {
+      miningConfigService.getEffectiveConfig.mockResolvedValue(PAUSED);
+    });
+
+    it('blocks a manual start', async () => {
+      const db = createFakeMiningDb();
+
+      await expect(buildService(db).start('user-1')).rejects.toThrow(
+        'Mining is disabled',
+      );
+      expect(db.sessions).toHaveLength(0);
+    });
+
+    it('still pays a completed cycle but does not auto-start the next one', async () => {
+      const now = new Date();
+      const startsAt = new Date(now.getTime() - 26 * HOUR);
+      const db = createFakeMiningDb({
+        sessions: [
+          session({ startsAt, endsAt: new Date(now.getTime() - 2 * HOUR) }),
+        ],
+        checkpoints: checkpoints('session-1', 24, 5, startsAt),
+      });
+
+      const result = await buildService(db).claim('user-1');
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          status: 'claimed',
+          claimedPoints: 120,
+          nextSession: null,
+        }),
+      );
+      expect(db.profile.miningClaimedPoints).toBe(120n);
+      expect(db.sessions).toHaveLength(1);
+    });
+
+    it('does not auto-start after a forfeited cycle either', async () => {
+      const now = new Date();
+      const startsAt = new Date(now.getTime() - 100 * HOUR);
+      const db = createFakeMiningDb({
+        sessions: [
+          session({ startsAt, endsAt: new Date(now.getTime() - 76 * HOUR) }),
+        ],
+      });
+
+      const result = await buildService(db).claim('user-1');
+
+      expect(result).toEqual(
+        expect.objectContaining({ status: 'expired', nextSession: null }),
+      );
+      expect(db.sessions).toHaveLength(1);
+    });
+
+    it('getMe reports config.enabled=false so clients can show a paused state', async () => {
+      const db = createFakeMiningDb();
+
+      const snapshot = await buildService(db).getMe('user-1');
+
+      expect(snapshot.config.enabled).toBe(false);
+      expect(snapshot.session.status).toBe('idle');
+    });
+  });
+
   describe('F-39 claim-window deadlock', () => {
     function deadlockedDb() {
       const now = new Date();
