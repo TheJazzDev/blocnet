@@ -19,6 +19,7 @@ import 'package:blocnet/services/notifications/push_notification_service.dart';
 import 'package:blocnet/services/notifications/notification_navigator.dart';
 import 'package:blocnet/services/engagement/quests_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
+import 'package:blocnet/services/projects/update_reactions_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/projects/project_invites_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
@@ -206,6 +207,18 @@ void main() async {
       providers: [
         ChangeNotifierProvider<AuthStore>.value(value: authStore),
         ChangeNotifierProvider(create: (_) => UpdatesStore()),
+        // Likes and saves on updates. Scoped to the signed-in member; the
+        // first signed-in scope also moves the phone's old local ones up.
+        ChangeNotifierProxyProvider<AuthStore, UpdateReactionsStore>(
+          create: (_) => UpdateReactionsStore(),
+          update: (_, auth, store) {
+            final reactions = store ?? UpdateReactionsStore();
+            reactions.ensureUserScope(
+              auth.isAuthenticated ? auth.userId : null,
+            );
+            return reactions;
+          },
+        ),
         // Eager so the Home bootstrap cache is read before the Home tab
         // builds; that is what lets it paint on the first frame.
         ChangeNotifierProvider(

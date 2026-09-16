@@ -25,6 +25,10 @@ class Update {
   final int likesCount;
   final int commentsCount;
   final int bookmarksCount;
+
+  /// Whether the signed-in member liked / saved this update, per the server.
+  final bool likedByMe;
+  final bool bookmarkedByMe;
   final bool isCommented;
   final List<String> secondaryTagIds;
   final List<SecondaryTag> secondaryTags;
@@ -45,6 +49,8 @@ class Update {
     this.likesCount = 0,
     this.commentsCount = 0,
     this.bookmarksCount = 0,
+    this.likedByMe = false,
+    this.bookmarkedByMe = false,
     this.isCommented = false,
     required List<String> secondaryTagIds,
     required List<SecondaryTag> secondaryTags,
@@ -66,6 +72,8 @@ class Update {
       likesCount: likesCount,
       commentsCount: commentsCount,
       bookmarksCount: bookmarksCount,
+      likedByMe: likedByMe,
+      bookmarkedByMe: bookmarkedByMe,
       isCommented: isCommented,
       secondaryTagIds: secondaryTagIds,
       admin: admin ?? this.admin,
@@ -97,6 +105,8 @@ class Update {
       likesCount: likesCount,
       commentsCount: commentsCount,
       bookmarksCount: bookmarksCount,
+      likedByMe: likedByMe,
+      bookmarkedByMe: bookmarkedByMe,
       isCommented: isCommented,
       secondaryTagIds: secondaryTagIds,
       admin: admin,
@@ -124,6 +134,8 @@ class Update {
       'likesCount': likesCount,
       'commentsCount': commentsCount,
       'bookmarksCount': bookmarksCount,
+      'likedByMe': likedByMe,
+      'bookmarkedByMe': bookmarkedByMe,
       'isCommented': isCommented,
       'priority': priority.toJson(),
       'createdAt': createdAt.toIso8601String(),
@@ -188,6 +200,8 @@ class Update {
       commentsCount: int.tryParse(json['commentsCount']?.toString() ?? '') ?? 0,
       bookmarksCount:
           int.tryParse(json['bookmarksCount']?.toString() ?? '') ?? 0,
+      likedByMe: json['likedByMe'] == true,
+      bookmarkedByMe: json['bookmarkedByMe'] == true,
       isCommented: json['isCommented'] == true,
       priority: Priority.fromJson(
           (json['priority'] ?? json['urgency'] ?? 'low').toString()),
