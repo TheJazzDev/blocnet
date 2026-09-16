@@ -135,9 +135,22 @@ export class HunterBoardGemDto {
   logoUrl!: string | null;
 
   @ApiProperty() primaryTag!: string;
+
+  @ApiProperty({
+    description:
+      'The chain chip: the primary tag name as stored (currently the same value as primaryTag).',
+  })
+  chain!: string;
+
   @ApiProperty() followersCount!: number;
   @ApiProperty() listedAt!: string;
   @ApiProperty() lastActivityAt!: string;
+
+  @ApiProperty({ description: 'Published updates on this gem, any author.' })
+  updatesCount!: number;
+
+  @ApiProperty({ description: 'True when the gem has no published update.' })
+  neverUpdated!: boolean;
 
   @ApiProperty({ nullable: true, type: BoardGemLastUpdateDto })
   lastUpdate!: BoardGemLastUpdateDto | null;

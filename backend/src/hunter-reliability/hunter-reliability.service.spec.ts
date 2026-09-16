@@ -60,12 +60,21 @@ function createService(data: {
     createdAt: Date;
   }[];
   tips?: Record<string, bigint>;
+  updatesCount?: Record<string, number>;
 }) {
   const prisma = {
     profile: { findMany: jest.fn().mockResolvedValue(data.profiles) },
     project: { findMany: jest.fn().mockResolvedValue(data.projects) },
     update: {
       groupBy: jest.fn().mockImplementation((args: any) => {
+        if (args._count) {
+          return Promise.resolve(
+            Object.entries(data.updatesCount ?? {}).map(([projectId, n]) => ({
+              projectId,
+              _count: { _all: n },
+            })),
+          );
+        }
         if (args._min) {
           return Promise.resolve(
             Object.entries(data.deadlines ?? {}).map(([projectId, d]) => ({
@@ -342,6 +351,7 @@ describe('HunterReliabilityService', () => {
         openReports: { 'quiet-a': 1 },
         followers: { current: 7 },
         deadlines: { current: deadline },
+        updatesCount: { current: 12, due: 3, 'quiet-a': 1 },
       });
 
       const board = await service.getBoard(HUNTER);
@@ -358,9 +368,12 @@ describe('HunterReliabilityService', () => {
         name: 'Current',
         logoUrl: null,
         primaryTag: 'DeFi',
+        chain: 'DeFi',
         followersCount: 7,
         listedAt: daysAgo(60).toISOString(),
         lastActivityAt: daysAgo(2).toISOString(),
+        updatesCount: 12,
+        neverUpdated: false,
         lastUpdate: {
           id: 'u-cur',
           title: 'Mainnet',
@@ -375,6 +388,8 @@ describe('HunterReliabilityService', () => {
       });
       const neverUpdated = board.gems[0];
       expect(neverUpdated.lastUpdate).toBeNull();
+      expect(neverUpdated.neverUpdated).toBe(true);
+      expect(neverUpdated.updatesCount).toBe(0);
       expect(neverUpdated.daysQuiet).toBe(30);
       expect(neverUpdated.membersWaiting).toBe(2);
 
@@ -393,8 +408,8 @@ describe('HunterReliabilityService', () => {
         (call: any[]) => call[0].where.OR,
       )[0];
       expect(rowsQuery.where.OR).toHaveLength(3);
-      // profile, gems, 7 fact reads, deadlines, newest-update rows.
-      expect(totalQueries(prisma)).toBe(11);
+      // profile, gems, 7 fact reads, deadlines, updates count, newest-update rows.
+      expect(totalQueries(prisma)).toBe(12);
     });
   });
 

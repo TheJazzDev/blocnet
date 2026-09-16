@@ -300,6 +300,17 @@ export class ReliabilityLoader {
     return map;
   }
 
+  /** Published updates per gem, all time, any author. 1 query. */
+  async loadUpdatesCount(projectIds: string[]): Promise<Map<string, number>> {
+    if (projectIds.length === 0) return new Map();
+    const rows = await this.prisma.update.groupBy({
+      by: ['projectId'],
+      where: { projectId: { in: projectIds }, status: UpdateStatus.published },
+      _count: { _all: true },
+    });
+    return countMap(rows);
+  }
+
   /** Soonest future deadline among each gem's published updates. 1 query. */
   async loadNextDeadlines(
     projectIds: string[],

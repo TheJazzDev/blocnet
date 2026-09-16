@@ -123,20 +123,25 @@ export function assembleBoardGem(input: {
   gem: GemRow;
   facts: ReliabilityFacts;
   waiting: Map<string, number>;
+  updatesCount: number;
   lastUpdate: LastUpdateRow | undefined;
   nextDeadlineAt: Date | undefined;
   now: Date;
 }): HunterBoardGemDto {
-  const { gem, facts, waiting, lastUpdate, nextDeadlineAt, now } = input;
+  const { gem, facts, waiting, updatesCount, lastUpdate, nextDeadlineAt, now } =
+    input;
   const last = lastActivityAt(toGemFacts(gem, facts.lastUpdateAtByGem));
   return {
     projectId: gem.projectId,
     name: gem.name,
     logoUrl: null,
     primaryTag: gem.primaryTag,
+    chain: gem.primaryTag,
     followersCount: facts.followersByGem.get(gem.projectId) ?? 0,
     listedAt: gem.listedAt.toISOString(),
     lastActivityAt: last.toISOString(),
+    updatesCount,
+    neverUpdated: !facts.lastUpdateAtByGem.has(gem.projectId),
     lastUpdate: lastUpdate
       ? {
           id: lastUpdate.id,
