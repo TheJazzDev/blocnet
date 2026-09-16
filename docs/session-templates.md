@@ -149,3 +149,81 @@ Workstream WS-H (backend/ only). MCR ("Mine Credits") is discarded; BNP = Blocne
 4. Add a short comment block at the top of the tips module documenting BNP vs BNT and the planned BNP→BNT conversion at launch (no conversion code yet).
 `bun run build && bun run test` per commit, `WS-H F-07:` prefix, standard co-author trailer. Do not touch mobile/ or console/. Report with the migration file name and the response shape changes.
 ```
+
+## Workstream kickoffs — mining (2026-09-16 pass)
+
+S1, S2, S3 and S5 can run in parallel right now, each in its own worktree. S4 starts its store half now and its UI half once the Mine design is approved in Claude Design (`docs/design-briefs/mine.md`). Merge order: S1 first (it owns the migration and the config DTO), then S2 and S3, then S4 and S5.
+
+### WS-S1 — Backend mining integrity
+
+```
+I'm continuing work on Blocnet. Read CLAUDE.md, then docs/UX_UI_TRACKER.md (findings F-44…F-62) and backend/src/mining + backend/src/referrals in full.
+
+Workstream S1 (backend/ only). Fix, one commit per finding, tests first for each:
+- F-44 P0 double start. Add a partial unique index allowing one unsettled MiningSession per user (claimedAt IS NULL AND expiredAt IS NULL) via `bunx prisma migrate dev --name mining_one_unsettled_session` (raw SQL in the migration; Prisma can't express partial indexes — document it in schema.prisma). Before creating the migration, query the dev DB for existing violators. Make `start()` and `ensureNextSessionState()` create inside a transaction and treat P2002 as "already running" (return the running session, 200). Either wire the unused `idempotencyKey` DTOs or delete them. Write a test that fires two starts concurrently.
+- F-45 hourly checkpoint insert: use createMany with skipDuplicates (or catch P2002) so concurrent GET /mining/me never 500s.
+- F-46 remove `email` from the user-facing `/referrals/downline` response (select and DTO). Add a simple per-IP throttle to `/referrals/validate` (check if @nestjs/throttler is already a dependency; if not, a small in-memory guard is fine).
+- F-47 backend half: add `claimWindowHours` (Min 1, Max 168) to UpdateMiningConfigDto. Make GET /admin/mining/config return the raw stored row values plus separate `runtimeFlags: {miningEnabled, referralsEnabled}` so a save can never persist flag-ANDed values. Coordinate the shape change in the tracker for S3.
+- F-48 rounding: pay the per-cycle remainder in the final hourly checkpoint so a cycle always totals exactly floor(base*(10000+boost)/10000). Test 0–4 active referrals at base 120/24h.
+- F-50 one definition of active referral: "started a mining cycle in the last activeReferralWindowHours". Put it in one helper and use it for the boost, /referrals/me, downline and admin metrics.
+- F-51 when mining is disabled: block start and auto-start (already), keep claim open so nobody loses points, and return `config.enabled=false` so clients can show a paused state. Record this decision in the Decisions log.
+- F-52 quest BNP rewards must also credit the BNP tip account through the same helper the claim settlement uses.
+- F-61 backend half: leaderboard excludes members with 0 claimed and 0 unclaimed points; add an index on Profile.miningClaimedPoints (same migration as F-44 is fine).
+Rules: never `prisma db push`; commit schema + migration together. Run `bun run build` and `bun run test` before each commit. Update tracker rows + Session Log. Don't touch mobile/ or console/.
+```
+
+### WS-S2 — Backend mining reminders
+
+```
+I'm continuing work on Blocnet. Read CLAUDE.md, docs/UX_UI_TRACKER.md (F-49), backend/src/notifications and backend/src/mining (mining-expiry.service.ts, mining-settlement.ts).
+
+Workstream S2 (backend/ only; new files preferred to avoid conflicts with S1). Build F-49:
+- Two new notification types in the `mining_referrals` category: `mining_cycle_ready` ("Your BNP is ready — claim {n} BNP") and `mining_claim_expiring` ("{n} BNP expires in {h} hours — claim now"). Enum change goes through `bunx prisma migrate dev --name mining_reminder_notification_types`.
+- A scheduler: the backend has no cron library — follow the existing interval-worker pattern (see the digest worker) with a 5-minute sweep. Cycle-ready fires once per session after endsAt; expiring fires once when ≤6h of the claim window remain. Dedupe with the existing dedupeKey mechanism so restarts and multiple instances never double-send (prove it with a test).
+- Respect notification preferences; push via the existing FCM path. Deep link to /mining.
+- The sweep must also settle expired cycles (call MiningExpiryService) so forfeits no longer depend on the user opening the app.
+Add a mobile note in the tracker for S4: route both new types to the Mine tab (notification_target_resolver.dart).
+Run build + tests; update tracker + Session Log. Don't touch mobile/ or console/.
+```
+
+### WS-S3 — Console mining admin
+
+```
+I'm continuing work on Blocnet. Read CLAUDE.md, console/CLAUDE.md, docs/UX_UI_TRACKER.md (F-47, F-56) and console/components/features/mining.
+
+Workstream S3 (console/ plus the one status fix in backend/src/users-admin). Fix:
+- F-47 console half: the config form sends only the fields the admin changed; show and edit `claimWindowHours`; show runtime flags read-only with a link to Settings (S1 is changing GET config to return raw values + `runtimeFlags` — check the tracker/S1 branch for the final shape). Move the page's data loading onto TanStack Query (use-mining-query.ts already exists), per console/CLAUDE.md.
+- F-56: session status in users-admin.service.ts must consider `expiredAt` and the claim window (reuse the mining module's isClaimable predicate); add "expired" to the MiningSection status type and badge. Gate /mining on a mining/admin capability, not canMutateWallet. Label lifetime totals as lifetime, only 24h metrics as "Rolling 24h". Show the config change history from the audit log (mining config actions).
+- Stretch (only if time remains, backend endpoint needed — coordinate with S1 in the tracker): full per-user session history with pagination.
+Tailwind v4 + mobile-first rules from CLAUDE.md apply. Run `bun run lint`, `bun run test`, `bun run build`. Update tracker + Session Log.
+```
+
+### WS-S4 — Mobile Mine rebuild
+
+```
+I'm continuing work on Blocnet. Read CLAUDE.md, docs/PROGRESS.md §4b, docs/design-briefs/NEXT_SESSION.md (the build method is non-negotiable), docs/UX_UI_TRACKER.md (F-53…F-62), docs/design-briefs/mine.md, and lib/features/mining + lib/services/engagement/mining_store.dart.
+
+Workstream S4 (mobile/ only). Two phases.
+
+Phase 1 — now, no design needed:
+- F-54: clear MiningStore on sign-out; split `_lastError` per request (snapshot / leaderboard / downline); stop fetching downline on every refresh (fetch it on the referral view only); make the 409 friendly copy reachable (prefer the error `code` over the message).
+- F-53: read `config.enabled` and show a paused state with no Start; first-load failure shows error + retry, never a default idle card; use `config.cycleHours` instead of defaulting to 24.
+- Countdown: offset the device clock by server `asOf`; refetch once when a cycle reaches its end; pause the 1 s ticker when the tab is not visible; refresh the snapshot on app resume.
+- MiningStartResult.unknown() must not report success; a claim with missing status must not default to 'claimed'.
+- Referral bind sheet: check the sheet's own mounted state; dispose its controller. Don't mark the first-launch referral prompt as seen when the snapshot load failed.
+- Route the S2 notification types (mining_cycle_ready, mining_claim_expiring) to the Mine tab.
+- F-62: give every bottom-bar tab a semantic label; check the stale-semantics symptom with TalkBack and fix it if it's real.
+Widget tests for the hero states (idle / running / claimable / expired / paused / error).
+
+Phase 2 — after the owner approves the Mine canvas in Claude Design:
+Extract every state's element order from the approved design file first, then build to those lists. Rebuild rather than adapt. Merge the referral screen into Mine (keep /referral-code as an alias route), remove Mining Power and the duplicate Total Earned tile, add the leaderboard preview with a pinned own row + pagination on the full board, and the three-state hourly history. Walk every state on the emulator against the list before calling it done.
+Rules: ChangeNotifier store pattern, files under ~300 lines, design tokens in lib/app/tokens. `flutter analyze` + `flutter test` before each commit. Update tracker + Session Log.
+```
+
+### WS-S5 — Wallet BNP row
+
+```
+I'm continuing work on Blocnet. Read CLAUDE.md, docs/UX_UI_TRACKER.md (F-59), backend/src/wallet (summary/assets), backend/src/tips (BNP tip account, tip.constants.ts BNP_CURRENCY_CODE), and mobile/lib/features/wallet.
+
+Workstream S5. Mined BNP is credited to the BNP tip account (1 BNP = 1000 atomic units, see mining-settlement.ts) but the Wallet asset list shows only BNT, BNB, USDT. Find why BNP is missing (asset registry? summary query? mobile filter?), and make the Wallet show a BNP row with the in-app balance, labelled as in-app points that convert to BNT at launch — no USD price. Tapping it opens asset detail with mining claims and tips as transactions. Balance string stays BigInt-safe end to end. Tests on both sides; update tracker + Session Log.
+```
