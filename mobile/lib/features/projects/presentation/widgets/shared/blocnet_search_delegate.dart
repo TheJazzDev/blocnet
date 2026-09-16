@@ -6,6 +6,7 @@ import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/blocnet_search_people_tile.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/detail_dialogs.dart';
 import 'package:flutter/material.dart';
 
 class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
@@ -170,6 +171,7 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                 ...projectMatches.map(
                   (project) => ListTile(
                     dense: true,
+                    onTap: () => showGemDetailsDialog(context, project.id),
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(
                       Icons.layers_outlined,
@@ -202,6 +204,7 @@ class BlocnetSearchDelegate extends SearchDelegate<Admin?> {
                 ...postMatches.map(
                   (post) => ListTile(
                     dense: true,
+                    onTap: () => showUpdateDetailsDialog(context, post.id),
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(
                       Icons.article_outlined,
