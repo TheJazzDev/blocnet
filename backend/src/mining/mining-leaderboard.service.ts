@@ -73,9 +73,20 @@ export class MiningLeaderboardService {
                 gt: BigInt(0),
               },
             },
+            // A member with 0 claimed and 0 unclaimed points has nothing
+            // to rank; starting a cycle alone no longer earns a place (F-61).
             {
-              miningSessions: {
-                some: {},
+              miningHourlyCheckpoints: {
+                some: {
+                  claimedAt: null,
+                  expiredAt: null,
+                  points: {
+                    gt: 0,
+                  },
+                  hourEndAt: {
+                    lte: asOf,
+                  },
+                },
               },
             },
           ],

@@ -183,4 +183,38 @@ describe('MiningLeaderboardService', () => {
       }),
     );
   });
+
+  it('ranks only members with claimed or unclaimed points (F-61)', async () => {
+    prisma.profile.findMany.mockResolvedValue([]);
+    prisma.profile.count.mockResolvedValue(0);
+
+    await service.getLeaderboard();
+
+    const expectedPointsFilter = {
+      OR: [
+        { miningClaimedPoints: { gt: BigInt(0) } },
+        {
+          miningHourlyCheckpoints: {
+            some: {
+              claimedAt: null,
+              expiredAt: null,
+              points: { gt: 0 },
+              hourEndAt: { lte: expect.any(Date) },
+            },
+          },
+        },
+      ],
+    };
+    const [findArgs] = prisma.profile.findMany.mock.calls[0];
+    const [countArgs] = prisma.profile.count.mock.calls[0];
+    for (const where of [findArgs.where, countArgs.where]) {
+      expect(where.AND[0]).toEqual(expectedPointsFilter);
+      // Having merely started a cycle no longer earns a rank.
+      expect(
+        JSON.stringify(where, (_key, value) =>
+          typeof value === 'bigint' ? value.toString() : value,
+        ),
+      ).not.toContain('miningSessions');
+    }
+  });
 });
