@@ -60,6 +60,19 @@ void main() {
     expect(model.projectSlug, 'gem-x');
     expect(model.note, 'Please hunt this one');
     expect(model.isPending, isTrue);
+    expect(model.kind, ProjectInviteModel.kindCoOwn);
+    expect(model.isHandover, isFalse);
+  });
+
+  test('ProjectInviteModel reads the invite kind, defaulting to co-own', () {
+    final handover = ProjectInviteModel.fromApi(
+      {..._invite('h'), 'kind': 'handover'},
+    );
+    expect(handover.isHandover, isTrue);
+    expect(handover.copyWith(status: 'accepted').isHandover, isTrue);
+
+    final unknown = ProjectInviteModel.fromApi({..._invite('u'), 'kind': 'x'});
+    expect(unknown.kind, ProjectInviteModel.kindCoOwn);
   });
 
   test('loadMine keeps only pending invites in pendingInvites', () async {
