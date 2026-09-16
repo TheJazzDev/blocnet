@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { BadgesModule } from '../badges/badges.module';
 import { LevelsModule } from '../levels/levels.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { QuestsModule } from '../quests/quests.module';
 import { MiningAdminController } from './mining-admin.controller';
 import { MiningController } from './mining.controller';
@@ -11,12 +12,15 @@ import { MiningConfigService } from './mining-config.service';
 import { MiningExpiryService } from './mining-expiry.service';
 import { MiningAdminService } from './mining-admin.service';
 import { MiningLeaderboardService } from './mining-leaderboard.service';
+import { MiningReminderSweepService } from './mining-reminder-sweep.service';
+import { MiningReminderWorker } from './mining-reminder.worker';
 
 @Module({
   imports: [
     AuditLogModule,
     BadgesModule,
     LevelsModule,
+    NotificationsModule,
     forwardRef(() => QuestsModule),
   ],
   controllers: [MiningController, MiningAdminController],
@@ -27,6 +31,8 @@ import { MiningLeaderboardService } from './mining-leaderboard.service';
     MiningExpiryService,
     MiningAdminService,
     MiningLeaderboardService,
+    MiningReminderSweepService,
+    MiningReminderWorker,
   ],
   exports: [
     MiningService,
