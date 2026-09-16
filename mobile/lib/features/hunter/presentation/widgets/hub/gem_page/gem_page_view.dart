@@ -1,0 +1,150 @@
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
+import 'package:blocnet/features/hunter/data/models/hunter_gem_detail_model.dart';
+import 'package:blocnet/features/hunter/domain/hub_format.dart';
+import 'package:blocnet/features/hunter/domain/hub_layout.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/board/gem_attention_parts.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/gem_notice_cards.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/gem_timeline.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/gem_header_line.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
+import 'package:flutter/material.dart';
+
+/// The gem page body (design state 6): header, the wait and the reports the
+/// hunter came to answer, *Post update*, then their updates newest first.
+///
+/// No *Hand over* button: there is no hunter-to-hunter handover yet (D4).
+class GemPageView extends StatelessWidget {
+  const GemPageView({
+    super.key,
+    required this.gem,
+    required this.detail,
+    required this.loading,
+    required this.error,
+    required this.now,
+    required this.onPost,
+    required this.onEdit,
+    required this.onRetry,
+    required this.onRefresh,
+  });
+
+  /// The freshest copy of the gem: the page's own payload once loaded,
+  /// otherwise the board row it was opened from.
+  final HunterBoardGem gem;
+  final HunterGemDetail? detail;
+  final bool loading;
+  final String? error;
+  final DateTime now;
+  final VoidCallback onPost;
+  final ValueChanged<HunterGemEvent> onEdit;
+  final VoidCallback onRetry;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final isQuiet = gem.chip == GemChip.quiet;
+    final gapDays = isQuiet ? (detail?.gapDays ?? gem.daysQuiet) : null;
+
+    return RefreshIndicator(
+      color: AppColors.hunterAccent,
+      backgroundColor: AppColors.bgSurface,
+      onRefresh: onRefresh,
+      child: ListView(
+        key: const ValueKey('gem-page-scroll'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          GemHeaderLine(
+            key: const ValueKey('gem-header'),
+            gem: gem,
+            large: true,
+          ),
+          if (gem.membersWaiting > 0) ...[
+            const SizedBox(height: 16),
+            GemWaitCard(
+              key: const ValueKey('gem-wait'),
+              waiting: gem.membersWaiting,
+            ),
+          ],
+          if (gem.openReports > 0) ...[
+            const SizedBox(height: 8),
+            GemReportCard(
+              key: const ValueKey('gem-report'),
+              reports: gem.openReports,
+            ),
+          ],
+          const SizedBox(height: 12),
+          HubButton(
+            key: const ValueKey('gem-post'),
+            label: gem.neverUpdated ? 'Post the first update' : 'Post update',
+            icon: Icons.edit_outlined,
+            onTap: onPost,
+          ),
+          const SizedBox(height: 20),
+          _timeline(gapDays),
+        ],
+      ),
+    );
+  }
+
+  Widget _timeline(int? gapDays) {
+    final events = detail?.updates;
+    if (events == null) {
+      if (error != null) {
+        return _Status(message: error!, onRetry: onRetry);
+      }
+      if (loading) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.hunterFill,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+    if (events == null || events.isEmpty) {
+      return GemNeverUpdatedLine(
+        key: const ValueKey('gem-no-updates'),
+        listed: daysAgoSince(gem.listedAt, now),
+      );
+    }
+    return GemTimeline(
+      key: const ValueKey('gem-timeline'),
+      events: events,
+      gapDays: gapDays,
+      onEdit: onEdit,
+    );
+  }
+}
+
+class _Status extends StatelessWidget {
+  const _Status({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(message, style: HubType.meta(AppColors.zincFaint)),
+        const SizedBox(height: 8),
+        HubButton(
+          label: 'Try again',
+          tone: HubButtonTone.outline,
+          small: true,
+          onTap: onRetry,
+        ),
+      ],
+    );
+  }
+}

@@ -153,6 +153,17 @@ HunterBoardGem prismYield() => gem(
       listedAt: hubNow.subtract(const Duration(days: 12)),
     );
 
+extension HunterBoardFixture on HunterBoard {
+  HunterBoard copyWithGems(List<HunterBoardGem> gems) =>
+      HunterBoard(reliability: this.reliability, gems: gems);
+}
+
+/// A hunter whose first gem is under two weeks old.
+HunterBoard newWithGemsBoard() => HunterBoard(
+      reliability: reliability(standing: ReliabilityStanding.newHunter),
+      gems: [coreMines()],
+    );
+
 /// State 1 · All current.
 HunterBoard allCurrentBoard() => HunterBoard(
       reliability: reliability(),
