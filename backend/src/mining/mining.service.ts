@@ -7,7 +7,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { MiningSession, Prisma } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { LevelsService } from '../levels/levels.service';
@@ -319,22 +319,10 @@ export class MiningService {
       config,
     );
 
-    const unsettledSessions = await this.prisma.miningSession.findMany({
-      where: {
-        userId,
-        ...UNSETTLED,
-      },
-      orderBy: {
-        startsAt: 'desc',
-      },
-      take: 10,
-    });
+    const opened = await this.openSessionIfIdle(userId, config, asOf);
 
-    const running = unsettledSessions.find(
-      (session) => session.endsAt.getTime() > asOf.getTime(),
-    );
-
-    if (running) {
+    if (opened.kind === 'running') {
+      const running = opened.session;
       return {
         ok: true,
         status: 'running',
@@ -349,23 +337,14 @@ export class MiningService {
       };
     }
 
-    const claimable = unsettledSessions.find((session) =>
-      isClaimable(session, asOf, config),
-    );
-
-    if (claimable) {
+    if (opened.kind === 'claimable') {
       throw new ConflictException({
         code: 'claim_required',
         message: 'Claim the previous mining cycle before starting a new one',
       });
     }
 
-    const session = await this.createMiningSession(
-      userId,
-      config,
-      asOf,
-      this.prisma,
-    );
+    const session = opened.session;
 
     await this.auditLogService.create({
       actorId: userId,
@@ -636,39 +615,17 @@ export class MiningService {
     }
 
     const asOf = new Date();
-    const unsettled = await this.prisma.miningSession.findMany({
-      where: {
-        userId,
-        ...UNSETTLED,
-      },
-      orderBy: {
-        startsAt: 'desc',
-      },
-      take: 10,
-    });
+    const opened = await this.openSessionIfIdle(userId, config, asOf);
 
-    const running = unsettled.find(
-      (session) => session.endsAt.getTime() > asOf.getTime(),
-    );
-
-    if (running) {
-      return this.toSessionState(userId, running, asOf, config);
+    if (opened.kind === 'running') {
+      return this.toSessionState(userId, opened.session, asOf, config);
     }
 
-    const stillClaimable = unsettled.find((session) =>
-      isClaimable(session, asOf, config),
-    );
-
-    if (stillClaimable) {
+    if (opened.kind === 'claimable') {
       return null;
     }
 
-    const nextSession = await this.createMiningSession(
-      userId,
-      config,
-      asOf,
-      this.prisma,
-    );
+    const nextSession = opened.session;
 
     await this.auditLogService.create({
       actorId: userId,
@@ -692,6 +649,54 @@ export class MiningService {
       config,
       nextSession.activeReferralsSnapshot,
     );
+  }
+
+  /**
+   * The only place a mining session is created (F-44). The "is anything
+   * unsettled?" check and the insert run in one transaction behind a per-user
+   * advisory lock, so concurrent start/auto-start calls serialise: the second
+   * caller sees the first caller's session and reports it as running instead
+   * of opening an overlapping cycle that pays in full.
+   */
+  private async openSessionIfIdle(
+    userId: string,
+    config: EffectiveMiningConfig,
+    asOf: Date,
+  ): Promise<{
+    kind: 'running' | 'claimable' | 'created';
+    session: MiningSession;
+  }> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`;
+
+      const unsettled = await tx.miningSession.findMany({
+        where: {
+          userId,
+          ...UNSETTLED,
+        },
+        orderBy: {
+          startsAt: 'desc',
+        },
+        take: 10,
+      });
+
+      const running = unsettled.find(
+        (session) => session.endsAt.getTime() > asOf.getTime(),
+      );
+      if (running) {
+        return { kind: 'running' as const, session: running };
+      }
+
+      const claimable = unsettled.find((session) =>
+        isClaimable(session, asOf, config),
+      );
+      if (claimable) {
+        return { kind: 'claimable' as const, session: claimable };
+      }
+
+      const created = await this.createMiningSession(userId, config, asOf, tx);
+      return { kind: 'created' as const, session: created };
+    });
   }
 
   private async syncHourlyAccrualForUser(

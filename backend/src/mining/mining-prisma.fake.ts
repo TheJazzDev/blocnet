@@ -112,6 +112,35 @@ export function createFakeMiningDb(options: FakeMiningDbOptions = {}) {
   let sessionSeq = sessions.length;
   let checkpointSeq = checkpoints.length;
 
+  /**
+   * Ordered trace of transaction boundaries, advisory locks and session
+   * reads/creates, tagged with the transaction they ran in (`null` = outside
+   * any transaction), so specs can assert *where* a check-then-create ran.
+   */
+  const events: Array<{ op: string; tx: number | null; detail?: unknown }> = [];
+  let txSeq = 0;
+
+  /**
+   * `pg_advisory_xact_lock` stand-in: a per-key FIFO mutex held until the
+   * owning transaction callback settles, exactly like Postgres releases it at
+   * commit/rollback.
+   */
+  const advisoryLocks = new Map<string, Promise<void>>();
+  async function acquireAdvisoryLock(key: string): Promise<() => void> {
+    const previous = advisoryLocks.get(key) ?? Promise.resolve();
+    let release!: () => void;
+    const current = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const chained = previous.then(() => current);
+    advisoryLocks.set(key, chained);
+    await previous;
+    return () => {
+      release();
+      if (advisoryLocks.get(key) === chained) advisoryLocks.delete(key);
+    };
+  }
+
   const selectSessions = (where: any = {}) =>
     sessions.filter(
       (row) =>
@@ -249,8 +278,58 @@ export function createFakeMiningDb(options: FakeMiningDbOptions = {}) {
     miningConfig: {
       upsert: jest.fn(async () => ({})),
     },
-    $transaction: jest.fn(async (callback: any) => callback(client)),
+    $executeRaw: jest.fn(async (strings: TemplateStringsArray, ...values: unknown[]) => {
+      // Outside a transaction an xact lock would release immediately.
+      events.push({ op: 'executeRaw', tx: null, detail: { sql: strings.join('?'), values } });
+      return 1;
+    }),
+    $transaction: jest.fn(async (callback: any) => {
+      txSeq += 1;
+      const txId = txSeq;
+      const held: Array<() => void> = [];
+      const traced = (op: string, fn: (...args: any[]) => any) =>
+        jest.fn(async (...args: any[]) => {
+          events.push({ op, tx: txId, detail: args[0] });
+          return fn(...args);
+        });
+      const tx = {
+        ...client,
+        miningSession: {
+          ...client.miningSession,
+          findMany: traced('miningSession.findMany', rawSessionFindMany),
+          create: traced('miningSession.create', rawSessionCreate),
+        },
+        $executeRaw: jest.fn(async (strings: TemplateStringsArray, ...values: unknown[]) => {
+          const sql = strings.join('?');
+          events.push({ op: 'executeRaw', tx: txId, detail: { sql, values } });
+          if (sql.includes('pg_advisory_xact_lock')) {
+            held.push(await acquireAdvisoryLock(String(values[0])));
+            events.push({ op: 'lock.acquired', tx: txId, detail: values[0] });
+          }
+          return 1;
+        }),
+      };
+      events.push({ op: 'tx.begin', tx: txId });
+      try {
+        return await callback(tx);
+      } finally {
+        events.push({ op: 'tx.end', tx: txId });
+        held.forEach((release) => release());
+      }
+    }),
   };
 
-  return { client, sessions, checkpoints, ledger, tipAccounts, profile };
+  // Calls made outside a transaction are traced with tx: null.
+  const rawSessionFindMany = client.miningSession.findMany;
+  const rawSessionCreate = client.miningSession.create;
+  client.miningSession.findMany = jest.fn(async (args: any) => {
+    events.push({ op: 'miningSession.findMany', tx: null, detail: args });
+    return rawSessionFindMany(args);
+  }) as typeof rawSessionFindMany;
+  client.miningSession.create = jest.fn(async (args: any) => {
+    events.push({ op: 'miningSession.create', tx: null, detail: args });
+    return rawSessionCreate(args);
+  }) as typeof rawSessionCreate;
+
+  return { client, sessions, checkpoints, ledger, tipAccounts, profile, events };
 }

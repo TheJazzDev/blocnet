@@ -158,6 +158,112 @@ describe('MiningService', () => {
     expect(db.sessions).toHaveLength(2);
   });
 
+  describe('F-44 double start', () => {
+    function sessionEvents(db: ReturnType<typeof createFakeMiningDb>) {
+      return db.events.filter((event) =>
+        [
+          'tx.begin',
+          'executeRaw',
+          'lock.acquired',
+          'miningSession.findMany',
+          'miningSession.create',
+          'tx.end',
+        ].includes(event.op),
+      );
+    }
+
+    it('takes the per-user advisory lock, then checks and creates inside one transaction', async () => {
+      const db = createFakeMiningDb();
+
+      const result = await buildService(db).start('user-1');
+
+      expect(result.status).toBe('started');
+      const createEvent = db.events.find(
+        (event) => event.op === 'miningSession.create',
+      );
+      expect(createEvent?.tx).not.toBeNull();
+      const txId = createEvent!.tx;
+      const inTx = db.events
+        .filter((event) => event.tx === txId)
+        .map((event) => event.op);
+      expect(inTx).toEqual([
+        'tx.begin',
+        'executeRaw',
+        'lock.acquired',
+        'miningSession.findMany',
+        'miningSession.create',
+        'tx.end',
+      ]);
+      const lockCall = db.events.find(
+        (event) => event.op === 'executeRaw' && event.tx === txId,
+      );
+      expect(lockCall?.detail).toEqual({
+        sql: expect.stringContaining('pg_advisory_xact_lock(hashtext('),
+        values: ['user-1'],
+      });
+      // No session is ever created outside the locked transaction.
+      expect(
+        sessionEvents(db).filter(
+          (event) => event.op === 'miningSession.create' && event.tx === null,
+        ),
+      ).toHaveLength(0);
+    });
+
+    it('two concurrent starts open exactly one session; the second reports running', async () => {
+      const db = createFakeMiningDb();
+      const service = buildService(db);
+
+      const results = await Promise.all([
+        service.start('user-1'),
+        service.start('user-1'),
+      ]);
+
+      expect(db.sessions).toHaveLength(1);
+      expect(results.map((result) => result.status).sort()).toEqual([
+        'running',
+        'started',
+      ]);
+      expect(results[0].session.id).toBe(results[1].session.id);
+      expect(
+        auditLogService.create.mock.calls.filter(
+          ([entry]) => entry.action === 'mining.start',
+        ),
+      ).toHaveLength(1);
+    });
+
+    it('auto-start after a claim also creates inside the locked transaction', async () => {
+      const now = new Date();
+      const startsAt = new Date(now.getTime() - 26 * HOUR);
+      const db = createFakeMiningDb({
+        sessions: [
+          session({ startsAt, endsAt: new Date(now.getTime() - 2 * HOUR) }),
+        ],
+        checkpoints: checkpoints('session-1', 24, 5, startsAt),
+      });
+
+      await buildService(db).claim('user-1');
+
+      const createEvents = db.events.filter(
+        (event) => event.op === 'miningSession.create',
+      );
+      expect(createEvents).toHaveLength(1);
+      const txId = createEvents[0].tx;
+      expect(txId).not.toBeNull();
+      expect(
+        db.events
+          .filter((event) => event.tx === txId)
+          .map((event) => event.op),
+      ).toEqual([
+        'tx.begin',
+        'executeRaw',
+        'lock.acquired',
+        'miningSession.findMany',
+        'miningSession.create',
+        'tx.end',
+      ]);
+    });
+  });
+
   describe('F-39 claim-window deadlock', () => {
     function deadlockedDb() {
       const now = new Date();
