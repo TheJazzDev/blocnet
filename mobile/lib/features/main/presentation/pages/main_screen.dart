@@ -389,11 +389,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     if (!mounted) return;
 
     final snapshot = miningStore.snapshot;
-    final referral = snapshot?.referral;
-    if (snapshot == null ||
-        referral == null ||
-        referral.isBound ||
-        !referral.bindWindowOpen) {
+    // A failed load says nothing about the referral state: ask again on the
+    // next launch instead of giving up for good.
+    if (snapshot == null) return;
+
+    final referral = snapshot.referral;
+    if (referral.isBound || !referral.bindWindowOpen) {
       await prefs.setBool(promptSeenKey, true);
       return;
     }
@@ -403,11 +404,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       try {
         await miningStore.bindReferralCode(pendingCode);
         await auth.setPendingReferralCode(null);
+        await prefs.setBool(promptSeenKey, true);
+        return;
       } catch (_) {
-        // Keep pending code for manual bind attempt in Mining screen.
+        // The link's code did not bind; fall through so the member can type
+        // one while the bind window is still open.
       }
-      await prefs.setBool(promptSeenKey, true);
-      return;
     }
 
     if (!mounted) return;
@@ -429,7 +431,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         await miningStore.bindReferralCode(enteredCode);
         await auth.setPendingReferralCode(null);
       } catch (_) {
-        // Error is shown by MiningStore snackbar handler.
+        // Error is shown by MiningStore snackbar handler. Leave the prompt
+        // unseen so the next launch offers it again inside the window.
+        return;
       }
     }
 
