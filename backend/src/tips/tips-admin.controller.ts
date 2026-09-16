@@ -17,17 +17,17 @@ import type { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ListAdminTipTransactionsQuery } from './dto/list-admin-tip-transactions.query';
 import { SetActiveTipCurrencyDto } from './dto/set-active-tip-currency.dto';
 import { UpdateTipCurrencyDto } from './dto/update-tip-currency.dto';
-import { TipsService } from './tips.service';
+import { TipsAdminService } from './tips-admin.service';
 
 @Controller('admin/tips')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(AppRole.OWNER, AppRole.ADMIN)
 export class TipsAdminController {
-  constructor(private readonly tipsService: TipsService) {}
+  constructor(private readonly tipsAdminService: TipsAdminService) {}
 
   @Get('settings')
   async getSettings() {
-    return this.tipsService.getAdminSettings();
+    return this.tipsAdminService.getAdminSettings();
   }
 
   @Patch('settings/currencies/:currencyCode')
@@ -40,7 +40,11 @@ export class TipsAdminController {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
-    return this.tipsService.updateCurrencySettings(user.id, currencyCode, dto);
+    return this.tipsAdminService.updateCurrencySettings(
+      user.id,
+      currencyCode,
+      dto,
+    );
   }
 
   @Patch('settings/active-currency')
@@ -52,11 +56,11 @@ export class TipsAdminController {
     if (!user) {
       throw new UnauthorizedException('User context missing');
     }
-    return this.tipsService.setActiveCurrency(user.id, dto.currencyCode);
+    return this.tipsAdminService.setActiveCurrency(user.id, dto.currencyCode);
   }
 
   @Get('transactions')
   async listTransactions(@Query() query: ListAdminTipTransactionsQuery) {
-    return this.tipsService.listAdminTransactions(query);
+    return this.tipsAdminService.listAdminTransactions(query);
   }
 }

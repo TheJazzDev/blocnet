@@ -1,4 +1,5 @@
 import { Prisma, WalletAsset } from '@prisma/client';
+import { WalletPointsService } from './wallet-points.service';
 import { WalletQueryService } from './wallet-query.service';
 import { WalletAssetPricingService } from './wallet-asset-pricing.service';
 import { WalletConfigService } from './wallet-config.service';
@@ -59,6 +60,20 @@ describe('WalletQueryService.getWalletSummary', () => {
     kycProfile: {
       findUnique: jest.fn().mockResolvedValue(null),
     },
+    tipCurrency: {
+      findUnique: jest.fn().mockResolvedValue({
+        code: 'BNP',
+        name: 'Blocnet Points',
+        decimals: 3,
+        isEnabled: true,
+      }),
+    },
+    profile: {
+      findUnique: jest.fn().mockResolvedValue({ miningClaimedPoints: 0n }),
+    },
+    tipAccount: {
+      upsert: jest.fn().mockResolvedValue({ balanceAtomic: 12345n }),
+    },
   } as unknown as PrismaService;
 
   const walletAssetPricingService = {
@@ -75,6 +90,7 @@ describe('WalletQueryService.getWalletSummary', () => {
       walletConfigService,
       walletProvisioningService,
       walletAssetPricingService,
+      new WalletPointsService(prisma),
     );
   });
 
@@ -120,6 +136,56 @@ describe('WalletQueryService.getWalletSummary', () => {
 
     expect(summary.wallet.status).toBe('disabled');
     expect(summary.features.userWalletEnabled).toBe(false);
+  });
+
+  it('lists BNP as an off-chain asset even when the wallet is disabled', async () => {
+    (
+      walletProvisioningService.ensureWalletForUser as jest.Mock
+    ).mockResolvedValueOnce({ ...wallet, status: 'disabled', address: null });
+
+    const summary = await service.getWalletSummary('user-1');
+
+    expect(summary.assets[0]).toEqual({
+      asset: 'BNP',
+      symbol: 'BNP',
+      name: 'Blocnet Points',
+      network: 'blocnet',
+      assetKind: 'points',
+      available: '12.345',
+      pending: '0',
+      locked: '0',
+      usdPrice: '0',
+      usdValue: '0',
+      priceSource: 'none',
+      decimals: 3,
+      balanceAtomic: '12345',
+      canSend: true,
+      canReceive: true,
+    });
+    expect(summary.assets.map((a) => a.asset)).toEqual(['BNP', 'BNT']);
+    // Points carry no price (and testnet hides on-chain prices).
+    expect(summary.totals.usdValue).toBe('0');
+    // BNP stays out of the on-chain feature lists.
+    expect(summary.features.supportedAssets).toEqual([WalletAsset.BNT]);
+  });
+
+  it('marks BNP as not sendable while the BNP currency is disabled', async () => {
+    ((prisma as any).tipCurrency.findUnique as jest.Mock).mockResolvedValueOnce(
+      {
+        code: 'BNP',
+        name: 'Blocnet Points',
+        decimals: 3,
+        isEnabled: false,
+      },
+    );
+
+    const summary = await service.getWalletSummary('user-1');
+
+    expect(summary.assets[0]).toMatchObject({
+      asset: 'BNP',
+      canSend: false,
+      canReceive: false,
+    });
   });
 });
 

@@ -10,17 +10,11 @@ import {
   Prisma,
   RoleName,
   TipAccountType,
-  type TipAccount,
+  TipTransactionType,
   type TipCurrency,
   type TipFeeConfig,
-  type TipTransaction,
 } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import {
-  currentLevelSelect,
-  toCurrentLevelDto,
-  type CurrentLevelRecord,
-} from '../levels/level-summary';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
 import {
   createDeterministicIdempotencyKey,
@@ -31,56 +25,48 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizePagination } from '../common/utils/pagination.util';
 import { CreateTipDto } from './dto/create-tip.dto';
-import { ListAdminTipTransactionsQuery } from './dto/list-admin-tip-transactions.query';
 import { ListTipHistoryQuery } from './dto/list-tip-history.query';
-import { UpdateTipCurrencyDto } from './dto/update-tip-currency.dto';
+import { formatAtomicAmount, parseAtomicAmount } from './tip-amount.util';
+import { TipBootstrapService } from './tip-bootstrap';
 import {
-  ceilDivide,
-  formatAtomicAmount,
-  parseAtomicAmount,
-  parseAtomicAmountAllowZero,
-} from './tip-amount.util';
+  assertTipAmountWithinPolicy,
+  calculateTipFeeAtomic,
+  resolveTipRecipientCreditAtomic,
+  resolveTipSenderDebitAtomic,
+} from './tip-fee.util';
+import { ensureFeeVaultAccount, ensureUserTipAccount } from './tip-ledger.util';
 import {
-  BNP_CURRENCY_CODE,
-  BNP_DECIMALS,
-  FEE_VAULT_OWNER_REF,
-  RETIRED_TIP_CURRENCY_CODES,
-  isRetiredTipCurrencyCode,
-} from './tip.constants';
+  tipTxInclude,
+  toTipCurrencyResponse,
+  toTipReceivedSummaryResponse,
+  toTipSentSummaryResponse,
+  toTipTransactionResponse,
+} from './tip-response.mappers';
 
 type CurrencyWithFeeConfig = TipCurrency & {
   feeConfig: TipFeeConfig | null;
 };
 
-type TipTxWithDetails = TipTransaction & {
-  currency: TipCurrency;
-  sender: TipParticipantRecord;
-  recipient: TipParticipantRecord;
-};
-
-type TipParticipantRecord = {
-  id: string;
-  username: string | null;
-  displayName: string | null;
-  avatarUrl: string | null;
-  currentLevel: CurrentLevelRecord | null;
-};
-
-type TxClient = Prisma.TransactionClient | PrismaService;
+/**
+ * Only real tips count as tips. The same ledger also carries member-to-member
+ * BNP transfers (`type: transfer`), which must never show up in tip history,
+ * tip totals or anything derived from them.
+ */
+const TIPS_ONLY = { type: TipTransactionType.tip } as const;
 
 @Injectable()
 export class TipsService {
   private readonly logger = new Logger(TipsService.name);
-  private bootstrapPromise: Promise<void> | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogService: AuditLogService,
     private readonly notificationsService: NotificationsService,
+    private readonly bootstrap: TipBootstrapService,
   ) {}
 
   async getMyOverview(userId: string) {
-    await this.ensureBootstrap();
+    await this.bootstrap.ensure();
     const [activeCurrency, accounts, sentAggregateRows, receivedAggregateRows] =
       await Promise.all([
         this.requireActiveCurrency(),
@@ -102,12 +88,8 @@ export class TipsService {
         }),
         this.prisma.tipTransaction.groupBy({
           by: ['currencyCode'],
-          where: {
-            senderUserId: userId,
-          },
-          _count: {
-            _all: true,
-          },
+          where: { senderUserId: userId, ...TIPS_ONLY },
+          _count: { _all: true },
           _sum: {
             amountAtomic: true,
             feeAtomic: true,
@@ -116,22 +98,16 @@ export class TipsService {
         }),
         this.prisma.tipTransaction.groupBy({
           by: ['currencyCode'],
-          where: {
-            recipientUserId: userId,
-          },
-          _count: {
-            _all: true,
-          },
-          _sum: {
-            amountAtomic: true,
-          },
+          where: { recipientUserId: userId, ...TIPS_ONLY },
+          _count: { _all: true },
+          _sum: { amountAtomic: true },
         }),
       ]);
 
-    const activeAccount = await this.ensureUserAccount(
+    const activeAccount = await ensureUserTipAccount(
+      this.prisma,
       userId,
       activeCurrency.code,
-      this.prisma,
     );
 
     const accountByCurrency = new Map(
@@ -148,7 +124,7 @@ export class TipsService {
     }
 
     const balances = [...accountByCurrency.values()].map((row) => ({
-      currency: this.toCurrencyResponse(row.currency, row.currency.feeConfig),
+      currency: toTipCurrencyResponse(row.currency, row.currency.feeConfig),
       balanceAtomic: row.balanceAtomic.toString(),
       balance: formatAtomicAmount(row.balanceAtomic, row.currency.decimals),
     }));
@@ -157,7 +133,7 @@ export class TipsService {
       .map((row) => {
         const account = accountByCurrency.get(row.currencyCode);
         if (!account) return null;
-        return this.toSentSummaryResponse({
+        return toTipSentSummaryResponse({
           currency: account.currency,
           feeConfig: account.currency.feeConfig,
           transactionCount: row._count._all,
@@ -172,7 +148,7 @@ export class TipsService {
       sentSummaryByCurrency.find(
         (row) => row.currency.code === activeCurrency.code,
       ) ??
-      this.toSentSummaryResponse({
+      toTipSentSummaryResponse({
         currency: activeCurrency,
         feeConfig: activeCurrency.feeConfig,
         transactionCount: 0,
@@ -185,7 +161,7 @@ export class TipsService {
       .map((row) => {
         const account = accountByCurrency.get(row.currencyCode);
         if (!account) return null;
-        return this.toReceivedSummaryResponse({
+        return toTipReceivedSummaryResponse({
           currency: account.currency,
           feeConfig: account.currency.feeConfig,
           transactionCount: row._count._all,
@@ -198,7 +174,7 @@ export class TipsService {
       receivedSummaryByCurrency.find(
         (row) => row.currency.code === activeCurrency.code,
       ) ??
-      this.toReceivedSummaryResponse({
+      toTipReceivedSummaryResponse({
         currency: activeCurrency,
         feeConfig: activeCurrency.feeConfig,
         transactionCount: 0,
@@ -206,7 +182,7 @@ export class TipsService {
       });
 
     return {
-      activeCurrency: this.toCurrencyResponse(
+      activeCurrency: toTipCurrencyResponse(
         activeCurrency,
         activeCurrency.feeConfig,
       ),
@@ -219,7 +195,7 @@ export class TipsService {
   }
 
   async sendTip(senderUserId: string, dto: CreateTipDto) {
-    await this.ensureBootstrap();
+    await this.bootstrap.ensure();
 
     const activeCurrency = await this.requireActiveCurrency();
     const requestedCurrencyCode = dto.currencyCode?.trim().toUpperCase();
@@ -239,7 +215,7 @@ export class TipsService {
       'amount',
     );
 
-    this.assertTipAmountWithinPolicy(amountAtomic, activeCurrency, feeConfig);
+    assertTipAmountWithinPolicy(amountAtomic, activeCurrency, feeConfig);
 
     const recipient = await this.resolveRecipient(dto, senderUserId);
     if (recipient.id === senderUserId) {
@@ -253,13 +229,13 @@ export class TipsService {
       throw new BadRequestException('Only hunters can receive tips');
     }
 
-    const feeAtomic = this.calculateFeeAtomic(amountAtomic, feeConfig);
-    const recipientCreditAtomic = this.resolveRecipientCreditAtomic(
+    const feeAtomic = calculateTipFeeAtomic(amountAtomic, feeConfig);
+    const recipientCreditAtomic = resolveTipRecipientCreditAtomic(
       amountAtomic,
       feeAtomic,
       feeConfig,
     );
-    const senderDebitAtomic = this.resolveSenderDebitAtomic(
+    const senderDebitAtomic = resolveTipSenderDebitAtomic(
       amountAtomic,
       feeAtomic,
       feeConfig,
@@ -280,25 +256,25 @@ export class TipsService {
       async (tx) => {
         const existing = await tx.tipTransaction.findUnique({
           where: { idempotencyKey },
-          include: this.tipTxInclude(),
+          include: tipTxInclude(),
         });
         if (existing) {
           return existing;
         }
 
-        const senderAccount = await this.ensureUserAccount(
+        const senderAccount = await ensureUserTipAccount(
+          tx,
           senderUserId,
           activeCurrency.code,
-          tx,
         );
-        const recipientAccount = await this.ensureUserAccount(
+        const recipientAccount = await ensureUserTipAccount(
+          tx,
           recipient.id,
           activeCurrency.code,
-          tx,
         );
-        const feeVaultAccount = await this.ensureFeeVaultAccount(
-          activeCurrency.code,
+        const feeVaultAccount = await ensureFeeVaultAccount(
           tx,
+          activeCurrency.code,
         );
 
         const freshSender = await tx.tipAccount.findUnique({
@@ -314,36 +290,24 @@ export class TipsService {
 
         await tx.tipAccount.update({
           where: { id: senderAccount.id },
-          data: {
-            balanceAtomic: {
-              decrement: senderDebitAtomic,
-            },
-          },
+          data: { balanceAtomic: { decrement: senderDebitAtomic } },
         });
 
         await tx.tipAccount.update({
           where: { id: recipientAccount.id },
-          data: {
-            balanceAtomic: {
-              increment: recipientCreditAtomic,
-            },
-          },
+          data: { balanceAtomic: { increment: recipientCreditAtomic } },
         });
 
         if (feeAtomic > 0n) {
           await tx.tipAccount.update({
             where: { id: feeVaultAccount.id },
-            data: {
-              balanceAtomic: {
-                increment: feeAtomic,
-              },
-            },
+            data: { balanceAtomic: { increment: feeAtomic } },
           });
         }
 
         return tx.tipTransaction.create({
           data: {
-            type: 'tip',
+            type: TipTransactionType.tip,
             senderAccountId: senderAccount.id,
             recipientAccountId: recipientAccount.id,
             feeAccountId: feeAtomic > 0n ? feeVaultAccount.id : null,
@@ -362,7 +326,7 @@ export class TipsService {
               feeBps: feeConfig.feeBps,
             },
           },
-          include: this.tipTxInclude(),
+          include: tipTxInclude(),
         });
       },
       {
@@ -429,15 +393,16 @@ export class TipsService {
       );
     }
 
-    return this.toTipTransactionResponse(created, senderUserId);
+    return toTipTransactionResponse(created, senderUserId);
   }
 
   async listTipHistory(userId: string, query: ListTipHistoryQuery) {
-    await this.ensureBootstrap();
+    await this.bootstrap.ensure();
     const { limit, offset } = normalizePagination(query.offset, query.limit);
     const direction = query.direction ?? 'all';
 
     const where: Prisma.TipTransactionWhereInput = {
+      ...TIPS_ONLY,
       ...(query.currencyCode
         ? { currencyCode: query.currencyCode.trim().toUpperCase() }
         : {}),
@@ -456,533 +421,17 @@ export class TipsService {
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: offset,
         take: limit,
-        include: this.tipTxInclude(),
+        include: tipTxInclude(),
       }),
       this.prisma.tipTransaction.count({ where }),
     ]);
 
     return {
-      data: rows.map((row) => this.toTipTransactionResponse(row, userId)),
+      data: rows.map((row) => toTipTransactionResponse(row, userId)),
       total,
       limit,
       offset,
     };
-  }
-
-  async listAdminTransactions(query: ListAdminTipTransactionsQuery) {
-    await this.ensureBootstrap();
-    const { limit, offset } = normalizePagination(query.offset, query.limit);
-    const q = query.q?.trim();
-    const direction = query.direction ?? 'all';
-    const userId = query.userId?.trim();
-
-    const and: Prisma.TipTransactionWhereInput[] = [];
-    if (query.currencyCode) {
-      and.push({
-        currencyCode: query.currencyCode.trim().toUpperCase(),
-      });
-    }
-
-    if (userId) {
-      if (direction === 'sent') {
-        and.push({ senderUserId: userId });
-      } else if (direction === 'received') {
-        and.push({ recipientUserId: userId });
-      } else {
-        and.push({
-          OR: [{ senderUserId: userId }, { recipientUserId: userId }],
-        });
-      }
-    }
-
-    if (q) {
-      const uuidRegex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      and.push({
-        OR: [
-          { note: { contains: q, mode: 'insensitive' } },
-          { sender: { email: { contains: q, mode: 'insensitive' } } },
-          { sender: { displayName: { contains: q, mode: 'insensitive' } } },
-          { sender: { username: { contains: q, mode: 'insensitive' } } },
-          { recipient: { email: { contains: q, mode: 'insensitive' } } },
-          { recipient: { displayName: { contains: q, mode: 'insensitive' } } },
-          { recipient: { username: { contains: q, mode: 'insensitive' } } },
-          ...(uuidRegex.test(q)
-            ? [{ id: q }, { senderUserId: q }, { recipientUserId: q }]
-            : []),
-        ],
-      });
-    }
-
-    const where: Prisma.TipTransactionWhereInput = and.length
-      ? { AND: and }
-      : {};
-
-    const [rows, total] = await Promise.all([
-      this.prisma.tipTransaction.findMany({
-        where,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        skip: offset,
-        take: limit,
-        include: this.tipTxInclude(),
-      }),
-      this.prisma.tipTransaction.count({ where }),
-    ]);
-
-    return {
-      data: rows.map((row) => this.toTipTransactionResponse(row)),
-      total,
-      limit,
-      offset,
-    };
-  }
-
-  async getAdminSettings() {
-    await this.ensureBootstrap();
-
-    const rows = await this.prisma.tipCurrency.findMany({
-      where: { code: { notIn: [...RETIRED_TIP_CURRENCY_CODES] } },
-      include: {
-        feeConfig: true,
-        accounts: {
-          where: {
-            accountType: TipAccountType.fee_vault,
-            ownerRef: FEE_VAULT_OWNER_REF,
-          },
-          take: 1,
-        },
-      },
-      orderBy: [{ isActiveTippingCurrency: 'desc' }, { code: 'asc' }],
-    });
-    // Defensive second pass: a retired code must never reach the console even
-    // if a stray row slips past the query filter.
-    const currencies = rows.filter(
-      (row) => !isRetiredTipCurrencyCode(row.code),
-    );
-
-    return {
-      activeCurrencyCode:
-        currencies.find((row) => row.isActiveTippingCurrency)?.code ?? null,
-      currencies: currencies.map((row) => ({
-        ...this.toCurrencyResponse(row, row.feeConfig),
-        feeVaultBalanceAtomic: (
-          row.accounts[0]?.balanceAtomic ?? 0n
-        ).toString(),
-        feeVaultBalance: formatAtomicAmount(
-          row.accounts[0]?.balanceAtomic ?? 0n,
-          row.decimals,
-        ),
-      })),
-    };
-  }
-
-  async updateCurrencySettings(
-    actorId: string,
-    currencyCode: string,
-    dto: UpdateTipCurrencyDto,
-  ) {
-    await this.ensureBootstrap();
-    const code = currencyCode.trim().toUpperCase();
-    this.assertNotRetiredCurrency(code);
-    if (dto.code !== undefined) {
-      this.assertNotRetiredCurrency(dto.code);
-    }
-
-    const currency = await this.prisma.tipCurrency.findUnique({
-      where: { code },
-      include: { feeConfig: true },
-    });
-    if (!currency) {
-      throw new NotFoundException('Tip currency not found');
-    }
-
-    const decimals = currency.decimals;
-    const maxTipAtomic = this.parseOptionalAtomic(
-      dto.maxTip,
-      decimals,
-      'maxTip',
-    );
-    const maxFeeAtomic = this.parseOptionalAtomic(
-      dto.maxFee,
-      decimals,
-      'maxFee',
-    );
-
-    const feeData: Prisma.TipFeeConfigUncheckedUpdateInput = {};
-    if (dto.feeBps !== undefined) feeData.feeBps = dto.feeBps;
-    if (dto.minTip !== undefined) {
-      feeData.minTipAtomic = parseAtomicAmount(dto.minTip, decimals, 'minTip');
-    }
-    if (dto.maxTip !== undefined) feeData.maxTipAtomic = maxTipAtomic;
-    if (dto.minFee !== undefined) {
-      feeData.minFeeAtomic = parseAtomicAmountAllowZero(
-        dto.minFee,
-        decimals,
-        'minFee',
-      );
-    }
-    if (dto.maxFee !== undefined) feeData.maxFeeAtomic = maxFeeAtomic;
-    if (dto.senderPaysFee !== undefined) {
-      feeData.senderPaysFee = dto.senderPaysFee;
-    }
-    if (dto.policyActive !== undefined) {
-      feeData.isActive = dto.policyActive;
-    }
-
-    if (
-      feeData.minTipAtomic !== undefined &&
-      feeData.maxTipAtomic !== undefined &&
-      feeData.maxTipAtomic !== null &&
-      BigInt(feeData.maxTipAtomic as bigint) <
-        BigInt(feeData.minTipAtomic as bigint)
-    ) {
-      throw new BadRequestException(
-        'maxTip must be greater than or equal to minTip',
-      );
-    }
-
-    if (
-      feeData.minFeeAtomic !== undefined &&
-      feeData.maxFeeAtomic !== undefined &&
-      feeData.maxFeeAtomic !== null &&
-      BigInt(feeData.maxFeeAtomic as bigint) <
-        BigInt(feeData.minFeeAtomic as bigint)
-    ) {
-      throw new BadRequestException(
-        'maxFee must be greater than or equal to minFee',
-      );
-    }
-
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const currencyRow = await tx.tipCurrency.update({
-        where: { code },
-        data: {
-          ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
-          ...(dto.symbol !== undefined ? { symbol: dto.symbol.trim() } : {}),
-          ...(dto.isEnabled !== undefined ? { isEnabled: dto.isEnabled } : {}),
-        },
-        include: { feeConfig: true },
-      });
-
-      const feeConfig = await tx.tipFeeConfig.upsert({
-        where: { currencyCode: code },
-        update: feeData,
-        create: {
-          currencyCode: code,
-          feeBps: dto.feeBps ?? 0,
-          minTipAtomic:
-            dto.minTip !== undefined
-              ? parseAtomicAmount(dto.minTip, decimals, 'minTip')
-              : 1n,
-          maxTipAtomic,
-          minFeeAtomic:
-            dto.minFee !== undefined
-              ? parseAtomicAmountAllowZero(dto.minFee, decimals, 'minFee')
-              : 0n,
-          maxFeeAtomic,
-          senderPaysFee: dto.senderPaysFee ?? true,
-          isActive: dto.policyActive ?? true,
-        },
-      });
-
-      await this.ensureFeeVaultAccount(code, tx);
-      return { currencyRow, feeConfig };
-    });
-
-    await this.auditLogService.create({
-      actorId,
-      action: FinancialAuditActions.TipCurrencySettingsUpdated,
-      resourceType: 'tip_currency',
-      resourceId: code,
-      metadata: {
-        currencyCode: code,
-        feeBps: updated.feeConfig.feeBps,
-        minTipAtomic: updated.feeConfig.minTipAtomic.toString(),
-        maxTipAtomic: updated.feeConfig.maxTipAtomic?.toString() ?? null,
-        minFeeAtomic: updated.feeConfig.minFeeAtomic.toString(),
-        maxFeeAtomic: updated.feeConfig.maxFeeAtomic?.toString() ?? null,
-        senderPaysFee: updated.feeConfig.senderPaysFee,
-      },
-    });
-
-    return this.getAdminSettings();
-  }
-
-  async setActiveCurrency(actorId: string, currencyCode: string) {
-    await this.ensureBootstrap();
-    const targetCode = currencyCode.trim().toUpperCase();
-    this.assertNotRetiredCurrency(targetCode);
-
-    const target = await this.prisma.tipCurrency.findUnique({
-      where: { code: targetCode },
-      include: { feeConfig: true },
-    });
-    if (!target) {
-      throw new NotFoundException('Tip currency not found');
-    }
-    if (!target.isEnabled) {
-      throw new BadRequestException('Tip currency is disabled');
-    }
-    if (!target.feeConfig?.isActive) {
-      throw new BadRequestException(
-        'Tip fee policy for this currency must be active first',
-      );
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.tipCurrency.updateMany({
-        where: { isActiveTippingCurrency: true },
-        data: { isActiveTippingCurrency: false },
-      });
-      await tx.tipCurrency.update({
-        where: { code: targetCode },
-        data: { isActiveTippingCurrency: true },
-      });
-      await this.ensureFeeVaultAccount(targetCode, tx);
-    });
-
-    await this.auditLogService.create({
-      actorId,
-      action: FinancialAuditActions.TipActiveCurrencyUpdated,
-      resourceType: 'tip_currency',
-      resourceId: targetCode,
-      metadata: {
-        activeCurrencyCode: targetCode,
-      },
-    });
-
-    return this.getAdminSettings();
-  }
-
-  private tipTxInclude() {
-    return {
-      currency: true,
-      sender: {
-        select: {
-          id: true,
-          username: true,
-          displayName: true,
-          avatarUrl: true,
-          currentLevel: {
-            select: currentLevelSelect,
-          },
-        },
-      },
-      recipient: {
-        select: {
-          id: true,
-          username: true,
-          displayName: true,
-          avatarUrl: true,
-          currentLevel: {
-            select: currentLevelSelect,
-          },
-        },
-      },
-    } satisfies Prisma.TipTransactionInclude;
-  }
-
-  private toTipParticipantResponse(participant: TipParticipantRecord) {
-    return {
-      id: participant.id,
-      username: participant.username,
-      displayName: participant.displayName,
-      avatarUrl: participant.avatarUrl,
-      currentLevel: toCurrentLevelDto(participant.currentLevel),
-    };
-  }
-
-  private toTipTransactionResponse(
-    row: TipTxWithDetails,
-    viewerUserId?: string,
-  ) {
-    const direction =
-      viewerUserId && row.senderUserId === viewerUserId
-        ? 'sent'
-        : viewerUserId && row.recipientUserId === viewerUserId
-          ? 'received'
-          : 'neutral';
-
-    return {
-      id: row.id,
-      type: row.type,
-      direction,
-      currency: {
-        code: row.currency.code,
-        name: row.currency.name,
-        symbol: row.currency.symbol,
-        decimals: row.currency.decimals,
-      },
-      amountAtomic: row.amountAtomic.toString(),
-      amount: formatAtomicAmount(row.amountAtomic, row.currency.decimals),
-      feeAtomic: row.feeAtomic.toString(),
-      fee: formatAtomicAmount(row.feeAtomic, row.currency.decimals),
-      totalDebitAtomic: row.totalDebitAtomic.toString(),
-      totalDebit: formatAtomicAmount(
-        row.totalDebitAtomic,
-        row.currency.decimals,
-      ),
-      sender: this.toTipParticipantResponse(row.sender),
-      recipient: this.toTipParticipantResponse(row.recipient),
-      note: row.note,
-      contextType: row.contextType,
-      contextId: row.contextId,
-      metadata: row.metadata ?? null,
-      createdAt: row.createdAt,
-    };
-  }
-
-  private toCurrencyResponse(
-    currency: TipCurrency,
-    feeConfig: TipFeeConfig | null,
-  ) {
-    return {
-      code: currency.code,
-      name: currency.name,
-      symbol: currency.symbol,
-      decimals: currency.decimals,
-      kind: currency.kind,
-      isEnabled: currency.isEnabled,
-      isActiveTippingCurrency: currency.isActiveTippingCurrency,
-      feePolicy: feeConfig
-        ? {
-            feeBps: feeConfig.feeBps,
-            minTipAtomic: feeConfig.minTipAtomic.toString(),
-            minTip: formatAtomicAmount(
-              feeConfig.minTipAtomic,
-              currency.decimals,
-            ),
-            maxTipAtomic: feeConfig.maxTipAtomic?.toString() ?? null,
-            maxTip:
-              feeConfig.maxTipAtomic == null
-                ? null
-                : formatAtomicAmount(feeConfig.maxTipAtomic, currency.decimals),
-            minFeeAtomic: feeConfig.minFeeAtomic.toString(),
-            minFee: formatAtomicAmount(
-              feeConfig.minFeeAtomic,
-              currency.decimals,
-            ),
-            maxFeeAtomic: feeConfig.maxFeeAtomic?.toString() ?? null,
-            maxFee:
-              feeConfig.maxFeeAtomic == null
-                ? null
-                : formatAtomicAmount(feeConfig.maxFeeAtomic, currency.decimals),
-            senderPaysFee: feeConfig.senderPaysFee,
-            isActive: feeConfig.isActive,
-          }
-        : null,
-    };
-  }
-
-  private toSentSummaryResponse({
-    currency,
-    feeConfig,
-    transactionCount,
-    amountAtomic,
-    feeAtomic,
-    totalDebitAtomic,
-  }: {
-    currency: TipCurrency;
-    feeConfig: TipFeeConfig | null;
-    transactionCount: number;
-    amountAtomic: bigint;
-    feeAtomic: bigint;
-    totalDebitAtomic: bigint;
-  }) {
-    return {
-      currency: this.toCurrencyResponse(currency, feeConfig),
-      transactionCount,
-      amountAtomic: amountAtomic.toString(),
-      amount: formatAtomicAmount(amountAtomic, currency.decimals),
-      feeAtomic: feeAtomic.toString(),
-      fee: formatAtomicAmount(feeAtomic, currency.decimals),
-      totalDebitAtomic: totalDebitAtomic.toString(),
-      totalDebit: formatAtomicAmount(totalDebitAtomic, currency.decimals),
-    };
-  }
-
-  private toReceivedSummaryResponse({
-    currency,
-    feeConfig,
-    transactionCount,
-    amountAtomic,
-  }: {
-    currency: TipCurrency;
-    feeConfig: TipFeeConfig | null;
-    transactionCount: number;
-    amountAtomic: bigint;
-  }) {
-    return {
-      currency: this.toCurrencyResponse(currency, feeConfig),
-      transactionCount,
-      amountAtomic: amountAtomic.toString(),
-      amount: formatAtomicAmount(amountAtomic, currency.decimals),
-    };
-  }
-
-  private resolveRecipientCreditAtomic(
-    amountAtomic: bigint,
-    feeAtomic: bigint,
-    feeConfig: TipFeeConfig,
-  ) {
-    if (feeConfig.senderPaysFee) {
-      return amountAtomic;
-    }
-    const net = amountAtomic - feeAtomic;
-    if (net <= 0n) {
-      throw new BadRequestException(
-        'Tip amount must exceed fee when recipient pays fee',
-      );
-    }
-    return net;
-  }
-
-  private resolveSenderDebitAtomic(
-    amountAtomic: bigint,
-    feeAtomic: bigint,
-    feeConfig: TipFeeConfig,
-  ) {
-    return feeConfig.senderPaysFee ? amountAtomic + feeAtomic : amountAtomic;
-  }
-
-  private calculateFeeAtomic(
-    amountAtomic: bigint,
-    feeConfig: TipFeeConfig,
-  ): bigint {
-    let feeAtomic = ceilDivide(amountAtomic * BigInt(feeConfig.feeBps), 10000n);
-    if (feeAtomic < feeConfig.minFeeAtomic) {
-      feeAtomic = feeConfig.minFeeAtomic;
-    }
-    if (feeConfig.maxFeeAtomic != null && feeAtomic > feeConfig.maxFeeAtomic) {
-      feeAtomic = feeConfig.maxFeeAtomic;
-    }
-    return feeAtomic;
-  }
-
-  private assertTipAmountWithinPolicy(
-    amountAtomic: bigint,
-    currency: TipCurrency,
-    feeConfig: TipFeeConfig,
-  ) {
-    if (amountAtomic < feeConfig.minTipAtomic) {
-      throw new BadRequestException(
-        `Minimum tip is ${formatAtomicAmount(
-          feeConfig.minTipAtomic,
-          currency.decimals,
-        )} ${currency.symbol}`,
-      );
-    }
-    if (
-      feeConfig.maxTipAtomic != null &&
-      amountAtomic > feeConfig.maxTipAtomic
-    ) {
-      throw new BadRequestException(
-        `Maximum tip is ${formatAtomicAmount(
-          feeConfig.maxTipAtomic,
-          currency.decimals,
-        )} ${currency.symbol}`,
-      );
-    }
   }
 
   private requireActiveFeeConfig(currency: CurrencyWithFeeConfig) {
@@ -1023,16 +472,16 @@ export class TipsService {
       );
     }
 
+    const select = {
+      id: true,
+      isDeactivated: true,
+      roles: { select: { role: true } },
+    } satisfies Prisma.ProfileSelect;
+
     if (dto.toUserId) {
       const profile = await this.prisma.profile.findUnique({
         where: { id: dto.toUserId },
-        select: {
-          id: true,
-          isDeactivated: true,
-          roles: {
-            select: { role: true },
-          },
-        },
+        select,
       });
       if (!profile || profile.isDeactivated) {
         throw new NotFoundException('Recipient user not found');
@@ -1046,19 +495,8 @@ export class TipsService {
     }
 
     const profile = await this.prisma.profile.findFirst({
-      where: {
-        username: {
-          equals: username,
-          mode: 'insensitive',
-        },
-      },
-      select: {
-        id: true,
-        isDeactivated: true,
-        roles: {
-          select: { role: true },
-        },
-      },
+      where: { username: { equals: username, mode: 'insensitive' } },
+      select,
     });
 
     if (!profile || profile.isDeactivated) {
@@ -1068,187 +506,5 @@ export class TipsService {
       throw new BadRequestException('You cannot tip yourself');
     }
     return profile;
-  }
-
-  private async ensureUserAccount(
-    userId: string,
-    currencyCode: string,
-    tx: TxClient,
-  ): Promise<TipAccount> {
-    let initialBalance = 0n;
-    if (currencyCode === BNP_CURRENCY_CODE) {
-      const profile = await tx.profile.findUnique({
-        where: { id: userId },
-        select: { miningClaimedPoints: true },
-      });
-      initialBalance = profile ? profile.miningClaimedPoints * 1000n : 0n;
-    }
-
-    return tx.tipAccount.upsert({
-      where: {
-        accountType_ownerRef_currencyCode: {
-          accountType: TipAccountType.user,
-          ownerRef: userId,
-          currencyCode,
-        },
-      },
-      update: {
-        userId,
-      },
-      create: {
-        accountType: TipAccountType.user,
-        ownerRef: userId,
-        userId,
-        currencyCode,
-        balanceAtomic: initialBalance,
-      },
-    });
-  }
-
-  private async ensureFeeVaultAccount(
-    currencyCode: string,
-    tx: TxClient,
-  ): Promise<TipAccount> {
-    return tx.tipAccount.upsert({
-      where: {
-        accountType_ownerRef_currencyCode: {
-          accountType: TipAccountType.fee_vault,
-          ownerRef: FEE_VAULT_OWNER_REF,
-          currencyCode,
-        },
-      },
-      update: {},
-      create: {
-        accountType: TipAccountType.fee_vault,
-        ownerRef: FEE_VAULT_OWNER_REF,
-        currencyCode,
-        balanceAtomic: 0n,
-      },
-    });
-  }
-
-  private async ensureBootstrap() {
-    if (!this.bootstrapPromise) {
-      this.bootstrapPromise = this.bootstrapDefaults().finally(() => {
-        this.bootstrapPromise = null;
-      });
-    }
-    await this.bootstrapPromise;
-  }
-
-  private async bootstrapDefaults() {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.tipCurrency.upsert({
-        where: { code: BNP_CURRENCY_CODE },
-        update: {
-          name: 'Blocnet Points',
-          symbol: 'BNP',
-          decimals: BNP_DECIMALS,
-          kind: 'points',
-          isEnabled: true,
-        },
-        create: {
-          code: BNP_CURRENCY_CODE,
-          name: 'Blocnet Points',
-          symbol: 'BNP',
-          decimals: BNP_DECIMALS,
-          kind: 'points',
-          isEnabled: true,
-          isActiveTippingCurrency: true,
-        },
-      });
-
-      await tx.tipCurrency.upsert({
-        where: { code: 'BNT' },
-        update: {
-          name: 'BlocNet Token',
-          symbol: 'BNT',
-          decimals: 18,
-          kind: 'token',
-          isEnabled: true,
-        },
-        create: {
-          code: 'BNT',
-          name: 'BlocNet Token',
-          symbol: 'BNT',
-          decimals: 18,
-          kind: 'token',
-          isEnabled: true,
-          isActiveTippingCurrency: false,
-        },
-      });
-
-      await tx.tipFeeConfig.upsert({
-        where: { currencyCode: BNP_CURRENCY_CODE },
-        update: {},
-        create: {
-          currencyCode: BNP_CURRENCY_CODE,
-          feeBps: 500,
-          minTipAtomic: 1n,
-          minFeeAtomic: 0n,
-          senderPaysFee: true,
-          isActive: true,
-        },
-      });
-
-      await tx.tipFeeConfig.upsert({
-        where: { currencyCode: 'BNT' },
-        update: {},
-        create: {
-          currencyCode: 'BNT',
-          feeBps: 500,
-          minTipAtomic: 1000000000000000n,
-          minFeeAtomic: 0n,
-          senderPaysFee: true,
-          isActive: true,
-        },
-      });
-
-      await this.ensureFeeVaultAccount(BNP_CURRENCY_CODE, tx);
-      await this.ensureFeeVaultAccount('BNT', tx);
-
-      const activeCount = await tx.tipCurrency.count({
-        where: {
-          isActiveTippingCurrency: true,
-          isEnabled: true,
-        },
-      });
-
-      if (activeCount === 0) {
-        await tx.tipCurrency.updateMany({
-          where: { isActiveTippingCurrency: true },
-          data: { isActiveTippingCurrency: false },
-        });
-        await tx.tipCurrency.update({
-          where: { code: BNP_CURRENCY_CODE },
-          data: { isActiveTippingCurrency: true },
-        });
-      }
-    });
-  }
-
-  /**
-   * Retired codes (F-07: MCR) can never be created, enabled or activated
-   * through the admin surface, regardless of the row's current DB state.
-   */
-  private assertNotRetiredCurrency(code: string) {
-    const normalized = code.trim().toUpperCase();
-    if (isRetiredTipCurrencyCode(normalized)) {
-      throw new BadRequestException(
-        `Tip currency ${normalized} is retired and cannot be created, enabled or activated`,
-      );
-    }
-  }
-
-  private parseOptionalAtomic(
-    value: string | null | undefined,
-    decimals: number,
-    field: string,
-  ) {
-    if (value === undefined) return undefined;
-    if (value === null) return null;
-    const normalized = value.trim();
-    if (!normalized) return null;
-    return parseAtomicAmountAllowZero(normalized, decimals, field);
   }
 }

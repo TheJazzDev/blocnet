@@ -1,154 +1,82 @@
-import { BadRequestException } from '@nestjs/common';
+import { TipTransactionType } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { TipBootstrapService } from './tip-bootstrap';
 import { TipsService } from './tips.service';
 
-function currencyRow(code: string, overrides: Record<string, unknown> = {}) {
-  return {
-    code,
-    name: code,
-    symbol: code,
-    decimals: 3,
-    kind: 'points',
-    isEnabled: true,
-    isActiveTippingCurrency: code === 'BNP',
-    createdAt: new Date('2026-01-01T00:00:00Z'),
-    updatedAt: new Date('2026-01-01T00:00:00Z'),
-    feeConfig: null,
-    accounts: [],
-    ...overrides,
-  };
-}
+const USER = '11111111-1111-4111-8111-111111111111';
 
-describe('TipsService (admin settings, retired currencies)', () => {
+const bnp = {
+  code: 'BNP',
+  name: 'Blocnet Points',
+  symbol: 'BNP',
+  decimals: 3,
+  kind: 'points',
+  isEnabled: true,
+  isActiveTippingCurrency: true,
+  feeConfig: null,
+};
+
+/**
+ * BNP transfers share the TipTransaction table with tips. These specs pin
+ * that the member-facing tip surfaces only ever read `type: tip`.
+ */
+describe('TipsService (transfers are not tips)', () => {
   const prisma = {
-    $transaction: jest.fn(),
-    tipCurrency: {
-      upsert: jest.fn(),
-      count: jest.fn(),
-      update: jest.fn(),
-      updateMany: jest.fn(),
+    tipCurrency: { findFirst: jest.fn() },
+    tipAccount: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
-    },
-    tipFeeConfig: {
       upsert: jest.fn(),
     },
-    tipAccount: {
-      upsert: jest.fn(),
+    tipTransaction: {
+      groupBy: jest.fn(),
+      findMany: jest.fn(),
+      count: jest.fn(),
     },
+    profile: { findUnique: jest.fn() },
   };
-
-  const auditLogService = {
-    create: jest.fn(),
-  } as unknown as AuditLogService;
-
-  const notificationsService = {
-    notifyMany: jest.fn(),
-  } as unknown as NotificationsService;
-
+  const bootstrap = { ensure: jest.fn() };
   let service: TipsService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Bootstrap runs inside a transaction; hand the callback the same mock.
-    prisma.$transaction.mockImplementation(
-      async (callback: (tx: typeof prisma) => Promise<unknown>) =>
-        callback(prisma),
-    );
-    prisma.tipCurrency.upsert.mockResolvedValue({});
-    prisma.tipCurrency.count.mockResolvedValue(1);
-    prisma.tipFeeConfig.upsert.mockResolvedValue({});
-    prisma.tipAccount.upsert.mockResolvedValue({});
-    prisma.tipCurrency.findMany.mockResolvedValue([]);
+    prisma.tipCurrency.findFirst.mockResolvedValue(bnp);
+    prisma.tipAccount.findMany.mockResolvedValue([
+      { currencyCode: 'BNP', balanceAtomic: 0n, currency: bnp },
+    ]);
+    prisma.tipAccount.upsert.mockResolvedValue({ id: 'acc-1' });
+    prisma.profile.findUnique.mockResolvedValue({ miningClaimedPoints: 0n });
+    prisma.tipTransaction.groupBy.mockResolvedValue([]);
+    prisma.tipTransaction.findMany.mockResolvedValue([]);
+    prisma.tipTransaction.count.mockResolvedValue(0);
 
     service = new TipsService(
       prisma as any,
-      auditLogService,
-      notificationsService,
+      { create: jest.fn() } as unknown as AuditLogService,
+      { notifyMany: jest.fn() } as unknown as NotificationsService,
+      bootstrap as unknown as TipBootstrapService,
     );
   });
 
-  describe('getAdminSettings', () => {
-    it('excludes retired codes at the query level', async () => {
-      prisma.tipCurrency.findMany.mockResolvedValue([
-        currencyRow('BNP'),
-        currencyRow('BNT', { kind: 'token', decimals: 18 }),
-      ]);
+  it('sums only tips in the sent and received overview totals', async () => {
+    await service.getMyOverview(USER);
 
-      const result = await service.getAdminSettings();
-
-      expect(prisma.tipCurrency.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { code: { notIn: ['MCR'] } },
-        }),
-      );
-      expect(result.activeCurrencyCode).toBe('BNP');
-      expect(result.currencies.map((row) => row.code)).toEqual(['BNP', 'BNT']);
-    });
-
-    it('never returns MCR even if a stray row slips past the query filter', async () => {
-      prisma.tipCurrency.findMany.mockResolvedValue([
-        currencyRow('BNP'),
-        currencyRow('MCR', { name: 'Mine Credits' }),
-      ]);
-
-      const result = await service.getAdminSettings();
-
-      expect(result.currencies.map((row) => row.code)).toEqual(['BNP']);
-      expect(result.currencies.some((row) => row.code === 'MCR')).toBe(false);
-    });
+    const wheres = prisma.tipTransaction.groupBy.mock.calls.map(
+      ([args]: [{ where: Record<string, unknown> }]) => args.where,
+    );
+    expect(wheres).toEqual([
+      { senderUserId: USER, type: TipTransactionType.tip },
+      { recipientUserId: USER, type: TipTransactionType.tip },
+    ]);
   });
 
-  describe('updateCurrencySettings', () => {
-    it('rejects enabling the retired MCR currency', async () => {
-      await expect(
-        service.updateCurrencySettings('actor-1', 'MCR', { isEnabled: true }),
-      ).rejects.toBeInstanceOf(BadRequestException);
+  it('lists only tips in tip history', async () => {
+    await service.listTipHistory(USER, { direction: 'all' });
 
-      expect(prisma.tipCurrency.findUnique).not.toHaveBeenCalled();
-      expect(prisma.tipCurrency.update).not.toHaveBeenCalled();
-      expect(auditLogService.create).not.toHaveBeenCalled();
-    });
-
-    it('normalises the code before checking (lower case, padded)', async () => {
-      await expect(
-        service.updateCurrencySettings('actor-1', ' mcr ', { name: 'x' }),
-      ).rejects.toBeInstanceOf(BadRequestException);
-
-      expect(prisma.tipCurrency.findUnique).not.toHaveBeenCalled();
-    });
-
-    it('rejects a payload that tries to (re)create MCR through the code field', async () => {
-      await expect(
-        service.updateCurrencySettings('actor-1', 'BNP', { code: 'MCR' }),
-      ).rejects.toBeInstanceOf(BadRequestException);
-
-      expect(prisma.tipCurrency.findUnique).not.toHaveBeenCalled();
-    });
-
-    it('still lets live currencies through to the lookup', async () => {
-      prisma.tipCurrency.findUnique.mockResolvedValue(null);
-
-      await expect(
-        service.updateCurrencySettings('actor-1', 'BNP', { name: 'Points' }),
-      ).rejects.toThrow('Tip currency not found');
-
-      expect(prisma.tipCurrency.findUnique).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { code: 'BNP' } }),
-      );
-    });
-  });
-
-  describe('setActiveCurrency', () => {
-    it('rejects activating the retired MCR currency', async () => {
-      await expect(
-        service.setActiveCurrency('actor-1', 'MCR'),
-      ).rejects.toBeInstanceOf(BadRequestException);
-
-      expect(prisma.tipCurrency.findUnique).not.toHaveBeenCalled();
-      expect(prisma.tipCurrency.updateMany).not.toHaveBeenCalled();
-      expect(auditLogService.create).not.toHaveBeenCalled();
-    });
+    const [findArgs] = prisma.tipTransaction.findMany.mock.calls[0];
+    const [countArgs] = prisma.tipTransaction.count.mock.calls[0];
+    expect(findArgs.where).toMatchObject({ type: TipTransactionType.tip });
+    expect(countArgs.where).toMatchObject({ type: TipTransactionType.tip });
   });
 });

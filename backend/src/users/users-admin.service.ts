@@ -12,6 +12,7 @@ import {
   QuestStatus,
   QuestVerificationStatus,
   RoleName,
+  TipTransactionType,
 } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AppRole } from '../common/enums/role.enum';
@@ -268,8 +269,11 @@ export class UsersAdminService {
             withdrawalRequests: true,
             deviceTokens: true,
             earnedBadges: true,
-            tipTransactionsSent: true,
-            tipTransactionsReceived: true,
+            // Tips only: BNP transfers share the ledger but are not tips.
+            tipTransactionsSent: { where: { type: TipTransactionType.tip } },
+            tipTransactionsReceived: {
+              where: { type: TipTransactionType.tip },
+            },
             tipConversions: true,
           },
         },
@@ -299,7 +303,7 @@ export class UsersAdminService {
     ] = await Promise.all([
       this.prisma.tipTransaction.groupBy({
         by: ['currencyCode'],
-        where: { senderUserId: userId },
+        where: { senderUserId: userId, type: TipTransactionType.tip },
         _count: { _all: true },
         _sum: {
           amountAtomic: true,
@@ -309,7 +313,7 @@ export class UsersAdminService {
       }),
       this.prisma.tipTransaction.groupBy({
         by: ['currencyCode'],
-        where: { recipientUserId: userId },
+        where: { recipientUserId: userId, type: TipTransactionType.tip },
         _count: { _all: true },
         _sum: {
           amountAtomic: true,

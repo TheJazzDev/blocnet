@@ -26,8 +26,7 @@ class AssetRow extends StatelessWidget {
     final isBalanceHidden =
         context.watch<WalletVisibilityStore>().isBalanceHidden;
     final isCardMode = viewMode == FeedViewMode.card;
-    final amountText =
-        isBalanceHidden ? '••••••' : formatTokenAmount(asset.available);
+    final amountText = isBalanceHidden ? '••••••' : formatAssetAmount(asset);
     final usdText = isBalanceHidden
         ? '\$••••'
         : (isUsdPriceLive(asset.priceSource)

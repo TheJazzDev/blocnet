@@ -40,7 +40,7 @@ class WalletHeadline {
         amount: '\$${formatUsd(total.toString())}',
         note: heldUnpriced.isEmpty
             ? null
-            : 'Excludes ${_holdings(heldUnpriced)}. ${_pendingReason(heldUnpriced)}',
+            : 'Excludes ${_holdings(heldUnpriced)}. ${_unpricedReason(heldUnpriced)}',
       );
     }
 
@@ -52,12 +52,21 @@ class WalletHeadline {
     return WalletHeadline(
       amount: _holding(held.first),
       otherHoldings: held.length > 1 ? '+ ${_holdings(held.skip(1))}' : null,
-      note: _pendingReason(held),
+      note: _tokenPriceReason(held),
     );
   }
 
-  static String _pendingReason(Iterable<WalletAssetBalance> unpriced) {
-    final bntOnly = unpriced.every(
+  /// Why unpriced holdings are left out of a USD total.
+  static String _unpricedReason(Iterable<WalletAssetBalance> unpriced) {
+    return _tokenPriceReason(unpriced) ?? 'Points have no USD value.';
+  }
+
+  /// Price caveat for held tokens. Points (BNP) never have a price, so they
+  /// need no caveat of their own when shown in their own units.
+  static String? _tokenPriceReason(Iterable<WalletAssetBalance> unpriced) {
+    final tokens = unpriced.where((a) => !a.isPoints);
+    if (tokens.isEmpty) return null;
+    final bntOnly = tokens.every(
       (a) => a.asset.toUpperCase() == walletPendingPriceAsset,
     );
     if (bntOnly) return 'BNT price pending until it launches on BSC.';
@@ -68,13 +77,16 @@ class WalletHeadline {
       assets.map(_holding).join(' · ');
 
   static String _holding(WalletAssetBalance asset) =>
-      '${formatTokenAmount(asset.available)} ${asset.asset}';
+      '${formatAssetAmount(asset)} ${asset.asset}';
 
   static double _amount(String value) => double.tryParse(value.trim()) ?? 0;
 }
 
-/// Per-asset USD line when the asset has no live price.
-String walletUnpricedLabel(WalletAssetBalance asset) =>
-    asset.asset.toUpperCase() == walletPendingPriceAsset
-        ? 'Pre-launch'
-        : 'No USD price';
+/// Per-asset USD line when the asset has no live price. Points are not a
+/// priced asset at all, so they read as what they are.
+String walletUnpricedLabel(WalletAssetBalance asset) {
+  if (asset.isPoints) return 'Points';
+  return asset.asset.toUpperCase() == walletPendingPriceAsset
+      ? 'Pre-launch'
+      : 'No USD price';
+}

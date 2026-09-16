@@ -26,6 +26,7 @@ class WalletStore extends ChangeNotifier {
   final Set<String> _loadingWithdrawalsAssets = {};
   bool _isSubmittingInternalTransfer = false;
   bool _isSubmittingWithdrawal = false;
+  bool _isSendingPoints = false;
   String? _lastError;
 
   WalletSnapshot? get snapshot => _snapshot;
@@ -37,6 +38,7 @@ class WalletStore extends ChangeNotifier {
   bool get isLoadingWithdrawals => _isLoadingWithdrawals;
   bool get isSubmittingInternalTransfer => _isSubmittingInternalTransfer;
   bool get isSubmittingWithdrawal => _isSubmittingWithdrawal;
+  bool get isSendingPoints => _isSendingPoints;
   String? get lastError => _lastError;
   List<String> get supportedAssets =>
       _snapshot?.supportedAssets.isNotEmpty == true
@@ -196,7 +198,9 @@ class WalletStore extends ChangeNotifier {
     final asset = _assetKey(assetCode);
     await Future.wait([
       loadTransactions(force: force, asset: asset),
-      loadWithdrawals(force: force, asset: asset),
+      // BNP is off-chain: it never has withdrawals.
+      if (asset != walletPointsAsset)
+        loadWithdrawals(force: force, asset: asset),
     ]);
   }
 
@@ -254,6 +258,38 @@ class WalletStore extends ChangeNotifier {
     }
   }
 
+  /// Sends BNP to another member, then refreshes balances and activity.
+  /// Rethrows so the form can show the backend's message.
+  Future<String?> sendPoints({
+    required String recipient,
+    required String amountAtomic,
+    required String idempotencyKey,
+    String? note,
+  }) async {
+    if (_isSendingPoints) return null;
+
+    _isSendingPoints = true;
+    notifyListeners();
+
+    try {
+      final id = await _repository.sendPoints(
+        recipient: recipient,
+        amountAtomic: amountAtomic,
+        idempotencyKey: idempotencyKey,
+        note: note,
+      );
+      _lastError = null;
+      await refreshAll();
+      return id;
+    } catch (error) {
+      _lastError = describeError(error);
+      rethrow;
+    } finally {
+      _isSendingPoints = false;
+      notifyListeners();
+    }
+  }
+
   Future<WalletWithdrawalRequest?> createWithdrawal({
     required String toAddress,
     required String amount,
@@ -293,7 +329,9 @@ class WalletStore extends ChangeNotifier {
         try {
           final parsed = jsonDecode(body);
           if (parsed is Map<String, dynamic>) {
-            final message = parsed['message']?.toString();
+            final raw = parsed['message'];
+            // Validation errors arrive as a list of messages.
+            final message = raw is List ? raw.join('\n') : raw?.toString();
             if (message != null && message.isNotEmpty) {
               return message;
             }

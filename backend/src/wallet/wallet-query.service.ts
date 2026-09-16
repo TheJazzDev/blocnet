@@ -2,13 +2,9 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   KycStatus,
   LedgerAccountType,
-  LedgerReason,
   Prisma,
   WalletAsset,
   WalletStatus,
-  WithdrawalStatus,
-  type LedgerEntry,
-  type UserWallet,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizePagination } from '../common/utils/pagination.util';
@@ -18,7 +14,14 @@ import { DECIMAL_ZERO, toDecimalString } from './types/decimal';
 import { normalizeWalletAsset, WALLET_ASSETS } from './wallet-asset.util';
 import { WalletAssetPricingService } from './wallet-asset-pricing.service';
 import { WalletConfigService } from './wallet-config.service';
+import { WalletPointsService, POINTS_ASSET } from './wallet-points.service';
 import { WalletProvisioningService } from './wallet-provisioning.service';
+import {
+  getAssetLabel,
+  toTransactionResponse,
+  toWalletSummary,
+  toWithdrawalResponse,
+} from './wallet-query.mappers';
 
 @Injectable()
 export class WalletQueryService {
@@ -27,6 +30,7 @@ export class WalletQueryService {
     private readonly walletConfigService: WalletConfigService,
     private readonly walletProvisioningService: WalletProvisioningService,
     private readonly walletAssetPricingService: WalletAssetPricingService,
+    private readonly walletPointsService: WalletPointsService,
   ) {}
 
   async getWalletSummary(userId: string) {
@@ -34,7 +38,7 @@ export class WalletQueryService {
       await this.walletProvisioningService.ensureWalletForUser(userId);
 
     const supportedAssets = this.walletConfigService.supportedAssets;
-    const [kycProfile, prices] = await Promise.all([
+    const [kycProfile, prices, pointsAsset] = await Promise.all([
       this.prisma.kycProfile.findUnique({
         where: { userId },
         select: {
@@ -45,6 +49,8 @@ export class WalletQueryService {
         },
       }),
       this.walletAssetPricingService.getUsdPrices(supportedAssets),
+      // Off-chain BNP: present whatever the on-chain wallet status is.
+      this.walletPointsService.getPointsAsset(userId),
     ]);
 
     const userAccounts = await Promise.all(
@@ -71,7 +77,7 @@ export class WalletQueryService {
     const bntAccount = accountByAsset.get(WalletAsset.BNT);
     const hideUsdPricing = wallet.chainEnvironment === 'testnet';
 
-    const assets = supportedAssets.map((asset) => {
+    const onchainAssets = supportedAssets.map((asset) => {
       const account = accountByAsset.get(asset);
       const available = account ? toDecimalString(account.available) : '0';
       const pending = account ? toDecimalString(account.pending) : '0';
@@ -86,7 +92,7 @@ export class WalletQueryService {
       return {
         asset,
         symbol: asset,
-        name: this.getAssetLabel(asset),
+        name: getAssetLabel(asset),
         network: 'BSC',
         assetKind: this.walletConfigService.getAssetKind(asset),
         available,
@@ -98,12 +104,16 @@ export class WalletQueryService {
       };
     });
 
-    const totalUsdValue = assets.reduce((total, item) => {
+    // BNP leads: it is the balance every member holds today. It has no USD
+    // price, so it adds nothing to the total.
+    const assets = [pointsAsset, ...onchainAssets];
+
+    const totalUsdValue = onchainAssets.reduce((total, item) => {
       return total.add(new Prisma.Decimal(item.usdValue));
     }, DECIMAL_ZERO);
 
     return {
-      wallet: this.toWalletSummary(wallet),
+      wallet: toWalletSummary(wallet),
       balances: {
         available: bntAccount ? toDecimalString(bntAccount.available) : '0',
         pending: bntAccount ? toDecimalString(bntAccount.pending) : '0',
@@ -192,13 +202,44 @@ export class WalletQueryService {
     query: ListWalletTransactionsQuery,
   ) {
     await this.walletProvisioningService.ensureWalletForUser(userId);
+    const { limit, offset } = normalizePagination(query.offset, query.limit);
+
+    if (query.asset === POINTS_ASSET) {
+      return this.walletPointsService.listPointsTransactions(userId, {
+        skip: offset,
+        take: limit,
+      });
+    }
 
     const selectedAsset = query.asset
       ? this.resolveRequestedAsset(query.asset)
       : null;
 
-    const { limit, offset } = normalizePagination(query.offset, query.limit);
+    if (selectedAsset) {
+      return this.listLedgerTransactions(userId, selectedAsset, {
+        skip: offset,
+        take: limit,
+      });
+    }
 
+    // All assets: page through the merged on-chain + BNP timeline. Both
+    // sources are read in parallel up to the end of the requested page, then
+    // merged newest-first and sliced.
+    const window = { skip: 0, take: offset + limit };
+    const [ledgerRows, pointsRows] = await Promise.all([
+      this.listLedgerTransactions(userId, null, window),
+      this.walletPointsService.listPointsTransactions(userId, window),
+    ]);
+    return [...ledgerRows, ...pointsRows]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(offset, offset + limit);
+  }
+
+  private async listLedgerTransactions(
+    userId: string,
+    selectedAsset: WalletAsset | null,
+    page: { skip: number; take: number },
+  ) {
     const entries = await this.prisma.ledgerEntry.findMany({
       where: {
         OR: [
@@ -223,8 +264,8 @@ export class WalletQueryService {
         ],
       },
       orderBy: { createdAt: 'desc' },
-      skip: offset,
-      take: limit,
+      skip: page.skip,
+      take: page.take,
       include: {
         debitAccount: {
           select: {
@@ -267,7 +308,7 @@ export class WalletQueryService {
       },
     });
 
-    return entries.map((entry) => this.toTransactionResponse(userId, entry));
+    return entries.map((entry) => toTransactionResponse(userId, entry));
   }
 
   async getKycStatus(userId: string) {
@@ -311,186 +352,7 @@ export class WalletQueryService {
       take: limit,
     });
 
-    return rows.map((row) => this.toWithdrawalResponse(row));
-  }
-
-  /**
-   * User-facing wallet block for `GET /wallet/me`.
-   *
-   * Custody internals stay out: `provider` and `providerWalletId` are the
-   * custody provider's own identifiers and `failureReason` is a raw provider
-   * error string. None of the three is actionable for the wallet owner, and
-   * all three are operational detail that belongs on the admin surface only
-   * (`GET /admin/wallet/*`, which serialises them separately in
-   * `WalletAdminService`). `status` already tells a user whether their wallet
-   * is provisioning, ready, errored or disabled.
-   */
-  private toWalletSummary(wallet: UserWallet) {
-    return {
-      id: wallet.id,
-      status: wallet.status,
-      address: wallet.address,
-      chainId: wallet.chainId,
-      chainEnvironment: wallet.chainEnvironment,
-      provisionedAt: wallet.provisionedAt,
-    };
-  }
-
-  private toTransactionResponse(
-    userId: string,
-    entry: LedgerEntry & {
-      debitAccount: {
-        userId: string | null;
-        accountType: LedgerAccountType;
-        currency: string;
-        user: {
-          id: string;
-          username: string | null;
-          displayName: string | null;
-        } | null;
-        wallet: {
-          address: string | null;
-        } | null;
-      };
-      creditAccount: {
-        userId: string | null;
-        accountType: LedgerAccountType;
-        currency: string;
-        user: {
-          id: string;
-          username: string | null;
-          displayName: string | null;
-        } | null;
-        wallet: {
-          address: string | null;
-        } | null;
-      };
-    },
-  ) {
-    const isDebit = entry.debitAccount.userId === userId;
-    const isCredit = entry.creditAccount.userId === userId;
-    const reason = entry.reason;
-
-    let direction: 'outgoing' | 'incoming' | 'internal';
-    if (
-      reason === LedgerReason.withdrawal_hold ||
-      reason === LedgerReason.withdrawal_finalize ||
-      reason === LedgerReason.withdrawal_fee
-    ) {
-      direction = 'outgoing';
-    } else if (reason === LedgerReason.withdrawal_reject_release) {
-      direction = 'incoming';
-    } else {
-      direction =
-        isDebit && !isCredit
-          ? 'outgoing'
-          : !isDebit && isCredit
-            ? 'incoming'
-            : 'internal';
-    }
-
-    const metadata = this.normalizeLedgerMetadata(entry.metadata);
-
-    const asset =
-      normalizeWalletAsset(entry.debitAccount.currency) ??
-      normalizeWalletAsset(entry.creditAccount.currency) ??
-      WalletAsset.BNT;
-
-    const sourceAccount =
-      direction === 'incoming'
-        ? entry.debitAccount
-        : direction === 'outgoing'
-          ? entry.creditAccount
-          : null;
-    const counterparty =
-      sourceAccount && sourceAccount.userId && sourceAccount.userId !== userId
-        ? {
-            userId: sourceAccount.userId,
-            username: sourceAccount.user?.username ?? null,
-            displayName: sourceAccount.user?.displayName ?? null,
-            walletAddress: sourceAccount.wallet?.address ?? null,
-          }
-        : null;
-
-    return {
-      id: entry.id,
-      asset,
-      direction,
-      reason,
-      amount: toDecimalString(entry.amount),
-      feeAmount: toDecimalString(entry.feeAmount),
-      debit: {
-        userId: entry.debitAccount.userId,
-        accountType: entry.debitAccount.accountType,
-      },
-      credit: {
-        userId: entry.creditAccount.userId,
-        accountType: entry.creditAccount.accountType,
-      },
-      referenceId: entry.referenceId,
-      metadata,
-      counterparty,
-      createdAt: entry.createdAt,
-    };
-  }
-
-  private normalizeLedgerMetadata(
-    input: Prisma.JsonValue | null,
-  ): Prisma.JsonObject | null {
-    if (!input || typeof input !== 'object' || Array.isArray(input)) {
-      return null;
-    }
-    return input;
-  }
-
-  private toWithdrawalResponse(withdrawal: {
-    id: string;
-    asset: WalletAsset;
-    toAddress: string;
-    amount: Prisma.Decimal;
-    feeAmount: Prisma.Decimal;
-    netAmount: Prisma.Decimal;
-    status: WithdrawalStatus;
-    reason: string;
-    rejectReason: string | null;
-    broadcastTxHash: string | null;
-    requestedAt: Date;
-    reviewedAt: Date | null;
-    confirmedAt: Date | null;
-    failureReason: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }) {
-    return {
-      id: withdrawal.id,
-      asset: withdrawal.asset,
-      toAddress: withdrawal.toAddress,
-      amount: toDecimalString(withdrawal.amount),
-      feeAmount: toDecimalString(withdrawal.feeAmount),
-      netAmount: toDecimalString(withdrawal.netAmount),
-      status: withdrawal.status,
-      reason: withdrawal.reason,
-      rejectReason: withdrawal.rejectReason,
-      broadcastTxHash: withdrawal.broadcastTxHash,
-      failureReason: withdrawal.failureReason,
-      requestedAt: withdrawal.requestedAt,
-      reviewedAt: withdrawal.reviewedAt,
-      confirmedAt: withdrawal.confirmedAt,
-      createdAt: withdrawal.createdAt,
-      updatedAt: withdrawal.updatedAt,
-    };
-  }
-
-  private getAssetLabel(asset: WalletAsset) {
-    switch (asset) {
-      case WalletAsset.BNB:
-        return 'Binance Coin';
-      case WalletAsset.USDT:
-        return 'Tether';
-      case WalletAsset.BNT:
-      default:
-        return 'Blocnet';
-    }
+    return rows.map((row) => toWithdrawalResponse(row));
   }
 
   private resolveRequestedAsset(rawAsset: WalletAsset | undefined) {

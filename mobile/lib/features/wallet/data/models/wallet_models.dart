@@ -1,3 +1,6 @@
+/// Asset code of Blocnet Points: off-chain, held in the in-app ledger.
+const String walletPointsAsset = 'BNP';
+
 class WalletAssetBalance {
   WalletAssetBalance({
     required this.asset,
@@ -11,6 +14,9 @@ class WalletAssetBalance {
     required this.usdPrice,
     required this.usdValue,
     required this.priceSource,
+    this.decimals,
+    this.canSend = false,
+    this.canReceive = false,
   });
 
   final String asset;
@@ -25,8 +31,18 @@ class WalletAssetBalance {
   final String usdValue;
   final String priceSource;
 
+  /// Display precision the backend reports (points only; tokens omit it).
+  final int? decimals;
+
+  /// Points only: whether BNP can be sent / received right now.
+  final bool canSend;
+  final bool canReceive;
+
   bool get isNative => assetKind.toLowerCase() == 'native';
   bool get isErc20 => assetKind.toLowerCase() == 'erc20';
+
+  /// Off-chain in-app points (BNP): no chain, no address, no USD price.
+  bool get isPoints => assetKind.toLowerCase() == 'points';
 
   factory WalletAssetBalance.fromApi(Map<String, dynamic> json) {
     return WalletAssetBalance(
@@ -41,6 +57,11 @@ class WalletAssetBalance {
       usdPrice: json['usdPrice']?.toString() ?? '0',
       usdValue: json['usdValue']?.toString() ?? '0',
       priceSource: json['priceSource']?.toString() ?? 'fallback',
+      decimals: json['decimals'] is num
+          ? (json['decimals'] as num).toInt()
+          : int.tryParse(json['decimals']?.toString() ?? ''),
+      canSend: json['canSend'] == true,
+      canReceive: json['canReceive'] == true,
     );
   }
 }
@@ -193,6 +214,14 @@ class WalletTransaction {
 
   bool get isOutgoing => direction == 'outgoing';
   bool get isIncoming => direction == 'incoming';
+
+  /// A movement on the in-app BNP ledger (transfer or tip).
+  bool get isPoints =>
+      asset == walletPointsAsset || metadataString('source') == 'bnp_ledger';
+
+  /// Row title: the backend's label for BNP rows, the reason otherwise.
+  String get label =>
+      metadataString('label') ?? reason.replaceAll('_', ' ').toUpperCase();
 
   String? metadataString(String key) {
     final value = metadata?[key];

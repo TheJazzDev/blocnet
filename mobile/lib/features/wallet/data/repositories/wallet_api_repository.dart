@@ -140,6 +140,27 @@ class WalletApiRepository {
     return WalletTransaction.fromApi(response);
   }
 
+  /// Member-to-member BNP transfer on the in-app ledger. Returns the created
+  /// ledger row id.
+  Future<String?> sendPoints({
+    required String recipient,
+    required String amountAtomic,
+    required String idempotencyKey,
+    String? note,
+  }) async {
+    final response = await _apiClient.post(
+      '/tips/transfers',
+      body: {
+        'recipient': recipient,
+        'amountAtomic': amountAtomic,
+        'idempotencyKey': idempotencyKey,
+        if (note != null && note.isNotEmpty) 'note': note,
+      },
+    );
+    if (response is! Map<String, dynamic>) return null;
+    return response['id']?.toString();
+  }
+
   Future<WalletWithdrawalRequest?> createWithdrawal({
     required String toAddress,
     required String amount,

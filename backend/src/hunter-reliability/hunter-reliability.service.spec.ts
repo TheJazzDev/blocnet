@@ -217,6 +217,11 @@ describe('HunterReliabilityService', () => {
         tipsReceivedTotal: '123456789012345678901234567890',
       });
 
+      // BNP transfers share the tip ledger; only real tips count.
+      expect(prisma.tipTransaction.groupBy.mock.calls[0][0].where).toEqual(
+        expect.objectContaining({ type: 'tip' }),
+      );
+
       const where = prisma.project.findMany.mock.calls[0][0].where;
       expect(where.status).toBe('active');
       expect(where.OR).toEqual([
