@@ -333,6 +333,72 @@ describe('MiningService', () => {
     });
   });
 
+  describe('F-51 mining paused (config.enabled=false)', () => {
+    const PAUSED = { ...CONFIG, enabled: false, referralsEnabled: false };
+
+    beforeEach(() => {
+      miningConfigService.getEffectiveConfig.mockResolvedValue(PAUSED);
+    });
+
+    it('blocks a manual start', async () => {
+      const db = createFakeMiningDb();
+
+      await expect(buildService(db).start('user-1')).rejects.toThrow(
+        'Mining is disabled',
+      );
+      expect(db.sessions).toHaveLength(0);
+    });
+
+    it('still pays a completed cycle but does not auto-start the next one', async () => {
+      const now = new Date();
+      const startsAt = new Date(now.getTime() - 26 * HOUR);
+      const db = createFakeMiningDb({
+        sessions: [
+          session({ startsAt, endsAt: new Date(now.getTime() - 2 * HOUR) }),
+        ],
+        checkpoints: checkpoints('session-1', 24, 5, startsAt),
+      });
+
+      const result = await buildService(db).claim('user-1');
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          status: 'claimed',
+          claimedPoints: 120,
+          nextSession: null,
+        }),
+      );
+      expect(db.profile.miningClaimedPoints).toBe(120n);
+      expect(db.sessions).toHaveLength(1);
+    });
+
+    it('does not auto-start after a forfeited cycle either', async () => {
+      const now = new Date();
+      const startsAt = new Date(now.getTime() - 100 * HOUR);
+      const db = createFakeMiningDb({
+        sessions: [
+          session({ startsAt, endsAt: new Date(now.getTime() - 76 * HOUR) }),
+        ],
+      });
+
+      const result = await buildService(db).claim('user-1');
+
+      expect(result).toEqual(
+        expect.objectContaining({ status: 'expired', nextSession: null }),
+      );
+      expect(db.sessions).toHaveLength(1);
+    });
+
+    it('getMe reports config.enabled=false so clients can show a paused state', async () => {
+      const db = createFakeMiningDb();
+
+      const snapshot = await buildService(db).getMe('user-1');
+
+      expect(snapshot.config.enabled).toBe(false);
+      expect(snapshot.session.status).toBe('idle');
+    });
+  });
+
   describe('F-39 claim-window deadlock', () => {
     function deadlockedDb() {
       const now = new Date();
