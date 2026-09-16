@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/wallet/presentation/utils/wallet_headline.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
@@ -26,13 +27,9 @@ class BalanceCard extends StatelessWidget {
                 ? 'Provisioning error'
                 : 'Provisioning wallet...');
 
-    final totalUsd = snapshot?.totalUsdValue ?? '0';
-    final hasLivePricing = (snapshot?.assets ?? const [])
-        .any((a) => isUsdPriceLive(a.priceSource));
+    final headline = WalletHeadline.from(snapshot);
     final isBalanceHidden = visibilityStore.isBalanceHidden;
-    final balanceText = isBalanceHidden
-        ? '\$••••••'
-        : (hasLivePricing ? '\$${formatUsd(totalUsd)}' : 'Pre-launch');
+    final balanceText = isBalanceHidden ? '\$••••••' : headline.amount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,6 +72,17 @@ class BalanceCard extends StatelessWidget {
             height: 1.0,
           ),
         ),
+        if (!isBalanceHidden && headline.otherHoldings != null) ...[
+          const SizedBox(height: AppSpace.xs),
+          Text(
+            headline.otherHoldings!,
+            style: AppTypography.custom(
+              color: AppColors.textSecondary,
+              size: AppText.labelSize,
+              weight: FontWeight.w600,
+            ),
+          ),
+        ],
         const SizedBox(height: AppSpace.xs),
         Text(
           'BSC Network',
@@ -84,10 +92,10 @@ class BalanceCard extends StatelessWidget {
             weight: FontWeight.w500,
           ),
         ),
-        if (!isBalanceHidden && !hasLivePricing) ...[
+        if (!isBalanceHidden && headline.note != null) ...[
           const SizedBox(height: AppSpace.sm),
           Text(
-            'Balances go live when BNT launches on BSC.',
+            headline.note!,
             style: AppTypography.custom(
               color: AppColors.textFaint,
               size: AppText.captionSize,
