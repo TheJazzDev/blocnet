@@ -26,7 +26,7 @@ interface Row {
   createdAt: Date;
   updatedAt: Date;
   moderatedAt: Date | null;
-  _count: { comments: number };
+  _count: { comments: number; likes: number };
 }
 
 const row = (id: string, at: Date, extra: Partial<Row> = {}): Row => ({
@@ -36,7 +36,7 @@ const row = (id: string, at: Date, extra: Partial<Row> = {}): Row => ({
   createdAt: at,
   updatedAt: at,
   moderatedAt: null,
-  _count: { comments: 0 },
+  _count: { comments: 0, likes: 0 },
   ...extra,
 });
 
@@ -157,7 +157,7 @@ describe('HunterGemPageService', () => {
         row('u2', daysAgo(19), {
           urgency: 'high',
           updatedAt: new Date(daysAgo(19).getTime() + 5 * 60_000),
-          _count: { comments: 38 },
+          _count: { comments: 38, likes: 12 },
         }),
         row('u1', daysAgo(30)),
       ],
@@ -197,7 +197,7 @@ describe('HunterGemPageService', () => {
         priority: 'high',
         createdAt: daysAgo(19).toISOString(),
         editedAt: new Date(daysAgo(19).getTime() + 5 * 60_000).toISOString(),
-        likesCount: 0,
+        likesCount: 12,
         commentsCount: 38,
         tipsAtomic: '210000',
         tipsCurrencyCode: 'BNP',
@@ -223,6 +223,10 @@ describe('HunterGemPageService', () => {
     expect(timeline.where).toEqual({ projectId: GEM, status: 'published' });
     expect(timeline.take).toBe(5);
     expect(timeline.orderBy).toEqual([{ createdAt: 'desc' }, { id: 'asc' }]);
+    // Likes are counted inside the timeline read, not per update.
+    expect(timeline.select._count).toEqual({
+      select: { comments: true, likes: true },
+    });
 
     expect(prisma.tipTransaction.groupBy).toHaveBeenCalledWith({
       by: ['contextId'],

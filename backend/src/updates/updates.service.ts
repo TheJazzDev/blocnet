@@ -14,13 +14,14 @@ import { CreateUpdateDto } from './dto/create-update.dto';
 import { UpdateUpdateDto } from './dto/update-update.dto';
 import { ListUpdatesQuery } from './dto/list-updates.query';
 import { parseDeadline } from './parse-deadline';
+import { normalizePagination } from '../common/utils/pagination.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { FcmService } from '../notifications/fcm.service';
 import { LevelsService } from '../levels/levels.service';
 import { QuestsService } from '../quests/quests.service';
-import { toUpdateResponse, updateInclude } from './updates.mapper';
+import { toUpdateResponse, updateIncludeFor } from './updates.mapper';
 
 @Injectable()
 export class UpdatesService {
@@ -68,7 +69,7 @@ export class UpdatesService {
             }
           : undefined,
       },
-      include: updateInclude,
+      include: updateIncludeFor(actor.id),
     });
 
     const actorName =
@@ -134,7 +135,7 @@ export class UpdatesService {
       orderBy: { createdAt: 'desc' },
       skip: offset,
       take: limit,
-      include: updateInclude,
+      include: updateIncludeFor(actor.id),
       // updateInclude spans author (+roles, +primaryBadge, +currentLevel),
       // project (+primaryTag) and secondaryTags. Under the default strategy
       // that is eight round trips for one feed page; as a lateral join it is
@@ -165,7 +166,7 @@ export class UpdatesService {
           ? { authorId: { notIn: blockedUserIds } }
           : {}),
       },
-      include: updateInclude,
+      include: updateIncludeFor(actor.id),
       // Same eight-relation fan-out as the feed, for a single row.
       relationLoadStrategy: 'join',
     });
@@ -181,6 +182,52 @@ export class UpdatesService {
     return toUpdateResponse(update, {
       isCommented: commentedUpdateIds.has(update.id),
     });
+  }
+
+  /**
+   * The member's saved updates, newest saved first, in the feed's shape plus
+   * `bookmarkedAt`. Same visibility as the feed read (published only here,
+   * since a save cannot be made on anything else, and blocked authors hidden).
+   * Three queries, like the feed: blocked ids, this join, commented ids.
+   */
+  async listBookmarkedUpdates(
+    actor: AuthUser,
+    opts: { limit?: number; offset?: number },
+  ) {
+    const { limit, offset } = normalizePagination(opts.offset, opts.limit);
+    const blockedUserIds = await this.blocksService.getBlockedUserIds(actor.id);
+
+    const rows = await this.prisma.updateBookmark.findMany({
+      where: {
+        userId: actor.id,
+        update: {
+          status: UpdateStatus.published,
+          ...(blockedUserIds.length > 0
+            ? { authorId: { notIn: blockedUserIds } }
+            : {}),
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+      skip: offset,
+      take: limit,
+      select: {
+        createdAt: true,
+        update: { include: updateIncludeFor(actor.id) },
+      },
+      relationLoadStrategy: 'join',
+    });
+
+    const commentedUpdateIds = await this.listCommentedUpdateIds(
+      actor.id,
+      rows.map((row) => row.update.id),
+    );
+
+    return rows.map((row) => ({
+      ...toUpdateResponse(row.update, {
+        isCommented: commentedUpdateIds.has(row.update.id),
+      }),
+      bookmarkedAt: row.createdAt,
+    }));
   }
 
   async updateUpdate(actor: AuthUser, id: string, dto: UpdateUpdateDto) {
@@ -222,7 +269,9 @@ export class UpdatesService {
         // undefined leaves the deadline alone; explicit null clears it, which
         // is how a hunter says "that window is no longer a thing".
         deadlineAt:
-          dto.deadlineAt === undefined ? undefined : parseDeadline(dto.deadlineAt),
+          dto.deadlineAt === undefined
+            ? undefined
+            : parseDeadline(dto.deadlineAt),
         secondaryTags: dto.secondaryTagIds
           ? {
               deleteMany: {},
@@ -235,7 +284,7 @@ export class UpdatesService {
             }
           : undefined,
       },
-      include: updateInclude,
+      include: updateIncludeFor(actor.id),
     });
 
     await this.auditLogService.create({

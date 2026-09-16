@@ -42,7 +42,7 @@ export class HunterGemUpdateDto {
 
   @ApiProperty({
     description:
-      'Updates have no likes yet; always 0, matching the feed (`likesCount`).',
+      'Members who liked the update, counted as the feed counts them (`likesCount`).',
   })
   likesCount!: number;
 

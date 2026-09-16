@@ -60,18 +60,48 @@ export const updateInclude = {
   _count: {
     select: {
       comments: true,
+      likes: true,
+      bookmarks: true,
     },
   },
 } satisfies Prisma.UpdateInclude;
 
+/**
+ * `updateInclude` plus whether this viewer liked or saved each update.
+ *
+ * Both are filtered, `take: 1` relations, so under `relationLoadStrategy:
+ * 'join'` they ride the same lateral join as the rest and add no round trip.
+ */
+export function updateIncludeFor(viewerId: string) {
+  return {
+    ...updateInclude,
+    likes: {
+      where: { userId: viewerId },
+      select: { id: true },
+      take: 1,
+    },
+    bookmarks: {
+      where: { userId: viewerId },
+      select: { id: true },
+      take: 1,
+    },
+  } satisfies Prisma.UpdateInclude;
+}
+
 export type UpdateWithRelations = Prisma.UpdateGetPayload<{
   include: typeof updateInclude;
-}>;
+}> & {
+  likes?: { id: string }[];
+  bookmarks?: { id: string }[];
+};
 
 export function toUpdateResponse(
-  update: UpdateWithRelations,
+  rawUpdate: UpdateWithRelations,
   options?: { isCommented?: boolean },
 ) {
+  // The viewer rows only feed the two flags; they are not part of the payload.
+  const { likes, bookmarks, ...update } = rawUpdate;
+
   const rawUsername = (update.author.username ?? '').replaceAll('@', '').trim();
   const normalized = rawUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '');
   const fallbackUsername = update.author.id.slice(0, 6);
@@ -109,7 +139,10 @@ export function toUpdateResponse(
     secondaryTagIds: update.secondaryTags.map((row) => row.secondaryTag.id),
     secondaryTags: update.secondaryTags.map((row) => row.secondaryTag.name),
     commentsCount: update._count?.comments ?? 0,
-    likesCount: 0,
+    likesCount: update._count?.likes ?? 0,
+    bookmarksCount: update._count?.bookmarks ?? 0,
+    likedByMe: (likes?.length ?? 0) > 0,
+    bookmarkedByMe: (bookmarks?.length ?? 0) > 0,
     isCommented: options?.isCommented === true,
   };
 }
