@@ -11,10 +11,15 @@ Map<String, dynamic> _asset(
   return {
     'asset': code,
     'symbol': code,
+    if (code == 'BNP') ...{
+      'assetKind': 'points',
+      'decimals': 3,
+      'priceSource': 'none',
+    },
     'available': available,
     'usdValue': usdValue,
     'usdPrice': '0',
-    'priceSource': priceSource,
+    if (code != 'BNP') 'priceSource': priceSource,
   };
 }
 
@@ -88,11 +93,61 @@ void main() {
     });
   });
 
+  group('WalletHeadline with BNP', () {
+    test('held BNP leads the tokens line with no price caveat', () {
+      final headline = WalletHeadline.from(_snapshot([
+        _asset('BNP', available: '12.3456'),
+        _asset('BNT'),
+      ]));
+      expect(headline.amount, '12.346 BNP');
+      expect(headline.otherHoldings, isNull);
+      expect(headline.note, isNull);
+    });
+
+    test('BNP joins the other held tokens', () {
+      final headline = WalletHeadline.from(_snapshot([
+        _asset('BNP', available: '5'),
+        _asset('BNT', available: '125'),
+        _asset('USDT', available: '10'),
+      ]));
+      expect(headline.amount, '5 BNP');
+      expect(headline.otherHoldings, '+ 125 BNT · 10 USDT');
+      expect(headline.note, 'No USD price is available for them right now.');
+    });
+
+    test('BNP beside only BNT keeps the BNT caveat', () {
+      final headline = WalletHeadline.from(_snapshot([
+        _asset('BNP', available: '5'),
+        _asset('BNT', available: '125'),
+      ]));
+      expect(headline.otherHoldings, '+ 125 BNT');
+      expect(headline.note, 'BNT price pending until it launches on BSC.');
+    });
+
+    test('a USD total excludes BNP and says why', () {
+      final headline = WalletHeadline.from(_snapshot([
+        _asset('BNP', available: '5'),
+        _asset('USDT', available: '10', usdValue: '10', priceSource: 'live'),
+      ]));
+      expect(headline.amount, r'$10.00');
+      expect(headline.note, 'Excludes 5 BNP. Points have no USD value.');
+    });
+
+    test('zero BNP with nothing else held reads as zero dollars', () {
+      final headline = WalletHeadline.from(_snapshot([
+        _asset('BNP'),
+        _asset('BNT'),
+      ]));
+      expect(headline.amount, r'$0.00');
+    });
+  });
+
   test('unpriced asset labels keep pre-launch for BNT only', () {
     WalletAssetBalance asset(String code) =>
         WalletAssetBalance.fromApi(_asset(code));
     expect(walletUnpricedLabel(asset('BNT')), 'Pre-launch');
     expect(walletUnpricedLabel(asset('USDT')), 'No USD price');
     expect(walletUnpricedLabel(asset('BNB')), 'No USD price');
+    expect(walletUnpricedLabel(asset('BNP')), 'Points');
   });
 }

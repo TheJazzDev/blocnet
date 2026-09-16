@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
+import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/action_row.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/asset_balance_card.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/section_header.dart';
@@ -46,6 +47,7 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
     final viewMode = context.watch<FeedViewModeStore>().mode;
     final isCardMode = viewMode == FeedViewMode.card;
     final asset = walletStore.findAsset(_assetCode);
+    final notice = _availabilityNotice(walletStore, asset);
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -82,14 +84,12 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
                 const SizedBox(height: AppSpace.sm),
                 TransactionsList(assetCode: _assetCode),
                 const SizedBox(height: AppSpace.xl),
-                if (!walletStore.canTransferAsset(_assetCode) ||
-                    !walletStore.canWithdrawAsset(_assetCode))
+                if (notice != null)
                   AppSurface(
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppSpace.md),
                     child: Text(
-                      'Send and withdrawal are currently disabled for $_assetCode. '
-                      'Receive/deposit is available.',
+                      notice,
                       style: AppTypography.custom(
                         size: AppText.bodySize,
                         weight: FontWeight.w400,
@@ -98,9 +98,7 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
                       ),
                     ),
                   ),
-                if (!isCardMode &&
-                    (!walletStore.canTransferAsset(_assetCode) ||
-                        !walletStore.canWithdrawAsset(_assetCode)))
+                if (!isCardMode && notice != null)
                   Divider(
                     height: 1,
                     color: AppColors.borderSubtle.withValues(alpha: 0.8),
@@ -112,5 +110,23 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
         ),
       ),
     );
+  }
+
+  /// Why some actions are off for this asset, or null when all are on.
+  /// BNP has no withdrawals; only its own send switch matters.
+  String? _availabilityNotice(
+    WalletStore walletStore,
+    WalletAssetBalance? asset,
+  ) {
+    if (_assetCode == walletPointsAsset) {
+      if (asset == null || asset.canSend) return null;
+      return 'Sending BNP is currently unavailable.';
+    }
+    if (walletStore.canTransferAsset(_assetCode) &&
+        walletStore.canWithdrawAsset(_assetCode)) {
+      return null;
+    }
+    return 'Send and withdrawal are currently disabled for $_assetCode. '
+        'Receive/deposit is available.';
   }
 }

@@ -13,6 +13,8 @@ enum WalletToastType { info, success, error }
 
 Color assetAccentColor(String assetCode) {
   switch (assetCode.toUpperCase()) {
+    case walletPointsAsset:
+      return const Color(0xFFA855F7);
     case 'BNB':
       return const Color(0xFFF3BA2F);
     case 'USDT':
@@ -57,7 +59,16 @@ String formatCount(num value) {
 }
 
 String assetBadgeText(WalletAssetBalance asset) {
+  if (asset.isPoints) return 'In-app';
   return asset.isNative ? 'BSC' : 'BEP-20';
+}
+
+/// Balance in the asset's own precision: BNP has 3 decimals, tokens up to 6.
+String formatAssetAmount(WalletAssetBalance asset, {String? value}) {
+  return formatTokenAmount(
+    value ?? asset.available,
+    maxDecimals: asset.isPoints ? (asset.decimals ?? 3) : 6,
+  );
 }
 
 String truncateMiddle(String value, {int head = 8, int tail = 6}) {

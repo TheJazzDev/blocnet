@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_rows.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
@@ -55,14 +56,23 @@ void showWalletActivityDetails(BuildContext context, WalletActivityItem row) {
     explorerTxUrl =
         buildExplorerTxUrl(context.read<WalletStore>().snapshot, txHash);
 
+    final feeAmount = double.tryParse(tx.feeAmount) ?? 0;
+    final amountDecimals = tx.isPoints ? 3 : 6;
     fields.addAll([
-      _WalletDetailField(label: 'Type', value: toTitleCase(tx.reason)),
+      _WalletDetailField(label: 'Type', value: _typeLabel(tx)),
       _WalletDetailField(
           label: 'Direction', value: directionLabel(tx.direction)),
       _WalletDetailField(
         label: 'Amount',
-        value: '${formatTokenAmount(tx.amount)} ${tx.asset}',
+        value:
+            '${formatTokenAmount(tx.amount, maxDecimals: amountDecimals)} ${tx.asset}',
       ),
+      if (feeAmount > 0)
+        _WalletDetailField(
+          label: 'Fee',
+          value:
+              '${formatTokenAmount(tx.feeAmount, maxDecimals: amountDecimals)} ${tx.asset}',
+        ),
       _WalletDetailField(label: 'Date', value: formatDate(tx.createdAt)),
     ]);
 
@@ -110,7 +120,9 @@ void showWalletActivityDetails(BuildContext context, WalletActivityItem row) {
     if (note.isNotEmpty) {
       fields.add(_WalletDetailField(label: 'Note', value: note));
     }
-    if (tx.referenceId != null && tx.referenceId!.trim().isNotEmpty) {
+    if (tx.referenceId != null &&
+        tx.referenceId!.trim().isNotEmpty &&
+        tx.referenceId != tx.id) {
       fields.add(
         _WalletDetailField(
           label: 'Reference ID',
@@ -120,7 +132,9 @@ void showWalletActivityDetails(BuildContext context, WalletActivityItem row) {
       );
     }
     fields.add(_WalletDetailField(
-        label: 'Ledger Entry ID', value: tx.id, copyable: true));
+        label: tx.isPoints ? 'Transaction ID' : 'Ledger Entry ID',
+        value: tx.id,
+        copyable: true));
   }
 
   if (withdrawal != null) {
@@ -184,7 +198,7 @@ void showWalletActivityDetails(BuildContext context, WalletActivityItem row) {
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (sheetContext) {
-      final title = tx != null ? toTitleCase(tx.reason) : 'Withdrawal Details';
+      final title = tx != null ? _typeLabel(tx) : 'Withdrawal Details';
       return SafeArea(
         top: false,
         child: Container(
@@ -332,3 +346,7 @@ void showWalletActivityDetails(BuildContext context, WalletActivityItem row) {
     },
   );
 }
+
+/// BNP rows carry a readable label from the backend ("BNP transfer", "Tip").
+String _typeLabel(WalletTransaction tx) =>
+    tx.isPoints ? tx.label : toTitleCase(tx.reason);

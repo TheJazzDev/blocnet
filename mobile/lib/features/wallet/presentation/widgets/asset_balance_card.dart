@@ -95,7 +95,7 @@ class AssetBalanceCard extends StatelessWidget {
           Text(
             isBalanceHidden
                 ? '•••••• ${asset.asset}'
-                : '${formatTokenAmount(asset.available)} ${asset.asset}',
+                : '${formatAssetAmount(asset)} ${asset.asset}',
             style: AppTypography.custom(
               color: AppColors.textPrimary,
               size: AppText.displaySize,
@@ -105,11 +105,13 @@ class AssetBalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.sm),
           Text(
-            isBalanceHidden
-                ? '\$•••• • Price \$••••'
-                : (isUsdPriceLive(asset.priceSource)
-                    ? '\$${formatUsd(asset.usdValue)} • Price \$${formatUsd(asset.usdPrice, decimals: 4)}'
-                    : '${walletUnpricedLabel(asset)} · no market value yet'),
+            asset.isPoints
+                ? 'In-app points · send to any member by @username'
+                : isBalanceHidden
+                    ? '\$•••• • Price \$••••'
+                    : (isUsdPriceLive(asset.priceSource)
+                        ? '\$${formatUsd(asset.usdValue)} • Price \$${formatUsd(asset.usdPrice, decimals: 4)}'
+                        : '${walletUnpricedLabel(asset)} · no market value yet'),
             style: AppTypography.custom(
               color: AppColors.textMuted,
               size: AppText.labelSize,

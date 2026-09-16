@@ -75,10 +75,10 @@ List<WalletActivityItem> buildWalletActivityRows(
       WalletActivityItem(
         id: tx.id.isNotEmpty ? 'tx_${tx.id}' : 'tx_${rows.length}',
         icon: icon,
-        title: tx.reason.replaceAll('_', ' ').toUpperCase(),
-        subtitle: formatDate(tx.createdAt),
+        title: tx.label.toUpperCase(),
+        subtitle: _transactionSubtitle(tx),
         amountLabel:
-            '$sign${formatTokenAmount(tx.amount, absolute: true)} ${tx.asset}',
+            '$sign${formatTokenAmount(tx.amount, absolute: true, maxDecimals: tx.isPoints ? 3 : 6)} ${tx.asset}',
         amountColor: isOutgoing
             ? AppColors.error500
             : isIncoming
@@ -130,4 +130,14 @@ List<WalletActivityItem> buildWalletActivityRows(
   });
 
   return rows;
+}
+
+/// BNP rows name the other member (`@bob • date`); on-chain rows show the date.
+String _transactionSubtitle(WalletTransaction tx) {
+  final date = formatDate(tx.createdAt);
+  if (!tx.isPoints) return date;
+  final handle = tx.counterparty?.username?.trim() ?? '';
+  if (handle.isEmpty) return date;
+  final prefix = tx.isOutgoing ? 'To' : 'From';
+  return '$prefix @$handle • $date';
 }
