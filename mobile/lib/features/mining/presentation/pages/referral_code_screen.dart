@@ -4,6 +4,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
+import 'package:blocnet/features/mining/presentation/widgets/referral_bind_sheet.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
@@ -30,6 +31,8 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
       final store = context.read<MiningStore>();
       unawaited(store.loadSnapshot(force: true));
       unawaited(store.loadReferralSummary(force: true));
+      // The downline belongs to this view, not to every Mine refresh (F-54).
+      unawaited(store.loadDownline(force: true));
     });
   }
 
@@ -65,171 +68,19 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   }
 
   Future<void> _showBindSheet(MiningStore store) async {
-    final controller = TextEditingController();
     final messenger = ScaffoldMessenger.of(context);
-    String? error;
-    bool validating = false;
-    bool binding = false;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    final bound = await showReferralBindSheet(context, store);
+    if (!bound) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Referral code bound successfully.'),
+        backgroundColor: AppColors.successColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.mdValue),
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
       ),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setLocalState) {
-            Future<void> submit() async {
-              final code = controller.text.trim().toUpperCase();
-              if (code.length != 8) {
-                setLocalState(
-                  () => error = 'Referral code must be 8 characters.',
-                );
-                return;
-              }
-
-              setLocalState(() {
-                error = null;
-                validating = true;
-              });
-
-              final validation = await store.validateReferralCode(code);
-              if (!mounted) return;
-
-              if (validation == null || !validation.valid) {
-                setLocalState(() {
-                  validating = false;
-                  error = 'Referral code is invalid.';
-                });
-                return;
-              }
-
-              setLocalState(() {
-                validating = false;
-                binding = true;
-              });
-
-              try {
-                await store.bindReferralCode(code);
-                if (!sheetContext.mounted) return;
-                Navigator.of(sheetContext).pop();
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: const Text('Referral code bound successfully.'),
-                    backgroundColor: AppColors.successColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              } catch (_) {
-                if (!mounted) return;
-                setLocalState(() {
-                  binding = false;
-                  error = store.lastError ?? 'Failed to bind referral code.';
-                });
-              }
-            }
-
-            return SafeArea(
-              top: false,
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: AppSpace.lg,
-                  right: AppSpace.lg,
-                  top: AppSpace.lg,
-                  bottom:
-                      AppSpace.lg + MediaQuery.of(context).viewInsets.bottom,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.borderMuted,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.fullValue),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.md),
-                    Text(
-                      'Bind Referral Code',
-                      style: AppTypography.custom(
-                        size: AppText.titleSize,
-                        weight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.sm),
-                    TextField(
-                      controller: controller,
-                      maxLength: 8,
-                      textCapitalization: TextCapitalization.characters,
-                      style: AppTypography.custom(
-                        size: AppText.bodySize,
-                        weight: FontWeight.w400,
-                        color: AppColors.textPrimary,
-                      ),
-                      decoration: const InputDecoration(
-                        hintText: 'Enter 8-character code',
-                        counterText: '',
-                      ),
-                    ),
-                    if (error != null) ...[
-                      const SizedBox(height: AppSpace.sm),
-                      Text(
-                        error!,
-                        style: AppTypography.custom(
-                          size: AppText.bodySize,
-                          weight: FontWeight.w400,
-                          color: Colors.redAccent,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: AppSpace.md),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: validating || binding ? null : submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary500,
-                          foregroundColor: Colors.black,
-                        ),
-                        child: validating || binding
-                            ? SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: Colors.black,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                'Bind Code',
-                                style: AppTypography.custom(
-                                  size: AppText.labelSize,
-                                  weight: FontWeight.w700,
-                                  color: Colors.black,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
@@ -289,9 +140,9 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                 onBind: () => _showBindSheet(miningStore),
               ),
             ],
-            if ((miningStore.lastError ?? '').isNotEmpty) ...[
+            if ((miningStore.snapshotError ?? '').isNotEmpty) ...[
               const SizedBox(height: AppSpace.lg),
-              _WarningBanner(message: miningStore.lastError!),
+              _WarningBanner(message: miningStore.snapshotError!),
             ],
           ],
         ),

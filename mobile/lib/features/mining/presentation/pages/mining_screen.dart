@@ -35,7 +35,7 @@ class _MiningScreenState extends State<MiningScreen> {
   Widget build(BuildContext context) {
     return Consumer<MiningStore>(
       builder: (context, store, _) {
-        final error = store.lastError;
+        final error = store.actionError ?? store.snapshotError;
         if (error != null && error.isNotEmpty && error != _lastShownError) {
           _lastShownError = error;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -146,7 +146,7 @@ class _MiningScreenState extends State<MiningScreen> {
       if (result != null && result.hasExpiredCycles) return;
       _showFeedback('Mining cycle started.');
     } catch (_) {
-      // surfaced via store.lastError
+      // surfaced via store.actionError
     }
   }
 
@@ -178,7 +178,7 @@ class _MiningScreenState extends State<MiningScreen> {
           : 'Rewards claimed.$nextCycle';
       _showFeedback(message.trim());
     } catch (_) {
-      // surfaced via store.lastError
+      // surfaced via store.actionError
     }
   }
 

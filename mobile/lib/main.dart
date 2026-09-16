@@ -185,6 +185,8 @@ void main() async {
       pushInitialised = false;
       pushNotificationService.dispose();
       notificationSettingsStore.clear();
+      // The next account must never see this one's balance or cycle (F-54).
+      miningStore.clear();
       pendingNotificationTap = null;
       lastHandledTapKey = null;
     }

@@ -102,7 +102,10 @@ class MiningSessionModel {
   final double hourlyRateNow;
   final double currentHourEstimatedPoints;
   final int completedHours;
-  final int cycleHours;
+
+  /// Only the idle placeholder carries this; a real session omits it, so
+  /// callers fall back to `config.cycleHours` rather than a guessed 24 (F-53).
+  final int? cycleHours;
   final int projectedCyclePointsNow;
 
   bool get isIdle => status == 'idle';
@@ -131,7 +134,7 @@ class MiningSessionModel {
           0,
       completedHours:
           int.tryParse(json['completedHours']?.toString() ?? '') ?? 0,
-      cycleHours: int.tryParse(json['cycleHours']?.toString() ?? '') ?? 24,
+      cycleHours: int.tryParse(json['cycleHours']?.toString() ?? ''),
       projectedCyclePointsNow:
           int.tryParse(json['projectedCyclePointsNow']?.toString() ?? '') ??
               int.tryParse(json['effectivePointsPerCycle']?.toString() ?? '') ??
@@ -308,9 +311,15 @@ class MiningSnapshot {
     required this.referral,
     required this.hourlyHistory,
     required this.lastExpiredCycle,
+    this.hasServerTime = true,
   });
 
+  /// Server time the snapshot was computed at. Falls back to the device clock
+  /// when the body has no `asOf`; see [hasServerTime].
   final DateTime asOf;
+
+  /// Whether [asOf] came from the server, so it can calibrate the clock.
+  final bool hasServerTime;
   final MiningConfigModel config;
   final MiningBalanceModel balance;
   final MiningSessionModel session;
@@ -331,6 +340,7 @@ class MiningSnapshot {
   }) {
     return MiningSnapshot(
       asOf: asOf,
+      hasServerTime: hasServerTime,
       config: config,
       balance: balance ?? this.balance,
       session: session ?? this.session,
@@ -351,8 +361,11 @@ class MiningSnapshot {
     final lastExpiredRaw =
         (json['lastExpiredCycle'] as Map?)?.cast<String, dynamic>();
 
+    final serverAsOf = DateTime.tryParse(json['asOf']?.toString() ?? '');
+
     return MiningSnapshot(
-      asOf: DateTime.tryParse(json['asOf']?.toString() ?? '') ?? DateTime.now(),
+      asOf: serverAsOf ?? DateTime.now(),
+      hasServerTime: serverAsOf != null,
       config: MiningConfigModel.fromApi(configRaw),
       balance: MiningBalanceModel.fromApi(balanceRaw),
       session: MiningSessionModel.fromApi(sessionRaw),
