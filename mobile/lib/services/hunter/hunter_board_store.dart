@@ -54,6 +54,13 @@ class HunterBoardStore extends ChangeNotifier {
   bool get isLoadingLeaderboard => _isLoadingLeaderboard;
   String? get leaderboardError => _leaderboardError;
 
+  // Handovers, per gem
+  final Set<String> _handoverBusy = {};
+  final Map<String, String> _handoverErrors = {};
+
+  bool isHandoverBusy(String projectId) => _handoverBusy.contains(projectId);
+  String? handoverErrorFor(String projectId) => _handoverErrors[projectId];
+
   Future<void> loadBoard() async {
     if (_isLoadingBoard) return;
     _isLoadingBoard = true;
@@ -121,6 +128,55 @@ class HunterBoardStore extends ChangeNotifier {
     }
   }
 
+  /// Offers [projectId] to [hunter] (username or profile id). Returns the
+  /// new invite's id, or null on failure with [handoverErrorFor] set. Nothing
+  /// changes on the board until the other hunter accepts.
+  Future<String?> startHandover(
+    String projectId,
+    String hunter, {
+    String? note,
+  }) {
+    return _runHandover(
+      projectId,
+      () => _repository.startHandover(projectId, hunter, note: note),
+      fallback: 'Could not send the handover. Please try again.',
+    );
+  }
+
+  /// Withdraws the caller's pending handover of [projectId]. Returns whether
+  /// it worked; on failure [handoverErrorFor] says why.
+  Future<bool> cancelHandover(String projectId) async {
+    final done = await _runHandover(
+      projectId,
+      () async {
+        await _repository.cancelHandover(projectId);
+        return projectId;
+      },
+      fallback: 'Could not withdraw the handover. Please try again.',
+    );
+    return done != null;
+  }
+
+  Future<String?> _runHandover(
+    String projectId,
+    Future<String> Function() request, {
+    required String fallback,
+  }) async {
+    if (_handoverBusy.contains(projectId)) return null;
+    _handoverBusy.add(projectId);
+    _handoverErrors.remove(projectId);
+    notifyListeners();
+    try {
+      return await request();
+    } catch (error) {
+      _handoverErrors[projectId] = describeApiError(error, fallback: fallback);
+      return null;
+    } finally {
+      _handoverBusy.remove(projectId);
+      notifyListeners();
+    }
+  }
+
   /// Drops everything, e.g. on sign-out.
   void clear() {
     _board = null;
@@ -131,6 +187,8 @@ class HunterBoardStore extends ChangeNotifier {
     _leaderboardCursor = null;
     _hasLoadedLeaderboard = false;
     _leaderboardError = null;
+    _handoverBusy.clear();
+    _handoverErrors.clear();
     notifyListeners();
   }
 }

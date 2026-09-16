@@ -4,7 +4,8 @@ import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dar
 import 'package:blocnet/features/hunter/data/models/reliability_json.dart';
 import 'package:blocnet/services/api/api_client.dart';
 
-/// Client for hunter reliability (`/hunters/*`, `/me/hunter/board`).
+/// Client for hunter reliability (`/hunters/*`, `/me/hunter/board`) and for
+/// handing a gem over (`/projects/:id/handover`).
 class HunterReliabilityApiRepository {
   HunterReliabilityApiRepository({ApiClient? apiClient})
       : _apiClient = apiClient ?? ApiClient();
@@ -37,5 +38,29 @@ class HunterReliabilityApiRepository {
       },
     );
     return HunterLeaderboardPage.fromApi(jsonMap(response));
+  }
+
+  /// `POST /projects/:projectId/handover`. [hunter] is a username or a
+  /// profile id. Returns the created invite's id.
+  Future<String> startHandover(
+    String projectId,
+    String hunter, {
+    String? note,
+  }) async {
+    final trimmedNote = note?.trim();
+    final response = await _apiClient.post(
+      '/projects/${projectId.trim()}/handover',
+      body: {
+        'hunter': hunter.trim(),
+        if (trimmedNote != null && trimmedNote.isNotEmpty) 'note': trimmedNote,
+      },
+    );
+    return jsonString(jsonMap(response)['id']);
+  }
+
+  /// `DELETE /projects/:projectId/handover` — withdraws the caller's pending
+  /// handover.
+  Future<void> cancelHandover(String projectId) async {
+    await _apiClient.delete('/projects/${projectId.trim()}/handover');
   }
 }
