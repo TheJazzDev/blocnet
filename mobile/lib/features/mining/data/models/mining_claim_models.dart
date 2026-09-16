@@ -29,7 +29,7 @@ class MiningClaimResult {
 
   final bool ok;
 
-  /// `claimed` or `expired`.
+  /// `claimed` or `expired`; `unknown` when the body did not say.
   final String status;
 
   /// Machine code on the expired branch, e.g. `claim_window_expired`.
@@ -55,7 +55,7 @@ class MiningClaimResult {
   final MiningSessionModel? nextSession;
 
   bool get isClaimed => status == 'claimed' && ok;
-  bool get isExpired => status == 'expired' || !ok;
+  bool get isExpired => status == 'expired' || (!ok && status != 'unknown');
   bool get startedNextCycle => nextSession != null;
 
   factory MiningClaimResult.fromApi(Map<String, dynamic> json) {
@@ -65,7 +65,8 @@ class MiningClaimResult {
 
     return MiningClaimResult(
       ok: json['ok'] != false,
-      status: json['status']?.toString() ?? 'claimed',
+      // A body without a status is not a payout: never assume `claimed`.
+      status: json['status']?.toString() ?? 'unknown',
       code: json['code']?.toString(),
       message: json['message']?.toString(),
       sessionId: json['sessionId']?.toString(),
@@ -115,7 +116,8 @@ class MiningStartResult {
 
   final bool ok;
 
-  /// `started` for a fresh cycle, `running` when one was already live.
+  /// `started` for a fresh cycle, `running` when one was already live,
+  /// `unknown` when the body could not be read.
   final String status;
   final List<MiningExpiredCycle> expiredCycles;
   final MiningSessionModel? session;
@@ -127,21 +129,26 @@ class MiningStartResult {
 
   bool get hasExpiredCycles => expiredCycles.isNotEmpty;
 
+  /// True only when the server confirmed a live cycle.
+  bool get isStarted => ok && (status == 'started' || status == 'running');
+
   factory MiningStartResult.fromApi(Map<String, dynamic> json) {
     final sessionRaw = (json['session'] as Map?)?.cast<String, dynamic>();
     return MiningStartResult(
       ok: json['ok'] != false,
-      status: json['status']?.toString() ?? 'started',
+      status: json['status']?.toString() ?? 'unknown',
       expiredCycles: MiningExpiredCycle.listFromApi(json['expiredCycles']),
       session:
           sessionRaw == null ? null : MiningSessionModel.fromApi(sessionRaw),
     );
   }
 
+  /// Fallback for an unreadable body. Not a success: the refresh that
+  /// follows shows whether a cycle actually started.
   factory MiningStartResult.unknown() {
     return const MiningStartResult(
-      ok: true,
-      status: 'started',
+      ok: false,
+      status: 'unknown',
       expiredCycles: <MiningExpiredCycle>[],
       session: null,
     );

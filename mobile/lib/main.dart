@@ -135,6 +135,8 @@ void main() async {
         badgesStore.loadMyBadges(force: true);
         break;
       case 'mining_claimed':
+      case 'mining_cycle_ready':
+      case 'mining_claim_expiring':
       case 'referral_bound':
       case 'referral_admin_bound':
         miningStore.loadSnapshot(force: true);
@@ -183,6 +185,8 @@ void main() async {
       pushInitialised = false;
       pushNotificationService.dispose();
       notificationSettingsStore.clear();
+      // The next account must never see this one's balance or cycle (F-54).
+      miningStore.clear();
       pendingNotificationTap = null;
       lastHandledTapKey = null;
     }

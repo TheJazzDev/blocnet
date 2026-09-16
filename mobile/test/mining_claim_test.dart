@@ -195,7 +195,7 @@ void main() {
       expect(result?.isClaimed, isFalse);
       expect(store.lastClaimResult?.isExpired, isTrue);
       // Not styled as a crash...
-      expect(store.lastError, isNull);
+      expect(store.actionError, isNull);
       // ...but the user is told, plainly, with the amount and what happens next.
       expect(store.forfeitNotice, isNotNull);
       expect(store.forfeitNotice, contains('120 BNP'));
@@ -219,7 +219,7 @@ void main() {
       expect(result?.isClaimed, isTrue);
       expect(result?.claimedPoints, 120);
       expect(store.forfeitNotice, isNull);
-      expect(store.lastError, isNull);
+      expect(store.actionError, isNull);
       expect(store.snapshot?.balance.claimedTotalPoints, 480);
     });
 
