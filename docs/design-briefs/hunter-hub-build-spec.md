@@ -172,9 +172,7 @@ No reach row.
   Otherwise the full copy (state 2). Current rows fold behind one line when something needs
   the hunter **and** more than three gems are current; with three or fewer they list under
   a `CURRENT · N GEMS` header. Fold text says *"all posted this week"* only when true.
-- **D4 · Hand over** needs a hunter-to-hunter handover invite that does not exist yet (invites
-  are admin-only and mean co-own). It needs a schema change, which is sequenced after the BNP
-  migration lands. Until then the button is **not rendered** (nothing tappable that isn't real).
+- **D4 · Hand over** — first held back because it needed a hunter-to-hunter handover invite and a schema change. **Built 2026-09-16**: `ProjectInviteKind` (`co_own` / `handover`), `POST`/`DELETE /projects/:id/handover`, and accepting moves ownership. The gem page shows *Hand over* as in the design. The *pending* state is not drawn in the design; it is built minimally: the button reads *Handover pending* and opens a withdraw sheet.
 - **D5 · App bar.** The canvas shows *Hub · history · settings* in place of the shared app bar.
   Home kept the shared bar (search, bell, space chip) and the space chip is how a hunter leaves
   the Hunter space, so the Hub keeps it too, titled **Hub**, with **history** added (opens *My
