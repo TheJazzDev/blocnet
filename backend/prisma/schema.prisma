@@ -44,6 +44,8 @@ model Profile {
   adminTwoFactorSessions             AdminTwoFactorSession[]
   audits                             AuditLog[]                           @relation("ActorAuditLogs")
   bookmarks                          Bookmark[]
+  updateLikes                        UpdateLike[]
+  updateBookmarks                    UpdateBookmark[]
   authoredComments                   Comment[]                            @relation("AuthoredComments")
   moderatedComments                  Comment[]                            @relation("CommentModerator")
   commentReactions                   CommentReaction[]                    @relation("CommentReactionUser")
@@ -271,6 +273,8 @@ model Update {
   moderator        Profile?             @relation("UpdateModerator", fields: [moderatedBy], references: [id])
   project          Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   secondaryTags    UpdateSecondaryTag[]
+  likes            UpdateLike[]
+  bookmarks        UpdateBookmark[]
 
   @@index([projectId, urgency])
   @@index([authorId])
@@ -523,6 +527,36 @@ model Bookmark {
   @@unique([userId, communityPostId])
   @@index([userId, createdAt])
   @@index([communityPostId])
+}
+
+/// A member's like on an update. One row per member per update; the count is
+/// derived, never stored, so it cannot drift from the rows.
+model UpdateLike {
+  id        String   @id @default(uuid()) @db.Uuid
+  updateId  String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  update    Update   @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([updateId, userId])
+  @@index([updateId])
+  @@index([userId, createdAt])
+}
+
+/// A member's saved update. Kept apart from `Bookmark`, whose post column is
+/// required and which the profile's community-post bookmarks read as-is.
+model UpdateBookmark {
+  id        String   @id @default(uuid()) @db.Uuid
+  updateId  String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  update    Update   @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([updateId, userId])
+  @@index([updateId])
+  @@index([userId, createdAt])
 }
 
 model CommunityModerationReport {
