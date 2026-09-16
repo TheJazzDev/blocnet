@@ -198,7 +198,7 @@ describe('ReferralsService', () => {
     expect(result.referrer).toBeNull();
   });
 
-  it('counts active referrals using latest mining session start window', async () => {
+  it('counts active referrals as a mining start inside the window (F-50)', async () => {
     const now = new Date();
 
     prisma.profile.findUnique.mockResolvedValueOnce({
@@ -208,28 +208,72 @@ describe('ReferralsService', () => {
       referredById: null,
       referredAt: null,
     });
-    prisma.profile.count.mockResolvedValue(2);
-    prisma.profile.findMany.mockResolvedValue([
-      {
-        miningSessions: [
-          {
-            startsAt: new Date(now.getTime() - 24 * 60 * 60 * 1000),
-          },
-        ],
-      },
-      {
-        miningSessions: [
-          {
-            startsAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
-          },
-        ],
-      },
-    ]);
+    prisma.profile.count.mockImplementation(async ({ where }: any) =>
+      where.miningSessions ? 1 : 2,
+    );
 
     const result = await service.getMe('user-1');
 
     expect(result.totalDirectReferrals).toBe(2);
     expect(result.activeDirectReferrals).toBe(1);
+    expect(prisma.profile.count).toHaveBeenCalledWith({
+      where: {
+        referredById: 'user-1',
+        miningSessions: {
+          some: {
+            startsAt: {
+              gte: expect.any(Date),
+              lte: expect.any(Date),
+            },
+          },
+        },
+      },
+    });
+    const activeCall = prisma.profile.count.mock.calls.find(
+      ([args]: any) => args.where.miningSessions,
+    );
+    const { gte, lte } = activeCall[0].where.miningSessions.some.startsAt;
+    expect(lte.getTime() - gte.getTime()).toBe(168 * 60 * 60 * 1000);
+  });
+
+  it('marks a downline member active only with a mining start in the window (F-50)', async () => {
+    const now = Date.now();
+    const row = (id: string, startsAgoHours: number | null) => ({
+      id,
+      username: id,
+      displayName: id,
+      avatarUrl: null,
+      referredAt: new Date(now - 500 * 60 * 60 * 1000),
+      miningClaimedPoints: 0n,
+      currentLevel: null,
+      miningSessions:
+        startsAgoHours === null
+          ? []
+          : [
+              {
+                id: `${id}-s`,
+                startsAt: new Date(now - startsAgoHours * 60 * 60 * 1000),
+                endsAt: new Date(now - (startsAgoHours - 24) * 60 * 60 * 1000),
+                claimedAt: null,
+                expiredAt: null,
+                effectivePointsPerCycle: 120,
+              },
+            ],
+    });
+    prisma.profile.findMany.mockResolvedValue([
+      row('recent', 2),
+      row('stale', 200),
+      row('never', null),
+    ]);
+    prisma.profile.count.mockResolvedValue(3);
+
+    const result = await service.listDownline('user-1');
+
+    expect(result.data.map((item) => [item.id, item.isActive])).toEqual([
+      ['recent', true],
+      ['stale', false],
+      ['never', false],
+    ]);
   });
 
   it('allows admin to bind referral after user bind window expired', async () => {

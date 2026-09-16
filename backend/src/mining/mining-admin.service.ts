@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { activeReferralWhere } from './active-referral';
 import { buildLifetimeMiningTotals } from './dto/lifetime-mining-totals.dto';
 import type { MiningAdminMetricsResponse } from './dto/mining-admin-metrics-response.dto';
 import { EffectiveMiningConfig } from './mining-calculator.service';
@@ -172,23 +173,12 @@ export class MiningAdminService {
       return 0;
     }
 
-    const cutoff = new Date(
-      asOf.getTime() - config.activeReferralWindowHours * 60 * 60 * 1000,
-    );
-
     return this.prisma.profile.count({
       where: {
         referredById: {
           not: null,
         },
-        miningSessions: {
-          some: {
-            startsAt: {
-              gte: cutoff,
-              lte: asOf,
-            },
-          },
-        },
+        ...activeReferralWhere(asOf, config.activeReferralWindowHours),
       },
     });
   }

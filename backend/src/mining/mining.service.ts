@@ -17,6 +17,7 @@ import {
   MiningCalculatorService,
   EffectiveMiningConfig,
 } from './mining-calculator.service';
+import { countActiveDirectReferrals } from './active-referral';
 import { MiningConfigService } from './mining-config.service';
 import {
   MiningExpiryService,
@@ -951,53 +952,7 @@ export class MiningService {
     asOf: Date,
     prisma: PrismaLike,
   ) {
-    if (!config.referralsEnabled) {
-      return 0;
-    }
-
-    const windowStart = new Date(
-      asOf.getTime() - config.activeReferralWindowHours * 3600000,
-    );
-
-    const count = await prisma.profile.count({
-      where: {
-        referredById: referrerId,
-        homeFeedLastSeenAt: {
-          gte: windowStart,
-        },
-      },
-    });
-
-    return count;
-  }
-
-  private async countActiveReferralEdges(
-    config: EffectiveMiningConfig,
-    asOf: Date,
-  ): Promise<number> {
-    if (!config.referralsEnabled) {
-      return 0;
-    }
-
-    const cutoff = new Date(
-      asOf.getTime() - config.activeReferralWindowHours * 60 * 60 * 1000,
-    );
-
-    return this.prisma.profile.count({
-      where: {
-        referredById: {
-          not: null,
-        },
-        miningSessions: {
-          some: {
-            startsAt: {
-              gte: cutoff,
-              lte: asOf,
-            },
-          },
-        },
-      },
-    });
+    return countActiveDirectReferrals(prisma, referrerId, config, asOf);
   }
 
   private async triggerSevenDayStreakQuestIfEligible(userId: string) {

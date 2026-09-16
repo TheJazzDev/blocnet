@@ -311,6 +311,28 @@ describe('MiningService', () => {
     });
   });
 
+  describe('F-50 boost uses the shared active-referral rule', () => {
+    it('counts referrals by mining start, not feed visits', async () => {
+      const db = createFakeMiningDb();
+
+      await buildService(db).start('user-1');
+
+      const whereClauses = db.client.profile.count.mock.calls.map(
+        ([args]: any) => args?.where,
+      );
+      expect(whereClauses.length).toBeGreaterThan(0);
+      for (const where of whereClauses) {
+        expect(where).not.toHaveProperty('homeFeedLastSeenAt');
+        expect(where).toEqual({
+          referredById: 'user-1',
+          miningSessions: {
+            some: { startsAt: { gte: expect.any(Date), lte: expect.any(Date) } },
+          },
+        });
+      }
+    });
+  });
+
   describe('F-39 claim-window deadlock', () => {
     function deadlockedDb() {
       const now = new Date();

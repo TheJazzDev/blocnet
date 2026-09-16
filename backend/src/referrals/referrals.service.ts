@@ -8,6 +8,10 @@ import {
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { BadgesService } from '../badges/badges.service';
 import { currentLevelSelect, toCurrentLevelDto } from '../levels/level-summary';
+import {
+  countActiveDirectReferrals,
+  isActiveReferral,
+} from '../mining/active-referral';
 import { isClaimable } from '../mining/mining-settlement';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuestsService } from '../quests/quests.service';
@@ -66,7 +70,7 @@ export class ReferralsService {
             referredById: userId,
           },
         }),
-        this.countActiveDirectReferrals(userId, config, asOf),
+        countActiveDirectReferrals(this.prisma, userId, config, asOf),
         profile.referredById
           ? this.prisma.profile.findUnique({
               where: {
@@ -370,10 +374,6 @@ export class ReferralsService {
       }),
     ]);
 
-    const cutoff = new Date(
-      asOf.getTime() - config.activeReferralWindowHours * 60 * 60 * 1000,
-    );
-
     const data = rows.map((row) => {
       const latestSession = row.miningSessions[0] ?? null;
       const status = this.resolveSessionStatus(latestSession, asOf, config);
@@ -386,7 +386,11 @@ export class ReferralsService {
         : 0;
 
       const lastActiveAt = latestSession?.startsAt ?? row.referredAt;
-      const isActive = !!latestSession && latestSession.startsAt >= cutoff;
+      const isActive = isActiveReferral(
+        latestSession?.startsAt,
+        asOf,
+        config.activeReferralWindowHours,
+      );
 
       return {
         id: row.id,
@@ -523,42 +527,6 @@ export class ReferralsService {
       referralBindWindowHours: configRow.referralBindWindowHours,
       claimWindowHours: configRow.claimWindowHours,
     };
-  }
-
-  private async countActiveDirectReferrals(
-    userId: string,
-    config: ReferralConfig,
-    asOf: Date,
-  ): Promise<number> {
-    if (!config.referralsEnabled) {
-      return 0;
-    }
-
-    const cutoff = new Date(
-      asOf.getTime() - config.activeReferralWindowHours * 60 * 60 * 1000,
-    );
-
-    const referrals = await this.prisma.profile.findMany({
-      where: {
-        referredById: userId,
-      },
-      select: {
-        miningSessions: {
-          orderBy: {
-            startsAt: 'desc',
-          },
-          take: 1,
-          select: {
-            startsAt: true,
-          },
-        },
-      },
-    });
-
-    return referrals.filter((referral) => {
-      const latestStart = referral.miningSessions[0]?.startsAt;
-      return !!latestStart && latestStart >= cutoff;
-    }).length;
   }
 
   /**
