@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:blocnet/app/blocnet_app.dart';
 import 'package:blocnet/app/router.dart';
 import 'package:blocnet/app/config.dart';
+import 'package:blocnet/services/hunter/hunter_board_store.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/badges_store.dart';
 import 'package:blocnet/services/users/blocks_store.dart';
@@ -236,6 +237,7 @@ void main() async {
         ),
         ChangeNotifierProvider(create: (_) => ProjectsStore()),
         ChangeNotifierProvider(create: (_) => ProjectInvitesStore()),
+        ChangeNotifierProvider(create: (_) => HunterBoardStore()),
         ChangeNotifierProxyProvider<AuthStore, HunterApplicationStore>(
           create: (_) => HunterApplicationStore(),
           update: (_, auth, store) {
