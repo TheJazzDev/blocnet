@@ -52,6 +52,8 @@ Today's screen answers none of these clearly:
 - There is a **leaderboard** of members by lifetime claimed BNP, and an **hourly history**
   of the last 48 checkpoints.
 
+**Owner decision 2026-09-16: cycle progress is a ring around the mining core, not hour segments.**
+
 **This is Blocnet's own system, so the app knows the exact end time.** The rule against
 progress bars and clocks, used on Home and Hub, is about third-party projects whose future
 nobody knows. It does **not** apply here: a cycle progress ring or bar is honest. Even so,
