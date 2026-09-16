@@ -31,6 +31,7 @@ Parallel-safe splits. Each touches one surface so they can run as separate sessi
 | H | Backend: MCR retirement, BNP/BNT naming | `backend/` (after B merges) | F-07 (MCR data migration, `*Mcr` → `*Bnp` DTO rename) | [session-templates.md#ws-h](session-templates.md#ws-h--backend-mcr-retirement) |
 
 | Q | Mobile: home feed redesign | `mobile/` | F-40, F-41, F-42, F-43 | branch `feature/home-feed-redesign`, phased below |
+| R | App map execution: cleanup, reliability, Hunter Hub, Gems | all | APP_MAP §4 | [`APP_MAP.md`](APP_MAP.md); briefs [`hunter-hub.md`](design-briefs/hunter-hub.md), [`gems.md`](design-briefs/gems.md) |
 
 Deferred to the Claude Design system phase (do not spend effort now): F-14 typography scale, F-23 hunter hero copy density, visual-language alignment between console and mobile.
 
