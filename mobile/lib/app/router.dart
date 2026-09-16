@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/routes.dart';
 import 'package:blocnet/app/route_access_gate.dart';
+import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 
@@ -27,6 +28,20 @@ class CustomAppRouter {
     final routes = getRoutes();
 
     final builder = routes[routeName];
+
+    // A tab route with the shell already open only switches its tab and
+    // removes itself, so it must not animate or hide the shell meanwhile.
+    if (builder != null &&
+        ProtectedRoutes.tabRoutes.contains(routeName) &&
+        MainTabNavigator.liveRoute != null) {
+      return PageRouteBuilder<void>(
+        settings: settings,
+        opaque: false,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (context, _, __) => builder(context),
+      );
+    }
 
     if (builder != null) {
       return MaterialPageRoute(

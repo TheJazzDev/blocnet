@@ -1,4 +1,3 @@
-import 'package:blocnet/features/engagement/data/models/edge_brief_model.dart';
 import 'package:blocnet/features/engagement/data/models/radar_summary_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 
@@ -18,7 +17,6 @@ class HomeBootstrapPayload {
     required this.feedItems,
     required this.rawFeedItems,
     required this.meSummary,
-    required this.edgeBrief,
     required this.radar,
     required this.unreadCount,
   });
@@ -29,12 +27,10 @@ class HomeBootstrapPayload {
   final List<Update> feedItems;
   final List<Map<String, dynamic>> rawFeedItems;
   final Map<String, dynamic>? meSummary;
-  final EdgeBriefResponse? edgeBrief;
   final RadarSummary? radar;
   final int unreadCount;
 
   bool get hasFeed => feedItems.isNotEmpty;
-  bool get hasEdgeBrief => edgeBrief != null;
   bool get hasRadar => radar != null;
 
   factory HomeBootstrapPayload.fromApi(Map<String, dynamic> json) {
@@ -63,7 +59,6 @@ class HomeBootstrapPayload {
     final rawFeedItems = (rawItems as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
         .toList(growable: false);
-    final edgeBriefMap = json['edgeBrief'];
     final radarMap = json['radar'];
 
     return HomeBootstrapPayload(
@@ -75,9 +70,6 @@ class HomeBootstrapPayload {
       rawFeedItems: rawFeedItems,
       meSummary: json['meSummary'] is Map<String, dynamic>
           ? json['meSummary'] as Map<String, dynamic>
-          : null,
-      edgeBrief: edgeBriefMap is Map<String, dynamic>
-          ? EdgeBriefResponse.fromApi(edgeBriefMap)
           : null,
       radar: radarMap is Map<String, dynamic>
           ? RadarSummary.fromApi(radarMap)
@@ -93,7 +85,6 @@ class HomeBootstrapPayload {
       'cacheTtlSec': cacheTtlSec,
       'feedItems': rawFeedItems,
       'meSummary': meSummary,
-      'edgeBrief': edgeBrief?.toJson(),
       'radar': radar?.toJson(),
       'unreadCount': unreadCount,
     };

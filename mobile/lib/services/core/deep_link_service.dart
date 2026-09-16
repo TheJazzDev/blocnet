@@ -31,7 +31,6 @@ class DeepLinkService {
     AppRoutes.referralCode,
     AppRoutes.home,
     AppRoutes.discover,
-    AppRoutes.trending,
   };
 
   DeepLinkService({

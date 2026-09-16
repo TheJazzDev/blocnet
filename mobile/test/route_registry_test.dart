@@ -38,11 +38,21 @@ void main() {
     expect(routes.containsKey(AppRoutes.glossary), isTrue);
     expect(routes.containsKey(AppRoutes.home), isTrue);
     expect(routes.containsKey(AppRoutes.discover), isTrue);
-    expect(routes.containsKey(AppRoutes.trending), isTrue);
-    expect(routes.containsKey(AppRoutes.midPriority), isTrue);
-    expect(routes.containsKey(AppRoutes.lowPriority), isTrue);
-    expect(routes.containsKey(AppRoutes.highPriority), isTrue);
     expect(routes.containsKey(AppRoutes.communityCreatePost), isTrue);
     expect(routes.containsKey(AppRoutes.communityDiscussion), isTrue);
+  });
+
+  test('cut screens are no longer registered', () {
+    // Trending and the three Priority screens were cut (APP_MAP section 3).
+    final routes = ProtectedRoutes.getAll();
+    for (final path in [
+      '/trending',
+      '/high-priority',
+      '/mid-priority',
+      '/low-priority',
+    ]) {
+      expect(routes.containsKey(path), isFalse, reason: path);
+      expect(ProtectedRoutes.isProtectedRoute(path), isFalse, reason: path);
+    }
   });
 }

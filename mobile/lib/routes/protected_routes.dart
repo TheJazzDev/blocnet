@@ -1,5 +1,4 @@
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/badges/presentation/pages/badge_gallery_page.dart';
 import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
@@ -16,7 +15,10 @@ import 'package:blocnet/features/tips/presentation/pages/tip_history_screen.dart
 import 'package:blocnet/features/community/presentation/pages/community_create_post_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_post_discussion_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/my_reports_screen.dart';
+import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
+import 'package:blocnet/features/main/presentation/widgets/main_tab_redirect.dart';
+import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/mining/presentation/pages/referral_code_screen.dart';
 import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
 import 'package:blocnet/features/notifications/presentation/pages/notification_insights_screen.dart';
@@ -25,7 +27,6 @@ import 'package:blocnet/features/system_alerts/presentation/pages/system_alerts_
 import 'package:blocnet/features/profile/presentation/pages/blocked_users_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/deactivate_account_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/edit_profile_screen.dart';
-import 'package:blocnet/features/profile/presentation/pages/profile_screen.dart';
 import 'package:blocnet/features/settings/presentation/pages/settings_screen.dart';
 import 'package:blocnet/features/support/presentation/pages/faq_screen.dart';
 import 'package:blocnet/features/support/presentation/pages/getting_started_screen.dart';
@@ -34,8 +35,6 @@ import 'package:blocnet/features/support/presentation/pages/help_support_screen.
 import 'package:blocnet/features/wallet/presentation/pages/wallet_asset_detail_screen.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_screen.dart';
 import 'package:flutter/material.dart';
-import '../features/projects/presentation/sections/explore/trending.dart';
-import '../features/projects/presentation/sections/explore/priority.dart';
 
 class ProtectedRoutes {
   // Global
@@ -78,11 +77,11 @@ class ProtectedRoutes {
   // Projects
   static const String home = AppRoutes.home;
   static const String discover = AppRoutes.discover;
-  static const String trending = AppRoutes.trending;
-  static const String midPriority = AppRoutes.midPriority;
-  static const String lowPriority = AppRoutes.lowPriority;
-  static const String highPriority = AppRoutes.highPriority;
   static const String topHunters = AppRoutes.topHunters;
+
+  /// Routes that name a bottom tab. Pushing one while the shell is open
+  /// returns to that tab; see [MainTabRedirect].
+  static Iterable<String> get tabRoutes => MainTabNavigator.tabForRoute.keys;
 
   static bool isProtectedRoute(String? route) {
     if (route == null) return false;
@@ -100,9 +99,10 @@ class ProtectedRoutes {
     return {
       // Global
       main: (context) => const MainScreen(initialIndex: 0),
-      profile: (context) => const ProfileScreen(),
+      // Tab routes land on the open shell's tab rather than stacking a copy.
+      profile: (context) => const MainTabRedirect(tab: MainTabScope.profileTab),
       settings: (context) => const SettingsScreen(),
-      wallet: (context) => const WalletScreen(),
+      wallet: (context) => const MainTabRedirect(tab: MainTabScope.walletTab),
       walletTransactions: (context) =>
           const WalletScreen(showTransactionsOnly: true),
       walletAssetDetail: (context) {
@@ -118,7 +118,7 @@ class ProtectedRoutes {
             : TipHistoryMode.sent;
         return TipHistoryScreen(mode: mode);
       },
-      mining: (context) => const MainScreen(initialIndex: 3),
+      mining: (context) => const MainTabRedirect(tab: MainTabScope.miningTab),
       miningLeaderboard: (context) => const MiningLeaderboardScreen(),
       miningHourlyHistory: (context) => const MiningHourlyHistoryScreen(),
       // Notifications is now a push route (not a main tab)
@@ -160,12 +160,9 @@ class ProtectedRoutes {
       becomeHunter: (context) => const BecomeHunterScreen(),
 
       // Projects
-      home: (context) => const MainScreen(initialIndex: 0),
-      discover: (context) => const MainScreen(initialIndex: 1),
-      trending: (context) => const TrendingScreen(),
-      midPriority: (context) => PriorityScreens(priority: Priority.mid),
-      lowPriority: (context) => PriorityScreens(priority: Priority.low),
-      highPriority: (context) => PriorityScreens(priority: Priority.high),
+      home: (context) => const MainTabRedirect(tab: MainTabScope.homeTab),
+      discover: (context) =>
+          const MainTabRedirect(tab: MainTabScope.discoverTab),
       topHunters: (context) => const TopHuntersScreen(),
     };
   }
@@ -206,10 +203,6 @@ class ProtectedRoutes {
     becomeHunter,
     home,
     discover,
-    trending,
-    midPriority,
-    lowPriority,
-    highPriority,
     topHunters,
   };
 

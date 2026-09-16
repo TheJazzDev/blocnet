@@ -19,6 +19,7 @@ import 'package:blocnet/features/projects/presentation/models/feed_blend.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/models/quiet_gem.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_caught_up_card.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_day_one.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_radar_strip.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
@@ -91,10 +92,6 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
     setState(() {
       _pickedSection = section;
       _section = section;
-      if (section == Sections.explore) {
-        _pendingNewPostIds.clear();
-        _showCatchupFilter = false;
-      }
     });
   }
 
@@ -109,10 +106,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
   }
 
   Future<void> _checkForNewPosts() async {
-    // Both feed tabs care about new posts; only General does not.
-    if (!mounted || _section == Sections.explore) {
-      return;
-    }
+    if (!mounted) return;
 
     final updatesStore = context.read<UpdatesStore>();
     final existingIds = updatesStore.posts.map((post) => post.id).toSet();
@@ -155,9 +149,9 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
 
   /// The hunters worth showing a member who follows nothing, ranked by how
   /// much they have posted. Five, because the design's rail is five.
-  List<({String handle, String name})> _topHunters(UpdatesStore store) {
+  List<FeedHunter> _topHunters(UpdatesStore store) {
     final counts = <String, int>{};
-    final names = <String, ({String handle, String name})>{};
+    final names = <String, FeedHunter>{};
     for (final post in store.posts) {
       final admin = post.admin;
       if (admin == null) continue;
@@ -166,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
           ? '@${admin.id.substring(0, admin.id.length >= 6 ? 6 : admin.id.length)}'
           : '@$raw';
       counts[handle] = (counts[handle] ?? 0) + 1;
-      names[handle] = (handle: handle, name: admin.name);
+      names[handle] = (handle: handle, name: admin.name, admin: admin);
     }
     final ranked = counts.keys.toList()
       ..sort((a, b) => counts[b]!.compareTo(counts[a]!));
@@ -207,7 +201,6 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
         (FeedBlend.defaultsToFollowing(followCount)
             ? Sections.following
             : Sections.forYou);
-    final isForYou = _section != Sections.explore;
     // Earned, not idle: only claim this once the radar has actually reported,
     // the member has a board to be caught up on, and nothing is pending.
     final radar = _radarSummary;
@@ -220,8 +213,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
       posts: updatesStore.posts,
       now: DateTime.now(),
     );
-    final showCaughtUp = isForYou &&
-        quietGems.isEmpty &&
+    final showCaughtUp = quietGems.isEmpty &&
         !_isLoadingRadar &&
         radar != null &&
         !radar.hasUpdates &&
@@ -276,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
                 // Not on day one: "0 new across 0 gems" is noise on a screen
                 // whose whole job is to get the member their first follow. The
                 // design goes straight from the tabs to the intro there.
-                else if (isForYou && radar != null && followCount > 0)
+                else if (radar != null && followCount > 0)
                   SliverToBoxAdapter(
                     child: FeedRadarStrip(radar: radar, accent: accent),
                   ),
@@ -286,18 +278,13 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
                   topHunters: _topHunters(updatesStore),
                   showCaughtUp: showCaughtUp,
                   isInitialLoading: feedLoading,
-                  showCatchupFilter: _showCatchupFilter,
-                  radarSummary: _radarSummary,
                   feedViewMode: feedViewMode,
-                  onClearCatchup: () {
-                    setState(() => _showCatchupFilter = false);
-                  },
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: bottomPad)),
               ],
             ),
           ),
-          if (isForYou && _pendingNewPostIds.isNotEmpty)
+          if (_pendingNewPostIds.isNotEmpty)
             NewUpdatesPill(
               count: _pendingNewPostIds.length,
               backgroundColor: accent,

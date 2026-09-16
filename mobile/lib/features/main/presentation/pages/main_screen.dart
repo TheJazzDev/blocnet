@@ -4,6 +4,7 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/spaces_explainer_sheet.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
+import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_screen.dart';
 import 'package:blocnet/features/moderation/presentation/pages/moderation_hub_screen.dart';
@@ -27,6 +28,7 @@ part 'main/main_screen_shells.part.dart';
 part 'main/main_screen_nav.part.dart';
 part 'main/main_screen_composer.part.dart';
 part 'main/main_screen_spaces_explainer.part.dart';
+part 'main/main_screen_hunter_onboarding.part.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key, this.initialIndex = 0});
@@ -94,6 +96,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    MainTabNavigator.detach(this);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -107,6 +110,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Lets routes pushed above this shell come back to one of its tabs.
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      MainTabNavigator.attach(this, route, _selectTabInActiveSpace);
+    }
     final authStore = context.watch<AuthStore>();
     final activeSpace = authStore.activeSpace;
 
@@ -516,114 +524,6 @@ class _TabMeta {
   final bool showSearch;
   final bool showFilter;
   final bool showNotificationBell;
-}
-
-class _HunterOnboardingDialog extends StatelessWidget {
-  const _HunterOnboardingDialog();
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      insetPadding:
-          const EdgeInsets.symmetric(horizontal: 22, vertical: AppSpace.xl),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.bgSurface,
-              AppColors.bgSurface.withValues(alpha: 0.96),
-            ],
-          ),
-          border: Border.all(
-            color: AppColors.primary500.withValues(alpha: 0.35),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.45),
-              blurRadius: 20,
-              spreadRadius: 1,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.fromLTRB(
-            AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.primary400,
-                        AppColors.teal400,
-                      ],
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.workspace_premium_rounded,
-                    size: AppIcon.lg,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Text(
-                    'Hunter role unlocked',
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: AppText.subtitleSize,
-                      weight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpace.md),
-            Text(
-              'You now have access to Hunter Hub, management tools, and hunter rankings.',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.labelSize,
-                weight: FontWeight.w500,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: AppSpace.lg),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary500,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                  ),
-                ),
-                child: const Text('Continue'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _ReferralPromptSheet extends StatefulWidget {

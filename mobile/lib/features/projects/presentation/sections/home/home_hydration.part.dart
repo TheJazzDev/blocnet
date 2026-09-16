@@ -9,17 +9,16 @@ part of '../home.dart';
 ///    payload and applies it; stores and local state only notify when the
 ///    content actually changed, so an unchanged feed does not flash.
 /// 3. The per-section follow-ups skip anything the payload already
-///    delivered (radar, edge brief), which is what keeps the request count
-///    down.
+///    delivered (radar), which is what keeps the request count down. The
+///    Edge brief is not loaded: only the cut Edge Engine page read it. The
+///    feed cards still need Edge decisions, fetched once.
 mixin _HomeHydration on State<HomeScreen> {
   final UsersApiRepository _usersRepository = UsersApiRepository();
 
   RadarSummary? _radarSummary;
   bool _isLoadingRadar = true;
   bool _isAcknowledgingRadar = false;
-  bool _showCatchupFilter = false;
   bool _isFeedReady = false;
-  bool _isEdgeReady = false;
   bool _isBootstrapLoading = false;
   bool _hasAppliedBootstrap = false;
 
@@ -82,25 +81,18 @@ mixin _HomeHydration on State<HomeScreen> {
         remote != null && remote.hasFeed
             ? updatesStore.refreshUpdates()
             : updatesStore.fetchUpdatesOnce(),
-        remote != null && remote.hasEdgeBrief
-            ? edgeStore.ensureFeed()
-            : edgeStore.fetchOnce(),
+        edgeStore.ensureFeed(),
         if (remote == null || !remote.hasRadar) _loadRadar(),
       ]);
     } finally {
       if (mounted) {
         final feedReady = updatesStore.posts.isNotEmpty;
-        final edgeReady = edgeStore.brief != null;
         _mutate(() {
           _isBootstrapLoading = false;
           _isFeedReady = feedReady;
-          _isEdgeReady = edgeReady;
         });
         if (feedReady) {
           StartupMetricsService.markHomeFeedReady(source: 'network');
-        }
-        if (edgeReady) {
-          StartupMetricsService.markEdgeReady(source: 'network');
         }
       }
     }
@@ -112,7 +104,6 @@ mixin _HomeHydration on State<HomeScreen> {
     bool duringInit = false,
   }) {
     final updatesStore = context.read<UpdatesStore>();
-    final edgeStore = context.read<EdgeEngineStore>();
     final projectsStore = context.read<ProjectsStore>();
     final notify = !duringInit;
 
@@ -123,7 +114,6 @@ mixin _HomeHydration on State<HomeScreen> {
       ),
     );
     updatesStore.hydrateFromUpdates(payload.feedItems, notify: notify);
-    edgeStore.hydrateBrief(payload.edgeBrief, notify: notify);
     context.read<HomeBootstrapStore>().markApplied(payload);
     _hasAppliedBootstrap = true;
 
@@ -132,18 +122,15 @@ mixin _HomeHydration on State<HomeScreen> {
     final radarChanged =
         radar != null && (current == null || !current.contentEquals(radar));
     final feedReady = _isFeedReady || payload.hasFeed;
-    final edgeReady = _isEdgeReady || payload.hasEdgeBrief;
     final loadingRadar = radar == null && current == null;
 
     if (radarChanged ||
         feedReady != _isFeedReady ||
-        edgeReady != _isEdgeReady ||
         loadingRadar != _isLoadingRadar) {
       _mutate(
         () {
           if (radarChanged) _radarSummary = radar;
           _isFeedReady = feedReady;
-          _isEdgeReady = edgeReady;
           _isLoadingRadar = loadingRadar;
         },
         duringInit: duringInit,
@@ -151,7 +138,6 @@ mixin _HomeHydration on State<HomeScreen> {
     }
 
     if (feedReady) StartupMetricsService.markHomeFeedReady(source: source);
-    if (edgeReady) StartupMetricsService.markEdgeReady(source: source);
   }
 
   Future<void> _loadRadar() async {
@@ -198,7 +184,6 @@ mixin _HomeHydration on State<HomeScreen> {
           highUrgencyCount: 0,
           activeProjects: const [],
         );
-        _showCatchupFilter = false;
       });
     } catch (_) {
       // Keep existing radar state; next refresh can recover.
@@ -221,9 +206,7 @@ mixin _HomeHydration on State<HomeScreen> {
 
     if (!mounted) return;
     setState(() {
-      _showCatchupFilter = false;
       _isFeedReady = updatesStore.posts.isNotEmpty;
-      _isEdgeReady = edgeStore.brief != null;
     });
   }
 }
