@@ -1,74 +1,19 @@
 import 'package:blocnet/features/hunter/data/models/hunter_gem_detail_model.dart';
-import 'package:blocnet/features/hunter/data/repositories/hunter_reliability_api_repository.dart';
-import 'package:blocnet/features/hunter/presentation/pages/hunter_gem_screen.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/hub_fab.dart';
 import 'package:blocnet/features/main/presentation/widgets/space_bottom_nav.dart';
-import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
-import 'package:blocnet/services/api/api_client.dart';
-import 'package:blocnet/services/hunter/hunter_board_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 
+import 'gem_store_fake.dart';
 import 'hub_fixtures.dart';
 import 'hub_harness.dart';
-
-class _NoopHttpClient extends http.BaseClient {
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) =>
-      throw UnimplementedError();
-}
-
-/// A store that already holds one gem page and never goes to the network.
-class _GemStore extends HunterBoardStore {
-  _GemStore(this.detail)
-      : super(
-          repository: HunterReliabilityApiRepository(
-            apiClient: ApiClient(httpClient: _NoopHttpClient()),
-          ),
-          proposalsRepository: ProjectProposalsApiRepository(
-            apiClient: ApiClient(httpClient: _NoopHttpClient()),
-          ),
-        );
-
-  final HunterGemDetail detail;
-  int loads = 0;
-
-  @override
-  HunterGemDetail? gemFor(String projectId) =>
-      projectId == detail.gem.projectId ? detail : null;
-
-  @override
-  Future<void> loadGem(String projectId) async => loads++;
-}
-
-Future<_GemStore> _pumpGemPage(
-  WidgetTester tester,
-  HunterGemDetail detail, {
-  double width = 375,
-}) async {
-  usePhone(tester, width);
-  final store = _GemStore(detail);
-  await tester.pumpWidget(
-    ChangeNotifierProvider<HunterBoardStore>.value(
-      value: store,
-      child: MaterialApp(
-        theme: ThemeData(brightness: Brightness.dark),
-        home: HunterGemScreen(initialGem: detail.gem, clock: () => hubNow),
-      ),
-    ),
-  );
-  await tester.pump();
-  return store;
-}
 
 void main() {
   for (final width in hubWidths) {
     group('@${width.toInt()}', () {
       testWidgets('state 6 · the gem page, opened from a quiet gem',
           (tester) async {
-        final store = await _pumpGemPage(tester, haloDetail(), width: width);
+        final store = await pumpGemPage(tester, haloDetail(), width: width);
         expect(tester.takeException(), isNull);
         expect(store.loads, 1, reason: 'loads its own payload on open');
 
@@ -104,9 +49,8 @@ void main() {
         expect(find.text('Unmaintained'), findsOneWidget);
         expect(inside(byKey('gem-post'), find.text('Post update')),
             findsOneWidget);
-
-        // D4: no hand-over until handover invites exist.
-        expect(find.text('Hand over'), findsNothing);
+        expect(inside(byKey('gem-handover'), find.text('Hand over')),
+            findsOneWidget);
 
         expect(find.text('19 days without an update'), findsOneWidget);
         final newest = byKey('gem-event-e1');
@@ -140,11 +84,12 @@ void main() {
         await tester.tap(byKey('gem-page-menu'));
         await tester.pumpAndSettle();
         expect(find.text('View as member'), findsOneWidget);
-        expect(find.text('Hand over'), findsNothing);
+        expect(find.text('Hand over'), findsOneWidget,
+            reason: 'the page button only; the menu has no hand-over entry');
       });
 
       testWidgets('wait and report cards are hidden at zero', (tester) async {
-        await _pumpGemPage(tester, haloDetail(waiting: 0, reports: 0),
+        await pumpGemPage(tester, haloDetail(waiting: 0, reports: 0),
             width: width);
         expect(tester.takeException(), isNull);
         expect(byKey('gem-wait'), findsNothing);
@@ -163,7 +108,7 @@ void main() {
           updates: haloDetail().updates,
           gapDays: null,
         );
-        await _pumpGemPage(tester, detail, width: width);
+        await pumpGemPage(tester, detail, width: width);
         expect(tester.takeException(), isNull);
         expect(byKey('gem-gap'), findsNothing);
         expect(inside(byKey('gem-header'), find.text('DUE')), findsOneWidget);

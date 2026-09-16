@@ -3,7 +3,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
 /// `← Your gem ⋯` — the gem page's own header. The menu holds *View as
-/// member*; there is no hand-over entry until handover invites exist (D4).
+/// member*; *Hand over* lives beside *Post update* on the page itself.
 class GemPageTopBar extends StatelessWidget {
   const GemPageTopBar({
     super.key,

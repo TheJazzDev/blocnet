@@ -4,23 +4,33 @@ import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
 import 'package:blocnet/features/hunter/presentation/hub_navigation.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/gem_page_top_bar.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/gem_page_view.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/handover_flow.dart';
 import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/main/presentation/widgets/space_bottom_nav.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/detail_dialogs.dart';
 import 'package:blocnet/services/hunter/hunter_board_store.dart';
+import 'package:blocnet/shared/widgets/username_suggest_field.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 /// One of the hunter's gems (design state 6), opened from any row or from
 /// *Open gem*. Keeps the hunter bottom bar with Hub on, and has no FAB.
 class HunterGemScreen extends StatefulWidget {
-  const HunterGemScreen({super.key, required this.initialGem, this.clock});
+  const HunterGemScreen({
+    super.key,
+    required this.initialGem,
+    this.clock,
+    this.profileSearch,
+  });
 
   /// The board row it was opened from, shown until the page's own payload
   /// arrives.
   final HunterBoardGem initialGem;
   final DateTime Function()? clock;
+
+  /// Hand over's @username suggestions; injectable for tests.
+  final ProfileSearch? profileSearch;
 
   @override
   State<HunterGemScreen> createState() => _HunterGemScreenState();
@@ -52,6 +62,7 @@ class _HunterGemScreenState extends State<HunterGemScreen> {
     final store = context.watch<HunterBoardStore>();
     final detail = store.gemFor(_id);
     final gem = detail?.gem ?? _boardCopy(store) ?? widget.initialGem;
+    final now = (widget.clock ?? DateTime.now)();
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -69,9 +80,17 @@ class _HunterGemScreenState extends State<HunterGemScreen> {
                 detail: detail,
                 loading: store.isLoadingGem(_id),
                 error: store.gemErrorFor(_id),
-                now: (widget.clock ?? DateTime.now)(),
+                now: now,
                 onPost: () =>
                     HubNavigation.openComposer(context, projectId: _id),
+                onHandover: () => HandoverFlow.open(
+                  context,
+                  projectId: _id,
+                  gemName: gem.name,
+                  pending: detail?.pendingHandover,
+                  now: now,
+                  search: widget.profileSearch,
+                ),
                 onEdit: (event) => HubNavigation.openComposer(
                   context,
                   projectId: _id,

@@ -308,6 +308,42 @@ void main() {
       });
       expect(detail.gapDays, isNull);
       expect(detail.updates, isEmpty);
+      expect(detail.pendingHandover, isNull);
+    });
+
+    test('reads the pending handover from the gem', () {
+      final detail = HunterGemDetail.fromApi({
+        'gem': {
+          'projectId': 'p',
+          'pendingHandover': {
+            'inviteId': 'inv1',
+            'hunter': {'id': 'h2', 'username': 'maya', 'displayName': 'Maya'},
+            'createdAt': '2026-09-10T08:00:00Z',
+          },
+        },
+        'updates': <Object>[],
+      });
+      final pending = detail.pendingHandover!;
+      expect(pending.inviteId, 'inv1');
+      expect(pending.hunter.id, 'h2');
+      expect(pending.hunter.username, 'maya');
+      expect(pending.hunter.displayName, 'Maya');
+      expect(pending.createdAt, DateTime.utc(2026, 9, 10, 8));
+    });
+
+    test('an unreadable pending handover is treated as none', () {
+      for (final raw in [null, 'x', <String, dynamic>{}]) {
+        final detail = HunterGemDetail.fromApi({
+          'gem': {'projectId': 'p', 'pendingHandover': raw},
+        });
+        expect(detail.pendingHandover, isNull, reason: '$raw');
+      }
+      final topLevel = HunterGemDetail.fromApi({
+        'pendingHandover': {'inviteId': 'top-level'},
+        'gem': {'projectId': 'p'},
+      });
+      expect(topLevel.pendingHandover, isNull,
+          reason: 'read from json["gem"], not the top level');
     });
   });
 }
