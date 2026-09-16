@@ -3,6 +3,9 @@ import type {
   AdminBindReferralRequest,
   AdminBindReferralResponse,
   AdminBindUserReferralRequest,
+  AdminBnpAdjustment,
+  AdminBnpAdjustmentRequest,
+  AdminBnpAdjustmentsResponse,
   AdminMiningConfig,
   AdminMiningConfigPatch,
   AdminMiningLeaderboardResponse,
@@ -44,4 +47,24 @@ export const miningApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  /** F-66. Errors are shown inline by the dialog, so no error toast. */
+  createBnpAdjustment: (userId: string, body: AdminBnpAdjustmentRequest) =>
+    apiFetch<AdminBnpAdjustment>(`/admin/mining/users/${userId}/adjustments`, {
+      method: "POST",
+      body: JSON.stringify(body),
+      successMessage: "BNP balance adjusted.",
+      suppressErrorToast: true,
+    }),
+
+  listBnpAdjustments: (
+    userId: string,
+    params?: { limit?: number; offset?: number },
+  ) =>
+    apiFetch<AdminBnpAdjustmentsResponse>(
+      `/admin/mining/users/${userId}/adjustments${toQuery({
+        limit: params?.limit,
+        offset: params?.offset,
+      })}`,
+    ),
 };

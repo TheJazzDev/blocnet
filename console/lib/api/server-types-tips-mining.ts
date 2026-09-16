@@ -176,3 +176,35 @@ export interface AdminBindReferralResponse {
   source: "admin_override";
 }
 
+
+/** F-66: owner/admin manual BNP adjustments. Balances are decimal strings. */
+export interface AdminBnpAdjustmentBalances {
+  claimedPoints: string;
+  walletBalance: string;
+}
+
+export interface AdminBnpAdjustment {
+  id: string;
+  userId: string;
+  /** Whole BNP; negative for a removal. */
+  amount: number;
+  reason: string;
+  actor: { id: string; displayName: string | null; username: string | null } | null;
+  balanceBefore: AdminBnpAdjustmentBalances | null;
+  balanceAfter: AdminBnpAdjustmentBalances | null;
+  createdAt: string;
+  replayed: boolean;
+}
+
+export interface AdminBnpAdjustmentRequest {
+  amount: number;
+  reason: string;
+  idempotencyKey: string;
+}
+
+export interface AdminBnpAdjustmentsResponse {
+  total: number;
+  limit: number;
+  offset: number;
+  data: AdminBnpAdjustment[];
+}

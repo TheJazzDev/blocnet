@@ -90,6 +90,10 @@ export type {
   AdminBindReferralRequest,
   AdminBindUserReferralRequest,
   AdminBindReferralResponse,
+  AdminBnpAdjustment,
+  AdminBnpAdjustmentBalances,
+  AdminBnpAdjustmentRequest,
+  AdminBnpAdjustmentsResponse,
 } from "./api";
 
 export type {

@@ -12,3 +12,4 @@ export * from "./use-governance-query";
 export * from "./use-tags-query";
 export * from "./use-tips-query";
 export * from "./use-mining-query";
+export * from "./use-bnp-adjustments-query";
