@@ -1,6 +1,5 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/wallet/presentation/pages/swap_flow_screen.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_receive_screen.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/quick_action_button.dart';
@@ -25,13 +24,7 @@ class QuickActions extends StatelessWidget {
                 AppColors.successColor.withValues(alpha: 0.7),
               ],
             ),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const WalletReceiveScreen(),
-                ),
-              );
-            },
+            onTap: () => openWalletReceive(context),
           ),
         ),
         const SizedBox(width: AppSpace.md),
@@ -49,28 +42,6 @@ class QuickActions extends StatelessWidget {
             ),
             onTap: () {
               openSendFlow(context);
-            },
-          ),
-        ),
-        const SizedBox(width: AppSpace.md),
-        Expanded(
-          child: QuickActionButton(
-            icon: Icons.swap_horiz_rounded,
-            label: 'Swap',
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.teal500,
-                AppColors.teal400,
-              ],
-            ),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const SwapFlowScreen(),
-                ),
-              );
             },
           ),
         ),

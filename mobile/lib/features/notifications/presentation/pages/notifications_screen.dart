@@ -1,25 +1,21 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
+import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
-import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
+import 'package:blocnet/features/notifications/presentation/widgets/cross_space_notification_sheet.dart';
+import 'package:blocnet/features/notifications/presentation/widgets/notification_category_filter_bar.dart';
+import 'package:blocnet/features/notifications/presentation/widgets/notification_tile.dart';
+import 'package:blocnet/features/notifications/presentation/widgets/notifications_empty_state.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/notifications/notification_navigator.dart';
-import 'package:blocnet/services/notifications/notification_target_resolver.dart';
+import 'package:blocnet/services/notifications/notification_space_target.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/app/typography.dart';
-import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:provider/provider.dart';
-
-enum _CrossSpaceSurface {
-  community,
-  hunterHub,
-}
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({
@@ -70,8 +66,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           });
         }
 
-        final digest = store.digestSummary;
-        final hasInsights = digest?.hasAnyInsight ?? false;
         final hasContent = store.notifications.isNotEmpty;
         final viewMode = context.watch<FeedViewModeStore>().mode;
 
@@ -84,30 +78,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             showFilter: false,
             showNotificationBell: false,
             actions: [
-              if (hasInsights)
-                GestureDetector(
-                  onTap: () => _openInsights(digest),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: AppSpace.sm),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpace.md,
-                      vertical: AppSpace.sm,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgElevated,
-                      borderRadius: BorderRadius.circular(AppRadius.smValue),
-                      border: Border.all(color: AppColors.borderSubtle),
-                    ),
-                    child: Text(
-                      'Insights',
-                      style: AppTypography.custom(
-                        color: AppColors.textMuted,
-                        size: AppText.captionSize,
-                        weight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
               if (store.unreadCount > 0)
                 GestureDetector(
                   onTap: store.markAllRead,
@@ -136,9 +106,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
           body: Column(
             children: [
-              _NotificationCategoryFilterBar(
+              NotificationCategoryFilterBar(
                 selectedKey: _selectedCategory,
-                options: _buildCategoryFilters(),
+                options: notificationCategoryFilters,
                 onSelect: (categoryKey) async {
                   if (_selectedCategory == categoryKey) return;
                   setState(() {
@@ -157,7 +127,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                       )
                     : !hasContent
-                        ? const _EmptyNotificationsState()
+                        ? const EmptyNotificationsState()
                         : RefreshIndicator(
                             color: AppColors.teal400,
                             backgroundColor: AppColors.bgSurface,
@@ -187,10 +157,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 }
                                 final isLastItem = index == itemCount - 1;
                                 final item = store.notifications[index];
-                                return _NotificationRowWrapper(
+                                return NotificationRowWrapper(
                                   mode: viewMode,
                                   showDivider: !isLastItem,
-                                  child: _NotificationTile(
+                                  child: NotificationTile(
                                     item: item,
                                     mode: viewMode,
                                     onTap: () async {
@@ -238,62 +208,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         );
   }
 
-  List<_NotificationCategoryFilter> _buildCategoryFilters() {
-    return [
-      _NotificationCategoryFilter(
-        key: 'all',
-        label: 'All',
-        color: AppColors.textSecondary,
-      ),
-      _NotificationCategoryFilter(
-        key: 'updates',
-        label: 'Updates',
-        color: AppColors.teal400,
-      ),
-      _NotificationCategoryFilter(
-        key: 'social',
-        label: 'Social',
-        color: AppColors.primary400,
-      ),
-      _NotificationCategoryFilter(
-        key: 'governance',
-        label: 'Governance',
-        color: AppColors.warning500,
-      ),
-      _NotificationCategoryFilter(
-        key: 'wallet',
-        label: 'Wallet',
-        color: AppColors.successColor,
-      ),
-      _NotificationCategoryFilter(
-        key: 'mining_referrals',
-        label: 'Mining & Referrals',
-        color: AppColors.tagInfo,
-      ),
-      _NotificationCategoryFilter(
-        key: 'rewards',
-        label: 'Rewards',
-        color: AppColors.tagAirdrop,
-      ),
-      _NotificationCategoryFilter(
-        key: 'system',
-        label: 'System',
-        color: AppColors.tagPartnership,
-      ),
-    ];
-  }
-
   Future<void> _openNotificationTarget(NotificationModel item) async {
     final auth = context.read<AuthStore>();
-    final crossSpaceSurface = _resolveCrossSpaceSurface(
-      item: item,
-      isHunterSpace: auth.isInHunterSpace,
+    final target = NotificationSpaceTarget.crossSpaceFor(
+      type: item.type,
+      deeplink: item.deeplink,
+      activeSpace: auth.activeSpace,
+      hasHunterSpace: auth.hasHunterSpace,
+      hasModerationSpace: auth.hasModerationSpace,
     );
-    if (crossSpaceSurface != null) {
-      await _openCrossSpacePreview(
+    final postId = item.payload?['postId']?.toString();
+
+    if (target != null) {
+      final switchSpace = await showCrossSpaceNotificationSheet(
+        context,
         item: item,
-        targetSurface: crossSpaceSurface,
-        currentSpaceLabel: auth.isInHunterSpace ? 'Hunter' : 'User',
+        target: target,
+        currentSpaceLabel: SpaceMeta.currentFor(auth).label,
+      );
+      if (!switchSpace || !mounted) return;
+      await NotificationNavigator.switchSpaceAndOpen(
+        context,
+        target: target,
+        type: item.type,
+        updateId: item.updateId,
+        postId: postId,
+        deeplink: item.deeplink,
+        payload: item.payload,
       );
       return;
     }
@@ -302,513 +243,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       context,
       type: item.type,
       updateId: item.updateId,
-      postId: item.payload?['postId']?.toString(),
+      postId: postId,
       deeplink: item.deeplink,
       payload: item.payload,
-    );
-  }
-
-  _CrossSpaceSurface? _resolveCrossSpaceSurface({
-    required NotificationModel item,
-    required bool isHunterSpace,
-  }) {
-    final type = item.type?.trim().toLowerCase() ?? '';
-    final deeplinkPath =
-        NotificationTargetResolver.parseDeeplink(item.deeplink).path;
-    final targetsCommunity =
-        type.startsWith('community_') || deeplinkPath.startsWith('/community');
-    final targetsHunterHub = NotificationTargetResolver.isHunterHubType(type) ||
-        deeplinkPath.startsWith('/hunter-hub') ||
-        deeplinkPath.startsWith('/manage-updates') ||
-        deeplinkPath.startsWith('/manage-projects');
-
-    if (isHunterSpace && targetsCommunity) {
-      return _CrossSpaceSurface.community;
-    }
-    if (!isHunterSpace && targetsHunterHub) {
-      return _CrossSpaceSurface.hunterHub;
-    }
-    return null;
-  }
-
-  Future<void> _openCrossSpacePreview({
-    required NotificationModel item,
-    required _CrossSpaceSurface targetSurface,
-    required String currentSpaceLabel,
-  }) async {
-    final destination = targetSurface == _CrossSpaceSurface.community
-        ? 'User Community'
-        : 'Hunter Hub';
-    final helperText = targetSurface == _CrossSpaceSurface.community
-        ? 'This alert belongs to Community in User space.'
-        : 'This alert belongs to Hunter Hub in Hunter space.';
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpace.md),
-              Text(
-                destination,
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: AppText.subtitleSize,
-                  weight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpace.sm),
-              Text(
-                item.title,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: AppSpace.xs),
-              Text(
-                item.body,
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w500,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: AppSpace.md),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpace.md),
-                decoration: BoxDecoration(
-                  color: AppColors.bgElevated,
-                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                  border: Border.all(color: AppColors.borderSubtle),
-                ),
-                child: Text(
-                  '$helperText You are in $currentSpaceLabel space, so this opens as an inline preview only.',
-                  style: AppTypography.custom(
-                    color: AppColors.textFaint,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w500,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary500,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-                  ),
-                  child: const Text('Close'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openInsights(DigestSummary? digest) {
-    if (!mounted) return;
-    Navigator.of(context).pushNamed(
-      AppRoutes.notificationInsights,
-      arguments: {'digest': digest},
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification tile
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _NotificationVisualStyle {
-  const _NotificationVisualStyle({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.categoryKey,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String label;
-  final String categoryKey;
-}
-
-class _NotificationCategoryFilter {
-  const _NotificationCategoryFilter({
-    required this.key,
-    required this.label,
-    required this.color,
-  });
-
-  final String key;
-  final String label;
-  final Color color;
-}
-
-String _categoryForNotificationType(String? type) {
-  return NotificationTargetResolver.categoryForType(type);
-}
-
-_NotificationVisualStyle _styleForNotificationType(String? type) {
-  final categoryKey = _categoryForNotificationType(type);
-  switch (categoryKey) {
-    case 'updates':
-      return _NotificationVisualStyle(
-        icon: Icons.campaign_outlined,
-        color: AppColors.teal400,
-        label: 'Updates',
-        categoryKey: categoryKey,
-      );
-    case 'social':
-      return _NotificationVisualStyle(
-        icon: Icons.people_alt_outlined,
-        color: AppColors.primary400,
-        label: 'Social',
-        categoryKey: categoryKey,
-      );
-    case 'governance':
-      return _NotificationVisualStyle(
-        icon: Icons.gavel_outlined,
-        color: AppColors.warning500,
-        label: 'Governance',
-        categoryKey: categoryKey,
-      );
-    case 'wallet':
-      return _NotificationVisualStyle(
-        icon: Icons.account_balance_wallet_outlined,
-        color: AppColors.successColor,
-        label: 'Wallet',
-        categoryKey: categoryKey,
-      );
-    case 'mining_referrals':
-      return _NotificationVisualStyle(
-        icon: Icons.bolt_rounded,
-        color: AppColors.tagInfo,
-        label: 'Mining & Referrals',
-        categoryKey: categoryKey,
-      );
-    case 'rewards':
-      return _NotificationVisualStyle(
-        icon: Icons.workspace_premium_outlined,
-        color: AppColors.tagAirdrop,
-        label: 'Rewards',
-        categoryKey: categoryKey,
-      );
-    default:
-      return _NotificationVisualStyle(
-        icon: Icons.settings_suggest_outlined,
-        color: AppColors.tagPartnership,
-        label: 'System',
-        categoryKey: categoryKey,
-      );
-  }
-}
-
-class _NotificationTile extends StatelessWidget {
-  const _NotificationTile({
-    required this.item,
-    required this.mode,
-    required this.onTap,
-  });
-
-  final NotificationModel item;
-  final FeedViewMode mode;
-  final VoidCallback onTap;
-
-  String _timeLabel() {
-    final diff = DateTime.now().difference(item.createdAt);
-    if (diff.inMinutes < 1) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    return '${diff.inDays}d';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isUnread = !item.isRead;
-    final style = _styleForNotificationType(item.type);
-
-    return InkWell(
-      onTap: onTap,
-      splashColor: AppColors.primary500.withValues(alpha: 0.08),
-      highlightColor: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isUnread
-              ? style.color.withValues(alpha: 0.08)
-              : Colors.transparent,
-          borderRadius:
-              BorderRadius.circular(mode == FeedViewMode.card ? 10 : 8),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: mode == FeedViewMode.card ? 10 : 12,
-            horizontal: mode == FeedViewMode.card ? 10 : 8,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                margin: const EdgeInsets.only(top: AppSpace.sm),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isUnread ? style.color : Colors.transparent,
-                ),
-              ),
-              const SizedBox(width: AppSpace.sm),
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: style.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(AppRadius.smValue),
-                  border: Border.all(
-                    color: style.color.withValues(alpha: 0.35),
-                  ),
-                ),
-                child: Icon(
-                  style.icon,
-                  size: AppIcon.sm,
-                  color: style.color,
-                ),
-              ),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.title,
-                      style: AppTypography.custom(
-                        color: isUnread
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                        size: AppText.bodySize,
-                        weight: isUnread ? FontWeight.w700 : FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.hair),
-                    Text(
-                      item.body,
-                      style: AppTypography.custom(
-                        color: isUnread
-                            ? AppColors.textSecondary
-                            : AppColors.textMuted,
-                        size: AppText.bodySize,
-                        weight: FontWeight.w400,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.sm),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpace.sm, vertical: AppSpace.hair),
-                      decoration: BoxDecoration(
-                        color: style.color.withValues(alpha: 0.12),
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.fullValue),
-                      ),
-                      child: Text(
-                        style.label,
-                        style: AppTypography.custom(
-                          color: style.color,
-                          size: AppText.captionSize,
-                          weight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpace.sm),
-              Text(
-                _timeLabel(),
-                style: AppTypography.custom(
-                  color: AppColors.textFaint,
-                  size: AppText.captionSize,
-                  weight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NotificationRowWrapper extends StatelessWidget {
-  const _NotificationRowWrapper({
-    required this.mode,
-    required this.showDivider,
-    required this.child,
-  });
-
-  final FeedViewMode mode;
-  final bool showDivider;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    if (mode == FeedViewMode.card) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: AppSpace.sm),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        ),
-        child: child,
-      );
-    }
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: showDivider ? 6 : 2),
-      child: child,
-    );
-  }
-}
-
-class _NotificationCategoryFilterBar extends StatelessWidget {
-  const _NotificationCategoryFilterBar({
-    required this.selectedKey,
-    required this.options,
-    required this.onSelect,
-  });
-
-  final String selectedKey;
-  final List<_NotificationCategoryFilter> options;
-  final ValueChanged<String> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(
-            AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.sm),
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (context, index) {
-          final option = options[index];
-          final isSelected = option.key == selectedKey;
-          return GestureDetector(
-            onTap: () => onSelect(option.key),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpace.md, vertical: 7),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? option.color.withValues(alpha: 0.18)
-                    : AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                border: Border.all(
-                  color: isSelected
-                      ? option.color.withValues(alpha: 0.6)
-                      : AppColors.borderSubtle,
-                ),
-              ),
-              child: Text(
-                option.label,
-                style: AppTypography.custom(
-                  color: isSelected ? option.color : AppColors.textMuted,
-                  size: AppText.captionSize,
-                  weight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                ),
-              ),
-            ),
-          );
-        },
-        separatorBuilder: (_, __) => const SizedBox(width: AppSpace.sm),
-        itemCount: options.length,
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty state
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _EmptyNotificationsState extends StatelessWidget {
-  const _EmptyNotificationsState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(AppRadius.lgValue),
-                border: Border.all(color: AppColors.borderSubtle),
-              ),
-              child: Icon(
-                Symbols.notifications_off,
-                size: AppIcon.lg,
-                color: AppColors.textFaint,
-              ),
-            ),
-            const SizedBox(height: AppSpace.lg),
-            Text(
-              'No notifications yet',
-              style: AppTypography.custom(
-                color: AppColors.textPrimary,
-                size: AppText.bodySize,
-                weight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              'Follow gems to receive priority and update alerts.',
-              textAlign: TextAlign.center,
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

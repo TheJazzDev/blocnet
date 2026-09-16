@@ -19,17 +19,30 @@ class NotificationNavigationDecision {
     this.route,
     this.arguments,
     this.updateId,
+    this.space,
+    this.spaceTab,
   });
 
   final String? route;
   final Object? arguments;
   final String? updateId;
 
+  /// Space whose bottom tab [spaceTab] is the target, for surfaces that have
+  /// no route of their own (the Moderation hub).
+  final String? space;
+  final int? spaceTab;
+
   bool get opensUpdateDetails =>
       updateId != null && updateId!.trim().isNotEmpty;
 
+  bool get opensSpaceTab => space != null && spaceTab != null;
+
   static NotificationNavigationDecision openUpdate(String updateId) {
     return NotificationNavigationDecision._(updateId: updateId);
+  }
+
+  static NotificationNavigationDecision openSpaceTab(String space, int tab) {
+    return NotificationNavigationDecision._(space: space, spaceTab: tab);
   }
 
   static NotificationNavigationDecision push(
@@ -63,6 +76,10 @@ class NotificationTargetResolver {
       case 'project_invite_received':
       case 'project_invite_responded':
       case 'project_assignment_changed':
+      // Both ask someone to act on a gem's coverage — a hunter to post, a
+      // moderator to review — which is Governance's job, not reading.
+      case 'project_update_requested':
+      case 'project_reported_inactive':
         return 'governance';
       case 'wallet_transfer_sent':
       case 'wallet_transfer_received':
@@ -159,7 +176,36 @@ class NotificationTargetResolver {
       return NotificationNavigationDecision.push(AppRoutes.profile);
     }
 
+    if (normalizedType == 'quest_completed' ||
+        normalizedType == 'quest_verified' ||
+        normalizedType == 'quest_rejected') {
+      return NotificationNavigationDecision.push(AppRoutes.quests);
+    }
+
+    if (normalizedType == 'mining_claimed') {
+      return NotificationNavigationDecision.push(AppRoutes.mining);
+    }
+
+    if (normalizedType == 'referral_bound' ||
+        normalizedType == 'referral_admin_bound') {
+      return NotificationNavigationDecision.push(AppRoutes.referralCode);
+    }
+
+    if (isModerationType(normalizedType)) {
+      // The Moderation hub has no route; it is slot 3 of Moderation space.
+      return NotificationNavigationDecision.openSpaceTab('moderation', 2);
+    }
+
     if (isGovernanceType(normalizedType)) {
+      // Members asking for an update: the Hub is where a hunter sees which of
+      // their gems need attention.
+      if (normalizedType == 'project_update_requested') {
+        return NotificationNavigationDecision.push(AppRoutes.hunterHub);
+      }
+      // The Become Hunter screen shows the application's status.
+      if (normalizedType == 'admin_application_reviewed') {
+        return NotificationNavigationDecision.push(AppRoutes.becomeHunter);
+      }
       // Invites are accepted/declined from the Invites section of Hunter
       // Hub's "Manage My Gems"; assignment changes land there too.
       if (normalizedType == 'project_invite_received' ||
@@ -177,6 +223,12 @@ class NotificationTargetResolver {
     }
     if (deeplinkPath.startsWith('/levels')) {
       return NotificationNavigationDecision.push(AppRoutes.levels);
+    }
+    if (deeplinkPath.startsWith('/mining')) {
+      return NotificationNavigationDecision.push(AppRoutes.mining);
+    }
+    if (deeplinkPath.startsWith('/quests')) {
+      return NotificationNavigationDecision.push(AppRoutes.quests);
     }
     if (deeplinkPath.startsWith('/wallet/transactions')) {
       return NotificationNavigationDecision.push(AppRoutes.walletTransactions);
@@ -282,15 +334,21 @@ class NotificationTargetResolver {
         type == 'project_invite_received' ||
         type == 'project_invite_responded' ||
         type == 'project_assignment_changed' ||
+        type == 'project_update_requested' ||
         type == 'project_approved' ||
         type == 'project_rejected' ||
         type == 'project_flagged' ||
         type == 'role_changed';
   }
 
+  static bool isModerationType(String type) {
+    return type == 'project_reported_inactive';
+  }
+
+  /// Notifications whose target lives in Hunter space. Update and comment
+  /// alerts are not among them: update details open from any space.
   static bool isHunterHubType(String type) {
-    return type == 'project_update' ||
-        type == 'comment_received' ||
+    return type == 'project_update_requested' ||
         type == 'project_proposal_submitted' ||
         type == 'project_proposal_reviewed' ||
         type == 'project_invite_received' ||

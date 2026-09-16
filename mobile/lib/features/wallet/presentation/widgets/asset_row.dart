@@ -4,6 +4,7 @@ import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
+import 'package:blocnet/features/wallet/presentation/utils/wallet_headline.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +32,7 @@ class AssetRow extends StatelessWidget {
         ? '\$••••'
         : (isUsdPriceLive(asset.priceSource)
             ? '\$${formatUsd(asset.usdValue)}'
-            : 'Pre-launch');
+            : walletUnpricedLabel(asset));
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.mdValue),
       onTap: () {

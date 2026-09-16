@@ -46,7 +46,7 @@ class WalletOnboardingBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpace.hair),
                 Text(
-                  'Use Receive for your address, Send for transfers, and Swap to prepare conversion flow.',
+                  'Use Receive for your address and Send for transfers.',
                   style: AppTypography.custom(
                     color: AppColors.textMuted,
                     size: AppText.captionSize,

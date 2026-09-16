@@ -2,13 +2,10 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
-import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
-import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
-import 'package:blocnet/features/profile/presentation/widgets/activity_card.dart';
-import 'package:blocnet/features/profile/presentation/widgets/empty_activity_card.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_role_chip.dart';
-import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
+import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_actions.dart';
+import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_identity.dart';
+import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_recent_activity.dart';
 import 'package:blocnet/features/profile/presentation/widgets/stat_card.dart';
 import 'package:blocnet/features/profile/presentation/widgets/trust_chips.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
@@ -18,10 +15,7 @@ import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/users/blocks_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
-import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:blocnet/shared/utils/role_presentation.dart';
-import 'package:blocnet/shared/widgets/app_avatar.dart';
-import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -145,55 +139,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     if (_isSubmittingBlock) return;
 
     final actionLabel = _isBlocked ? 'Unblock' : 'Block';
-    final description = _isBlocked
-        ? 'You will start seeing this user in your feeds again.'
-        : 'You will stop seeing this user in your feeds and comments.';
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgSurface,
-        title: Text(
-          '$actionLabel user?',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.subtitleSize,
-            weight: FontWeight.w700,
-          ),
-        ),
-        content: Text(
-          description,
-          style: AppTypography.custom(
-            color: AppColors.textSecondary,
-            size: AppText.bodySize,
-            weight: FontWeight.w400,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              'Cancel',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.labelSize,
-                weight: FontWeight.w600,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              actionLabel,
-              style: AppTypography.custom(
-                color: _isBlocked ? AppColors.primary400 : AppColors.error500,
-                size: AppText.labelSize,
-                weight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
+    final confirmed = await confirmPublicProfileBlock(
+      context,
+      isBlocked: _isBlocked,
     );
 
     if (confirmed != true || !mounted) return;
@@ -219,6 +167,22 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     }
 
     setState(() => _isSubmittingBlock = false);
+  }
+
+  void _openTipSheet(PublicProfileModel? publicProfile) {
+    final admin = widget.admin;
+    TipHunterSheet.show(
+      context,
+      recipient: TipRecipient(
+        userId: admin.id,
+        username: admin.username,
+        displayName: publicProfile?.displayName ?? admin.name,
+        avatarUrl: publicProfile?.avatarUrl ?? admin.imageUrl,
+        isHunterHint: true,
+      ),
+      contextType: 'public_profile',
+      contextId: admin.id,
+    );
   }
 
   @override
@@ -307,69 +271,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         AppSpace.lg, AppSpace.xs, AppSpace.lg, AppSpace.xl),
                     child: Column(
                       children: [
-                        AppAvatar(
-                          radius: 42,
-                          imageUrl: admin.imageUrl,
-                          fallback: Text(
-                            admin.name.isNotEmpty
-                                ? admin.name[0].toUpperCase()
-                                : 'U',
-                            style: AppTypography.custom(
-                              color: AppColors.primary400,
-                              size: AppText.headlineSize,
-                              weight: FontWeight.w700,
-                            ),
-                          ),
+                        PublicProfileIdentity(
+                          admin: admin,
+                          displayName: _publicProfile?.displayName,
+                          username: username,
+                          roleKey: displayRoleKey,
                         ),
-                        const SizedBox(height: AppSpace.md),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: UserNameWithLevelIcon(
-                                name: (_publicProfile?.displayName
-                                            ?.trim()
-                                            .isNotEmpty ??
-                                        false)
-                                    ? _publicProfile!.displayName!.trim()
-                                    : admin.name,
-                                currentLevel: admin.currentLevel,
-                                levelBadgeSize: LevelBadgeSize.small,
-                                textStyle: AppTypography.custom(
-                                  color: AppColors.textPrimary,
-                                  size: AppText.headlineSize,
-                                  weight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            if (admin.primaryBadge != null) ...[
-                              const SizedBox(width: AppSpace.sm),
-                              BadgeIcon(
-                                badge: admin.primaryBadge!,
-                                size: BadgeSize.medium,
-                                showTooltip: false,
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: AppSpace.xs),
-                        Text(
-                          username,
-                          style: AppTypography.custom(
-                            color: AppColors.textMuted,
-                            size: AppText.bodySize,
-                            weight: FontWeight.w400,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpace.sm),
-                        if (displayRoleKey != null)
-                          ProfileRoleChip(
-                            label: _roleLabel(displayRoleKey),
-                            textColor: _roleTextColor(displayRoleKey),
-                            borderColor: _roleBorderColor(displayRoleKey),
-                            backgroundColor:
-                                _roleBackgroundColor(displayRoleKey),
-                          ),
                         const SizedBox(height: AppSpace.lg),
                         Row(
                           children: [
@@ -401,101 +308,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: SizedBox(
-                                  height: 42,
-                                  child: ElevatedButton(
-                                    onPressed: _isSubmittingFollow
-                                        ? null
-                                        : _toggleFollow,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: _isFollowing
-                                          ? AppColors.bgElevated
-                                          : AppColors.primary500,
-                                      foregroundColor: _isFollowing
-                                          ? AppColors.textPrimary
-                                          : Colors.black,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            AppRadius.mdValue),
-                                      ),
-                                    ),
-                                    child: _isSubmittingFollow
-                                        ? SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              color: _isFollowing
-                                                  ? AppColors.textPrimary
-                                                  : Colors.black,
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : Text(
-                                            _isFollowing
-                                                ? 'Following'
-                                                : 'Follow',
-                                            style: AppTypography.custom(
-                                              color: _isFollowing
-                                                  ? AppColors.textPrimary
-                                                  : Colors.black,
-                                              size: AppText.labelSize,
-                                              weight: FontWeight.w700,
-                                            ),
-                                          ),
-                                  ),
+                                child: PublicProfileFollowButton(
+                                  isFollowing: _isFollowing,
+                                  isSubmitting: _isSubmittingFollow,
+                                  onPressed: _toggleFollow,
                                 ),
                               ),
                               const SizedBox(width: AppSpace.sm),
                               Expanded(
-                                child: SizedBox(
-                                  height: 42,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      TipHunterSheet.show(
-                                        context,
-                                        recipient: TipRecipient(
-                                          userId: admin.id,
-                                          username: admin.username,
-                                          displayName:
-                                              publicProfile?.displayName ??
-                                                  admin.name,
-                                          avatarUrl: publicProfile?.avatarUrl ??
-                                              admin.imageUrl,
-                                          isHunterHint: true,
-                                        ),
-                                        contextType: 'public_profile',
-                                        contextId: admin.id,
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary500
-                                          .withValues(alpha: 0.14),
-                                      foregroundColor: AppColors.primary400,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            AppRadius.mdValue),
-                                        side: BorderSide(
-                                          color: AppColors.primary500
-                                              .withValues(alpha: 0.45),
-                                        ),
-                                      ),
-                                    ),
-                                    icon: Icon(
-                                      Icons.volunteer_activism_rounded,
-                                      color: AppColors.primary400,
-                                      size: AppIcon.sm,
-                                    ),
-                                    label: Text(
-                                      'Tip Hunter',
-                                      style: AppTypography.custom(
-                                        color: AppColors.primary400,
-                                        size: AppText.labelSize,
-                                        weight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
+                                child: PublicProfileTipButton(
+                                  onPressed: () => _openTipSheet(publicProfile),
                                 ),
                               ),
                             ],
@@ -503,122 +325,22 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         else
                           SizedBox(
                             width: double.infinity,
-                            height: 42,
-                            child: ElevatedButton(
-                              onPressed:
-                                  _isSubmittingFollow ? null : _toggleFollow,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _isFollowing
-                                    ? AppColors.bgElevated
-                                    : AppColors.primary500,
-                                foregroundColor: _isFollowing
-                                    ? AppColors.textPrimary
-                                    : Colors.black,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.mdValue),
-                                ),
-                              ),
-                              child: _isSubmittingFollow
-                                  ? SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        color: _isFollowing
-                                            ? AppColors.textPrimary
-                                            : Colors.black,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Text(
-                                      _isFollowing ? 'Following' : 'Follow',
-                                      style: AppTypography.custom(
-                                        color: _isFollowing
-                                            ? AppColors.textPrimary
-                                            : Colors.black,
-                                        size: AppText.labelSize,
-                                        weight: FontWeight.w700,
-                                      ),
-                                    ),
+                            child: PublicProfileFollowButton(
+                              isFollowing: _isFollowing,
+                              isSubmitting: _isSubmittingFollow,
+                              onPressed: _toggleFollow,
                             ),
                           ),
                         if (!isOwnProfile) ...[
                           const SizedBox(height: AppSpace.md),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 40,
-                            child: OutlinedButton.icon(
-                              onPressed:
-                                  _isSubmittingBlock ? null : _toggleBlock,
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(
-                                  color: _isBlocked
-                                      ? AppColors.primary400
-                                          .withValues(alpha: 0.5)
-                                      : AppColors.error500
-                                          .withValues(alpha: 0.45),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.mdValue),
-                                ),
-                                backgroundColor: _isBlocked
-                                    ? AppColors.primary500
-                                        .withValues(alpha: 0.08)
-                                    : AppColors.error500
-                                        .withValues(alpha: 0.08),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: AppSpace.md),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              icon: _isSubmittingBlock
-                                  ? SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: _isBlocked
-                                            ? AppColors.primary400
-                                            : AppColors.error500,
-                                      ),
-                                    )
-                                  : Icon(
-                                      _isBlocked
-                                          ? Icons.check_circle_outline
-                                          : Icons.block_outlined,
-                                      size: AppIcon.sm,
-                                      color: _isBlocked
-                                          ? AppColors.primary400
-                                          : AppColors.error500,
-                                    ),
-                              label: Text(
-                                _isBlocked ? 'User blocked' : 'Block user',
-                                style: AppTypography.custom(
-                                  color: _isBlocked
-                                      ? AppColors.primary400
-                                      : AppColors.error500,
-                                  size: AppText.labelSize,
-                                  weight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
+                          PublicProfileBlockButton(
+                            isBlocked: _isBlocked,
+                            isSubmitting: _isSubmittingBlock,
+                            onPressed: _toggleBlock,
                           ),
                         ],
                         const SizedBox(height: AppSpace.lg),
-                        const SectionLabel('Recent Activity'),
-                        const SizedBox(height: AppSpace.sm),
-                        if (posts.isEmpty)
-                          const EmptyActivityCard()
-                        else
-                          ...posts.take(4).map(
-                                (post) => ActivityCard(
-                                  title: post.title,
-                                  subtitle: post.project?.name ?? 'Gem',
-                                  time: getTimeStamp(post.createdAt),
-                                ),
-                              ),
+                        PublicProfileRecentActivity(posts: posts),
                       ],
                     ),
                   );
@@ -632,43 +354,5 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
     if (widget.asSheet) return content;
     return Scaffold(backgroundColor: AppColors.bgBase, body: content);
-  }
-
-  String _roleLabel(String roleKey) {
-    switch (roleKey) {
-      case 'core_team':
-        return 'CORE TEAM';
-      case 'community_admin':
-        return 'ADMIN';
-      case 'community_moderator':
-        return 'MODERATOR';
-      case 'hunter':
-        return 'HUNTER';
-      default:
-        return roleKey.toUpperCase();
-    }
-  }
-
-  Color _roleTextColor(String roleKey) {
-    switch (roleKey) {
-      case 'core_team':
-        return const Color(0xFF38BDF8);
-      case 'hunter':
-        return const Color(0xFFC084FC);
-      case 'community_moderator':
-        return const Color(0xFFF59E0B);
-      case 'community_admin':
-        return AppColors.primary400;
-      default:
-        return AppColors.textMuted;
-    }
-  }
-
-  Color _roleBorderColor(String roleKey) {
-    return _roleTextColor(roleKey).withValues(alpha: 0.55);
-  }
-
-  Color _roleBackgroundColor(String roleKey) {
-    return _roleTextColor(roleKey).withValues(alpha: 0.15);
   }
 }

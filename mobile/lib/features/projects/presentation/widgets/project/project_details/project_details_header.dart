@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/share_link.dart';
 import 'package:flutter/material.dart';
 
 class ProjectDetailsHeader extends StatelessWidget {
@@ -39,12 +40,11 @@ class ProjectDetailsHeader extends StatelessWidget {
           const SizedBox(width: AppSpace.md),
           _HeaderIconButton(
             icon: Icons.share_outlined,
-            onTap: () {},
-          ),
-          const SizedBox(width: AppSpace.sm),
-          _HeaderIconButton(
-            icon: Icons.bookmark_border,
-            onTap: () {},
+            onTap: () => shareBlocnetLink(
+              context,
+              title: title,
+              deepPath: '/projects/$projectId',
+            ),
           ),
         ],
       ),

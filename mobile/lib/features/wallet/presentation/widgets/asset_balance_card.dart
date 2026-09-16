@@ -2,6 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
+import 'package:blocnet/features/wallet/presentation/utils/wallet_headline.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
@@ -108,7 +109,7 @@ class AssetBalanceCard extends StatelessWidget {
                 ? '\$•••• • Price \$••••'
                 : (isUsdPriceLive(asset.priceSource)
                     ? '\$${formatUsd(asset.usdValue)} • Price \$${formatUsd(asset.usdPrice, decimals: 4)}'
-                    : 'Pre-launch · no market value yet'),
+                    : '${walletUnpricedLabel(asset)} · no market value yet'),
             style: AppTypography.custom(
               color: AppColors.textMuted,
               size: AppText.labelSize,

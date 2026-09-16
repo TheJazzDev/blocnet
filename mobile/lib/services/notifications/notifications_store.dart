@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:blocnet/features/notifications/data/models/digest_summary_model.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
 import 'package:blocnet/features/notifications/data/repositories/notifications_api_repository.dart';
 import 'package:blocnet/services/notifications/notification_target_resolver.dart';
@@ -24,16 +23,12 @@ class NotificationsStore extends ChangeNotifier {
 
   final NotificationsApiRepository _repository;
   final Map<String, _NotificationFeedState> _feeds = {};
-  DigestSummary? _digestSummary;
-  bool _isFetchingDigest = false;
   String _activeCategory = 'all';
 
   List<NotificationModel> get notifications =>
       List.unmodifiable(_activeFeed.items);
-  DigestSummary? get digestSummary => _digestSummary;
   bool get isFetching => _activeFeed.isFetching;
   bool get isFetchingMore => _activeFeed.isFetchingMore;
-  bool get isFetchingDigest => _isFetchingDigest;
   bool get hasMore => _activeFeed.hasMore;
   String get activeCategory => _activeCategory;
   String? get lastError => _activeFeed.lastError;
@@ -109,7 +104,6 @@ class NotificationsStore extends ChangeNotifier {
         ..fetchedFromBackend = true;
 
       if (!useCategory) {
-        _digestSummary = await _repository.fetchDigestSummary(windowDays: 7);
         _hydratePendingCategoryCachesFromAll();
       }
     } catch (error) {
@@ -158,23 +152,6 @@ class NotificationsStore extends ChangeNotifier {
       feed.lastError = error.toString();
     } finally {
       feed.isFetchingMore = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> refreshDigestSummary({int windowDays = 7}) async {
-    if (_isFetchingDigest) return;
-
-    _isFetchingDigest = true;
-    notifyListeners();
-    try {
-      _digestSummary =
-          await _repository.fetchDigestSummary(windowDays: windowDays);
-      _activeFeed.lastError = null;
-    } catch (error) {
-      _activeFeed.lastError = error.toString();
-    } finally {
-      _isFetchingDigest = false;
       notifyListeners();
     }
   }

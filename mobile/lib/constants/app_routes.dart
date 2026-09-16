@@ -11,7 +11,6 @@ class AppRoutes {
   static const String miningLeaderboard = '/mining/leaderboard';
   static const String miningHourlyHistory = '/mining/hourly-history';
   static const String notifications = '/notifications';
-  static const String notificationInsights = '/notifications/insights';
   static const String systemAlerts = '/system-alerts';
   static const String badges = '/badges';
   static const String levels = '/levels';
