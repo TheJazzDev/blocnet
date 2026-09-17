@@ -5,13 +5,20 @@
 > directly in this language.** No design canvases, no new visual ideas.
 
 Reference screenshots of the old app: [`reference/`](reference/).
+
+The shared pieces live in `lib/shared/widgets/` (`widgets.dart`): `AppPill.caps`,
+`AppButton` (compact 40px size, `outline` / `tinted` variants), `AppListRow`,
+`AppRowGroup`, `AppHairline`, `AppStatTile`, `AppIconSquare`, `AppSurface`. The one
+toast is `AppSnackbar` (`lib/widgets/app_snackbar.dart`); never
+`ScaffoldMessenger`, whose snack bars sit under sheets.
+
 Screens already in this language (copy their patterns):
 
 | Screen | Where | Helpers worth reusing |
 |---|---|---|
 | Home feed | `features/projects/presentation/widgets/home/` | `HomePanel`, `HomePanelHeader` (`home_panel.dart`), `feed_card/*`, `feed_follow_row.dart`, `feed_top_hunters.dart` |
-| Hunter Hub + gem page | `features/hunter/presentation/widgets/hub/` | `HubType`, `HubTone`, `HubPill` (`parts/hub_styles.dart`, `parts/`) |
-| Mine | `features/mining/presentation/` | `MinePalette.tag()`, the old list row and stat tile |
+| Hunter Hub + gem page | `features/hunter/presentation/widgets/hub/` | `HubType`, `HubTone` (`parts/hub_styles.dart`) |
+| Mine | `features/mining/presentation/` | `MineSectionHeader`, `MineLinkRow` |
 
 ## Tokens
 
