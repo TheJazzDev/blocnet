@@ -45,7 +45,7 @@ class ComposerPriorityPicker extends StatelessWidget {
   }
 }
 
-/// Secondary tags as toggle chips.
+/// Secondary tags as outlined toggle pills.
 class ComposerTagPicker extends StatelessWidget {
   const ComposerTagPicker({
     super.key,
@@ -62,11 +62,11 @@ class ComposerTagPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     if (tags.isEmpty) {
       return Text(
-        'No secondary tags available',
+        'No tags yet',
         style: AppTypography.custom(
           color: AppColors.textFaint,
-          size: AppText.bodySize,
-          weight: FontWeight.w400,
+          size: AppText.labelSize,
+          weight: FontWeight.w500,
         ),
       );
     }
@@ -75,83 +75,141 @@ class ComposerTagPicker extends StatelessWidget {
       runSpacing: AppSpace.sm,
       children: [
         for (final tag in tags)
-          FilterChip(
+          _TagToggle(
+            label: tag.name,
             selected: selected.contains(tag.id),
-            onSelected: (value) => onToggle(tag.id, value),
-            label: Text(
-              tag.name,
-              style: AppTypography.custom(
-                color: selected.contains(tag.id)
-                    ? AppColors.teal400
-                    : AppColors.textMuted,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-              ),
-            ),
-            selectedColor: AppColors.teal500.withValues(alpha: 0.15),
-            backgroundColor: AppColors.bgElevated,
-            side: BorderSide(
-              color: selected.contains(tag.id)
-                  ? AppColors.teal500
-                  : AppColors.borderSubtle,
-            ),
-            showCheckmark: false,
+            onTap: () => onToggle(tag.id, !selected.contains(tag.id)),
           ),
       ],
     );
   }
 }
 
-/// The full-width submit button, with a spinner while sending.
+class _TagToggle extends StatelessWidget {
+  const _TagToggle({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppColors.primary500;
+    final color = selected ? accent : AppColors.textMuted;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 34),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
+          decoration: BoxDecoration(
+            color: selected ? accent.withValues(alpha: 0.12) : null,
+            borderRadius: AppRadius.full,
+            border: Border.all(
+              color: selected
+                  ? accent.withValues(alpha: 0.4)
+                  : AppColors.borderSubtle,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected) ...[
+                Icon(Icons.check_rounded, size: AppIcon.xs, color: color),
+                const SizedBox(width: AppSpace.xs),
+              ],
+              Flexible(
+                child: Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.custom(
+                    color: color,
+                    size: AppText.captionSize,
+                    weight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The full-width filled button in the space accent, with a spinner while
+/// sending.
 class ComposerSubmitButton extends StatelessWidget {
   const ComposerSubmitButton({
     super.key,
     required this.label,
     required this.busy,
     required this.onTap,
+    this.icon,
   });
 
   final String label;
   final bool busy;
   final VoidCallback onTap;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
+    final accent = AppColors.primary500;
+    final onAccent =
+        accent.computeLuminance() > 0.4 ? Colors.black : Colors.white;
+    return Semantics(
+      button: true,
+      enabled: !busy,
       child: GestureDetector(
         onTap: busy ? null : onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          height: 46,
+          width: double.infinity,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: busy
-                ? null
-                : LinearGradient(
-                    colors: [AppColors.teal500, AppColors.primary500],
-                  ),
-            color: busy ? AppColors.bgElevated : null,
-            borderRadius: BorderRadius.circular(AppRadius.lgValue),
+            color: busy ? AppColors.bgElevated : accent,
+            borderRadius: AppRadius.md,
           ),
           child: busy
-              ? Center(
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.teal400,
-                    ),
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: accent,
                   ),
                 )
-              : Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: AppTypography.custom(
-                    color: Colors.white,
-                    size: AppText.bodySize,
-                    weight: FontWeight.w600,
-                  ),
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: AppIcon.sm, color: onAccent),
+                      const SizedBox(width: AppSpace.sm),
+                    ],
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.custom(
+                          color: onAccent,
+                          size: AppText.bodySize,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),
