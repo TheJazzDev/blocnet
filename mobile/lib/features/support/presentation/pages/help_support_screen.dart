@@ -5,6 +5,7 @@ import 'package:blocnet/features/profile/presentation/widgets/common/profile_lis
 import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/features/support/data/getting_started_content.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -73,7 +74,7 @@ class HelpSupportScreen extends StatelessWidget {
               ProfileListRow(
                 icon: Icons.lightbulb_outline,
                 title: 'Getting Started Guide',
-                subtitle: '7 steps',
+                subtitle: '${gettingStartedSteps.length} steps',
                 onTap: () => navigator.pushNamed(AppRoutes.gettingStarted),
               ),
               ProfileListRow(
