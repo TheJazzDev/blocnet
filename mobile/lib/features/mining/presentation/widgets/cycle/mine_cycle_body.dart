@@ -60,11 +60,6 @@ class MineCycleBody extends StatelessWidget {
             key: const ValueKey('mine-primary'),
             label: button,
             icon: view.canClaim ? Icons.savings_outlined : Icons.bolt_rounded,
-            color: view.isAmber
-                ? MinePalette.amber
-                : view.canClaim
-                    ? MinePalette.success
-                    : null,
             busy: isBusy,
             onPressed: view.canClaim ? onClaim : onStart,
           ),

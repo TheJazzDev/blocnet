@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/mining/data/mine_cycle_phase.dart';
+import 'package:blocnet/features/mining/data/mine_format.dart';
 import 'package:blocnet/features/mining/data/mine_local_cache.dart';
 import 'package:blocnet/features/mining/presentation/widgets/cycle/mine_second_ticker.dart';
 import 'package:blocnet/features/mining/presentation/widgets/help/mine_explainer.dart';
@@ -100,8 +101,16 @@ class _MiningScreenState extends State<MiningScreen> {
     try {
       final result = await store.claimMining();
       if (result == null || !result.isClaimed) return;
-      // The receipt is drawn from store.lastClaimResult; the wallet catch-up
-      // is best effort.
+      if (mounted) {
+        final points = MineFormat.points(result.claimedPoints);
+        AppSnackbar.showSuccess(
+          context,
+          result.startedNextCycle
+              ? '+$points BNP claimed. Next cycle started.'
+              : '+$points BNP claimed.',
+        );
+      }
+      // The wallet catch-up is best effort.
       await wallet.refreshAll();
     } catch (_) {
       // Surfaced through store.actionError.

@@ -163,22 +163,17 @@ class _MineCycleCardState extends State<MineCycleCard>
   }
 
   /// Flat grounds only. Live states take the old "EARNING PER HOUR" panel's
-  /// accent wash; the ready edge breathes between 20 % and 55 %.
+  /// accent wash in every phase, so the card keeps the space colour; the
+  /// ready edge breathes between 20 % and 55 %.
   BoxDecoration _decoration(MineCyclePhase phase, double breath) {
     switch (phase) {
       case MineCyclePhase.running:
+      case MineCyclePhase.closingSoon:
         return _card(MinePalette.accentWash, MinePalette.accentEdge);
       case MineCyclePhase.ready:
-        final tone = MinePalette.success;
         return _card(
-          tone.withValues(alpha: 0.08),
-          tone.withValues(alpha: 0.2 + 0.35 * breath),
-        );
-      case MineCyclePhase.closingSoon:
-        final tone = MinePalette.amber;
-        return _card(
-          tone.withValues(alpha: 0.08),
-          tone.withValues(alpha: 0.3),
+          MinePalette.accentWash,
+          MinePalette.accent.withValues(alpha: 0.2 + 0.35 * breath),
         );
       case MineCyclePhase.paused:
         return _card(MinePalette.card, MinePalette.strongEdge);

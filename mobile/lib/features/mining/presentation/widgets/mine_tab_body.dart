@@ -4,7 +4,6 @@ import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/mining/data/mine_boost.dart';
 import 'package:blocnet/features/mining/data/mine_cycle_phase.dart';
 import 'package:blocnet/features/mining/data/mine_history.dart';
-import 'package:blocnet/features/mining/data/models/mining_claim_models.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/mining/presentation/widgets/cycle/mine_cycle_card.dart';
 import 'package:blocnet/features/mining/presentation/widgets/earn_faster/mine_earn_faster_cards.dart';
@@ -13,16 +12,6 @@ import 'package:blocnet/features/mining/presentation/widgets/mine_notices.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mine_sections.dart';
 import 'package:blocnet/services/engagement/mining_store.dart';
 import 'package:flutter/material.dart';
-
-/// Whether [result] is the claim that opened the cycle now on screen, so its
-/// receipt still belongs above the card.
-bool mineReceiptApplies(MiningClaimResult? result, MiningSnapshot snapshot) {
-  if (result == null || !result.isClaimed) return false;
-  final next = result.nextSession;
-  final session = snapshot.session;
-  if (next == null) return session.isIdle;
-  return session.isRunning && session.id != null && session.id == next.id;
-}
 
 /// The Mine tab, top to bottom, once a snapshot exists.
 class MineTabBody extends StatelessWidget {
@@ -54,7 +43,6 @@ class MineTabBody extends StatelessWidget {
     final showExpired = expired != null &&
         MineExpiredNotice.isCurrent(snapshot) &&
         !dismissedExpired.contains(expired.sessionId);
-    final claim = store.lastClaimResult;
     final groups = MineHistory.group(
       snapshot.hourlyHistory,
       currentSessionId: snapshot.session.isRunning ? snapshot.session.id : null,
@@ -65,12 +53,7 @@ class MineTabBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: AppSpace.xs),
-        if (claim != null && mineReceiptApplies(claim, snapshot))
-          MineClaimReceipt(
-            points: claim.claimedPoints,
-            nextCycleStarted: claim.startedNextCycle,
-          )
-        else if (showExpired)
+        if (showExpired)
           MineExpiredNotice(
             cycle: expired,
             claimWindowHours: snapshot.config.claimWindowHours,

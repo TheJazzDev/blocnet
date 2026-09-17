@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 /// Icon, tone (tag, icons) and ring colour per phase, as the old hero's
 /// status tag: grey idle, accent live, green ready, amber paused / closing.
+/// The ring stays in the space accent in every phase.
 class MinePhaseStyle {
   const MinePhaseStyle({
     required this.icon,
@@ -33,13 +34,13 @@ class MinePhaseStyle {
         return MinePhaseStyle(
           icon: Icons.check_circle_rounded,
           tone: MinePalette.success,
-          ringColor: MinePalette.success,
+          ringColor: MinePalette.accent,
         );
       case MineCyclePhase.closingSoon:
         return MinePhaseStyle(
           icon: Icons.timer_rounded,
           tone: MinePalette.amber,
-          ringColor: MinePalette.amber,
+          ringColor: MinePalette.accent,
         );
       case MineCyclePhase.paused:
         return MinePhaseStyle(
