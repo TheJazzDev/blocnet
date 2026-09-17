@@ -2,6 +2,9 @@ import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dar
 import 'package:blocnet/features/moderation/data/models/inactive_gem_model.dart';
 import 'package:blocnet/features/moderation/presentation/pages/inactive_gems_queue_screen.dart';
 import 'package:blocnet/features/moderation/presentation/pages/moderation_hub_screen.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_button.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/resolve_inactive_gem_dialog.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -118,16 +121,40 @@ void main() {
       await _pump(tester, Scaffold(body: ModerationHubScreen(apiClient: api)));
 
       expect(find.text('Queue counts did not load'), findsOneWidget);
-      expect(find.text('Pending\nReports'), findsNothing);
+      // No made-up zeros: no count pills, and restrictions read as unknown.
+      expect(find.byType(ModPill), findsNothing);
+      expect(find.text('0'), findsNothing);
+      expect(find.text('—'), findsOneWidget);
       expect(find.text('Quiet gems reported'), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
       api.failStats = false;
       await tester.tap(find.text('Try again'));
       await tester.pumpAndSettle();
 
       expect(find.text('Queue counts did not load'), findsNothing);
-      expect(find.text('Pending\nReports'), findsOneWidget);
-      expect(find.text('4'), findsWidgets);
+      expect(find.widgetWithText(ModPill, '4'), findsOneWidget);
+      expect(find.widgetWithText(ModPill, '1'), findsOneWidget);
+      expect(find.text('0'), findsOneWidget, reason: 'active restrictions');
+      expect(find.text('—'), findsNothing);
+    });
+
+    testWidgets('shows each queue once with its count, no overflow at 375px',
+        (tester) async {
+      final api = _FakeApiClient()
+        ..gems = [_gemJson('p1', 'Alpha'), _gemJson('p2', 'Beta')];
+      await _pump(tester, Scaffold(body: ModerationHubScreen(apiClient: api)));
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Reports'), findsOneWidget);
+      expect(find.text('Appeals'), findsOneWidget);
+      expect(find.text('Quiet gems reported'), findsOneWidget);
+      expect(find.text('Active restrictions'), findsOneWidget);
+      // Each count appears exactly once on the hub.
+      expect(find.text('4'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right_rounded), findsNWidgets(3));
+      expect(find.byType(ModPill), findsNWidgets(3));
     });
 
     testWidgets('opens the quiet gems queue and reloads stats on return',
@@ -161,6 +188,7 @@ void main() {
       );
       expect(find.text('Ada'), findsOneWidget);
       expect(find.text('Quiet · 25% current'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('shows the empty state when nothing is reported',
@@ -174,20 +202,23 @@ void main() {
       final api = _FakeApiClient()..gems = [_gemJson('p1', 'Alpha')];
       await _pump(tester, InactiveGemsQueueScreen(apiClient: api));
 
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Resolve'));
+      await tester.tap(find.widgetWithText(ModButton, 'Resolve'));
       await tester.pumpAndSettle();
 
-      final submit = find.widgetWithText(ElevatedButton, 'Resolve');
-      expect(tester.widget<ElevatedButton>(submit).onPressed, isNull);
+      final submit = find.descendant(
+        of: find.byType(ResolveInactiveGemDialog),
+        matching: find.widgetWithText(ModButton, 'Resolve'),
+      );
+      expect(tester.widget<ModButton>(submit).onTap, isNull);
 
       await tester.tap(find.text('Hunter contacted'));
       await tester.pump();
-      expect(tester.widget<ElevatedButton>(submit).onPressed, isNull,
+      expect(tester.widget<ModButton>(submit).onTap, isNull,
           reason: 'a note is required');
 
       await tester.enterText(find.byType(TextField), '  Pinged on Telegram ');
       await tester.pump();
-      expect(tester.widget<ElevatedButton>(submit).onPressed, isNotNull);
+      expect(tester.widget<ModButton>(submit).onTap, isNotNull);
 
       await tester.tap(submit);
       await tester.pumpAndSettle();
@@ -206,7 +237,7 @@ void main() {
       final api = _FakeApiClient()..gems = [_gemJson('p1', 'Alpha')];
       await _pump(tester, InactiveGemsQueueScreen(apiClient: api));
 
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Resolve'));
+      await tester.tap(find.widgetWithText(ModButton, 'Resolve'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();

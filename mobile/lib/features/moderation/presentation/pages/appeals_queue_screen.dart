@@ -1,24 +1,56 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/moderation/data/models/community_appeal_model.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/appeals/appeal_card.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_app_bar.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_dropdown.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_input_dialogs.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_queue_body.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_styles.dart';
 import 'package:blocnet/services/api/api_client.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/services/api/api_error.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
+/// Members contesting a moderation decision. An admin overturns or upholds.
 class AppealsQueueScreen extends StatefulWidget {
-  const AppealsQueueScreen({super.key});
+  const AppealsQueueScreen({this.apiClient, super.key});
+
+  /// Injectable for tests.
+  final ApiClient? apiClient;
 
   @override
   State<AppealsQueueScreen> createState() => _AppealsQueueScreenState();
 }
 
+enum _Decision {
+  overturn('overturn', 'Overturn decision', 'Overturn', 'Appeal overturned'),
+  uphold('uphold', 'Uphold decision', 'Uphold', 'Decision upheld');
+
+  const _Decision(this.apiValue, this.title, this.action, this.done);
+
+  final String apiValue;
+  final String title;
+  final String action;
+  final String done;
+}
+
 class _AppealsQueueScreenState extends State<AppealsQueueScreen> {
-  final ApiClient _apiClient = ApiClient();
+  late final ApiClient _apiClient = widget.apiClient ?? ApiClient();
   List<CommunityAppeal> _appeals = [];
   bool _isLoading = false;
+  bool _reloadQueued = false;
+  String? _error;
   String? _statusFilter;
+  String? _reviewingId;
+
+  static const Map<String?, String> _statusOptions = {
+    null: 'All',
+    'pending': 'Pending',
+    'under_review': 'Under review',
+    'approved': 'Approved',
+    'rejected': 'Rejected',
+  };
 
   @override
   void initState() {
@@ -27,614 +59,134 @@ class _AppealsQueueScreenState extends State<AppealsQueueScreen> {
   }
 
   Future<void> _loadAppeals() async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
+    if (_isLoading) {
+      _reloadQueued = true;
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     try {
-      final queryParams = <String, String>{
-        'limit': '50',
-      };
-      if (_statusFilter != null) {
-        queryParams['status'] = _statusFilter!;
-      }
-
       final response = await _apiClient.get(
         '/community/moderation/appeals',
-        query: queryParams,
+        query: {
+          'limit': '50',
+          if (_statusFilter != null) 'status': _statusFilter!,
+        },
       );
-
+      final rows = response is Map ? response['appeals'] : null;
       if (!mounted) return;
       setState(() {
-        _appeals = (response['appeals'] as List)
-            .map((a) => CommunityAppeal.fromApi(a as Map<String, dynamic>))
+        _appeals = (rows is List ? rows : const [])
+            .whereType<Map<String, dynamic>>()
+            .map(CommunityAppeal.fromApi)
             .toList();
       });
     } catch (e) {
       if (!mounted) return;
       debugPrint('Failed to load appeals: $e');
+      setState(() {
+        _error = describeApiError(e, fallback: 'Appeals could not be loaded.');
+      });
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
+    }
+    if (mounted && _reloadQueued) {
+      _reloadQueued = false;
+      await _loadAppeals();
     }
   }
 
   void _onStatusFilterChanged(String? value) {
-    setState(() => _statusFilter = value);
+    setState(() {
+      _statusFilter = value;
+      _appeals = [];
+    });
     _loadAppeals();
+  }
+
+  Future<void> _review(CommunityAppeal appeal, _Decision decision) async {
+    final notes = await showModReasonDialog(
+      context,
+      title: decision.title,
+      hint: 'Why?',
+      required: false,
+      confirmLabel: decision.action,
+    );
+    if (notes == null || !mounted) return;
+
+    setState(() => _reviewingId = appeal.id);
+    try {
+      await _apiClient.patch(
+        '/community/moderation/appeals/${appeal.id}',
+        body: {
+          'decision': decision.apiValue,
+          if (notes.isNotEmpty) 'reviewNotes': notes,
+        },
+      );
+      if (!mounted) return;
+      AppSnackbar.showSuccess(context, decision.done);
+      await _loadAppeals();
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackbar.showError(
+        context,
+        describeApiError(e, fallback: 'The review did not go through.'),
+      );
+    } finally {
+      if (mounted) setState(() => _reviewingId = null);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      appBar: AppBar(
-        backgroundColor: AppColors.bgBase,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Appeals Queue',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.subtitleSize,
-            weight: FontWeight.w700,
-          ),
-        ),
-      ),
+      appBar: const ModAppBar(title: 'Appeals'),
       body: Column(
         children: [
-          // Filter bar
           Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpace.lg, vertical: AppSpace.md),
-            decoration: BoxDecoration(
-              color: AppColors.bgSurface,
-              border: Border(
-                bottom: BorderSide(color: AppColors.borderSubtle),
-              ),
+            padding: const EdgeInsets.fromLTRB(
+              ModTone.gutter,
+              AppSpace.md,
+              ModTone.gutter,
+              AppSpace.md,
             ),
-            child: Row(
-              children: [
-                Text(
-                  'Status:',
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Container(
-                    height: 36,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpace.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgBase,
-                      borderRadius: BorderRadius.circular(AppRadius.smValue),
-                      border: Border.all(color: AppColors.borderSubtle),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _statusFilter,
-                        isExpanded: true,
-                        hint: Text(
-                          'All Statuses',
-                          style: AppTypography.custom(
-                            color: AppColors.textMuted,
-                            size: AppText.bodySize,
-                            weight: FontWeight.w400,
-                          ),
-                        ),
-                        style: AppTypography.custom(
-                          color: AppColors.textPrimary,
-                          size: AppText.labelSize,
-                          weight: FontWeight.w500,
-                        ),
-                        icon: Icon(Icons.arrow_drop_down,
-                            size: AppIcon.md, color: AppColors.textMuted),
-                        items: const [
-                          DropdownMenuItem(
-                              value: null, child: Text('All Statuses')),
-                          DropdownMenuItem(
-                              value: 'pending', child: Text('Pending')),
-                          DropdownMenuItem(
-                              value: 'under_review',
-                              child: Text('Under Review')),
-                          DropdownMenuItem(
-                              value: 'approved', child: Text('Approved')),
-                          DropdownMenuItem(
-                              value: 'rejected', child: Text('Rejected')),
-                        ],
-                        onChanged: _onStatusFilterChanged,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
+            ),
+            child: ModDropdown<String?>(
+              label: 'Status',
+              value: _statusFilter,
+              options: _statusOptions,
+              onChanged: _onStatusFilterChanged,
             ),
           ),
-
-          // Appeals list
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _appeals.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.gavel_outlined,
-                              size: AppIcon.xxl,
-                              color: AppColors.textMuted.withValues(alpha: 0.5),
-                            ),
-                            const SizedBox(height: AppSpace.md),
-                            Text(
-                              'No appeals found',
-                              style: AppTypography.custom(
-                                color: AppColors.textMuted,
-                                size: AppText.labelSize,
-                                weight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _loadAppeals,
-                        color: AppColors.moderationAccent,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(AppSpace.lg),
-                          itemCount: _appeals.length,
-                          itemBuilder: (context, index) {
-                            return _AppealCard(
-                              appeal: _appeals[index],
-                              onReviewed: _loadAppeals,
-                            );
-                          },
-                        ),
-                      ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AppealCard extends StatelessWidget {
-  final CommunityAppeal appeal;
-  final VoidCallback onReviewed;
-
-  const _AppealCard({
-    required this.appeal,
-    required this.onReviewed,
-  });
-
-  Color _getStatusColor() {
-    switch (appeal.status) {
-      case CommunityAppealStatus.pending:
-        return AppColors.warning500;
-      case CommunityAppealStatus.underReview:
-        return AppColors.primary400;
-      case CommunityAppealStatus.approved:
-        return AppColors.successColor;
-      case CommunityAppealStatus.rejected:
-        return AppColors.error500;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final statusColor = _getStatusColor();
-
-    return AppSurface.flush(
-      margin: const EdgeInsets.only(bottom: AppSpace.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(AppSpace.md),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.08),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpace.sm, vertical: AppSpace.hair),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(AppRadius.smValue),
-                  ),
-                  child: Text(
-                    appeal.statusLabel.toUpperCase(),
-                    style: AppTypography.custom(
-                      color: Colors.black,
-                      size: AppText.captionSize,
-                      weight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                Expanded(
-                  child: Text(
-                    'Appeal #${appeal.id.substring(0, 8)}',
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: AppText.labelSize,
-                      weight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Text(
-                  DateFormat('MMM d, HH:mm').format(appeal.createdAt.toLocal()),
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(AppSpace.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Appealer info
-                Row(
-                  children: [
-                    Icon(Icons.person_outline,
-                        size: AppIcon.sm, color: AppColors.textMuted),
-                    const SizedBox(width: AppSpace.sm),
-                    Text(
-                      appeal.appealer?.username ?? 'Unknown',
-                      style: AppTypography.custom(
-                        color: AppColors.textPrimary,
-                        size: AppText.labelSize,
-                        weight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpace.sm),
-
-                // Appeal reason
-                Text(
-                  'Reason:',
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.xs),
-                Text(
-                  appeal.reason,
-                  style: AppTypography.custom(
-                    color: AppColors.textSecondary,
-                    size: AppText.bodySize,
-                    weight: FontWeight.w400,
-                    height: 1.4,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                // Original report info
-                if (appeal.report != null) ...[
-                  const SizedBox(height: AppSpace.md),
-                  Container(
-                    padding: const EdgeInsets.all(AppSpace.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgBase,
-                      borderRadius: BorderRadius.circular(AppRadius.smValue),
-                      border: Border.all(color: AppColors.borderSubtle),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Original Report',
-                          style: AppTypography.custom(
-                            color: AppColors.textMuted,
-                            size: AppText.captionSize,
-                            weight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpace.sm),
-                        Text(
-                          'Category: ${appeal.report!.category}',
-                          style: AppTypography.custom(
-                            color: AppColors.textSecondary,
-                            size: AppText.captionSize,
-                            weight: FontWeight.w400,
-                          ),
-                        ),
-                        if (appeal.report!.reviewNotes != null)
-                          Text(
-                            'Notes: ${appeal.report!.reviewNotes}',
-                            style: AppTypography.custom(
-                              color: AppColors.textSecondary,
-                              size: AppText.captionSize,
-                              weight: FontWeight.w400,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                // Review info (if reviewed)
-                if (appeal.reviewedBy != null) ...[
-                  const SizedBox(height: AppSpace.md),
-                  Container(
-                    padding: const EdgeInsets.all(AppSpace.md),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(AppRadius.smValue),
-                      border:
-                          Border.all(color: statusColor.withValues(alpha: 0.2)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.check_circle_outline,
-                                size: AppIcon.sm, color: statusColor),
-                            const SizedBox(width: AppSpace.sm),
-                            Text(
-                              'Reviewed by ${appeal.reviewedBy!.username}',
-                              style: AppTypography.custom(
-                                color: statusColor,
-                                size: AppText.captionSize,
-                                weight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (appeal.decision != null) ...[
-                          const SizedBox(height: AppSpace.xs),
-                          Text(
-                            'Decision: ${appeal.decisionLabel}',
-                            style: AppTypography.custom(
-                              color: AppColors.textSecondary,
-                              size: AppText.captionSize,
-                              weight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                        if (appeal.reviewNotes != null) ...[
-                          const SizedBox(height: AppSpace.xs),
-                          Text(
-                            appeal.reviewNotes!,
-                            style: AppTypography.custom(
-                              color: AppColors.textSecondary,
-                              size: AppText.captionSize,
-                              weight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-
-                // Action buttons (only for pending/under_review)
-                if (appeal.status == CommunityAppealStatus.pending ||
-                    appeal.status == CommunityAppealStatus.underReview) ...[
-                  const SizedBox(height: AppSpace.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () =>
-                              _showReviewDialog(context, appeal, 'overturn'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.successColor,
-                            side: BorderSide(color: AppColors.successColor),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: AppSpace.md),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.smValue),
-                            ),
-                          ),
-                          child: Text(
-                            'Overturn',
-                            style: AppTypography.custom(
-                              color: AppColors.successColor,
-                              size: AppText.labelSize,
-                              weight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpace.sm),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () =>
-                              _showReviewDialog(context, appeal, 'uphold'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.error500,
-                            side: BorderSide(color: AppColors.error500),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: AppSpace.md),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.smValue),
-                            ),
-                          ),
-                          child: Text(
-                            'Uphold',
-                            style: AppTypography.custom(
-                              color: AppColors.error500,
-                              size: AppText.labelSize,
-                              weight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
+            child: ModQueueBody(
+              isLoading: _isLoading,
+              error: _error,
+              itemCount: _appeals.length,
+              onRefresh: _loadAppeals,
+              errorTitle: 'Appeals did not load',
+              emptyIcon: Icons.gavel_outlined,
+              emptyTitle: 'No appeals',
+              emptyMessage: 'Nothing matches this filter.',
+              itemBuilder: (context, index) {
+                final appeal = _appeals[index];
+                return AppealCard(
+                  appeal: appeal,
+                  busy: _reviewingId != null,
+                  onOverturn: () => _review(appeal, _Decision.overturn),
+                  onUphold: () => _review(appeal, _Decision.uphold),
+                );
+              },
             ),
           ),
         ],
       ),
     );
-  }
-
-  void _showReviewDialog(
-      BuildContext context, CommunityAppeal appeal, String decision) {
-    final TextEditingController notesController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgSurface,
-        title: Text(
-          decision == 'overturn'
-              ? 'Overturn Appeal'
-              : 'Uphold Original Decision',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.bodySize,
-            weight: FontWeight.w700,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Review Notes (optional)',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.labelSize,
-                weight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            TextField(
-              controller: notesController,
-              maxLines: 3,
-              style: AppTypography.custom(
-                color: AppColors.textPrimary,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Add notes about your decision...',
-                hintStyle: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                ),
-                filled: true,
-                fillColor: AppColors.bgBase,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.smValue),
-                  borderSide: const BorderSide(color: AppColors.borderSubtle),
-                ),
-                contentPadding: const EdgeInsets.all(AppSpace.md),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Cancel',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.labelSize,
-                weight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await _submitReview(
-                  context, appeal, decision, notesController.text.trim());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: decision == 'overturn'
-                  ? AppColors.successColor
-                  : AppColors.error500,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpace.lg, vertical: AppSpace.md),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.smValue),
-              ),
-            ),
-            child: Text(
-              'Confirm',
-              style: AppTypography.custom(
-                color: Colors.white,
-                size: AppText.labelSize,
-                weight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _submitReview(
-    BuildContext context,
-    CommunityAppeal appeal,
-    String decision,
-    String notes,
-  ) async {
-    try {
-      final apiClient = ApiClient();
-      await apiClient.patch(
-        '/community/moderation/appeals/${appeal.id}',
-        body: {
-          'decision': decision,
-          if (notes.isNotEmpty) 'reviewNotes': notes,
-        },
-      );
-
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Appeal ${decision}ed successfully'),
-          backgroundColor: AppColors.successColor,
-        ),
-      );
-
-      onReviewed();
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to review appeal: $e'),
-          backgroundColor: AppColors.error500,
-        ),
-      );
-    }
   }
 }

@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/badges/presentation/widgets/progress_style.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_progress_card.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
@@ -23,13 +23,18 @@ class LevelsProgressHeader extends StatelessWidget {
   final bool isLoading;
   final String? error;
   final VoidCallback onRetry;
-  final VoidCallback onTap;
+
+  /// Opens the current level. Only used once progress has loaded.
+  final ValueChanged<UserLevelModel> onTap;
 
   @override
   Widget build(BuildContext context) {
     final progress = this.progress;
     if (progress != null) {
-      return LevelProgressCard(progress: progress, onTap: onTap);
+      return LevelProgressCard(
+        progress: progress,
+        onTap: () => onTap(progress.currentLevel),
+      );
     }
     if (isLoading) return const _Placeholder();
     if (error != null) return _ErrorRow(message: error!, onRetry: onRetry);
@@ -43,12 +48,11 @@ class _Placeholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppSurface.flush(
-      radius: AppRadius.lg,
       height: 76,
       child: Center(
         child: SizedBox(
-          width: 18,
-          height: 18,
+          width: AppIcon.md,
+          height: AppIcon.md,
           child: CircularProgressIndicator(
             strokeWidth: 2,
             color: AppColors.textMuted,
@@ -67,40 +71,37 @@ class _ErrorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
       padding: const EdgeInsets.fromLTRB(
-          AppSpace.md, AppSpace.sm, AppSpace.sm, AppSpace.sm),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: AppColors.error500.withValues(alpha: 0.35)),
+        AppSpace.lg,
+        AppSpace.sm,
+        AppSpace.sm,
+        AppSpace.sm,
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline_rounded,
-              size: AppIcon.sm, color: AppColors.error500),
-          const SizedBox(width: AppSpace.sm),
+          Icon(
+            Icons.error_outline_rounded,
+            size: AppIcon.sm,
+            color: AppColors.error500,
+          ),
+          AppSpace.wGapSm,
           Expanded(
             child: Text(
-              message,
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.captionSize,
-                weight: FontWeight.w500,
+              progressErrorText(
+                message,
+                fallback: 'Could not load your progress.',
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
+              style: AppText.label(AppColors.textMuted),
             ),
           ),
-          TextButton(
+          AppButton(
+            label: 'Retry',
+            variant: AppButtonVariant.ghost,
+            size: AppButtonSize.small,
             onPressed: onRetry,
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.textPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
-              minimumSize: const Size(0, 32),
-            ),
-            child: const Text('Retry',
-                style: TextStyle(fontSize: AppText.bodySize)),
           ),
         ],
       ),

@@ -21,7 +21,7 @@ class SupportHeader extends StatelessWidget {
           style: AppTypography.custom(
             color: AppColors.textPrimary,
             size: AppText.titleSize,
-            weight: FontWeight.w800,
+            weight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: AppSpace.sm),
@@ -123,7 +123,9 @@ class _SupportFaqTileState extends State<SupportFaqTile> {
   }
 }
 
-/// Numbered step card used by the Getting Started screen.
+/// One Getting Started step: a flat card with a tinted icon square, the
+/// numbered title and the body, left-aligned. A step with a shortcut ends in
+/// a hairline and a tappable row with a chevron.
 class SupportStepCard extends StatelessWidget {
   const SupportStepCard({
     super.key,
@@ -144,77 +146,61 @@ class SupportStepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppSurface(
-      radius: AppRadius.lg,
+    final hasAction = actionLabel != null && onAction != null;
+    return AppSurface.flush(
       margin: const EdgeInsets.only(bottom: AppSpace.md),
-      padding: const EdgeInsets.all(AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.primary500.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.mdValue),
+          Padding(
+            padding: AppSpace.card,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary500.withValues(alpha: 0.12),
+                    borderRadius: AppRadius.sm,
+                  ),
+                  child:
+                      Icon(icon, size: AppIcon.sm, color: AppColors.primary400),
                 ),
-                child:
-                    Icon(icon, size: AppIcon.md, color: AppColors.primary400),
-              ),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Text(
-                  '$number. $title',
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: AppText.bodySize,
-                    weight: FontWeight.w700,
+                AppSpace.wGapMd,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$number. $title',
+                        style: AppText.body(
+                          AppColors.textPrimary,
+                          weight: AppText.bold,
+                        ),
+                      ),
+                      AppSpace.gapXs,
+                      Text(body,
+                          style: AppText.label(AppColors.textMuted)
+                              .copyWith(height: 1.5)),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpace.md),
-          Text(
-            body,
-            style: AppTypography.custom(
-              color: AppColors.textSecondary,
-              size: AppText.bodySize,
-              weight: FontWeight.w400,
-              height: 1.5,
+              ],
             ),
           ),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: AppSpace.md),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: onAction,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      actionLabel!,
-                      style: AppTypography.custom(
-                        color: AppColors.primary400,
-                        size: AppText.labelSize,
-                        weight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      size: AppIcon.sm,
-                      color: AppColors.primary400,
-                    ),
-                  ],
-                ),
+          if (hasAction) ...[
+            Divider(height: 1, color: AppColors.borderSubtle),
+            AppListRow(
+              title: actionLabel!,
+              titleColor: AppColors.primary400,
+              dense: true,
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                size: AppIcon.md,
+                color: AppColors.textFaint,
               ),
+              onTap: onAction,
             ),
           ],
         ],

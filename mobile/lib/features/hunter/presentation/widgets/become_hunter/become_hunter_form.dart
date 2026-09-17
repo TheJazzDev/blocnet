@@ -1,7 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/become_hunter/become_hunter_criteria.dart';
 import 'package:blocnet/services/users/hunter_application_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -42,24 +44,17 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
     final ok = await store.submit(reason);
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: ok ? AppColors.successColor : AppColors.error500,
-          content: Text(
-            ok
-                ? 'Application sent. We will notify you once it is reviewed.'
-                : (store.lastError ?? 'Could not send your application.'),
-            style: AppTypography.custom(
-              color: Colors.white,
-              size: AppText.labelSize,
-              weight: FontWeight.w600,
-            ),
-          ),
-        ),
+    if (ok) {
+      AppSnackbar.showSuccess(
+        context,
+        'Application sent. You will get a notification once it is reviewed.',
       );
+    } else {
+      AppSnackbar.showError(
+        context,
+        store.lastError ?? 'Could not send your application.',
+      );
+    }
   }
 
   @override
@@ -70,39 +65,10 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'WHAT WE LOOK FOR',
-          style: AppTypography.custom(
-            color: AppColors.textFaint,
-            size: AppText.captionSize,
-            weight: FontWeight.w600,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: AppSpace.md),
-        const _Criterion(
-          icon: Icons.search_rounded,
-          text: 'You research projects before you post about them.',
-        ),
-        const _Criterion(
-          icon: Icons.forum_outlined,
-          text: 'You are active in the community and your comments add signal.',
-        ),
-        const _Criterion(
-          icon: Icons.schedule_rounded,
-          text: 'You can post Updates consistently for the Gems you track.',
-        ),
-        const SizedBox(height: 22),
-        Text(
-          'WHY DO YOU WANT TO BE A HUNTER?',
-          style: AppTypography.custom(
-            color: AppColors.textFaint,
-            size: AppText.captionSize,
-            weight: FontWeight.w600,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: AppSpace.md),
+        const _Header('What we look for', Icons.checklist_rounded),
+        const BecomeHunterCriteria(),
+        AppSpace.gapXl,
+        const _Header('Why do you want to be a Hunter?', Icons.edit_note_rounded),
         TextField(
           controller: _reason,
           maxLength: BecomeHunterForm.maxReasonLength,
@@ -110,128 +76,60 @@ class _BecomeHunterFormState extends State<BecomeHunterForm> {
           minLines: 4,
           enabled: !store.isSubmitting,
           textCapitalization: TextCapitalization.sentences,
-          style: AppTypography.custom(
-            size: AppText.bodySize,
-            weight: FontWeight.w400,
-            color: AppColors.textPrimary,
-          ),
+          style: AppText.body(AppColors.textPrimary),
           decoration: InputDecoration(
-            hintText:
-                'Which chains or sectors do you follow? Share past calls or research if you have any.',
-            hintStyle: AppTypography.custom(
-              size: AppText.bodySize,
-              weight: FontWeight.w400,
-              color: AppColors.textFaint,
-            ),
-            counterStyle: AppTypography.custom(
-              size: AppText.captionSize,
-              weight: FontWeight.w400,
-              color: AppColors.textFaint,
-            ),
+            hintText: 'Which chains or sectors do you follow? Link past calls '
+                'or research if you have any.',
+            hintStyle: AppText.body(AppColors.textFaint),
+            counterStyle: AppText.caption(AppColors.textFaint),
             filled: true,
             fillColor: AppColors.bgSurface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.mdValue),
-              borderSide: BorderSide(color: AppColors.borderSubtle),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.mdValue),
-              borderSide: BorderSide(color: AppColors.borderSubtle),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.mdValue),
-              borderSide: BorderSide(color: AppColors.primary500),
-            ),
+            contentPadding: AppSpace.card,
+            border: _border(AppColors.borderSubtle),
+            enabledBorder: _border(AppColors.borderSubtle),
+            disabledBorder: _border(AppColors.borderSubtle),
+            focusedBorder: _border(AppColors.primary500),
           ),
         ),
         if (error != null) ...[
-          const SizedBox(height: AppSpace.sm),
-          Text(
-            error,
-            style: AppTypography.custom(
-              size: AppText.captionSize,
-              weight: FontWeight.w500,
-              color: AppColors.error500,
-            ),
-          ),
+          AppSpace.gapXs,
+          Text(error, style: AppText.label(AppColors.error500)),
         ],
-        const SizedBox(height: AppSpace.md),
+        AppSpace.gapMd,
         Text(
-          'The Blocnet team reviews applications within a few days. You will '
-          'get a notification either way.',
-          style: AppTypography.custom(
-            color: AppColors.textFaint,
-            size: AppText.captionSize,
-            weight: FontWeight.w400,
-            height: 1.4,
-          ),
+          'Reviewed within a few days.',
+          style: AppText.label(AppColors.textFaint, weight: AppText.regular),
         ),
-        const SizedBox(height: AppSpace.lg),
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: FilledButton(
-            onPressed: store.isSubmitting ? null : _submit,
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary500,
-              disabledBackgroundColor: AppColors.bgElevated,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lgValue),
-              ),
-            ),
-            child: store.isSubmitting
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.black,
-                    ),
-                  )
-                : Text(
-                    'Apply to become a Hunter',
-                    style: AppTypography.custom(
-                      size: AppText.labelSize,
-                      color: Colors.black,
-                      weight: FontWeight.w700,
-                    ),
-                  ),
-          ),
+        AppSpace.gapLg,
+        AppButton(
+          label: 'Apply to become a Hunter',
+          onPressed: store.isSubmitting ? null : _submit,
+          isLoading: store.isSubmitting,
+          fullWidth: true,
         ),
       ],
     );
   }
+
+  static OutlineInputBorder _border(Color color) => OutlineInputBorder(
+        borderRadius: AppRadius.md,
+        borderSide: BorderSide(color: color),
+      );
 }
 
-class _Criterion extends StatelessWidget {
-  const _Criterion({required this.icon, required this.text});
+/// A small caps section label with a faint icon.
+class _Header extends StatelessWidget {
+  const _Header(this.label, this.icon);
 
+  final String label;
   final IconData icon;
-  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpace.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: AppIcon.sm, color: AppColors.primary400),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Text(
-              text,
-              style: AppTypography.custom(
-                color: AppColors.textSecondary,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-                height: 1.45,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return AppSectionHeader(
+      title: label,
+      icon: icon,
+      padding: const EdgeInsets.only(bottom: AppSpace.md),
     );
   }
 }

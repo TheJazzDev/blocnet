@@ -1,15 +1,13 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_status_chip.dart';
 import 'package:flutter/material.dart';
 
-/// Compact row for a level inside a tier section (list view mode).
-///
-/// Locked levels are dimmed but keep a tier-coloured accent bar so the
-/// section still reads as one colour block.
+/// A level as a list row inside its tier card (list view mode): badge,
+/// name, level number, a status mark and a chevron. Locked levels are
+/// dimmed.
 class LevelListItem extends StatelessWidget {
   const LevelListItem({
     super.key,
@@ -28,23 +26,12 @@ class LevelListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentAlpha = isLocked ? 0.3 : 0.9;
-
     return Material(
-      color: isCurrent ? tierColor.withValues(alpha: 0.08) : Colors.transparent,
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
-          decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(
-                width: 3,
-                color: tierColor.withValues(alpha: isCurrent ? 1 : accentAlpha),
-              ),
-            ),
-          ),
+        child: Padding(
+          padding: AppSpace.row,
           child: Row(
             children: [
               Opacity(
@@ -56,10 +43,16 @@ class LevelListItem extends StatelessWidget {
                   showLevelNumber: false,
                 ),
               ),
-              const SizedBox(width: AppSpace.md),
+              AppSpace.wGapMd,
               Expanded(child: _buildText()),
-              const SizedBox(width: AppSpace.sm),
-              _buildTrailing(),
+              AppSpace.wGapSm,
+              _buildStatus(),
+              AppSpace.wGapXs,
+              Icon(
+                Icons.chevron_right_rounded,
+                size: AppIcon.md,
+                color: AppColors.textFaint,
+              ),
             ],
           ),
         ),
@@ -68,60 +61,39 @@ class LevelListItem extends StatelessWidget {
   }
 
   Widget _buildText() {
+    final showDescription = !isLocked && level.description.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           level.name,
-          style: AppTypography.custom(
-            color: isLocked ? AppColors.textMuted : AppColors.textPrimary,
-            size: AppText.labelSize,
-            weight: FontWeight.w700,
-          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: AppText.body(
+            isLocked ? AppColors.textMuted : AppColors.textPrimary,
+            weight: AppText.bold,
+          ),
         ),
-        const SizedBox(height: AppSpace.hair),
         Text(
-          'Level ${level.level}',
-          style: AppTypography.custom(
-            color: isLocked ? AppColors.textFaint : tierColor,
-            size: AppText.captionSize,
-            weight: FontWeight.w600,
-          ),
+          showDescription
+              ? 'Level ${level.level} · ${level.description}'
+              : 'Level ${level.level}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppText.label(AppColors.textFaint),
         ),
-        if (!isLocked && level.description.isNotEmpty) ...[
-          const SizedBox(height: AppSpace.hair),
-          Text(
-            level.description,
-            style: AppTypography.custom(
-              color: AppColors.textFaint,
-              size: AppText.captionSize,
-              weight: FontWeight.w400,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
       ],
     );
   }
 
-  Widget _buildTrailing() {
+  Widget _buildStatus() {
     if (isCurrent) {
-      return LevelStatusChip(label: 'CURRENT', color: tierColor);
-    }
-    if (isLocked) {
-      return Icon(
-        Icons.lock_outline_rounded,
-        size: AppIcon.sm,
-        color: tierColor.withValues(alpha: 0.55),
-      );
+      return LevelStatusChip(label: 'Current', color: tierColor, filled: false);
     }
     return Icon(
-      Icons.check_circle_rounded,
+      isLocked ? Icons.lock_outline_rounded : Icons.check_circle_rounded,
       size: AppIcon.sm,
-      color: tierColor.withValues(alpha: 0.85),
+      color: isLocked ? AppColors.textFaint : AppColors.successColor,
     );
   }
 }

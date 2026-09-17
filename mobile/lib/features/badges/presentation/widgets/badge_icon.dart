@@ -1,10 +1,16 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
-import 'package:flutter/material.dart';
+import 'package:blocnet/features/badges/presentation/widgets/progress_style.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 
-/// A compact badge icon widget that displays next to usernames
-/// Similar to Discord's badge system
+export 'package:blocnet/features/badges/presentation/widgets/badge_chips.dart';
+
+/// A compact badge icon shown next to usernames and in the badge gallery.
+///
+/// Flat: a faint tint of the badge's rarity colour behind the artwork and a
+/// hairline in the same colour. No gradient, no glow.
 class BadgeIcon extends StatelessWidget {
   const BadgeIcon({
     super.key,
@@ -22,80 +28,35 @@ class BadgeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dimensions = size.dimensions;
-    final hasValidImage = _isUsableImageUrl(badge.imageUrl);
-    final rarityColor = Color(badge.rarity.color);
-    final categoryColor = Color(badge.category.color);
-    final shellColor =
-        Color.lerp(rarityColor, categoryColor, 0.35) ?? rarityColor;
+    final tone = badge.rarity.tone;
 
     Widget fallbackIcon() {
-      return Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              shellColor.withValues(alpha: 0.35),
-              shellColor.withValues(alpha: 0.12),
-            ],
-          ),
-        ),
+      return ColoredBox(
+        color: tone.withValues(alpha: 0.14),
         child: Icon(
-          Icons.emoji_events,
+          Icons.emoji_events_rounded,
           size: dimensions * 0.6,
-          color: rarityColor,
+          color: tone,
         ),
       );
     }
 
-    Widget badgeWidget = GestureDetector(
+    final badgeWidget = GestureDetector(
       onTap: onTap,
       child: Container(
         width: dimensions,
         height: dimensions,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(
-            color: rarityColor.withValues(alpha: 0.3),
-            width: size == BadgeSize.large ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: rarityColor.withValues(alpha: 0.2),
-              blurRadius: size == BadgeSize.large ? 8 : 4,
-              spreadRadius: size == BadgeSize.large ? 2 : 1,
-            ),
-          ],
+          border: Border.all(color: tone.withValues(alpha: 0.35)),
         ),
         child: ClipOval(
-          child: hasValidImage
+          child: isUsableBadgeImageUrl(badge.imageUrl)
               ? CachedNetworkImage(
                   imageUrl: badge.imageUrl,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          shellColor.withValues(alpha: 0.3),
-                          shellColor.withValues(alpha: 0.1),
-                        ],
-                      ),
-                    ),
-                    child: Center(
-                      child: SizedBox(
-                        width: dimensions * 0.5,
-                        height: dimensions * 0.5,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            rarityColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  placeholder: (context, url) =>
+                      ColoredBox(color: tone.withValues(alpha: 0.12)),
                   errorWidget: (context, url, error) => fallbackIcon(),
                 )
               : fallbackIcon(),
@@ -103,49 +64,38 @@ class BadgeIcon extends StatelessWidget {
       ),
     );
 
-    if (showTooltip) {
-      return Tooltip(
-        message: '${badge.name}\n${badge.description}',
-        preferBelow: false,
-        textStyle: const TextStyle(
-          fontSize: AppText.bodySize,
-          color: Colors.white,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.black87,
-          borderRadius: BorderRadius.circular(AppRadius.smValue),
-          border: Border.all(
-            color: rarityColor.withValues(alpha: 0.5),
-            width: 1,
-          ),
-        ),
-        child: badgeWidget,
-      );
-    }
+    if (!showTooltip) return badgeWidget;
 
-    return badgeWidget;
+    return Tooltip(
+      message: '${badge.name}\n${badge.description}',
+      preferBelow: false,
+      textStyle: AppText.label(AppColors.textPrimary),
+      decoration: BoxDecoration(
+        color: AppColors.bgElevated,
+        borderRadius: AppRadius.sm,
+        border: Border.all(color: AppColors.borderMuted),
+      ),
+      child: badgeWidget,
+    );
   }
+}
 
-  bool _isUsableImageUrl(String raw) {
-    final value = raw.trim();
-    if (value.isEmpty) return false;
-    final uri = Uri.tryParse(value);
-    if (uri == null) return false;
-    if (!uri.hasScheme || !uri.hasAuthority) return false;
-    final scheme = uri.scheme.toLowerCase();
-    if (scheme != 'http' && scheme != 'https') return false;
+/// True for an http(s) URL that is not a known placeholder host.
+bool isUsableBadgeImageUrl(String raw) {
+  final value = raw.trim();
+  if (value.isEmpty) return false;
+  final uri = Uri.tryParse(value);
+  if (uri == null || !uri.hasScheme || !uri.hasAuthority) return false;
+  final scheme = uri.scheme.toLowerCase();
+  if (scheme != 'http' && scheme != 'https') return false;
 
-    final host = uri.host.toLowerCase();
-    const blockedHosts = {
-      'via.placeholder.com',
-      'placeholder.com',
-      'placehold.co',
-      'placehold.it',
-    };
-    if (blockedHosts.contains(host)) return false;
-
-    return true;
-  }
+  const blockedHosts = {
+    'via.placeholder.com',
+    'placeholder.com',
+    'placehold.co',
+    'placehold.it',
+  };
+  return !blockedHosts.contains(uri.host.toLowerCase());
 }
 
 enum BadgeSize {
@@ -217,14 +167,15 @@ class BadgeList extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ...displayBadges.map((badge) => Padding(
-              padding: EdgeInsets.only(right: spacing),
-              child: BadgeIcon(
-                badge: badge,
-                size: size,
-                onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
-              ),
-            )),
+        for (final badge in displayBadges)
+          Padding(
+            padding: EdgeInsets.only(right: spacing),
+            child: BadgeIcon(
+              badge: badge,
+              size: size,
+              onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
+            ),
+          ),
         if (remaining > 0)
           GestureDetector(
             onTap: onMoreTap,
@@ -233,115 +184,22 @@ class BadgeList extends StatelessWidget {
               height: size.dimensions,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF111827),
-                border: Border.all(
-                  color: const Color(0xFF3B82F6).withValues(alpha: 0.6),
-                  width: 1,
-                ),
+                color: AppColors.bgElevated,
+                border: Border.all(color: AppColors.borderMuted),
               ),
               child: Center(
                 child: Text(
                   '+$remaining',
                   style: TextStyle(
                     fontSize: size.dimensions * 0.4,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF93C5FD),
+                    fontWeight: AppText.bold,
+                    color: AppColors.textMuted,
                   ),
                 ),
               ),
             ),
           ),
       ],
-    );
-  }
-}
-
-/// Badge rarity indicator chip
-class BadgeRarityChip extends StatelessWidget {
-  const BadgeRarityChip({
-    super.key,
-    required this.rarity,
-    this.compact = false,
-  });
-
-  final BadgeRarity rarity;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: compact
-          ? const EdgeInsets.symmetric(
-              horizontal: AppSpace.sm, vertical: AppSpace.hair)
-          : const EdgeInsets.symmetric(
-              horizontal: AppSpace.sm, vertical: AppSpace.xs),
-      decoration: BoxDecoration(
-        color: Color(rarity.color).withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(
-          color: Color(rarity.color).withValues(alpha: 0.5),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.stars,
-            size: compact ? 12 : 14,
-            color: Color(rarity.color),
-          ),
-          const SizedBox(width: AppSpace.xs),
-          Text(
-            rarity.displayName,
-            style: TextStyle(
-              fontSize: compact ? 10 : 12,
-              fontWeight: FontWeight.bold,
-              color: Color(rarity.color),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Badge category chip
-class BadgeCategoryChip extends StatelessWidget {
-  const BadgeCategoryChip({
-    super.key,
-    required this.category,
-    this.compact = false,
-  });
-
-  final BadgeCategory category;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final categoryColor = Color(category.color);
-    return Container(
-      padding: compact
-          ? const EdgeInsets.symmetric(
-              horizontal: AppSpace.sm, vertical: AppSpace.hair)
-          : const EdgeInsets.symmetric(
-              horizontal: AppSpace.sm, vertical: AppSpace.xs),
-      decoration: BoxDecoration(
-        color: categoryColor.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(
-          color: categoryColor.withValues(alpha: 0.55),
-          width: 1,
-        ),
-      ),
-      child: Text(
-        category.displayName,
-        style: TextStyle(
-          fontSize: compact ? 10 : 12,
-          fontWeight: FontWeight.w500,
-          color: categoryColor,
-        ),
-      ),
     );
   }
 }

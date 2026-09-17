@@ -1,7 +1,8 @@
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_feedback.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_validators.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -40,12 +41,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isSubmitting = false);
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authStore.lastError ?? 'Failed to send reset email'),
-          backgroundColor: AppColors.darkGrey200,
-          behavior: SnackBarBehavior.floating,
-        ),
+      showAuthMessage(
+        context,
+        authErrorText(authStore.lastError, 'Could not send the reset link.'),
       );
       return;
     }
@@ -61,11 +59,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return AuthScreenShell(
       appBarTitle: '',
       heading: 'Reset your password',
-      subtitle: 'Enter your email and we\'ll send you reset instructions.',
+      subtitle: 'We will email you a link to set a new one.',
       child: Form(
         key: _formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AuthInputField(
               controller: _emailController,
@@ -74,22 +72,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               textInputAction: TextInputAction.done,
               autofillHints: const [AutofillHints.email],
               onFieldSubmitted: (_) => _submit(),
-              validator: (value) {
-                final email = value?.trim() ?? '';
-                if (email.isEmpty) return 'Email is required';
-                if (!email.contains('@')) return 'Enter a valid email';
-                return null;
-              },
+              validator: validateEmail,
             ),
 
             // Success confirmation card
             if (_linkSent) ...[
-              const SizedBox(height: AppSpace.lg),
-              _SuccessCard(email: _emailController.text.trim()),
+              AppSpace.gapMd,
+              AuthNotice.success(
+                message: 'If ${_emailController.text.trim()} has an account, '
+                    'the link is on its way.',
+              ),
             ],
 
-            const SizedBox(height: AppSpace.xl),
-
+            AppSpace.gapLg,
             AppButton(
               label: _linkSent ? 'Resend link' : 'Send reset link',
               onPressed:
@@ -98,69 +93,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               fullWidth: true,
             ),
 
-            const SizedBox(height: AppSpace.xl),
-
-            Center(
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Text(
-                  'Back to sign in',
-                  style: TextStyle(
-                    color: AppColors.teal400,
-                    fontSize: AppText.labelSize,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+            AppSpace.gapSm,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: AuthTextLink(
+                label: 'Back to sign in',
+                onTap: () => Navigator.maybePop(context),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SuccessCard extends StatelessWidget {
-  const _SuccessCard({required this.email});
-
-  final String email;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.lg, vertical: AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.successColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(
-          color: AppColors.successColor.withValues(alpha: 0.25),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.check_circle_outline_rounded,
-            color: AppColors.successColor,
-            size: AppIcon.sm,
-          ),
-          const SizedBox(width: AppSpace.sm),
-          Expanded(
-            child: Text(
-              'If an account exists for $email, a reset link has been sent.',
-              style: TextStyle(
-                color: AppColors.successColor,
-                fontSize: AppText.bodySize,
-                fontFamily: 'Geist',
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

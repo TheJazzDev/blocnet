@@ -89,6 +89,56 @@ void main() {
       expect(find.text('Hunter'), findsOneWidget);
       expect(find.text('Moderation'), findsNothing);
     });
+
+    testWidgets('keeps a 44px tap area around the pill', (tester) async {
+      await tester.pumpWidget(
+        _wrap(_RolesAuthStore(hunter: true), const SpaceSwitcher()),
+      );
+      await tester.pump();
+
+      final area = tester.getSize(find.byType(SpaceSwitcher));
+      expect(area.height, greaterThanOrEqualTo(44));
+    });
+  });
+
+  group('SpaceSwitcherSheet', () {
+    testWidgets('ticks only the current space and fits 375px',
+        (tester) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final auth = _RolesAuthStore(hunter: true, moderation: true);
+      auth.setActiveSpace('moderation');
+      await tester.pumpWidget(_wrap(auth, const SpaceSwitcher()));
+      await tester.pump();
+
+      expect(find.text('Moderation'), findsOneWidget);
+      await tester.tap(find.byType(SpaceSwitcher));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Social feed and community'), findsOneWidget);
+      expect(find.text('Post updates and manage your gems'), findsOneWidget);
+      expect(find.text('Community moderation hub'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
+    });
+
+    testWidgets('picking the current space just closes the sheet',
+        (tester) async {
+      final auth = _RolesAuthStore(hunter: true);
+      await tester.pumpWidget(_wrap(auth, const SpaceSwitcher()));
+      await tester.pump();
+
+      await tester.tap(find.byType(SpaceSwitcher));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Social feed and community'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Switch Space'), findsNothing);
+      expect(SpaceMeta.currentFor(auth).id, 'user');
+    });
   });
 
   group('SpacesExplainerSheet', () {

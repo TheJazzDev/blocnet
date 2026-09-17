@@ -101,6 +101,31 @@ void main() {
     }
   });
 
+  testWidgets('getting started fits 375px and shows each shortcut as a row',
+      (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_app(const GettingStartedScreen()));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    final withAction =
+        gettingStartedSteps.where((s) => s.actionLabel != null).toList();
+    for (final step in withAction) {
+      final label = find.text(step.actionLabel!);
+      await tester.scrollUntilVisible(
+        label,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(label, findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+    expect(find.byIcon(Icons.chevron_right_rounded), findsWidgets);
+  });
+
   test('glossary defines every agreed term with BNP/BNT expansions', () {
     final terms = glossaryTerms.map((t) => t.term).toList();
     expect(

@@ -23,12 +23,16 @@ class GettingStartedScreen extends StatelessWidget {
         showSpaceSwitcher: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpace.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg + 2,
+          AppSpace.lg,
+          AppSpace.lg + 2,
+          AppSpace.xxl,
+        ),
         children: [
           const SupportHeader(
             title: 'Your first week on Blocnet',
-            subtitle: 'Seven steps, in the order that makes the app click. You '
-                'can do them all in one sitting.',
+            subtitle: 'Seven steps, in order. One sitting is enough.',
           ),
           const SizedBox(height: AppSpace.lg),
           for (var i = 0; i < gettingStartedSteps.length; i++)
@@ -46,7 +50,6 @@ class GettingStartedScreen extends StatelessWidget {
                         gettingStartedSteps[i].route!,
                       ),
             ),
-          const SizedBox(height: AppSpace.xl),
         ],
       ),
     );

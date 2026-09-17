@@ -1,13 +1,16 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_feedback.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_google_button.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_navigation.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_validators.dart';
 import 'package:blocnet/features/auth/presentation/widgets/session_ended_notice.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -52,23 +55,10 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() => _isSubmitting = false);
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            authStore.lastError ?? 'Sign in failed',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: AppColors.error500,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      handleAuthFailure(context, authStore, 'Sign in failed. Try again.');
       return;
     }
-
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.main,
-      (Route<dynamic> route) => false,
-    );
+    enterApp(context);
   }
 
   Future<void> _continueWithGoogle() async {
@@ -82,23 +72,10 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() => _isGoogleSigningIn = false);
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            authStore.lastError ?? 'Google sign-in failed',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: AppColors.error500,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      handleAuthFailure(context, authStore, 'Google sign-in failed.');
       return;
     }
-
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.main,
-      (Route<dynamic> route) => false,
-    );
+    enterApp(context);
   }
 
   Widget? _sessionEndedNotice(String? message) {
@@ -111,30 +88,35 @@ class _SignInScreenState extends State<SignInScreen> {
     final authStore = context.watch<AuthStore>();
     final isBusy = _isSubmitting || authStore.isSubmitting;
     final isAnyBusy = isBusy || _isGoogleSigningIn;
+    final configured = authStore.isSupabaseConfigured;
 
     return AuthScreenShell(
       appBarTitle: '',
       showBack: false,
       heading: 'Sign in to Blocnet',
-      subtitle:
-          'Connect to your account and track the latest signals from your favorite gems.',
-      notice: !authStore.isSupabaseConfigured
-          ? _ConfigWarning()
-          : _sessionEndedNotice(authStore.sessionEndedNotice),
+      subtitle: 'Follow your gems and their hunters.',
+      notice: configured
+          ? _sessionEndedNotice(authStore.sessionEndedNotice)
+          : AuthNotice(
+              message: 'Supabase config missing. Add SUPABASE_URL and '
+                  'PUBLISHABLE_KEY via --dart-define.',
+              color: AppColors.warning500,
+              icon: Icons.warning_amber_rounded,
+            ),
       child: Form(
         key: _formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _GoogleAuthButton(
+            AuthGoogleButton(
               label: 'Continue with Google',
-              isEnabled: !isAnyBusy && authStore.isSupabaseConfigured,
+              isEnabled: !isAnyBusy && configured,
               isLoading: _isGoogleSigningIn,
               onPressed: _continueWithGoogle,
             ),
-            const SizedBox(height: AppSpace.lg),
-            const _OrDivider(label: 'or sign in with email'),
-            const SizedBox(height: AppSpace.lg),
+            AppSpace.gapLg,
+            const AuthOrDivider(label: 'or use email'),
+            AppSpace.gapLg,
             AuthInputField(
               controller: _emailController,
               label: 'Email address',
@@ -142,17 +124,11 @@ class _SignInScreenState extends State<SignInScreen> {
               focusNode: _emailFocus,
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.email],
-              onFieldSubmitted: (_) {
-                FocusScope.of(context).requestFocus(_passwordFocus);
-              },
-              validator: (value) {
-                final email = value?.trim() ?? '';
-                if (email.isEmpty) return 'Email is required';
-                if (!email.contains('@')) return 'Enter a valid email';
-                return null;
-              },
+              onFieldSubmitted: (_) =>
+                  FocusScope.of(context).requestFocus(_passwordFocus),
+              validator: validateEmail,
             ),
-            const SizedBox(height: AppSpace.md),
+            AppSpace.gapMd,
             AuthInputField(
               controller: _passwordController,
               label: 'Password',
@@ -166,219 +142,38 @@ class _SignInScreenState extends State<SignInScreen> {
                 onTap: () =>
                     setState(() => _obscurePassword = !_obscurePassword),
               ),
-              validator: (value) {
-                if ((value ?? '').length < 6) {
-                  return 'Password must be at least 6 characters';
-                }
-                return null;
-              },
+              validator: validatePassword,
             ),
-            const SizedBox(height: AppSpace.xs),
-
-            // Forgot password — right-aligned link
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: isAnyBusy
+              child: AuthTextLink(
+                label: 'Forgot password?',
+                onTap: isAnyBusy
                     ? null
                     : () => Navigator.pushNamed(
                           context,
                           AppRoutes.forgotPassword,
                         ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpace.xs,
-                    vertical: AppSpace.sm,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'Forgot password?',
-                  style: TextStyle(
-                    color: AppColors.teal400,
-                    fontSize: AppText.labelSize,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
               ),
             ),
-
-            const SizedBox(height: AppSpace.lg),
-
-            // Primary CTA — full width
+            AppSpace.gapXs,
             AppButton(
               label: 'Sign in',
-              onPressed:
-                  !isAnyBusy && authStore.isSupabaseConfigured ? _submit : null,
+              onPressed: !isAnyBusy && configured ? _submit : null,
               isLoading: isBusy,
               fullWidth: true,
             ),
-            const SizedBox(height: AppSpace.xl),
-
-            // Sign up link — centered below divider
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Don't have an account?",
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: AppText.bodySize,
-                      fontFamily: 'Geist',
-                    ),
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  GestureDetector(
-                    onTap: isAnyBusy
-                        ? null
-                        : () => Navigator.pushNamed(context, AppRoutes.signUp),
-                    child: Text(
-                      'Create account',
-                      style: TextStyle(
-                        color: AppColors.teal400,
-                        fontSize: AppText.labelSize,
-                        fontFamily: 'Geist',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            AppSpace.gapMd,
+            AuthLinkRow(
+              prompt: 'New here?',
+              action: 'Create account',
+              onTap: isAnyBusy
+                  ? null
+                  : () => Navigator.pushNamed(context, AppRoutes.signUp),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _GoogleAuthButton extends StatelessWidget {
-  const _GoogleAuthButton({
-    required this.label,
-    required this.isEnabled,
-    required this.isLoading,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool isEnabled;
-  final bool isLoading;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: isEnabled ? onPressed : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 3,
-          shadowColor: Colors.black.withValues(alpha: 0.35),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          ),
-        ),
-        child: isLoading
-            ? SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primary400,
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/google_g.svg',
-                    width: 22,
-                    height: 22,
-                  ),
-                  const SizedBox(width: AppSpace.md),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: AppText.bodySize,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-class _ConfigWarning extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.md, vertical: AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.warning900.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(
-          color: AppColors.warning500.withValues(alpha: 0.5),
-          width: 1,
-        ),
-      ),
-      child: Text(
-        'Supabase config missing. Add SUPABASE_URL and PUBLISHABLE_KEY via --dart-define.',
-        style: TextStyle(
-          color: AppColors.warning500,
-          fontSize: AppText.captionSize,
-          fontFamily: 'Geist',
-          height: 1.5,
-        ),
-      ),
-    );
-  }
-}
-
-class _OrDivider extends StatelessWidget {
-  const _OrDivider({this.label = 'or'});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 1,
-            color: AppColors.borderSubtle,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: AppColors.textFaint,
-              fontSize: AppText.bodySize,
-              fontFamily: 'Geist',
-            ),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            height: 1,
-            color: AppColors.bgElevated,
-          ),
-        ),
-      ],
     );
   }
 }
