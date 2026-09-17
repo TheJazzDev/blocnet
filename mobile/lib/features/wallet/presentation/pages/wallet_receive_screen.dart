@@ -1,10 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/receive_address_card.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_state_views.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -33,7 +32,7 @@ class WalletReceiveScreen extends StatelessWidget {
       if (!context.mounted) return;
       showWalletToast(
         context,
-        message: 'Unable to open share options right now.',
+        message: "Couldn't open sharing.",
         type: WalletToastType.error,
       );
     }
@@ -53,18 +52,15 @@ class WalletReceiveScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: AppBar(
-        title: Text(
-          'Receive',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.titleSize,
-            weight: FontWeight.w700,
-          ),
-        ),
+        title: Text('Receive', style: AppText.title(AppColors.textPrimary)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
-            AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+          AppSpace.lg,
+          AppSpace.md,
+          AppSpace.lg,
+          AppSpace.xl,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -75,82 +71,21 @@ class WalletReceiveScreen extends StatelessWidget {
                 onShare: () => _share(context, address),
               )
             else
-              _WalletNotReadyCard(message: walletNotReadyMessage(walletStore)),
-            const SizedBox(height: AppSpace.lg),
-            AppSurface(
-              padding: const EdgeInsets.all(AppSpace.md),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: AppIcon.sm,
-                    color: AppColors.textMuted,
-                  ),
-                  const SizedBox(width: AppSpace.sm),
-                  Expanded(
-                    child: Text(
-                      'Only send BNB and BEP-20 tokens on $networkLabel to '
-                      'this address. Assets sent on another network cannot '
-                      'be recovered.',
-                      style: AppTypography.custom(
-                        color: AppColors.textMuted,
-                        size: AppText.labelSize,
-                        weight: FontWeight.w500,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
+              WalletNoticeCard(
+                icon: Icons.hourglass_top_rounded,
+                message: 'Address not ready',
+                detail: walletNotReadyMessage(walletStore),
               ),
+            const SizedBox(height: AppSpace.md),
+            WalletNoticeCard(
+              icon: Icons.warning_amber_rounded,
+              iconColor: AppColors.warning500,
+              message: 'Only BNB and BEP-20 tokens',
+              detail: 'Send them on $networkLabel. Tokens sent on another '
+                  'network are lost.',
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _WalletNotReadyCard extends StatelessWidget {
-  const _WalletNotReadyCard({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppSurface(
-      radius: AppRadius.lg,
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: 28),
-      child: Column(
-        children: [
-          Icon(
-            Icons.hourglass_top_rounded,
-            size: AppIcon.xl,
-            color: AppColors.textMuted,
-          ),
-          const SizedBox(height: AppSpace.md),
-          Text(
-            'Address not ready',
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.bodySize,
-              weight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Text(
-            message,
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.labelSize,
-              weight: FontWeight.w500,
-              height: 1.4,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }

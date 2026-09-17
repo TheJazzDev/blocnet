@@ -1,6 +1,5 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
 class DisclaimerText extends StatelessWidget {
@@ -9,15 +8,9 @@ class DisclaimerText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      "BNT is Blocnet's native utility token. It is not a security or financial instrument. "
-      'All wallet features are under active development and subject to change.',
-      textAlign: TextAlign.center,
-      style: AppTypography.custom(
-        color: AppColors.textFaint,
-        size: AppText.captionSize,
-        weight: FontWeight.w400,
-        height: 1.6,
-      ),
+      "BNT is Blocnet's utility token, not a security or investment. "
+      'Wallet features may change.',
+      style: AppText.caption(AppColors.textFaint).copyWith(height: 1.5),
     );
   }
 }

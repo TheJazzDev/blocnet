@@ -2,17 +2,16 @@ import 'dart:math';
 
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/utils/points_transfer_form.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/points_recipient_field.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/send_header_card.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/send_submit_button.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_form_field.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -109,7 +108,7 @@ class _SendPointsPageState extends State<SendPointsPage> {
       );
     } catch (error) {
       if (!mounted) return;
-      setState(() => _error = walletStore.describeError(error));
+      setState(() => _error = walletErrorText(walletStore, error));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -123,22 +122,15 @@ class _SendPointsPageState extends State<SendPointsPage> {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: AppBar(
-        title: Text(
-          'Send BNP',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.titleSize,
-            weight: FontWeight.w700,
-          ),
-        ),
+        title: Text('Send BNP', style: AppText.title(AppColors.textPrimary)),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
-            16,
-            12,
-            16,
-            24 + MediaQuery.of(context).viewInsets.bottom,
+            AppSpace.lg,
+            AppSpace.md,
+            AppSpace.lg,
+            AppSpace.xl + MediaQuery.viewInsetsOf(context).bottom,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,13 +138,10 @@ class _SendPointsPageState extends State<SendPointsPage> {
               const SendHeaderCard(
                 icon: Icons.compare_arrows_rounded,
                 title: 'Send Blocnet Points',
-                subtitle: 'Instant, in-app, to any member',
+                subtitle: 'Arrives instantly, to any member',
               ),
-              const SizedBox(height: AppSpace.lg),
-              AppSurface(
-                radius: AppRadius.lg,
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpace.lg),
+              const SizedBox(height: AppSpace.md),
+              WalletCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -173,18 +162,14 @@ class _SendPointsPageState extends State<SendPointsPage> {
                     const SizedBox(height: AppSpace.xs),
                     Text(
                       'Available: ${formatAssetAmount(asset)} BNP',
-                      style: AppTypography.custom(
-                        color: AppColors.textMuted,
-                        size: AppText.captionSize,
-                        weight: FontWeight.w500,
-                      ),
+                      style: AppText.caption(AppColors.textMuted),
                     ),
                     const SizedBox(height: AppSpace.md),
                     WalletFormField(
                       fieldKey: const ValueKey('points-note'),
                       label: 'Note (optional)',
                       controller: _noteController,
-                      hint: 'Optional transfer note',
+                      hint: 'Add a note',
                       textInputAction: TextInputAction.done,
                     ),
                   ],
@@ -192,14 +177,7 @@ class _SendPointsPageState extends State<SendPointsPage> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: AppSpace.md),
-                Text(
-                  _error!,
-                  style: AppTypography.custom(
-                    color: AppColors.error500,
-                    size: AppText.bodySize,
-                    weight: FontWeight.w400,
-                  ),
-                ),
+                Text(_error!, style: AppText.label(AppColors.tagWarning)),
               ],
               const SizedBox(height: AppSpace.lg),
               SendSubmitButton(

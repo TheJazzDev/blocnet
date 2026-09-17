@@ -1,7 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
+import 'package:blocnet/features/notifications/presentation/widgets/notification_style.dart';
+import 'package:blocnet/features/notifications/presentation/widgets/parts/notif_ui.dart';
 import 'package:blocnet/services/notifications/notification_space_target.dart';
 import 'package:flutter/material.dart';
 
@@ -17,9 +18,7 @@ Future<bool> showCrossSpaceNotificationSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: AppColors.bgSurface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    shape: const RoundedRectangleBorder(borderRadius: AppRadius.sheet),
     builder: (_) => CrossSpaceNotificationSheet(
       item: item,
       target: target,
@@ -47,8 +46,17 @@ class CrossSpaceNotificationSheet extends StatelessWidget {
         NotificationSpaceTarget.moderationHub => 'Moderation',
       };
 
+  /// The button takes the accent of the space it opens.
+  Color get _targetAccent => switch (target) {
+        NotificationSpaceTarget.community => AppColors.userAccent,
+        NotificationSpaceTarget.hunterHub => AppColors.hunterAccent,
+        NotificationSpaceTarget.moderationHub => AppColors.moderationAccent,
+      };
+
   @override
   Widget build(BuildContext context) {
+    final style = styleForNotificationType(item.type);
+    final body = item.body.trim();
     return SafeArea(
       top: false,
       child: Padding(
@@ -60,85 +68,70 @@ class CrossSpaceNotificationSheet extends StatelessWidget {
           children: [
             Center(
               child: Container(
-                width: 42,
+                width: 40,
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.borderMuted,
-                  borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpace.md),
-            Text(
-              target.label,
-              style: AppTypography.custom(
-                color: AppColors.textPrimary,
-                size: AppText.subtitleSize,
-                weight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              item.title,
-              style: AppTypography.custom(
-                color: AppColors.textSecondary,
-                size: AppText.labelSize,
-                weight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpace.xs),
-            Text(
-              item.body,
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.labelSize,
-                weight: FontWeight.w500,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: AppSpace.md),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpace.md),
-              decoration: BoxDecoration(
-                color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                border: Border.all(color: AppColors.borderSubtle),
-              ),
-              child: Text(
-                'This alert belongs to ${target.label} in $_spaceName space. '
-                'You are in $currentSpaceLabel space.',
-                style: AppTypography.custom(
-                  color: AppColors.textFaint,
-                  size: AppText.captionSize,
-                  weight: FontWeight.w500,
-                  height: 1.35,
+                  borderRadius: AppRadius.full,
                 ),
               ),
             ),
             const SizedBox(height: AppSpace.lg),
+            Text(
+              'OPENS IN ${target.label.toUpperCase()}',
+              style: notifCaps(AppColors.textFaint),
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                NotifIconSquare(icon: style.icon, color: style.color),
+                const SizedBox(width: AppSpace.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: AppText.body(
+                          AppColors.textPrimary,
+                          weight: AppText.bold,
+                        ),
+                      ),
+                      if (body.isNotEmpty) ...[
+                        const SizedBox(height: AppSpace.hair),
+                        Text(
+                          body,
+                          style: AppText.label(AppColors.textMuted)
+                              .copyWith(height: 1.4),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpace.md),
+            Text(
+              'You are in $currentSpaceLabel space. '
+              'This opens in $_spaceName space.',
+              style: AppText.label(AppColors.textFaint),
+            ),
+            const SizedBox(height: AppSpace.lg),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: NotifButton(
+                label: 'Switch and open',
+                accent: _targetAccent,
                 onPressed: () => Navigator.of(context).pop(true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary500,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-                ),
-                child: const Text('Switch and open'),
               ),
             ),
             const SizedBox(height: AppSpace.sm),
             SizedBox(
               width: double.infinity,
-              child: TextButton(
+              child: NotifButton(
+                label: 'Close',
                 onPressed: () => Navigator.of(context).pop(false),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textMuted,
-                  padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-                ),
-                child: const Text('Close'),
               ),
             ),
           ],

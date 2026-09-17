@@ -1,9 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:flutter/material.dart';
 
-/// Full-width primary button of the wallet send pages, with a busy state.
+/// Full-width filled button of the wallet send pages, with a busy state.
 class SendSubmitButton extends StatelessWidget {
   const SendSubmitButton({
     super.key,
@@ -18,36 +18,32 @@ class SendSubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onAccent = WalletTone.onAccent;
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: submitting ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.teal500,
-          foregroundColor: Colors.black,
-          disabledBackgroundColor: AppColors.bgElevated.withValues(alpha: 0.8),
+          backgroundColor: WalletTone.accent,
+          foregroundColor: onAccent,
+          disabledBackgroundColor: AppColors.bgElevated,
           disabledForegroundColor: AppColors.textFaint,
-          minimumSize: const Size.fromHeight(50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          ),
+          elevation: 0,
+          minimumSize: const Size.fromHeight(46),
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.md),
         ),
         child: submitting
             ? SizedBox(
-                width: 16,
-                height: 16,
+                width: AppIcon.sm,
+                height: AppIcon.sm,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.bgBase,
+                  color: AppColors.textMuted,
                 ),
               )
             : Text(
                 label,
-                style: AppTypography.custom(
-                  color: Colors.black,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w700,
-                ),
+                style: AppText.body(onAccent, weight: AppText.bold),
               ),
       ),
     );

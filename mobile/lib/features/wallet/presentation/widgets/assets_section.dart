@@ -1,64 +1,56 @@
-import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/asset_row.dart';
-import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_state_views.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// The wallet's assets as rows in one card. BNP leads: it is what members
+/// hold and move day to day.
 class AssetsSection extends StatelessWidget {
   const AssetsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
-    final viewMode = context.watch<FeedViewModeStore>().mode;
     final snapshot = walletStore.snapshot;
-    final assets = snapshot?.assets ?? const <WalletAssetBalance>[];
+    final assets = walletAssetsPointsFirst(
+      snapshot?.assets ?? const <WalletAssetBalance>[],
+    );
 
     if (walletStore.isLoadingSummary && snapshot == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 22),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2.2),
-          ),
-        ),
-      );
+      return const WalletLoadingCard();
     }
 
     if (assets.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-        child: Text(
-          'No assets available yet.',
-          style: AppTypography.custom(
-            color: AppColors.textMuted,
-            size: AppText.bodySize,
-            weight: FontWeight.w400,
-          ),
-        ),
+      return const WalletNoticeCard(
+        icon: Icons.token_outlined,
+        message: 'No assets yet.',
       );
     }
 
-    return Column(
-      children: assets.asMap().entries.map((entry) {
-        return Column(
-          children: [
-            AssetRow(asset: entry.value, viewMode: viewMode),
-            if (viewMode == FeedViewMode.list && entry.key != assets.length - 1)
-              Divider(
-                height: 1,
-                color: AppColors.borderSubtle.withValues(alpha: 0.8),
-              ),
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: walletCardDecoration(),
+      child: Column(
+        children: [
+          for (var i = 0; i < assets.length; i++) ...[
+            if (i > 0) const WalletRowDivider(),
+            AssetRow(asset: assets[i]),
           ],
-        );
-      }).toList(),
+        ],
+      ),
     );
   }
+}
+
+/// [assets] with points first, otherwise in the server's order.
+List<WalletAssetBalance> walletAssetsPointsFirst(
+  List<WalletAssetBalance> assets,
+) {
+  return [
+    ...assets.where((a) => a.isPoints),
+    ...assets.where((a) => !a.isPoints),
+  ];
 }

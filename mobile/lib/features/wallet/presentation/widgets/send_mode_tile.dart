@@ -1,9 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:flutter/material.dart';
 
-/// One option of the Internal / External toggle on the token send page.
+/// One option of the in-Blocnet / on-chain choice on the token send page.
+/// The picked one carries an accent edge and a faint accent tint.
 class SendModeTile extends StatelessWidget {
   const SendModeTile({
     super.key,
@@ -22,51 +23,57 @@ class SendModeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isActive
-        ? AppColors.teal500.withValues(alpha: 0.55)
-        : AppColors.borderSubtle;
-    final bgColor = isActive
-        ? AppColors.teal500.withValues(alpha: 0.1)
-        : AppColors.bgSurface;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.mdValue),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(11),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: AppIcon.sm, color: AppColors.teal400),
-            const SizedBox(width: AppSpace.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: AppText.labelSize,
-                      weight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: AppTypography.custom(
-                      color: AppColors.textMuted,
-                      size: AppText.captionSize,
-                      weight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
+    final accent = WalletTone.accent;
+    return Semantics(
+      button: true,
+      selected: isActive,
+      child: InkWell(
+        borderRadius: AppRadius.md,
+        onTap: onTap,
+        child: Container(
+          padding: AppSpace.allMd,
+          decoration: BoxDecoration(
+            color:
+                isActive ? accent.withValues(alpha: 0.08) : AppColors.bgSurface,
+            borderRadius: AppRadius.md,
+            border: Border.all(
+              color: isActive
+                  ? accent.withValues(alpha: 0.5)
+                  : AppColors.borderSubtle,
             ),
-          ],
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: AppIcon.sm,
+                color: isActive ? WalletTone.accentSoft : AppColors.textMuted,
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.label(
+                        AppColors.textPrimary,
+                        weight: AppText.bold,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.caption(AppColors.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

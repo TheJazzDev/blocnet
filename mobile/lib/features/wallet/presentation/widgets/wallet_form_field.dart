@@ -1,35 +1,32 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
 /// Filled input style shared by the wallet send forms.
 InputDecoration walletFieldDecoration(String hint, {Widget? prefixIcon}) {
+  OutlineInputBorder edge(Color color) => OutlineInputBorder(
+        borderRadius: AppRadius.sm,
+        borderSide: BorderSide(color: color),
+      );
   return InputDecoration(
     hintText: hint,
-    hintStyle: AppTypography.custom(
-      color: AppColors.textFaint,
-      size: AppText.bodySize,
-      weight: FontWeight.w400,
-    ),
+    hintStyle: AppText.body(AppColors.textFaint),
     prefixIcon: prefixIcon,
     filled: true,
     fillColor: AppColors.bgElevated,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.mdValue),
-      borderSide: BorderSide(color: AppColors.borderSubtle),
+    isDense: true,
+    border: edge(AppColors.borderSubtle),
+    enabledBorder: edge(AppColors.borderSubtle),
+    focusedBorder: edge(AppColors.primary500),
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: AppSpace.md,
+      vertical: 12,
     ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.mdValue),
-      borderSide: BorderSide(color: AppColors.borderSubtle),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.mdValue),
-      borderSide: BorderSide(color: AppColors.teal500),
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
   );
 }
+
+/// Input text style of the wallet send forms.
+TextStyle get walletFieldTextStyle => AppText.body(AppColors.textPrimary);
 
 /// Label + text field, as laid out in the wallet send forms.
 class WalletFormField extends StatelessWidget {
@@ -59,24 +56,17 @@ class WalletFormField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.custom(
-            color: AppColors.textSecondary,
-            size: AppText.labelSize,
-            weight: FontWeight.w600,
-          ),
+          style:
+              AppText.label(AppColors.textSecondary, weight: AppText.semibold),
         ),
-        const SizedBox(height: AppSpace.sm),
+        const SizedBox(height: AppSpace.xs),
         TextField(
           key: fieldKey,
           controller: controller,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
           onChanged: onChanged,
-          style: AppTypography.custom(
-            color: AppColors.textSecondary,
-            size: AppText.bodySize,
-            weight: FontWeight.w400,
-          ),
+          style: walletFieldTextStyle,
           decoration: walletFieldDecoration(hint),
         ),
       ],

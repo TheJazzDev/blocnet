@@ -1,8 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_pill.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:flutter/material.dart';
 
+/// One-time tip on the wallet tab, dismissible.
 class WalletOnboardingBanner extends StatelessWidget {
   const WalletOnboardingBanner({
     super.key,
@@ -13,67 +15,42 @@ class WalletOnboardingBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.primary500.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(
-          color: AppColors.primary500.withValues(alpha: 0.32),
-        ),
+    return WalletCard(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        AppSpace.md,
+        AppSpace.xs,
+        AppSpace.md,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.lightbulb_outline_rounded,
-            color: AppColors.primary400,
-            size: AppIcon.md,
+          WalletIconSquare(
+            color: WalletTone.accent,
+            icon: Icons.lightbulb_outline_rounded,
+            size: 32,
           ),
-          const SizedBox(width: AppSpace.sm),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Wallet quick start',
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: AppText.labelSize,
-                    weight: FontWeight.w700,
-                  ),
+                  'Getting started',
+                  style: WalletType.rowTitle(AppColors.textPrimary),
                 ),
                 const SizedBox(height: AppSpace.hair),
                 Text(
-                  'Use Receive for your address and Send for transfers.',
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w500,
-                    height: 1.35,
-                  ),
+                  'Receive shows your address. Send moves BNP or tokens.',
+                  style: WalletType.meta(AppColors.textMuted),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: AppSpace.sm),
-          GestureDetector(
-            onTap: onDismiss,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(AppRadius.smValue),
-                border: Border.all(color: AppColors.borderSubtle),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                size: AppIcon.sm,
-                color: AppColors.textMuted,
-              ),
-            ),
+          IconButton(
+            onPressed: onDismiss,
+            tooltip: 'Dismiss',
+            iconSize: AppIcon.md,
+            icon: Icon(Icons.close_rounded, color: AppColors.textMuted),
           ),
         ],
       ),

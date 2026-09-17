@@ -87,6 +87,6 @@ class WalletHeadline {
 String walletUnpricedLabel(WalletAssetBalance asset) {
   if (asset.isPoints) return 'Points';
   return asset.asset.toUpperCase() == walletPendingPriceAsset
-      ? 'Pre-launch'
+      ? 'Price pending'
       : 'No USD price';
 }

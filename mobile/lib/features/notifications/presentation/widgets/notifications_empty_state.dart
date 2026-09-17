@@ -1,56 +1,53 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/notifications/presentation/widgets/parts/notif_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
+/// Left-aligned empty card. [categoryLabel] names the filter when one is on.
 class EmptyNotificationsState extends StatelessWidget {
-  const EmptyNotificationsState({super.key});
+  const EmptyNotificationsState({super.key, this.categoryLabel});
+
+  final String? categoryLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(AppRadius.lgValue),
-                border: Border.all(color: AppColors.borderSubtle),
-              ),
-              child: Icon(
-                Symbols.notifications_off,
-                size: AppIcon.lg,
-                color: AppColors.textFaint,
-              ),
+    final label = categoryLabel;
+    final title = label == null
+        ? 'No notifications yet'
+        : 'No ${label.toLowerCase()} notifications';
+    return Container(
+      width: double.infinity,
+      padding: AppSpace.card,
+      decoration: notifCardDecoration(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          NotifIconSquare(
+            icon: Symbols.notifications_off,
+            color: AppColors.textFaint,
+          ),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppText.body(
+                    AppColors.textPrimary,
+                    weight: AppText.bold,
+                  ),
+                ),
+                const SizedBox(height: AppSpace.hair),
+                Text(
+                  'Follow gems to get their updates here.',
+                  style: AppText.label(AppColors.textMuted),
+                ),
+              ],
             ),
-            const SizedBox(height: AppSpace.lg),
-            Text(
-              'No notifications yet',
-              style: AppTypography.custom(
-                color: AppColors.textPrimary,
-                size: AppText.bodySize,
-                weight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              'Follow gems to receive priority and update alerts.',
-              textAlign: TextAlign.center,
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
