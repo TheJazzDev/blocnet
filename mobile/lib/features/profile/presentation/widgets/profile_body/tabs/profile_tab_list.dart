@@ -43,8 +43,8 @@ class _ProfileTabListState extends State<ProfileTabList> {
               ),
               child: Text(
                 _expanded ? 'Show less' : 'Show all ($total)',
-                style: AppText.label(AppColors.primary400,
-                    weight: AppText.bold),
+                style:
+                    AppText.label(AppColors.primary400, weight: AppText.bold),
               ),
             ),
           ),

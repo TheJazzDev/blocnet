@@ -249,7 +249,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           followers: stats?.followersCount ?? admin.followers,
                           updates: stats?.updatesCreated ?? posts.length,
                           gems: stats?.projectsCreated ??
-                              posts.map((post) => post.projectId).toSet().length,
+                              posts
+                                  .map((post) => post.projectId)
+                                  .toSet()
+                                  .length,
                         ),
                         if (_isLoadingPublicProfile) ...[
                           AppSpace.gapMd,

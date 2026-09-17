@@ -65,9 +65,8 @@ class _ProfileBodyState extends State<ProfileBody> {
   }
 
   Future<void> _refresh() async {
-    final hunterBoard = widget.auth.hasHunterSpace
-        ? context.read<HunterBoardStore?>()
-        : null;
+    final hunterBoard =
+        widget.auth.hasHunterSpace ? context.read<HunterBoardStore?>() : null;
     await Future.wait(<Future<void>>[
       context.read<UserProfileStore>().refreshAll(forceRefresh: true),
       context.read<TipsStore>().loadOverview(force: true),

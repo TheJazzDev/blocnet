@@ -75,8 +75,8 @@ class ProfileHeroSection extends StatelessWidget {
               normalizedBio,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body(AppColors.textSecondary)
-                  .copyWith(height: 1.45),
+              style:
+                  AppText.body(AppColors.textSecondary).copyWith(height: 1.45),
             ),
           ],
           if (shownBadges.isNotEmpty) ...[
@@ -161,7 +161,8 @@ class _EditButton extends StatelessWidget {
         shape: const RoundedRectangleBorder(borderRadius: AppRadius.md),
         foregroundColor: AppColors.textPrimary,
       ),
-      icon: Icon(Icons.edit_outlined, size: AppIcon.xs, color: AppColors.textMuted),
+      icon: Icon(Icons.edit_outlined,
+          size: AppIcon.xs, color: AppColors.textMuted),
       label: Text(
         'Edit',
         style: AppText.label(AppColors.textPrimary, weight: AppText.semibold),

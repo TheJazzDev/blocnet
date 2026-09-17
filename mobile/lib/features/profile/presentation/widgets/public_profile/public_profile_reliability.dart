@@ -46,9 +46,8 @@ class _PublicProfileReliabilityState extends State<PublicProfileReliability> {
     final response = asked != null && answered != null && asked > 0
         ? '$answered of $asked'
         : null;
-    final cadence = r.cadenceDays == null
-        ? null
-        : counted(r.cadenceDays!.round(), 'day');
+    final cadence =
+        r.cadenceDays == null ? null : counted(r.cadenceDays!.round(), 'day');
     final facts = [
       if (response != null) 'Response $response',
       if (cadence != null) 'Every $cadence',

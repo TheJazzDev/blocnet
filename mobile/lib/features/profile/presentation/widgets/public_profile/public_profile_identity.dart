@@ -37,9 +37,8 @@ class PublicProfileIdentity extends StatelessWidget {
         ? displayName!.trim()
         : (admin.name.trim().isNotEmpty ? admin.name.trim() : 'Member');
     final role = roleKey;
-    final image = (avatarUrl?.trim().isNotEmpty ?? false)
-        ? avatarUrl
-        : admin.imageUrl;
+    final image =
+        (avatarUrl?.trim().isNotEmpty ?? false) ? avatarUrl : admin.imageUrl;
 
     return Row(
       children: [

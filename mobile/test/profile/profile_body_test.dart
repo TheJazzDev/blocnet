@@ -79,11 +79,10 @@ void main() {
       );
 
       final gems = find.byKey(const ValueKey('profile-stat-gems'));
+      expect(find.descendant(of: gems, matching: find.text('Gems followed')),
+          findsOneWidget);
       expect(
-          find.descendant(of: gems, matching: find.text('Gems followed')),
-          findsOneWidget);
-      expect(find.descendant(of: gems, matching: find.text('2')),
-          findsOneWidget);
+          find.descendant(of: gems, matching: find.text('2')), findsOneWidget);
       final people = find.byKey(const ValueKey('profile-stat-people'));
       expect(find.descendant(of: people, matching: find.text('7')),
           findsOneWidget);

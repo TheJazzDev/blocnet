@@ -57,7 +57,8 @@ class ProfileInlineState extends StatelessWidget {
               ),
               child: Text(
                 actionLabel!,
-                style: AppText.label(AppColors.primary400, weight: AppText.bold),
+                style:
+                    AppText.label(AppColors.primary400, weight: AppText.bold),
               ),
             ),
         ],

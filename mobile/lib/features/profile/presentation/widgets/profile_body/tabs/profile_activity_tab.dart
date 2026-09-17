@@ -35,7 +35,8 @@ class ProfileActivityTab extends StatelessWidget {
         .where((item) => !hiddenActivityActions.contains(item.action))
         .toList(growable: false);
 
-    if (items.isEmpty && (store.isLoadingActivity || !store.hasLoadedActivity)) {
+    if (items.isEmpty &&
+        (store.isLoadingActivity || !store.hasLoadedActivity)) {
       return Padding(
         padding: const EdgeInsets.all(AppSpace.xl),
         child: Center(

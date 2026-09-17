@@ -60,7 +60,8 @@ class FakeUsersRepository extends UsersApiRepository {
       {'followingCount': followingCount};
 
   @override
-  Future<List<Project>> fetchWatchlist({int limit = 100, int offset = 0}) async =>
+  Future<List<Project>> fetchWatchlist(
+          {int limit = 100, int offset = 0}) async =>
       watchlist;
 
   @override

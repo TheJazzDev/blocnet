@@ -36,7 +36,11 @@ void main() {
     });
 
     test("comments open the comment's update", () {
-      for (final action in ['comment.create', 'comment.update', 'comment.delete']) {
+      for (final action in [
+        'comment.create',
+        'comment.update',
+        'comment.delete'
+      ]) {
         expect(
           target(activity('a', action,
               resourceId: 'c1', metadata: {'updateId': 'u9'})),
