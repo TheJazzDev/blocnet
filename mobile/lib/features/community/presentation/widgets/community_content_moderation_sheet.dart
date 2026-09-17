@@ -2,6 +2,8 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
+import 'package:blocnet/features/community/presentation/widgets/moderation/moderation_reason_dialog.dart';
+import 'package:blocnet/shared/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 
 class CommunityContentModerationDecision {
@@ -14,192 +16,73 @@ class CommunityContentModerationDecision {
   final String reason;
 }
 
+/// Staff actions on a post or comment: hide, restore, and (for community
+/// admins) archive. Each asks for a reason before it is returned.
 Future<CommunityContentModerationDecision?> showCommunityContentModerationSheet(
   BuildContext context, {
   required String targetLabel,
   required bool canArchive,
 }) async {
-  final status = await showModalBottomSheet<CommunityContentModerationStatus>(
+  final status = await AppSheet.show<CommunityContentModerationStatus>(
     context: context,
-    backgroundColor: AppColors.bgSurface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (context) {
-      return SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              Text(
-                '$targetLabel actions',
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: AppText.subtitleSize,
-                  weight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpace.sm),
-              Text(
-                canArchive
-                    ? 'Hide, restore, or archive this content.'
-                    : 'Hide or restore this content. Archive is reserved for community admins and governance roles.',
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w500,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              _ActionTile(
-                icon: Icons.visibility_off_outlined,
-                label: 'Hide $targetLabel',
-                tone: const Color(0xFFF59E0B),
-                onTap: () => Navigator.of(context).pop(
-                  CommunityContentModerationStatus.hidden,
-                ),
-              ),
-              const SizedBox(height: AppSpace.md),
-              _ActionTile(
-                icon: Icons.visibility_outlined,
-                label: 'Restore $targetLabel',
-                tone: const Color(0xFF34D399),
-                onTap: () => Navigator.of(context).pop(
-                  CommunityContentModerationStatus.active,
-                ),
-              ),
-              if (canArchive) ...[
-                const SizedBox(height: AppSpace.md),
-                _ActionTile(
-                  icon: Icons.archive_outlined,
-                  label: 'Archive $targetLabel',
-                  tone: AppColors.error500,
-                  onTap: () => Navigator.of(context).pop(
-                    CommunityContentModerationStatus.archived,
-                  ),
-                ),
-              ],
-            ],
-          ),
+    title: 'Moderate $targetLabel',
+    icon: Icons.shield_outlined,
+    builder: (sheetContext) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ActionRow(
+          icon: Icons.visibility_off_outlined,
+          label: 'Hide',
+          tone: AppColors.warning500,
+          onTap: () => Navigator.of(sheetContext)
+              .pop(CommunityContentModerationStatus.hidden),
         ),
-      );
-    },
-  );
-
-  if (status == null || !context.mounted) {
-    return null;
-  }
-
-  final reason = await _showModerationReasonDialog(
-    context,
-    targetLabel: targetLabel,
-    status: status,
-  );
-
-  if (reason == null) {
-    return null;
-  }
-
-  final trimmed = reason.trim();
-  if (trimmed.isEmpty) {
-    return null;
-  }
-
-  return CommunityContentModerationDecision(
-    status: status,
-    reason: trimmed,
-  );
-}
-
-Future<String?> _showModerationReasonDialog(
-  BuildContext context, {
-  required String targetLabel,
-  required CommunityContentModerationStatus status,
-}) async {
-  final controller = TextEditingController();
-
-  final result = await showDialog<String>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: AppColors.bgSurface,
-        title: Text(
-          '${status.label} $targetLabel',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.subtitleSize,
-            weight: FontWeight.w700,
-          ),
+        _ActionRow(
+          icon: Icons.visibility_outlined,
+          label: 'Restore',
+          tone: AppColors.successColor,
+          onTap: () => Navigator.of(sheetContext)
+              .pop(CommunityContentModerationStatus.active),
         ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          minLines: 3,
-          maxLines: 5,
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.labelSize,
-            weight: FontWeight.w500,
-          ),
-          decoration: InputDecoration(
-            hintText: 'Add moderation reason',
-            hintStyle: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.bodySize,
+        if (canArchive)
+          _ActionRow(
+            icon: Icons.archive_outlined,
+            label: 'Archive',
+            tone: AppColors.tagWarning,
+            onTap: () => Navigator.of(sheetContext)
+                .pop(CommunityContentModerationStatus.archived),
+          )
+        else ...[
+          const SizedBox(height: AppSpace.sm),
+          Text(
+            'Only community admins can archive.',
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
+              size: AppText.labelSize,
               weight: FontWeight.w400,
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Cancel',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.labelSize,
-                weight: FontWeight.w600,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text(
-              'Confirm',
-              style: AppTypography.custom(
-                color: AppColors.primary400,
-                size: AppText.labelSize,
-                weight: FontWeight.w700,
-              ),
-            ),
-          ),
         ],
-      );
-    },
+      ],
+    ),
   );
 
-  controller.dispose();
-  return result;
+  if (status == null || !context.mounted) return null;
+
+  final reason = await showModerationReasonDialog(
+    context,
+    title: '${status.label} $targetLabel',
+  );
+  final trimmed = reason?.trim() ?? '';
+  if (trimmed.isEmpty) return null;
+
+  return CommunityContentModerationDecision(status: status, reason: trimmed);
 }
 
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
+/// A list row with a tinted icon square, as elsewhere in the app.
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
     required this.icon,
     required this.label,
     required this.tone,
@@ -215,25 +98,20 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.lgValue),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.lg, vertical: AppSpace.lg),
-        decoration: BoxDecoration(
-          color: tone.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          border: Border.all(color: tone.withValues(alpha: 0.22)),
-        ),
+      borderRadius: AppRadius.sm,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
         child: Row(
           children: [
             Container(
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: tone.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                color: tone.withValues(alpha: 0.12),
+                borderRadius: AppRadius.sm,
+                border: Border.all(color: tone.withValues(alpha: 0.35)),
               ),
-              child: Icon(icon, size: AppIcon.md, color: tone),
+              child: Icon(icon, size: AppIcon.sm, color: tone),
             ),
             const SizedBox(width: AppSpace.md),
             Expanded(
@@ -241,12 +119,16 @@ class _ActionTile extends StatelessWidget {
                 label,
                 style: AppTypography.custom(
                   color: AppColors.textPrimary,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w700,
+                  size: AppText.bodySize,
+                  weight: FontWeight.w600,
                 ),
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: AppIcon.md,
+              color: AppColors.textFaint,
+            ),
           ],
         ),
       ),

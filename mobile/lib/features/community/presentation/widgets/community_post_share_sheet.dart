@@ -1,185 +1,142 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/shared/widgets/app_sheet.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Share a community post: copy its link, send it to WhatsApp or Telegram, or
+/// hand it to the system share sheet.
 Future<void> showCommunityPostShareSheet(
   BuildContext context, {
   required String postId,
   required String content,
 }) async {
-  final trimmedContent = content.trim();
-  final deepPath = '/community/$postId';
-  final webLink =
-      'https://blocnet.app/open?path=${Uri.encodeComponent(deepPath)}';
-  final deepLink = 'io.blocnet.app://community/$postId';
-  final shareText = '$trimmedContent\n$webLink';
+  final text = content.trim();
+  final link =
+      'https://blocnet.app/open?path=${Uri.encodeComponent('/community/$postId')}';
+  final shareText = text.isEmpty ? link : '$text\n$link';
 
-  Future<void> copyLink() async {
-    await Clipboard.setData(ClipboardData(text: webLink));
-    if (!context.mounted) return;
-    Navigator.of(context).pop();
-    AppSnackbar.showSuccess(context, 'Post link copied');
-  }
-
-  Future<void> openExternal(Uri uri, String platformName) async {
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!context.mounted) return;
-    Navigator.of(context).pop();
-    if (!launched) {
-      await Clipboard.setData(ClipboardData(text: shareText));
-      if (!context.mounted) return;
-      AppSnackbar.showError(
-        context,
-        'Could not open $platformName. Link copied instead.',
-      );
-    }
-  }
-
-  await showModalBottomSheet<void>(
+  final choice = await AppSheet.show<_ShareChoice>(
     context: context,
-    backgroundColor: AppColors.bgSurface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (context) {
-      return SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpace.md),
-              Text(
-                'Share post',
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: AppText.subtitleSize,
-                  weight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpace.xs),
-              Text(
-                trimmedContent,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              _ShareOptionTile(
-                icon: Icons.copy_all_rounded,
-                title: 'Copy link',
-                subtitle: webLink,
-                onTap: copyLink,
-              ),
-              _ShareOptionTile(
-                icon: Icons.chat_bubble_outline_rounded,
-                title: 'Share to WhatsApp',
-                subtitle: 'Open WhatsApp with post link',
-                onTap: () => openExternal(
-                  Uri.parse(
-                    'https://wa.me/?text=${Uri.encodeComponent(shareText)}',
-                  ),
-                  'WhatsApp',
-                ),
-              ),
-              _ShareOptionTile(
-                icon: Icons.send_outlined,
-                title: 'Share to Telegram',
-                subtitle: 'Open Telegram with post link',
-                onTap: () => openExternal(
-                  Uri.parse(
-                    'https://t.me/share/url?url=${Uri.encodeComponent(webLink)}&text=${Uri.encodeComponent(trimmedContent)}',
-                  ),
-                  'Telegram',
-                ),
-              ),
-              _ShareOptionTile(
-                icon: Icons.link_rounded,
-                title: 'Copy deep link',
-                subtitle: deepLink,
-                onTap: () async {
-                  await Clipboard.setData(ClipboardData(text: deepLink));
-                  if (!context.mounted) return;
-                  Navigator.of(context).pop();
-                  AppSnackbar.showSuccess(context, 'Deep link copied');
-                },
-              ),
-            ],
+    title: 'Share post',
+    icon: Icons.share_outlined,
+    builder: (sheetContext) {
+      void pick(_ShareChoice choice) => Navigator.of(sheetContext).pop(choice);
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ShareRow(
+            icon: Icons.link_rounded,
+            label: 'Copy link',
+            onTap: () => pick(_ShareChoice.copy),
           ),
-        ),
+          _ShareRow(
+            icon: Icons.chat_bubble_outline_rounded,
+            label: 'WhatsApp',
+            onTap: () => pick(_ShareChoice.whatsApp),
+          ),
+          _ShareRow(
+            icon: Icons.send_outlined,
+            label: 'Telegram',
+            onTap: () => pick(_ShareChoice.telegram),
+          ),
+          _ShareRow(
+            icon: Icons.ios_share_rounded,
+            label: 'More',
+            onTap: () => pick(_ShareChoice.system),
+          ),
+        ],
       );
     },
   );
+  if (choice == null || !context.mounted) return;
+
+  Future<void> copy(String message) async {
+    await Clipboard.setData(ClipboardData(text: link));
+    if (context.mounted) AppSnackbar.showSuccess(context, message);
+  }
+
+  Future<void> open(Uri uri, String app) async {
+    var launched = false;
+    try {
+      launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      launched = false;
+    }
+    if (!launched) await copy('$app isn’t available. Link copied.');
+  }
+
+  switch (choice) {
+    case _ShareChoice.copy:
+      await copy('Link copied');
+    case _ShareChoice.whatsApp:
+      await open(
+        Uri.parse('https://wa.me/?text=${Uri.encodeComponent(shareText)}'),
+        'WhatsApp',
+      );
+    case _ShareChoice.telegram:
+      await open(
+        Uri.parse(
+          'https://t.me/share/url?url=${Uri.encodeComponent(link)}'
+          '&text=${Uri.encodeComponent(text)}',
+        ),
+        'Telegram',
+      );
+    case _ShareChoice.system:
+      try {
+        await SharePlus.instance.share(ShareParams(text: shareText));
+      } catch (_) {
+        await copy('Sharing isn’t available. Link copied.');
+      }
+  }
 }
 
-class _ShareOptionTile extends StatelessWidget {
-  const _ShareOptionTile({
+enum _ShareChoice { copy, whatsApp, telegram, system }
+
+class _ShareRow extends StatelessWidget {
+  const _ShareRow({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.label,
     required this.onTap,
   });
 
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        child: Icon(icon, color: AppColors.textSecondary, size: AppIcon.md),
-      ),
-      title: Text(
-        title,
-        style: AppTypography.custom(
-          color: AppColors.textPrimary,
-          size: AppText.labelSize,
-          weight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppTypography.custom(
-          color: AppColors.textFaint,
-          size: AppText.captionSize,
-          weight: FontWeight.w400,
-        ),
-      ),
+    return InkWell(
       onTap: onTap,
+      borderRadius: AppRadius.sm,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Row(
+          children: [
+            Icon(icon, size: AppIcon.md, color: AppColors.primary400),
+            const SizedBox(width: AppSpace.lg),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTypography.custom(
+                  color: AppColors.textPrimary,
+                  size: AppText.bodySize,
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: AppIcon.md,
+              color: AppColors.textFaint,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
