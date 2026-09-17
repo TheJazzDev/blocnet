@@ -58,7 +58,7 @@ class GemsOrdering {
   static List<GemListing> moving(List<GemListing> gems, DateTime now) {
     final since = now.subtract(movingWindow);
     final out = gems
-        .where((g) => g.newest != null && g.newest!.createdAt.isAfter(since))
+        .where((g) => g.newestIsLatest && g.newest!.createdAt.isAfter(since))
         .toList()
       ..sort(_byNewestUpdate);
     return out.take(movingLimit).toList();
@@ -70,12 +70,11 @@ class GemsOrdering {
   static List<GemListing> board(List<GemListing> gems, DateTime now) {
     int group(GemListing g) {
       final deadline = g.nextDeadline?.deadlineAt;
-      if (deadline != null &&
-          deadline.isBefore(now.add(boardDeadlineWindow))) {
+      if (deadline != null && deadline.isBefore(now.add(boardDeadlineWindow))) {
         return 0;
       }
-      final newest = g.newest?.createdAt;
-      if (newest != null && newest.isAfter(now.subtract(boardFreshWindow))) {
+      final last = g.lastUpdateAt;
+      if (last != null && last.isAfter(now.subtract(boardFreshWindow))) {
         return 1;
       }
       return 2;
@@ -109,8 +108,8 @@ class GemsOrdering {
 
   /// Newest update first; gems with none go last.
   static int _byNewestUpdate(GemListing a, GemListing b) {
-    final at = a.newest?.createdAt;
-    final bt = b.newest?.createdAt;
+    final at = a.lastUpdateAt;
+    final bt = b.lastUpdateAt;
     if (at == null && bt == null) return 0;
     if (at == null) return 1;
     if (bt == null) return -1;

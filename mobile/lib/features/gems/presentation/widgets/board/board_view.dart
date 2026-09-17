@@ -78,8 +78,7 @@ class BoardView extends StatelessWidget {
           style: HubType.caps(AppColors.textFaint),
         ),
       ),
-      for (final gem in ordered)
-        BoardRow(gem: gem, actions: actions, now: now),
+      for (final gem in ordered) BoardRow(gem: gem, actions: actions, now: now),
     ];
   }
 }

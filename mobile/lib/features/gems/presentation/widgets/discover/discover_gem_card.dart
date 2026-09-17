@@ -55,7 +55,8 @@ class DiscoverGemCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    GemMonogram(name: project.name, tag: project.primaryTag.name),
+                    GemMonogram(
+                        name: project.name, tag: project.primaryTag.name),
                     AppSpace.wGapMd,
                     Expanded(
                       child: Column(
@@ -90,8 +91,9 @@ class DiscoverGemCard extends StatelessWidget {
                   ),
                 ],
                 AppSpace.gapMd,
-                GemActivityLine(newest: gem.newest, now: now),
-                if (deadline != null) FeedDeadlineLine(deadlineAt: deadline, now: now),
+                GemActivityLine(gem: gem, now: now),
+                if (deadline != null)
+                  FeedDeadlineLine(deadlineAt: deadline, now: now),
                 AppSpace.gapXs,
                 Text(
                   '${counted(gem.updatesCount, 'update')} · '

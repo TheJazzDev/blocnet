@@ -34,7 +34,8 @@ class GemsNotice extends StatelessWidget {
               Icon(icon, size: AppIcon.md, color: AppColors.textMuted),
               AppSpace.wGapSm,
               Expanded(
-                child: Text(title, style: HubType.rowTitle(AppColors.textPrimary)),
+                child:
+                    Text(title, style: HubType.rowTitle(AppColors.textPrimary)),
               ),
             ],
           ),

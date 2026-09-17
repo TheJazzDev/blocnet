@@ -55,7 +55,8 @@ class HunterRankRow extends StatelessWidget {
               radius: 18,
             ),
             AppSpace.wGapMd,
-            Expanded(child: _Details(keeper: keeper, keepsYourGems: keepsYourGems)),
+            Expanded(
+                child: _Details(keeper: keeper, keepsYourGems: keepsYourGems)),
             AppSpace.wGapSm,
             StandingPill(standing: keeper.standing),
           ],

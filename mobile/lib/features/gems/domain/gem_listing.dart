@@ -29,8 +29,18 @@ class GemListing {
 
   String get id => project.id;
 
-  /// The newest update's time, or the listing date when there is none.
-  DateTime get lastActivity => newest?.createdAt ?? project.createdAt;
+  /// When the gem last had an update: the server's time, or the newest loaded
+  /// update when the server did not say. Null when it never had one.
+  DateTime? get lastUpdateAt => _later(project.lastUpdateAt, newest?.createdAt);
+
+  /// [newest] is the gem's latest update, not just the latest one loaded.
+  bool get newestIsLatest {
+    final loaded = newest?.createdAt;
+    return loaded != null && !lastUpdateAt!.isAfter(loaded);
+  }
+
+  /// The last update's time, or the listing date when there is none.
+  DateTime get lastActivity => lastUpdateAt ?? project.createdAt;
 }
 
 /// Builds [GemListing]s from what the stores hold.
@@ -48,24 +58,21 @@ class GemListings {
     for (final update in updates) {
       byProject.putIfAbsent(update.projectId, () => []).add(update);
     }
-    final quietIds = QuietGems.detect(
-      projects: projects,
-      followedProjectIds: projects.map((p) => p.id).toSet(),
-      posts: updates,
-      now: now,
-    ).map((q) => q.project.id).toSet();
-
     final out = <GemListing>[];
     for (final project in projects) {
       if (onlyIds != null && !onlyIds.contains(project.id)) continue;
       final own = byProject[project.id] ?? const <Update>[];
+      final newest = _newest(own);
+      final lastActivity =
+          _later(project.lastUpdateAt, newest?.createdAt) ?? project.createdAt;
       out.add(GemListing(
         project: project,
-        newest: _newest(own),
+        newest: newest,
         updatesCount: project.updatesCount ?? own.length,
         nextDeadline: _nextDeadline(own, now),
         keeper: GemKeeper.forProject(project, known: hunters),
-        isQuiet: quietIds.contains(project.id),
+        // Home's rule, measured from the server's last update when known.
+        isQuiet: now.difference(lastActivity) >= QuietGems.silenceThreshold,
       ));
     }
     return out;
@@ -88,4 +95,10 @@ class GemListings {
     }
     return next;
   }
+}
+
+DateTime? _later(DateTime? a, DateTime? b) {
+  if (a == null) return b;
+  if (b == null) return a;
+  return a.isAfter(b) ? a : b;
 }

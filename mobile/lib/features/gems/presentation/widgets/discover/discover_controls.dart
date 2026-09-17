@@ -105,11 +105,13 @@ class _SortMenu extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.sort_rounded, size: AppIcon.xs, color: AppColors.textMuted),
+            Icon(Icons.sort_rounded,
+                size: AppIcon.xs, color: AppColors.textMuted),
             AppSpace.wGapXs,
             Text(
               sort.label,
-              style: HubType.meta(AppColors.textSecondary, weight: AppText.semibold),
+              style: HubType.meta(AppColors.textSecondary,
+                  weight: AppText.semibold),
             ),
             Icon(
               Icons.expand_more_rounded,

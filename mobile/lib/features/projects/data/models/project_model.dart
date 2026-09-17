@@ -35,6 +35,10 @@ class Project {
   /// project list and detail reads. Null elsewhere.
   final OwnerReliability? ownerReliability;
 
+  /// The newest published update, per the server. Null when the gem has none
+  /// or the payload did not carry it.
+  final DateTime? lastUpdateAt;
+
   Project({
     this.posts,
     this.admin,
@@ -57,6 +61,7 @@ class Project {
     this.updateIds = const {},
     this.updatesCount,
     this.ownerReliability,
+    this.lastUpdateAt,
   });
 
   Project copyWith({
@@ -88,6 +93,7 @@ class Project {
       secondaryTags: secondaryTags,
       updatesCount: updatesCount,
       ownerReliability: ownerReliability,
+      lastUpdateAt: lastUpdateAt,
     );
   }
 
@@ -164,6 +170,7 @@ class Project {
           ? null
           : _toInt(json['updatesCount']),
       ownerReliability: OwnerReliability.fromApi(json['ownerReliability']),
+      lastUpdateAt: DateTime.tryParse(json['lastUpdateAt']?.toString() ?? ''),
     );
   }
 

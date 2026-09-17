@@ -68,7 +68,7 @@ class BoardRow extends StatelessWidget {
                     children: [
                       _TitleLine(gem: gem),
                       AppSpace.gapXs,
-                      GemActivityLine(newest: gem.newest, now: now),
+                      GemActivityLine(gem: gem, now: now),
                       if (deadline != null)
                         FeedDeadlineLine(deadlineAt: deadline, now: now),
                       if (gem.isQuiet) ...[

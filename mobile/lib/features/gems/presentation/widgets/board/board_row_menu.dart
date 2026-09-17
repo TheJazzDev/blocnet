@@ -32,8 +32,8 @@ class BoardRowMenu extends StatelessWidget {
       itemBuilder: (_) => [
         PopupMenuItem(
           value: _BoardAction.notifications,
-          child: Text('Notifications',
-              style: HubType.body(AppColors.textPrimary)),
+          child:
+              Text('Notifications', style: HubType.body(AppColors.textPrimary)),
         ),
         PopupMenuItem(
           value: _BoardAction.unfollow,
