@@ -1,3 +1,5 @@
+import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dart';
+
 import 'admin_model.dart';
 import 'update_model.dart';
 import 'package:blocnet/features/projects/data/models/primary_tag_model.dart';
@@ -25,6 +27,14 @@ class Project {
   final Map<String, String?> apps;
   final Map<String, String?> socials;
 
+  /// Published updates on the gem, as the server counts them. Null when the
+  /// payload did not carry the count (older backend, or a nested project).
+  final int? updatesCount;
+
+  /// Standing and coverage of the hunter who keeps the gem, sent on the
+  /// project list and detail reads. Null elsewhere.
+  final OwnerReliability? ownerReliability;
+
   Project({
     this.posts,
     this.admin,
@@ -45,6 +55,8 @@ class Project {
     this.apps = const {},
     this.socials = const {},
     this.updateIds = const {},
+    this.updatesCount,
+    this.ownerReliability,
   });
 
   Project copyWith({
@@ -74,6 +86,8 @@ class Project {
       primaryTag: primaryTag,
       secondaryTagIds: secondaryTagIds,
       secondaryTags: secondaryTags,
+      updatesCount: updatesCount,
+      ownerReliability: ownerReliability,
     );
   }
 
@@ -146,6 +160,10 @@ class Project {
               .toSet() ??
           {},
       admin: _readAdmin(json),
+      updatesCount: json['updatesCount'] == null
+          ? null
+          : _toInt(json['updatesCount']),
+      ownerReliability: OwnerReliability.fromApi(json['ownerReliability']),
     );
   }
 
