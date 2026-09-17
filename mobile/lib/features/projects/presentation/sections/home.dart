@@ -244,32 +244,25 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
                   ),
                 ),
                 const SliverToBoxAdapter(child: AppSpace.gapMd),
-                // The approved design has neither an Alpha Radar card nor a
-                // Blocnet Edge Engine card: between them they pushed the first
-                // real post most of a screen down, which is the problem the
-                // redesign started from. One 13px strip, or the caught-up card
-                // in its place when nothing is waiting.
+                // One radar panel above the feed, or the caught-up panel in its
+                // place when nothing is waiting. The old separate Alpha Radar
+                // and Edge Engine panels pushed the first post too far down.
                 if (showCaughtUp)
-                  SliverPadding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-                    sliver: SliverToBoxAdapter(
-                      child: FeedCaughtUpCard(
-                        accent: accent,
-                        gemsFollowed: followCount,
-                        updatesTracked: _trackedUpdateCount(
-                          updatesStore,
-                          context.read<ProjectsStore>().followedProjectIds,
-                        ),
-                        sweptAt: radar.asOf,
+                  _TopPanel(
+                    child: FeedCaughtUpCard(
+                      accent: accent,
+                      gemsFollowed: followCount,
+                      updatesTracked: _trackedUpdateCount(
+                        updatesStore,
+                        context.read<ProjectsStore>().followedProjectIds,
                       ),
+                      sweptAt: radar.asOf,
                     ),
                   )
                 // Not on day one: "0 new across 0 gems" is noise on a screen
-                // whose whole job is to get the member their first follow. The
-                // design goes straight from the tabs to the intro there.
+                // whose whole job is to get the member their first follow.
                 else if (radar != null && followCount > 0)
-                  SliverToBoxAdapter(
+                  _TopPanel(
                     child: FeedRadarStrip(radar: radar, accent: accent),
                   ),
                 HomeFeedSliver(
@@ -293,6 +286,26 @@ class _HomeScreenState extends State<HomeScreen> with _HomeHydration {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// A panel above the feed, inside the screen gutter with a gap beneath it.
+class _TopPanel extends StatelessWidget {
+  const _TopPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        0,
+        AppSpace.lg,
+        AppSpace.md,
+      ),
+      sliver: SliverToBoxAdapter(child: child),
     );
   }
 }

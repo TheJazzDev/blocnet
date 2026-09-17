@@ -7,20 +7,11 @@ import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:flutter/material.dart';
 
-/// The small parts of a feed card, each built to the approved round-six design
-/// rather than adapted from what the screen happened to have.
-///
-/// Reference: `docs/artifacts/blocnet-home-feed-v2.html`, the "card at rest"
-/// and "urgent" panels. Where a measurement is quoted below it comes from that
-/// file, not from taste.
+/// The small parts of a feed card, drawn in the app's original flat style:
+/// thin outlines, light tints, small uppercase labels.
 
-/// The author's level, as an 18px tier-coloured disc showing the number.
-///
-/// The design's `.bdg` is a filled disc carrying the level **number**, tinted
-/// by tier, sized to sit inside a line of 15px text. The app previously put the
-/// full badge artwork here, which is the right thing on the levels screen and
-/// too much detail at this size — in a feed row it reads as a smudge and costs
-/// an SVG decode per card.
+/// The author's level, as a small tier-coloured disc showing the number. It
+/// sits in front of the name, where the old feed put the level icon.
 class FeedLevelBadge extends StatelessWidget {
   const FeedLevelBadge({super.key, required this.level});
 
@@ -30,8 +21,8 @@ class FeedLevelBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final tier = LevelTier.forLevel(level.level);
     return Container(
-      width: 18,
-      height: 18,
+      width: AppIcon.sm,
+      height: AppIcon.sm,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -42,46 +33,15 @@ class FeedLevelBadge extends StatelessWidget {
         style: AppTypography.custom(
           color: AppColors.bgBase,
           size: 9,
-          weight: FontWeight.w800,
+          weight: FontWeight.w700,
         ).copyWith(height: 1),
       ),
     );
   }
 }
 
-/// `HUNTER`, `CORE TEAM`, `MODERATOR` — what the author is on this platform.
-class FeedRoleTag extends StatelessWidget {
-  const FeedRoleTag({super.key, required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: AppRadius.full,
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: AppTypography.custom(
-          color: color,
-          size: AppText.captionSize,
-          weight: FontWeight.w800,
-          letterSpacing: 1.1,
-        ),
-      ),
-    );
-  }
-}
-
-/// `LOW` / `MEDIUM` / `HIGH`, in the header row at the far right.
-///
-/// It belongs beside the author, not down on the project row where the app had
-/// drifted to putting it: urgency is a property of what was said, so it reads
-/// with who said it.
+/// `LOW` / `MEDIUM` / `HIGH`, as the old outlined pill tinted with the
+/// priority's own colour.
 class FeedPriorityTag extends StatelessWidget {
   const FeedPriorityTag({super.key, required this.priority});
 
@@ -89,101 +49,79 @@ class FeedPriorityTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Low is neutral zinc: most updates are low, and a coloured pill on every
-    // card would mean nothing. Only medium and high take their own colour.
-    final isLow = priority.isLow;
+    final color = priority.color;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.sm,
+        vertical: AppSpace.hair,
+      ),
       decoration: BoxDecoration(
-        color: isLow
-            ? AppColors.bgElevated
-            : priority.color.withValues(alpha: 0.15),
+        color: color.withValues(alpha: 0.12),
         borderRadius: AppRadius.full,
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
         priority.label.toUpperCase(),
         style: AppTypography.custom(
-          color: isLow ? AppColors.textFaint : priority.color,
+          color: color,
           size: AppText.captionSize,
-          weight: FontWeight.w800,
-          letterSpacing: 1.1,
+          weight: FontWeight.w700,
+          letterSpacing: 0.4,
         ),
       ),
     );
   }
 }
 
-/// The gem this update belongs to: a small inline pill carrying a round
-/// monogram and the gem's name.
-///
-/// The app had this as a full-width gradient panel with a generic layers icon,
-/// which made every card look like it contained a second card. The design's
-/// version is one line, tinted by chain, and sized to the name.
+/// The gem line: a layers icon and "in" plus the gem name, with the priority
+/// pill at the far right. Tapping the line opens the gem.
 class FeedProjectTag extends StatelessWidget {
   const FeedProjectTag({
     super.key,
     required this.project,
+    required this.priority,
     required this.onTap,
   });
 
   final Project project;
+  final Priority priority;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final tint = _chainTint(project.primaryTag.name);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(4, 4, AppSpace.md, 4),
-        decoration: BoxDecoration(
-          borderRadius: AppRadius.full,
-          color: tint.withValues(alpha: 0.12),
-          border: Border.all(color: tint.withValues(alpha: 0.24)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 22,
-              height: 22,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: tint),
-              child: Text(
-                _monogram(project.name),
-                style: AppTypography.custom(
-                  color: AppColors.bgBase,
-                  size: AppText.captionSize,
-                  weight: FontWeight.w800,
-                ).copyWith(height: 1),
+      child: Row(
+        children: [
+          Icon(
+            Icons.layers_outlined,
+            size: AppIcon.xs,
+            color: AppColors.textFaint,
+          ),
+          const SizedBox(width: AppSpace.xs + 2),
+          Expanded(
+            child: Text(
+              'in ${project.name}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.custom(
+                color: AppColors.textMuted,
+                size: AppText.labelSize,
+                weight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: AppSpace.sm),
-            Flexible(
-              child: Text(
-                project.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpace.md),
+          FeedPriorityTag(priority: priority),
+        ],
       ),
     );
   }
 }
 
-/// Edge's read on a gem: how many signals, and what it recommends.
-///
-/// Sits below the tags and takes colour only on `act`, so it can never compete
-/// with a deadline on the same card. `ignore` is not drawn at all — a verdict
-/// meaning "nothing to do" earns no space.
+/// Edge's read on a gem: a small outlined chip with how many signals and what
+/// it recommends. Only `act` takes the accent colour.
 class FeedEdgeTag extends StatelessWidget {
   const FeedEdgeTag({
     super.key,
@@ -201,24 +139,22 @@ class FeedEdgeTag extends StatelessWidget {
     final accent = _isAct ? AppColors.primary400 : AppColors.textMuted;
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.md,
-        vertical: AppSpace.xs,
+        horizontal: AppSpace.sm,
+        vertical: AppSpace.hair,
       ),
       decoration: BoxDecoration(
-        borderRadius: AppRadius.full,
-        color: _isAct
-            ? AppColors.primary400.withValues(alpha: 0.08)
-            : AppColors.bgElevated,
+        borderRadius: AppRadius.sm,
+        border: Border.all(color: AppColors.borderMuted),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.radar_rounded, size: AppIcon.xs, color: accent),
-          const SizedBox(width: AppSpace.xs + 2),
+          Icon(Icons.auto_awesome_outlined, size: AppIcon.xs, color: accent),
+          const SizedBox(width: AppSpace.xs),
           Text(
             'EDGE · $signals ${signals == 1 ? 'signal' : 'signals'}',
             style: AppTypography.custom(
-              color: AppColors.textMuted,
+              color: AppColors.textFaint,
               size: AppText.captionSize,
               weight: FontWeight.w700,
               letterSpacing: 0.6,
@@ -230,43 +166,12 @@ class FeedEdgeTag extends StatelessWidget {
             style: AppTypography.custom(
               color: accent,
               size: AppText.captionSize,
-              weight: FontWeight.w800,
-              letterSpacing: 1.1,
+              weight: FontWeight.w700,
+              letterSpacing: 0.6,
             ),
           ),
         ],
       ),
     );
-  }
-}
-
-String _monogram(String name) {
-  final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
-  if (words.isEmpty) return '?';
-  if (words.length >= 2) {
-    return '${words.first[0]}${words.elementAt(1)[0]}'.toUpperCase();
-  }
-  final only = words.first;
-  return only.substring(0, only.length >= 2 ? 2 : 1).toUpperCase();
-}
-
-/// Chain colours, matching the design's per-chain project tints. Categorical,
-/// and deliberately independent of the brand accent.
-Color _chainTint(String chain) {
-  switch (chain.trim().toLowerCase()) {
-    case 'core':
-      return const Color(0xFFFB923C);
-    case 'solana':
-      return const Color(0xFF34D399);
-    case 'ethereum':
-      return const Color(0xFF818CF8);
-    case 'telegram network':
-      return const Color(0xFF38BDF8);
-    case 'binance smart chain':
-      return const Color(0xFFFBBF24);
-    case 'ice open network':
-      return const Color(0xFF2DD4BF);
-    default:
-      return AppColors.primary400;
   }
 }
