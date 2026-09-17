@@ -13,8 +13,8 @@ import 'package:blocnet/features/mentions/presentation/widgets/mention_text.dart
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:flutter/material.dart';
 
-/// A community post laid out as a Home feed post: the avatar in a left column;
-/// name, role pill and time; the body; then the evenly spaced actions.
+/// A community post laid out as a Home feed post: the avatar beside name,
+/// role pill and time; the body at full width below; then the actions.
 ///
 /// Used by the feed card, the Saved list and the top of a discussion.
 class CommunityPostView extends StatelessWidget {
@@ -75,16 +75,18 @@ class CommunityPostView extends StatelessWidget {
       canModerate: onModerate != null,
     );
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CommunityAvatar(author: post.admin, onTap: () => _openAuthor(context)),
-        const SizedBox(width: AppSpace.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CommunityAuthorLine(
+        Row(
+          children: [
+            CommunityAvatar(
+              author: post.admin,
+              onTap: () => _openAuthor(context),
+            ),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: CommunityAuthorLine(
                 author: post.admin,
                 createdAt: post.createdAt,
                 status: post.status,
@@ -93,37 +95,37 @@ class CommunityPostView extends StatelessWidget {
                     ? CommunityMoreButton(onTap: () => _openMenu(context))
                     : null,
               ),
-              const SizedBox(height: AppSpace.sm),
-              MentionText(
-                text: post.content.trim(),
-                maxLines: maxBodyLines,
-                overflow: maxBodyLines == null ? null : TextOverflow.ellipsis,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                  height: 1.5,
-                ),
-                onMentionTap: (username) =>
-                    MentionProfileNavigator.openFromUsername(context, username),
-              ),
-              const SizedBox(height: AppSpace.sm),
-              CommunityPostActions(
-                isLiked: post.isLiked,
-                likesCount: post.likesCount,
-                isCommented: post.isCommented,
-                commentsCount: post.commentsCount,
-                isSaved: post.isBookmarked,
-                onLike: onLike,
-                onComment: onComment,
-                onSave: onSave,
-                onShare: () => showCommunityPostShareSheet(
-                  context,
-                  postId: post.id,
-                  content: post.content,
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpace.sm),
+        MentionText(
+          text: post.content.trim(),
+          maxLines: maxBodyLines,
+          overflow: maxBodyLines == null ? null : TextOverflow.ellipsis,
+          style: AppTypography.custom(
+            color: AppColors.textSecondary,
+            size: AppText.bodySize,
+            weight: FontWeight.w400,
+            height: 1.5,
+          ),
+          onMentionTap: (username) =>
+              MentionProfileNavigator.openFromUsername(context, username),
+        ),
+        const SizedBox(height: AppSpace.sm),
+        CommunityPostActions(
+          isLiked: post.isLiked,
+          likesCount: post.likesCount,
+          isCommented: post.isCommented,
+          commentsCount: post.commentsCount,
+          isSaved: post.isBookmarked,
+          onLike: onLike,
+          onComment: onComment,
+          onSave: onSave,
+          onShare: () => showCommunityPostShareSheet(
+            context,
+            postId: post.id,
+            content: post.content,
           ),
         ),
       ],
