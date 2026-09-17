@@ -27,6 +27,22 @@ class ProjectsApiRepository {
         .toList();
   }
 
+  /// The gems the signed-in member follows, newest follow first.
+  Future<List<Project>> fetchFollowedProjects({
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    final response = await _apiClient.get(
+      '/projects/followed',
+      query: {'limit': '$limit', 'offset': '$offset'},
+    );
+    if (response is! List) return [];
+    return response
+        .whereType<Map<String, dynamic>>()
+        .map(Project.fromApi)
+        .toList();
+  }
+
   Future<Project?> fetchProjectById(String id) async {
     final response = await _apiClient.get('/projects/$id');
 

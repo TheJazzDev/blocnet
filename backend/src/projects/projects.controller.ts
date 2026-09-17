@@ -41,6 +41,16 @@ export class ProjectsController {
     return this.projectsService.listProjects(query);
   }
 
+  @Get('followed')
+  @UseGuards(AuthGuard)
+  async listFollowed(
+    @CurrentUser() user: AuthUser | undefined,
+    @Query() query: ListProjectsQuery,
+  ) {
+    if (!user) throw new UnauthorizedException('User context missing');
+    return this.projectsService.listFollowedProjects(user.id, query);
+  }
+
   @Get(':id')
   async getById(@Param('id', ParseUUIDPipe) id: string) {
     return this.projectsService.getProject(id);

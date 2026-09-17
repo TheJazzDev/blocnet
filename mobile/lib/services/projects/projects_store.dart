@@ -5,6 +5,7 @@ import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/repositories/updates_api_repository.dart';
 import 'package:blocnet/features/projects/data/repositories/projects_api_repository.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
+import 'package:blocnet/services/api/api_error.dart';
 import 'package:blocnet/services/projects/project_follows_store.dart';
 import 'package:flutter/material.dart';
 
@@ -184,13 +185,44 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
         }
       }
 
+      await _addMissingFollowed(postsByProject);
       _lastError = null;
     } catch (error) {
-      _lastError = error.toString();
+      _lastError = describeApiError(error, fallback: 'Could not load gems.');
       debugPrint('Failed to fetch projects from API: $error');
     } finally {
       _isFetching = false;
       notifyListeners();
+    }
+  }
+
+  /// `GET /projects` is capped, so a followed gem can be missing from it.
+  /// Reads the member's follows only when that happens; a failure keeps the
+  /// list as it is.
+  Future<void> _addMissingFollowed(
+    Map<String, List<Update>> postsByProject,
+  ) async {
+    final listed = _projects.map((p) => p.id).toSet();
+    final missing = _followedProjectIds.difference(listed);
+    if (missing.isEmpty) return;
+    const pageSize = 100;
+    try {
+      for (var offset = 0; missing.isNotEmpty; offset += pageSize) {
+        final page = await _projectsRepository.fetchFollowedProjects(
+          limit: pageSize,
+          offset: offset,
+        );
+        for (final project in page) {
+          if (!missing.remove(project.id)) continue;
+          _projects.add(project.copyWith(
+            posts: postsByProject[project.id] ?? const <Update>[],
+            admin: project.admin ?? _fallbackAdmin(project.adminId),
+          ));
+        }
+        if (page.length < pageSize) break;
+      }
+    } catch (error) {
+      debugPrint('Followed gems read failed: $error');
     }
   }
 
