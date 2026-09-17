@@ -1,13 +1,13 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:flutter/material.dart';
 
-/// One settings row: icon, title, subtitle and a trailing switch.
+/// One settings row: tinted icon square, title, subtitle and a switch.
 ///
 /// [subtitleWidget] replaces the plain [subtitle] text when a row needs a
 /// richer subtitle (e.g. a tappable "+ N more"). [footer] renders under the
-/// row, above the divider, for expandable detail.
+/// row for expandable detail. Rows sit in a `ProfileRowGroup`, which draws
+/// the hairlines.
 class SettingSwitchTile extends StatelessWidget {
   const SettingSwitchTile({
     super.key,
@@ -16,7 +16,7 @@ class SettingSwitchTile extends StatelessWidget {
     required this.subtitle,
     required this.value,
     required this.onChanged,
-    this.showDivider = true,
+    this.iconColor,
     this.subtitleWidget,
     this.footer,
   });
@@ -26,73 +26,74 @@ class SettingSwitchTile extends StatelessWidget {
   final String subtitle;
   final bool value;
   final ValueChanged<bool>? onChanged;
-  final bool showDivider;
+
+  /// Defaults to the space accent.
+  final Color? iconColor;
   final Widget? subtitleWidget;
   final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
-    final isEnabled = onChanged != null;
-    final iconColor = value ? AppColors.teal400 : AppColors.textMuted;
-    final subtitleColor = isEnabled
-        ? AppColors.textMuted
-        : AppColors.textMuted.withValues(alpha: 0.7);
+    final enabled = onChanged != null;
+    final tint = iconColor ?? AppColors.primary400;
+    final fade = enabled ? 1.0 : 0.55;
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-          child: Row(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.md, AppSpace.sm, AppSpace.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Icon(icon, size: AppIcon.md, color: iconColor),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.custom(
-                        color: isEnabled
-                            ? AppColors.textPrimary
-                            : AppColors.textPrimary.withValues(alpha: 0.7),
-                        size: AppText.bodySize,
-                        weight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.hair),
-                    subtitleWidget ??
-                        Text(
-                          subtitle,
-                          style: AppTypography.custom(
-                            color: subtitleColor,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w500,
-                          ),
-                        ),
-                  ],
+              Opacity(
+                opacity: fade,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: tint.withValues(alpha: 0.12),
+                    borderRadius: AppRadius.sm,
+                  ),
+                  child: Icon(icon, size: AppIcon.sm, color: tint),
                 ),
               ),
-              const SizedBox(width: AppSpace.sm),
+              AppSpace.wGapMd,
+              Expanded(
+                child: Opacity(
+                  opacity: fade,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppText.body(AppColors.textPrimary,
+                            weight: AppText.semibold),
+                      ),
+                      AppSpace.gapHair,
+                      subtitleWidget ??
+                          Text(
+                            subtitle,
+                            style: AppText.label(AppColors.textMuted,
+                                weight: AppText.regular),
+                          ),
+                    ],
+                  ),
+                ),
+              ),
               Switch(
                 value: value,
                 onChanged: onChanged,
-                activeColor: AppColors.teal400,
-                activeTrackColor: AppColors.teal500.withValues(alpha: 0.35),
+                activeColor: AppColors.primary400,
+                activeTrackColor: AppColors.primary500.withValues(alpha: 0.35),
                 inactiveThumbColor: AppColors.textFaint,
                 inactiveTrackColor: AppColors.bgElevated,
               ),
             ],
           ),
-        ),
-        if (footer != null) footer!,
-        if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: AppColors.borderSubtle,
-          ),
-      ],
+          if (footer != null) footer!,
+        ],
+      ),
     );
   }
 }

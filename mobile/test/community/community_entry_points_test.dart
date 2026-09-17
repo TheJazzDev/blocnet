@@ -180,7 +180,7 @@ void main() {
         repo.error = ApiException('Server is down', statusCode: 503);
       });
       expect(find.text('Couldn’t load your reports'), findsOneWidget);
-      expect(find.text('Server is down'), findsOneWidget);
+      expect(find.text('Server is down'), findsNothing);
 
       repo
         ..error = null

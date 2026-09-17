@@ -1,10 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
-/// Heading + subtitle at the top of a support screen.
+/// Title and a one-line count at the top of a support screen.
 class SupportHeader extends StatelessWidget {
   const SupportHeader({super.key, required this.title, required this.subtitle});
 
@@ -16,25 +15,30 @@ class SupportHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.titleSize,
-            weight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: AppSpace.sm),
-        Text(
-          subtitle,
-          style: AppTypography.custom(
-            color: AppColors.textMuted,
-            size: AppText.bodySize,
-            weight: FontWeight.w400,
-            height: 1.45,
-          ),
-        ),
+        Text(title, style: AppText.title(AppColors.textPrimary)),
+        AppSpace.gapXs,
+        Text(subtitle, style: AppText.label(AppColors.textMuted)),
       ],
+    );
+  }
+}
+
+/// A tinted icon square, the list-row leading used across support.
+class SupportIconSquare extends StatelessWidget {
+  const SupportIconSquare({super.key, required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: AppColors.primary500.withValues(alpha: 0.12),
+        borderRadius: AppRadius.sm,
+      ),
+      child: Icon(icon, size: AppIcon.sm, color: AppColors.primary400),
     );
   }
 }
@@ -66,11 +70,11 @@ class _SupportFaqTileState extends State<SupportFaqTile> {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        margin: const EdgeInsets.only(bottom: AppSpace.md),
-        padding: const EdgeInsets.all(AppSpace.lg),
+        margin: const EdgeInsets.only(bottom: AppSpace.sm),
+        padding: AppSpace.card,
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
+          borderRadius: AppRadius.md,
           border: Border.all(
             color: _expanded
                 ? AppColors.primary500.withValues(alpha: 0.35)
@@ -82,17 +86,13 @@ class _SupportFaqTileState extends State<SupportFaqTile> {
           children: [
             Row(
               children: [
-                Icon(widget.icon,
-                    size: AppIcon.md, color: AppColors.primary400),
-                const SizedBox(width: AppSpace.md),
+                SupportIconSquare(icon: widget.icon),
+                AppSpace.wGapMd,
                 Expanded(
                   child: Text(
                     widget.question,
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: AppText.labelSize,
-                      weight: FontWeight.w600,
-                    ),
+                    style: AppText.body(AppColors.textPrimary,
+                        weight: AppText.semibold),
                   ),
                 ),
                 Icon(
@@ -105,15 +105,11 @@ class _SupportFaqTileState extends State<SupportFaqTile> {
               ],
             ),
             if (_expanded) ...[
-              const SizedBox(height: AppSpace.md),
+              AppSpace.gapMd,
               Text(
                 widget.answer,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                  height: 1.5,
-                ),
+                style:
+                    AppText.body(AppColors.textSecondary).copyWith(height: 1.5),
               ),
             ],
           ],
@@ -146,61 +142,51 @@ class SupportStepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasAction = actionLabel != null && onAction != null;
-    return AppSurface.flush(
-      margin: const EdgeInsets.only(bottom: AppSpace.md),
+    return AppSurface(
+      margin: const EdgeInsets.only(bottom: AppSpace.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: AppSpace.card,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary500.withValues(alpha: 0.12),
-                    borderRadius: AppRadius.sm,
-                  ),
-                  child:
-                      Icon(icon, size: AppIcon.sm, color: AppColors.primary400),
+          Row(
+            children: [
+              SupportIconSquare(icon: icon),
+              AppSpace.wGapMd,
+              Expanded(
+                child: Text(
+                  '$number. $title',
+                  style:
+                      AppText.body(AppColors.textPrimary, weight: AppText.bold),
                 ),
-                AppSpace.wGapMd,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$number. $title',
-                        style: AppText.body(
-                          AppColors.textPrimary,
-                          weight: AppText.bold,
-                        ),
-                      ),
-                      AppSpace.gapXs,
-                      Text(body,
-                          style: AppText.label(AppColors.textMuted)
-                              .copyWith(height: 1.5)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (hasAction) ...[
-            Divider(height: 1, color: AppColors.borderSubtle),
-            AppListRow(
-              title: actionLabel!,
-              titleColor: AppColors.primary400,
-              dense: true,
-              trailing: Icon(
-                Icons.chevron_right_rounded,
-                size: AppIcon.md,
-                color: AppColors.textFaint,
               ),
-              onTap: onAction,
+            ],
+          ),
+          AppSpace.gapMd,
+          Text(
+            body,
+            style: AppText.body(AppColors.textSecondary).copyWith(height: 1.5),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            AppSpace.gapMd,
+            SizedBox(
+              height: 40,
+              child: OutlinedButton.icon(
+                onPressed: onAction,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.borderMuted),
+                  shape:
+                      const RoundedRectangleBorder(borderRadius: AppRadius.md),
+                ),
+                icon: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: AppIcon.sm,
+                  color: AppColors.primary400,
+                ),
+                label: Text(
+                  actionLabel!,
+                  style: AppText.label(AppColors.textPrimary,
+                      weight: AppText.semibold),
+                ),
+              ),
             ),
           ],
         ],

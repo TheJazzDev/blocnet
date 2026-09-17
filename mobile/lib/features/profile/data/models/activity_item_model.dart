@@ -34,46 +34,46 @@ class ActivityItem {
     );
   }
 
-  String get label {
-    switch (action) {
-      case 'community_post.create':
-        return 'Created a community post';
-      case 'community_post.comment.create':
-        return 'Commented on a community post';
-      case 'community_post.reaction.add':
-        return 'Liked a community post';
-      case 'community_post.reaction.remove':
-        return 'Removed a like from a post';
-      case 'community_post.bookmark.add':
-        return 'Bookmarked a community post';
-      case 'community_post.bookmark.remove':
-        return 'Removed a bookmark';
-      case 'project.follow':
-        return 'Followed a gem';
-      case 'project.unfollow':
-        return 'Unfollowed a gem';
-      case 'profile.follow':
-        return 'Followed a hunter profile';
-      case 'profile.unfollow':
-        return 'Unfollowed a hunter profile';
-      case 'tip.sent':
-        return 'Sent a tip to a hunter';
-      default:
-        return _toTitleCase(
-          action.replaceAll(RegExp(r'[._]+'), ' ').trim(),
-        );
-    }
-  }
+  /// Short past-tense line for the Activity tab.
+  String get label => _labels[action] ?? _toSentenceCase(action);
 }
 
-String _toTitleCase(String value) {
-  final trimmed = value.trim();
-  if (trimmed.isEmpty) return '';
-  return trimmed
+const Map<String, String> _labels = {
+  'update.create': 'Posted an update',
+  'update.update': 'Edited an update',
+  'comment.create': 'Commented on an update',
+  'comment.update': 'Edited a comment',
+  'comment.delete': 'Deleted a comment',
+  'community_post.create': 'Posted in Community',
+  'community_post.comment.create': 'Replied in Community',
+  'community_post.reaction.add': 'Liked a post',
+  'community_post.reaction.remove': 'Unliked a post',
+  'community_post.bookmark.add': 'Saved a post',
+  'community_post.bookmark.remove': 'Unsaved a post',
+  'follow.preferences.update': 'Changed gem alerts',
+  'mining.start': 'Started mining',
+  'mining.claim': 'Claimed mining',
+  'profile.follow': 'Followed a member',
+  'profile.unfollow': 'Unfollowed a member',
+  'project.create': 'Added a gem',
+  'project.update': 'Edited a gem',
+  'project.follow': 'Followed a gem',
+  'project.unfollow': 'Unfollowed a gem',
+  'project_proposal.create': 'Submitted a gem',
+  'referral.bind': 'Joined with a referral',
+  'tip.sent': 'Sent a tip',
+};
+
+String _toSentenceCase(String value) {
+  final words = value
+      .replaceAll(RegExp(r'[._]+'), ' ')
+      .trim()
       .split(RegExp(r'\s+'))
       .where((part) => part.isNotEmpty)
-      .map((part) {
-    final lower = part.toLowerCase();
-    return '${lower[0].toUpperCase()}${lower.substring(1)}';
-  }).join(' ');
+      .map((part) => part.toLowerCase())
+      .toList();
+  if (words.isEmpty) return 'Activity';
+  final first = words.first;
+  words[0] = '${first[0].toUpperCase()}${first.substring(1)}';
+  return words.join(' ');
 }

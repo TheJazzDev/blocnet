@@ -1,14 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/notifications/data/models/notification_preferences_model.dart';
-import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/features/settings/presentation/widgets/category_switch_tile.dart';
-import 'package:blocnet/features/settings/presentation/widgets/setting_switch_tile.dart';
+import 'package:blocnet/features/settings/presentation/widgets/settings_account_sections.dart';
+import 'package:blocnet/features/settings/presentation/widgets/settings_notification_sections.dart';
+import 'package:blocnet/features/settings/presentation/widgets/settings_retry_card.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
-import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/notifications/notification_settings_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
@@ -37,576 +33,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<NotificationSettingsStore>(
-      builder: (context, settingsStore, _) {
-        final prefs = settingsStore.preferences;
-        final catalog = settingsStore.catalog;
-        final feedViewModeStore = context.watch<FeedViewModeStore>();
-        final error = settingsStore.lastError;
-        if (error != null &&
-            error.isNotEmpty &&
-            error != _lastShownError &&
-            mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            if (_lastShownError == error) return;
-            _lastShownError = error;
-            AppSnackbar.showError(context, error);
-          });
-        }
-
-        return Scaffold(
-          backgroundColor: AppColors.bgBase,
-          appBar: const CustomAppBar(
-            title: 'Settings',
-            backButton: true,
-            showSearch: false,
-            showFilter: false,
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpace.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SettingsHeader(),
-                const SizedBox(height: AppSpace.xl),
-                if (settingsStore.isLoading && !settingsStore.hasLoaded) ...[
-                  const SkeletonList(items: 5, itemHeight: 56),
-                ] else if (prefs == null || catalog == null) ...[
-                  _SettingsRetryCard(
-                    onRetry: settingsStore.refresh,
-                  ),
-                ] else ...[
-                  _buildNotificationsSection(
-                    context: context,
-                    settingsStore: settingsStore,
-                    prefs: prefs,
-                  ),
-                  const SizedBox(height: AppSpace.xl),
-                  _buildDisplaySection(feedViewModeStore),
-                  const SizedBox(height: AppSpace.xl),
-                  _buildCategoriesSection(
-                    context: context,
-                    settingsStore: settingsStore,
-                    prefs: prefs,
-                    catalog: catalog,
-                  ),
-                  const SizedBox(height: AppSpace.xl),
-                  _buildPrivacySection(context),
-                  const SizedBox(height: AppSpace.xl),
-                ],
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  /// A failed save shows once as a toast. A failed load has its own card,
+  /// so it is not repeated here.
+  void _reportSaveError(NotificationSettingsStore store) {
+    final error = store.lastError;
+    if (error == null || error.isEmpty || !store.hasLoaded) return;
+    if (error == _lastShownError) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _lastShownError == error) return;
+      _lastShownError = error;
+      AppSnackbar.showError(context, 'Could not save that setting');
+    });
   }
-
-  Widget _buildPrivacySection(BuildContext context) {
-    final viewMode = context.watch<FeedViewModeStore>().mode;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionLabel('Privacy & Security'),
-        const SizedBox(height: AppSpace.sm),
-        _SettingsNavigationTile(
-          mode: viewMode,
-          icon: Icons.flag_outlined,
-          title: 'My Reports',
-          subtitle: 'View your submitted community reports',
-          showDivider: true,
-          onTap: () {
-            Navigator.pushNamed(context, AppRoutes.myReports);
-          },
-        ),
-        _SettingsNavigationTile(
-          mode: viewMode,
-          icon: Icons.block_outlined,
-          title: 'Blocked users',
-          subtitle: 'Manage your blocked accounts',
-          showDivider: true,
-          onTap: () {
-            Navigator.pushNamed(context, AppRoutes.blockedUsers);
-          },
-        ),
-        _SettingsNavigationTile(
-          mode: viewMode,
-          icon: Icons.no_accounts_outlined,
-          title: 'Deactivate account',
-          subtitle: 'Temporarily disable your account',
-          showDivider: false,
-          onTap: () {
-            Navigator.pushNamed(context, AppRoutes.deactivateAccount);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNotificationsSection({
-    required BuildContext context,
-    required NotificationSettingsStore settingsStore,
-    required NotificationPreferences prefs,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionLabel('Notifications'),
-        const SizedBox(height: AppSpace.sm),
-        SettingSwitchTile(
-          icon: Icons.notifications_outlined,
-          title: 'Push notifications',
-          subtitle: 'Get in-app and device alerts',
-          value: prefs.masterEnabled,
-          showDivider: true,
-          onChanged: settingsStore.isSaving
-              ? null
-              : (value) {
-                  settingsStore.setMasterEnabled(value);
-                },
-        ),
-        SettingSwitchTile(
-          icon: Icons.mail_outline,
-          title: 'Email digest',
-          subtitle:
-              'Daily summary at ${_formatLocalDigestTime(prefs.digestHourLocal, prefs.digestMinuteLocal)}',
-          value: prefs.digestEmailEnabled,
-          showDivider: true,
-          onChanged: settingsStore.isSaving
-              ? null
-              : (value) {
-                  settingsStore.setDigestEmailEnabled(value);
-                },
-        ),
-        _CadenceSelector(
-          cadence: prefs.digestCadence,
-          disabled: settingsStore.isSaving || !prefs.digestEmailEnabled,
-          onChanged: (next) {
-            settingsStore.setDigestCadence(next);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoriesSection({
-    required BuildContext context,
-    required NotificationSettingsStore settingsStore,
-    required NotificationPreferences prefs,
-    required NotificationPreferencesCatalog catalog,
-  }) {
-    final categories = catalog.categories;
-    if (categories.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionLabel('Notification Categories'),
-        const SizedBox(height: AppSpace.sm),
-        ...categories.indexed.map(
-          (entry) {
-            final index = entry.$1;
-            final category = entry.$2;
-            return CategorySwitchTile(
-              icon: _iconForCategory(category.key),
-              category: category,
-              value: prefs.isCategoryEnabled(category.key),
-              showDivider: index != categories.length - 1,
-              onChanged: settingsStore.isSaving || !prefs.masterEnabled
-                  ? null
-                  : (value) {
-                      settingsStore.setCategoryEnabled(category.key, value);
-                    },
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDisplaySection(FeedViewModeStore feedViewModeStore) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SectionLabel('Display'),
-        const SizedBox(height: AppSpace.sm),
-        _FeedViewSelector(
-          mode: feedViewModeStore.mode,
-          onChanged: (nextMode) {
-            feedViewModeStore.setMode(nextMode);
-          },
-        ),
-      ],
-    );
-  }
-
-  IconData _iconForCategory(String key) {
-    switch (key) {
-      case 'updates':
-        return Icons.campaign_outlined;
-      case 'social':
-        return Icons.people_alt_outlined;
-      case 'governance':
-        return Icons.hub_outlined;
-      case 'wallet':
-        return Icons.account_balance_wallet_outlined;
-      case 'mining_referrals':
-        return Icons.bolt_outlined;
-      case 'rewards':
-        return Icons.workspace_premium_outlined;
-      case 'system':
-        return Icons.settings_suggest_outlined;
-      default:
-        return Icons.notifications_outlined;
-    }
-  }
-
-  String _formatLocalDigestTime(int hour, int minute) {
-    final date = DateTime(2026, 1, 1, hour, minute);
-    final formatted = TimeOfDay.fromDateTime(date).format(context);
-    return formatted;
-  }
-}
-
-// ─── Header ───────────────────────────────────────────────────────────────────
-
-class _SettingsHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Notifications, display and account preferences.',
-          style: TextStyle(
-            color: AppColors.textMuted,
-            fontSize: AppText.bodySize,
-            fontFamily: 'Geist',
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Section Label ────────────────────────────────────────────────────────────
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.label);
-
-  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: TextStyle(
-        color: AppColors.textFaint,
-        fontSize: AppText.captionSize,
-        fontFamily: 'Geist',
-        fontWeight: FontWeight.w600,
-        letterSpacing: 1.0,
+    final store = context.watch<NotificationSettingsStore>();
+    final prefs = store.preferences;
+    final catalog = store.catalog;
+    _reportSaveError(store);
+
+    return Scaffold(
+      backgroundColor: AppColors.bgBase,
+      appBar: const CustomAppBar(
+        title: 'Settings',
+        backButton: true,
+        showSearch: false,
+        showFilter: false,
       ),
-    );
-  }
-}
-
-// ─── Switch Tile ──────────────────────────────────────────────────────────────
-
-class _CadenceSelector extends StatelessWidget {
-  const _CadenceSelector({
-    required this.cadence,
-    required this.onChanged,
-    this.disabled = false,
-  });
-
-  final String cadence;
-  final ValueChanged<String> onChanged;
-  final bool disabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-      child: Row(
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xxxl),
         children: [
-          Icon(
-            Icons.schedule_outlined,
-            size: AppIcon.md,
-            color: disabled
-                ? AppColors.textMuted.withValues(alpha: 0.7)
-                : AppColors.textMuted,
-          ),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Text(
-              'Digest cadence',
-              style: AppTypography.custom(
-                color: disabled
-                    ? AppColors.textPrimary.withValues(alpha: 0.7)
-                    : AppColors.textPrimary,
-                size: AppText.bodySize,
-                weight: FontWeight.w700,
-              ),
+          if (store.isLoading && !store.hasLoaded)
+            const SkeletonList(items: 4, itemHeight: 56)
+          else if (prefs == null || catalog == null)
+            SettingsRetryCard(onRetry: store.refresh)
+          else ...[
+            SettingsNotificationsSection(store: store, prefs: prefs),
+            AppSpace.gapXl,
+            SettingsCategoriesSection(
+              store: store,
+              prefs: prefs,
+              catalog: catalog,
             ),
-          ),
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment<String>(value: 'daily', label: Text('Daily')),
-              ButtonSegment<String>(value: 'weekly', label: Text('Weekly')),
-            ],
-            selected: {cadence == 'weekly' ? 'weekly' : 'daily'},
-            onSelectionChanged:
-                disabled ? null : (selection) => onChanged(selection.first),
-            style: ButtonStyle(
-              visualDensity: VisualDensity.compact,
-              foregroundColor: WidgetStateProperty.all(AppColors.textPrimary),
-              backgroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return AppColors.teal500.withValues(alpha: 0.35);
-                }
-                return AppColors.bgElevated;
-              }),
-            ),
-          ),
+          ],
+          AppSpace.gapXl,
+          const SettingsDisplaySection(),
+          AppSpace.gapXl,
+          const SettingsPrivacySection(),
         ],
       ),
-    );
-  }
-}
-
-class _FeedViewSelector extends StatelessWidget {
-  const _FeedViewSelector({
-    required this.mode,
-    required this.onChanged,
-  });
-
-  final FeedViewMode mode;
-  final ValueChanged<FeedViewMode> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-      child: Row(
-        children: [
-          Icon(
-            Icons.view_stream_outlined,
-            size: AppIcon.md,
-            color: AppColors.textMuted,
-          ),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Text(
-              'App layout',
-              style: AppTypography.custom(
-                color: AppColors.textPrimary,
-                size: AppText.bodySize,
-                weight: FontWeight.w700,
-              ),
-            ),
-          ),
-          SegmentedButton<FeedViewMode>(
-            segments: const [
-              ButtonSegment<FeedViewMode>(
-                value: FeedViewMode.list,
-                label: Text('List'),
-              ),
-              ButtonSegment<FeedViewMode>(
-                value: FeedViewMode.card,
-                label: Text('Card'),
-              ),
-            ],
-            selected: {mode},
-            onSelectionChanged: (selection) => onChanged(selection.first),
-            style: ButtonStyle(
-              visualDensity: VisualDensity.compact,
-              foregroundColor: WidgetStateProperty.all(AppColors.textPrimary),
-              backgroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return AppColors.teal500.withValues(alpha: 0.35);
-                }
-                return AppColors.bgElevated;
-              }),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SettingsRetryCard extends StatelessWidget {
-  const _SettingsRetryCard({required this.onRetry});
-
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppSurface(
-      radius: AppRadius.lg,
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpace.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Unable to load notification settings.',
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.bodySize,
-              weight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Text(
-            'Tap retry to fetch your latest preferences.',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.labelSize,
-              weight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: AppSpace.md),
-          FilledButton.tonal(
-            onPressed: () {
-              onRetry();
-            },
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Navigation Tile ──────────────────────────────────────────────────────────
-
-class _SettingsNavigationTile extends StatelessWidget {
-  const _SettingsNavigationTile({
-    required this.mode,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.showDivider = true,
-  });
-
-  final FeedViewMode mode;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final bool showDivider;
-
-  @override
-  Widget build(BuildContext context) {
-    final content = Row(
-      children: [
-        if (mode == FeedViewMode.card)
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.textMuted.withValues(alpha: 0.15),
-                  AppColors.textMuted.withValues(alpha: 0.08),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.mdValue),
-              border: Border.all(
-                color: AppColors.textMuted.withValues(alpha: 0.2),
-                width: 1.5,
-              ),
-            ),
-            child: Icon(icon, size: AppIcon.md, color: AppColors.textMuted),
-          )
-        else
-          Icon(icon, size: AppIcon.md, color: AppColors.textMuted),
-        const SizedBox(width: AppSpace.lg),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpace.hair),
-              Text(
-                subtitle,
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpace.sm),
-        Icon(
-          Icons.chevron_right,
-          color: AppColors.textMuted,
-          size: AppIcon.md,
-        ),
-      ],
-    );
-
-    final tile = GestureDetector(
-      onTap: onTap,
-      child: mode == FeedViewMode.card
-          ? Container(
-              margin: const EdgeInsets.only(bottom: AppSpace.md),
-              padding: const EdgeInsets.all(AppSpace.lg),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.bgSurface,
-                    AppColors.bgSurface.withValues(alpha: 0.85),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.lgValue),
-                border: Border.all(
-                  color: AppColors.borderSubtle,
-                  width: 1.5,
-                ),
-              ),
-              child: content,
-            )
-          : Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-              child: content,
-            ),
-    );
-
-    if (mode == FeedViewMode.card) {
-      return tile;
-    }
-
-    return Column(
-      children: [
-        tile,
-        if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: AppColors.borderSubtle,
-          ),
-      ],
     );
   }
 }

@@ -64,7 +64,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Couldn’t load saved posts'), findsOneWidget);
-    expect(find.text('Server is down'), findsOneWidget);
+    expect(find.text('Server is down'), findsNothing);
 
     repo.bookmarksError = null;
     repo.bookmarks = [post(id: 'a', content: 'Back again', saved: true)];

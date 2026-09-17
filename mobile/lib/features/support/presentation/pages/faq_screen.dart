@@ -24,13 +24,11 @@ class FaqScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpace.lg),
         children: [
-          const SupportHeader(
+          SupportHeader(
             title: 'Frequently asked questions',
-            subtitle:
-                'Short answers to the things people ask most. Tap a question '
-                'to expand it.',
+            subtitle: '${faqEntries.length} questions',
           ),
-          const SizedBox(height: AppSpace.lg),
+          AppSpace.gapLg,
           for (final entry in faqEntries)
             SupportFaqTile(
               icon: entry.icon,

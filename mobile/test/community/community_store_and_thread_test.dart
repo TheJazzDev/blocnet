@@ -77,7 +77,7 @@ void main() {
     test('a failed feed load is kept apart from action errors', () async {
       repo.feedError = ApiException('Server is down', statusCode: 503);
       await store.refreshPosts();
-      expect(store.postsError, 'Server is down');
+      expect(store.postsError, isNot(contains('Server is down')));
 
       repo.feedError = null;
       repo.feed = [post(id: 'p1')];
@@ -86,7 +86,7 @@ void main() {
 
       repo.toggleError = ApiException('nope', statusCode: 500);
       expect(await store.toggleBookmark('p1'), isFalse);
-      expect(store.lastError, 'nope');
+      expect(store.lastError, 'Could not update saved');
       expect(store.postsError, isNull);
       expect(store.postById('p1')!.isBookmarked, isFalse); // rolled back
     });

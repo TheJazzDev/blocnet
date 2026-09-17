@@ -25,8 +25,9 @@ String describeApiError(
     if (error.isNetworkError) return _logged(error, networkErrorMessage);
     final code = error.statusCode ?? 0;
     if (code >= 400 && code < 500) {
-      final message = _bodyMessage(error.responseBody);
-      if (message != null) return message;
+      final message = _bodyMessage(error.responseBody) ?? error.message.trim();
+      // ApiClient words a 4xx without a body message itself.
+      if (message.isNotEmpty && message != 'Request failed') return message;
     }
     return _logged(error, fallback);
   }

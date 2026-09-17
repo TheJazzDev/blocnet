@@ -24,19 +24,12 @@ class ProfileLevelPill extends StatelessWidget {
       onTap: () => Navigator.of(context).pushNamed(AppRoutes.levels),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.xs, vertical: AppSpace.xs),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.xs, AppSpace.hair, AppSpace.hair, AppSpace.hair),
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.smValue),
-          border: Border.all(color: AppColors.borderSubtle),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: AppColors.bgElevated,
+          borderRadius: AppRadius.full,
+          border: Border.all(color: AppColors.borderMuted),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -50,9 +43,9 @@ class ProfileLevelPill extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.custom(
-                  color: AppColors.textPrimary,
+                  color: AppColors.textSecondary,
                   size: AppText.captionSize,
-                  weight: FontWeight.w600,
+                  weight: FontWeight.w700,
                 ),
               ),
             ),

@@ -30,9 +30,9 @@ class GettingStartedScreen extends StatelessWidget {
           AppSpace.xxl,
         ),
         children: [
-          const SupportHeader(
+          SupportHeader(
             title: 'Your first week on Blocnet',
-            subtitle: 'Seven steps, in order. One sitting is enough.',
+            subtitle: '${gettingStartedSteps.length} steps, in order',
           ),
           const SizedBox(height: AppSpace.lg),
           for (var i = 0; i < gettingStartedSteps.length; i++)
