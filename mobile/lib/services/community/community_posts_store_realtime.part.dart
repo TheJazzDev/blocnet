@@ -1,8 +1,7 @@
 part of 'community_posts_store.dart';
 
 mixin _CommunityPostsRealtimeMixin on ChangeNotifier {
-  static const Duration _realtimeRefetchDebounce =
-      Duration(milliseconds: 450);
+  static const Duration _realtimeRefetchDebounce = Duration(milliseconds: 450);
   static const Duration _realtimeChannelRecoveryDelay = Duration(seconds: 2);
 
   RealtimeCoordinator get _realtimeCoordinator;
