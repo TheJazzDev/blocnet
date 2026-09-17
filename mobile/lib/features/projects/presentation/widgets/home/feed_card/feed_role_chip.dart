@@ -18,7 +18,7 @@ class FeedRoleChip extends StatelessWidget {
   /// Hunters read in violet and every other role in the accent, as the feed
   /// always drew them.
   static Color colorFor(String label) =>
-      label == 'HUNTER' ? AppColors.inviteViolet : AppColors.primary400;
+      label == 'HUNTER' ? AppColors.tagPartnership : AppColors.primary400;
 
   @override
   Widget build(BuildContext context) {
