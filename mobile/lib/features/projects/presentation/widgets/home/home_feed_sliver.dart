@@ -143,14 +143,10 @@ class HomeFeedSliver extends StatelessWidget {
             sliver: SliverToBoxAdapter(child: EmptyFeed()),
           );
         }
-        // Card rows are full-bleed and carry their own padding, so the feed
-        // reads as one stream rather than a stack of floating panels. The
-        // list layout has not been redesigned and still wants a gutter.
-        final isFullBleed = feedViewMode == FeedViewMode.card;
+        // Every row sits inside the screen gutter: cards are flat panels and
+        // list rows are separated by dividers.
         return SliverPadding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isFullBleed ? 0 : AppSpace.lg,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               if (isDayOne) ...[

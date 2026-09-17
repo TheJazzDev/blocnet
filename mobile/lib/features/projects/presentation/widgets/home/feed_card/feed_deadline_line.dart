@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 ///
 /// So: one line, quiet, no animation. Only the closing-today case takes any
 /// emphasis, and it takes it in weight and brightness rather than colour,
-/// because on a high-priority card the red edge is already spent.
+/// because on a high-priority card the priority pill already spends red.
 class FeedDeadlineLine extends StatelessWidget {
   const FeedDeadlineLine({
     super.key,
@@ -34,17 +34,17 @@ class FeedDeadlineLine extends StatelessWidget {
     final phrasing = describeDeadline(deadlineAt, now ?? DateTime.now());
 
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpace.md),
+      padding: const EdgeInsets.only(top: AppSpace.sm),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             phrasing.hasPassed ? Icons.history_rounded : Icons.schedule_rounded,
-            size: AppIcon.sm,
+            size: AppIcon.xs,
             color:
                 phrasing.hasPassed ? AppColors.textFaint : AppColors.textMuted,
           ),
-          const SizedBox(width: AppSpace.sm),
+          const SizedBox(width: AppSpace.xs + 2),
           Expanded(
             child: Text(
               phrasing.label,
@@ -54,9 +54,9 @@ class FeedDeadlineLine extends StatelessWidget {
                     : phrasing.isToday
                         ? AppColors.textPrimary
                         : AppColors.textSecondary,
-                size: AppText.bodySize,
+                size: AppText.labelSize,
                 weight: phrasing.isToday ? FontWeight.w700 : FontWeight.w600,
-                height: 1.4,
+                height: 1.3,
               ),
             ),
           ),
