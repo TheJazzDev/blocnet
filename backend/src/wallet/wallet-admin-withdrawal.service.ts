@@ -15,6 +15,10 @@ import {
   WithdrawalReviewDecision,
 } from './dto/review-withdrawal.dto';
 import { toDecimalString } from './types/decimal';
+import {
+  resolveAdminFailureDetail,
+  toMemberWithdrawalFailure,
+} from './withdrawal-failure';
 
 @Injectable()
 export class WalletAdminWithdrawalService {
@@ -78,6 +82,8 @@ export class WalletAdminWithdrawalService {
               displayName: true,
             },
           },
+          // The revert entry keeps the operator-only failure detail.
+          finalizeLedgerEntry: { select: { metadata: true } },
         },
       }),
       this.prisma.withdrawalRequest.count({ where }),
@@ -93,7 +99,13 @@ export class WalletAdminWithdrawalService {
         netAmount: toDecimalString(row.netAmount),
         reason: row.reason,
         rejectReason: row.rejectReason,
-        failureReason: row.failureReason,
+        // Operators see the internal detail; `failureMessage` is what the
+        // member is shown for the same withdrawal.
+        failureReason: resolveAdminFailureDetail(
+          row.failureReason,
+          row.finalizeLedgerEntry?.metadata,
+        ),
+        failureMessage: toMemberWithdrawalFailure(row).failureReason,
         broadcastTxHash: row.broadcastTxHash,
         confirmations: row.confirmations,
         requester: row.requester,

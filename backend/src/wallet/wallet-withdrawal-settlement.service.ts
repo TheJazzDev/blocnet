@@ -22,6 +22,11 @@ import {
   WalletConfigService,
   WalletDepositNetworkConfig,
 } from './wallet-config.service';
+import {
+  INTERNAL_DETAIL_KEY,
+  REVERT_KIND,
+  WITHDRAWAL_FAILED_MESSAGE,
+} from './withdrawal-failure';
 
 @Injectable()
 export class WalletWithdrawalSettlementService {
@@ -554,11 +559,18 @@ export class WalletWithdrawalSettlementService {
     });
   }
 
+  /**
+   * Returns a failed withdrawal's amount to the member. `internalDetail` is
+   * operator-only: it goes to the logs, the audit log and the release entry's
+   * `internalDetail`. The row and the entry's `reason` carry only the safe
+   * member message (F-37).
+   */
   private async revertWithdrawal(
     withdrawalId: string,
-    reason: string,
+    internalDetail: string,
     confirmations?: number,
   ): Promise<void> {
+    this.logger.warn(`Reverting withdrawal ${withdrawalId}: ${internalDetail}`);
     const result = await this.prisma.$transaction(
       async (tx) => {
         const withdrawal = await tx.withdrawalRequest.findUnique({
@@ -647,7 +659,9 @@ export class WalletWithdrawalSettlementService {
               metadata: {
                 withdrawalId: withdrawal.id,
                 asset: withdrawal.asset,
-                reason,
+                kind: REVERT_KIND,
+                reason: WITHDRAWAL_FAILED_MESSAGE,
+                [INTERNAL_DETAIL_KEY]: internalDetail.slice(0, 2000),
               },
             },
           });
@@ -657,8 +671,7 @@ export class WalletWithdrawalSettlementService {
           where: { id: withdrawal.id },
           data: {
             status: WithdrawalStatus.reverted,
-            failureReason: reason.slice(0, 500),
-            rejectReason: reason.slice(0, 500),
+            failureReason: WITHDRAWAL_FAILED_MESSAGE,
             failedAt: new Date(),
             confirmations: confirmations ?? withdrawal.confirmations,
             finalizeLedgerEntryId:
@@ -669,7 +682,6 @@ export class WalletWithdrawalSettlementService {
         return {
           id: reverted.id,
           userId: reverted.userId,
-          reason,
         };
       },
       {
@@ -687,7 +699,8 @@ export class WalletWithdrawalSettlementService {
       resourceType: 'withdrawal_request',
       resourceId: result.id,
       metadata: {
-        reason: result.reason,
+        reason: internalDetail,
+        userMessage: WITHDRAWAL_FAILED_MESSAGE,
       },
     });
   }
