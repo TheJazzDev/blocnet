@@ -1,8 +1,8 @@
 import 'package:blocnet/features/moderation/presentation/pages/appeals_queue_screen.dart';
 import 'package:blocnet/features/moderation/presentation/pages/reports_queue_screen.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_button.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_dialog.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -126,8 +126,8 @@ void main() {
       expect(find.text('POST'), findsNWidgets(2));
       expect(find.text('3 hours ago'), findsNWidgets(2));
       // Only the open report can be resolved or dismissed.
-      expect(find.widgetWithText(ModButton, 'Resolve'), findsOneWidget);
-      expect(find.widgetWithText(ModButton, 'Dismiss'), findsOneWidget);
+      expect(find.widgetWithText(AppButton, 'Resolve'), findsOneWidget);
+      expect(find.widgetWithText(AppButton, 'Dismiss'), findsOneWidget);
       expect(find.text('1–2 of 2'), findsOneWidget);
     });
 
@@ -167,7 +167,7 @@ void main() {
       final api = _FakeApiClient()..reports = [_reportJson('a')];
       await _pump(tester, ReportsQueueScreen(apiClient: api));
 
-      await tester.tap(find.widgetWithText(ModButton, 'Resolve'));
+      await tester.tap(find.widgetWithText(AppButton, 'Resolve'));
       await tester.pumpAndSettle();
       expect(find.byType(ModDialog), findsOneWidget);
 
@@ -181,7 +181,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: find.byType(ModDialog),
-          matching: find.widgetWithText(ModButton, 'Resolve'),
+          matching: find.widgetWithText(AppButton, 'Resolve'),
         ),
       );
       await tester.pumpAndSettle();
@@ -209,8 +209,8 @@ void main() {
       expect(find.text('APPROVED'), findsOneWidget);
       expect(find.text('ada'), findsNWidgets(2));
       expect(find.text('ORIGINAL REPORT'), findsNWidgets(2));
-      expect(find.widgetWithText(ModButton, 'Overturn'), findsOneWidget);
-      expect(find.widgetWithText(ModButton, 'Uphold'), findsOneWidget);
+      expect(find.widgetWithText(AppButton, 'Overturn'), findsOneWidget);
+      expect(find.widgetWithText(AppButton, 'Uphold'), findsOneWidget);
     });
 
     testWidgets('a failed load says so instead of "no appeals"',
@@ -226,12 +226,12 @@ void main() {
       final api = _FakeApiClient()..appeals = [_appealJson('x')];
       await _pump(tester, AppealsQueueScreen(apiClient: api));
 
-      await tester.tap(find.widgetWithText(ModButton, 'Uphold'));
+      await tester.tap(find.widgetWithText(AppButton, 'Uphold'));
       await tester.pumpAndSettle();
       await tester.tap(
         find.descendant(
           of: find.byType(ModDialog),
-          matching: find.widgetWithText(ModButton, 'Uphold'),
+          matching: find.widgetWithText(AppButton, 'Uphold'),
         ),
       );
       await tester.pumpAndSettle();

@@ -70,7 +70,7 @@ class AppButtonTone {
     };
   }
 
-  /// Dark text on a light fill (the cyan accent), white on a dark one.
+  /// Black text on a light fill (the cyan accent), white on a dark one.
   static Color _on(Color fill) =>
-      fill.computeLuminance() > 0.4 ? AppColors.bgBase : Colors.white;
+      fill.computeLuminance() > 0.4 ? Colors.black : Colors.white;
 }

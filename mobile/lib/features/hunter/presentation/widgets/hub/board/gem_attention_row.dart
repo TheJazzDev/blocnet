@@ -5,8 +5,8 @@ import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/domain/hub_layout.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/board/gem_attention_parts.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/gem_header_line.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// A gem that needs its hunter: due, quiet, or never updated.
@@ -79,10 +79,12 @@ class GemAttentionRow extends StatelessWidget {
                 padding: const EdgeInsets.only(top: AppSpace.md),
                 child: SizedBox(
                   width: double.infinity,
-                  child: HubButton(
+                  child: AppButton(
                     label: 'Post the first update',
                     icon: Icons.edit_outlined,
-                    onTap: onPost,
+                    onPressed: onPost,
+                    color: HubTone.accent,
+                    size: AppButtonSize.compact,
                   ),
                 ),
               ),
@@ -106,18 +108,21 @@ class _Actions extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: HubButton(
+            child: AppButton(
               label: 'Post update',
               icon: Icons.edit_outlined,
-              onTap: onPost,
+              onPressed: onPost,
+              color: HubTone.accent,
+              size: AppButtonSize.compact,
             ),
           ),
           AppSpace.wGapSm,
           Expanded(
-            child: HubButton(
+            child: AppButton(
               label: 'Open gem',
-              tone: HubButtonTone.outline,
-              onTap: onOpen,
+              variant: AppButtonVariant.outline,
+              onPressed: onOpen,
+              size: AppButtonSize.compact,
             ),
           ),
         ],

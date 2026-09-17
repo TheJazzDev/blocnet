@@ -2,7 +2,6 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_button.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_input_dialogs.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_styles.dart';
@@ -278,11 +277,11 @@ class _MemberActionsSheetState extends State<MemberActionsSheet> {
       Row(
         children: [
           Expanded(
-            child: ModButton(label: 'Warn', onTap: lock ? null : _warn),
+            child: AppButton(label: 'Warn', onPressed: lock ? null : _warn, variant: AppButtonVariant.outline, size: AppButtonSize.compact),
           ),
           AppSpace.wGapSm,
           Expanded(
-            child: ModButton(label: 'Mute', onTap: lock ? null : _mute),
+            child: AppButton(label: 'Mute', onPressed: lock ? null : _mute, variant: AppButtonVariant.outline, size: AppButtonSize.compact),
           ),
         ],
       ),
@@ -291,25 +290,30 @@ class _MemberActionsSheetState extends State<MemberActionsSheet> {
         Row(
           children: [
             Expanded(
-              child: ModButton(
+              child: AppButton(
                 label: 'Suspend',
-                tone: ModButtonTone.filled,
-                onTap: lock ? null : _suspend,
+                color: ModTone.accent,
+                onPressed: lock ? null : _suspend,
+                size: AppButtonSize.compact,
               ),
             ),
             AppSpace.wGapSm,
             Expanded(
-              child: ModButton(
+              child: AppButton(
                 label: 'Restrict',
-                onTap: lock ? null : _restrict,
+                onPressed: lock ? null : _restrict,
+                variant: AppButtonVariant.outline,
+                size: AppButtonSize.compact,
               ),
             ),
           ],
         ),
         AppSpace.gapSm,
-        ModButton(
+        AppButton(
           label: 'Clear restrictions',
-          onTap: lock ? null : _clear,
+          onPressed: lock ? null : _clear,
+          variant: AppButtonVariant.outline,
+          size: AppButtonSize.compact,
         ),
       ] else ...[
         AppSpace.gapMd,

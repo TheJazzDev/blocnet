@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_button.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_styles.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// The flat dialog every moderation form sits in: surface, hairline border,
@@ -12,7 +13,6 @@ class ModDialog extends StatelessWidget {
     required this.children,
     required this.confirmLabel,
     required this.onConfirm,
-    this.confirmTone = ModButtonTone.filled,
     this.confirmColor,
   });
 
@@ -22,7 +22,8 @@ class ModDialog extends StatelessWidget {
 
   /// Null disables the confirm button.
   final VoidCallback? onConfirm;
-  final ModButtonTone confirmTone;
+
+  /// The confirm button's fill. Defaults to the moderation red.
   final Color? confirmColor;
 
   @override
@@ -67,18 +68,20 @@ class ModDialog extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: ModButton(
+                    child: AppButton(
                       label: 'Cancel',
-                      onTap: () => Navigator.of(context).pop(),
+                      onPressed: () => Navigator.of(context).pop(),
+                      variant: AppButtonVariant.outline,
+                      size: AppButtonSize.compact,
                     ),
                   ),
                   AppSpace.wGapSm,
                   Expanded(
-                    child: ModButton(
+                    child: AppButton(
                       label: confirmLabel,
-                      tone: confirmTone,
-                      color: confirmColor,
-                      onTap: onConfirm,
+                      color: confirmColor ?? ModTone.accent,
+                      onPressed: onConfirm,
+                      size: AppButtonSize.compact,
                     ),
                   ),
                 ],

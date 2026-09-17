@@ -3,9 +3,9 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/project_invite_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/answers/answer_card_frame.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_pill.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// An invite to take over a gem's coverage: who is handing it over, what it
@@ -40,20 +40,21 @@ class InviteCard extends StatelessWidget {
       actions: Row(
         children: [
           Expanded(
-            child: HubButton(
+            child: AppButton(
               label: 'Accept',
-              small: true,
-              busy: busy,
-              onTap: onAccept,
+              isLoading: busy,
+              onPressed: onAccept,
+              color: HubTone.accent,
+              size: AppButtonSize.compactSmall,
             ),
           ),
           AppSpace.wGapSm,
           Expanded(
-            child: HubButton(
+            child: AppButton(
               label: 'Decline',
-              small: true,
-              tone: HubButtonTone.outline,
-              onTap: busy ? null : onDecline,
+              variant: AppButtonVariant.outline,
+              onPressed: busy ? null : onDecline,
+              size: AppButtonSize.compactSmall,
             ),
           ),
         ],

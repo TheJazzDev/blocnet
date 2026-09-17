@@ -2,10 +2,10 @@ import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dar
 import 'package:blocnet/features/moderation/data/models/inactive_gem_model.dart';
 import 'package:blocnet/features/moderation/presentation/pages/inactive_gems_queue_screen.dart';
 import 'package:blocnet/features/moderation/presentation/pages/moderation_hub_screen.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_button.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/resolve_inactive_gem_dialog.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -202,23 +202,23 @@ void main() {
       final api = _FakeApiClient()..gems = [_gemJson('p1', 'Alpha')];
       await _pump(tester, InactiveGemsQueueScreen(apiClient: api));
 
-      await tester.tap(find.widgetWithText(ModButton, 'Resolve'));
+      await tester.tap(find.widgetWithText(AppButton, 'Resolve'));
       await tester.pumpAndSettle();
 
       final submit = find.descendant(
         of: find.byType(ResolveInactiveGemDialog),
-        matching: find.widgetWithText(ModButton, 'Resolve'),
+        matching: find.widgetWithText(AppButton, 'Resolve'),
       );
-      expect(tester.widget<ModButton>(submit).onTap, isNull);
+      expect(tester.widget<AppButton>(submit).onPressed, isNull);
 
       await tester.tap(find.text('Hunter contacted'));
       await tester.pump();
-      expect(tester.widget<ModButton>(submit).onTap, isNull,
+      expect(tester.widget<AppButton>(submit).onPressed, isNull,
           reason: 'a note is required');
 
       await tester.enterText(find.byType(TextField), '  Pinged on Telegram ');
       await tester.pump();
-      expect(tester.widget<ModButton>(submit).onTap, isNotNull);
+      expect(tester.widget<AppButton>(submit).onPressed, isNotNull);
 
       await tester.tap(submit);
       await tester.pumpAndSettle();
@@ -237,7 +237,7 @@ void main() {
       final api = _FakeApiClient()..gems = [_gemJson('p1', 'Alpha')];
       await _pump(tester, InactiveGemsQueueScreen(apiClient: api));
 
-      await tester.tap(find.widgetWithText(ModButton, 'Resolve'));
+      await tester.tap(find.widgetWithText(AppButton, 'Resolve'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();

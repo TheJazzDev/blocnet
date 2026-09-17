@@ -2,8 +2,8 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dart';
 import 'package:blocnet/features/moderation/data/models/inactive_gem_model.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_button.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_styles.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -68,11 +68,12 @@ class InactiveGemCard extends StatelessWidget {
           AppSpace.gapMd,
           SizedBox(
             width: double.infinity,
-            child: ModButton(
+            child: AppButton(
               label: 'Resolve',
-              tone: ModButtonTone.filled,
-              busy: isResolving,
-              onTap: onResolve,
+              color: ModTone.accent,
+              isLoading: isResolving,
+              onPressed: onResolve,
+              size: AppButtonSize.compact,
             ),
           ),
         ],
