@@ -1,6 +1,5 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/domain/level_requirement.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_status_chip.dart';
 import 'package:flutter/material.dart';
@@ -36,8 +35,9 @@ extension LevelMetricPresentation on LevelMetric {
       };
 }
 
-/// One criterion row in the level detail sheet: icon, label, current vs
-/// required and a thin progress bar, all tinted with the tier colour.
+/// One criterion as a list row: tinted icon square, label, current vs
+/// required, a thin bar and, when unmet, how much is left. Rows sit in one
+/// card separated by hairlines.
 class LevelRequirementRow extends StatelessWidget {
   const LevelRequirementRow({
     super.key,
@@ -52,37 +52,26 @@ class LevelRequirementRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final complete = requirement.isComplete;
     final metric = requirement.metric;
+    final tone = complete ? AppColors.successColor : AppColors.textMuted;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpace.sm),
-      padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-        color: complete ? tierColor.withValues(alpha: 0.08) : AppColors.bgBase,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(
-          color: complete
-              ? tierColor.withValues(alpha: 0.35)
-              : AppColors.borderSubtle,
-        ),
-      ),
+    return Padding(
+      padding: AppSpace.row,
       child: Row(
         children: [
           Container(
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: complete
-                  ? tierColor.withValues(alpha: 0.16)
-                  : AppColors.bgSurface,
-              borderRadius: BorderRadius.circular(AppRadius.smValue),
+              color: tone.withValues(alpha: 0.12),
+              borderRadius: AppRadius.sm,
             ),
             child: Icon(
               complete ? Icons.check_rounded : metric.icon,
               size: AppIcon.sm,
-              color: complete ? tierColor : AppColors.textMuted,
+              color: tone,
             ),
           ),
-          const SizedBox(width: AppSpace.md),
+          AppSpace.wGapMd,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,42 +81,36 @@ class LevelRequirementRow extends StatelessWidget {
                     Expanded(
                       child: Text(
                         metric.label,
-                        style: AppTypography.custom(
-                          color: AppColors.textPrimary,
-                          size: AppText.labelSize,
-                          weight: FontWeight.w700,
-                        ),
                         overflow: TextOverflow.ellipsis,
+                        style: AppText.label(
+                          AppColors.textPrimary,
+                          weight: AppText.bold,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: AppSpace.sm),
+                    AppSpace.wGapSm,
                     Text(
                       '${requirement.currentLabel} / ${requirement.requiredLabel}',
-                      style: AppTypography.custom(
-                        color: complete ? tierColor : AppColors.textMuted,
-                        size: AppText.captionSize,
-                        weight: FontWeight.w600,
-                      ),
+                      style: AppText.caption(
+                        complete ? AppColors.successColor : AppColors.textMuted,
+                        weight: AppText.semibold,
+                      ).merge(AppText.tabular),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpace.sm),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: requirement.ratio,
-                    minHeight: 4,
-                    backgroundColor: AppColors.borderSubtle,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      complete ? tierColor : tierColor.withValues(alpha: 0.7),
-                    ),
-                  ),
+                AppSpace.gapXs,
+                LinearProgressIndicator(
+                  value: requirement.ratio,
+                  minHeight: 4,
+                  borderRadius: AppRadius.full,
+                  backgroundColor: AppColors.bgElevated,
+                  valueColor: AlwaysStoppedAnimation<Color>(tierColor),
                 ),
               ],
             ),
           ),
           if (!complete) ...[
-            const SizedBox(width: AppSpace.sm),
+            AppSpace.wGapSm,
             LevelStatusChip(
               label: '+${requirement.remainingLabel}',
               color: AppColors.textMuted,

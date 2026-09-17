@@ -1,8 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/domain/level_tier.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_detail_sheet.dart';
 import 'package:blocnet/features/levels/presentation/widgets/levels_page_states.dart';
 import 'package:blocnet/features/levels/presentation/widgets/levels_progress_header.dart';
@@ -43,25 +43,10 @@ class _LevelsPageState extends State<LevelsPage> {
 
     final current = levelsStore.myProgress?.currentLevel;
     if (current == null) return;
-    final tierColor = current.tierColor;
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          backgroundColor: tierColor,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-          content: Text(
-            'Level up! You are now Level ${current.level} · ${current.name}',
-            style: AppTypography.custom(
-              color: foregroundOn(tierColor),
-              size: AppText.labelSize,
-              weight: FontWeight.w700,
-            ),
-          ),
-        ),
-      );
+    AppSnackbar.showSuccess(
+      context,
+      'Level up! You are now Level ${current.level} · ${current.name}',
+    );
   }
 
   void _openLevel(UserLevelModel level) {
@@ -83,19 +68,21 @@ class _LevelsPageState extends State<LevelsPage> {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: AppBar(
-        backgroundColor: AppColors.bgSurface,
+        backgroundColor: AppColors.bgBase,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          tooltip: 'Back',
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Levels',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.subtitleSize,
-            weight: FontWeight.w700,
-          ),
+          style: AppText.title(AppColors.textPrimary),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.borderSubtle),
         ),
         actions: [_RefreshAction(onPressed: _recalculate)],
       ),
@@ -127,7 +114,11 @@ class _LevelsPageState extends State<LevelsPage> {
             ]),
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.xl),
+                AppSpace.lg,
+                AppSpace.lg,
+                AppSpace.lg,
+                AppSpace.xxl,
+              ),
               itemCount: sections.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
@@ -138,9 +129,7 @@ class _LevelsPageState extends State<LevelsPage> {
                       isLoading: levelsStore.isLoadingProgress,
                       error: levelsStore.progressError,
                       onRetry: levelsStore.fetchMyProgress,
-                      onTap: myProgress == null
-                          ? () {}
-                          : () => _openLevel(myProgress.currentLevel),
+                      onTap: _openLevel,
                     ),
                   );
                 }
@@ -180,8 +169,8 @@ class _RefreshAction extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
         child: Center(
           child: SizedBox(
-            width: 18,
-            height: 18,
+            width: AppIcon.md,
+            height: AppIcon.md,
             child: CircularProgressIndicator(
               strokeWidth: 2,
               color: AppColors.textPrimary,
@@ -192,7 +181,7 @@ class _RefreshAction extends StatelessWidget {
     }
 
     return IconButton(
-      icon: Icon(Icons.refresh, color: AppColors.textPrimary),
+      icon: Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
       onPressed: onPressed,
       tooltip: 'Refresh progress',
     );
