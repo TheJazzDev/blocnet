@@ -7,19 +7,45 @@ extension _MainScreenComposerSheet on _MainScreenState {
     final canCreate = context.read<AuthStore>().canCreateUpdate;
     final applicationStatus = context.read<HunterApplicationStore>().status;
     final becomeHunterSubtitle = switch (applicationStatus) {
-      HunterApplicationStatus.pending => 'Application pending review',
+      HunterApplicationStatus.pending => 'Application in review',
       HunterApplicationStatus.approved => 'Approved. Hunter tools on the way',
       HunterApplicationStatus.rejected => 'Not approved. You can apply again',
       HunterApplicationStatus.none => 'Hunters post updates and submit gems',
     };
 
+    void open(BuildContext sheetContext, String route) {
+      Navigator.of(sheetContext).pop();
+      Navigator.of(context).pushNamed(route);
+    }
+
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: AppRadius.sheet),
       builder: (ctx) {
+        final rows = <Widget>[
+          if (canCreate) ...[
+            _ComposerRow(
+              title: 'Post Hunter Update',
+              subtitle: 'Share news on a gem you track',
+              icon: Icons.bolt_rounded,
+              onTap: () => open(ctx, AppRoutes.createUpdate),
+            ),
+            _ComposerRow(
+              title: 'Submit New Gem',
+              subtitle: 'Propose a gem for Blocnet',
+              icon: Icons.diamond_outlined,
+              onTap: () => open(ctx, AppRoutes.submitProject),
+            ),
+          ] else
+            _ComposerRow(
+              title: 'Become a Hunter',
+              subtitle: becomeHunterSubtitle,
+              icon: Icons.radar_rounded,
+              onTap: () => open(ctx, AppRoutes.becomeHunter),
+            ),
+        ];
+
         return SafeArea(
           top: false,
           child: Padding(
@@ -27,62 +53,48 @@ extension _MainScreenComposerSheet on _MainScreenState {
                 AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: AppSpace.xl),
-                  decoration: BoxDecoration(
-                    color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'CREATE',
-                    style: AppTypography.custom(
-                      size: AppText.captionSize,
-                      weight: FontWeight.w600,
-                      color: AppColors.textFaint,
-                      letterSpacing: 1.2,
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: AppSpace.lg),
+                    decoration: BoxDecoration(
+                      color: AppColors.borderMuted,
+                      borderRadius: AppRadius.full,
                     ),
                   ),
                 ),
+                Text(
+                  'CREATE',
+                  style: AppText.caption(
+                    AppColors.textFaint,
+                    weight: AppText.bold,
+                  ).copyWith(letterSpacing: 1.0),
+                ),
                 const SizedBox(height: AppSpace.md),
-                if (canCreate) ...[
-                  _ComposerTile(
-                    title: 'Post Hunter Update',
-                    subtitle: 'Share intel about a gem you track',
-                    icon: Icons.bolt_rounded,
-                    iconColor: AppColors.teal400,
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      Navigator.of(context).pushNamed(AppRoutes.createUpdate);
-                    },
+                Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: AppColors.bgElevated,
+                    borderRadius: AppRadius.md,
+                    border: Border.all(color: AppColors.borderSubtle),
                   ),
-                  const SizedBox(height: AppSpace.sm),
-                  _ComposerTile(
-                    title: 'Submit New Gem',
-                    subtitle: 'Propose a gem to be listed on Blocnet',
-                    icon: Icons.diamond_outlined,
-                    iconColor: AppColors.primary400,
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      Navigator.of(context).pushNamed(AppRoutes.submitProject);
-                    },
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < rows.length; i++) ...[
+                        if (i > 0)
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: AppColors.borderSubtle,
+                          ),
+                        rows[i],
+                      ],
+                    ],
                   ),
-                ] else
-                  _ComposerTile(
-                    title: 'Become a Hunter',
-                    subtitle: becomeHunterSubtitle,
-                    icon: Icons.radar_rounded,
-                    iconColor: AppColors.primary400,
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      Navigator.of(context).pushNamed(AppRoutes.becomeHunter);
-                    },
-                  ),
+                ),
               ],
             ),
           ),
@@ -92,75 +104,74 @@ extension _MainScreenComposerSheet on _MainScreenState {
   }
 }
 
-class _ComposerTile extends StatelessWidget {
-  const _ComposerTile({
+/// A list row: accent icon in a tinted square, bold title, muted
+/// subtitle, chevron.
+class _ComposerRow extends StatelessWidget {
+  const _ComposerRow({
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.iconColor,
     required this.onTap,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
-  final Color iconColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.lg, vertical: AppSpace.lg),
-        decoration: BoxDecoration(
-          color: AppColors.bgElevated,
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.mdValue),
+    final accent = AppColors.primary500;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: AppSpace.card,
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: AppRadius.md,
+                ),
+                child: Icon(icon, color: accent, size: AppIcon.md),
               ),
-              child: Icon(icon, color: iconColor, size: AppIcon.md),
-            ),
-            const SizedBox(width: AppSpace.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.custom(
-                      size: AppText.bodySize,
-                      weight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppText.body(
+                        AppColors.textPrimary,
+                        weight: AppText.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpace.hair),
-                  Text(
-                    subtitle,
-                    style: AppTypography.custom(
-                      size: AppText.bodySize,
-                      weight: FontWeight.w400,
-                      color: AppColors.textMuted,
+                    const SizedBox(height: AppSpace.hair),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.label(
+                        AppColors.textMuted,
+                        weight: AppText.regular,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: AppColors.textFaint,
-              size: AppIcon.xs,
-            ),
-          ],
+              const SizedBox(width: AppSpace.sm),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textFaint,
+                size: AppIcon.md,
+              ),
+            ],
+          ),
         ),
       ),
     );
