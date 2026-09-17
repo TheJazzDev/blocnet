@@ -45,23 +45,29 @@ class MineCodeActions extends StatelessWidget {
       children: [
         Container(
           margin: const EdgeInsets.only(top: AppSpace.lg),
-          padding: AppSpace.allMd,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.lg,
+            vertical: AppSpace.md,
+          ),
           decoration: mineTileDecoration(
-            ground: MinePalette.codeGround,
-            edge: MinePalette.codeEdge,
+            ground: MinePalette.raised,
+            radius: AppRadius.md,
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.key_rounded,
-                  size: AppIcon.sm, color: MinePalette.caption),
+              Icon(Icons.key_rounded,
+                  size: AppIcon.md, color: MinePalette.faint),
               const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Text(
-                  value ?? '········',
-                  style:
-                      AppText.subtitle(MinePalette.white, weight: AppText.bold)
-                          .merge(AppText.tabular)
-                          .copyWith(letterSpacing: 2),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value ?? '········',
+                    style: AppText.headline(MinePalette.accentSoft)
+                        .merge(AppText.tabular)
+                        .copyWith(letterSpacing: 2),
+                  ),
                 ),
               ),
             ],
@@ -79,12 +85,15 @@ class MineCodeActions extends StatelessWidget {
                 onTap: value == null ? null : () => _share(context, value),
               ),
             ),
-            const SizedBox(width: AppSpace.sm),
-            _Button(
-              key: const ValueKey('mine-copy-code'),
-              label: 'Copy',
-              filled: false,
-              onTap: value == null ? null : () => _copy(context, value),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: _Button(
+                key: const ValueKey('mine-copy-code'),
+                label: 'Copy',
+                icon: Icons.copy_rounded,
+                filled: false,
+                onTap: value == null ? null : () => _copy(context, value),
+              ),
             ),
           ],
         ),
@@ -109,43 +118,44 @@ class _Button extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = filled ? MinePalette.white : MinePalette.strong;
-    // `Copy` is the design's 36 px small button, inside a 44 px target.
+    final ground = filled ? MinePalette.accent : MinePalette.raised;
+    final fg = filled
+        ? (ThemeData.estimateBrightnessForColor(ground) == Brightness.dark
+            ? Colors.white
+            : Colors.black)
+        : MinePalette.text;
+    // The old referral screen's pair: two equal buttons, 44 tall.
     return Material(
-      color: Colors.transparent,
+      color: ground,
+      borderRadius: AppRadius.md,
       child: InkWell(
         onTap: onTap,
         borderRadius: AppRadius.md,
-        child: SizedBox(
+        child: Container(
           height: 44,
-          child: Center(
-            child: Container(
-              height: filled ? 44 : 36,
-              width: filled ? double.infinity : null,
-              alignment: filled ? Alignment.center : null,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-              decoration: BoxDecoration(
-                color: filled ? MinePalette.fill : Colors.transparent,
-                borderRadius: AppRadius.md,
-                border: filled ? null : Border.all(color: MinePalette.chip),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
+          decoration: filled
+              ? null
+              : BoxDecoration(
+                  borderRadius: AppRadius.md,
+                  border: Border.all(color: MinePalette.strongEdge),
+                ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: AppIcon.sm, color: fg),
+                const SizedBox(width: AppSpace.sm),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.label(fg, weight: AppText.bold),
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, size: AppIcon.sm, color: fg),
-                    const SizedBox(width: AppSpace.sm),
-                  ],
-                  Text(
-                    label,
-                    style: filled
-                        ? AppText.body(fg, weight: AppText.semibold)
-                        : AppText.label(fg, weight: AppText.semibold),
-                  ),
-                ],
-              ),
-            ),
+            ],
           ),
         ),
       ),

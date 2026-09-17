@@ -9,12 +9,13 @@ class MineSubHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
   @override
-  Size get preferredSize => const Size.fromHeight(48);
+  Size get preferredSize => const Size.fromHeight(49);
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: MinePalette.ground,
+      shape: const Border(bottom: BorderSide(color: MinePalette.edge)),
       child: SafeArea(
         bottom: false,
         child: SizedBox(
@@ -25,10 +26,10 @@ class MineSubHeader extends StatelessWidget implements PreferredSizeWidget {
               IconButton(
                 tooltip: 'Back',
                 onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_rounded,
-                  size: AppIcon.md,
-                  color: MinePalette.muted,
+                  size: AppIcon.lg,
+                  color: MinePalette.secondary,
                 ),
               ),
               Expanded(
@@ -38,10 +39,7 @@ class MineSubHeader extends StatelessWidget implements PreferredSizeWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.subtitle(
-                      MinePalette.white,
-                      weight: AppText.bold,
-                    ).copyWith(letterSpacing: -0.3),
+                    style: AppText.title(MinePalette.text),
                   ),
                 ),
               ),

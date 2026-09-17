@@ -7,13 +7,9 @@ import 'package:blocnet/features/profile/presentation/pages/public_profile_scree
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:flutter/material.dart';
 
-/// Gold, silver and bronze for ranks 1–3 only.
-Color mineRankColor(int rank) => switch (rank) {
-      1 => MinePalette.gold,
-      2 => MinePalette.silver,
-      3 => MinePalette.bronze,
-      _ => MinePalette.caption,
-    };
+/// Amber for the top three, as the old board; muted otherwise.
+Color mineRankColor(int rank) =>
+    rank <= 3 ? MinePalette.amber : MinePalette.muted;
 
 /// Opens [entry]'s public profile sheet.
 Future<void> openMineMemberProfile(
@@ -59,22 +55,12 @@ class MineLeaderboardRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
       decoration: BoxDecoration(
         border: divided
-            ? const Border(bottom: BorderSide(color: MinePalette.rowHairline))
+            ? const Border(bottom: BorderSide(color: MinePalette.edge))
             : null,
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 26,
-            child: Text(
-              '${entry.rank}',
-              textAlign: TextAlign.right,
-              style: AppText.label(
-                mineRankColor(entry.rank),
-                weight: AppText.bold,
-              ).merge(AppText.tabular),
-            ),
-          ),
+          _RankBox(rank: entry.rank),
           const SizedBox(width: AppSpace.md),
           MineAvatar(name: name, imageUrl: entry.avatarUrl),
           const SizedBox(width: AppSpace.md),
@@ -92,15 +78,15 @@ class MineLeaderboardRow extends StatelessWidget {
                           '@$handle',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppText.label(MinePalette.dim),
+                          style: AppText.label(MinePalette.muted),
                         ),
                       ),
                     if (entry.isMiningNow) ...[
                       const SizedBox(width: AppSpace.sm),
-                      const Icon(
+                      Icon(
                         Icons.bolt_rounded,
                         size: AppIcon.xs,
-                        color: MinePalette.miningNow,
+                        color: MinePalette.accentSoft,
                       ),
                       const SizedBox(width: AppSpace.xs),
                       Flexible(
@@ -108,7 +94,7 @@ class MineLeaderboardRow extends StatelessWidget {
                           'mining now',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppText.label(MinePalette.miningNow),
+                          style: AppText.label(MinePalette.accentSoft),
                         ),
                       ),
                     ],
@@ -120,7 +106,7 @@ class MineLeaderboardRow extends StatelessWidget {
           const SizedBox(width: AppSpace.md),
           Text(
             MineFormat.points(entry.claimedTotalPoints),
-            style: AppText.body(MinePalette.body, weight: AppText.semibold)
+            style: AppText.label(MinePalette.text, weight: AppText.bold)
                 .merge(AppText.tabular),
           ),
         ],
@@ -128,5 +114,35 @@ class MineLeaderboardRow extends StatelessWidget {
     );
     if (onTap == null) return row;
     return InkWell(onTap: onTap, child: row);
+  }
+}
+
+/// The old board's rank square: amber-tinted for the top three.
+class _RankBox extends StatelessWidget {
+  const _RankBox({required this.rank});
+
+  final int rank;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = rank <= 3;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 32),
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
+      alignment: Alignment.center,
+      decoration: top
+          ? MinePalette.tag(MinePalette.amber, radius: AppRadius.sm)
+          : BoxDecoration(
+              color: MinePalette.raised.withValues(alpha: 0.5),
+              borderRadius: AppRadius.sm,
+              border: Border.all(color: MinePalette.edge),
+            ),
+      child: Text(
+        '$rank',
+        style: AppText.label(mineRankColor(rank), weight: AppText.bold)
+            .merge(AppText.tabular),
+      ),
+    );
   }
 }

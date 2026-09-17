@@ -162,39 +162,37 @@ class _MineCycleCardState extends State<MineCycleCard>
     );
   }
 
+  /// Flat grounds only. Live states take the old "EARNING PER HOUR" panel's
+  /// accent wash; the ready edge breathes between 20 % and 55 %.
   BoxDecoration _decoration(MineCyclePhase phase, double breath) {
     switch (phase) {
       case MineCyclePhase.running:
-        return _card(
-            MinePalette.runTop, MinePalette.runBottom, MinePalette.runEdge);
+        return _card(MinePalette.accentWash, MinePalette.accentEdge);
       case MineCyclePhase.ready:
-        final edge = Color.lerp(
-          MinePalette.readyEdgeLow,
-          MinePalette.readyEdgeHigh,
-          breath,
-        )!;
-        return _card(MinePalette.readyTop, MinePalette.readyBottom, edge);
+        final tone = MinePalette.success;
+        return _card(
+          tone.withValues(alpha: 0.08),
+          tone.withValues(alpha: 0.2 + 0.35 * breath),
+        );
       case MineCyclePhase.closingSoon:
+        final tone = MinePalette.amber;
         return _card(
-            MinePalette.soonTop, MinePalette.soonBottom, MinePalette.soonEdge);
+          tone.withValues(alpha: 0.08),
+          tone.withValues(alpha: 0.3),
+        );
       case MineCyclePhase.paused:
-        return _card(
-            MinePalette.card, MinePalette.card, MinePalette.pausedEdge);
+        return _card(MinePalette.card, MinePalette.strongEdge);
       case MineCyclePhase.idle:
       case MineCyclePhase.loading:
       case MineCyclePhase.loadError:
-        return _card(MinePalette.card, MinePalette.card, MinePalette.cardEdge);
+        return _card(MinePalette.card, MinePalette.edge);
     }
   }
 
-  static BoxDecoration _card(Color top, Color bottom, Color edge) {
+  static BoxDecoration _card(Color ground, Color edge) {
     return BoxDecoration(
-      borderRadius: AppRadius.lg,
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [top, bottom],
-      ),
+      color: ground,
+      borderRadius: AppRadius.xl,
       border: Border.all(color: edge),
     );
   }

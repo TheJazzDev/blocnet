@@ -1,3 +1,4 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/mining/presentation/pages/mining_leaderboard_screen.dart';
 import 'package:blocnet/features/mining/presentation/widgets/leaderboard/mine_leaderboard_preview.dart';
@@ -104,10 +105,10 @@ void main() {
     expect(find.text('Member 11'), findsNothing);
     expect(find.text('@member1'), findsOneWidget);
     expect(find.text('mining now'), findsNWidgets(6));
-    expect(_rankColor(tester, '1'), const Color(0xFFF0B429));
-    expect(_rankColor(tester, '2'), const Color(0xFFC0C6CE));
-    expect(_rankColor(tester, '3'), const Color(0xFFC97B3C));
-    expect(_rankColor(tester, '4'), const Color(0xFF6B6B73));
+    expect(_rankColor(tester, '1'), AppColors.warning500);
+    expect(_rankColor(tester, '2'), AppColors.warning500);
+    expect(_rankColor(tester, '3'), AppColors.warning500);
+    expect(_rankColor(tester, '4'), AppColors.textMuted);
 
     expect(
       find.descendant(of: _pinned, matching: find.text('You')),

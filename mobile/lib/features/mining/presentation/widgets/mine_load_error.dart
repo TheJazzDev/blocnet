@@ -35,9 +35,10 @@ class MineLoadError extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF2F2F35), width: 2),
+              color: MinePalette.card,
+              border: Border.all(color: MinePalette.strongEdge),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.cloud_off_rounded,
               size: AppIcon.lg,
               color: MinePalette.faint,
@@ -47,7 +48,7 @@ class MineLoadError extends StatelessWidget {
           Text(
             "Can't reach Blocnet",
             textAlign: TextAlign.center,
-            style: AppText.title(MinePalette.white),
+            style: AppText.title(MinePalette.text),
           ),
           const SizedBox(height: AppSpace.sm),
           Text(
@@ -71,8 +72,8 @@ class MineLoadError extends StatelessWidget {
                 children: [
                   TextSpan(
                     text: '${MineFormat.points(balance)} BNP',
-                    style: const TextStyle(
-                      color: MinePalette.body,
+                    style: TextStyle(
+                      color: MinePalette.text,
                       fontWeight: AppText.semibold,
                     ),
                   ),

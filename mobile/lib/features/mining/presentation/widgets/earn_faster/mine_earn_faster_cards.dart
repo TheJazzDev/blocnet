@@ -7,19 +7,31 @@ import 'package:blocnet/features/mining/presentation/widgets/earn_faster/mine_co
 import 'package:blocnet/features/mining/presentation/widgets/mine_sections.dart';
 import 'package:flutter/material.dart';
 
-/// The flat card every Earn faster block sits in.
+/// The flat card every Earn faster block sits in. [highlight] gives it the
+/// old referral card's accent wash and edge.
 class MineEarnCardFrame extends StatelessWidget {
-  const MineEarnCardFrame({super.key, required this.child, this.padding});
+  const MineEarnCardFrame({
+    super.key,
+    required this.child,
+    this.padding,
+    this.highlight = false,
+  });
 
   final Widget child;
   final EdgeInsets? padding;
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
       padding: padding ?? AppSpace.card,
-      decoration: mineTileDecoration(),
+      decoration: highlight
+          ? mineTileDecoration(
+              ground: MinePalette.accentWash,
+              edge: MinePalette.accentEdge,
+            )
+          : mineTileDecoration(),
       child: child,
     );
   }
@@ -46,6 +58,7 @@ class MineEarnFasterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MineEarnCardFrame(
+      highlight: true,
       child: Column(
         key: const ValueKey('mine-earn-card'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -85,24 +98,37 @@ class MineInviteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final withFriend = MineFormat.points(boost.pointsPerCycleWithOneMore());
     return MineEarnCardFrame(
+      highlight: true,
       child: Column(
         key: const ValueKey('mine-invite-card'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: AppSpace.sm),
-          const Icon(Icons.group_add_outlined,
-              size: AppIcon.xl, color: MinePalette.accent),
+          Center(
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: MinePalette.accent.withValues(alpha: 0.12),
+                borderRadius: AppRadius.md,
+              ),
+              child: Icon(
+                Icons.group_add_outlined,
+                size: AppIcon.lg,
+                color: MinePalette.accentSoft,
+              ),
+            ),
+          ),
           const SizedBox(height: AppSpace.md),
           Text(
             'Invite a friend, earn $withFriend BNP ${boost.perCycleUnit}',
             textAlign: TextAlign.center,
-            style: AppText.subtitle(MinePalette.white, weight: AppText.bold),
+            style: AppText.subtitle(MinePalette.text, weight: AppText.bold),
           ),
           const SizedBox(height: AppSpace.sm),
           Text(
             '${boost.perFriendRule}.',
             textAlign: TextAlign.center,
-            style: AppText.label(MinePalette.faint).copyWith(height: 1.55),
+            style: AppText.label(MinePalette.muted),
           ),
           MineCodeActions(code: code),
           if (footer != null) footer!,
@@ -127,7 +153,7 @@ class MineRateNowCard extends StatelessWidget {
           MineBoostHeadline(
             value: '${MineFormat.points(boost.pointsPerCycle())} BNP',
             caption: '${boost.perCycleUnit} · ${boost.baseRate} BNP/hr',
-            valueColor: MinePalette.white,
+            valueColor: MinePalette.text,
           ),
           MineBoostMeter(boost: boost),
           MineRuleText(boost.hasBoost ? boost.sideLine : 'No boost yet.'),

@@ -60,12 +60,12 @@ class _HeaderIcon extends StatelessWidget {
               height: 30,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: active ? MinePalette.chip : Colors.transparent,
+                color: active ? MinePalette.raised : Colors.transparent,
               ),
               child: Icon(
                 icon,
                 size: AppIcon.md,
-                color: active ? MinePalette.white : MinePalette.muted,
+                color: active ? MinePalette.text : MinePalette.secondary,
               ),
             ),
           ),

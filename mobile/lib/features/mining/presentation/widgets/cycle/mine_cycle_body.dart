@@ -46,14 +46,10 @@ class MineCycleBody extends StatelessWidget {
                 MineStatusRow(view: view),
                 const SizedBox(height: AppSpace.lg),
                 MineWhenLine(view: view),
-                const SizedBox(height: AppSpace.lg),
-                Row(
-                  children: [
-                    _Ring(view: view, glow: glow),
-                    const SizedBox(width: AppSpace.lg),
-                    Expanded(child: MineSideColumn(view: view)),
-                  ],
-                ),
+                const SizedBox(height: AppSpace.sm),
+                Center(child: _Ring(view: view, glow: glow)),
+                const SizedBox(height: AppSpace.sm),
+                MineSideColumn(view: view),
               ],
             ),
           ),
@@ -64,7 +60,11 @@ class MineCycleBody extends StatelessWidget {
             key: const ValueKey('mine-primary'),
             label: button,
             icon: view.canClaim ? Icons.savings_outlined : Icons.bolt_rounded,
-            amber: view.isAmber,
+            color: view.isAmber
+                ? MinePalette.amber
+                : view.canClaim
+                    ? MinePalette.success
+                    : null,
             busy: isBusy,
             onPressed: view.canClaim ? onClaim : onStart,
           ),
@@ -73,7 +73,8 @@ class MineCycleBody extends StatelessWidget {
           const SizedBox(height: AppSpace.md),
           Text(
             view.note!,
-            style: AppText.label(MinePalette.faint).copyWith(height: 1.55),
+            textAlign: TextAlign.center,
+            style: AppText.label(MinePalette.faint),
           ),
         ],
         if (view.showNotify) const MineNotifyRow(),
@@ -95,16 +96,17 @@ class _Ring extends StatelessWidget {
     return AnimatedBuilder(
       animation: glow,
       builder: (context, _) {
-        // Running breathes between the design's 3 px / 30 % and 9 px / 70 %
-        // halos; full and amber rings hold a steady 5 px.
+        // Running breathes the head dot's halo and the core glow, as the
+        // old hero's pulse did; the other states hold still.
         final t = running ? glow.value : 0.5;
-        final alpha = running ? 0.3 + 0.4 * t : 0.42;
-        final blur = running ? 1.5 + 3 * t : 2.5;
+        final lit = view.ringFraction > 0;
         return MineProgressRing(
           fraction: view.ringFraction,
           color: style.ringColor,
-          glowColor: style.ringColor.withValues(alpha: alpha),
-          glow: view.ringFraction > 0 ? blur : 0,
+          glowColor: style.ringColor
+              .withValues(alpha: running ? 0.35 + 0.35 * t : 0.5),
+          glow: lit ? (running ? 3 + 5 * t : 5) : 0,
+          halo: style.quiet ? 0.08 : (running ? 0.16 + 0.16 * t : 0.22),
           center: MineRingCenter(view: view),
         );
       },
