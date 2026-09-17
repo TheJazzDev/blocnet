@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_gem_detail_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
@@ -50,13 +51,13 @@ class GemPageView extends StatelessWidget {
     final gapDays = isQuiet ? (detail?.gapDays ?? gem.daysQuiet) : null;
 
     return RefreshIndicator(
-      color: AppColors.hunterAccent,
+      color: HubTone.accent,
       backgroundColor: AppColors.bgSurface,
       onRefresh: onRefresh,
       child: ListView(
         key: const ValueKey('gem-page-scroll'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(HubInsets.gutter),
         children: [
           GemHeaderLine(
             key: const ValueKey('gem-header'),
@@ -64,22 +65,25 @@ class GemPageView extends StatelessWidget {
             large: true,
           ),
           if (gem.membersWaiting > 0) ...[
-            const SizedBox(height: 16),
+            AppSpace.gapLg,
             GemWaitCard(
               key: const ValueKey('gem-wait'),
               waiting: gem.membersWaiting,
             ),
           ],
           if (gem.openReports > 0) ...[
-            const SizedBox(height: 8),
+            AppSpace.gapSm,
             GemReportCard(
               key: const ValueKey('gem-report'),
               reports: gem.openReports,
             ),
           ],
-          const SizedBox(height: 12),
+          AppSpace.gapLg,
           _actions(),
-          const SizedBox(height: 20),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpace.lg),
+            child: Divider(height: 1, color: AppColors.borderSubtle),
+          ),
           _timeline(gapDays),
         ],
       ),
@@ -120,15 +124,15 @@ class GemPageView extends StatelessWidget {
         return _Status(message: error!, onRetry: onRetry);
       }
       if (loading) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.xl),
           child: Center(
             child: SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.hunterFill,
+                color: HubTone.accent,
               ),
             ),
           ),
@@ -161,8 +165,8 @@ class _Status extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(message, style: HubType.meta(AppColors.zincFaint)),
-        const SizedBox(height: 8),
+        Text(message, style: HubType.body(AppColors.textMuted)),
+        AppSpace.gapSm,
         HubButton(
           label: 'Try again',
           tone: HubButtonTone.outline,

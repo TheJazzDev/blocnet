@@ -1,8 +1,9 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
 
-/// The Hub's handover sheets: title (17), one muted paragraph, then the
+/// The Hub's handover sheets: title (16), one muted paragraph, then the
 /// sheet's own fields and actions. Scrolls when the keyboard is up.
 class HandoverSheetFrame extends StatelessWidget {
   const HandoverSheetFrame({
@@ -24,9 +25,9 @@ class HandoverSheetFrame extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(title, style: HubType.lead(AppColors.textPrimary)),
-          const SizedBox(height: 8),
-          Text(body, style: HubType.meta(AppColors.zincMuted)),
-          const SizedBox(height: 16),
+          AppSpace.gapSm,
+          Text(body, style: HubType.body(AppColors.textMuted)),
+          AppSpace.gapLg,
           ...children,
         ],
       ),
@@ -43,7 +44,7 @@ class HandoverSheetError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpace.sm),
       child: Row(
         key: const ValueKey('handover-error'),
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,13 +52,13 @@ class HandoverSheetError extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.only(top: 2),
             child: Icon(Icons.error_outline_rounded,
-                size: 15, color: AppColors.quietOrange),
+                size: AppIcon.sm, color: HubTone.quiet),
           ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               message,
-              style: HubType.meta(AppColors.quietOrange),
+              style: HubType.meta(HubTone.quiet),
             ),
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_deadline_line.dart';
@@ -7,9 +8,17 @@ import 'package:flutter/material.dart';
 /// What the gem last said, then how long ago: `Farming round 2 is live ·
 /// last update 19 days ago`.
 class GemLastLine extends StatelessWidget {
-  const GemLastLine({super.key, required this.title, required this.ago});
+  const GemLastLine({
+    super.key,
+    required this.title,
+    required this.ago,
+    this.agoColor,
+  });
 
   final String title;
+
+  /// The status colour of how long it has been; faint when null.
+  final Color? agoColor;
 
   /// `last update 19 days ago`, or `19 days ago` in compact copy.
   final String ago;
@@ -22,13 +31,14 @@ class GemLastLine extends StatelessWidget {
           if (title.isNotEmpty) TextSpan(text: title),
           TextSpan(
             text: title.isEmpty ? capitalized(ago) : ' · $ago',
-            style: HubType.body(AppColors.zincDim, weight: FontWeight.w500),
+            style: HubType.body(agoColor ?? AppColors.textFaint,
+                weight: AppText.medium),
           ),
         ],
       ),
       maxLines: 3,
       overflow: TextOverflow.ellipsis,
-      style: HubType.body(AppColors.zincBody, weight: FontWeight.w600),
+      style: HubType.body(AppColors.textPrimary, weight: AppText.medium),
     );
   }
 }
@@ -44,7 +54,7 @@ class GemNeverUpdatedLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       'No updates yet · listed $listed',
-      style: HubType.body(AppColors.zincFaint, weight: FontWeight.w500),
+      style: HubType.body(AppColors.textMuted, weight: AppText.medium),
     );
   }
 }
@@ -60,16 +70,17 @@ class GemDeadlineLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.only(top: AppSpace.sm),
       child: Row(
         children: [
-          const Icon(Icons.schedule_rounded,
-              size: 16, color: AppColors.zincDim),
-          const SizedBox(width: 8),
+          Icon(Icons.schedule_rounded,
+              size: AppIcon.xs + 2, color: AppColors.textFaint),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               describeDeadline(at, now).label,
-              style: HubType.body(AppColors.zincBody, weight: FontWeight.w600),
+              style: HubType.meta(AppColors.textSecondary,
+                  weight: AppText.semibold),
             ),
           ),
         ],
@@ -95,17 +106,17 @@ class GemWaitMeta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.only(top: AppSpace.sm),
       child: Wrap(
-        spacing: 12,
-        runSpacing: 4,
+        spacing: AppSpace.md + 2,
+        runSpacing: AppSpace.xs,
         children: [
           if (waiting > 0)
             _MetaItem(
               key: const ValueKey('gem-waiting'),
               icon: Icons.how_to_vote_rounded,
-              iconColor: AppColors.chainIce,
-              color: AppColors.zincStrong,
+              iconColor: HubTone.accent,
+              color: AppColors.textSecondary,
               label: compact
                   ? '${groupedCount(waiting)} waiting'
                   : '${counted(waiting, 'member')} waiting',
@@ -114,8 +125,8 @@ class GemWaitMeta extends StatelessWidget {
             _MetaItem(
               key: const ValueKey('gem-reports'),
               icon: Icons.flag_outlined,
-              iconColor: AppColors.reportRed,
-              color: AppColors.reportRed,
+              iconColor: HubTone.report,
+              color: HubTone.report,
               label: counted(reports, 'report'),
             ),
         ],
@@ -143,9 +154,9 @@ class _MetaItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: iconColor),
-        const SizedBox(width: 5),
-        Text(label, style: HubType.meta(color, weight: FontWeight.w600)),
+        Icon(icon, size: AppIcon.xs + 2, color: iconColor),
+        AppSpace.wGapXs,
+        Text(label, style: HubType.meta(color, weight: AppText.semibold)),
       ],
     );
   }

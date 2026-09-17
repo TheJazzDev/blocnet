@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
 
@@ -21,31 +22,34 @@ class GemFoldLine extends StatelessWidget {
     return InkWell(
       onTap: onToggle,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: HubInsets.gutter,
+          vertical: AppSpace.lg,
+        ),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.borderFaint)),
+          border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.check_circle_rounded,
-              size: 16,
-              color: AppColors.currentTick,
+              size: AppIcon.sm,
+              color: HubTone.current,
             ),
-            const SizedBox(width: 8),
+            AppSpace.wGapSm,
             Expanded(
               child: Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style:
-                    HubType.body(AppColors.zincMuted, weight: FontWeight.w600),
+                style: HubType.body(AppColors.textSecondary,
+                    weight: AppText.medium),
               ),
             ),
             Icon(
               expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-              size: 16,
-              color: AppColors.zincQuiet,
+              size: AppIcon.md,
+              color: AppColors.textFaint,
             ),
           ],
         ),

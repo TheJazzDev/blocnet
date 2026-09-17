@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
 import 'package:blocnet/features/hunter/data/models/project_invite_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
@@ -12,6 +13,7 @@ import 'package:blocnet/features/hunter/presentation/widgets/hub/board/reach_row
 import 'package:blocnet/features/hunter/presentation/widgets/hub/day_one/day_one_card.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/day_one/reliability_explainer.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_section_header.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/features/projects/data/models/project_proposal_model.dart';
 import 'package:flutter/material.dart';
 
@@ -94,7 +96,7 @@ class _HubBoardViewState extends State<HubBoardView> {
       HubIdentityRow(
         key: const ValueKey('hub-identity'),
         identity: widget.identity,
-        bottomPadding: layout.foldsCurrent ? 12 : 16,
+        bottomPadding: layout.foldsCurrent ? AppSpace.md : AppSpace.lg,
       ),
       if (layout.isDayOne) ...[
         DayOneCard(
@@ -143,7 +145,7 @@ class _HubBoardViewState extends State<HubBoardView> {
     ];
 
     return RefreshIndicator(
-      color: AppColors.hunterAccent,
+      color: HubTone.accent,
       backgroundColor: AppColors.bgSurface,
       onRefresh: widget.onRefresh,
       child: SingleChildScrollView(

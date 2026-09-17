@@ -1,22 +1,24 @@
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/domain/chain_style.dart';
 import 'package:flutter/material.dart';
 
-/// Size steps for a gem's monogram (design: 32 / 40 / 52).
+/// Size steps for a gem's monogram.
 enum GemMonogramSize {
-  small(32, 8, 11),
-  medium(40, 12, 13),
-  large(52, 14, 17);
+  small(32, AppRadius.sm, AppText.labelSize),
+  medium(40, AppRadius.md, AppText.bodySize),
+  large(44, AppRadius.md, AppText.subtitleSize);
 
   const GemMonogramSize(this.extent, this.radius, this.fontSize);
 
   final double extent;
-  final double radius;
+  final BorderRadius radius;
   final double fontSize;
 }
 
-/// Two letters on a gradient of the gem's chain hue. Projects have no logo
-/// column, so this stands in for one.
+/// Two letters in the gem's chain hue on a flat logo tile — the old
+/// project list's logo box. Projects have no logo column, so this stands in
+/// for one.
 class GemMonogram extends StatelessWidget {
   const GemMonogram({
     super.key,
@@ -37,19 +39,16 @@ class GemMonogram extends StatelessWidget {
       height: size.extent,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size.radius),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: style.gradient,
-        ),
+        color: AppColors.bgElevated,
+        borderRadius: size.radius,
+        border: Border.all(color: AppColors.borderMuted),
       ),
       child: Text(
         gemMonogram(name),
-        style: AppTypography.custom(
-          size: size.fontSize,
-          weight: FontWeight.w800,
-          color: Colors.white,
+        style: TextStyle(
+          fontSize: size.fontSize,
+          fontWeight: AppText.bold,
+          color: style.label.isEmpty ? AppColors.textSecondary : style.color,
           height: 1,
         ),
       ),

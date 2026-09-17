@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_gem_detail_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/gem_notice_cards.dart';
@@ -6,7 +7,7 @@ import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_style
 import 'package:flutter/material.dart';
 
 /// The hunter's own updates on the gem, newest first, on a 1px rail. The
-/// newest node is cyan. A quiet gem's silence is drawn at the top as a gap.
+/// newest node carries the accent. A quiet gem's silence is drawn at the top as a gap.
 class GemTimeline extends StatelessWidget {
   const GemTimeline({
     super.key,
@@ -33,7 +34,7 @@ class GemTimeline extends StatelessWidget {
           bottom: 20,
           child: SizedBox(
             width: 1,
-            child: ColoredBox(color: AppColors.hubCardEdge),
+            child: ColoredBox(color: AppColors.borderSubtle),
           ),
         ),
         Column(
@@ -101,9 +102,9 @@ class _Event extends StatelessWidget {
                 height: 11,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: newest ? const Color(0xFF0B1F24) : AppColors.bgSurface,
+                  color: AppColors.bgBase,
                   border: Border.all(
-                    color: newest ? AppColors.chainIce : AppColors.borderMuted,
+                    color: newest ? HubTone.accent : AppColors.borderMuted,
                     width: 2,
                   ),
                 ),
@@ -121,27 +122,27 @@ class _Event extends StatelessWidget {
                         '${dayMonth(event.createdAt)} · '
                                 '${urgencyLabel(event.priority)}'
                             .toUpperCase(),
-                        style:
-                            HubType.caps(AppColors.zincCaption, tracking: 0.88),
+                        style: HubType.caps(AppColors.textFaint,
+                            weight: AppText.semibold),
                       ),
                     ),
                     InkWell(
                       key: ValueKey('gem-edit-${event.id}'),
                       onTap: onEdit,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: AppRadius.sm,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 4, vertical: 2),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.edit_outlined,
-                                size: 14, color: AppColors.zincFaint),
-                            const SizedBox(width: 4),
+                            Icon(Icons.edit_outlined,
+                                size: AppIcon.xs, color: AppColors.textMuted),
+                            AppSpace.wGapXs,
                             Text(
                               'Edit',
-                              style: HubType.caps(AppColors.zincFaint,
-                                  weight: FontWeight.w500, tracking: 0),
+                              style: HubType.meta(AppColors.textMuted,
+                                  weight: AppText.medium),
                             ),
                           ],
                         ),
@@ -149,18 +150,14 @@ class _Event extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                AppSpace.gapXs,
                 Text(
                   event.title,
-                  style: HubType.rowTitle(AppColors.textPrimary)
-                      .copyWith(height: 1.4),
+                  style: HubType.body(AppColors.textPrimary,
+                      weight: AppText.semibold),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  stats,
-                  style:
-                      HubType.meta(AppColors.zincFaint).copyWith(height: 1.55),
-                ),
+                const SizedBox(height: AppSpace.hair),
+                Text(stats, style: HubType.meta(AppColors.textFaint)),
               ],
             ),
           ),

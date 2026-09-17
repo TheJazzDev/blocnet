@@ -22,7 +22,8 @@ class ChainStyle {
   /// Chip text colour.
   final Color color;
 
-  /// Chip ground: [color] at 12%, or zinc for an unknown chain.
+  /// Chip ground: [color] at 12%, or the elevated surface for an unknown
+  /// chain.
   final Color chipBackground;
 
   /// Monogram gradient, light to deep.
@@ -75,8 +76,8 @@ class ChainStyle {
     }
     return ChainStyle(
       label: key.isEmpty ? '' : tag.trim().toUpperCase(),
-      color: AppColors.zincMuted,
-      chipBackground: AppColors.borderSubtle,
+      color: AppColors.textMuted,
+      chipBackground: AppColors.bgElevated,
       gradient: const [AppColors.chainNeutral, AppColors.borderSubtle],
     );
   }

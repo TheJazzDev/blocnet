@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/project_invite_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/answers/answer_card_frame.dart';
@@ -31,14 +32,10 @@ class InviteCard extends StatelessWidget {
       name: invite.projectName,
       tag: invite.primaryTag ?? '',
       highlighted: true,
-      pill: HubPill(
-        label: 'Invite',
-        color: AppColors.inviteViolet,
-        background: AppColors.inviteViolet.withValues(alpha: 0.14),
-      ),
+      pill: HubPill(label: 'Invite', color: HubTone.accent),
       body: Text.rich(
         TextSpan(children: inviteSentence(invite, now)),
-        style: HubType.meta(AppColors.zincFaint).copyWith(height: 1.55),
+        style: HubType.body(AppColors.textMuted),
       ),
       actions: Row(
         children: [
@@ -50,7 +47,7 @@ class InviteCard extends StatelessWidget {
               onTap: onAccept,
             ),
           ),
-          const SizedBox(width: 8),
+          AppSpace.wGapSm,
           Expanded(
             child: HubButton(
               label: 'Decline',
@@ -78,9 +75,9 @@ List<InlineSpan> inviteSentence(ProjectInviteModel invite, DateTime now) {
     if (invite.lastUpdateAt != null)
       'last one ${daysAgoSince(invite.lastUpdateAt!, now)}',
   ];
-  const bold = TextStyle(
-    color: AppColors.zincBody,
-    fontWeight: FontWeight.w600,
+  final bold = TextStyle(
+    color: AppColors.textPrimary,
+    fontWeight: AppText.semibold,
   );
   return [
     if (handle != null) ...[
