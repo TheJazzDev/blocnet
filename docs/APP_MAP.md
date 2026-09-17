@@ -183,8 +183,12 @@ new vocabulary.
 
 ## 4 · The plan
 
-One screen at a time, each with its own brief → design → build → device check,
-using the method in [`design-briefs/NEXT_SESSION.md`](design-briefs/NEXT_SESSION.md).
+One screen at a time, built directly in
+[`design-briefs/VISUAL_LANGUAGE.md`](design-briefs/VISUAL_LANGUAGE.md) and checked on a device.
+Since 2026-09-17 there are no design rounds (owner decision).
+
+**Status 2026-09-17:** steps 0–6 done. Step 7's visual pass is done too (Community, Progress);
+what remains of 7 is the Progress merge and the console.
 
 | Step | What | Kind | Why this order |
 |---|---|---|---|
@@ -211,4 +215,4 @@ cleanup pass and the reliability metric ahead of both.
 4. **Hunter Hub before Gems.** — agreed
 5. **Notification Insights, Trending, Priority screens** are cut. — agreed
 
-Execution: full speed, parallel sub-agents; design briefs for Hunter Hub and Gems go to Claude Design.
+Execution: full speed, parallel sub-agents. (Claude Design briefs were retired on 2026-09-17.)
