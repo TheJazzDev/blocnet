@@ -7,6 +7,8 @@ String describeApiError(
   String fallback = 'Something went wrong. Please try again.',
 }) {
   if (error is ApiException) {
+    // The body of a 401 is raw backend auth text, never user copy.
+    if (error.statusCode == 401) return ApiException.sessionUnconfirmedMessage;
     final body = error.responseBody?.trim();
     if (body != null && body.isNotEmpty) {
       try {
