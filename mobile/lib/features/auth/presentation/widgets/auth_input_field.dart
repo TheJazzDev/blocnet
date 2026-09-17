@@ -1,7 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/app/typography.dart';
 
 class AuthInputField extends StatelessWidget {
   const AuthInputField({
@@ -33,6 +32,11 @@ class AuthInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    OutlineInputBorder border(Color color) => OutlineInputBorder(
+          borderRadius: AppRadius.md,
+          borderSide: BorderSide(color: color),
+        );
+
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -43,70 +47,27 @@ class AuthInputField extends StatelessWidget {
       focusNode: focusNode,
       textCapitalization: textCapitalization,
       onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-      style: AppTypography.custom(
-        color: AppColors.textSecondary,
-        size: AppText.bodySize,
-        weight: FontWeight.w400,
-      ),
+      style: AppText.body(AppColors.textPrimary),
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: AppTypography.custom(
-          color: AppColors.textMuted,
-          size: AppText.labelSize,
-          weight: FontWeight.w500,
-        ),
-        floatingLabelStyle: AppTypography.custom(
-          color: AppColors.primary400,
-          size: AppText.labelSize,
-          weight: FontWeight.w600,
-        ),
+        labelStyle: AppText.body(AppColors.textFaint),
+        floatingLabelStyle:
+            AppText.label(AppColors.primary400, weight: AppText.semibold),
+        isDense: true,
         filled: true,
-        fillColor: AppColors.bgSurface,
+        fillColor: AppColors.bgElevated,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.lg,
-          vertical: AppSpace.lg,
+          horizontal: AppSpace.md + 2,
+          vertical: AppSpace.md + 2,
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          borderSide: BorderSide(
-            color: AppColors.borderSubtle.withValues(alpha: 0.5),
-            width: 1.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          borderSide: BorderSide(
-            color: AppColors.borderSubtle.withValues(alpha: 0.5),
-            width: 1.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          borderSide: BorderSide(
-            color: AppColors.primary400,
-            width: 2,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          borderSide: BorderSide(
-            color: AppColors.error500,
-            width: 1.5,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          borderSide: BorderSide(
-            color: AppColors.error500,
-            width: 2,
-          ),
-        ),
-        errorStyle: AppTypography.custom(
-          color: AppColors.error500,
-          size: AppText.captionSize,
-          weight: FontWeight.w500,
-        ),
+        border: border(AppColors.borderMuted),
+        enabledBorder: border(AppColors.borderMuted),
+        focusedBorder: border(AppColors.primary400),
+        errorBorder: border(AppColors.error500),
+        focusedErrorBorder: border(AppColors.error500),
+        errorStyle: AppText.caption(AppColors.error500),
+        errorMaxLines: 2,
         suffixIcon: suffixIcon,
       ),
     );

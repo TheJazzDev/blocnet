@@ -1,8 +1,9 @@
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_feedback.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_validators.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -47,23 +48,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     setState(() => _isSubmitting = false);
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authStore.lastError ?? 'Password update failed'),
-          backgroundColor: AppColors.darkGrey200,
-          behavior: SnackBarBehavior.floating,
-        ),
+      showAuthMessage(
+        context,
+        authErrorText(authStore.lastError, 'Could not update the password.'),
       );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Password updated successfully'),
-        backgroundColor: AppColors.darkGrey200,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showAuthMessage(context, 'Password updated. Sign in with it.',
+        error: false);
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRoutes.signIn,
       (Route<dynamic> route) => false,
@@ -78,11 +71,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return AuthScreenShell(
       appBarTitle: '',
       heading: 'Set a new password',
-      subtitle: 'Choose a strong password to secure your account.',
+      subtitle: 'At least 6 characters.',
       child: Form(
         key: _formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AuthInputField(
               controller: _passwordController,
@@ -98,14 +91,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 onTap: () =>
                     setState(() => _obscurePassword = !_obscurePassword),
               ),
-              validator: (value) {
-                if ((value ?? '').length < 6) {
-                  return 'Password must be at least 6 characters';
-                }
-                return null;
-              },
+              validator: validatePassword,
             ),
-            const SizedBox(height: AppSpace.md),
+            AppSpace.gapMd,
             AuthInputField(
               controller: _confirmPasswordController,
               label: 'Confirm password',
@@ -120,14 +108,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   () => _obscureConfirmPassword = !_obscureConfirmPassword,
                 ),
               ),
-              validator: (value) {
-                if (value != _passwordController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
+              validator:
+                  confirmPasswordValidator(() => _passwordController.text),
             ),
-            const SizedBox(height: AppSpace.xl),
+            AppSpace.gapLg,
             AppButton(
               label: 'Update password',
               onPressed:
