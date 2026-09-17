@@ -1,9 +1,15 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-/// Follow / Following toggle on a public profile.
+export 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_block_dialog.dart';
+
+const double _buttonHeight = 40;
+
+/// Follow / Following toggle on a public profile: filled accent to follow,
+/// dark outlined once following.
 class PublicProfileFollowButton extends StatelessWidget {
   const PublicProfileFollowButton({
     super.key,
@@ -18,38 +24,44 @@ class PublicProfileFollowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = isFollowing ? AppColors.textPrimary : Colors.black;
+    final inHunterSpace = context.select<AuthStore?, bool>(
+      (auth) => auth?.isInHunterSpace ?? false,
+    );
+    final foreground = isFollowing
+        ? AppColors.textPrimary
+        : AppColors.onAccentForSpace(inHunterSpace);
+    final label = isSubmitting
+        ? SizedBox.square(
+            dimension: 16,
+            child: CircularProgressIndicator(color: foreground, strokeWidth: 2),
+          )
+        : Text(
+            isFollowing ? 'Following' : 'Follow',
+            style: AppText.label(foreground, weight: AppText.bold),
+          );
+    final shape = const RoundedRectangleBorder(borderRadius: AppRadius.md);
+
     return SizedBox(
-      height: 42,
-      child: ElevatedButton(
-        onPressed: isSubmitting ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor:
-              isFollowing ? AppColors.bgElevated : AppColors.primary500,
-          foregroundColor: foreground,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          ),
-        ),
-        child: isSubmitting
-            ? SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  color: foreground,
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(
-                isFollowing ? 'Following' : 'Follow',
-                style: AppTypography.custom(
-                  color: foreground,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w700,
-                ),
+      height: _buttonHeight,
+      child: isFollowing
+          ? OutlinedButton(
+              onPressed: isSubmitting ? null : onPressed,
+              style: OutlinedButton.styleFrom(
+                shape: shape,
+                side: const BorderSide(color: AppColors.borderMuted),
+                backgroundColor: AppColors.bgSurface,
               ),
-      ),
+              child: label,
+            )
+          : FilledButton(
+              onPressed: isSubmitting ? null : onPressed,
+              style: FilledButton.styleFrom(
+                shape: shape,
+                backgroundColor: AppColors.primary500,
+                foregroundColor: foreground,
+              ),
+              child: label,
+            ),
     );
   }
 }
@@ -63,39 +75,30 @@ class PublicProfileTipButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 42,
-      child: ElevatedButton.icon(
+      height: _buttonHeight,
+      child: OutlinedButton.icon(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary500.withValues(alpha: 0.14),
-          foregroundColor: AppColors.primary400,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-            side: BorderSide(
-              color: AppColors.primary500.withValues(alpha: 0.45),
-            ),
-          ),
+        style: OutlinedButton.styleFrom(
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.md),
+          side: const BorderSide(color: AppColors.borderMuted),
+          backgroundColor: AppColors.bgSurface,
         ),
         icon: Icon(
-          Icons.volunteer_activism_rounded,
+          Icons.volunteer_activism_outlined,
           color: AppColors.primary400,
           size: AppIcon.sm,
         ),
         label: Text(
-          'Tip Hunter',
-          style: AppTypography.custom(
-            color: AppColors.primary400,
-            size: AppText.labelSize,
-            weight: FontWeight.w700,
-          ),
+          'Tip',
+          style: AppText.label(AppColors.textPrimary, weight: AppText.bold),
         ),
       ),
     );
   }
 }
 
-/// Block / unblock toggle on someone else's public profile.
+/// Block / unblock on someone else's public profile. A quiet text row, not
+/// a second primary button.
 class PublicProfileBlockButton extends StatelessWidget {
   const PublicProfileBlockButton({
     super.key,
@@ -110,107 +113,31 @@ class PublicProfileBlockButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isBlocked ? AppColors.primary400 : AppColors.error500;
-    return SizedBox(
-      width: double.infinity,
-      height: 40,
-      child: OutlinedButton.icon(
+    final color = isBlocked ? AppColors.textMuted : AppColors.error500;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
         onPressed: isSubmitting ? null : onPressed,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(
-            color: isBlocked
-                ? AppColors.primary400.withValues(alpha: 0.5)
-                : AppColors.error500.withValues(alpha: 0.45),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          ),
-          backgroundColor: isBlocked
-              ? AppColors.primary500.withValues(alpha: 0.08)
-              : AppColors.error500.withValues(alpha: 0.08),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
+        style: TextButton.styleFrom(
+          minimumSize: const Size(44, 36),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
+          foregroundColor: color,
         ),
         icon: isSubmitting
-            ? SizedBox(
-                width: 14,
-                height: 14,
+            ? SizedBox.square(
+                dimension: 14,
                 child: CircularProgressIndicator(strokeWidth: 2, color: color),
               )
             : Icon(
-                isBlocked ? Icons.check_circle_outline : Icons.block_outlined,
+                isBlocked ? Icons.lock_open_rounded : Icons.block_outlined,
                 size: AppIcon.sm,
                 color: color,
               ),
         label: Text(
-          isBlocked ? 'User blocked' : 'Block user',
-          style: AppTypography.custom(
-            color: color,
-            size: AppText.labelSize,
-            weight: FontWeight.w700,
-          ),
+          isBlocked ? 'Blocked · Unblock' : 'Block user',
+          style: AppText.label(color, weight: AppText.semibold),
         ),
       ),
     );
   }
-}
-
-/// Asks before blocking or unblocking. Resolves true only on confirm.
-Future<bool> confirmPublicProfileBlock(
-  BuildContext context, {
-  required bool isBlocked,
-}) async {
-  final actionLabel = isBlocked ? 'Unblock' : 'Block';
-  final description = isBlocked
-      ? 'You will start seeing this user in your feeds again.'
-      : 'You will stop seeing this user in your feeds and comments.';
-
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: AppColors.bgSurface,
-      title: Text(
-        '$actionLabel user?',
-        style: AppTypography.custom(
-          color: AppColors.textPrimary,
-          size: AppText.subtitleSize,
-          weight: FontWeight.w700,
-        ),
-      ),
-      content: Text(
-        description,
-        style: AppTypography.custom(
-          color: AppColors.textSecondary,
-          size: AppText.bodySize,
-          weight: FontWeight.w400,
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: Text(
-            'Cancel',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.labelSize,
-              weight: FontWeight.w600,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(true),
-          child: Text(
-            actionLabel,
-            style: AppTypography.custom(
-              color: isBlocked ? AppColors.primary400 : AppColors.error500,
-              size: AppText.labelSize,
-              weight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-  return confirmed ?? false;
 }

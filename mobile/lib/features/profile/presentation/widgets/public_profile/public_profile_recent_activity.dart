@@ -1,6 +1,7 @@
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/profile/presentation/widgets/activity_card.dart';
-import 'package:blocnet/features/profile/presentation/widgets/empty_activity_card.dart';
+import 'package:blocnet/features/profile/presentation/widgets/common/profile_inline_state.dart';
+import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/detail_dialogs.dart';
@@ -16,14 +17,20 @@ class PublicProfileRecentActivity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionLabel('Recent Activity'),
-        const SizedBox(height: AppSpace.sm),
-        if (posts.isEmpty)
-          const EmptyActivityCard()
-        else
-          ...posts.take(4).map(
-                (post) => ActivityCard(
+        const SectionLabel('Recent updates', icon: Icons.article_outlined),
+        AppSpace.gapSm,
+        ProfileRowGroup(
+          children: [
+            if (posts.isEmpty)
+              const ProfileInlineState(
+                icon: Icons.article_outlined,
+                title: 'No updates yet',
+              )
+            else
+              for (final post in posts.take(4))
+                ActivityCard(
                   title: post.title,
                   subtitle: post.project?.name ?? 'Gem',
                   time: getTimeStamp(post.createdAt),
@@ -31,7 +38,8 @@ class PublicProfileRecentActivity extends StatelessWidget {
                       ? null
                       : () => showUpdateDetailsDialog(context, post.id),
                 ),
-              ),
+          ],
+        ),
       ],
     );
   }
