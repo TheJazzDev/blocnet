@@ -1,17 +1,16 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/home_panel.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
 import 'package:flutter/material.dart';
 
 /// Shown when nothing a member follows needs them.
 ///
-/// This is the product keeping its promise, and it used to look like a failure:
-/// a grey panel with the words *"You are fully caught up"* set in the same
-/// weight as any other label. Round six asks for it to feel earned, and to
-/// carry the receipt — what was checked, across how many gems, and how recently
-/// — because reassurance that shows its work is what lets someone stop
-/// checking.
+/// Drawn as the app's original Alpha Radar panel: a small header, the
+/// headline, one sentence, and the receipt as a single muted line — what was
+/// checked, across how many gems, and how recently. Reassurance that shows its
+/// work is what lets someone stop checking.
 ///
 /// Every number here is one the app actually knows. There is deliberately no
 /// "unread" count: nothing tracks per-update reads, so claiming one would be
@@ -39,92 +38,57 @@ class FeedCaughtUpCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpace.xl,
-        horizontal: AppSpace.lg,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: AppRadius.lg,
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color.lerp(AppColors.bgSurface, accent, 0.10)!,
-            Color.lerp(AppColors.bgBase, accent, 0.04)!,
-          ],
-        ),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
-      ),
+    return HomePanel(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // A ring rather than a filled badge: the shape says "complete"
-          // without shouting, and it is the one accent object on the card.
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border:
-                  Border.all(color: accent.withValues(alpha: 0.28), width: 2),
-            ),
-            child: Icon(
-              Icons.check_rounded,
-              size: AppIcon.xl,
-              color: accent,
-            ),
-          ),
-          const SizedBox(height: AppSpace.lg),
-          Text(
-            "You're all caught up",
-            textAlign: TextAlign.center,
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.headlineSize,
-              weight: FontWeight.w700,
-            ),
+          HomePanelHeader(
+            icon: Icons.radar_rounded,
+            label: 'ALPHA RADAR',
+            iconColor: accent,
           ),
           const SizedBox(height: AppSpace.sm),
           Text(
-            _subtitle,
-            textAlign: TextAlign.center,
+            "You're all caught up",
             style: AppTypography.custom(
-              color: AppColors.textMuted,
+              color: AppColors.textPrimary,
               size: AppText.bodySize,
-              weight: FontWeight.w400,
-              height: 1.5,
+              weight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: AppSpace.lg),
-          Container(
-            padding: const EdgeInsets.only(top: AppSpace.lg),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: accent.withValues(alpha: 0.14)),
-              ),
+          const SizedBox(height: AppSpace.xs),
+          Text(
+            _subtitle,
+            style: AppTypography.custom(
+              color: AppColors.textMuted,
+              size: AppText.labelSize,
+              weight: FontWeight.w400,
+              height: 1.45,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _Stat(
-                  value: '$gemsFollowed',
-                  label: gemsFollowed == 1 ? 'gem' : 'gems',
-                ),
-                _Stat(
-                  value: '$updatesTracked',
-                  label: updatesTracked == 1 ? 'update' : 'updates',
-                ),
-                _Stat(
-                  value: sweptAt == null ? '—' : getTimeStamp(sweptAt!),
-                  label: 'last sweep',
-                ),
-              ],
-            ),
+          ),
+          const SizedBox(height: AppSpace.md),
+          Text(
+            _receipt,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
+              size: AppText.labelSize,
+              weight: FontWeight.w500,
+            ).merge(AppText.tabular),
           ),
         ],
       ),
     );
+  }
+
+  String get _receipt {
+    final gems = '$gemsFollowed ${gemsFollowed == 1 ? 'gem' : 'gems'}';
+    final updates =
+        '$updatesTracked ${updatesTracked == 1 ? 'update' : 'updates'}';
+    final sweep =
+        'last sweep ${sweptAt == null ? '—' : getTimeStamp(sweptAt!)}';
+    return '$gems · $updates · $sweep';
   }
 
   String get _subtitle {
@@ -134,38 +98,5 @@ class FeedCaughtUpCard extends StatelessWidget {
     }
     return 'Nothing needs you across the $gemsFollowed gems on your board. '
         'A hunter is keeping each one current.';
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.value, required this.label});
-
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.titleSize,
-            weight: FontWeight.w700,
-          ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
-        ),
-        const SizedBox(height: AppSpace.hair),
-        Text(
-          label.toUpperCase(),
-          style: AppTypography.custom(
-            color: AppColors.textFaint,
-            size: AppText.captionSize,
-            weight: FontWeight.w600,
-            letterSpacing: 0.8,
-          ),
-        ),
-      ],
-    );
   }
 }
