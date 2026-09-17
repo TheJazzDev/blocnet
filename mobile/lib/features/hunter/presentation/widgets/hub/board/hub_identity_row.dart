@@ -1,5 +1,5 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/domain/chain_style.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_pill.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
@@ -52,16 +52,16 @@ class HubIdentityRow extends StatelessWidget {
     final level = identity.level;
     final subtitle = identity.subtitle;
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 4, 16, bottomPadding),
+      padding: EdgeInsets.fromLTRB(
+        HubInsets.gutter,
+        AppSpace.md,
+        HubInsets.gutter,
+        bottomPadding,
+      ),
       child: Row(
         children: [
-          AppAvatar(
-            radius: 22,
-            imageUrl: identity.avatarUrl,
-            fallback: _Initials(name: identity.name),
-            backgroundColor: AppColors.hunterFill,
-          ),
-          const SizedBox(width: 12),
+          _Avatar(identity: identity),
+          AppSpace.wGapMd,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,22 +81,16 @@ class HubIdentityRow extends StatelessWidget {
                       TierLevelBadge(level: level),
                     ],
                     const SizedBox(width: 6),
-                    HubPill(
-                      label: 'Hunter',
-                      color: AppColors.hunterAccent,
-                      background: AppColors.chainIce.withValues(alpha: 0.14),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 3),
-                    ),
+                    const HubPill(label: 'Hunter', color: HubTone.hunterRole),
                   ],
                 ),
                 if (subtitle.isNotEmpty) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpace.hair),
                   Text(
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: HubType.meta(AppColors.zincDim),
+                    style: HubType.meta(AppColors.textFaint),
                   ),
                 ],
               ],
@@ -108,32 +102,27 @@ class HubIdentityRow extends StatelessWidget {
   }
 }
 
-class _Initials extends StatelessWidget {
-  const _Initials({required this.name});
+/// The old profile avatar: a dark disc inside an accent ring.
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.identity});
 
-  final String name;
+  final HubIdentity identity;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 44,
-      height: 44,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.all(AppSpace.hair),
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.hunterFill, AppColors.hunterDeep],
-        ),
+        border: Border.all(color: HubTone.accent, width: 1.5),
       ),
-      child: Text(
-        gemMonogram(name),
-        style: AppTypography.custom(
-          size: 15,
-          weight: FontWeight.w700,
-          color: Colors.white,
-          height: 1,
+      child: AppAvatar(
+        radius: 20,
+        imageUrl: identity.avatarUrl,
+        fallback: Text(
+          gemMonogram(identity.name),
+          style: AppText.body(HubTone.accent, weight: AppText.bold)
+              .copyWith(height: 1),
         ),
       ),
     );

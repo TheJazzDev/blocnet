@@ -1,8 +1,9 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
 
-/// A caps label over a Hub text input (radius 10, zinc-800 fill, cyan focus).
+/// A caps label over a Hub text input (elevated fill, accent focus).
 class HubInput extends StatelessWidget {
   const HubInput({
     super.key,
@@ -28,7 +29,7 @@ class HubInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     OutlineInputBorder border(Color color) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: AppRadius.md,
           borderSide: BorderSide(color: color),
         );
 
@@ -36,8 +37,8 @@ class HubInput extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label, style: HubType.caps(AppColors.zincDim)),
-        const SizedBox(height: 8),
+        Text(label, style: HubType.caps(AppColors.textFaint)),
+        AppSpace.gapSm,
         TextField(
           key: fieldKey,
           controller: controller,
@@ -47,20 +48,22 @@ class HubInput extends StatelessWidget {
           maxLines: maxLines,
           minLines: 1,
           autocorrect: false,
-          style: HubType.body(AppColors.zincStrong),
+          style: HubType.body(AppColors.textPrimary),
           decoration: InputDecoration(
             isDense: true,
             hintText: hint,
-            hintStyle: HubType.body(AppColors.zincDim),
-            counterStyle: HubType.meta(AppColors.zincCaption),
+            hintStyle: HubType.body(AppColors.textFaint),
+            counterStyle: AppText.caption(AppColors.textFaint),
             filled: true,
             fillColor: AppColors.bgElevated,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            border: border(AppColors.borderSubtle),
-            enabledBorder: border(AppColors.borderSubtle),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.md + 2,
+              vertical: AppSpace.md,
+            ),
+            border: border(AppColors.borderMuted),
+            enabledBorder: border(AppColors.borderMuted),
             disabledBorder: border(AppColors.borderSubtle),
-            focusedBorder: border(AppColors.hunterFill),
+            focusedBorder: border(HubTone.accent),
           ),
         ),
       ],

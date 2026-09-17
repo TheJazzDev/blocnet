@@ -1,7 +1,32 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
+
+/// A flat surface card with a status-tinted hairline, like the old
+/// profile's sentiment card.
+class _NoticeFrame extends StatelessWidget {
+  const _NoticeFrame({required this.tone, required this.child, this.margin});
+
+  final Color tone;
+  final Widget child;
+  final EdgeInsets? margin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: margin,
+      padding: AppSpace.allMd,
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: AppRadius.md,
+        border: Border.all(color: tone.withValues(alpha: 0.35)),
+      ),
+      child: child,
+    );
+  }
+}
 
 /// How many members asked for an update. A count only — no member names
 /// reach the hunter.
@@ -15,34 +40,29 @@ class GemWaitCard extends StatelessWidget {
     final headline = waiting == 1
         ? '1 member is waiting'
         : '${groupedCount(waiting)} members are waiting';
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.quietTop,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.quietOrange.withValues(alpha: 0.2)),
-      ),
+    return _NoticeFrame(
+      tone: HubTone.quiet,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               const Icon(Icons.how_to_vote_rounded,
-                  size: 16, color: AppColors.quietOrange),
-              const SizedBox(width: 8),
+                  size: AppIcon.sm, color: HubTone.quiet),
+              AppSpace.wGapSm,
               Expanded(
                 child: Text(
                   headline,
-                  style: HubType.rowTitle(AppColors.zincStrong),
+                  style: HubType.rowTitle(AppColors.textPrimary),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          AppSpace.gapXs,
           Text(
             'They asked for an update this week. One post clears all of '
             "them — they're notified the moment you publish.",
-            style: HubType.meta(AppColors.zincFaint).copyWith(height: 1.55),
+            style: HubType.body(AppColors.textMuted),
           ),
         ],
       ),
@@ -58,26 +78,21 @@ class GemReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.hubCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppColors.moderationAccent.withValues(alpha: 0.2)),
-      ),
+    return _NoticeFrame(
+      tone: HubTone.report,
       child: Row(
         children: [
-          const Icon(Icons.flag_outlined, size: 16, color: AppColors.reportRed),
-          const SizedBox(width: 10),
+          const Icon(Icons.flag_outlined,
+              size: AppIcon.sm, color: HubTone.report),
+          AppSpace.wGapSm,
           Expanded(
             child: Text(
               counted(reports, 'report'),
-              style: HubType.rowTitle(AppColors.zincStrong),
+              style: HubType.rowTitle(HubTone.report),
             ),
           ),
           // The only report members can raise on a gem is "inactive".
-          Text('Unmaintained', style: HubType.meta(AppColors.zincFaint)),
+          Text('Unmaintained', style: HubType.meta(AppColors.textFaint)),
         ],
       ),
     );
@@ -92,24 +107,18 @@ class GemGapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.quietTop,
-        borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: AppColors.quietOrange.withValues(alpha: 0.18)),
-      ),
+    return _NoticeFrame(
+      tone: HubTone.quiet,
+      margin: const EdgeInsets.only(bottom: AppSpace.xl),
       child: Row(
         children: [
           const Icon(Icons.more_horiz_rounded,
-              size: 16, color: AppColors.quietOrange),
-          const SizedBox(width: 8),
+              size: AppIcon.sm, color: HubTone.quiet),
+          AppSpace.wGapSm,
           Expanded(
             child: Text(
               '${counted(days, 'day')} without an update',
-              style: HubType.meta(AppColors.zincBody),
+              style: HubType.meta(HubTone.quiet, weight: AppText.semibold),
             ),
           ),
         ],

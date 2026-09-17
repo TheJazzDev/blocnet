@@ -1,9 +1,12 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// The Hub's extended pill: `✎ Post update`, or `+ Submit a gem` on day one.
+/// The Hub's extended button: `✎ Post update`, or `+ Submit a gem` on day
+/// one. Drawn like the old app's FAB — an accent tile with dark ink and a
+/// soft accent glow.
 class HubFab extends StatelessWidget {
   const HubFab({
     super.key,
@@ -29,16 +32,15 @@ class HubFab extends StatelessWidget {
         },
         child: Container(
           height: 56,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
           decoration: BoxDecoration(
-            color: AppColors.hunterFill,
-            borderRadius: BorderRadius.circular(999),
+            color: HubTone.accent,
+            borderRadius: AppRadius.lg,
             boxShadow: [
               BoxShadow(
-                color: AppColors.hunterFill.withValues(alpha: 0.7),
-                blurRadius: 24,
-                spreadRadius: -6,
-                offset: const Offset(0, 8),
+                color: AppColors.cyanGlow,
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -47,17 +49,13 @@ class HubFab extends StatelessWidget {
             children: [
               Icon(
                 dayOne ? Icons.add_rounded : Icons.edit_outlined,
-                size: 16,
-                color: Colors.white,
+                size: AppIcon.md,
+                color: HubTone.onAccent,
               ),
-              const SizedBox(width: 8),
+              AppSpace.wGapSm,
               Text(
                 label,
-                style: AppTypography.custom(
-                  size: 15,
-                  weight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+                style: AppText.body(HubTone.onAccent, weight: AppText.bold),
               ),
             ],
           ),

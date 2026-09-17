@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/domain/hub_layout.dart';
@@ -26,9 +27,12 @@ class GemCurrentRow extends StatelessWidget {
     return InkWell(
       onTap: onOpen,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: HubInsets.gutter,
+          vertical: AppSpace.md + 2,
+        ),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.borderFaint)),
+          border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
         ),
         child: Row(
           children: [
@@ -37,7 +41,7 @@ class GemCurrentRow extends StatelessWidget {
               tag: gem.chain,
               size: GemMonogramSize.small,
             ),
-            const SizedBox(width: 10),
+            AppSpace.wGapMd,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +52,7 @@ class GemCurrentRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: HubType.rowTitle(AppColors.textPrimary),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpace.hair),
                   Row(
                     children: [
                       ChainChip(tag: gem.chain),
@@ -59,7 +63,7 @@ class GemCurrentRow extends StatelessWidget {
                           '${shortAgo(gem.lastTouchedAt, now)}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: HubType.meta(AppColors.zincDim),
+                          style: HubType.meta(AppColors.textFaint),
                         ),
                       ),
                     ],
@@ -67,11 +71,11 @@ class GemCurrentRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            const Icon(
+            AppSpace.wGapSm,
+            Icon(
               Icons.check_circle_rounded,
-              size: 16,
-              color: AppColors.currentTick,
+              size: AppIcon.sm,
+              color: HubTone.current,
             ),
           ],
         ),

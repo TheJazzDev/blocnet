@@ -1,9 +1,11 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
 
-/// Tips and followers, deliberately demoted: flat tiles, no accent, 15px
-/// figures against coverage's 32. A receipt for the work, not its headline.
+/// Tips and followers, deliberately demoted: two small flat tiles like the
+/// old mining stats, neutral icons, no accent. A receipt for the work, not
+/// its headline.
 class ReachRow extends StatelessWidget {
   const ReachRow({
     super.key,
@@ -18,7 +20,12 @@ class ReachRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        HubInsets.gutter,
+        AppSpace.md,
+        HubInsets.gutter,
+        0,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -28,7 +35,7 @@ class ReachRow extends StatelessWidget {
               label: 'Tips',
             ),
           ),
-          const SizedBox(width: 8),
+          AppSpace.wGapMd,
           Expanded(
             child: _Tile(
               icon: Icons.groups_outlined,
@@ -52,33 +59,41 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: AppSpace.allMd,
       decoration: BoxDecoration(
-        color: AppColors.hubCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.hubTileEdge),
+        color: AppColors.bgSurface,
+        borderRadius: AppRadius.md,
+        border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.zincCaption),
-          const SizedBox(width: 10),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.bgElevated,
+              borderRadius: AppRadius.sm,
+            ),
+            child: Icon(icon, size: AppIcon.sm, color: AppColors.textMuted),
+          ),
+          AppSpace.wGapMd,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  label.toUpperCase(),
+                  style: HubType.caps(AppColors.textFaint,
+                      weight: AppText.semibold),
+                ),
+                const SizedBox(height: AppSpace.hair),
+                Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: HubType.body(AppColors.zincBody,
-                          weight: FontWeight.w700, height: 1.3)
-                      .copyWith(
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-                Text(
-                  label.toUpperCase(),
-                  style: HubType.caps(AppColors.zincCaption),
+                  style: AppText.body(AppColors.textPrimary,
+                          weight: AppText.bold)
+                      .merge(AppText.tabular),
                 ),
               ],
             ),

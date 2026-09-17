@@ -126,34 +126,23 @@ class AppColors {
   static const Color tagAirdropBorder = Color(0x33F97316);
 
   // ── Hunter Hub ────────────────────────────────────────────────────────────
-  // Values from docs/artifacts/blocnet-hunter-hub.html. Quiet is orange, not
-  // red: red on the Hub is spent on open reports and nothing else.
+  // The Hub itself now draws from the core palette above (see HubTone in
+  // features/hunter/.../hub_styles.dart). What remains here is still used by
+  // the Mine tab (mine_palette.dart) and the bottom bar.
 
-  /// Filled buttons and the FAB in the hunter space (#0891B2).
+  /// Filled accent (#0891B2). Mine tab only.
   static const Color hunterFill = Color(0xFF0891B2);
 
-  /// Softer cyan for the Reliable chip text (#67E8F9).
+  /// Softer cyan (#67E8F9). Mine tab only.
   static const Color hunterSoft = Color(0xFF67E8F9);
 
-  /// A quiet gem — edge, chip, pips, wait card (#FB923C).
-  static const Color quietOrange = Color(0xFFFB923C);
-
-  /// A due gem's chip (#F59E0B).
+  /// Amber (#F59E0B). Mine tab and the referral bind sheet.
   static const Color dueAmber = Color(0xFFF59E0B);
 
-  /// A due gem's 3px left edge (#78350F).
-  static const Color dueEdge = Color(0xFF78350F);
-
-  /// Open reports — the only red on the Hub (#F87171).
-  static const Color reportRed = Color(0xFFF87171);
-
-  /// A pending invite chip (#A78BFA).
-  static const Color inviteViolet = Color(0xFFA78BFA);
-
-  /// The tick on a current gem (#3F9C86).
+  /// Green tick (#3F9C86). Mine tab only.
   static const Color currentTick = Color(0xFF3F9C86);
 
-  /// Zinc text steps the Hub uses beside the app-wide text colours.
+  /// Zinc text steps. Mine tab and the bottom bar.
   static const Color zincStrong = Color(0xFFE4E4E7);
   static const Color zincBody = Color(0xFFD4D4D8);
   static const Color zincMuted = Color(0xFFA1A1AA);
@@ -162,27 +151,13 @@ class AppColors {
   static const Color zincCaption = Color(0xFF6B6B73);
   static const Color zincQuiet = Color(0xFF52525B);
 
-  /// Flat Hub card ground and its inset edges.
+  /// Flat card ground and its inset edges. Mine tab only.
   static const Color hubCard = Color(0xFF101012);
   static const Color hubCardEdge = Color(0xFF232327);
   static const Color hubTileEdge = Color(0xFF1F1F23);
 
-  /// Day-one step rows.
-  static const Color hubStep = Color(0xFF0D1214);
-
-  /// Vertical grounds: reliable card, slipping card, quiet row.
-  static const Color reliableTop = Color(0xFF111A1D);
-  static const Color reliableBottom = Color(0xFF101113);
-  static const Color slippingTop = Color(0xFF1D1710);
-  static const Color slippingBottom = Color(0xFF121110);
-  static const Color quietTop = Color(0xFF1B1510);
-  static const Color quietBottom = Color(0xFF121011);
-
   /// The labelled bottom bar (#0D0D0F at 90%).
   static const Color navGround = Color(0xE60D0D0F);
-
-  /// Hunter avatar fallback gradient end (#155E75).
-  static const Color hunterDeep = Color(0xFF155E75);
 
   // ── Chain palette (gem chips and monograms) ───────────────────────────────
   static const Color chainCore = Color(0xFFFB923C);

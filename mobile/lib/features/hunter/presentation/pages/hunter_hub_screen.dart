@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
 import 'package:blocnet/features/hunter/data/models/project_invite_model.dart';
 import 'package:blocnet/features/hunter/presentation/hub_navigation.dart';
@@ -133,29 +134,29 @@ class _BoardStatus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (error == null) {
-      return const Center(
+      return Center(
         child: SizedBox(
           width: 22,
           height: 22,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.hunterFill,
+            color: HubTone.accent,
           ),
         ),
       );
     }
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: AppSpace.allXl,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               error!,
               textAlign: TextAlign.center,
-              style: HubType.body(AppColors.zincMuted),
+              style: HubType.body(AppColors.textMuted),
             ),
-            const SizedBox(height: 12),
+            AppSpace.gapMd,
             HubButton(
               label: 'Try again',
               tone: HubButtonTone.outline,

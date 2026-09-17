@@ -19,15 +19,11 @@ class ReviewCard extends StatelessWidget {
     return AnswerCardFrame(
       name: proposal.name,
       tag: '',
-      pill: const HubPill(
-        label: 'In review',
-        color: AppColors.zincMuted,
-        background: AppColors.borderSubtle,
-      ),
+      pill: const HubPill.neutral(label: 'In review'),
       body: Text(
         'Submitted ${daysAgoSince(proposal.createdAt, now)}. A moderator is '
         "checking the diligence. You'll get a notification either way.",
-        style: HubType.meta(AppColors.zincFaint).copyWith(height: 1.55),
+        style: HubType.body(AppColors.textMuted),
       ),
     );
   }

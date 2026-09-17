@@ -1,5 +1,5 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/domain/hub_layout.dart';
@@ -9,10 +9,10 @@ import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/gem_state
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
 
-/// Monogram · name · chain chip and `N following` · state chip.
+/// Monogram · name · chain tag and `N following` · state pill.
 ///
-/// The row uses the 40px monogram and a 15px name; the gem page the 52px
-/// monogram and a 20px name ([large]).
+/// Rows use the 40px monogram and a 14px name; the gem page the 44px
+/// monogram and an 18px name ([large]).
 class GemHeaderLine extends StatelessWidget {
   const GemHeaderLine({super.key, required this.gem, this.large = false});
 
@@ -28,7 +28,7 @@ class GemHeaderLine extends StatelessWidget {
           tag: gem.chain,
           size: large ? GemMonogramSize.large : GemMonogramSize.medium,
         ),
-        const SizedBox(width: 12),
+        AppSpace.wGapMd,
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,16 +38,10 @@ class GemHeaderLine extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: large
-                    ? AppTypography.custom(
-                        size: 20,
-                        weight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -0.4,
-                        height: 1.25,
-                      )
+                    ? AppText.title(AppColors.textPrimary)
                     : HubType.rowTitle(AppColors.textPrimary),
               ),
-              SizedBox(height: large ? 4 : 3),
+              const SizedBox(height: AppSpace.xs),
               Row(
                 children: [
                   ChainChip(tag: gem.chain),
@@ -57,7 +51,7 @@ class GemHeaderLine extends StatelessWidget {
                       '${groupedCount(gem.followersCount)} following',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: HubType.meta(AppColors.zincDim),
+                      style: HubType.meta(AppColors.textFaint),
                     ),
                   ),
                 ],
@@ -65,7 +59,7 @@ class GemHeaderLine extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 8),
+        AppSpace.wGapSm,
         GemStateChip(chip: gem.chip),
       ],
     );
