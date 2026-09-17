@@ -6,6 +6,7 @@ import 'package:blocnet/features/moderation/presentation/widgets/inactive_gem_ca
 import 'package:blocnet/features/moderation/presentation/widgets/resolve_inactive_gem_dialog.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/api/api_error.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 
 /// Gems members have reported as abandoned (F-42), for a moderator to follow
@@ -72,7 +73,7 @@ class _InactiveGemsQueueScreenState extends State<InactiveGemsQueueScreen> {
     if (resolution == null || !mounted) return;
 
     setState(() => _resolvingProjectId = gem.projectId);
-    final messenger = ScaffoldMessenger.of(context);
+    final toast = AppSnackbar.of(context);
     try {
       await _apiClient.post(
         '/community/moderation/inactive-gems/${gem.projectId}/resolve',
@@ -82,25 +83,15 @@ class _InactiveGemsQueueScreenState extends State<InactiveGemsQueueScreen> {
         },
       );
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Reports on ${gem.projectName} resolved'),
-          backgroundColor: AppColors.successColor,
-        ),
-      );
+      toast.success('Reports on ${gem.projectName} resolved');
       setState(() => _gems = _gems
           .where((row) => row.projectId != gem.projectId)
           .toList(growable: false));
       _loadGems();
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            describeApiError(e, fallback: 'Could not resolve these reports.'),
-          ),
-          backgroundColor: AppColors.error500,
-        ),
+      toast.error(
+        describeApiError(e, fallback: 'Could not resolve these reports.'),
       );
     } finally {
       if (mounted) setState(() => _resolvingProjectId = null);

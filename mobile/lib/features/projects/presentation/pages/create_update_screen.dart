@@ -15,6 +15,7 @@ import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/tags_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -215,7 +216,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
     final updatesStore = context.read<UpdatesStore>();
     final projectsStore = context.read<ProjectsStore>();
     final notificationsStore = context.read<NotificationsStore>();
-    final messenger = ScaffoldMessenger.of(context);
+    final toast = AppSnackbar.of(context);
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
     final tagIds = _selectedSecondaryTagIds.toList();
@@ -252,19 +253,15 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       ]);
 
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(
-        content: Text(widget.isEdit ? 'Update saved' : 'Update published'),
-      ));
+      toast.success(widget.isEdit ? 'Update saved' : 'Update published');
       Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) return;
       final message = composerErrorText(error);
       setState(() => _submitError = message);
-      messenger.showSnackBar(SnackBar(
-        content: Text(widget.isEdit
-            ? "Couldn't save: $message"
-            : "Couldn't publish: $message"),
-      ));
+      toast.error(widget.isEdit
+          ? "Couldn't save: $message"
+          : "Couldn't publish: $message");
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

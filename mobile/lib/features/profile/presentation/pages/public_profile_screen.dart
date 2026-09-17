@@ -17,6 +17,7 @@ import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/utils/role_presentation.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -110,9 +111,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       userProfileStore.applyFollowingProfilesDelta(wasFollowing ? 1 : -1);
       if (!mounted) return;
       setState(() => _isFollowing = wasFollowing);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not update follow')),
-      );
+      AppSnackbar.showError(context, 'Could not update follow');
     } finally {
       if (mounted) setState(() => _isSubmittingFollow = false);
     }
@@ -164,10 +163,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     if (ok) {
       setState(() => _isBlocked = !_isBlocked);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not ${actionLabel.toLowerCase()} this user'),
-        ),
+      AppSnackbar.showError(
+        context,
+        'Could not ${actionLabel.toLowerCase()} this user',
       );
     }
 

@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -74,10 +75,10 @@ class WalletAddressRow extends StatelessWidget {
 
   void _copy(BuildContext context, String address) {
     Clipboard.setData(ClipboardData(text: address));
-    showWalletToast(
+    AppSnackbar.showSuccess(
       context,
-      message: 'Address copied.',
-      type: WalletToastType.success,
+      'Address copied.',
+      duration: AppSnackbar.longDuration,
     );
   }
 }

@@ -1,9 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_button.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -39,10 +39,10 @@ class PointsReceiveScreen extends StatelessWidget {
 
   void _copy(BuildContext context, String handle) {
     Clipboard.setData(ClipboardData(text: handle));
-    showWalletToast(
+    AppSnackbar.showSuccess(
       context,
-      message: 'Username copied.',
-      type: WalletToastType.success,
+      'Username copied.',
+      duration: AppSnackbar.longDuration,
     );
   }
 
@@ -56,10 +56,10 @@ class PointsReceiveScreen extends StatelessWidget {
       );
     } catch (_) {
       if (!context.mounted) return;
-      showWalletToast(
+      AppSnackbar.showError(
         context,
-        message: "Couldn't open sharing.",
-        type: WalletToastType.error,
+        "Couldn't open sharing.",
+        duration: AppSnackbar.longDuration,
       );
     }
   }

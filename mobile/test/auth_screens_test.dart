@@ -4,6 +4,7 @@ import 'package:blocnet/features/auth/presentation/pages/sign_up.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_feedback.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -128,7 +129,7 @@ void main() {
     expect(store.closedAlphaRejected, isTrue);
     expect(find.byType(ClosedAlphaScreen), findsOneWidget);
     expect(find.text('outsider@example.com'), findsOneWidget);
-    expect(find.byType(SnackBar), findsNothing);
+    expect(find.byType(AppToast), findsNothing);
 
     // "Use a different email" goes back to the form.
     await tester.tap(find.text('Use a different email'));

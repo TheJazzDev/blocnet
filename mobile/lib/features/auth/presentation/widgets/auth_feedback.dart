@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 
 /// Turns an auth failure into something a person can read. The store passes
@@ -23,45 +24,17 @@ String authErrorText(String? raw, String fallback) {
   return text;
 }
 
-/// A floating snackbar in the app's surface colours. [error] adds the red
-/// icon; otherwise a green tick.
+/// A toast for an auth outcome: an error, or [error] false for a success.
 void showAuthMessage(
   BuildContext context,
   String message, {
   bool error = true,
 }) {
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  if (messenger == null) return;
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgElevated,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.md,
-          side: BorderSide(color: AppColors.borderMuted),
-        ),
-        content: Row(
-          children: [
-            Icon(
-              error
-                  ? Icons.error_outline_rounded
-                  : Icons.check_circle_outline_rounded,
-              size: AppIcon.sm,
-              color: error ? AppColors.error500 : AppColors.successColor,
-            ),
-            AppSpace.wGapSm,
-            Expanded(
-              child: Text(
-                message,
-                style: AppText.label(AppColors.textPrimary),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  if (error) {
+    AppSnackbar.showError(context, message);
+  } else {
+    AppSnackbar.showSuccess(context, message);
+  }
 }
 
 /// A one-line tinted note: an icon and a sentence, left-aligned

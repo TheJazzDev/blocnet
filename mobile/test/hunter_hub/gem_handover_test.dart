@@ -6,6 +6,7 @@ import 'package:blocnet/features/hunter/data/models/pending_handover_model.dart'
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/handover_offer_sheet.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/features/profile/data/models/profile_search_result_model.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -152,7 +153,7 @@ void main() {
               find.text('That hunter already has a handover pending.')),
           findsOneWidget,
         );
-        expect(find.byType(SnackBar), findsNothing);
+        expect(find.byType(AppToast), findsNothing);
         expect(store.loads, 1);
       });
 

@@ -4,6 +4,7 @@ import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/handov
 import 'package:blocnet/services/hunter/hunter_board_store.dart';
 import 'package:blocnet/shared/widgets/app_sheet.dart';
 import 'package:blocnet/shared/widgets/username_suggest_field.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -33,7 +34,7 @@ class HandoverFlow {
     ProfileSearch? search,
   ) async {
     final store = context.read<HunterBoardStore>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
+    final toast = AppSnackbar.of(context);
     final username = await AppSheet.show<String>(
       context: context,
       showClose: false,
@@ -45,11 +46,7 @@ class HandoverFlow {
       ),
     );
     if (username == null) return;
-    messenger
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(handoverOfferedMessage(username))),
-      );
+    toast.success(handoverOfferedMessage(username));
     await Future.wait([store.loadGem(projectId), store.loadBoard()]);
   }
 

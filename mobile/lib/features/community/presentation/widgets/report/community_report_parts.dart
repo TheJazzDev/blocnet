@@ -3,35 +3,18 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/shared/widgets/app_button.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 
 /// Confirms a sent report, with a shortcut to My reports.
 void showCommunityReportSent(BuildContext context) {
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  if (messenger == null) return;
   final navigator = Navigator.of(context);
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgElevated,
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.md),
-        content: Text(
-          'Report sent',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.bodySize,
-            weight: FontWeight.w600,
-          ),
-        ),
-        action: SnackBarAction(
-          label: 'My reports',
-          textColor: AppColors.primary400,
-          onPressed: () => navigator.pushNamed(AppRoutes.myReports),
-        ),
-      ),
-    );
+  AppSnackbar.showSuccess(
+    context,
+    'Report sent',
+    actionLabel: 'My reports',
+    onAction: () => navigator.pushNamed(AppRoutes.myReports),
+  );
 }
 
 /// The reported text, quoted.

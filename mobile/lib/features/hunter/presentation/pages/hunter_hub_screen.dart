@@ -13,6 +13,7 @@ import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/hunter/hunter_board_store.dart';
 import 'package:blocnet/services/projects/project_invites_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -53,12 +54,10 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
   Future<void> _respond(ProjectInviteModel invite, bool accept) async {
     final invites = context.read<ProjectInvitesStore>();
     final board = context.read<HunterBoardStore>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
+    final toast = AppSnackbar.of(context);
     final ok = await invites.respond(invite.id, accept: accept);
     if (!ok) {
-      messenger?.showSnackBar(SnackBar(
-        content: Text(invites.lastError ?? 'Could not answer the invite.'),
-      ));
+      toast.error(invites.lastError ?? 'Could not answer the invite.');
       return;
     }
     if (accept) await board.loadBoard();

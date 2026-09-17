@@ -4,6 +4,7 @@ import 'package:blocnet/features/profile/presentation/pages/public_profile_scree
 import 'package:blocnet/features/projects/presentation/widgets/project/follow_preference_bottom_sheet.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/detail_dialogs.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 
 /// The live [GemActions]: stores, sheets and the gem page.
@@ -34,18 +35,16 @@ Future<void> askForUpdate(
   String projectId,
   String gemName,
 ) async {
-  final messenger = ScaffoldMessenger.maybeOf(context);
+  final toast = AppSnackbar.of(context);
   final waiting = await store.requestUpdateOn(projectId);
-  if (!context.mounted || messenger == null) return;
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(
-        waiting == null
-            ? 'Already asked this week.'
-            : waiting == 1
-                ? 'Asked. 1 member waiting on $gemName.'
-                : 'Asked. $waiting members waiting on $gemName.',
-      ),
-    ),
+  if (!context.mounted) return;
+  if (waiting == null) {
+    toast.info('Already asked this week.');
+    return;
+  }
+  toast.success(
+    waiting == 1
+        ? 'Asked. 1 member waiting on $gemName.'
+        : 'Asked. $waiting members waiting on $gemName.',
   );
 }

@@ -4,6 +4,7 @@ import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/receive_address_card.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_state_views.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -30,10 +31,10 @@ class WalletReceiveScreen extends StatelessWidget {
       );
     } catch (_) {
       if (!context.mounted) return;
-      showWalletToast(
+      AppSnackbar.showError(
         context,
-        message: "Couldn't open sharing.",
-        type: WalletToastType.error,
+        "Couldn't open sharing.",
+        duration: AppSnackbar.longDuration,
       );
     }
   }

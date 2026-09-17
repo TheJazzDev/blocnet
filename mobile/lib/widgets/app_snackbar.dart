@@ -1,146 +1,169 @@
-import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/widgets/app_toast.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
 
+export 'app_toast.dart' show AppToast, AppToastKind;
+
+/// The app's one toast.
+///
+/// It draws in the root overlay, so it shows above open bottom sheets and
+/// dialogs — unlike `ScaffoldMessenger`, whose snack bars sit under them.
+/// One toast shows at a time; a new one replaces the last.
+///
+/// ```dart
+/// AppSnackbar.showSuccess(context, 'Saved');
+/// AppSnackbar.showInfo(context, 'Report sent',
+///     actionLabel: 'My reports', onAction: openReports);
+///
+/// // Across an async gap, or when the route pops first:
+/// final toast = AppSnackbar.of(context);
+/// await save();
+/// toast.error('Could not save.');
+/// ```
 class AppSnackbar {
-  static OverlayEntry? _activeEntry;
-  static Timer? _dismissTimer;
+  const AppSnackbar._();
 
-  static void showError(BuildContext context, String message) {
-    _show(
-      context,
-      _ToastSpec(
-        message: message,
-        icon: Icons.error_outline_rounded,
-        background: AppColors.error900,
-        border: AppColors.error500,
-        iconColor: AppColors.error500,
-      ),
-    );
-  }
+  static const Duration defaultDuration = Duration(seconds: 3);
 
-  static void showSuccess(BuildContext context, String message) {
-    _show(
-      context,
-      _ToastSpec(
-        message: message,
-        icon: Icons.check_circle_outline_rounded,
-        background: AppColors.bgSurface,
-        border: AppColors.successColor,
-        iconColor: AppColors.successColor,
-      ),
-    );
-  }
+  /// For money and address messages people may want to read twice.
+  static const Duration longDuration = Duration(seconds: 6);
 
-  static void _show(BuildContext context, _ToastSpec spec) {
-    _dismissActive();
-    final overlay = Overlay.maybeOf(context, rootOverlay: true);
-    if (overlay == null) {
-      return;
-    }
+  static OverlayEntry? _active;
 
+  /// The overlay [_active] sits in. When a test (or a hot restart) tears
+  /// that overlay down, the entry is simply forgotten.
+  static OverlayState? _activeOverlay;
+
+  static void showSuccess(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = defaultDuration,
+  }) =>
+      of(context).success(
+        message,
+        actionLabel: actionLabel,
+        onAction: onAction,
+        duration: duration,
+      );
+
+  static void showError(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = defaultDuration,
+  }) =>
+      of(context).error(
+        message,
+        actionLabel: actionLabel,
+        onAction: onAction,
+        duration: duration,
+      );
+
+  static void showInfo(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = defaultDuration,
+  }) =>
+      of(context).info(
+        message,
+        actionLabel: actionLabel,
+        onAction: onAction,
+        duration: duration,
+      );
+
+  /// Captures the root overlay now, for a toast shown later.
+  static AppToaster of(BuildContext context) {
     final media = MediaQuery.maybeOf(context);
-    final topInset = (media?.padding.top ?? 0) + kToolbarHeight + 12;
-
-    final entry = OverlayEntry(
-      builder: (_) => _OverlayToast(
-        topInset: topInset,
-        spec: spec,
-        onClose: _dismissActive,
-      ),
+    return AppToaster._(
+      Overlay.maybeOf(context, rootOverlay: true),
+      (media?.padding.top ?? 0) + kToolbarHeight + 12,
     );
-
-    _activeEntry = entry;
-    overlay.insert(entry);
-    _dismissTimer = Timer(const Duration(seconds: 3), _dismissActive);
   }
 
-  static void _dismissActive() {
-    _dismissTimer?.cancel();
-    _dismissTimer = null;
-    _activeEntry?.remove();
-    _activeEntry = null;
+  /// Removes the toast on screen, if any.
+  static void dismiss() {
+    final entry = _active;
+    if (entry != null) _remove(entry);
+  }
+
+  static void _remove(OverlayEntry entry) {
+    if (!identical(_active, entry)) return;
+    final overlay = _activeOverlay;
+    _active = null;
+    _activeOverlay = null;
+    if (overlay == null || !overlay.mounted) return;
+    entry.remove();
+    entry.dispose();
   }
 }
 
-class _ToastSpec {
-  const _ToastSpec({
-    required this.message,
-    required this.icon,
-    required this.background,
-    required this.border,
-    required this.iconColor,
-  });
+/// A toast target captured by [AppSnackbar.of].
+class AppToaster {
+  const AppToaster._(this._overlay, this._top);
 
-  final String message;
-  final IconData icon;
-  final Color background;
-  final Color border;
-  final Color iconColor;
-}
+  final OverlayState? _overlay;
+  final double _top;
 
-class _OverlayToast extends StatelessWidget {
-  const _OverlayToast({
-    required this.topInset,
-    required this.spec,
-    required this.onClose,
-  });
+  void success(
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = AppSnackbar.defaultDuration,
+  }) =>
+      show(AppToastKind.success, message,
+          actionLabel: actionLabel, onAction: onAction, duration: duration);
 
-  final double topInset;
-  final _ToastSpec spec;
-  final VoidCallback onClose;
+  void error(
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = AppSnackbar.defaultDuration,
+  }) =>
+      show(AppToastKind.error, message,
+          actionLabel: actionLabel, onAction: onAction, duration: duration);
 
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: topInset,
-      left: 16,
-      right: 16,
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            color: spec.background,
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-            border: Border.all(color: spec.border),
-          ),
-          padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.md, AppSpace.md),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(spec.icon, size: AppIcon.md, color: spec.iconColor),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Text(
-                  spec.message,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: AppText.labelSize,
-                    weight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpace.sm),
-              GestureDetector(
-                onTap: onClose,
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpace.hair),
-                  child: Icon(
-                    Icons.close_rounded,
-                    size: AppIcon.md,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
-            ],
-          ),
+  void info(
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = AppSnackbar.defaultDuration,
+  }) =>
+      show(AppToastKind.info, message,
+          actionLabel: actionLabel, onAction: onAction, duration: duration);
+
+  void show(
+    AppToastKind kind,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+    Duration duration = AppSnackbar.defaultDuration,
+  }) {
+    final overlay = _overlay;
+    if (overlay == null || !overlay.mounted) return;
+    AppSnackbar.dismiss();
+
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => Positioned(
+        top: _top,
+        left: 16,
+        right: 16,
+        child: AppToast(
+          message: message,
+          kind: kind,
+          duration: duration,
+          actionLabel: actionLabel,
+          onAction: onAction,
+          onDismiss: () => AppSnackbar._remove(entry),
         ),
       ),
     );
+    AppSnackbar._active = entry;
+    AppSnackbar._activeOverlay = overlay;
+    overlay.insert(entry);
   }
 }
