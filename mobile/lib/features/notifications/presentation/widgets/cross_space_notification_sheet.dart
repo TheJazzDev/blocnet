@@ -4,6 +4,7 @@ import 'package:blocnet/features/notifications/data/models/notification_model.da
 import 'package:blocnet/features/notifications/presentation/widgets/notification_style.dart';
 import 'package:blocnet/features/notifications/presentation/widgets/parts/notif_ui.dart';
 import 'package:blocnet/services/notifications/notification_space_target.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Preview of a notification that belongs to another space. Resolves to
@@ -85,7 +86,8 @@ class CrossSpaceNotificationSheet extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                NotifIconSquare(icon: style.icon, color: style.color),
+                AppIconSquare(
+                    icon: style.icon, color: style.color, bordered: true),
                 const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Column(

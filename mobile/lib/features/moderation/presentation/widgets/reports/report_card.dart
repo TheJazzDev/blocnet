@@ -82,12 +82,12 @@ class ReportCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              ModPill(
+              AppPill.caps(
                 label: report.status.label,
                 color: reportStatusColor(report.status),
               ),
               AppSpace.wGapXs,
-              ModPill(
+              AppPill.caps(
                 label: report.targetType.label,
                 color: AppColors.textMuted,
               ),

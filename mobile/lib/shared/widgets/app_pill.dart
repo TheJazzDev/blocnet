@@ -116,14 +116,14 @@ class AppPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: dense ? AppIcon.xs : AppIcon.sm, color: foreground),
+            Icon(icon,
+                size: dense ? AppIcon.xs : AppIcon.sm, color: foreground),
             SizedBox(width: dense ? AppSpace.hair : AppSpace.xs),
           ],
           Text(
             text,
-            style: uppercase
-                ? textStyle.copyWith(letterSpacing: 0.4)
-                : textStyle,
+            style:
+                uppercase ? textStyle.copyWith(letterSpacing: 0.4) : textStyle,
           ),
         ],
       ),

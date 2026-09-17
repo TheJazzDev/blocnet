@@ -93,9 +93,8 @@ class AppButton extends StatelessWidget {
               alignment: _compact ? Alignment.center : null,
               // 44px tall at regular size: the accessibility minimum for a
               // touch target.
-              constraints: _compact
-                  ? null
-                  : BoxConstraints(minHeight: _small ? 36 : 44),
+              constraints:
+                  _compact ? null : BoxConstraints(minHeight: _small ? 36 : 44),
               padding: EdgeInsets.symmetric(
                 horizontal: _compact || _small ? AppSpace.md : AppSpace.lg,
                 vertical: _compact ? 0 : (_small ? AppSpace.sm : AppSpace.md),
@@ -155,4 +154,3 @@ class AppButton extends StatelessWidget {
     );
   }
 }
-

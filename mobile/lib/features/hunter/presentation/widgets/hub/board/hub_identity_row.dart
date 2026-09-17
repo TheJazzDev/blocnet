@@ -1,11 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/domain/chain_style.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_pill.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/features/levels/domain/level_tier.dart';
 import 'package:blocnet/features/levels/presentation/widgets/tier_level_badge.dart';
-import 'package:blocnet/shared/widgets/app_avatar.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Who the Hub belongs to, as the design's identity row states it.
@@ -81,7 +80,7 @@ class HubIdentityRow extends StatelessWidget {
                       TierLevelBadge(level: level),
                     ],
                     const SizedBox(width: 6),
-                    const HubPill(label: 'Hunter', color: HubTone.hunterRole),
+                    AppPill.caps(label: 'Hunter', color: HubTone.hunterRole),
                   ],
                 ),
                 if (subtitle.isNotEmpty) ...[

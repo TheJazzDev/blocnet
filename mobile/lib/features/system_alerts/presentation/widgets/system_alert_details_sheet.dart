@@ -6,6 +6,7 @@ import 'package:blocnet/features/system_alerts/data/models/system_alert_model.da
 import 'package:blocnet/features/system_alerts/presentation/utils/system_alert_format.dart';
 import 'package:blocnet/features/system_alerts/presentation/widgets/system_alert_detail_parts.dart';
 import 'package:blocnet/features/system_alerts/presentation/widgets/system_alert_ui.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -81,7 +82,7 @@ class SystemAlertDetailsSheet extends StatelessWidget {
                       weight: AppText.bold),
                 ),
               ),
-              AlertPill(label: alert.status, color: color),
+              AppPill.caps(label: alert.status, color: color),
             ],
           ),
           const SizedBox(height: AppSpace.md),

@@ -9,9 +9,9 @@ import 'package:blocnet/features/gems/presentation/widgets/parts/gems_tone.dart'
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/chain_chip.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/gem_monogram.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_pill.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_deadline_line.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// A followed gem on the member's board: its newest update, its next
@@ -126,7 +126,7 @@ class _TitleLine extends StatelessWidget {
           children: [
             ChainChip(tag: gem.project.primaryTag.name),
             if (gem.isQuiet)
-              const HubPill(
+              AppPill.caps(
                 key: ValueKey('quiet-pill'),
                 label: 'Quiet',
                 color: GemsTone.quiet,

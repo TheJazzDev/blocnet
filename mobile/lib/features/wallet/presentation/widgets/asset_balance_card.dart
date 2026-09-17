@@ -2,11 +2,11 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_headline.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_pill.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_state_views.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -38,10 +38,11 @@ class AssetBalanceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              WalletIconSquare(
+              AppIconSquare(
                 color: assetAccentColor(assetCode),
                 symbol: asset.symbol,
                 size: 32,
+                bordered: true,
               ),
               const SizedBox(width: AppSpace.md),
               Flexible(
@@ -53,7 +54,7 @@ class AssetBalanceCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpace.sm),
-              WalletPill(label: assetBadgeText(asset)),
+              AppPill.caps(label: assetBadgeText(asset), dense: true),
             ],
           ),
           const SizedBox(height: AppSpace.md),

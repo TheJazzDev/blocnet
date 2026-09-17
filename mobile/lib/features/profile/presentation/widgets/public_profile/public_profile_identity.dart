@@ -2,11 +2,10 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_pill.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/widgets/profile_avatar.dart';
 import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_role_style.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
-import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Avatar, name, handle and lead role, left-aligned, at the top of a
@@ -80,7 +79,7 @@ class PublicProfileIdentity extends StatelessWidget {
               ],
               if (role != null) ...[
                 AppSpace.gapSm,
-                ProfilePill(
+                AppPill.caps(
                   label: publicProfileRoleLabel(role),
                   color: publicProfileRoleColor(role),
                 ),

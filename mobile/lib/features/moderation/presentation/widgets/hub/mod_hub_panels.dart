@@ -39,9 +39,11 @@ class ModHubRestrictionsCard extends StatelessWidget {
       padding: AppSpace.row,
       child: Row(
         children: [
-          ModIconSquare(
+          AppIconSquare(
             icon: Icons.block_rounded,
             color: AppColors.tagPartnership,
+            size: 36,
+            iconSize: AppIcon.md,
           ),
           AppSpace.wGapMd,
           Expanded(

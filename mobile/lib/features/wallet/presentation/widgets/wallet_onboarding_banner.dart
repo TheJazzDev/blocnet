@@ -1,7 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_pill.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// One-time tip on the wallet tab, dismissible.
@@ -24,10 +24,11 @@ class WalletOnboardingBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          WalletIconSquare(
+          AppIconSquare(
             color: WalletTone.accent,
             icon: Icons.lightbulb_outline_rounded,
             size: 32,
+            bordered: true,
           ),
           const SizedBox(width: AppSpace.md),
           Expanded(

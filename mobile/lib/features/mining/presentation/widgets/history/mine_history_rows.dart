@@ -3,7 +3,7 @@ import 'package:blocnet/features/mining/data/mine_format.dart';
 import 'package:blocnet/features/mining/data/mine_history.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/mining/presentation/mine_palette.dart';
-import 'package:blocnet/features/mining/presentation/widgets/mine_member_parts.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// `15 SEP · 132 BNP` with the outcome pill.
@@ -39,7 +39,7 @@ class MineHistoryHeader extends StatelessWidget {
                   .copyWith(letterSpacing: 1),
             ),
           ),
-          MinePill(label: group.pill, tone: tone),
+          AppPill.caps(label: group.pill, color: tone),
         ],
       ),
     );

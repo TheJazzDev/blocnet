@@ -1,8 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_pill.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_rows.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// One transaction or withdrawal as a list row: direction square, title
@@ -28,7 +28,8 @@ class WalletActivityRow extends StatelessWidget {
         padding: AppSpace.row,
         child: Row(
           children: [
-            WalletIconSquare(color: _tone, icon: item.icon, size: 34),
+            AppIconSquare(
+                color: _tone, icon: item.icon, size: 34, bordered: true),
             const SizedBox(width: AppSpace.md),
             Expanded(
               child: Column(
@@ -46,7 +47,10 @@ class WalletActivityRow extends StatelessWidget {
                       ),
                       if (item.badgeLabel != null && badgeColor != null) ...[
                         const SizedBox(width: AppSpace.sm),
-                        WalletPill(label: item.badgeLabel!, color: badgeColor),
+                        AppPill.caps(
+                            label: item.badgeLabel!,
+                            color: badgeColor,
+                            dense: true),
                       ],
                     ],
                   ),

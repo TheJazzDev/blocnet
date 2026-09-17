@@ -3,8 +3,8 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/domain/hub_layout.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/board/reliability_metrics.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/board/reliability_pips.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_pill.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// The three states of the reliability card.
@@ -90,9 +90,9 @@ class ReliabilityCard extends StatelessWidget {
         ),
         AppSpace.wGapSm,
         if (tone == null)
-          HubPill.neutral(label: standingLabel)
+          AppPill.caps(label: standingLabel)
         else
-          HubPill(label: standingLabel, color: tone),
+          AppPill.caps(label: standingLabel, color: tone),
         const Spacer(),
         if (trailingLabel != null)
           Text(

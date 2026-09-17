@@ -5,6 +5,7 @@ import 'package:blocnet/features/mining/presentation/mine_palette.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mine_member_parts.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Amber for the top three, as the old board; muted otherwise.
@@ -132,7 +133,7 @@ class _RankBox extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
       alignment: Alignment.center,
       decoration: top
-          ? MinePalette.tag(MinePalette.amber, radius: AppRadius.sm)
+          ? appTintDecoration(MinePalette.amber, bordered: true)
           : BoxDecoration(
               color: MinePalette.raised.withValues(alpha: 0.5),
               borderRadius: AppRadius.sm,

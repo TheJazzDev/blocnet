@@ -33,7 +33,7 @@ class InactiveGemCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              ModPill(label: reportLabel, color: AppColors.tagAirdrop),
+              AppPill.caps(label: reportLabel, color: AppColors.tagAirdrop),
               const Spacer(),
               Text(
                 'Since ${DateFormat('MMM d').format(gem.firstReportedAt.toLocal())}',
@@ -138,7 +138,7 @@ class _HunterRow extends StatelessWidget {
             ),
           ),
           AppSpace.wGapSm,
-          ModPill(label: standing, color: _tone, uppercase: false),
+          AppPill.caps(label: standing, color: _tone, uppercase: false),
         ],
       ),
     );

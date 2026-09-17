@@ -4,9 +4,9 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_headline.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_pill.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -37,7 +37,8 @@ class AssetRow extends StatelessWidget {
         padding: AppSpace.row,
         child: Row(
           children: [
-            WalletIconSquare(color: accent, symbol: asset.symbol),
+            AppIconSquare(
+                color: accent, symbol: asset.symbol, size: 36, bordered: true),
             const SizedBox(width: AppSpace.md),
             Expanded(
               flex: 3,
@@ -59,7 +60,8 @@ class AssetRow extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpace.sm),
                       Flexible(
-                        child: WalletPill(label: assetBadgeText(asset)),
+                        child: AppPill.caps(
+                            label: assetBadgeText(asset), dense: true),
                       ),
                     ],
                   ),

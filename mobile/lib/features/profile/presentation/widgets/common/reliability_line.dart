@@ -2,7 +2,7 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/features/profile/domain/reliability_summary.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_pill.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// `[RELIABLE] 4 of 5 gems current` — the compact reliability line.
@@ -21,7 +21,7 @@ class ReliabilityLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        ProfilePill(
+        AppPill.caps(
           label: summary.standing,
           color: colorFor(summary.tone),
         ),

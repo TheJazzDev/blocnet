@@ -2,6 +2,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/mining/data/mine_cycle_phase.dart';
 import 'package:blocnet/features/mining/data/mine_cycle_view.dart';
 import 'package:blocnet/features/mining/presentation/mine_palette.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Icon, tone (tag, icons) and ring colour per phase, as the old hero's
@@ -87,18 +88,7 @@ class MineStatusRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpace.sm),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.md,
-            vertical: AppSpace.xs,
-          ),
-          decoration: MinePalette.tag(style.tone),
-          child: Text(
-            view.pill,
-            style: AppText.caption(style.tone, weight: AppText.bold)
-                .copyWith(letterSpacing: 0.8),
-          ),
-        ),
+        AppPill.caps(label: view.pill, color: style.tone),
       ],
     );
   }
@@ -187,18 +177,9 @@ class MineSideColumn extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: tone.withValues(alpha: 0.12),
-              borderRadius: AppRadius.sm,
-            ),
-            child: Icon(
-              view.isAmber ? Icons.timer_outlined : Icons.speed_rounded,
-              size: AppIcon.sm,
-              color: tone,
-            ),
+          AppIconSquare(
+            icon: view.isAmber ? Icons.timer_outlined : Icons.speed_rounded,
+            color: tone,
           ),
           const SizedBox(width: AppSpace.md),
           Expanded(

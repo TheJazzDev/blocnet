@@ -44,7 +44,7 @@ class AppealCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              ModPill(
+              AppPill.caps(
                 label: appeal.statusLabel,
                 color: appealStatusColor(appeal.status),
               ),

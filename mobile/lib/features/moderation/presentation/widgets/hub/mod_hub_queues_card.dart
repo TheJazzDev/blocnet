@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -46,7 +47,8 @@ class ModHubQueuesCard extends StatelessWidget {
         child: Column(
           children: [
             for (var i = 0; i < queues.length; i++) ...[
-              if (i > 0) const ModHairline(indent: AppSpace.lg + 36 + AppSpace.md),
+              if (i > 0)
+                const ModHairline(indent: AppSpace.lg + 36 + AppSpace.md),
               _QueueRow(queue: queues[i]),
             ],
           ],
@@ -77,7 +79,11 @@ class _QueueRow extends StatelessWidget {
             padding: AppSpace.row,
             child: Row(
               children: [
-                ModIconSquare(icon: queue.icon, color: queue.color),
+                AppIconSquare(
+                    icon: queue.icon,
+                    color: queue.color,
+                    size: 36,
+                    iconSize: AppIcon.md),
                 AppSpace.wGapMd,
                 Expanded(
                   child: Column(
@@ -102,7 +108,7 @@ class _QueueRow extends StatelessWidget {
                 ),
                 if (count != null && count > 0) ...[
                   AppSpace.wGapSm,
-                  ModPill(label: '$count', color: queue.color),
+                  AppPill.caps(label: '$count', color: queue.color),
                 ],
                 AppSpace.wGapXs,
                 Icon(

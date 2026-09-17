@@ -3,8 +3,8 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/assets_section.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_pill.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Bottom sheet listing the wallet's assets; pops the chosen asset code.
@@ -84,10 +84,11 @@ class _AssetOption extends StatelessWidget {
         padding: AppSpace.row,
         child: Row(
           children: [
-            WalletIconSquare(
+            AppIconSquare(
               color: assetAccentColor(asset.asset),
               symbol: asset.symbol,
               size: 32,
+              bordered: true,
             ),
             const SizedBox(width: AppSpace.md),
             Expanded(

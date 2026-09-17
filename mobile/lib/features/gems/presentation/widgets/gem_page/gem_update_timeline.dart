@@ -3,10 +3,10 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/gems/presentation/widgets/parts/gems_tone.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/gem_notice_cards.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_pill.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_deadline_line.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// A gem's updates, newest first, on a 1px rail. The newest node carries the
@@ -131,7 +131,7 @@ class _Event extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      HubPill(
+                      AppPill.caps(
                         label: update.priority.label,
                         color: update.priority.color,
                       ),

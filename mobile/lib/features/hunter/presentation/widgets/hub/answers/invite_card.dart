@@ -3,7 +3,6 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/project_invite_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/answers/answer_card_frame.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_pill.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +31,7 @@ class InviteCard extends StatelessWidget {
       name: invite.projectName,
       tag: invite.primaryTag ?? '',
       highlighted: true,
-      pill: HubPill(label: 'Invite', color: HubTone.accent),
+      pill: AppPill.caps(label: 'Invite', color: HubTone.accent),
       body: Text.rich(
         TextSpan(children: inviteSentence(invite, now)),
         style: HubType.body(AppColors.textMuted),

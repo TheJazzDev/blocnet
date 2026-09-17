@@ -2,11 +2,11 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/profile_list_row.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_pill.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/users/hunter_application_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -123,9 +123,9 @@ class _BecomeHunterRow extends StatelessWidget {
     };
     final pill = switch (status) {
       HunterApplicationStatus.pending =>
-        ProfilePill(label: 'Pending', color: AppColors.warning500),
+        AppPill.caps(label: 'Pending', color: AppColors.warning500),
       HunterApplicationStatus.approved =>
-        ProfilePill(label: 'Approved', color: AppColors.successColor),
+        AppPill.caps(label: 'Approved', color: AppColors.successColor),
       _ => null,
     };
     return ProfileListRow(
