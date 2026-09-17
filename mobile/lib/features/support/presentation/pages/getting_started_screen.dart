@@ -25,10 +25,9 @@ class GettingStartedScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpace.lg),
         children: [
-          const SupportHeader(
+          SupportHeader(
             title: 'Your first week on Blocnet',
-            subtitle: 'Seven steps, in the order that makes the app click. You '
-                'can do them all in one sitting.',
+            subtitle: '${gettingStartedSteps.length} steps, in order',
           ),
           const SizedBox(height: AppSpace.lg),
           for (var i = 0; i < gettingStartedSteps.length; i++)

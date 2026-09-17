@@ -23,7 +23,7 @@ const List<GettingStartedStep> gettingStartedSteps = [
   GettingStartedStep(
     icon: Icons.diamond_outlined,
     title: 'Follow a few Gems',
-    body: 'Open the Discover tab, browse the curated feed or use the filters, '
+    body: 'Open the Gems tab, browse the curated list or use the filters, '
         'and tap Follow on the Gems you want to track. Everything else on '
         'Blocnet (your feed, Alpha Radar, Edge briefs) starts from the Gems '
         'you follow.',
@@ -39,10 +39,10 @@ const List<GettingStartedStep> gettingStartedSteps = [
   GettingStartedStep(
     icon: Icons.memory_rounded,
     title: 'Start mining BNP',
-    body: 'In the Mining tab start a session and claim your BNP when the cycle '
+    body: 'In the Mine tab start a session and claim your BNP when the cycle '
         'ends. Bind a referral code once to boost your rate, and share your '
-        'own code from Profile > Referral Code.',
-    actionLabel: 'Open Mining',
+        'own code from Mine > Earn faster.',
+    actionLabel: 'Open Mine',
     route: AppRoutes.mining,
   ),
   GettingStartedStep(

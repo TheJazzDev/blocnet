@@ -50,6 +50,42 @@ void main() {
     expect(find.textContaining('coming soon'), findsNothing);
   });
 
+  testWidgets('a link that cannot open says so instead of doing nothing',
+      (tester) async {
+    final opened = <Uri>[];
+    await tester.pumpWidget(_app(HelpSupportScreen(
+      launcher: (uri) async {
+        opened.add(uri);
+        return false;
+      },
+    )));
+    await tester.pump();
+
+    await tester.tap(find.text('Email Support'));
+    await tester.pump();
+
+    expect(opened.single.toString(), 'mailto:support@blocnet.app');
+    expect(find.text('Could not open your mail app'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 10));
+  });
+
+  test('support copy names the tabs as they are now', () {
+    final copy = [
+      for (final step in gettingStartedSteps) ...[
+        step.body,
+        step.actionLabel ?? '',
+      ],
+      for (final entry in faqEntries) entry.answer,
+      for (final term in glossaryTerms) term.definition,
+    ].join('\n');
+    expect(copy, isNot(contains('Discover')));
+    expect(copy, isNot(contains('Mining tab')));
+    expect(copy, isNot(contains('Open Mining')));
+    expect(copy, isNot(contains('Profile > Referral Code')));
+    expect(copy, contains('Gems tab'));
+    expect(copy, contains('Mine tab'));
+  });
+
   test('FAQ covers the core vocabulary', () {
     final questions = faqEntries.map((e) => e.question.toLowerCase()).toList();
     for (final term in [

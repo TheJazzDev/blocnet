@@ -18,7 +18,7 @@ const List<FaqEntry> faqEntries = [
     icon: Icons.diamond_outlined,
     question: 'What is a Gem?',
     answer: 'A Gem is a crypto project listed on Blocnet. You find Gems in the '
-        'Discover tab, follow the ones you care about and their Updates show '
+        'Gems tab, follow the ones you care about and their Updates show '
         'up in your Home feed. Gems are proposed by Hunters and approved by '
         'the Blocnet team before they are listed.',
   ),
@@ -62,7 +62,7 @@ const List<FaqEntry> faqEntries = [
   FaqEntry(
     icon: Icons.memory_rounded,
     question: 'How does mining work?',
-    answer: 'Open the Mining tab and start a session. BNP accrues every hour '
+    answer: 'Open the Mine tab and start a session. BNP accrues every hour '
         'while the session runs; when the cycle ends you claim what you '
         'mined and start the next one. Binding a referral code and inviting '
         'friends boosts your rate, and the leaderboard shows the top miners.',
