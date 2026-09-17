@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/notifications/presentation/widgets/notification_style.dart';
 import 'package:flutter/material.dart';
 
 class NotificationCategoryFilter {
@@ -15,49 +15,28 @@ class NotificationCategoryFilter {
   final Color color;
 }
 
-final List<NotificationCategoryFilter> notificationCategoryFilters = [
-  NotificationCategoryFilter(
-    key: 'all',
-    label: 'All',
-    color: AppColors.textSecondary,
-  ),
-  NotificationCategoryFilter(
-    key: 'updates',
-    label: 'Updates',
-    color: AppColors.teal400,
-  ),
-  NotificationCategoryFilter(
-    key: 'social',
-    label: 'Social',
-    color: AppColors.primary400,
-  ),
-  NotificationCategoryFilter(
-    key: 'governance',
-    label: 'Governance',
-    color: AppColors.warning500,
-  ),
-  NotificationCategoryFilter(
-    key: 'wallet',
-    label: 'Wallet',
-    color: AppColors.successColor,
-  ),
-  NotificationCategoryFilter(
-    key: 'mining_referrals',
-    label: 'Mining & Referrals',
-    color: AppColors.tagInfo,
-  ),
-  NotificationCategoryFilter(
-    key: 'rewards',
-    label: 'Rewards',
-    color: AppColors.tagAirdrop,
-  ),
-  NotificationCategoryFilter(
-    key: 'system',
-    label: 'System',
-    color: AppColors.tagPartnership,
-  ),
+const _categoryKeys = [
+  'all',
+  'updates',
+  'social',
+  'governance',
+  'wallet',
+  'mining_referrals',
+  'rewards',
+  'system',
 ];
 
+/// The filters, coloured like the tiles' category pills.
+List<NotificationCategoryFilter> get notificationCategoryFilters => [
+      for (final key in _categoryKeys)
+        NotificationCategoryFilter(
+          key: key,
+          label: styleForNotificationCategory(key).label,
+          color: styleForNotificationCategory(key).color,
+        ),
+    ];
+
+/// Horizontal row of outlined filter pills.
 class NotificationCategoryFilterBar extends StatelessWidget {
   const NotificationCategoryFilterBar({
     super.key,
@@ -76,41 +55,65 @@ class NotificationCategoryFilterBar extends StatelessWidget {
       height: 48,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(
-            AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.sm),
+            AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.sm),
         scrollDirection: Axis.horizontal,
+        itemCount: options.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpace.sm),
         itemBuilder: (context, index) {
           final option = options[index];
-          final isSelected = option.key == selectedKey;
-          return GestureDetector(
+          return _FilterPill(
+            option: option,
+            selected: option.key == selectedKey,
             onTap: () => onSelect(option.key),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpace.md, vertical: 7),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? option.color.withValues(alpha: 0.18)
-                    : AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                border: Border.all(
-                  color: isSelected
-                      ? option.color.withValues(alpha: 0.6)
-                      : AppColors.borderSubtle,
-                ),
-              ),
-              child: Text(
-                option.label,
-                style: AppTypography.custom(
-                  color: isSelected ? option.color : AppColors.textMuted,
-                  size: AppText.captionSize,
-                  weight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                ),
-              ),
-            ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(width: AppSpace.sm),
-        itemCount: options.length,
+      ),
+    );
+  }
+}
+
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final NotificationCategoryFilter option;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = option.color;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
+          decoration: BoxDecoration(
+            color: selected
+                ? color.withValues(alpha: 0.12)
+                : AppColors.bgSurface,
+            borderRadius: AppRadius.full,
+            border: Border.all(
+              color: selected
+                  ? color.withValues(alpha: 0.4)
+                  : AppColors.borderSubtle,
+            ),
+          ),
+          child: Text(
+            option.label,
+            style: AppText.label(
+              selected ? color : AppColors.textMuted,
+              weight: selected ? AppText.bold : AppText.semibold,
+            ),
+          ),
+        ),
       ),
     );
   }
