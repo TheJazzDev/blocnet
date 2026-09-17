@@ -1,13 +1,15 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/shared/widgets/app_icon_square.dart';
 import 'package:blocnet/shared/widgets/app_surface.dart';
 import 'package:flutter/material.dart';
 
-/// Label over a number, with an optional icon and a delta line.
+/// The stat tile of the visual language: a tinted icon square beside a small
+/// label and its value, in a flat card. Two per row. A chevron shows only
+/// when the tile opens something.
 ///
-/// The mining dashboard, hunter stats, wallet and the profile header all draw
-/// this and all draw it differently. Numbers use tabular figures here so a
-/// value that ticks upward does not shuffle its own digits sideways.
+/// Numbers use tabular figures so a value that ticks upward does not shuffle
+/// its own digits sideways.
 ///
 /// ```dart
 /// AppStatTile(label: 'Active miners', value: '12,480', delta: '+8.2%')
@@ -33,6 +35,8 @@ class AppStatTile extends StatelessWidget {
   final String? delta;
   final bool deltaIsPositive;
   final IconData? icon;
+
+  /// Defaults to the live space accent.
   final Color? iconColor;
   final VoidCallback? onTap;
 
@@ -41,61 +45,59 @@ class AppStatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tint = iconColor ?? AppColors.primary500;
-
     return AppSurface(
       onTap: onTap,
       padding: AppSpace.allMd,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          Row(
-            children: [
-              if (icon != null) ...[
-                Container(
-                  padding: AppSpace.allXs,
-                  decoration: BoxDecoration(
-                    color: tint.withValues(alpha: 0.12),
-                    borderRadius: AppRadius.sm,
-                  ),
-                  child: Icon(icon, size: AppIcon.sm, color: tint),
-                ),
-                const SizedBox(width: AppSpace.sm),
-              ],
-              Expanded(
-                child: Text(
-                  label,
-                  style: AppText.caption(AppColors.textMuted),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpace.xs),
+          if (icon != null) ...[
+            AppIconSquare(icon: icon, color: iconColor),
+            AppSpace.wGapSm,
+          ],
+          Expanded(child: _texts()),
+          if (onTap != null)
+            Icon(
+              Icons.chevron_right_rounded,
+              size: AppIcon.sm,
+              color: AppColors.textFaint,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _texts() {
+    final valueStyle = large
+        ? AppText.display(AppColors.textPrimary)
+        : AppText.subtitle(AppColors.textPrimary, weight: AppText.bold);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: AppText.caption(AppColors.textMuted),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          value,
+          style: valueStyle.merge(AppText.tabular),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (delta != null) ...[
+          AppSpace.gapHair,
           Text(
-            value,
-            style: (large
-                    ? AppText.display(AppColors.textPrimary)
-                    : AppText.subtitle(AppColors.textPrimary))
-                .merge(AppText.tabular),
+            delta!,
+            style: AppText.caption(
+              deltaIsPositive ? AppColors.successColor : AppColors.error500,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          if (delta != null) ...[
-            const SizedBox(height: AppSpace.hair),
-            Text(
-              delta!,
-              style: AppText.caption(
-                deltaIsPositive ? AppColors.successColor : AppColors.error500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 }

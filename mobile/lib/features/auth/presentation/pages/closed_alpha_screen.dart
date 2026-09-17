@@ -156,22 +156,9 @@ class _NextStepRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppListRow(
       padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-      leading: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: AppColors.primary500.withValues(alpha: 0.12),
-          borderRadius: AppRadius.sm,
-        ),
-        child: Icon(icon, size: AppIcon.md, color: AppColors.primary400),
-      ),
+      leading: AppIconSquare(icon: icon, size: 36, iconSize: AppIcon.md),
       title: title,
       subtitle: subtitle,
-      trailing: Icon(
-        Icons.chevron_right_rounded,
-        size: AppIcon.md,
-        color: AppColors.textFaint,
-      ),
       onTap: onTap,
     );
   }

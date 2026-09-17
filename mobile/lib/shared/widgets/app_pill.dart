@@ -1,5 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/shared/widgets/app_caps_pill.dart';
 import 'package:flutter/material.dart';
 
 /// How a pill carries its colour.
@@ -35,7 +36,23 @@ class AppPill extends StatelessWidget {
     this.dense = false,
     this.uppercase = false,
     super.key,
-  });
+  }) : caps = false;
+
+  /// The caps status pill of the visual language (`HUNTER`, `HIGH`,
+  /// `IN REVIEW`): 12% tint, 35% hairline, 10px bold caps.
+  ///
+  /// With no [color] it is the neutral grey pill for states that ask nothing
+  /// (`CURRENT`, `NEW`). [uppercase] false keeps a phrase as written
+  /// (`Quiet · 25% current`). [dense] is the tighter pill for inline rows.
+  const AppPill.caps({
+    required this.label,
+    this.color,
+    this.icon,
+    this.dense = false,
+    this.uppercase = true,
+    super.key,
+  })  : caps = true,
+        style = AppPillStyle.tinted;
 
   final String label;
 
@@ -50,8 +67,20 @@ class AppPill extends StatelessWidget {
   final bool dense;
   final bool uppercase;
 
+  /// Built by [AppPill.caps]; drawn by [AppCapsPill].
+  final bool caps;
+
   @override
   Widget build(BuildContext context) {
+    if (caps) {
+      return AppCapsPill(
+        label: label,
+        color: color,
+        icon: icon,
+        dense: dense,
+        uppercase: uppercase,
+      );
+    }
     final tone = color ?? AppColors.primary500;
     final filled = style == AppPillStyle.filled;
 
