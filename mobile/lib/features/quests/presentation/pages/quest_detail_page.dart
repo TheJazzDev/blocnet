@@ -2,13 +2,16 @@ import 'dart:io';
 
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/badges/presentation/widgets/progress_style.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/quests/data/models/quest_models.dart';
+import 'package:blocnet/features/quests/presentation/widgets/detail/quest_detail_footer.dart';
+import 'package:blocnet/features/quests/presentation/widgets/detail/quest_detail_sections.dart';
+import 'package:blocnet/features/quests/presentation/widgets/detail/quest_proof_section.dart';
 import 'package:blocnet/services/engagement/quests_store.dart';
 import 'package:blocnet/shared/utils/external_url_launcher.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -28,77 +31,93 @@ class QuestDetailPage extends StatefulWidget {
 }
 
 class _QuestDetailPageState extends State<QuestDetailPage> {
+  static const _maxScreenshotBytes = 8 * 1024 * 1024;
+
   final _imagePicker = ImagePicker();
-  final _proofTextController = TextEditingController();
-  File? _selectedScreenshot;
+  final _noteController = TextEditingController();
+  File? _screenshot;
 
   @override
   void dispose() {
-    _proofTextController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
+  QuestModel get _quest => widget.quest;
   QuestStatus get _status => widget.userQuest?.status ?? QuestStatus.notStarted;
   bool get _isPending => _status == QuestStatus.pendingVerification;
   bool get _isCompleted => _status == QuestStatus.completed;
-  String? get _resolvedTargetUrl {
-    final raw = widget.quest.targetUrl?.trim();
-    if (raw != null && raw.isNotEmpty) {
-      return raw;
-    }
 
-    final slug = widget.quest.slug.toLowerCase();
-    final title = widget.quest.title.toLowerCase();
+  String? get _targetUrl {
+    final raw = _quest.targetUrl?.trim();
+    if (raw != null && raw.isNotEmpty) return raw;
+
+    final slug = _quest.slug.toLowerCase();
+    final title = _quest.title.toLowerCase();
     if (slug.contains('share-on-x') ||
         slug.contains('follow-on-x') ||
         title.contains(' on x')) {
       return 'https://x.com/blocnet_app';
     }
-
     return null;
   }
 
   String get _targetButtonLabel {
-    final target = _resolvedTargetUrl?.toLowerCase() ?? '';
+    final target = _targetUrl?.toLowerCase() ?? '';
     if (target.contains('x.com') || target.contains('twitter.com')) {
       return 'Open X';
     }
-    return 'Open Link';
+    return 'Open link';
   }
 
   @override
   Widget build(BuildContext context) {
+    final url = _targetUrl;
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: const CustomAppBar(
-        title: 'Quest Details',
+        title: 'Quest',
         backButton: true,
         showSearch: false,
         showFilter: false,
       ),
       body: Consumer<QuestsStore>(
-        builder: (context, store, child) {
+        builder: (context, store, _) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpace.lg),
+            padding: AppSpace.allLg,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildQuestHeader(),
-                const SizedBox(height: AppSpace.xl),
-                _buildQuestInfo(),
-                const SizedBox(height: AppSpace.xl),
-                _buildRewardsSection(),
-                const SizedBox(height: AppSpace.xl),
-                if (_resolvedTargetUrl != null) ...[
-                  _buildTargetSection(),
-                  const SizedBox(height: AppSpace.xl),
+                QuestDetailHeader(quest: _quest, status: _status),
+                AppSpace.gapXl,
+                QuestRewardSection(quest: _quest),
+                AppSpace.gapLg,
+                QuestAboutSection(quest: _quest),
+                if (url != null) ...[
+                  AppSpace.gapLg,
+                  QuestLinkSection(
+                    url: url,
+                    buttonLabel: _targetButtonLabel,
+                    onOpen: () => _launchUrl(url),
+                  ),
                 ],
-                if (widget.quest.requiresManualVerification &&
-                    !_isCompleted) ...[
-                  _buildProofSubmissionSection(store),
-                  const SizedBox(height: AppSpace.xl),
+                if (_quest.requiresManualVerification && !_isCompleted) ...[
+                  AppSpace.gapLg,
+                  if (_isPending)
+                    const QuestProofPending()
+                  else
+                    QuestProofForm(
+                      screenshot: _screenshot,
+                      noteController: _noteController,
+                      isSubmitting: store.isSubmitting,
+                      onPick: _pickScreenshot,
+                      onClearScreenshot: () =>
+                          setState(() => _screenshot = null),
+                      onSubmit: () => _submitProof(store),
+                    ),
                 ],
-                _buildActionSection(store),
+                AppSpace.gapLg,
+                _footer(store),
               ],
             ),
           );
@@ -107,596 +126,103 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
     );
   }
 
-  Widget _buildQuestHeader() {
-    return AppSurface(
-      radius: AppRadius.lg,
-      padding: const EdgeInsets.all(AppSpace.xl),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpace.lg),
-            decoration: BoxDecoration(
-              color: Color(_status.color).withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              widget.quest.type.iconData,
-              size: AppIcon.xxl,
-              color: Color(_status.color),
-            ),
-          ),
-          const SizedBox(height: AppSpace.lg),
-          Text(
-            widget.quest.title,
-            textAlign: TextAlign.center,
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.titleSize,
-              weight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              BadgeCategoryChip(category: widget.quest.category),
-              const SizedBox(width: AppSpace.sm),
-              _QuestTypeChip(type: widget.quest.type),
-            ],
-          ),
-          if (_status != QuestStatus.notStarted) ...[
-            const SizedBox(height: AppSpace.md),
-            _QuestStatusChip(status: _status),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuestInfo() {
-    return AppSurface(
-      radius: AppRadius.lg,
-      padding: const EdgeInsets.all(AppSpace.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Description',
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.bodySize,
-              weight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Text(
-            widget.quest.description,
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.bodySize,
-              weight: FontWeight.w400,
-            ),
-          ),
-          if (widget.quest.requiredProof != null) ...[
-            const SizedBox(height: AppSpace.lg),
-            Text(
-              'Required Proof',
-              style: AppTypography.custom(
-                color: AppColors.textPrimary,
-                size: AppText.bodySize,
-                weight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              widget.quest.requiredProof!,
-              style: AppTypography.custom(
-                color: AppColors.textSecondary,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpace.lg),
-          Row(
-            children: [
-              Icon(
-                widget.quest.isAutoVerified ? Icons.verified : Icons.fact_check,
-                size: AppIcon.sm,
-                color: AppColors.textFaint,
-              ),
-              const SizedBox(width: AppSpace.sm),
-              Text(
-                widget.quest.isAutoVerified
-                    ? 'Auto-verified quest'
-                    : 'Manual verification required',
-                style: AppTypography.custom(
-                  color: AppColors.textFaint,
-                  size: AppText.captionSize,
-                  weight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRewardsSection() {
-    return AppSurface(
-      radius: AppRadius.lg,
-      padding: const EdgeInsets.all(AppSpace.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Rewards',
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.bodySize,
-              weight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: AppSpace.md),
-          Row(
-            children: [
-              Icon(
-                Icons.stars,
-                size: AppIcon.xl,
-                color: AppColors.warning500,
-              ),
-              const SizedBox(width: AppSpace.md),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${widget.quest.rewardPoints} BNP',
-                    style: AppTypography.custom(
-                      color: AppColors.warning500,
-                      size: AppText.subtitleSize,
-                      weight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    'Boost your mining earnings',
-                    style: AppTypography.custom(
-                      color: AppColors.textFaint,
-                      size: AppText.captionSize,
-                      weight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          if (widget.quest.rewardBadgeId != null) ...[
-            const SizedBox(height: AppSpace.md),
-            Divider(color: AppColors.borderSubtle),
-            const SizedBox(height: AppSpace.md),
-            Row(
-              children: [
-                Icon(
-                  Icons.emoji_events,
-                  size: AppIcon.xl,
-                  color: AppColors.tagAirdrop,
-                ),
-                const SizedBox(width: AppSpace.md),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Exclusive Badge',
-                      style: AppTypography.custom(
-                        color: AppColors.tagAirdrop,
-                        size: AppText.subtitleSize,
-                        weight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      'Unlock a special achievement badge',
-                      style: AppTypography.custom(
-                        color: AppColors.textFaint,
-                        size: AppText.captionSize,
-                        weight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTargetSection() {
-    final targetUrl = _resolvedTargetUrl!;
-    return AppSurface(
-      radius: AppRadius.lg,
-      padding: const EdgeInsets.all(AppSpace.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'How to Complete',
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.bodySize,
-              weight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: AppSpace.md),
-          Container(
-            padding: const EdgeInsets.all(AppSpace.md),
-            decoration: BoxDecoration(
-              color: AppColors.bgBase,
-              borderRadius: BorderRadius.circular(AppRadius.smValue),
-              border: Border.all(
-                color: AppColors.borderSubtle,
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.link,
-                  color: AppColors.primary500,
-                ),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Text(
-                    targetUrl,
-                    style: AppTypography.custom(
-                      color: AppColors.primary500,
-                      size: AppText.bodySize,
-                      weight: FontWeight.w400,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpace.md),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _launchUrl(targetUrl),
-              icon: const Icon(Icons.open_in_new),
-              label: Text(_targetButtonLabel),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary500,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProofSubmissionSection(QuestsStore store) {
-    if (_isPending) {
-      return Container(
-        padding: const EdgeInsets.all(AppSpace.lg),
-        decoration: BoxDecoration(
-          color: AppColors.warning500.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          border: Border.all(
-            color: AppColors.warning500.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.pending,
-              size: AppIcon.xxl,
-              color: AppColors.warning500,
-            ),
-            const SizedBox(height: AppSpace.md),
-            Text(
-              'Proof Submitted',
-              style: AppTypography.custom(
-                color: AppColors.warning500,
-                size: AppText.subtitleSize,
-                weight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              'Your submission is pending admin verification. You will be notified once reviewed.',
-              textAlign: TextAlign.center,
-              style: AppTypography.custom(
-                color: AppColors.textSecondary,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return AppSurface(
-      radius: AppRadius.lg,
-      padding: const EdgeInsets.all(AppSpace.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Submit Proof',
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.bodySize,
-              weight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Text(
-            'Provide proof that you completed this quest. Admin will review and verify your submission.',
-            style: AppTypography.custom(
-              color: AppColors.textSecondary,
-              size: AppText.bodySize,
-              weight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: AppSpace.lg),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: store.isSubmitting ? null : _pickScreenshot,
-              icon: const Icon(Icons.image_outlined),
-              label: Text(
-                _selectedScreenshot == null
-                    ? 'Upload Screenshot'
-                    : 'Change Screenshot',
-              ),
-            ),
-          ),
-          if (_selectedScreenshot != null) ...[
-            const SizedBox(height: AppSpace.md),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.mdValue),
-              child: Stack(
-                children: [
-                  Image.file(
-                    _selectedScreenshot!,
-                    height: 170,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: IconButton(
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.black.withValues(alpha: 0.45),
-                      ),
-                      onPressed: () =>
-                          setState(() => _selectedScreenshot = null),
-                      icon:
-                          const Icon(Icons.close_rounded, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpace.md),
-          TextField(
-            controller: _proofTextController,
-            onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              labelText: 'Additional Details (optional)',
-              hintText: 'Any additional information',
-              prefixIcon: Icon(Icons.description),
-            ),
-            maxLines: 3,
-          ),
-          const SizedBox(height: AppSpace.lg),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: (_selectedScreenshot == null) || store.isSubmitting
-                  ? null
-                  : () => _submitProof(store),
-              icon: store.isSubmitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.upload),
-              label: Text(
-                store.isSubmitting ? 'Submitting...' : 'Submit Proof',
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary500,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionSection(QuestsStore store) {
+  Widget _footer(QuestsStore store) {
     if (_isCompleted) {
-      return Container(
-        padding: const EdgeInsets.all(AppSpace.lg),
-        decoration: BoxDecoration(
-          color: AppColors.successColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.lgValue),
-          border: Border.all(
-            color: AppColors.successColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.check_circle,
-              size: AppIcon.xxl,
-              color: AppColors.successColor,
-            ),
-            const SizedBox(height: AppSpace.md),
-            Text(
-              'Quest Completed!',
-              style: AppTypography.custom(
-                color: AppColors.successColor,
-                size: AppText.subtitleSize,
-                weight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              'You have successfully completed this quest and received your rewards.',
-              textAlign: TextAlign.center,
-              style: AppTypography.custom(
-                color: AppColors.textSecondary,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-              ),
-            ),
-            if (widget.userQuest?.completedAt != null) ...[
-              const SizedBox(height: AppSpace.sm),
-              Text(
-                'Completed ${_formatDate(widget.userQuest!.completedAt!)}',
-                style: AppTypography.custom(
-                  color: AppColors.textFaint,
-                  size: AppText.captionSize,
-                  weight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ],
-        ),
+      return QuestCompletedCard(completedAt: widget.userQuest?.completedAt);
+    }
+    if (_isPending) return const SizedBox.shrink();
+    if (_quest.isAutoVerified) {
+      return AppButton(
+        label: 'Verify quest',
+        icon: Icons.verified_outlined,
+        isLoading: store.isClaiming,
+        fullWidth: true,
+        onPressed: () => _verifyQuest(store),
       );
     }
-
-    if (_isPending) {
-      return const SizedBox.shrink();
-    }
-
-    if (widget.quest.isAutoVerified) {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: store.isClaiming ? null : () => _verifyQuest(store),
-          icon: store.isClaiming
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.verified_outlined),
-          label: Text(store.isClaiming ? 'Verifying...' : 'Verify Quest'),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
-            backgroundColor: AppColors.primary500,
-            foregroundColor: Colors.white,
-          ),
-        ),
-      );
-    }
-
-    return AppSurface(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpace.md),
-      child: Text(
-        'Submit your proof above to send this quest for admin review.',
-        style: AppTypography.custom(
-          color: AppColors.textSecondary,
-          size: AppText.bodySize,
-          weight: FontWeight.w400,
-        ),
-      ),
-    );
+    return const QuestManualHint();
   }
 
   Future<void> _submitProof(QuestsStore store) async {
+    final note = _noteController.text.trim();
     final submission = await store.submitQuestProof(
-      questSlug: widget.quest.slug,
-      proofText: _proofTextController.text.trim().isEmpty
-          ? null
-          : _proofTextController.text.trim(),
-      screenshotFile: _selectedScreenshot,
+      questSlug: _quest.slug,
+      proofText: note.isEmpty ? null : note,
+      screenshotFile: _screenshot,
     );
+    if (!mounted) return;
 
-    if (mounted) {
-      if (submission != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Proof submitted for verification!'),
-            backgroundColor: AppColors.successColor,
-          ),
-        );
-        _proofTextController.clear();
-        setState(() => _selectedScreenshot = null);
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(store.lastError ?? 'Failed to submit proof'),
-            backgroundColor: AppColors.error500,
-          ),
-        );
-      }
+    if (submission != null) {
+      AppSnackbar.showSuccess(context, 'Proof sent for review');
+      _noteController.clear();
+      setState(() => _screenshot = null);
+      Navigator.pop(context);
+    } else {
+      AppSnackbar.showError(
+        context,
+        progressErrorText(
+          store.lastError,
+          fallback: 'Could not send proof. Try again.',
+        ),
+      );
     }
   }
 
   Future<void> _verifyQuest(QuestsStore store) async {
-    final result = await store.verifyQuest(widget.quest.slug);
-    if (mounted) {
-      if (result != null && result.completed) {
-        if (result.alreadyCompleted) {
-          await _showVerificationResultModal(
-            title: 'Already Completed',
-            message: 'This quest has already been completed.',
-            isSuccess: true,
-          );
-          if (!mounted) return;
-          Navigator.pop(context);
-          return;
-        }
-        final suffix = widget.quest.rewardBadgeId != null
+    final result = await store.verifyQuest(_quest.slug);
+    if (!mounted) return;
+
+    if (result != null && result.completed) {
+      if (result.alreadyCompleted) {
+        await showQuestResultDialog(
+          context,
+          title: 'Already completed',
+          message: 'You finished this quest before.',
+          isSuccess: true,
+        );
+      } else {
+        final badgeLine = _quest.rewardBadgeId != null
             ? '\n\nYou also unlocked a badge.'
             : '';
-        await _showVerificationResultModal(
-          title: 'Quest Completed',
-          message: 'You earned ${result.rewardPoints} BNP.$suffix',
+        await showQuestResultDialog(
+          context,
+          title: 'Quest completed',
+          message: 'You earned ${result.rewardPoints} BNP.$badgeLine',
           isSuccess: true,
           closeLabel: 'Done',
         );
-        if (!mounted) return;
-        Navigator.pop(context);
-      } else if (result != null && !result.eligible) {
-        final progressLine = result.targetProgress > 0
-            ? '${result.currentProgress}/${result.targetProgress} ${result.metricLabel}'
-            : null;
-        final details = <String>[
+      }
+      if (!mounted) return;
+      Navigator.pop(context);
+      return;
+    }
+
+    if (result != null && !result.eligible) {
+      final progressLine = result.targetProgress > 0
+          ? '${result.currentProgress}/${result.targetProgress} ${result.metricLabel}'
+          : null;
+      await showQuestResultDialog(
+        context,
+        title: 'Not yet',
+        message: [
           result.message,
           if (progressLine != null) 'Progress: $progressLine',
           ...result.missingRequirements,
-        ].join('\n');
-        await _showVerificationResultModal(
-          title: 'Not Eligible Yet',
-          message: details,
-          isSuccess: false,
-        );
-      } else {
-        await _showVerificationResultModal(
-          title: 'Verification Failed',
-          message: store.lastError ?? 'Failed to verify quest',
-          isSuccess: false,
-        );
-      }
+        ].join('\n'),
+        isSuccess: false,
+      );
+      return;
     }
+
+    await showQuestResultDialog(
+      context,
+      title: 'Could not verify',
+      message: progressErrorText(
+        store.lastError,
+        fallback: 'Try again in a moment.',
+      ),
+      isSuccess: false,
+    );
   }
 
   Future<void> _pickScreenshot() async {
@@ -711,209 +237,21 @@ class _QuestDetailPageState extends State<QuestDetailPage> {
       final file = File(image.path);
       final bytes = await file.length();
       if (!mounted) return;
-      if (bytes > 8 * 1024 * 1024) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Screenshot must be 8MB or smaller.'),
-            backgroundColor: AppColors.error500,
-          ),
-        );
+      if (bytes > _maxScreenshotBytes) {
+        AppSnackbar.showError(context, 'Screenshot must be 8MB or smaller.');
         return;
       }
-
-      setState(() => _selectedScreenshot = file);
+      setState(() => _screenshot = file);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Could not pick image right now.'),
-          backgroundColor: AppColors.error500,
-        ),
-      );
+      AppSnackbar.showError(context, 'Could not open your photos.');
     }
-  }
-
-  Future<void> _showVerificationResultModal({
-    required String title,
-    required String message,
-    required bool isSuccess,
-    String closeLabel = 'Close',
-  }) {
-    return showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgSurface,
-        title: Row(
-          children: [
-            Icon(
-              isSuccess ? Icons.check_circle : Icons.info_outline,
-              color: isSuccess ? AppColors.successColor : AppColors.warning500,
-            ),
-            const SizedBox(width: AppSpace.sm),
-            Expanded(
-              child: Text(
-                title,
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: AppText.subtitleSize,
-                  weight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Text(
-            message,
-            style: AppTypography.custom(
-              color: AppColors.textSecondary,
-              size: AppText.bodySize,
-              weight: FontWeight.w400,
-              height: 1.5,
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary500,
-            ),
-            child: Text(
-              closeLabel,
-              style: AppTypography.custom(
-                color: AppColors.primary500,
-                size: AppText.labelSize,
-                weight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _launchUrl(String url) async {
     final opened = await launchExternalUrlWithAppFallback(url);
-    if (!opened) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Could not open link'),
-            backgroundColor: AppColors.error500,
-          ),
-        );
-      }
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-
-    if (diff.inDays == 0) return 'today';
-    if (diff.inDays == 1) return 'yesterday';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
-    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} weeks ago';
-    return '${(diff.inDays / 30).floor()} months ago';
-  }
-}
-
-class _QuestTypeChip extends StatelessWidget {
-  const _QuestTypeChip({
-    required this.type,
-  });
-
-  final QuestType type;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.sm, vertical: AppSpace.xs),
-      decoration: BoxDecoration(
-        color: AppColors.bgBase,
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        border: Border.all(
-          color: AppColors.borderSubtle,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            type.iconData,
-            size: AppIcon.sm,
-            color: AppColors.textMuted,
-          ),
-          const SizedBox(width: AppSpace.xs),
-          Text(
-            type.displayName,
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.labelSize,
-              weight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuestStatusChip extends StatelessWidget {
-  const _QuestStatusChip({
-    required this.status,
-  });
-
-  final QuestStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.md, vertical: AppSpace.sm),
-      decoration: BoxDecoration(
-        color: Color(status.color).withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: Color(status.color).withValues(alpha: 0.5),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            _getStatusIcon(status),
-            size: AppIcon.sm,
-            color: Color(status.color),
-          ),
-          const SizedBox(width: AppSpace.sm),
-          Text(
-            status.displayName,
-            style: TextStyle(
-              fontSize: AppText.labelSize,
-              fontWeight: FontWeight.bold,
-              color: Color(status.color),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _getStatusIcon(QuestStatus status) {
-    switch (status) {
-      case QuestStatus.notStarted:
-        return Icons.radio_button_unchecked;
-      case QuestStatus.inProgress:
-        return Icons.pending;
-      case QuestStatus.pendingVerification:
-        return Icons.hourglass_empty;
-      case QuestStatus.completed:
-        return Icons.check_circle;
+    if (!opened && mounted) {
+      AppSnackbar.showError(context, 'Could not open link');
     }
   }
 }

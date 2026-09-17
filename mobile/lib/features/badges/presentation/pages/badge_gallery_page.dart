@@ -60,7 +60,8 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
             controller: _tabController,
             labelColor: AppColors.primary400,
             unselectedLabelColor: AppColors.textMuted,
-            labelStyle: AppText.label(AppColors.primary400, weight: AppText.bold),
+            labelStyle:
+                AppText.label(AppColors.primary400, weight: AppText.bold),
             unselectedLabelStyle: AppText.label(AppColors.textMuted),
             indicatorColor: AppColors.primary400,
             dividerColor: AppColors.borderSubtle,

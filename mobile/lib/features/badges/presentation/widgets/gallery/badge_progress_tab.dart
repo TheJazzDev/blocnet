@@ -149,7 +149,8 @@ class _Bar extends StatelessWidget {
             ),
             Text(
               '$earned / $total',
-              style: AppText.caption(AppColors.textMuted).merge(AppText.tabular),
+              style:
+                  AppText.caption(AppColors.textMuted).merge(AppText.tabular),
             ),
           ],
         ),
