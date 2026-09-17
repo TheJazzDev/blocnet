@@ -1,17 +1,21 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:flutter/material.dart';
 
+/// Section label: small icon, 10px bold caps in the faint text colour, and
+/// an optional accent action on the right ("View all").
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
     super.key,
     required this.label,
+    this.icon,
     this.actionLabel,
     this.actionRoute,
   });
 
   final String label;
+  final IconData? icon;
   final String? actionLabel;
   final String? actionRoute;
 
@@ -19,39 +23,45 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final canShowAction = actionLabel != null && actionRoute != null;
 
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label.toUpperCase(),
-            style: AppTypography.custom(
-              color: AppColors.textFaint,
-              size: AppText.captionSize,
-              weight: FontWeight.w700,
-              letterSpacing: 0.9,
-            ),
-          ),
-        ),
-        if (canShowAction)
-          TextButton(
-            onPressed: () => Navigator.of(context).pushNamed(actionRoute!),
-            style: TextButton.styleFrom(
-              minimumSize: const Size(0, 28),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpace.sm, vertical: 0),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              foregroundColor: AppColors.primary500,
-            ),
-            child: Text(
-              actionLabel!,
-              style: AppTypography.custom(
-                color: AppColors.primary500,
-                size: AppText.captionSize,
-                weight: FontWeight.w600,
+    return Semantics(
+      header: true,
+      child: SizedBox(
+        height: 28,
+        child: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: AppIcon.sm, color: AppColors.textFaint),
+              const SizedBox(width: AppSpace.sm),
+            ],
+            Expanded(
+              child: Text(
+                label.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: WalletType.caps(AppColors.textFaint),
               ),
             ),
-          ),
-      ],
+            if (canShowAction)
+              InkWell(
+                borderRadius: AppRadius.sm,
+                onTap: () => Navigator.of(context).pushNamed(actionRoute!),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.xs,
+                    vertical: AppSpace.xs,
+                  ),
+                  child: Text(
+                    actionLabel!,
+                    style: AppText.label(
+                      WalletTone.accentSoft,
+                      weight: AppText.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

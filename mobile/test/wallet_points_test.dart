@@ -8,7 +8,6 @@ import 'package:blocnet/features/wallet/presentation/utils/points_transfer_form.
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/action_row.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/asset_row.dart';
-import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
@@ -362,17 +361,15 @@ void main() {
       await tester.pumpWidget(_app(
         store,
         Scaffold(
-          body: AssetRow(
-            asset: store.findAsset('BNP')!,
-            viewMode: FeedViewMode.list,
-          ),
+          body: AssetRow(asset: store.findAsset('BNP')!),
         ),
       ));
 
       expect(find.text('Blocnet Points'), findsOneWidget);
       // Symbol in the avatar, code beside the badge.
       expect(find.text('BNP'), findsNWidgets(2));
-      expect(find.text('In-app'), findsOneWidget);
+      // The network pill is drawn in caps.
+      expect(find.text('IN-APP'), findsOneWidget);
       expect(find.text('12.345'), findsOneWidget);
       expect(find.text('Points'), findsOneWidget);
       expect(find.text('No USD price'), findsNothing);

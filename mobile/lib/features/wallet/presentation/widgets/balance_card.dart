@@ -1,153 +1,119 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_headline.dart';
-import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/wallet_address_row.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+/// The wallet headline: total balance, left-aligned in a flat card, with
+/// the on-chain address underneath.
 class BalanceCard extends StatelessWidget {
   const BalanceCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final walletStore = context.watch<WalletStore>();
+    final snapshot = context.watch<WalletStore>().snapshot;
     final visibilityStore = context.watch<WalletVisibilityStore>();
-    final snapshot = walletStore.snapshot;
-    final address = snapshot?.walletAddress;
-    final status = snapshot?.walletStatus ?? 'provisioning';
-    final addressText = address != null && address.isNotEmpty
-        ? truncateMiddle(address)
-        : (status == 'disabled'
-            ? 'Wallet feature disabled'
-            : status == 'error'
-                ? 'Provisioning error'
-                : 'Provisioning wallet...');
-
     final headline = WalletHeadline.from(snapshot);
-    final isBalanceHidden = visibilityStore.isBalanceHidden;
-    final balanceText = isBalanceHidden ? '\$••••••' : headline.amount;
+    final isHidden = visibilityStore.isBalanceHidden;
 
+    return WalletCard(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        AppSpace.md,
+        AppSpace.xs,
+        AppSpace.xs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.account_balance_wallet_outlined,
+                size: AppIcon.sm,
+                color: AppColors.textFaint,
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Expanded(
+                child: Text(
+                  'TOTAL BALANCE',
+                  style: WalletType.caps(AppColors.textFaint),
+                ),
+              ),
+              IconButton(
+                onPressed: visibilityStore.toggle,
+                iconSize: AppIcon.md,
+                visualDensity: VisualDensity.compact,
+                tooltip: isHidden ? 'Show balances' : 'Hide balances',
+                icon: Icon(
+                  isHidden
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpace.md),
+            child: _Figures(headline: headline, isHidden: isHidden),
+          ),
+          const SizedBox(height: AppSpace.sm),
+          const Padding(
+            padding: EdgeInsets.only(right: AppSpace.sm),
+            child: WalletRowDivider(),
+          ),
+          const WalletAddressRow(),
+        ],
+      ),
+    );
+  }
+}
+
+class _Figures extends StatelessWidget {
+  const _Figures({required this.headline, required this.isHidden});
+
+  final WalletHeadline headline;
+  final bool isHidden;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              'TOTAL BALANCE',
-              style: AppTypography.custom(
-                color: AppColors.textFaint,
-                size: AppText.captionSize,
-                weight: FontWeight.w700,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(width: AppSpace.sm),
-            IconButton(
-              onPressed: visibilityStore.toggle,
-              splashRadius: 18,
-              iconSize: 18,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-              icon: Icon(
-                isBalanceHidden
-                    ? Icons.visibility_off_rounded
-                    : Icons.visibility_rounded,
-                color: AppColors.textMuted,
-              ),
-              tooltip: isBalanceHidden ? 'Show balances' : 'Hide balances',
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpace.sm),
-        Text(
-          balanceText,
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.displayXlSize,
-            weight: FontWeight.w800,
-            height: 1.0,
+        // Large balances shrink rather than overflow.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            isHidden ? r'$••••••' : headline.amount,
+            maxLines: 1,
+            style: AppText.display(AppColors.textPrimary, weight: FontWeight.w800)
+                .merge(AppText.tabular)
+                .copyWith(height: 1.1),
           ),
         ),
-        if (!isBalanceHidden && headline.otherHoldings != null) ...[
+        if (!isHidden && headline.otherHoldings != null) ...[
           const SizedBox(height: AppSpace.xs),
           Text(
             headline.otherHoldings!,
-            style: AppTypography.custom(
-              color: AppColors.textSecondary,
-              size: AppText.labelSize,
-              weight: FontWeight.w600,
+            style: AppText.label(
+              AppColors.textSecondary,
+              weight: AppText.semibold,
             ),
           ),
         ],
-        const SizedBox(height: AppSpace.xs),
-        Text(
-          'BSC Network',
-          style: AppTypography.custom(
-            color: AppColors.textMuted,
-            size: AppText.labelSize,
-            weight: FontWeight.w500,
-          ),
-        ),
-        if (!isBalanceHidden && headline.note != null) ...[
-          const SizedBox(height: AppSpace.sm),
+        if (!isHidden && headline.note != null) ...[
+          const SizedBox(height: AppSpace.xs),
           Text(
             headline.note!,
-            style: AppTypography.custom(
-              color: AppColors.textFaint,
-              size: AppText.captionSize,
-              weight: FontWeight.w500,
-            ),
+            style: AppText.label(AppColors.textFaint),
           ),
         ],
-        const SizedBox(height: AppSpace.lg),
-        GestureDetector(
-          onTap: () {
-            if (address == null || address.isEmpty) {
-              showWalletToast(
-                context,
-                message: 'Wallet address is not ready yet.',
-                type: WalletToastType.error,
-              );
-              return;
-            }
-            Clipboard.setData(ClipboardData(text: address));
-            showWalletToast(
-              context,
-              message: 'Address copied.',
-              type: WalletToastType.success,
-            );
-          },
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    addressText,
-                    style: AppTypography.custom(
-                      color: AppColors.textSecondary,
-                      size: AppText.labelSize,
-                      weight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.md),
-                Icon(
-                  Icons.copy_rounded,
-                  size: AppIcon.sm,
-                  color: AppColors.teal400,
-                ),
-              ],
-            ),
-          ),
-        ),
       ],
     );
   }

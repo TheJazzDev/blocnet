@@ -142,10 +142,10 @@ void main() {
     });
   });
 
-  test('unpriced asset labels keep pre-launch for BNT only', () {
+  test('unpriced asset labels mark BNT price as pending, not pre-launch', () {
     WalletAssetBalance asset(String code) =>
         WalletAssetBalance.fromApi(_asset(code));
-    expect(walletUnpricedLabel(asset('BNT')), 'Pre-launch');
+    expect(walletUnpricedLabel(asset('BNT')), 'Price pending');
     expect(walletUnpricedLabel(asset('USDT')), 'No USD price');
     expect(walletUnpricedLabel(asset('BNB')), 'No USD price');
     expect(walletUnpricedLabel(asset('BNP')), 'Points');
