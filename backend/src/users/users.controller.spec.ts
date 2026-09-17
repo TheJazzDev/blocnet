@@ -72,7 +72,11 @@ describe('UsersController (self-service deactivate/reactivate)', () => {
         forbidNonWhitelisted: true,
       }),
     );
-    await app.init();
+    // Listen once, on the loopback address supertest dials. Left to itself,
+    // supertest binds each request to `::` on a random port, and macOS lets
+    // that share a port another process holds on 127.0.0.1 (emulator, adb,
+    // IDE helpers), so the request lands on that process instead (F-71).
+    await app.listen(0, '127.0.0.1');
   });
 
   afterAll(async () => {

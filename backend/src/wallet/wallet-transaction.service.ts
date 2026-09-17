@@ -13,7 +13,6 @@ import {
   WalletAsset,
   WalletStatus,
   WithdrawalStatus,
-  type LedgerEntry,
   type UserWallet,
 } from '@prisma/client';
 import { AuditLogService } from '../audit-log/audit-log.service';
@@ -28,11 +27,14 @@ import { CreateInternalTransferDto } from './dto/create-internal-transfer.dto';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 import { SubmitKycDto } from './dto/submit-kyc.dto';
 import {
+  toTransactionResponse,
+  toWithdrawalResponse,
+} from './wallet-query.mappers';
+import {
   DECIMAL_ZERO,
   decimalMax,
   decimalMin,
   parsePositiveDecimal,
-  toDecimalString,
 } from './types/decimal';
 import {
   getWithdrawalFeeKeyForAsset,
@@ -284,7 +286,7 @@ export class WalletTransactionService {
       },
     });
 
-    return this.toTransactionResponse(userId, result);
+    return toTransactionResponse(userId, result);
   }
 
   async submitKyc(userId: string, dto: SubmitKycDto) {
@@ -535,7 +537,7 @@ export class WalletTransactionService {
       },
     });
 
-    return this.toWithdrawalResponse(created);
+    return toWithdrawalResponse(created);
   }
 
   private async resolveRecipientWallet(
@@ -605,151 +607,6 @@ export class WalletTransactionService {
     }
 
     return wallet;
-  }
-
-  private toTransactionResponse(
-    userId: string,
-    entry: LedgerEntry & {
-      debitAccount: {
-        userId: string | null;
-        accountType: LedgerAccountType;
-        currency: string;
-        user: {
-          id: string;
-          username: string | null;
-          displayName: string | null;
-        } | null;
-        wallet: {
-          address: string | null;
-        } | null;
-      };
-      creditAccount: {
-        userId: string | null;
-        accountType: LedgerAccountType;
-        currency: string;
-        user: {
-          id: string;
-          username: string | null;
-          displayName: string | null;
-        } | null;
-        wallet: {
-          address: string | null;
-        } | null;
-      };
-    },
-  ) {
-    const isDebit = entry.debitAccount.userId === userId;
-    const isCredit = entry.creditAccount.userId === userId;
-    const reason = entry.reason;
-
-    let direction: 'outgoing' | 'incoming' | 'internal';
-    if (
-      reason === LedgerReason.withdrawal_hold ||
-      reason === LedgerReason.withdrawal_finalize ||
-      reason === LedgerReason.withdrawal_fee
-    ) {
-      direction = 'outgoing';
-    } else if (reason === LedgerReason.withdrawal_reject_release) {
-      direction = 'incoming';
-    } else {
-      direction =
-        isDebit && !isCredit
-          ? 'outgoing'
-          : !isDebit && isCredit
-            ? 'incoming'
-            : 'internal';
-    }
-
-    const metadata = this.normalizeLedgerMetadata(entry.metadata);
-
-    const asset =
-      normalizeWalletAsset(entry.debitAccount.currency) ??
-      normalizeWalletAsset(entry.creditAccount.currency) ??
-      WalletAsset.BNT;
-
-    const sourceAccount =
-      direction === 'incoming'
-        ? entry.debitAccount
-        : direction === 'outgoing'
-          ? entry.creditAccount
-          : null;
-    const counterparty =
-      sourceAccount && sourceAccount.userId && sourceAccount.userId !== userId
-        ? {
-            userId: sourceAccount.userId,
-            username: sourceAccount.user?.username ?? null,
-            displayName: sourceAccount.user?.displayName ?? null,
-            walletAddress: sourceAccount.wallet?.address ?? null,
-          }
-        : null;
-
-    return {
-      id: entry.id,
-      asset,
-      direction,
-      reason,
-      amount: toDecimalString(entry.amount),
-      feeAmount: toDecimalString(entry.feeAmount),
-      debit: {
-        userId: entry.debitAccount.userId,
-        accountType: entry.debitAccount.accountType,
-      },
-      credit: {
-        userId: entry.creditAccount.userId,
-        accountType: entry.creditAccount.accountType,
-      },
-      referenceId: entry.referenceId,
-      metadata,
-      counterparty,
-      createdAt: entry.createdAt,
-    };
-  }
-
-  private normalizeLedgerMetadata(
-    input: Prisma.JsonValue | null,
-  ): Prisma.JsonObject | null {
-    if (!input || typeof input !== 'object' || Array.isArray(input)) {
-      return null;
-    }
-    return input;
-  }
-
-  private toWithdrawalResponse(withdrawal: {
-    id: string;
-    asset: WalletAsset;
-    toAddress: string;
-    amount: Prisma.Decimal;
-    feeAmount: Prisma.Decimal;
-    netAmount: Prisma.Decimal;
-    status: WithdrawalStatus;
-    reason: string;
-    rejectReason: string | null;
-    broadcastTxHash: string | null;
-    requestedAt: Date;
-    reviewedAt: Date | null;
-    confirmedAt: Date | null;
-    failureReason: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }) {
-    return {
-      id: withdrawal.id,
-      asset: withdrawal.asset,
-      toAddress: withdrawal.toAddress,
-      amount: toDecimalString(withdrawal.amount),
-      feeAmount: toDecimalString(withdrawal.feeAmount),
-      netAmount: toDecimalString(withdrawal.netAmount),
-      status: withdrawal.status,
-      reason: withdrawal.reason,
-      rejectReason: withdrawal.rejectReason,
-      broadcastTxHash: withdrawal.broadcastTxHash,
-      failureReason: withdrawal.failureReason,
-      requestedAt: withdrawal.requestedAt,
-      reviewedAt: withdrawal.reviewedAt,
-      confirmedAt: withdrawal.confirmedAt,
-      createdAt: withdrawal.createdAt,
-      updatedAt: withdrawal.updatedAt,
-    };
   }
 
   private assertWalletFeatureEnabled() {
