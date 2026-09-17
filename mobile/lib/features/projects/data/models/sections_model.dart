@@ -19,9 +19,6 @@ class Sections {
   /// type rather than whose it was.
   static const following = Section("following", "Following");
 
-  static const yourProjects = Section("your_projects", "My Gems");
-  static const discoverProjects = Section("discover_projects", "Discover Gems");
-
   /// The tabs Home shows, in order.
   /// Order per the approved design: Following leads, because for a member
   /// with a board it is the tab that matters. On day one it is dimmed and
@@ -29,10 +26,5 @@ class Sections {
   /// that job moves to Gems.
   static const List<Section> homeTabs = [following, forYou];
 
-  static const List<Section> all = [
-    forYou,
-    following,
-    yourProjects,
-    discoverProjects,
-  ];
+  static const List<Section> all = [forYou, following];
 }

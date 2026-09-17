@@ -7,7 +7,6 @@ import 'package:blocnet/features/auth/presentation/widgets/space_switcher.dart';
 import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/blocnet_search_delegate.dart';
-import 'package:blocnet/features/projects/presentation/widgets/filter_bottom_sheet/filter_bottom_sheet.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
@@ -23,7 +22,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.title,
     this.backButton = true,
-    this.showFilter = true,
+    this.showFilter = false,
     this.showSearch = true,
     this.showSpaceSwitcher = true,
     this.showNotificationBell = true,
@@ -35,6 +34,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   final String title;
   final bool backButton;
+  /// No longer draws anything. The filter sheet it opened applied to the
+  /// old Discover only; Gems filters inline. Kept so callers still compile.
   final bool showFilter;
   final bool showSearch;
 
@@ -120,22 +121,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                         onTap: () {
                           MainTabNavigator.openRoute(
                               context, AppRoutes.profile);
-                        },
-                      ),
-                    ],
-                    if (showFilter) ...[
-                      const SizedBox(width: AppSpace.sm),
-                      _AppBarIconButton(
-                        icon: Icons.tune_rounded,
-                        minimal: minimalActionIcons,
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            isDismissible: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => FilterBottomSheet(),
-                          );
                         },
                       ),
                     ],

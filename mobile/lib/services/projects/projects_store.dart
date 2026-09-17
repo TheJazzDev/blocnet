@@ -1,6 +1,5 @@
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/data/models/follow_preference_model.dart';
-import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/repositories/updates_api_repository.dart';
@@ -30,12 +29,6 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
   final Set<String> _followedProjectIds = <String>{};
   final Map<String, FollowPreference> _followPreferences =
       <String, FollowPreference>{};
-  @override
-  final Set<String> _discoverPrimaryTagFilters = <String>{};
-  @override
-  final Set<String> _discoverSecondaryTagFilters = <String>{};
-  @override
-  final Set<Priority> _discoverPriorityFilters = <Priority>{};
   bool _isFetching = false;
   bool _isTogglingFollow = false;
   bool _isUpdatingFollowPreferences = false;
@@ -45,16 +38,6 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
   Set<String> get followedProjectIds => Set.unmodifiable(_followedProjectIds);
   Map<String, FollowPreference> get followPreferences =>
       Map.unmodifiable(_followPreferences);
-  Set<String> get discoverPrimaryTagFilters =>
-      Set.unmodifiable(_discoverPrimaryTagFilters);
-  Set<String> get discoverSecondaryTagFilters =>
-      Set.unmodifiable(_discoverSecondaryTagFilters);
-  Set<Priority> get discoverPriorityFilters =>
-      Set.unmodifiable(_discoverPriorityFilters);
-  bool get hasDiscoverFilters =>
-      _discoverPrimaryTagFilters.isNotEmpty ||
-      _discoverSecondaryTagFilters.isNotEmpty ||
-      _discoverPriorityFilters.isNotEmpty;
   bool get isFetching => _isFetching;
   bool get isTogglingFollow => _isTogglingFollow;
   bool get isUpdatingFollowPreferences => _isUpdatingFollowPreferences;
@@ -237,31 +220,6 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
       }
     }
     return null;
-  }
-
-  void setDiscoverFilters({
-    required Set<String> primaryTags,
-    required Set<String> secondaryTags,
-    required Set<Priority> priorities,
-  }) {
-    _discoverPrimaryTagFilters
-      ..clear()
-      ..addAll(primaryTags);
-    _discoverSecondaryTagFilters
-      ..clear()
-      ..addAll(secondaryTags);
-    _discoverPriorityFilters
-      ..clear()
-      ..addAll(priorities);
-    notifyListeners();
-  }
-
-  void clearDiscoverFilters() {
-    if (!hasDiscoverFilters) return;
-    _discoverPrimaryTagFilters.clear();
-    _discoverSecondaryTagFilters.clear();
-    _discoverPriorityFilters.clear();
-    notifyListeners();
   }
 
   /// Asks a gem's hunter for an update.
