@@ -16,6 +16,7 @@ import 'package:blocnet/features/quests/presentation/pages/quests_page.dart';
 import 'package:blocnet/features/tips/presentation/pages/tip_history_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_create_post_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_post_discussion_screen.dart';
+import 'package:blocnet/features/community/presentation/pages/community_saved_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/my_reports_screen.dart';
 import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
@@ -66,6 +67,7 @@ class ProtectedRoutes {
   static const String manageUpdates = AppRoutes.manageUpdates;
   static const String communityCreatePost = AppRoutes.communityCreatePost;
   static const String communityDiscussion = AppRoutes.communityDiscussion;
+  static const String communitySaved = AppRoutes.communitySaved;
   static const String myReports = AppRoutes.myReports;
   static const String editProfile = AppRoutes.editProfile;
 
@@ -153,6 +155,7 @@ class ProtectedRoutes {
       manageUpdates: (context) => const ManageUpdatesScreen(),
       communityCreatePost: (context) => const CommunityCreatePostScreen(),
       communityDiscussion: (context) => const CommunityPostDiscussionScreen(),
+      communitySaved: (context) => const CommunitySavedScreen(),
       myReports: (context) => const MyReportsScreen(),
       editProfile: (context) => const EditProfileScreen(),
 
@@ -198,6 +201,7 @@ class ProtectedRoutes {
     manageUpdates,
     communityCreatePost,
     communityDiscussion,
+    communitySaved,
     myReports,
     editProfile,
     hunterHub,
