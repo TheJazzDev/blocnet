@@ -1,13 +1,12 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_list_row.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/edit_profile/profile_primary_button.dart';
 import 'package:blocnet/features/profile/presentation/widgets/edit_profile/profile_text_field.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -114,19 +113,19 @@ class _DeactivateAccountScreenState extends State<DeactivateAccountScreen> {
         children: [
           const SectionLabel('What happens', icon: Icons.info_outline_rounded),
           AppSpace.gapSm,
-          ProfileRowGroup(
+          AppRowGroup(
             children: [
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.visibility_off_outlined,
                 iconColor: AppColors.warning500,
                 title: 'Profile hidden',
               ),
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.logout_rounded,
                 iconColor: AppColors.warning500,
                 title: 'Signed out until reactivated',
               ),
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.inventory_2_outlined,
                 iconColor: AppColors.successColor,
                 title: 'Your data is kept',

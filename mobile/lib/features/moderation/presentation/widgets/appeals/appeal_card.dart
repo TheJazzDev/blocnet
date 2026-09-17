@@ -1,7 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/moderation/data/models/community_appeal_model.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_button.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_styles.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
@@ -45,7 +44,7 @@ class AppealCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              ModPill(
+              AppPill.caps(
                 label: appeal.statusLabel,
                 color: appealStatusColor(appeal.status),
               ),
@@ -96,20 +95,22 @@ class AppealCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: ModButton(
+                  child: AppButton(
                     label: 'Overturn',
-                    tone: ModButtonTone.tinted,
+                    variant: AppButtonVariant.tinted,
                     color: ModTone.done,
-                    onTap: busy ? null : onOverturn,
+                    onPressed: busy ? null : onOverturn,
+                    size: AppButtonSize.compact,
                   ),
                 ),
                 AppSpace.wGapSm,
                 Expanded(
-                  child: ModButton(
+                  child: AppButton(
                     label: 'Uphold',
-                    tone: ModButtonTone.tinted,
+                    variant: AppButtonVariant.tinted,
                     color: ModTone.accent,
-                    onTap: busy ? null : onUphold,
+                    onPressed: busy ? null : onUphold,
+                    size: AppButtonSize.compact,
                   ),
                 ),
               ],
@@ -135,7 +136,7 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ModHairline(),
+          const AppHairline(),
           AppSpace.gapMd,
           Text(label.toUpperCase(), style: ModText.caps(AppColors.textFaint)),
           for (final line in lines) ...[

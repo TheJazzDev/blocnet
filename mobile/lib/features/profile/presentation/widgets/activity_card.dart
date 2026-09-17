@@ -3,7 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 
 /// One activity row: title, a muted second line and the time. Meant to sit
-/// in a `ProfileRowGroup`.
+/// in an `AppRowGroup`.
 class ActivityCard extends StatelessWidget {
   const ActivityCard({
     super.key,

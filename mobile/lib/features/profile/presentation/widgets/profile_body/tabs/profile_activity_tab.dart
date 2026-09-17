@@ -4,10 +4,10 @@ import 'package:blocnet/features/profile/domain/activity_target.dart';
 import 'package:blocnet/features/profile/presentation/navigation/activity_opener.dart';
 import 'package:blocnet/features/profile/presentation/widgets/activity_card.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/profile_inline_state.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/tabs/profile_tab_list.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -50,7 +50,7 @@ class ProfileActivityTab extends StatelessWidget {
 
     if (items.isEmpty) {
       final failed = store.activityError != null;
-      return ProfileRowGroup(
+      return AppRowGroup(
         children: [
           ProfileInlineState(
             icon: failed ? Icons.cloud_off_rounded : Icons.history_rounded,

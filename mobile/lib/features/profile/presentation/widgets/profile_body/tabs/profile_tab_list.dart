@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// A tab's rows in one card. Shows the first [collapsedCount] and a
@@ -30,7 +30,7 @@ class _ProfileTabListState extends State<ProfileTabList> {
     final canExpand = total > widget.collapsedCount;
     final shown = _expanded || !canExpand ? total : widget.collapsedCount;
 
-    return ProfileRowGroup(
+    return AppRowGroup(
       children: [
         for (var i = 0; i < shown; i++) widget.itemBuilder(context, i),
         if (canExpand)

@@ -5,6 +5,7 @@ import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_address_row.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -65,7 +66,7 @@ class BalanceCard extends StatelessWidget {
           const SizedBox(height: AppSpace.sm),
           const Padding(
             padding: EdgeInsets.only(right: AppSpace.sm),
-            child: WalletRowDivider(),
+            child: AppHairline(),
           ),
           const WalletAddressRow(),
         ],

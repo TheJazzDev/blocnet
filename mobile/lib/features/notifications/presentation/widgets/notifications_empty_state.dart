@@ -1,6 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/notifications/presentation/widgets/parts/notif_ui.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
@@ -23,9 +24,10 @@ class EmptyNotificationsState extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          NotifIconSquare(
+          AppIconSquare(
             icon: Symbols.notifications_off,
             color: AppColors.textFaint,
+            bordered: true,
           ),
           const SizedBox(width: AppSpace.md),
           Expanded(

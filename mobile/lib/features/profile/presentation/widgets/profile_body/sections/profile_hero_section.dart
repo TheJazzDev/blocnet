@@ -4,9 +4,9 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_pill.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/widgets/profile_avatar.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_level_pill.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Avatar, name, handle, pills (space, role, level), bio and earned badges,
@@ -123,7 +123,7 @@ class ProfileHeroSection extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             if (isHunter)
-              const ProfilePill(
+              AppPill.caps(
                 label: 'Hunter',
                 color: AppColors.tagPartnership,
               ),

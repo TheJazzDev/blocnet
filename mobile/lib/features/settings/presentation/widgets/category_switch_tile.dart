@@ -1,10 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/notifications/data/models/notification_preferences_model.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_pill.dart';
 import 'package:blocnet/features/settings/presentation/utils/humanize_notification_type.dart';
 import 'package:blocnet/features/notifications/presentation/widgets/notification_style.dart';
 import 'package:blocnet/features/settings/presentation/widgets/setting_switch_tile.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Notification category row. The subtitle shows the first linked event and
@@ -78,7 +78,7 @@ class _CategorySwitchTileState extends State<CategorySwitchTile> {
                 runSpacing: 6,
                 children: [
                   for (final type in _types)
-                    ProfilePill(
+                    AppPill.caps(
                       label: humanizeNotificationType(type),
                       color: AppColors.textMuted,
                     ),

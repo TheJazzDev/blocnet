@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/system_alerts/data/models/system_alert_model.dart';
 import 'package:blocnet/features/system_alerts/presentation/utils/system_alert_format.dart';
 import 'package:blocnet/features/system_alerts/presentation/widgets/system_alert_ui.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// One alert as a flat card row: status icon, summary, source · provider,
@@ -36,9 +37,10 @@ class SystemAlertTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AlertIconSquare(
+              AppIconSquare(
                 icon: alertStatusIcon(alert.status),
                 color: color,
+                bordered: true,
               ),
               const SizedBox(width: AppSpace.md),
               Expanded(
@@ -54,7 +56,7 @@ class SystemAlertTile extends StatelessWidget {
                       style: AppText.label(AppColors.textMuted),
                     ),
                     const SizedBox(height: AppSpace.sm),
-                    AlertPill(label: alert.status, color: color),
+                    AppPill.caps(label: alert.status, color: color),
                   ],
                 ),
               ),

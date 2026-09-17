@@ -4,6 +4,7 @@ import 'package:blocnet/features/moderation/data/models/inactive_gem_model.dart'
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_dialog.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_styles.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// What a moderator chose when resolving a quiet gem.
@@ -79,7 +80,7 @@ class _ResolveInactiveGemDialogState extends State<ResolveInactiveGemDialog> {
           child: Column(
             children: [
               for (final outcome in InactiveGemOutcome.values) ...[
-                if (outcome.index > 0) const ModHairline(),
+                if (outcome.index > 0) const AppHairline(),
                 _OutcomeOption(
                   outcome: outcome,
                   selected: _outcome == outcome,

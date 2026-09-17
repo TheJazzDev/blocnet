@@ -1,9 +1,9 @@
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_state_views.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_details_sheet.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_row.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_rows.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -41,23 +41,17 @@ class TransactionsList extends StatelessWidget {
       );
     }
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: walletCardDecoration(),
-      child: Column(
-        children: [
-          for (var i = 0; i < visibleRows.length; i++) ...[
-            if (i > 0) const WalletRowDivider(),
-            WalletActivityRow(
-              key: ValueKey(visibleRows[i].id),
-              item: visibleRows[i],
-              onTap: _canOpen(visibleRows[i])
-                  ? () => showWalletActivityDetails(context, visibleRows[i])
-                  : null,
-            ),
-          ],
-        ],
-      ),
+    return AppRowGroup(
+      children: [
+        for (final row in visibleRows)
+          WalletActivityRow(
+            key: ValueKey(row.id),
+            item: row,
+            onTap: _canOpen(row)
+                ? () => showWalletActivityDetails(context, row)
+                : null,
+          ),
+      ],
     );
   }
 

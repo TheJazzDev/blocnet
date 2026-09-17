@@ -2,10 +2,9 @@ import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dar
 import 'package:blocnet/features/moderation/data/models/inactive_gem_model.dart';
 import 'package:blocnet/features/moderation/presentation/pages/inactive_gems_queue_screen.dart';
 import 'package:blocnet/features/moderation/presentation/pages/moderation_hub_screen.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_button.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/resolve_inactive_gem_dialog.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -122,7 +121,7 @@ void main() {
 
       expect(find.text('Queue counts did not load'), findsOneWidget);
       // No made-up zeros: no count pills, and restrictions read as unknown.
-      expect(find.byType(ModPill), findsNothing);
+      expect(find.byType(AppPill), findsNothing);
       expect(find.text('0'), findsNothing);
       expect(find.text('—'), findsOneWidget);
       expect(find.text('Quiet gems reported'), findsOneWidget);
@@ -133,8 +132,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Queue counts did not load'), findsNothing);
-      expect(find.widgetWithText(ModPill, '4'), findsOneWidget);
-      expect(find.widgetWithText(ModPill, '1'), findsOneWidget);
+      expect(find.widgetWithText(AppPill, '4'), findsOneWidget);
+      expect(find.widgetWithText(AppPill, '1'), findsOneWidget);
       expect(find.text('0'), findsOneWidget, reason: 'active restrictions');
       expect(find.text('—'), findsNothing);
     });
@@ -154,7 +153,7 @@ void main() {
       expect(find.text('4'), findsOneWidget);
       expect(find.text('2'), findsOneWidget);
       expect(find.byIcon(Icons.chevron_right_rounded), findsNWidgets(3));
-      expect(find.byType(ModPill), findsNWidgets(3));
+      expect(find.byType(AppPill), findsNWidgets(3));
     });
 
     testWidgets('opens the quiet gems queue and reloads stats on return',
@@ -202,23 +201,23 @@ void main() {
       final api = _FakeApiClient()..gems = [_gemJson('p1', 'Alpha')];
       await _pump(tester, InactiveGemsQueueScreen(apiClient: api));
 
-      await tester.tap(find.widgetWithText(ModButton, 'Resolve'));
+      await tester.tap(find.widgetWithText(AppButton, 'Resolve'));
       await tester.pumpAndSettle();
 
       final submit = find.descendant(
         of: find.byType(ResolveInactiveGemDialog),
-        matching: find.widgetWithText(ModButton, 'Resolve'),
+        matching: find.widgetWithText(AppButton, 'Resolve'),
       );
-      expect(tester.widget<ModButton>(submit).onTap, isNull);
+      expect(tester.widget<AppButton>(submit).onPressed, isNull);
 
       await tester.tap(find.text('Hunter contacted'));
       await tester.pump();
-      expect(tester.widget<ModButton>(submit).onTap, isNull,
+      expect(tester.widget<AppButton>(submit).onPressed, isNull,
           reason: 'a note is required');
 
       await tester.enterText(find.byType(TextField), '  Pinged on Telegram ');
       await tester.pump();
-      expect(tester.widget<ModButton>(submit).onTap, isNotNull);
+      expect(tester.widget<AppButton>(submit).onPressed, isNotNull);
 
       await tester.tap(submit);
       await tester.pumpAndSettle();
@@ -237,7 +236,7 @@ void main() {
       final api = _FakeApiClient()..gems = [_gemJson('p1', 'Alpha')];
       await _pump(tester, InactiveGemsQueueScreen(apiClient: api));
 
-      await tester.tap(find.widgetWithText(ModButton, 'Resolve'));
+      await tester.tap(find.widgetWithText(AppButton, 'Resolve'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();

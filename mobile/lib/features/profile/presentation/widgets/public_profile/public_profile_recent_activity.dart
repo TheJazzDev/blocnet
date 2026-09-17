@@ -1,11 +1,11 @@
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/profile/presentation/widgets/activity_card.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/profile_inline_state.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/detail_dialogs.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// The profile owner's latest updates; each row opens that update.
@@ -21,7 +21,7 @@ class PublicProfileRecentActivity extends StatelessWidget {
       children: [
         const SectionLabel('Recent updates', icon: Icons.article_outlined),
         AppSpace.gapSm,
-        ProfileRowGroup(
+        AppRowGroup(
           children: [
             if (posts.isEmpty)
               const ProfileInlineState(

@@ -3,6 +3,7 @@ import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator
 import 'package:blocnet/features/main/presentation/pages/main_screen.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/notifications/notification_space_target.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/update_details/update_details_dialog.dart';
@@ -151,10 +152,9 @@ class NotificationNavigator {
     final resolved = store.updates.any((u) => u.id == updateId);
     if (!resolved) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Update not found. It may have been removed.'),
-        ),
+      AppSnackbar.showError(
+        context,
+        'Update not found. It may have been removed.',
       );
       return;
     }

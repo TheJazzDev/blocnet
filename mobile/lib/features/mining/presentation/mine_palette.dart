@@ -1,5 +1,4 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 
 /// The Mine tab's colours, all taken from [AppColors].
@@ -37,13 +36,4 @@ class MinePalette {
 
   /// Scrim under the help popover.
   static Color get scrim => Colors.black.withValues(alpha: 0.6);
-
-  /// A tinted tag or icon square in [color]: 14 % fill, 38 % edge.
-  static BoxDecoration tag(Color color, {BorderRadius? radius}) {
-    return BoxDecoration(
-      color: color.withValues(alpha: 0.14),
-      borderRadius: radius ?? AppRadius.full,
-      border: Border.all(color: color.withValues(alpha: 0.38)),
-    );
-  }
 }

@@ -8,8 +8,8 @@ import 'package:blocnet/features/hunter/presentation/widgets/hub/board/gem_atten
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/gem_notice_cards.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/gem_timeline.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/gem_header_line.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// The gem page body (design state 6): header, the wait and the reports the
@@ -97,20 +97,24 @@ class GemPageView extends StatelessWidget {
       key: const ValueKey('gem-actions'),
       children: [
         Expanded(
-          child: HubButton(
+          child: AppButton(
             key: const ValueKey('gem-post'),
             label: gem.neverUpdated ? 'First update' : 'Post update',
             icon: Icons.edit_outlined,
-            onTap: onPost,
+            onPressed: onPost,
+            color: HubTone.accent,
+            size: AppButtonSize.compact,
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: HubButton(
+          child: AppButton(
             key: const ValueKey('gem-handover'),
             label: pending ? 'Handover pending' : 'Hand over',
-            tone: HubButtonTone.warn,
-            onTap: onHandover,
+            variant: AppButtonVariant.tinted,
+            onPressed: onHandover,
+            color: HubTone.quiet,
+            size: AppButtonSize.compact,
           ),
         ),
       ],
@@ -167,11 +171,11 @@ class _Status extends StatelessWidget {
       children: [
         Text(message, style: HubType.body(AppColors.textMuted)),
         AppSpace.gapSm,
-        HubButton(
+        AppButton(
           label: 'Try again',
-          tone: HubButtonTone.outline,
-          small: true,
-          onTap: onRetry,
+          variant: AppButtonVariant.outline,
+          onPressed: onRetry,
+          size: AppButtonSize.compactSmall,
         ),
       ],
     );

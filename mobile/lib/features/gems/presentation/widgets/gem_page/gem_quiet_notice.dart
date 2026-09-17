@@ -3,9 +3,9 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/gems/presentation/widgets/parts/gems_button.dart';
 import 'package:blocnet/features/gems/presentation/widgets/parts/gems_tone.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_pill.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/features/projects/presentation/widgets/home/home_panel.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// A quiet gem: how long it has been, and *Ask* for followers (only
@@ -34,7 +34,7 @@ class GemQuietNotice extends StatelessWidget {
         children: [
           Row(
             children: [
-              const HubPill(label: 'Quiet', color: GemsTone.quiet),
+              AppPill.caps(label: 'Quiet', color: GemsTone.quiet),
               AppSpace.wGapSm,
               Expanded(
                 child: Text(

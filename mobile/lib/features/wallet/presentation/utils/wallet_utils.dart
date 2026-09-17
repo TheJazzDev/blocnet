@@ -2,14 +2,12 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'wallet_toast.dart';
-
 export 'wallet_error_text.dart';
 export 'wallet_send_flow.dart' show openSendFlow;
-export 'wallet_toast.dart';
 
 Color assetAccentColor(String assetCode) {
   switch (assetCode.toUpperCase()) {
@@ -209,20 +207,20 @@ Future<void> openExplorerTx(
 ) async {
   final uri = Uri.tryParse(explorerTxUrl);
   if (uri == null) {
-    showWalletToast(
+    AppSnackbar.showError(
       context,
-      message: 'Invalid explorer URL.',
-      type: WalletToastType.error,
+      'Invalid explorer URL.',
+      duration: AppSnackbar.longDuration,
     );
     return;
   }
 
   final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!launched && context.mounted) {
-    showWalletToast(
+    AppSnackbar.showError(
       context,
-      message: 'Could not open block explorer.',
-      type: WalletToastType.error,
+      'Could not open block explorer.',
+      duration: AppSnackbar.longDuration,
     );
   }
 }

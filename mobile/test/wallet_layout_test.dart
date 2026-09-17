@@ -3,7 +3,6 @@ import 'package:blocnet/features/wallet/data/repositories/wallet_api_repository.
 import 'package:blocnet/features/wallet/presentation/pages/send_token_page.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_screen.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_pill.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_details_sheet.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_fields.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_row.dart';
@@ -12,6 +11,7 @@ import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -148,7 +148,7 @@ void main() {
     expect(find.text('Price pending'), findsOneWidget);
     expect(find.textContaining('Pre-launch'), findsNothing);
     // Withdrawal status reads in plain words, in an outlined pill.
-    expect(find.widgetWithText(WalletPill, 'FAILED'), findsOneWidget);
+    expect(find.widgetWithText(AppPill, 'FAILED'), findsOneWidget);
   });
 
   testWidgets('BNP leads the assets list', (tester) async {

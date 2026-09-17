@@ -244,7 +244,7 @@ void main() {
       expect(find.byIcon(Icons.add_rounded), findsOneWidget);
       await tester.tap(find.text('Submit a gem'));
       expect(submits, 1);
-      expect(tester.getSize(find.byKey(const ValueKey('hub-fab'))).height, 56);
+      expect(tester.getSize(find.byKey(const ValueKey('hub-fab'))).height, 48);
     });
   });
 }

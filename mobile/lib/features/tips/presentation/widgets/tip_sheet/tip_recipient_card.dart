@@ -1,7 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
-import 'package:blocnet/features/tips/presentation/widgets/tip_sheet/tip_sheet_styles.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
@@ -57,7 +56,7 @@ class TipRecipientCard extends StatelessWidget {
           ),
           if (recipient.isHunterHint) ...[
             const SizedBox(width: AppSpace.sm),
-            const TipPill(label: 'Hunter', color: AppColors.tagPartnership),
+            AppPill.caps(label: 'Hunter', color: AppColors.tagPartnership),
           ],
         ],
       ),

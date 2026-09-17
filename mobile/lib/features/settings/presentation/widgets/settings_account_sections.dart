@@ -1,12 +1,11 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_list_row.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/settings/presentation/widgets/settings_choice_row.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -22,7 +21,7 @@ class SettingsDisplaySection extends StatelessWidget {
       children: [
         const SectionLabel('Display', icon: Icons.view_agenda_outlined),
         AppSpace.gapSm,
-        ProfileRowGroup(
+        AppRowGroup(
           children: [
             SettingsChoiceRow<FeedViewMode>(
               icon: Icons.view_stream_outlined,
@@ -54,19 +53,19 @@ class SettingsPrivacySection extends StatelessWidget {
       children: [
         const SectionLabel('Privacy & security', icon: Icons.lock_outline),
         AppSpace.gapSm,
-        ProfileRowGroup(
+        AppRowGroup(
           children: [
-            ProfileListRow(
+            AppListRow(
               icon: Icons.flag_outlined,
               title: 'My reports',
               onTap: () => navigator.pushNamed(AppRoutes.myReports),
             ),
-            ProfileListRow(
+            AppListRow(
               icon: Icons.block_outlined,
               title: 'Blocked users',
               onTap: () => navigator.pushNamed(AppRoutes.blockedUsers),
             ),
-            ProfileListRow(
+            AppListRow(
               icon: Icons.no_accounts_outlined,
               iconColor: AppColors.error500,
               title: 'Deactivate account',

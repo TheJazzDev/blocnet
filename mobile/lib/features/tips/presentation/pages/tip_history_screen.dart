@@ -2,7 +2,6 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/profile_inline_state.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
@@ -117,7 +116,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
             if (isLoading && rows.isEmpty)
               const SkeletonList(items: 4, itemHeight: 56)
             else if (rows.isEmpty)
-              ProfileRowGroup(
+              AppRowGroup(
                 children: [
                   failed
                       ? ProfileInlineState(
@@ -135,7 +134,7 @@ class _TipHistoryScreenState extends State<TipHistoryScreen> {
                 ],
               )
             else
-              ProfileRowGroup(
+              AppRowGroup(
                 children: [
                   for (final row in rows)
                     TipHistoryListItem(

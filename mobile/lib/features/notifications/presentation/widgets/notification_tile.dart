@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/notifications/data/models/notification_model.dart';
 import 'package:blocnet/features/notifications/presentation/widgets/notification_style.dart';
 import 'package:blocnet/features/notifications/presentation/widgets/parts/notif_ui.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 export 'notification_style.dart';
@@ -50,7 +51,8 @@ class NotificationTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              NotifIconSquare(icon: style.icon, color: style.color),
+              AppIconSquare(
+                  icon: style.icon, color: style.color, bordered: true),
               const SizedBox(width: AppSpace.md),
               Expanded(child: _content(style, isUnread)),
             ],
@@ -107,7 +109,7 @@ class NotificationTile extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpace.sm),
-        NotifPill(label: style.label, color: style.color),
+        AppPill.caps(label: style.label, color: style.color),
       ],
     );
   }

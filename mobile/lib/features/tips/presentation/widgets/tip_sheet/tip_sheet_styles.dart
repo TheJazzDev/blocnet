@@ -41,30 +41,6 @@ class TipSectionLabel extends StatelessWidget {
   }
 }
 
-/// Outlined pill: faint tint, coloured hairline, coloured caps.
-class TipPill extends StatelessWidget {
-  const TipPill({super.key, required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.sm,
-        vertical: AppSpace.hair,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: AppRadius.full,
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(label.toUpperCase(), maxLines: 1, style: tipCaps(color)),
-    );
-  }
-}
-
 /// Input style for the tip form: elevated ground, subtle edge, accent focus.
 InputDecoration tipFieldDecoration(String hint) {
   OutlineInputBorder edge(Color color) => OutlineInputBorder(

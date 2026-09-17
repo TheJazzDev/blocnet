@@ -65,21 +65,16 @@ class _TipStatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = AppColors.primary500;
     return AppSurface(
       padding: AppSpace.allMd,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
-              borderRadius: AppRadius.sm,
-              border: Border.all(color: accent.withValues(alpha: 0.35)),
-            ),
-            child: Icon(icon, size: AppIcon.sm, color: accent),
+          AppIconSquare(
+            icon: icon,
+            color: AppColors.primary500,
+            size: 30,
+            bordered: true,
           ),
           const SizedBox(width: AppSpace.sm),
           Expanded(

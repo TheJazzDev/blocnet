@@ -1,8 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_button.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -22,10 +22,10 @@ class ReceiveAddressCard extends StatelessWidget {
 
   void _copy(BuildContext context) {
     Clipboard.setData(ClipboardData(text: address));
-    showWalletToast(
+    AppSnackbar.showSuccess(
       context,
-      message: 'Address copied.',
-      type: WalletToastType.success,
+      'Address copied.',
+      duration: AppSnackbar.longDuration,
     );
   }
 

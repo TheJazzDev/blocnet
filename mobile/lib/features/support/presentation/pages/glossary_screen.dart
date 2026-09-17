@@ -51,7 +51,7 @@ class _GlossaryCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SupportIconSquare(icon: term.icon),
+          AppIconSquare(icon: term.icon),
           const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(

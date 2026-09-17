@@ -4,6 +4,7 @@ import 'package:blocnet/features/notifications/presentation/widgets/notification
 import 'package:blocnet/features/notifications/presentation/widgets/notification_tile.dart';
 import 'package:blocnet/features/notifications/presentation/widgets/notifications_empty_state.dart';
 import 'package:blocnet/features/notifications/presentation/widgets/parts/notif_ui.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -45,15 +46,14 @@ void main() {
       tester,
       NotificationTile(item: _item(), onTap: () {}, now: _now),
     );
-    expect(find.byKey(const ValueKey('notification-unread-dot')),
-        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('notification-unread-dot')), findsOneWidget);
 
     await _pumpAt375(
       tester,
       NotificationTile(item: _item(isRead: true), onTap: () {}, now: _now),
     );
-    expect(
-        find.byKey(const ValueKey('notification-unread-dot')), findsNothing);
+    expect(find.byKey(const ValueKey('notification-unread-dot')), findsNothing);
   });
 
   testWidgets('the category reads as an outlined caps pill', (tester) async {
@@ -62,7 +62,7 @@ void main() {
       NotificationTile(item: _item(), onTap: () {}, now: _now),
     );
     final style = styleForNotificationType('wallet_transfer_received');
-    final pill = tester.widget<NotifPill>(find.byType(NotifPill));
+    final pill = tester.widget<AppPill>(find.byType(AppPill));
     expect(pill.label, style.label);
     expect(find.text(style.label.toUpperCase()), findsOneWidget);
   });

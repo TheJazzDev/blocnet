@@ -23,26 +23,6 @@ class SupportHeader extends StatelessWidget {
   }
 }
 
-/// A tinted icon square, the list-row leading used across support.
-class SupportIconSquare extends StatelessWidget {
-  const SupportIconSquare({super.key, required this.icon});
-
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: AppColors.primary500.withValues(alpha: 0.12),
-        borderRadius: AppRadius.sm,
-      ),
-      child: Icon(icon, size: AppIcon.sm, color: AppColors.primary400),
-    );
-  }
-}
-
 /// Expandable question/answer row used by the FAQ screen.
 class SupportFaqTile extends StatefulWidget {
   const SupportFaqTile({
@@ -86,7 +66,7 @@ class _SupportFaqTileState extends State<SupportFaqTile> {
           children: [
             Row(
               children: [
-                SupportIconSquare(icon: widget.icon),
+                AppIconSquare(icon: widget.icon),
                 AppSpace.wGapMd,
                 Expanded(
                   child: Text(
@@ -149,7 +129,7 @@ class SupportStepCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              SupportIconSquare(icon: icon),
+              AppIconSquare(icon: icon),
               AppSpace.wGapMd,
               Expanded(
                 child: Text(

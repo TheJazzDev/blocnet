@@ -6,6 +6,7 @@ import 'package:blocnet/features/projects/presentation/widgets/update/composer/c
 import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_notice.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/projects/tags_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -133,7 +134,7 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
       _isSubmitting = true;
       _submitError = null;
     });
-    final messenger = ScaffoldMessenger.of(context);
+    final toast = AppSnackbar.of(context);
     final send =
         widget.submit ?? ProjectProposalsApiRepository().submitProposal;
 
@@ -150,17 +151,13 @@ class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
         throw Exception('The proposal was not sent. Try again.');
       }
       if (!mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Gem submitted for approval')),
-      );
+      toast.success('Gem submitted for approval');
       Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) return;
       final message = composerErrorText(error);
       setState(() => _submitError = message);
-      messenger.showSnackBar(
-        SnackBar(content: Text("Couldn't submit: $message")),
-      );
+      toast.error("Couldn't submit: $message");
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

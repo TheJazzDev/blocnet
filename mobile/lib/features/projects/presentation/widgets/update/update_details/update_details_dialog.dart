@@ -16,6 +16,7 @@ import 'package:blocnet/services/community/comments_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/shared/widgets/user_name_with_level_icon.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../more_from/more_from_primary_tag.dart';
@@ -212,9 +213,7 @@ class _PostDetailsDialogState extends State<UpdateDetailsDialog> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _commentError = error.toString());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to comment: $error')),
-      );
+      AppSnackbar.showError(context, 'Failed to comment: $error');
     } finally {
       if (mounted) setState(() => _isSubmittingComment = false);
     }
@@ -307,12 +306,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
       await commentsStore.toggleLikeComment(commentId);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to like comment: $error'),
-          backgroundColor: AppColors.error500,
-        ),
-      );
+      AppSnackbar.showError(context, 'Failed to like comment: $error');
     }
   }
 

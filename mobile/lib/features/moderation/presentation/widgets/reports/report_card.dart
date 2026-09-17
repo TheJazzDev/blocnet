@@ -1,7 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_button.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/common/mod_styles.dart';
 import 'package:blocnet/shared/utils/get_timestamp.dart';
@@ -43,31 +42,37 @@ class ReportCard extends StatelessWidget {
     final lock = reviewing;
     final actions = <Widget>[
       if (onResolve != null)
-        ModButton(
+        AppButton(
           label: 'Resolve',
           icon: Icons.check_rounded,
-          tone: ModButtonTone.tinted,
+          variant: AppButtonVariant.tinted,
           color: ModTone.done,
-          onTap: lock ? null : onResolve,
+          onPressed: lock ? null : onResolve,
+          size: AppButtonSize.compact,
         ),
       if (onDismiss != null)
-        ModButton(
+        AppButton(
           label: 'Dismiss',
           icon: Icons.close_rounded,
-          onTap: lock ? null : onDismiss,
+          onPressed: lock ? null : onDismiss,
+          variant: AppButtonVariant.outline,
+          size: AppButtonSize.compact,
         ),
       if (onContentActions != null)
-        ModButton(
+        AppButton(
           label: 'Content',
           icon: Icons.visibility_outlined,
-          onTap: lock ? null : onContentActions,
+          onPressed: lock ? null : onContentActions,
+          variant: AppButtonVariant.outline,
+          size: AppButtonSize.compact,
         ),
       if (onUserActions != null)
-        ModButton(
+        AppButton(
           label: 'Member',
           icon: Icons.person_outline_rounded,
-          tone: ModButtonTone.filled,
-          onTap: lock ? null : onUserActions,
+          color: ModTone.accent,
+          onPressed: lock ? null : onUserActions,
+          size: AppButtonSize.compact,
         ),
     ];
 
@@ -77,12 +82,12 @@ class ReportCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              ModPill(
+              AppPill.caps(
                 label: report.status.label,
                 color: reportStatusColor(report.status),
               ),
               AppSpace.wGapXs,
-              ModPill(
+              AppPill.caps(
                 label: report.targetType.label,
                 color: AppColors.textMuted,
               ),

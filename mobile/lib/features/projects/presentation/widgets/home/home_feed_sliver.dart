@@ -17,6 +17,7 @@ import 'package:blocnet/services/edge/edge_engine_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -128,9 +129,7 @@ class HomeFeedSliver extends StatelessWidget {
           context.read<AuthStore>().isInHunterSpace,
         );
         final starters = isDayOne
-            ? ([...projectsStore.projects]..sort(_byActivity))
-                .take(4)
-                .toList()
+            ? ([...projectsStore.projects]..sort(_byActivity)).take(4).toList()
             : const <Project>[];
 
         if (posts.isEmpty && quietCards.isEmpty && starters.isEmpty) {
@@ -240,19 +239,17 @@ Future<void> _ask(
   ProjectsStore store,
   QuietGem gem,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
+  final toast = AppSnackbar.of(context);
   final waiting = await store.requestUpdateOn(gem.project.id);
   if (!context.mounted) return;
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(
-        waiting == null
-            ? 'You have already asked about this gem recently.'
-            : waiting == 1
-                ? 'Asked. You are the first waiting on ${gem.project.name}.'
-                : 'Asked. $waiting members are waiting on ${gem.project.name}.',
-      ),
-    ),
+  if (waiting == null) {
+    toast.info('You have already asked about this gem recently.');
+    return;
+  }
+  toast.success(
+    waiting == 1
+        ? 'Asked. You are the first waiting on ${gem.project.name}.'
+        : 'Asked. $waiting members are waiting on ${gem.project.name}.',
   );
 }
 
@@ -265,7 +262,7 @@ Future<void> _report(
   ProjectsStore store,
   QuietGem gem,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
+  final toast = AppSnackbar.of(context);
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
@@ -291,15 +288,11 @@ Future<void> _report(
 
   final open = await store.reportProjectInactive(gem.project.id);
   if (!context.mounted) return;
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(
-        open == null
-            ? 'Could not send that report. Try again shortly.'
-            : 'Reported. A moderator will review ${gem.project.name}.',
-      ),
-    ),
-  );
+  if (open == null) {
+    toast.error('Could not send that report. Try again shortly.');
+  } else {
+    toast.success('Reported. A moderator will review ${gem.project.name}.');
+  }
 }
 
 /// Opens a gem from a day-one follow row. Tapping the row should read the gem;

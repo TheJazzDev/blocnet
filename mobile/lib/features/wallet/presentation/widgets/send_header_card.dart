@@ -1,7 +1,7 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_pill.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// What the send page does, as a list row in a flat card.
@@ -22,7 +22,8 @@ class SendHeaderCard extends StatelessWidget {
     return WalletCard(
       child: Row(
         children: [
-          WalletIconSquare(color: WalletTone.accent, icon: icon),
+          AppIconSquare(
+              color: WalletTone.accent, icon: icon, size: 36, bordered: true),
           const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(

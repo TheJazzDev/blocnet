@@ -2,11 +2,11 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_button.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_pill.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_fields.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_rows.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -131,7 +131,7 @@ class _Header extends StatelessWidget {
           ),
         ),
         if (badge != null && badgeColor != null)
-          WalletPill(label: badge, color: badgeColor),
+          AppPill.caps(label: badge, color: badgeColor, dense: true),
       ],
     );
   }
@@ -144,16 +144,10 @@ class _FieldsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: walletCardDecoration(),
-      child: Column(
-        children: [
-          for (var i = 0; i < fields.length; i++) ...[
-            if (i > 0) const WalletRowDivider(),
-            _FieldRow(field: fields[i]),
-          ],
-        ],
-      ),
+    return AppRowGroup(
+      children: [
+        for (final field in fields) _FieldRow(field: field),
+      ],
     );
   }
 }
