@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/api/api_error.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 
 /// A send or withdrawal error as a sentence a member can act on.
@@ -14,11 +15,7 @@ String walletErrorText(WalletStore store, Object error) {
   if (error is ApiException) {
     final code = error.statusCode ?? 0;
     if (code >= 400 && code < 500 && code != 401) {
-      final message = store.describeError(error).trim();
-      final isGeneric = message.isEmpty ||
-          message.startsWith('Request failed') ||
-          message == error.message;
-      if (!isGeneric) return message;
+      return describeApiError(error, fallback: walletGenericErrorText);
     }
     if (code == 401) return 'Your session expired. Sign in again.';
     if (code == 0) return walletOfflineText;

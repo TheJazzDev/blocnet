@@ -1,8 +1,6 @@
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/data/repositories/wallet_api_repository.dart';
 import 'package:blocnet/services/api/api_error.dart';
-import 'package:blocnet/services/api/api_client.dart';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 
 class WalletStore extends ChangeNotifier {
@@ -322,31 +320,7 @@ class WalletStore extends ChangeNotifier {
     }
   }
 
-  String describeError(Object error) {
-    if (error is ApiException) {
-      final body = error.responseBody?.trim();
-      if (body != null && body.isNotEmpty) {
-        try {
-          final parsed = jsonDecode(body);
-          if (parsed is Map<String, dynamic>) {
-            final raw = parsed['message'];
-            // Validation errors arrive as a list of messages.
-            final message = raw is List ? raw.join('\n') : raw?.toString();
-            if (message != null && message.isNotEmpty) {
-              return message;
-            }
-          }
-        } catch (_) {
-          // no-op; fallback below
-        }
-      }
-      if (error.statusCode != null) {
-        return 'Request failed (${error.statusCode})';
-      }
-      return error.message;
-    }
-    return error.toString();
-  }
+  String describeError(Object error) => describeApiError(error);
 
   void clear() {
     _snapshot = null;

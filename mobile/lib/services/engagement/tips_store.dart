@@ -1,8 +1,7 @@
-import 'dart:convert';
 
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/data/repositories/tip_api_repository.dart';
-import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/api/api_error.dart';
 import 'package:flutter/material.dart';
 
 class TipsStore extends ChangeNotifier {
@@ -215,33 +214,7 @@ class TipsStore extends ChangeNotifier {
     }
   }
 
-  String describeError(Object error) {
-    if (error is ApiException) {
-      final body = error.responseBody?.trim();
-      if (body != null && body.isNotEmpty) {
-        try {
-          final parsed = jsonDecode(body);
-          if (parsed is Map<String, dynamic>) {
-            final message = parsed['message']?.toString();
-            if (message != null && message.isNotEmpty) {
-              return message;
-            }
-          }
-        } catch (_) {
-          // fall through
-        }
-      }
-      if (error.statusCode != null) {
-        return 'Request failed (${error.statusCode})';
-      }
-      return error.message;
-    }
-    // Transport-level failures (ClientException, SocketException, timeouts)
-    // carry hosts and stack details that must never reach the UI. Log them
-    // and hand back plain copy instead.
-    debugPrint('[TipsStore] request failed: $error');
-    return 'Network error. Check your connection and try again.';
-  }
+  String describeError(Object error) => describeApiError(error);
 
   void clear() {
     _boundUserId = null;
