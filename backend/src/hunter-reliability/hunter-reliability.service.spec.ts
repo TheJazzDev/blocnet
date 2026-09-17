@@ -497,4 +497,20 @@ describe('HunterReliabilityService', () => {
       expect(totalQueries(prisma)).toBe(2);
     });
   });
+
+  describe('lastUpdateAtFor', () => {
+    it('reads each gem’s newest update in one query', async () => {
+      const { service, prisma } = createService({
+        profiles: [],
+        projects: [],
+        lastUpdates: { a1: daysAgo(3) },
+      });
+
+      const result = await service.lastUpdateAtFor(['a1', 'b1', 'a1']);
+
+      expect(result.get('a1')).toEqual(daysAgo(3));
+      expect(result.has('b1')).toBe(false);
+      expect(totalQueries(prisma)).toBe(1);
+    });
+  });
 });

@@ -27,7 +27,11 @@ class _GatedUpdatesRepository extends UpdatesApiRepository {
   final release = Completer<List<Update>>();
 
   @override
-  Future<List<Update>> fetchUpdates({int limit = 200, int offset = 0}) {
+  Future<List<Update>> fetchUpdates({
+    int limit = 200,
+    int offset = 0,
+    String? projectId,
+  }) {
     if (!started.isCompleted) started.complete();
     return release.future;
   }

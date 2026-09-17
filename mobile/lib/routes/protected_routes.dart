@@ -1,5 +1,7 @@
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/badges/presentation/pages/badge_gallery_page.dart';
+import 'package:blocnet/features/gems/domain/gems_tab.dart';
+import 'package:blocnet/features/gems/presentation/gems_navigation.dart';
 import 'package:blocnet/features/hunter/presentation/pages/become_hunter_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
 import 'package:blocnet/features/levels/presentation/pages/levels_page.dart';
@@ -11,7 +13,6 @@ import 'package:blocnet/features/projects/presentation/pages/create_update_scree
 import 'package:blocnet/features/projects/presentation/pages/manage_updates_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/manage_projects_screen.dart';
 import 'package:blocnet/features/projects/presentation/pages/submit_project_screen.dart';
-import 'package:blocnet/features/projects/presentation/pages/top_hunters_screen.dart';
 import 'package:blocnet/features/quests/presentation/pages/quests_page.dart';
 import 'package:blocnet/features/tips/presentation/pages/tip_history_screen.dart';
 import 'package:blocnet/features/community/presentation/pages/community_create_post_screen.dart';
@@ -78,6 +79,11 @@ class ProtectedRoutes {
   // Projects
   static const String home = AppRoutes.home;
   static const String discover = AppRoutes.discover;
+  static const String gems = AppRoutes.gems;
+  static const String gemsBoard = AppRoutes.gemsBoard;
+  static const String gemsHunters = AppRoutes.gemsHunters;
+
+  /// Alias of [gemsHunters]; the Top Hunters screen became that view.
   static const String topHunters = AppRoutes.topHunters;
 
   /// Routes that name a bottom tab. Pushing one while the shell is open
@@ -165,9 +171,12 @@ class ProtectedRoutes {
 
       // Projects
       home: (context) => const MainTabRedirect(tab: MainTabScope.homeTab),
-      discover: (context) =>
-          const MainTabRedirect(tab: MainTabScope.discoverTab),
-      topHunters: (context) => const TopHuntersScreen(),
+      // Gems opens on a view; `/discover` and `/top-hunters` are aliases.
+      discover: (context) => const GemsTabRedirect(tab: GemsTab.discover),
+      gems: (context) => const GemsTabRedirect(tab: GemsTab.discover),
+      gemsBoard: (context) => const GemsTabRedirect(tab: GemsTab.board),
+      gemsHunters: (context) => const GemsTabRedirect(tab: GemsTab.hunters),
+      topHunters: (context) => const GemsTabRedirect(tab: GemsTab.hunters),
     };
   }
 
@@ -208,6 +217,9 @@ class ProtectedRoutes {
     becomeHunter,
     home,
     discover,
+    gems,
+    gemsBoard,
+    gemsHunters,
     topHunters,
   };
 

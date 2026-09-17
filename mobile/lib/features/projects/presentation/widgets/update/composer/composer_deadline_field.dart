@@ -35,7 +35,7 @@ class ComposerDeadlineField extends StatelessWidget {
                 vertical: AppSpace.sm,
               ),
               decoration: BoxDecoration(
-                color: AppColors.bgElevated,
+                color: AppColors.bgBase,
                 borderRadius: AppRadius.md,
                 border: Border.all(color: AppColors.borderSubtle),
               ),

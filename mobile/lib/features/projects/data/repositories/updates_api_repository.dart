@@ -8,12 +8,19 @@ class UpdatesApiRepository {
 
   final ApiClient _apiClient;
 
-  Future<List<Update>> fetchUpdates({int limit = 200, int offset = 0}) async {
+  /// `GET /updates`, newest first. [projectId] narrows it to one gem. The
+  /// server returns at most 100 per page.
+  Future<List<Update>> fetchUpdates({
+    int limit = 200,
+    int offset = 0,
+    String? projectId,
+  }) async {
     final response = await _apiClient.get(
       '/updates',
       query: {
         'limit': '$limit',
         'offset': '$offset',
+        if (projectId != null && projectId.isNotEmpty) 'projectId': projectId,
       },
     );
 

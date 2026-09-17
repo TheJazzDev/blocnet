@@ -45,13 +45,11 @@ void main() {
       );
     });
 
-    test('followedAndManagedProjects merges followed and managed ids',
-        () async {
+    test('refreshProjects loads follow state from /me', () async {
       final store = ProjectsStore(
         projectsRepository: _FakeProjectsApiRepository([
           _project(id: 'p1', adminId: 'u1', createdAt: 1),
           _project(id: 'p2', adminId: 'u2', createdAt: 2),
-          _project(id: 'p3', adminId: 'u3', createdAt: 3),
         ]),
         postsRepository: _FakeUpdatesApiRepository(const []),
         usersRepository: _FakeUsersApiRepository(
@@ -61,15 +59,8 @@ void main() {
 
       await store.refreshProjects();
 
-      final merged = store.followedAndManagedProjects(
-        userId: 'u1',
-        updates: <Update>[_update(id: 'up-1', adminId: 'u1', projectId: 'p3')],
-      );
-
-      expect(
-        merged.map((project) => project.id).toSet(),
-        equals({'p1', 'p2', 'p3'}),
-      );
+      expect(store.isProjectFollowed('p2'), isTrue);
+      expect(store.isProjectFollowed('p1'), isFalse);
     });
   });
 }
@@ -135,7 +126,11 @@ class _FakeUpdatesApiRepository extends UpdatesApiRepository {
   final List<Update> updates;
 
   @override
-  Future<List<Update>> fetchUpdates({int limit = 200, int offset = 0}) async {
+  Future<List<Update>> fetchUpdates({
+    int limit = 200,
+    int offset = 0,
+    String? projectId,
+  }) async {
     return updates;
   }
 }

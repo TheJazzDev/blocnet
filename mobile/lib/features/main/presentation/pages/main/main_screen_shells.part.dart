@@ -8,9 +8,9 @@ const _userTabs = [
     showNotificationBell: true,
   ),
   _TabMeta(
-    title: 'Discover',
+    title: 'Gems',
     showSearch: true,
-    showFilter: true,
+    showFilter: false,
     showNotificationBell: true,
   ),
   _TabMeta(
@@ -47,9 +47,9 @@ const _hunterTabs = [
     showNotificationBell: true,
   ),
   _TabMeta(
-    title: 'Discover',
+    title: 'Gems',
     showSearch: true,
-    showFilter: true,
+    showFilter: false,
     showNotificationBell: true,
   ),
   _TabMeta(
@@ -86,9 +86,9 @@ const _moderationTabs = [
     showNotificationBell: true,
   ),
   _TabMeta(
-    title: 'Discover',
+    title: 'Gems',
     showSearch: true,
-    showFilter: true,
+    showFilter: false,
     showNotificationBell: true,
   ),
   _TabMeta(
@@ -132,7 +132,7 @@ class _UserSpaceShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tab = _userTabs[currentIndex];
-    // Home and Discover only: the Community tab owns its own FAB.
+    // Home and Gems only: the Community tab owns its own FAB.
     final showComposerFab = currentIndex == 0 || currentIndex == 1;
 
     return Scaffold(
@@ -152,7 +152,7 @@ class _UserSpaceShell extends StatelessWidget {
         index: currentIndex,
         builders: const [
           _homeBuilder,
-          _discoverBuilder,
+          _gemsBuilder,
           _communityBuilder,
           _miningBuilder,
           _walletBuilder,
@@ -208,7 +208,7 @@ class _HunterSpaceShell extends StatelessWidget {
         index: currentIndex,
         builders: const [
           _homeBuilder,
-          _discoverBuilder,
+          _gemsBuilder,
           _hunterHubBuilder,
           _miningBuilder,
           _walletBuilder,
@@ -261,7 +261,7 @@ class _ModerationSpaceShell extends StatelessWidget {
         index: currentIndex,
         builders: const [
           _homeBuilder,
-          _discoverBuilder,
+          _gemsBuilder,
           _moderationHubBuilder,
           _miningBuilder,
           _walletBuilder,
@@ -282,7 +282,7 @@ List<Widget> _mineActions(int index) =>
     index == MainTabScope.miningTab ? const [MineHeaderActions()] : const [];
 
 Widget _homeBuilder(BuildContext _) => const HomeScreen();
-Widget _discoverBuilder(BuildContext _) => const DiscoverScreen();
+Widget _gemsBuilder(BuildContext _) => const GemsScreen();
 Widget _communityBuilder(BuildContext _) => const CommunityScreen();
 Widget _hunterHubBuilder(BuildContext _) => const HunterHubScreen();
 Widget _moderationHubBuilder(BuildContext _) => const ModerationHubScreen();

@@ -1,104 +1,15 @@
-import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/projects/data/models/project_model.dart';
-import 'package:blocnet/features/projects/presentation/widgets/dividers/horizontal_divider.dart';
-import 'package:blocnet/features/projects/presentation/widgets/shared/more_from_project_name.dart';
-import 'package:blocnet/features/projects/presentation/widgets/shared/render_markdown_content.dart';
-import 'package:blocnet/services/projects/updates_store.dart';
-import 'package:blocnet/services/projects/projects_store.dart';
+import 'package:blocnet/features/gems/presentation/pages/gem_page.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../more_from/urgent_update_in_project_name.dart';
-import 'project_details_header.dart';
-import 'project_details_info.dart';
 
+/// The member's gem page, as every existing caller opens it.
+///
+/// Kept under its old name so feed cards, search, update detail and the
+/// Hub's "View as member" all land on the rebuilt page.
 class ProjectDetailsDialog extends StatelessWidget {
   const ProjectDetailsDialog({required this.projectId, super.key});
 
   final String projectId;
 
   @override
-  Widget build(BuildContext context) {
-    final projectsStore = Provider.of<ProjectsStore>(context);
-    final postsStore = Provider.of<UpdatesStore>(context);
-
-    final project = _resolveProject(
-      projectId: projectId,
-      projectsStore: projectsStore,
-      postsStore: postsStore,
-    );
-
-    if (project == null) {
-      return const SafeArea(
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    final recentPostInProjectName = (project.posts ?? []).take(5).toList();
-    final detailsContent =
-        project.details.isEmpty ? project.description : project.details;
-
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: AppColors.bgBase,
-        body: Column(
-          children: [
-            ProjectDetailsHeader(projectId: project.id, title: project.name),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  12,
-                  16,
-                  16 + MediaQuery.paddingOf(context).bottom,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ProjectDetailsInfo(project: project),
-                    const SizedBox(height: AppSpace.xl),
-                    RenderMarkdownContent(content: detailsContent),
-                    const SizedBox(height: 28),
-                    MoreFromProjectName(
-                      label: 'Recent Hunter Updates in',
-                      projectTitle: project.name,
-                      posts: recentPostInProjectName,
-                    ),
-                    const CustomHorizontalDivider(margin: 16),
-                    UrgentPostInProjectName(
-                      projectName: project.name,
-                      projectId: project.id,
-                    ),
-                    const CustomHorizontalDivider(margin: 16),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Project? _resolveProject({
-    required String projectId,
-    required ProjectsStore projectsStore,
-    required UpdatesStore postsStore,
-  }) {
-    final relatedPosts =
-        postsStore.posts.where((post) => post.projectId == projectId).toList();
-
-    final fromProjectsStore = projectsStore.getProjectById(projectId);
-    if (fromProjectsStore != null) {
-      return fromProjectsStore.copyWith(posts: relatedPosts);
-    }
-
-    final postWithProject = relatedPosts.where((post) => post.project != null);
-    if (postWithProject.isNotEmpty) {
-      final project = postWithProject.first.project!;
-      return project.copyWith(posts: relatedPosts);
-    }
-
-    return null;
-  }
+  Widget build(BuildContext context) => GemPage(projectId: projectId);
 }

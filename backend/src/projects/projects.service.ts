@@ -162,11 +162,19 @@ export class ProjectsService {
       include: projectInclude,
     });
 
-    // Owner reliability for the whole page in two queries, not one per card.
-    const reliability =
-      await this.hunterReliability.ownerReliabilityFor(projects);
+    // Owner reliability for the whole page in two queries, and each gem's
+    // newest update in one more — not one per card. The newest update is sent
+    // because a client's update list is capped and cannot answer it.
+    const [reliability, lastUpdateAt] = await Promise.all([
+      this.hunterReliability.ownerReliabilityFor(projects),
+      this.hunterReliability.lastUpdateAtFor(projects.map((p) => p.id)),
+    ]);
     return projects.map((project) =>
-      toProjectResponse(project, reliability.get(project.id) ?? null),
+      toProjectResponse(
+        project,
+        reliability.get(project.id) ?? null,
+        lastUpdateAt.get(project.id) ?? null,
+      ),
     );
   }
 
@@ -183,10 +191,15 @@ export class ProjectsService {
       throw new NotFoundException('Project not found');
     }
 
-    const reliability = await this.hunterReliability.ownerReliabilityFor([
-      project,
+    const [reliability, lastUpdateAt] = await Promise.all([
+      this.hunterReliability.ownerReliabilityFor([project]),
+      this.hunterReliability.lastUpdateAtFor([project.id]),
     ]);
-    return toProjectResponse(project, reliability.get(project.id) ?? null);
+    return toProjectResponse(
+      project,
+      reliability.get(project.id) ?? null,
+      lastUpdateAt.get(project.id) ?? null,
+    );
   }
 
   async updateProject(actor: AuthUser, id: string, dto: UpdateProjectDto) {
