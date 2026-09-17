@@ -82,7 +82,7 @@ Future<String?> _openTokenSend(
   if (!canTransfer && !canWithdraw) {
     showWalletToast(
       context,
-      message: '$assetCode send and withdrawal are currently disabled.',
+      message: 'Sending $assetCode is off right now.',
       type: WalletToastType.info,
     );
     return null;
@@ -107,7 +107,7 @@ Future<String?> _pickAsset(
   if (assets.isEmpty) {
     showWalletToast(
       context,
-      message: 'No wallet assets available to send right now.',
+      message: 'Nothing to send yet.',
       type: WalletToastType.info,
     );
     return null;
