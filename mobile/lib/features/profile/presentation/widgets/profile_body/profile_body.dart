@@ -119,7 +119,6 @@ class _ProfileBodyState extends State<ProfileBody> {
               avatarUrl: auth.avatarUrl,
               handle: _handle(auth),
               bio: auth.bio,
-              activeSpace: activeSpace,
               isHunter: isHunter,
               primaryBadge: badgesStore.displayBadge,
               badges: earnedBadges,

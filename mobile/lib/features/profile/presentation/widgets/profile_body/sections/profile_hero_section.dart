@@ -1,7 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
 import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
@@ -19,7 +18,6 @@ class ProfileHeroSection extends StatelessWidget {
     required this.avatarUrl,
     required this.handle,
     required this.bio,
-    required this.activeSpace,
     required this.isHunter,
     required this.onEditTap,
     this.badges = const [],
@@ -33,7 +31,6 @@ class ProfileHeroSection extends StatelessWidget {
   /// `@username`, or the email when there is no username.
   final String? handle;
   final String? bio;
-  final SpaceMeta activeSpace;
 
   /// Adds the HUNTER role pill.
   final bool isHunter;
@@ -125,11 +122,6 @@ class ProfileHeroSection extends StatelessWidget {
           runSpacing: 6,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            ProfilePill(
-              label: activeSpace.label,
-              color: activeSpace.accent,
-              icon: activeSpace.icon,
-            ),
             if (isHunter)
               const ProfilePill(
                 label: 'Hunter',
