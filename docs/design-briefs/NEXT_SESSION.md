@@ -25,18 +25,14 @@
 
 ## What's left, in order
 
-1. **Shared widgets.** Several features carry their own copy of the same pieces: a dark
-   outlined 40px button (`HubButton`, `ModButton`), a caps pill (`HubPill`, `ModPill`,
-   `ProfilePill`, `MinePalette.tag`), a list row with chevron, a row group and a stat tile
-   (`features/profile/.../common/`). Move one version of each into `lib/shared/widgets`,
-   point the features at it, and delete the copies.
-2. **`AppSnackbar` from inside a sheet** shows behind the sheet for error/info toasts
-   (success was fixed per screen). Add a variant that attaches to the sheet's overlay.
-3. **Progress screen** (APP_MAP step 7): Badges, Quests and Levels as one screen.
-4. **Community post edit/delete**: no server endpoint exists; build it with the screen.
-5. **Console review** (APP_MAP step 7), in the same visual language as mobile.
-6. Small layout nits seen on device: the Home + button covers the end of post text while
-   scrolling; the Hub's "Post update" button is large.
+1. **Progress screen** (APP_MAP step 7): Badges, Quests and Levels as one screen.
+2. **Community post edit/delete**: no server endpoint exists; build it with the screen.
+3. **Console review** (APP_MAP step 7), in the same visual language as mobile.
+4. The 44px look-alike buttons (`GemsButton`, `WalletButton`, `NotifButton`, `AlertButton`)
+   could fold into `AppButton`.
+
+Done on 09-17: shared widgets (`AppButton` compact/outline, `AppPill.caps`, `AppIconSquare`,
+`AppListRow`, `AppRowGroup`, `AppStatTile`) and one toast (`AppSnackbar`, drawn above sheets).
 
 ## Local dev — things that bite
 
@@ -52,7 +48,8 @@
   A cold boot usually keeps the session now (F-38 keeps roles offline).
 - Dev data kept on purpose: `@babsman4all` co-owns Solana Radar, TON Drop Desk and Ethereum
   Watch; TON Drop Desk has 3 asks and 1 inactivity report; every seeded profile has a
-  username (`bun run prisma:seed:usernames` fills missing ones).
+  username (`bun run prisma:seed:usernames` fills missing ones); a few community posts come
+  from `bun run prisma:seed:community`.
 
 ## Not yet seen on a device
 
