@@ -87,6 +87,8 @@ class GemKeeper {
     final admin = project.admin;
     if (owner == null) {
       if (admin == null || admin.id.isEmpty) return null;
+      final full = known[admin.id];
+      if (full != null) return GemKeeper.fromReliability(full);
       return _fromAdmin(admin, ReliabilityStanding.unknown, null);
     }
     final full = known[owner.profileId];

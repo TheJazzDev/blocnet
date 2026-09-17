@@ -126,7 +126,11 @@ class _FakeUpdatesApiRepository extends UpdatesApiRepository {
   final List<Update> updates;
 
   @override
-  Future<List<Update>> fetchUpdates({int limit = 200, int offset = 0}) async {
+  Future<List<Update>> fetchUpdates({
+    int limit = 200,
+    int offset = 0,
+    String? projectId,
+  }) async {
     return updates;
   }
 }

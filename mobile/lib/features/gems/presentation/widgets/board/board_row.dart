@@ -109,26 +109,30 @@ class _TitleLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Flexible(
-          child: Text(
-            gem.project.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: HubType.rowTitle(AppColors.textPrimary),
-          ),
+        Text(
+          gem.project.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: HubType.rowTitle(AppColors.textPrimary),
         ),
-        AppSpace.wGapSm,
-        ChainChip(tag: gem.project.primaryTag.name),
-        if (gem.isQuiet) ...[
-          AppSpace.wGapXs,
-          const HubPill(
-            key: ValueKey('quiet-pill'),
-            label: 'Quiet',
-            color: GemsTone.quiet,
-          ),
-        ],
+        AppSpace.gapXs,
+        Wrap(
+          spacing: AppSpace.xs + 2,
+          runSpacing: AppSpace.xs,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ChainChip(tag: gem.project.primaryTag.name),
+            if (gem.isQuiet)
+              const HubPill(
+                key: ValueKey('quiet-pill'),
+                label: 'Quiet',
+                color: GemsTone.quiet,
+              ),
+          ],
+        ),
       ],
     );
   }

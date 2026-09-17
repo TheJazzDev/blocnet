@@ -21,10 +21,12 @@ class GemsTabBar extends StatelessWidget {
       child: Row(
         children: [
           for (final tab in GemsTab.values)
-            _Tab(
-              tab: tab,
-              active: tab == active,
-              onTap: () => onSelect(tab),
+            Expanded(
+              child: _Tab(
+                tab: tab,
+                active: tab == active,
+                onTap: () => onSelect(tab),
+              ),
             ),
         ],
       ),
@@ -52,7 +54,7 @@ class _Tab extends StatelessWidget {
         child: Container(
           height: 44,
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
@@ -63,6 +65,8 @@ class _Tab extends StatelessWidget {
           ),
           child: Text(
             tab.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: AppText.body(
               active ? accent : AppColors.textFaint,
               weight: active ? AppText.semibold : AppText.medium,
