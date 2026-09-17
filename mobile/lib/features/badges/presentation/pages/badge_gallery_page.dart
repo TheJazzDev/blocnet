@@ -1,10 +1,13 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/badges/data/models/badge_models.dart';
-import 'package:blocnet/features/badges/presentation/widgets/badge_icon.dart';
+import 'package:blocnet/features/badges/presentation/widgets/gallery/badge_details_sheet.dart';
+import 'package:blocnet/features/badges/presentation/widgets/gallery/badge_progress_tab.dart';
+import 'package:blocnet/features/badges/presentation/widgets/gallery/badge_tile.dart';
+import 'package:blocnet/features/badges/presentation/widgets/progress_style.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/engagement/badges_store.dart';
-import 'package:blocnet/shared/widgets/app_skeleton.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,16 +20,17 @@ class BadgeGalleryPage extends StatefulWidget {
 
 class _BadgeGalleryPageState extends State<BadgeGalleryPage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  BadgeCategory? _selectedCategory;
-  BadgeRarity? _selectedRarity;
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _loadBadges();
+      if (!mounted) return;
+      final store = context.read<BadgesStore>();
+      store.loadAllBadges();
+      store.loadMyBadges();
     });
   }
 
@@ -36,12 +40,8 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
     super.dispose();
   }
 
-  Future<void> _loadBadges() async {
-    final store = context.read<BadgesStore>();
-    await Future.wait([
-      store.loadAllBadges(),
-      store.loadMyBadges(),
-    ]);
+  void _openBadge(BadgeModel badge, bool isEarned) {
+    showBadgeDetailsSheet(context, badge: badge, isEarned: isEarned);
   }
 
   @override
@@ -56,67 +56,59 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
             showSearch: false,
             showFilter: false,
           ),
-          Container(
-            color: AppColors.bgBase,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppColors.primary400,
-              unselectedLabelColor: AppColors.textMuted,
-              indicatorColor: AppColors.primary400,
-              indicatorWeight: 2.5,
-              dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: 'All Badges'),
-                Tab(text: 'My Badges'),
-                Tab(text: 'Progress'),
-              ],
-            ),
+          TabBar(
+            controller: _tabController,
+            labelColor: AppColors.primary400,
+            unselectedLabelColor: AppColors.textMuted,
+            labelStyle: AppText.label(AppColors.primary400, weight: AppText.bold),
+            unselectedLabelStyle: AppText.label(AppColors.textMuted),
+            indicatorColor: AppColors.primary400,
+            dividerColor: AppColors.borderSubtle,
+            tabs: const [
+              Tab(text: 'All'),
+              Tab(text: 'Mine'),
+              Tab(text: 'Progress'),
+            ],
           ),
           Expanded(
             child: Consumer<BadgesStore>(
-              builder: (context, store, child) {
-                if (store.isLoadingAll || store.isLoadingMy) {
+              builder: (context, store, _) {
+                final nothingLoaded =
+                    store.allBadges.isEmpty && store.myBadges.isEmpty;
+                if (nothingLoaded &&
+                    (store.isLoadingAll || store.isLoadingMy)) {
                   return const SingleChildScrollView(
                     physics: NeverScrollableScrollPhysics(),
                     child: SkeletonList(
                       items: 6,
                       itemHeight: 84,
-                      padding: EdgeInsets.all(AppSpace.lg),
+                      padding: AppSpace.allLg,
                     ),
                   );
                 }
-
-                if (store.lastError != null) {
+                // Only a failed load with nothing to show takes the whole
+                // screen; a failed "set primary" must not hide the gallery.
+                if (nothingLoaded && store.lastError != null) {
                   return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.error_outline,
-                            size: AppIcon.xxl, color: Colors.red.shade300),
-                        const SizedBox(height: AppSpace.lg),
-                        Text(
-                          store.lastError!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.red.shade300),
-                        ),
-                        const SizedBox(height: AppSpace.lg),
-                        ElevatedButton(
-                          onPressed: _loadBadges,
-                          child: const Text('Retry'),
-                        ),
-                      ],
+                    child: AppEmptyState.error(
+                      title: 'Could not load badges',
+                      message: progressErrorText(
+                        store.lastError,
+                        fallback: 'Check your connection and try again.',
+                      ),
+                      onAction: store.refresh,
                     ),
                   );
                 }
 
                 return RefreshIndicator(
-                  onRefresh: () => store.refresh(),
+                  onRefresh: store.refresh,
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildAllBadgesTab(store),
-                      _buildMyBadgesTab(store),
-                      _buildProgressTab(store),
+                      _allTab(store),
+                      _mineTab(store),
+                      BadgeProgressTab(store: store),
                     ],
                   ),
                 );
@@ -128,622 +120,95 @@ class _BadgeGalleryPageState extends State<BadgeGalleryPage>
     );
   }
 
-  Widget _buildAllBadgesTab(BadgesStore store) {
-    var badges = store.allBadges;
-
-    // Apply filters
-    if (_selectedCategory != null) {
-      badges = badges.where((b) => b.category == _selectedCategory).toList();
-    }
-    if (_selectedRarity != null) {
-      badges = badges.where((b) => b.rarity == _selectedRarity).toList();
-    }
-
+  Widget _allTab(BadgesStore store) {
+    final badges = store.allBadges;
     if (badges.isEmpty) {
-      return const Center(
-        child: Text('No badges available'),
+      return const _ScrollableEmpty(
+        icon: Icons.emoji_events_outlined,
+        title: 'No badges yet',
       );
     }
-
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSpace.md),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.02,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
+    return _BadgeGrid(
       itemCount: badges.length,
-      itemBuilder: (context, index) {
+      itemBuilder: (index) {
         final badge = badges[index];
         final isEarned = store.hasBadge(badge.id);
-        return _BadgeCard(
+        return BadgeTile(
           badge: badge,
           isEarned: isEarned,
           isPrimary: store.primaryBadge?.id == badge.id,
-          onTap: () => _showBadgeDetails(badge, isEarned),
+          onTap: () => _openBadge(badge, isEarned),
         );
       },
     );
   }
 
-  Widget _buildMyBadgesTab(BadgesStore store) {
-    final myBadges = store.myBadges;
-
-    if (myBadges.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.emoji_events_outlined,
-                size: AppIcon.xxl, color: Colors.grey.shade600),
-            const SizedBox(height: AppSpace.lg),
-            Text(
-              'No badges earned yet',
-              style: TextStyle(
-                  fontSize: AppText.subtitleSize, color: Colors.grey.shade400),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              'Complete quests and stay active to earn badges!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: AppText.bodySize, color: Colors.grey.shade600),
-            ),
-          ],
-        ),
+  Widget _mineTab(BadgesStore store) {
+    final mine = store.myBadges;
+    if (mine.isEmpty) {
+      return const _ScrollableEmpty(
+        icon: Icons.emoji_events_outlined,
+        title: 'No badges earned yet',
+        message: 'Quests and daily activity earn badges.',
       );
     }
-
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSpace.md),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.02,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: myBadges.length,
-      itemBuilder: (context, index) {
-        final userBadge = myBadges[index];
-        return _BadgeCard(
+    return _BadgeGrid(
+      itemCount: mine.length,
+      itemBuilder: (index) {
+        final userBadge = mine[index];
+        return BadgeTile(
           badge: userBadge.badge,
           isEarned: true,
           isPrimary: store.primaryBadge?.id == userBadge.badgeId,
           earnedAt: userBadge.earnedAt,
-          onTap: () => _showBadgeDetails(userBadge.badge, true),
+          onTap: () => _openBadge(userBadge.badge, true),
         );
       },
     );
   }
+}
 
-  Widget _buildProgressTab(BadgesStore store) {
+class _BadgeGrid extends StatelessWidget {
+  const _BadgeGrid({required this.itemCount, required this.itemBuilder});
+
+  final int itemCount;
+  final Widget Function(int index) itemBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: AppSpace.allLg,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisExtent: kBadgeTileExtent,
+        crossAxisSpacing: AppSpace.md,
+        mainAxisSpacing: AppSpace.md,
+      ),
+      itemCount: itemCount,
+      itemBuilder: (context, index) => itemBuilder(index),
+    );
+  }
+}
+
+/// An empty state that still lets pull-to-refresh work.
+class _ScrollableEmpty extends StatelessWidget {
+  const _ScrollableEmpty({
+    required this.icon,
+    required this.title,
+    this.message,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(AppSpace.md),
+      physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        _buildStatsCard(store),
-        const SizedBox(height: AppSpace.lg),
-        _buildCategoryProgress(store),
-        const SizedBox(height: AppSpace.lg),
-        _buildRarityProgress(store),
+        AppEmptyState(icon: icon, title: title, message: message),
       ],
-    );
-  }
-
-  Widget _buildStatsCard(BadgesStore store) {
-    final percentage = store.totalBadgeCount > 0
-        ? (store.earnedBadgeCount / store.totalBadgeCount * 100)
-            .toStringAsFixed(1)
-        : '0.0';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.hair),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Badge Collection',
-            style: TextStyle(
-              fontSize: AppText.bodySize,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppSpace.md),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem('Earned', store.earnedBadgeCount.toString()),
-              _buildStatItem('Total', store.totalBadgeCount.toString()),
-              _buildStatItem('Progress', '$percentage%'),
-            ],
-          ),
-          const SizedBox(height: AppSpace.md),
-          LinearProgressIndicator(
-            value: store.totalBadgeCount > 0
-                ? store.earnedBadgeCount / store.totalBadgeCount
-                : 0,
-            minHeight: 7,
-            borderRadius: BorderRadius.circular(AppRadius.fullValue),
-            backgroundColor: AppColors.bgElevated,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary400),
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Divider(
-            height: 1,
-            color: AppColors.borderSubtle.withValues(alpha: 0.8),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: AppText.titleSize,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: AppSpace.xs),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: AppText.captionSize,
-            color: AppColors.textMuted,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryProgress(BadgesStore store) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.hair),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Progress by Category',
-            style: TextStyle(
-              fontSize: AppText.labelSize,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppSpace.md),
-          ...BadgeCategory.values.map((category) {
-            final totalInCategory = store.getBadgesByCategory(category).length;
-            final earnedInCategory =
-                store.getEarnedBadgesByCategory(category).length;
-            if (totalInCategory == 0) return const SizedBox.shrink();
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AppSpace.md),
-              child: _buildProgressBar(
-                category.displayName,
-                earnedInCategory,
-                totalInCategory,
-                color: Color(category.color),
-              ),
-            );
-          }),
-          const SizedBox(height: AppSpace.hair),
-          Divider(
-            height: 1,
-            color: AppColors.borderSubtle.withValues(alpha: 0.8),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRarityProgress(BadgesStore store) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.hair),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Progress by Rarity',
-            style: TextStyle(
-              fontSize: AppText.labelSize,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppSpace.md),
-          ...BadgeRarity.values.map((rarity) {
-            final badgesOfRarity = store.getBadgesByRarity(rarity);
-            final earnedOfRarity =
-                badgesOfRarity.where((b) => store.hasBadge(b.id)).length;
-            if (badgesOfRarity.isEmpty) return const SizedBox.shrink();
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AppSpace.md),
-              child: _buildProgressBar(
-                rarity.displayName,
-                earnedOfRarity,
-                badgesOfRarity.length,
-                color: Color(rarity.color),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressBar(
-    String label,
-    int earned,
-    int total, {
-    Color? color,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: AppText.labelSize,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              '$earned / $total',
-              style: TextStyle(
-                  fontSize: AppText.captionSize, color: AppColors.textMuted),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpace.xs),
-        LinearProgressIndicator(
-          value: total > 0 ? earned / total : 0,
-          minHeight: 6,
-          borderRadius: BorderRadius.circular(3),
-          backgroundColor: AppColors.bgElevated,
-          valueColor: AlwaysStoppedAnimation<Color>(
-            color ?? Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showBadgeDetails(BadgeModel badge, bool isEarned) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => _BadgeDetailsSheet(
-        badge: badge,
-        isEarned: isEarned,
-      ),
-    );
-  }
-}
-
-class _BadgeCard extends StatelessWidget {
-  const _BadgeCard({
-    required this.badge,
-    required this.isEarned,
-    required this.isPrimary,
-    this.earnedAt,
-    this.onTap,
-  });
-
-  final BadgeModel badge;
-  final bool isEarned;
-  final bool isPrimary;
-  final DateTime? earnedAt;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final rarityColor = Color(badge.rarity.color);
-    final categoryColor = Color(badge.category.color);
-    final unlockedBase =
-        Color.lerp(rarityColor, categoryColor, 0.38) ?? rarityColor;
-    final lockedOverlay = AppColors.bgBase.withValues(alpha: 0.45);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.xlValue),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              isEarned
-                  ? unlockedBase.withValues(alpha: 0.24)
-                  : AppColors.bgSurface.withValues(alpha: 0.95),
-              isEarned
-                  ? unlockedBase.withValues(alpha: 0.1)
-                  : AppColors.bgSurface.withValues(alpha: 0.82),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.xlValue),
-          border: Border.all(
-            color: isEarned
-                ? unlockedBase.withValues(alpha: 0.56)
-                : AppColors.borderSubtle.withValues(alpha: 0.8),
-            width: isEarned ? 1.8 : 1.2,
-          ),
-          boxShadow: isEarned
-              ? [
-                  BoxShadow(
-                    color: unlockedBase.withValues(alpha: 0.16),
-                    blurRadius: 14,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : null,
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpace.md, AppSpace.md, AppSpace.md, AppSpace.md),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: AppSpace.hair),
-                        decoration: BoxDecoration(
-                          color: isEarned
-                              ? unlockedBase.withValues(alpha: 0.18)
-                              : AppColors.bgElevated,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.fullValue),
-                          border: Border.all(
-                            color: isEarned
-                                ? unlockedBase.withValues(alpha: 0.52)
-                                : AppColors.borderSubtle,
-                          ),
-                        ),
-                        child: Text(
-                          isEarned ? 'Unlocked' : 'Locked',
-                          style: TextStyle(
-                            fontSize: AppText.captionSize,
-                            fontWeight: FontWeight.w700,
-                            color:
-                                isEarned ? unlockedBase : AppColors.textMuted,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      if (isPrimary)
-                        Container(
-                          width: 22,
-                          height: 22,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary500.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color:
-                                  AppColors.primary500.withValues(alpha: 0.45),
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.star_rounded,
-                            size: AppIcon.xs,
-                            color: AppColors.primary400,
-                          ),
-                        ),
-                    ],
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Opacity(
-                            opacity: isEarned ? 1 : 0.35,
-                            child: BadgeIcon(
-                              badge: badge,
-                              size: BadgeSize.large,
-                              showTooltip: false,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpace.sm),
-                          Text(
-                            badge.name,
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: AppText.labelSize,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                              color: isEarned
-                                  ? AppColors.textPrimary
-                                  : AppColors.textFaint,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpace.xs),
-                          Opacity(
-                            opacity: isEarned ? 1 : 0.45,
-                            child: BadgeRarityChip(
-                                rarity: badge.rarity, compact: true),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Text(
-                    isEarned
-                        ? (earnedAt != null
-                            ? 'Earned ${_formatDate(earnedAt!)}'
-                            : 'Earned')
-                        : 'Unlock at ${badge.pointsRequirement} pts',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppText.captionSize,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (!isEarned)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: lockedOverlay,
-                    borderRadius: BorderRadius.circular(AppRadius.xlValue),
-                  ),
-                ),
-              ),
-            if (!isEarned)
-              Positioned(
-                right: 10,
-                bottom: 10,
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: AppColors.bgElevated,
-                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                    border: Border.all(color: AppColors.borderSubtle),
-                  ),
-                  child: Icon(
-                    Icons.lock_outline_rounded,
-                    size: AppIcon.xs,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime value) {
-    final month = value.month.toString().padLeft(2, '0');
-    final day = value.day.toString().padLeft(2, '0');
-    return '$month/$day/${value.year}';
-  }
-}
-
-class _BadgeDetailsSheet extends StatelessWidget {
-  const _BadgeDetailsSheet({
-    required this.badge,
-    required this.isEarned,
-  });
-
-  final BadgeModel badge;
-  final bool isEarned;
-
-  @override
-  Widget build(BuildContext context) {
-    final store = context.watch<BadgesStore>();
-    final isPrimary = store.primaryBadge?.id == badge.id;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            BadgeIcon(
-              badge: badge,
-              size: BadgeSize.xlarge,
-              showTooltip: false,
-            ),
-            const SizedBox(height: AppSpace.lg),
-            Text(
-              badge.name,
-              style: const TextStyle(
-                  fontSize: AppText.headlineSize, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                BadgeRarityChip(rarity: badge.rarity),
-                const SizedBox(width: AppSpace.sm),
-                BadgeCategoryChip(category: badge.category),
-              ],
-            ),
-            const SizedBox(height: AppSpace.lg),
-            Text(
-              badge.description,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: AppText.bodySize, color: Colors.grey.shade300),
-            ),
-            const SizedBox(height: AppSpace.xl),
-            if (isEarned) ...[
-              if (!isPrimary)
-                ElevatedButton.icon(
-                  onPressed: store.isSettingPrimary
-                      ? null
-                      : () async {
-                          final success = await store.setPrimaryBadge(badge.id);
-                          if (context.mounted) {
-                            if (success) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      '${badge.name} set as primary badge'),
-                                ),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(store.lastError ??
-                                      'Failed to set primary badge'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  icon: const Icon(Icons.star),
-                  label: const Text('Set as Primary Badge'),
-                )
-              else
-                ElevatedButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.check),
-                  label: const Text('Primary Badge'),
-                ),
-            ] else ...[
-              Container(
-                padding: const EdgeInsets.all(AppSpace.md),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade800,
-                  borderRadius: BorderRadius.circular(AppRadius.smValue),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.lock_outline, color: Colors.grey.shade400),
-                    const SizedBox(width: AppSpace.sm),
-                    Text(
-                      'Complete requirements to unlock',
-                      style: TextStyle(color: Colors.grey.shade400),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }
