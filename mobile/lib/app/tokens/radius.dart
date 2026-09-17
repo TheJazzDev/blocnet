@@ -22,8 +22,8 @@ class AppRadius {
   /// 12 — cards, tiles, list rows. The workhorse. Absorbs 10.
   static const double mdValue = 12;
 
-  /// 16 — panels, bottom sheets, large cards. Absorbs 14, 18.
-  static const double lgValue = 16;
+  /// 14 — panels, inputs, large cards.
+  static const double lgValue = 14;
 
   /// 20 — full-screen sheets and modals.
   static const double xlValue = 20;

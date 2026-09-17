@@ -4,8 +4,8 @@ import 'package:flutter/widgets.dart';
 ///
 /// Replaces 16 ad-hoc gap values across ~1,700 call sites (1,060 `SizedBox`
 /// spacers plus `EdgeInsets`). The three biggest buckets were 8 (240),
-/// 12 (179) and 10 (153). Odd values round **up**, so the migration opens the
-/// layout up slightly rather than tightening it.
+/// 12 (179) and 10 (153). The steps keep the app's pre-2026-09-11 density;
+/// a roomier grid was tried and read as too loose on a phone (F-67).
 ///
 /// ```dart
 /// const SizedBox(height: AppSpace.md)
@@ -24,20 +24,20 @@ class AppSpace {
   /// 8 — the default small gap. Absorbs 6, 9.
   static const double sm = 8;
 
-  /// 12 — between related rows. Absorbs 10.
-  static const double md = 12;
+  /// 10 — between related rows.
+  static const double md = 10;
 
-  /// 16 — card padding, between cards. Absorbs 14, 18.
-  static const double lg = 16;
+  /// 14 — card padding, between cards.
+  static const double lg = 14;
 
-  /// 24 — between sections. Absorbs 20.
-  static const double xl = 24;
+  /// 20 — between sections.
+  static const double xl = 20;
 
-  /// 32 — around a screen's major blocks.
-  static const double xxl = 32;
+  /// 28 — around a screen's major blocks.
+  static const double xxl = 28;
 
-  /// 48 — empty-state breathing room.
-  static const double xxxl = 48;
+  /// 40 — empty-state breathing room.
+  static const double xxxl = 40;
 
   // ── Ready-made insets ────────────────────────────────────────────────────
   static const EdgeInsets allXs = EdgeInsets.all(xs);

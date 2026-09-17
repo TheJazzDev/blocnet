@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 /// The Blocnet type scale.
 ///
 /// Replaces 32 ad-hoc sizes (8px–200px, 1,117 call sites) with 8 steps.
-/// Grounded in what the app actually used: the four workhorse buckets were
-/// 12 (224), 11 (166), 13 (157) and 14 (103), all of which read small on a
-/// phone. Every step here lands at or above its predecessor, so the migration
-/// only ever makes text larger.
+/// The values are the app's own pre-2026-09-11 workhorse sizes — 12 (224),
+/// 11 (166), 13 (157) and 14 (103). A larger scale was tried and rejected by
+/// the owner as too loud on a phone (F-67), so these stay moderate.
 ///
 /// Prefer these over [AppTypography.custom]. They are shorter to type, which
 /// is the whole reason the previous named scale went unused.
@@ -20,30 +19,30 @@ class AppText {
   const AppText._();
 
   // ── Sizes ────────────────────────────────────────────────────────────────
-  /// 11 — timestamps, counts, micro-labels. Absorbs 8, 8.5, 9, 10, 10.5.
-  static const double captionSize = 11;
+  /// 10 — timestamps, counts, micro-labels.
+  static const double captionSize = 10;
 
-  /// 13 — chips, badges, tab labels, dense table rows. Absorbs 11.5, 12, 12.5.
-  static const double labelSize = 13;
+  /// 12 — chips, badges, tab labels, dense table rows.
+  static const double labelSize = 12;
 
-  /// 15 — default reading text. Absorbs 14. The floor for anything a user
-  /// reads as a sentence rather than scans as a label.
-  static const double bodySize = 15;
+  /// 14 — default reading text. The floor for anything a user reads as a
+  /// sentence rather than scans as a label.
+  static const double bodySize = 14;
 
-  /// 17 — card titles, list-row leads. Absorbs 16.
-  static const double subtitleSize = 17;
+  /// 16 — card titles, list-row leads.
+  static const double subtitleSize = 16;
 
-  /// 20 — section and screen headings. Absorbs 18, 19, 21.
-  static const double titleSize = 20;
+  /// 18 — section and screen headings.
+  static const double titleSize = 18;
 
-  /// 24 — page heroes. Absorbs 22.
-  static const double headlineSize = 24;
+  /// 22 — page heroes.
+  static const double headlineSize = 22;
 
-  /// 32 — hero stats and balances. Absorbs 28, 36, 38.
-  static const double displaySize = 32;
+  /// 28 — hero stats and balances.
+  static const double displaySize = 28;
 
-  /// 48 — the wallet balance and nothing else, realistically.
-  static const double displayXlSize = 48;
+  /// 40 — the wallet balance and nothing else, realistically.
+  static const double displayXlSize = 40;
 
   // ── Weights ──────────────────────────────────────────────────────────────
   // Four, down from five. w800 (38 uses) folds into bold.
