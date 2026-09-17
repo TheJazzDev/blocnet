@@ -22,6 +22,22 @@ class CommunityModerationApiRepository {
     return CommunityModerationReport.fromApi(response);
   }
 
+  /// The reports the signed-in member filed (`GET /community/reports/mine`).
+  /// Unlike [fetchReports], this needs no staff role.
+  Future<CommunityModerationReportsPage> fetchMyReports({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final response = await _apiClient.get(
+      '/community/reports/mine',
+      query: {'limit': '$limit', 'offset': '$offset'},
+    );
+    if (response is! Map<String, dynamic>) {
+      throw ApiException('Invalid reports response.');
+    }
+    return CommunityModerationReportsPage.fromApi(response);
+  }
+
   Future<CommunityModerationReportsPage> fetchReports({
     int limit = 20,
     int offset = 0,

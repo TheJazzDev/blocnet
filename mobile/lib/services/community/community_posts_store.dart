@@ -13,9 +13,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 part 'community_posts_store_realtime.part.dart';
 part 'community_posts_store_reactions.part.dart';
+part 'community_posts_store_saved.part.dart';
 
 class CommunityPostsStore extends ChangeNotifier
-    with _CommunityPostsRealtimeMixin, _CommunityPostsReactionsMixin {
+    with
+        _CommunityPostsRealtimeMixin,
+        _CommunityPostsReactionsMixin,
+        _CommunityPostsSavedMixin {
   CommunityPostsStore({CommunityPostsApiRepository? repository})
       : _repository = repository ?? CommunityPostsApiRepository();
 
@@ -29,10 +33,16 @@ class CommunityPostsStore extends ChangeNotifier
   final RealtimeCoordinator _realtimeCoordinator = RealtimeCoordinator();
 
   final List<CommunityPost> _posts = [];
+
+  /// Posts opened outside the feed (a deep link, a saved post older than the
+  /// feed). Kept apart so opening one never pushes it to the top of the feed.
+  final Map<String, CommunityPost> _detachedPosts = {};
+  final Map<String, String> _postLoadErrors = {};
   @override
   final Map<String, List<CommunityPostComment>> _commentsByPostId = {};
   final Map<String, bool> _hasMoreCommentsByPostId = {};
   final Set<String> _loadingCommentPostIds = <String>{};
+  final Map<String, String> _commentLoadErrors = {};
   @override
   final Set<String> _pendingLikePostIds = <String>{};
   @override
@@ -43,11 +53,16 @@ class CommunityPostsStore extends ChangeNotifier
   bool _isFetchingPosts = false;
   bool _isSubmittingPost = false;
   String? _lastError;
+  String? _postsError;
 
   List<CommunityPost> get posts => List.unmodifiable(_posts);
   bool get isFetchingPosts => _isFetchingPosts;
   bool get isSubmittingPost => _isSubmittingPost;
   String? get lastError => _lastError;
+
+  /// Why the feed failed to load, or null. Separate from [lastError], which
+  /// any action (a like, a comment) can set.
+  String? get postsError => _postsError;
 
   Future<void> fetchPostsOnce() async {
     if (_posts.isNotEmpty || _isFetchingPosts) return;
@@ -59,6 +74,7 @@ class CommunityPostsStore extends ChangeNotifier
 
     _isFetchingPosts = true;
     _lastError = null;
+    _postsError = null;
     notifyListeners();
 
     try {
@@ -77,8 +93,12 @@ class CommunityPostsStore extends ChangeNotifier
             ),
           ),
         );
+      for (final item in items) {
+        _detachedPosts.remove(item.id);
+      }
     } catch (error) {
-      _lastError = _errorMapper.map(error, fallback: 'Unable to load posts');
+      _lastError = _errorMapper.map(error, fallback: 'Could not load posts');
+      _postsError = _lastError;
     } finally {
       _isFetchingPosts = false;
       notifyListeners();
@@ -107,7 +127,7 @@ class CommunityPostsStore extends ChangeNotifier
 
       return created;
     } catch (error) {
-      _lastError = _errorMapper.map(error, fallback: 'Unable to publish post');
+      _lastError = _errorMapper.map(error, fallback: 'Could not publish post');
       rethrow;
     } finally {
       _isSubmittingPost = false;
@@ -120,8 +140,11 @@ class CommunityPostsStore extends ChangeNotifier
     for (final post in _posts) {
       if (post.id == postId) return post;
     }
-    return null;
+    return _detachedPosts[postId] ?? _savedById(postId);
   }
+
+  /// Why [postId] could not be opened, or null.
+  String? postLoadError(String postId) => _postLoadErrors[postId];
 
   @override
   Future<CommunityPost?> fetchPostById(String postId) async {
@@ -130,14 +153,53 @@ class CommunityPostsStore extends ChangeNotifier
       return existing;
     }
 
-    final fetched = await _repository.fetchPostById(postId);
-    if (fetched == null) {
+    final hadError = _postLoadErrors.remove(postId) != null;
+    if (hadError) notifyListeners();
+
+    try {
+      final fetched = await _repository.fetchPostById(postId);
+      if (fetched == null) {
+        _postLoadErrors[postId] = 'This post is no longer available';
+        notifyListeners();
+        return null;
+      }
+      _replacePost(fetched);
+      notifyListeners();
+      return fetched;
+    } catch (error) {
+      _postLoadErrors[postId] = _errorMapper.map(
+        error,
+        fallback: 'Could not open this post',
+      );
+      notifyListeners();
       return null;
     }
+  }
 
-    _replacePost(fetched);
+  /// Drops a post everywhere it is held, e.g. after a moderator hides it.
+  void removePost(String postId) {
+    _posts.removeWhere((post) => post.id == postId);
+    _detachedPosts.remove(postId);
+    _removeSaved((post) => post.id == postId);
     notifyListeners();
-    return fetched;
+  }
+
+  /// Drops everything [authorId] wrote from the feed, saved posts and open
+  /// threads, so a block takes effect without a refresh.
+  void removeContentByAuthor(String authorId) {
+    final id = authorId.trim();
+    if (id.isEmpty) return;
+    bool byAuthor(CommunityPost post) =>
+        post.authorId == id || post.admin?.id == id;
+    _posts.removeWhere(byAuthor);
+    _detachedPosts.removeWhere((_, post) => byAuthor(post));
+    _removeSaved(byAuthor);
+    for (final postId in _commentsByPostId.keys.toList()) {
+      _commentsByPostId[postId] = _commentsByPostId[postId]!
+          .where((c) => c.authorId != id && c.admin?.id != id)
+          .toList();
+    }
+    notifyListeners();
   }
 
   List<CommunityPostComment> commentsForPost(String postId) {
@@ -148,6 +210,9 @@ class CommunityPostsStore extends ChangeNotifier
     return _loadingCommentPostIds.contains(postId);
   }
 
+  /// Why the first page of comments failed to load, or null.
+  String? commentsError(String postId) => _commentLoadErrors[postId];
+
   bool hasMoreCommentsForPost(String postId) {
     return _hasMoreCommentsByPostId[postId] ?? true;
   }
@@ -157,6 +222,7 @@ class CommunityPostsStore extends ChangeNotifier
     if (!force && (_commentsByPostId[postId]?.isNotEmpty ?? false)) return;
 
     _loadingCommentPostIds.add(postId);
+    _commentLoadErrors.remove(postId);
     notifyListeners();
 
     try {
@@ -165,8 +231,9 @@ class CommunityPostsStore extends ChangeNotifier
     } catch (error) {
       _lastError = _errorMapper.map(
         error,
-        fallback: 'Unable to load discussion comments',
+        fallback: 'Could not load comments',
       );
+      _commentLoadErrors[postId] = _lastError!;
     } finally {
       _loadingCommentPostIds.remove(postId);
       notifyListeners();
@@ -185,7 +252,7 @@ class CommunityPostsStore extends ChangeNotifier
     } catch (error) {
       _lastError = _errorMapper.map(
         error,
-        fallback: 'Unable to refresh discussion comments',
+        fallback: 'Could not refresh comments',
       );
       notifyListeners();
     }
@@ -222,7 +289,7 @@ class CommunityPostsStore extends ChangeNotifier
     } catch (error) {
       _lastError = _errorMapper.map(
         error,
-        fallback: 'Unable to load older comments',
+        fallback: 'Could not load older comments',
       );
     } finally {
       _loadingCommentPostIds.remove(postId);
@@ -283,15 +350,18 @@ class CommunityPostsStore extends ChangeNotifier
   @override
   void _replacePost(CommunityPost post) {
     final index = _posts.indexWhere((item) => item.id == post.id);
+    final existing = index == -1 ? _detachedPosts[post.id] : _posts[index];
+    final merged = existing == null
+        ? post
+        : post.copyWith(
+            isCommented: post.isCommented || existing.isCommented,
+          );
     if (index == -1) {
-      _posts.insert(0, post);
-      return;
+      _detachedPosts[post.id] = merged;
+    } else {
+      _posts[index] = merged;
     }
-
-    final existing = _posts[index];
-    _posts[index] = post.copyWith(
-      isCommented: post.isCommented || existing.isCommented,
-    );
+    _syncSaved(merged);
   }
 
   Future<void> _fetchLatestComments(

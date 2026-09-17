@@ -124,6 +124,10 @@ class MentionTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final bool showFocusHighlight;
 
+  /// Open the @mention suggestions above the field instead of below it. For
+  /// a composer pinned to the bottom of the screen, where below is off-screen.
+  final bool suggestionsAbove;
+
   const MentionTextField({
     super.key,
     required this.controller,
@@ -135,6 +139,7 @@ class MentionTextField extends StatefulWidget {
     this.maxLength,
     this.onChanged,
     this.showFocusHighlight = true,
+    this.suggestionsAbove = false,
   });
 
   @override
@@ -243,7 +248,12 @@ class _MentionTextFieldState extends State<MentionTextField> {
         child: CompositedTransformFollower(
           link: _layerLink,
           showWhenUnlinked: false,
-          offset: const Offset(0, 50),
+          followerAnchor: widget.suggestionsAbove
+              ? Alignment.bottomLeft
+              : Alignment.topLeft,
+          offset: widget.suggestionsAbove
+              ? const Offset(0, -AppSpace.xs)
+              : const Offset(0, 50),
           child: Material(
             elevation: 8,
             borderRadius: BorderRadius.circular(AppRadius.mdValue),

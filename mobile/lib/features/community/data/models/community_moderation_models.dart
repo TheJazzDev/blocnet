@@ -312,18 +312,52 @@ class CommunityModerationReport {
   }
 }
 
+class CommunityReportCounts {
+  const CommunityReportCounts({
+    required this.open,
+    required this.resolved,
+    required this.dismissed,
+  });
+
+  final int open;
+  final int resolved;
+  final int dismissed;
+
+  int get total => open + resolved + dismissed;
+
+  static CommunityReportCounts? fromApi(dynamic raw) {
+    if (raw is! Map) return null;
+    int read(String key) {
+      final value = raw[key];
+      if (value is int) return value;
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    return CommunityReportCounts(
+      open: read('open'),
+      resolved: read('resolved'),
+      dismissed: read('dismissed'),
+    );
+  }
+}
+
 class CommunityModerationReportsPage {
   const CommunityModerationReportsPage({
     required this.reports,
     required this.total,
     required this.limit,
     required this.offset,
+    this.counts,
   });
 
   final List<CommunityModerationReport> reports;
   final int total;
   final int limit;
   final int offset;
+
+  /// Reports per status across every page. Only the member's own list
+  /// (`/community/reports/mine`) sends it.
+  final CommunityReportCounts? counts;
 
   factory CommunityModerationReportsPage.fromApi(Map<String, dynamic> json) {
     final rows = (json['data'] as List? ?? const [])
@@ -341,6 +375,7 @@ class CommunityModerationReportsPage {
       total: toInt(json['total'], rows.length),
       limit: toInt(json['limit'], rows.length),
       offset: toInt(json['offset'], 0),
+      counts: CommunityReportCounts.fromApi(json['counts']),
     );
   }
 }

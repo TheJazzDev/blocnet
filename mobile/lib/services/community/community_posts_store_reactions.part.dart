@@ -43,18 +43,21 @@ mixin _CommunityPostsReactionsMixin on ChangeNotifier {
       _lastError = null;
     } catch (error) {
       _replacePost(current);
-      _lastError = _errorMapper.map(error, fallback: 'Unable to update like');
+      _lastError = _errorMapper.map(error, fallback: 'Could not update like');
     } finally {
       _pendingLikePostIds.remove(postId);
       notifyListeners();
     }
   }
 
-  Future<void> toggleBookmark(String postId) async {
-    if (_pendingBookmarkPostIds.contains(postId)) return;
+  /// Saves or unsaves [postId]. Returns true when the server took it, false
+  /// when it failed (and the change was rolled back), and null when nothing
+  /// was attempted (unknown post, or a toggle already in flight).
+  Future<bool?> toggleBookmark(String postId) async {
+    if (_pendingBookmarkPostIds.contains(postId)) return null;
 
     final current = postById(postId);
-    if (current == null) return;
+    if (current == null) return null;
 
     _pendingBookmarkPostIds.add(postId);
     _replacePost(
@@ -73,10 +76,11 @@ mixin _CommunityPostsReactionsMixin on ChangeNotifier {
         _replacePost(updated);
       }
       _lastError = null;
+      return true;
     } catch (error) {
       _replacePost(current);
-      _lastError =
-          _errorMapper.map(error, fallback: 'Unable to update bookmark');
+      _lastError = _errorMapper.map(error, fallback: 'Could not update saved');
+      return false;
     } finally {
       _pendingBookmarkPostIds.remove(postId);
       notifyListeners();
@@ -113,8 +117,7 @@ mixin _CommunityPostsReactionsMixin on ChangeNotifier {
       _lastError = null;
     } catch (error) {
       _replaceCommentInAllCaches(commentId, current);
-      _lastError =
-          _errorMapper.map(error, fallback: 'Unable to update comment like');
+      _lastError = _errorMapper.map(error, fallback: 'Could not update like');
     } finally {
       _pendingLikeCommentIds.remove(commentId);
       notifyListeners();
@@ -165,6 +168,7 @@ mixin _CommunityPostsReactionsMixin on ChangeNotifier {
       updatedAt: current.updatedAt,
       likesCount: likesCount < 0 ? 0 : likesCount,
       isLiked: isLiked,
+      status: current.status,
       admin: current.admin,
       replyToId: current.replyToId,
       replyToData: current.replyToData,

@@ -1,686 +1,196 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
 import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
-import 'package:blocnet/services/api/api_client.dart';
-import 'package:blocnet/shared/utils/get_timestamp.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/features/community/presentation/widgets/reports/report_row.dart';
+import 'package:blocnet/features/community/presentation/widgets/reports/reports_summary.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/services/api/api_error.dart';
+import 'package:blocnet/shared/widgets/app_empty_state.dart';
 import 'package:flutter/material.dart';
 
+/// The reports the member has sent and what happened to each.
 class MyReportsScreen extends StatefulWidget {
-  const MyReportsScreen({super.key});
+  const MyReportsScreen({super.key, this.repository});
+
+  final CommunityModerationApiRepository? repository;
 
   @override
   State<MyReportsScreen> createState() => _MyReportsScreenState();
 }
 
 class _MyReportsScreenState extends State<MyReportsScreen> {
-  final _repository = CommunityModerationApiRepository();
-  final _scrollController = ScrollController();
+  static const int _pageSize = 20;
 
-  List<CommunityModerationReport> _reports = [];
+  late final CommunityModerationApiRepository _repository =
+      widget.repository ?? CommunityModerationApiRepository();
+  final _scroll = ScrollController();
+
+  final List<CommunityModerationReport> _reports = [];
+  CommunityReportCounts? _counts;
+  int _total = 0;
   bool _isLoading = false;
-  bool _hasMore = true;
-  String? _errorMessage;
-  int _offset = 0;
-  final int _limit = 20;
+  bool _loaded = false;
+  String? _error;
+
+  bool get _hasMore => _reports.length < _total;
 
   @override
   void initState() {
     super.initState();
-    _loadReports();
-    _scrollController.addListener(_onScroll);
+    _scroll.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _load();
+    });
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent * 0.9) {
-      if (!_isLoading && _hasMore) {
-        _loadMore();
-      }
-    }
+    if (!_scroll.hasClients) return;
+    final position = _scroll.position;
+    if (position.pixels >= position.maxScrollExtent - 200) _loadMore();
   }
 
-  Future<void> _loadReports() async {
+  Future<void> _load() async {
     if (_isLoading) return;
-
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
-      _offset = 0;
+      _error = null;
     });
-
     try {
-      final page = await _repository.fetchReports(
-        limit: _limit,
-        offset: 0,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _reports = page.reports;
-        _hasMore = page.reports.length >= _limit;
-        _offset = page.reports.length;
-        _isLoading = false;
-      });
-    } on ApiException catch (e) {
+      final page = await _repository.fetchMyReports(limit: _pageSize);
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.message;
-        _isLoading = false;
+        _reports
+          ..clear()
+          ..addAll(page.reports);
+        _counts = page.counts;
+        _total = page.total;
+        _loaded = true;
       });
-    } catch (e) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Failed to load reports';
-        _isLoading = false;
+        _error = describeApiError(error, fallback: 'Could not load reports');
       });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _loadMore() async {
     if (_isLoading || !_hasMore) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
-      final page = await _repository.fetchReports(
-        limit: _limit,
-        offset: _offset,
+      final page = await _repository.fetchMyReports(
+        limit: _pageSize,
+        offset: _reports.length,
       );
-
       if (!mounted) return;
-
       setState(() {
         _reports.addAll(page.reports);
-        _hasMore = page.reports.length >= _limit;
-        _offset = _reports.length;
-        _isLoading = false;
+        _total = page.reports.isEmpty ? _reports.length : page.total;
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
+    } catch (_) {
+      // The next scroll retries; the loaded reports stay.
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Map<String, int> _calculateStatistics() {
-    final total = _reports.length;
-    final open =
-        _reports.where((r) => r.status == CommunityReportStatus.open).length;
-    final resolved = _reports
-        .where((r) => r.status == CommunityReportStatus.resolved)
-        .length;
-    final dismissed = _reports
-        .where((r) => r.status == CommunityReportStatus.dismissed)
-        .length;
+  CommunityReportCounts get _summary =>
+      _counts ??
+      CommunityReportCounts(
+        open: _countOf(CommunityReportStatus.open),
+        resolved: _countOf(CommunityReportStatus.resolved),
+        dismissed: _countOf(CommunityReportStatus.dismissed),
+      );
 
-    return {
-      'total': total,
-      'open': open,
-      'resolved': resolved,
-      'dismissed': dismissed,
-    };
-  }
+  int _countOf(CommunityReportStatus status) =>
+      _reports.where((r) => r.status == status).length;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      appBar: AppBar(
-        title: Text(
-          'My Reports',
-          style: AppTypography.custom(
-            size: AppText.titleSize,
-            weight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        centerTitle: false,
+      appBar: const CustomAppBar(
+        title: 'My reports',
+        showSearch: false,
+        showFilter: false,
+        showNotificationBell: false,
+        showSpaceSwitcher: false,
       ),
       body: RefreshIndicator(
-        color: AppColors.primary500,
+        color: AppColors.primary400,
         backgroundColor: AppColors.bgSurface,
-        onRefresh: _loadReports,
-        child: _buildBody(),
+        onRefresh: _load,
+        child: _body(),
       ),
     );
   }
 
-  Widget _buildBody() {
-    if (_errorMessage != null && _reports.isEmpty) {
-      return _buildError();
-    }
-
-    if (_isLoading && _reports.isEmpty) {
-      return Center(
-        child: CircularProgressIndicator(
-          color: AppColors.primary500,
-          strokeWidth: 2,
-        ),
+  Widget _body() {
+    if (_reports.isEmpty) {
+      final Widget child;
+      if (!_loaded && _error == null) {
+        child = Padding(
+          padding: const EdgeInsets.only(top: AppSpace.xxxl * 2),
+          child: Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary400,
+              strokeWidth: 2,
+            ),
+          ),
+        );
+      } else if (_error != null) {
+        child = AppEmptyState.error(
+          title: 'Couldn’t load your reports',
+          message: _error,
+          onAction: _load,
+        );
+      } else {
+        child = const AppEmptyState(
+          icon: Icons.flag_outlined,
+          title: 'No reports yet',
+          message: 'Reports you send from a post or comment show up here.',
+        );
+      }
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [child],
       );
     }
 
-    if (_reports.isEmpty) {
-      return _buildEmpty();
-    }
-
-    final stats = _calculateStatistics();
-
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(AppSpace.lg),
-      itemCount:
-          _reports.length + (_hasMore ? 1 : 0) + 1, // +1 for stats header
+    return ListView.separated(
+      controller: _scroll,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        AppSpace.md,
+        AppSpace.lg,
+        MediaQuery.paddingOf(context).bottom + AppSpace.xl,
+      ),
+      itemCount: _reports.length + 1 + (_hasMore ? 1 : 0),
+      separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
       itemBuilder: (context, index) {
-        // Statistics header
-        if (index == 0) {
-          return _ReportStatistics(stats: stats);
-        }
-
-        // Adjust index for reports (accounting for stats header)
-        final reportIndex = index - 1;
-
-        if (reportIndex >= _reports.length) {
-          return Padding(
-            padding: const EdgeInsets.all(AppSpace.lg),
-            child: Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary500,
-                strokeWidth: 2,
-              ),
+        if (index == 0) return ReportsSummary(counts: _summary);
+        final i = index - 1;
+        if (i < _reports.length) return ReportRow(report: _reports[i]);
+        return Padding(
+          padding: const EdgeInsets.all(AppSpace.lg),
+          child: Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary400,
+              strokeWidth: 2,
             ),
-          );
-        }
-
-        final report = _reports[reportIndex];
-        return _ReportCard(report: report);
+          ),
+        );
       },
-    );
-  }
-
-  Widget _buildEmpty() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.xxl),
-        child: AppSurface(
-          padding: const EdgeInsets.all(AppSpace.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.flag_outlined,
-                size: AppIcon.xl,
-                color: AppColors.textFaint,
-              ),
-              const SizedBox(height: AppSpace.md),
-              Text(
-                'No Reports Yet',
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: AppSpace.xs),
-              Text(
-                'Your submitted reports will appear here',
-                textAlign: TextAlign.center,
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildError() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.xxl),
-        child: AppSurface(
-          padding: const EdgeInsets.all(AppSpace.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: AppIcon.xl,
-                color: AppColors.error500,
-              ),
-              const SizedBox(height: AppSpace.md),
-              Text(
-                'Error Loading Reports',
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: AppSpace.xs),
-              Text(
-                _errorMessage ?? 'Something went wrong',
-                textAlign: TextAlign.center,
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              ElevatedButton(
-                onPressed: _loadReports,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary500,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpace.xl,
-                    vertical: AppSpace.md,
-                  ),
-                ),
-                child: Text(
-                  'Retry',
-                  style: AppTypography.custom(
-                    size: AppText.labelSize,
-                    weight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ReportCard extends StatelessWidget {
-  const _ReportCard({required this.report});
-
-  final CommunityModerationReport report;
-
-  Color _getStatusColor() {
-    switch (report.status) {
-      case CommunityReportStatus.open:
-        return AppColors.warning500;
-      case CommunityReportStatus.resolved:
-        return Colors.green;
-      case CommunityReportStatus.dismissed:
-        return AppColors.textMuted;
-    }
-  }
-
-  IconData _getStatusIcon() {
-    switch (report.status) {
-      case CommunityReportStatus.open:
-        return Icons.pending_outlined;
-      case CommunityReportStatus.resolved:
-        return Icons.check_circle_outline;
-      case CommunityReportStatus.dismissed:
-        return Icons.cancel_outlined;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final statusColor = _getStatusColor();
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpace.md),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.bgSurface,
-            AppColors.bgSurface.withValues(alpha: 0.85),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: AppColors.borderSubtle.withValues(alpha: 0.75),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with type and status
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpace.sm,
-                    vertical: AppSpace.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary400.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(AppRadius.smValue),
-                  ),
-                  child: Text(
-                    report.targetType.label,
-                    style: AppTypography.custom(
-                      size: AppText.captionSize,
-                      weight: FontWeight.w600,
-                      color: AppColors.primary400,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Icon(
-                  _getStatusIcon(),
-                  size: AppIcon.sm,
-                  color: statusColor,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Text(
-                  report.status.label,
-                  style: AppTypography.custom(
-                    size: AppText.labelSize,
-                    weight: FontWeight.w600,
-                    color: statusColor,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: AppSpace.md),
-
-            // Reason
-            Text(
-              report.reason,
-              style: AppTypography.custom(
-                size: AppText.bodySize,
-                weight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-
-            if (report.details != null &&
-                report.details!.trim().isNotEmpty) ...[
-              const SizedBox(height: AppSpace.sm),
-              Text(
-                report.details!,
-                style: AppTypography.custom(
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-
-            const SizedBox(height: AppSpace.md),
-
-            // Timestamp
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  size: AppIcon.xs,
-                  color: AppColors.textFaint,
-                ),
-                const SizedBox(width: AppSpace.xs),
-                Text(
-                  'Reported ${getTimeStamp(report.createdAt)}',
-                  style: AppTypography.custom(
-                    size: AppText.captionSize,
-                    weight: FontWeight.w400,
-                    color: AppColors.textFaint,
-                  ),
-                ),
-              ],
-            ),
-
-            // Resolution info if resolved/dismissed
-            if (report.status != CommunityReportStatus.open) ...[
-              const SizedBox(height: AppSpace.md),
-              Container(
-                padding: const EdgeInsets.all(AppSpace.md),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.smValue),
-                  border: Border.all(
-                    color: statusColor.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.admin_panel_settings_outlined,
-                          size: AppIcon.sm,
-                          color: statusColor,
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        Text(
-                          report.status == CommunityReportStatus.resolved
-                              ? 'Resolved'
-                              : 'Dismissed',
-                          style: AppTypography.custom(
-                            size: AppText.labelSize,
-                            weight: FontWeight.w600,
-                            color: statusColor,
-                          ),
-                        ),
-                        if (report.reviewedAt != null) ...[
-                          const SizedBox(width: AppSpace.xs),
-                          Text(
-                            '• ${getTimeStamp(report.reviewedAt!)}',
-                            style: AppTypography.custom(
-                              size: AppText.captionSize,
-                              weight: FontWeight.w400,
-                              color: AppColors.textFaint,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    if (report.resolutionNote != null &&
-                        report.resolutionNote!.trim().isNotEmpty) ...[
-                      const SizedBox(height: AppSpace.sm),
-                      Text(
-                        report.resolutionNote!,
-                        style: AppTypography.custom(
-                          size: AppText.bodySize,
-                          weight: FontWeight.w400,
-                          color: AppColors.textSecondary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReportStatistics extends StatelessWidget {
-  const _ReportStatistics({required this.stats});
-
-  final Map<String, int> stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final total = stats["total"] ?? 0;
-    final open = stats["open"] ?? 0;
-    final resolved = stats["resolved"] ?? 0;
-    final dismissed = stats["dismissed"] ?? 0;
-    final reviewedCount = resolved + dismissed;
-    final reviewedRate =
-        total > 0 ? (reviewedCount / total * 100).toStringAsFixed(0) : "0";
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpace.lg),
-      padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary400.withValues(alpha: 0.1),
-            AppColors.primary400.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(
-          color: AppColors.primary400.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.analytics_outlined,
-                  color: AppColors.primary400, size: AppIcon.md),
-              const SizedBox(width: AppSpace.sm),
-              Text("Report Statistics",
-                  style: AppTypography.custom(
-                      size: AppText.bodySize,
-                      weight: FontWeight.w600,
-                      color: AppColors.textPrimary)),
-            ],
-          ),
-          const SizedBox(height: AppSpace.lg),
-          Row(
-            children: [
-              Expanded(
-                  child: _StatCard(
-                      label: "Total",
-                      value: total.toString(),
-                      color: AppColors.primary400,
-                      icon: Icons.flag_outlined)),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                  child: _StatCard(
-                      label: "Pending",
-                      value: open.toString(),
-                      color: AppColors.warning500,
-                      icon: Icons.pending_outlined)),
-            ],
-          ),
-          const SizedBox(height: AppSpace.md),
-          Row(
-            children: [
-              Expanded(
-                  child: _StatCard(
-                      label: "Resolved",
-                      value: resolved.toString(),
-                      color: Colors.green,
-                      icon: Icons.check_circle_outline)),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                  child: _StatCard(
-                      label: "Dismissed",
-                      value: dismissed.toString(),
-                      color: AppColors.textMuted,
-                      icon: Icons.cancel_outlined)),
-            ],
-          ),
-          if (total > 0) ...[
-            const SizedBox(height: AppSpace.md),
-            Container(
-              padding: const EdgeInsets.all(AppSpace.md),
-              decoration: BoxDecoration(
-                  color: AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(AppRadius.smValue)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.speed,
-                      size: AppIcon.sm, color: AppColors.primary400),
-                  const SizedBox(width: AppSpace.sm),
-                  Text("Review Rate: ",
-                      style: AppTypography.custom(
-                          size: AppText.labelSize,
-                          weight: FontWeight.w500,
-                          color: AppColors.textSecondary)),
-                  Text("$reviewedRate%",
-                      style: AppTypography.custom(
-                          size: AppText.labelSize,
-                          weight: FontWeight.w700,
-                          color: AppColors.primary400)),
-                  Text(" ($reviewedCount/$total reviewed)",
-                      style: AppTypography.custom(
-                          size: AppText.captionSize,
-                          weight: FontWeight.w400,
-                          color: AppColors.textMuted)),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard(
-      {required this.label,
-      required this.value,
-      required this.color,
-      required this.icon});
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          border: Border.all(color: color.withValues(alpha: 0.3))),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: AppIcon.md),
-          const SizedBox(height: AppSpace.sm),
-          Text(value,
-              style: AppTypography.custom(
-                  size: AppText.headlineSize,
-                  weight: FontWeight.w700,
-                  color: color)),
-          const SizedBox(height: AppSpace.hair),
-          Text(label,
-              style: AppTypography.custom(
-                  size: AppText.captionSize,
-                  weight: FontWeight.w500,
-                  color: AppColors.textMuted)),
-        ],
-      ),
     );
   }
 }

@@ -1,26 +1,27 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/community/data/models/community_post_comment_model.dart';
-import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
-import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
-import 'package:blocnet/features/community/presentation/widgets/community_discussion_comment_card.dart';
-import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_discussion_composer.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_discussion_no_post_view.dart';
-import 'package:blocnet/features/community/presentation/widgets/community_discussion_post_details_card.dart';
-import 'package:blocnet/features/community/presentation/widgets/community_post_share_sheet.dart';
+import 'package:blocnet/features/community/presentation/widgets/discussion/discussion_body.dart';
+import 'package:blocnet/features/community/presentation/widgets/discussion/discussion_thread_list.dart';
+import 'package:blocnet/features/community/presentation/widgets/feed/community_save_toggle.dart';
+import 'package:blocnet/features/community/presentation/widgets/moderation/moderation_actions.dart';
+import 'package:blocnet/features/community/presentation/widgets/post/community_author_line.dart';
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
 import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/api/api_error.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// A community post and its comments, with a composer pinned to the bottom.
+///
+/// Opened with the post id, or `{postId, focusComposer}` as route arguments.
 class CommunityPostDiscussionScreen extends StatefulWidget {
   const CommunityPostDiscussionScreen({super.key, this.postId});
 
@@ -35,157 +36,117 @@ class _CommunityPostDiscussionScreenState
     extends State<CommunityPostDiscussionScreen> {
   final TextEditingController _commentCtrl = MentionHighlightTextController();
   final FocusNode _commentFocusNode = FocusNode();
-  final ScrollController _threadScrollController = ScrollController();
+  final ScrollController _scroll = ScrollController();
   final Set<String> _knownCommentIds = <String>{};
-  final Set<String> _pendingNewCommentIds = <String>{};
-  late final MentionsRepository _mentionsRepository;
+  final Set<String> _pendingCommentIds = <String>{};
+  final MentionsRepository _mentionsRepository =
+      MentionsRepository(ApiClient());
   final CommunityModerationApiRepository _moderationRepository =
       CommunityModerationApiRepository();
+
+  CommunityPostsStore? _store;
   String? _postId;
-  bool _focusComposerOnLoad = false;
+  bool _baselineReady = false;
   bool _isSending = false;
-  bool _isCommentsBaselineReady = false;
-  VoidCallback? _storeListener;
-  CommunityPostsStore? _communityPostsStore;
-  String? _replyToCommentId;
-  String? _replyToUsername;
+  CommunityPostComment? _replyTo;
 
   @override
   void initState() {
     super.initState();
-    _postId = widget.postId;
-    _mentionsRepository = MentionsRepository(ApiClient());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final store = context.read<CommunityPostsStore>();
-      store.fetchPostsOnce();
-      _attachStoreListener();
-      final id = _postId;
-      if (id != null && id.isNotEmpty) {
-        store.fetchPostById(id);
-        store.fetchComments(id);
-        store.watchCommentsRealtime(id);
-      }
-    });
+    _scroll.addListener(_handleScroll);
+    final id = widget.postId;
+    if (id != null && id.isNotEmpty) _openThread(id, focusComposer: false);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _communityPostsStore ??= context.read<CommunityPostsStore>();
+    _store ??= context.read<CommunityPostsStore>()
+      ..addListener(_onStoreChanged);
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is String && args.isNotEmpty) {
-      if (_postId == args) return;
-      _loadThread(postId: args, focusComposer: false);
-      return;
-    }
-
-    if (args is Map) {
-      final postId = args['postId']?.toString();
-      if (postId == null || postId.isEmpty || _postId == postId) {
-        return;
-      }
-      _loadThread(postId: postId, focusComposer: args['focusComposer'] == true);
-    }
+    final id = switch (args) {
+      String value => value,
+      Map value => value['postId']?.toString(),
+      _ => null,
+    };
+    if (id == null || id.isEmpty || id == _postId) return;
+    _openThread(
+      id,
+      focusComposer: args is Map && args['focusComposer'] == true,
+    );
   }
 
-  void _loadThread({
-    required String postId,
-    required bool focusComposer,
-  }) {
+  void _openThread(String postId, {required bool focusComposer}) {
+    final previous = _postId;
     _postId = postId;
-    _focusComposerOnLoad = focusComposer;
+    _baselineReady = false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
-      _attachStoreListener();
+      final store = _store ?? context.read<CommunityPostsStore>();
+      if (previous != null) store.unwatchCommentsRealtime(previous);
       store.fetchPostById(postId);
       store.fetchComments(postId);
       store.watchCommentsRealtime(postId);
-      if (_focusComposerOnLoad) {
-        _focusComposerSoon();
-      }
+      _onStoreChanged();
+      if (focusComposer) _focusComposerSoon();
     });
   }
 
-  void _attachStoreListener() {
-    if (_storeListener != null) return;
-    final store = _communityPostsStore;
-    if (store == null) return;
-    _storeListener = _onStoreChanged;
-    store.addListener(_storeListener!);
-    _threadScrollController.addListener(_handleThreadScroll);
-    _onStoreChanged();
-  }
-
+  /// Notes comments that arrive while the reader is scrolled away from the
+  /// bottom, so a pill can offer to jump to them.
   void _onStoreChanged() {
-    if (!mounted) return;
     final postId = _postId;
-    if (postId == null || postId.isEmpty) return;
-
-    final store = _communityPostsStore;
-    if (store == null) return;
-    final comments = store.commentsForPost(postId);
-    final currentIds = comments.map((comment) => comment.id).toSet();
-
-    if (!_isCommentsBaselineReady) {
+    final store = _store;
+    if (!mounted || postId == null || store == null) return;
+    final ids = store.commentsForPost(postId).map((c) => c.id).toSet();
+    if (!_baselineReady) {
       _knownCommentIds
         ..clear()
-        ..addAll(currentIds);
-      _isCommentsBaselineReady = true;
+        ..addAll(ids);
+      _baselineReady = !store.isLoadingCommentsForPost(postId);
       return;
     }
-
-    final newIds = currentIds.difference(_knownCommentIds);
+    final fresh = ids.difference(_knownCommentIds);
     _knownCommentIds
       ..clear()
-      ..addAll(currentIds);
-
-    if (newIds.isEmpty || _isNearLatest()) return;
-
-    setState(() {
-      _pendingNewCommentIds.addAll(newIds);
-    });
+      ..addAll(ids);
+    if (fresh.isEmpty || _isNearBottom()) return;
+    setState(() => _pendingCommentIds.addAll(fresh));
   }
 
-  void _handleThreadScroll() {
-    if (_isNearLatest() && _pendingNewCommentIds.isNotEmpty) {
-      setState(() => _pendingNewCommentIds.clear());
+  void _handleScroll() {
+    if (_pendingCommentIds.isNotEmpty && _isNearBottom()) {
+      setState(_pendingCommentIds.clear);
     }
   }
 
-  bool _isNearLatest() {
-    if (!_threadScrollController.hasClients) return true;
-    final distanceToBottom = _threadScrollController.position.maxScrollExtent -
-        _threadScrollController.offset;
-    return distanceToBottom <= 80;
+  bool _isNearBottom() {
+    if (!_scroll.hasClients) return true;
+    final position = _scroll.position;
+    return position.maxScrollExtent - position.pixels <= 80;
   }
 
-  Future<void> _jumpToLatestComments() async {
-    if (_threadScrollController.hasClients) {
-      await _threadScrollController.animateTo(
-        _threadScrollController.position.maxScrollExtent,
+  Future<void> _jumpToNewest() async {
+    if (_scroll.hasClients) {
+      await _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
       );
     }
-    if (!mounted) return;
-    setState(() => _pendingNewCommentIds.clear());
+    if (mounted) setState(_pendingCommentIds.clear);
   }
 
   @override
   void dispose() {
-    final store = _communityPostsStore;
+    final store = _store;
     final postId = _postId;
-    if (store != null && postId != null && postId.isNotEmpty) {
-      store.unwatchCommentsRealtime(postId);
+    if (store != null) {
+      store.removeListener(_onStoreChanged);
+      if (postId != null) store.unwatchCommentsRealtime(postId);
     }
-    final listener = _storeListener;
-    if (store != null && listener != null) {
-      store.removeListener(listener);
-    }
-    _threadScrollController
-      ..removeListener(_handleThreadScroll)
+    _scroll
+      ..removeListener(_handleScroll)
       ..dispose();
     _commentFocusNode.dispose();
     _commentCtrl.dispose();
@@ -194,143 +155,40 @@ class _CommunityPostDiscussionScreenState
 
   void _focusComposerSoon() {
     Future<void>.delayed(const Duration(milliseconds: 220), () {
-      if (!mounted) return;
-      _commentFocusNode.requestFocus();
+      if (mounted) _commentFocusNode.requestFocus();
     });
   }
 
-  void _handleReply(String commentId, String? username) {
-    setState(() {
-      _replyToCommentId = commentId;
-      _replyToUsername = username;
-    });
+  void _replyToComment(CommunityPostComment comment) {
+    setState(() => _replyTo = comment);
     _commentFocusNode.requestFocus();
   }
 
-  void _cancelReply() {
-    setState(() {
-      _replyToCommentId = null;
-      _replyToUsername = null;
-    });
-  }
-
-  Future<void> _handleLike(String commentId) async {
-    final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
-    try {
-      await store.toggleLikeCommunityPostComment(commentId);
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to like comment: $error'),
-          backgroundColor: AppColors.error500,
-        ),
-      );
-    }
-  }
-
-  Future<void> _sendComment(String postId) async {
+  Future<void> _send(String postId) async {
     final text = _commentCtrl.text.trim();
     if (text.isEmpty || _isSending) return;
-    if (text.length > 300) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Community comments cannot exceed 300 characters'),
-        ),
-      );
-      return;
-    }
-
     setState(() => _isSending = true);
     try {
-      final store = _communityPostsStore ?? context.read<CommunityPostsStore>();
-      final created = await store.createComment(
+      final created = await _store!.createComment(
         postId: postId,
         content: text,
-        replyToId: _replyToCommentId,
+        replyToId: _replyTo?.id,
       );
-
-      if (created != null) {
+      if (created != null && mounted) {
         _commentCtrl.clear();
-        _cancelReply();
+        setState(() => _replyTo = null);
       }
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to send comment')),
-      );
+    } catch (error) {
+      if (mounted) {
+        AppSnackbar.showError(
+          context,
+          describeApiError(error, fallback: 'Could not send comment'),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
   }
-
-  Future<void> _moderatePost(
-    CommunityContentModerationDecision decision,
-  ) async {
-    final postId = _postId;
-    if (postId == null || postId.isEmpty) return;
-
-    try {
-      await _moderationRepository.moderateCommunityPostStatus(
-        postId: postId,
-        status: decision.status,
-        reason: decision.reason,
-      );
-      if (!mounted) return;
-      await context.read<CommunityPostsStore>().refreshPosts();
-      if (!mounted) return;
-      AppSnackbar.showSuccess(
-        context,
-        _contentActionSuccessMessage(decision.status, 'Post'),
-      );
-      if (decision.status != CommunityContentModerationStatus.active &&
-          mounted &&
-          Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-    } catch (error) {
-      if (!mounted) return;
-      AppSnackbar.showError(context, error.toString());
-    }
-  }
-
-  Future<void> _moderateComment(
-    String commentId,
-    CommunityContentModerationDecision decision,
-  ) async {
-    final postId = _postId;
-    if (postId == null || postId.isEmpty) return;
-
-    try {
-      await _moderationRepository.moderateCommunityCommentStatus(
-        commentId: commentId,
-        status: decision.status,
-        reason: decision.reason,
-      );
-      if (!mounted) return;
-      await context
-          .read<CommunityPostsStore>()
-          .fetchComments(postId, force: true);
-      if (!mounted) return;
-      AppSnackbar.showSuccess(
-        context,
-        _contentActionSuccessMessage(decision.status, 'Comment'),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      AppSnackbar.showError(context, error.toString());
-    }
-  }
-
-  String _contentActionSuccessMessage(
-    CommunityContentModerationStatus status,
-    String target,
-  ) =>
-      switch (status) {
-        CommunityContentModerationStatus.active => '$target restored',
-        CommunityContentModerationStatus.hidden => '$target hidden',
-        CommunityContentModerationStatus.archived => '$target archived',
-      };
 
   @override
   Widget build(BuildContext context) {
@@ -339,264 +197,92 @@ class _CommunityPostDiscussionScreenState
       return const CommunityDiscussionNoPostView();
     }
 
-    return Consumer<CommunityPostsStore>(
-      builder: (context, store, _) {
-        final post = store.postById(postId);
-        final comments = store.commentsForPost(postId);
-        final threadedComments = _buildThreadedComments(comments);
-        final isLoadingComments = store.isLoadingCommentsForPost(postId);
-        final hasMoreComments = store.hasMoreCommentsForPost(postId);
-        final auth = context.watch<AuthStore>();
-        final canModerateContent = auth.canAccessCommunityStaffTools;
-        final canArchiveModeration = auth.isCommunityAdmin;
+    final auth = context.watch<AuthStore>();
+    final store = context.watch<CommunityPostsStore>();
+    final post = store.postById(postId);
+    final canModerate = auth.canAccessCommunityStaffTools;
 
-        return Scaffold(
-          backgroundColor: AppColors.bgBase,
-          appBar: const CustomAppBar(
-            title: 'Post Details',
-            backButton: true,
-            showSearch: false,
-            showFilter: false,
-          ),
-          body: GestureDetector(
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            behavior: HitTestBehavior.translucent,
-            child: Column(
-              children: [
-                Expanded(
-                  child: post == null
-                      ? Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary400,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Stack(
-                          children: [
-                            ListView(
-                              controller: _threadScrollController,
-                              padding: const EdgeInsets.fromLTRB(AppSpace.lg,
-                                  AppSpace.md, AppSpace.lg, AppSpace.md),
-                              children: [
-                                CommunityDiscussionPostDetailsCard(
-                                  post: post,
-                                  onLike: () => store.toggleLike(post.id),
-                                  onCommentTap: _focusComposerSoon,
-                                  onShareTap: () => _openShareSheet(post),
-                                  onBookmark: () =>
-                                      store.toggleBookmark(post.id),
-                                  onModerate:
-                                      canModerateContent ? _moderatePost : null,
-                                  canArchiveModeration: canArchiveModeration,
+    return Scaffold(
+      backgroundColor: AppColors.bgBase,
+      appBar: const CustomAppBar(
+        title: 'Post',
+        showSearch: false,
+        showFilter: false,
+      ),
+      body: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: Column(
+          children: [
+            Expanded(
+              child: DiscussionBody(
+                hasPost: post != null,
+                loadError: store.postLoadError(postId),
+                onRetry: () => store.fetchPostById(postId),
+                pendingCount: _pendingCommentIds.length,
+                onJumpToNewest: _jumpToNewest,
+                thread: post == null
+                    ? null
+                    : DiscussionThreadList(
+                        post: post,
+                        comments: store.commentsForPost(postId),
+                        controller: _scroll,
+                        isLoadingComments:
+                            store.isLoadingCommentsForPost(postId),
+                        hasMoreComments: store.hasMoreCommentsForPost(postId),
+                        commentsError: store.commentsError(postId),
+                        onLoadOlder: () => store.loadOlderComments(postId),
+                        onRetryComments: () =>
+                            store.fetchComments(postId, force: true),
+                        onLikePost: () => store.toggleLike(postId),
+                        onSavePost: () => toggleCommunitySave(context, postId),
+                        onCommentTap: _commentFocusNode.requestFocus,
+                        onLikeComment: (c) =>
+                            store.toggleLikeCommunityPostComment(c.id),
+                        onReply: _replyToComment,
+                        canArchiveModeration: auth.isCommunityAdmin,
+                        onModeratePost: !canModerate
+                            ? null
+                            : (decision) async {
+                                final ok = await applyPostModeration(
+                                  context,
+                                  repository: _moderationRepository,
+                                  postId: postId,
+                                  decision: decision,
+                                );
+                                if (ok &&
+                                    context.mounted &&
+                                    store.postById(postId) == null) {
+                                  Navigator.of(context).maybePop();
+                                }
+                              },
+                        onModerateComment: !canModerate
+                            ? null
+                            : (commentId, decision) => applyCommentModeration(
+                                  context,
+                                  repository: _moderationRepository,
+                                  postId: postId,
+                                  commentId: commentId,
+                                  decision: decision,
                                 ),
-                                const SizedBox(height: AppSpace.lg),
-                                _DiscussionHeader(
-                                  commentsCount: comments.length,
-                                  isLoadingComments: isLoadingComments,
-                                  hasMoreComments: hasMoreComments,
-                                  onLoadOlder: () =>
-                                      store.loadOlderComments(postId),
-                                ),
-                                const SizedBox(height: AppSpace.md),
-                                if (comments.isEmpty)
-                                  const CommunityDiscussionEmpty()
-                                else ...[
-                                  for (var index = 0;
-                                      index < threadedComments.length;
-                                      index++) ...[
-                                    CommunityDiscussionCommentCard(
-                                      comment: threadedComments[index].comment,
-                                      isNestedReply:
-                                          threadedComments[index].isNestedReply,
-                                      onReply: () => _handleReply(
-                                        threadedComments[index].comment.id,
-                                        threadedComments[index]
-                                                .comment
-                                                .admin
-                                                ?.username ??
-                                            threadedComments[index]
-                                                .comment
-                                                .admin
-                                                ?.name,
-                                      ),
-                                      onLike: () => _handleLike(
-                                          threadedComments[index].comment.id),
-                                      onModerate: canModerateContent
-                                          ? (decision) => _moderateComment(
-                                                threadedComments[index]
-                                                    .comment
-                                                    .id,
-                                                decision,
-                                              )
-                                          : null,
-                                      canArchiveModeration:
-                                          canArchiveModeration,
-                                    ),
-                                    if (index != threadedComments.length - 1)
-                                      Divider(
-                                        height: 1,
-                                        color: AppColors.borderSubtle
-                                            .withValues(alpha: 0.8),
-                                      ),
-                                  ],
-                                ],
-                                const SizedBox(height: 90),
-                              ],
-                            ),
-                            if (_pendingNewCommentIds.isNotEmpty)
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                bottom: 12,
-                                child: Center(
-                                  child: GestureDetector(
-                                    onTap: _jumpToLatestComments,
-                                    behavior: HitTestBehavior.opaque,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: AppSpace.md,
-                                        vertical: AppSpace.sm,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary500,
-                                        borderRadius: BorderRadius.circular(
-                                            AppRadius.fullValue),
-                                      ),
-                                      child: Text(
-                                        '${_pendingNewCommentIds.length} new comments',
-                                        style: AppTypography.custom(
-                                          color: Colors.black,
-                                          size: AppText.labelSize,
-                                          weight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                ),
-                CommunityDiscussionComposer(
-                  controller: _commentCtrl,
-                  focusNode: _commentFocusNode,
-                  mentionsRepository: _mentionsRepository,
-                  isSending: _isSending,
-                  onSendTap: () => _sendComment(postId),
-                  replyingToUsername: _replyToUsername,
-                  onCancelReply: _cancelReply,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  List<_ThreadedCommunityComment> _buildThreadedComments(
-    List<CommunityPostComment> comments,
-  ) {
-    if (comments.length < 2) {
-      return comments
-          .map((comment) => _ThreadedCommunityComment(comment: comment))
-          .toList(growable: false);
-    }
-
-    final byId = <String, CommunityPostComment>{
-      for (final comment in comments) comment.id: comment,
-    };
-    final repliesByParent = <String, List<CommunityPostComment>>{};
-    final roots = <CommunityPostComment>[];
-
-    for (final comment in comments) {
-      final parentId = comment.replyToId?.trim();
-      if (parentId == null || parentId.isEmpty || !byId.containsKey(parentId)) {
-        roots.add(comment);
-        continue;
-      }
-      final replies =
-          repliesByParent.putIfAbsent(parentId, () => <CommunityPostComment>[]);
-      replies.add(comment);
-    }
-
-    final flattened = <_ThreadedCommunityComment>[];
-    for (final root in roots) {
-      flattened.add(_ThreadedCommunityComment(comment: root));
-      final replies = repliesByParent[root.id];
-      if (replies == null) continue;
-      for (final reply in replies) {
-        flattened.add(
-          _ThreadedCommunityComment(
-            comment: reply,
-            isNestedReply: true,
-          ),
-        );
-      }
-    }
-
-    return flattened;
-  }
-
-  Future<void> _openShareSheet(CommunityPost post) async {
-    await showCommunityPostShareSheet(
-      context,
-      postId: post.id,
-      content: post.content,
-    );
-  }
-}
-
-class _ThreadedCommunityComment {
-  const _ThreadedCommunityComment({
-    required this.comment,
-    this.isNestedReply = false,
-  });
-
-  final CommunityPostComment comment;
-  final bool isNestedReply;
-}
-
-class _DiscussionHeader extends StatelessWidget {
-  const _DiscussionHeader({
-    required this.commentsCount,
-    required this.isLoadingComments,
-    required this.hasMoreComments,
-    required this.onLoadOlder,
-  });
-
-  final int commentsCount;
-  final bool isLoadingComments;
-  final bool hasMoreComments;
-  final VoidCallback onLoadOlder;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          'DISCUSSION ($commentsCount)',
-          style: AppTypography.custom(
-            color: AppColors.textFaint,
-            size: AppText.captionSize,
-            weight: FontWeight.w600,
-            letterSpacing: 0.8,
-          ),
-        ),
-        const Spacer(),
-        if (commentsCount > 0 && hasMoreComments)
-          TextButton(
-            onPressed: isLoadingComments ? null : onLoadOlder,
-            child: Text(
-              isLoadingComments ? 'Loading…' : 'Load older',
-              style: AppTypography.custom(
-                color: AppColors.primary400,
-                size: AppText.labelSize,
-                weight: FontWeight.w600,
+                      ),
               ),
             ),
-          ),
-      ],
+            if (post != null)
+              CommunityDiscussionComposer(
+                controller: _commentCtrl,
+                focusNode: _commentFocusNode,
+                mentionsRepository: _mentionsRepository,
+                isSending: _isSending,
+                onSendTap: () => _send(postId),
+                replyingToUsername: _replyTo == null
+                    ? null
+                    : communityHandle(_replyTo!.admin).substring(1),
+                onCancelReply: () => setState(() => _replyTo = null),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

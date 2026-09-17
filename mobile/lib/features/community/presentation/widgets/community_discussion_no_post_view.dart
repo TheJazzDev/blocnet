@@ -12,14 +12,14 @@ class CommunityDiscussionNoPostView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: const CustomAppBar(
-        title: 'Post Discussion',
+        title: 'Post',
         backButton: true,
         showSearch: false,
         showFilter: false,
       ),
       body: Center(
         child: Text(
-          'No post selected.',
+          'Nothing to show here.',
           style: AppTypography.custom(
             color: AppColors.textMuted,
             size: AppText.bodySize,

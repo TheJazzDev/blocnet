@@ -5,6 +5,7 @@ import { CommunityModerationController } from './community-moderation.controller
 import { CommunityModerationEnforcementService } from './community-moderation-enforcement.service';
 import { CommunityModerationService } from './community-moderation.service';
 import { InactiveGemsModerationService } from './inactive-gems-moderation.service';
+import { MyReportsService } from './my-reports.service';
 
 @Module({
   imports: [AuditLogModule, HunterReliabilityModule],
@@ -13,6 +14,7 @@ import { InactiveGemsModerationService } from './inactive-gems-moderation.servic
     CommunityModerationService,
     CommunityModerationEnforcementService,
     InactiveGemsModerationService,
+    MyReportsService,
   ],
   exports: [CommunityModerationEnforcementService, CommunityModerationService],
 })
