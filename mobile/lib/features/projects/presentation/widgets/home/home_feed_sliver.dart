@@ -122,17 +122,13 @@ class HomeFeedSliver extends StatelessWidget {
 
         // Day one: no board yet, so Home borrows Discover's job. An intro
         // saying what a hunter is for, then gems worth starting with, ranked
-        // by the store's own hype score. Disappears at the first follow.
+        // by newest update, then followers. Disappears at the first follow.
         final isDayOne = followedIds.isEmpty;
         final accent = AppColors.accentForSpace(
           context.read<AuthStore>().isInHunterSpace,
         );
         final starters = isDayOne
-            ? ([...projectsStore.projects]..sort(
-                    (a, b) => projectsStore
-                        .hypeScoreForProject(b)
-                        .compareTo(projectsStore.hypeScoreForProject(a)),
-                  ))
+            ? ([...projectsStore.projects]..sort(_byActivity))
                 .take(4)
                 .toList()
             : const <Project>[];
@@ -317,4 +313,14 @@ void _openProject(BuildContext context, String projectId) {
     pageBuilder: (_, __, ___) => ProjectDetailsDialog(projectId: projectId),
     transitionDuration: const Duration(milliseconds: 320),
   );
+}
+
+/// Newest update first; gems that never posted go last, most followed first.
+int _byActivity(Project a, Project b) {
+  final aAt = a.lastUpdateAt;
+  final bAt = b.lastUpdateAt;
+  if (aAt != null && bAt != null && aAt != bAt) return bAt.compareTo(aAt);
+  if (aAt == null && bAt != null) return 1;
+  if (aAt != null && bAt == null) return -1;
+  return b.followersCount.compareTo(a.followersCount);
 }
