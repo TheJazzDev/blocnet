@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
+import 'package:blocnet/features/auth/presentation/widgets/session_ended_notice.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -100,6 +101,11 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
+  Widget? _sessionEndedNotice(String? message) {
+    if (message == null) return null;
+    return SessionEndedNotice(message: message);
+  }
+
   @override
   Widget build(BuildContext context) {
     final authStore = context.watch<AuthStore>();
@@ -112,7 +118,9 @@ class _SignInScreenState extends State<SignInScreen> {
       heading: 'Sign in to Blocnet',
       subtitle:
           'Connect to your account and track the latest signals from your favorite gems.',
-      notice: !authStore.isSupabaseConfigured ? _ConfigWarning() : null,
+      notice: !authStore.isSupabaseConfigured
+          ? _ConfigWarning()
+          : _sessionEndedNotice(authStore.sessionEndedNotice),
       child: Form(
         key: _formKey,
         child: Column(
