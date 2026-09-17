@@ -21,7 +21,7 @@ Color assetAccentColor(String assetCode) {
       return AppColors.successColor;
     case 'BNT':
     default:
-      return AppColors.teal400;
+      return AppColors.primary400;
   }
 }
 

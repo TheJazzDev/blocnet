@@ -54,4 +54,3 @@ List<WalletAssetBalance> walletAssetsPointsFirst(
     ...assets.where((a) => !a.isPoints),
   ];
 }
-

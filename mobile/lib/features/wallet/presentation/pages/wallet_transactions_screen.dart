@@ -15,7 +15,8 @@ class WalletTransactionsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: AppBar(
-        title: Text('Transactions', style: AppText.title(AppColors.textPrimary)),
+        title:
+            Text('Transactions', style: AppText.title(AppColors.textPrimary)),
       ),
       body: RefreshIndicator(
         color: AppColors.primary500,

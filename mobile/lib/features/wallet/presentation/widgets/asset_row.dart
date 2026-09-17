@@ -40,6 +40,7 @@ class AssetRow extends StatelessWidget {
             WalletIconSquare(color: accent, symbol: asset.symbol),
             const SizedBox(width: AppSpace.md),
             Expanded(
+              flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -57,7 +58,9 @@ class AssetRow extends StatelessWidget {
                         style: WalletType.meta(AppColors.textMuted),
                       ),
                       const SizedBox(width: AppSpace.sm),
-                      WalletPill(label: assetBadgeText(asset)),
+                      Flexible(
+                        child: WalletPill(label: assetBadgeText(asset)),
+                      ),
                     ],
                   ),
                 ],
@@ -65,15 +68,20 @@ class AssetRow extends StatelessWidget {
             ),
             const SizedBox(width: AppSpace.sm),
             Flexible(
+              flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    amountText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: WalletType.rowTitle(AppColors.textPrimary)
-                        .merge(AppText.tabular),
+                  // Large amounts shrink rather than lose digits.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      amountText,
+                      maxLines: 1,
+                      style: WalletType.rowTitle(AppColors.textPrimary)
+                          .merge(AppText.tabular),
+                    ),
                   ),
                   const SizedBox(height: AppSpace.hair),
                   Text(

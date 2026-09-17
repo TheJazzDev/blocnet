@@ -1,18 +1,16 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/action_row.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/asset_balance_card.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_state_views.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/section_header.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/transactions_list.dart';
-import 'package:blocnet/services/core/feed_view_mode_store.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// One asset: balance, Receive / Send, and its transactions.
 class WalletAssetDetailScreen extends StatefulWidget {
   const WalletAssetDetailScreen({
     super.key,
@@ -44,8 +42,6 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final walletStore = context.watch<WalletStore>();
-    final viewMode = context.watch<FeedViewModeStore>().mode;
-    final isCardMode = viewMode == FeedViewMode.card;
     final asset = walletStore.findAsset(_assetCode);
     final notice = _availabilityNotice(walletStore, asset);
 
@@ -54,11 +50,7 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
       appBar: AppBar(
         title: Text(
           asset?.name ?? _assetCode,
-          style: AppTypography.custom(
-            size: AppText.titleSize,
-            weight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
+          style: AppText.title(AppColors.textPrimary),
         ),
       ),
       body: RefreshIndicator(
@@ -70,42 +62,33 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: AppSpace.xl),
-                AssetBalanceCard(assetCode: _assetCode, mode: viewMode),
-                const SizedBox(height: AppSpace.lg),
-                ActionRow(assetCode: _assetCode),
-                const SizedBox(height: AppSpace.xl),
-                const SectionHeader(label: 'Transactions'),
-                const SizedBox(height: AppSpace.sm),
-                TransactionsList(assetCode: _assetCode),
-                const SizedBox(height: AppSpace.xl),
-                if (notice != null)
-                  AppSurface(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppSpace.md),
-                    child: Text(
-                      notice,
-                      style: AppTypography.custom(
-                        size: AppText.bodySize,
-                        weight: FontWeight.w400,
-                        color: AppColors.textMuted,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                if (!isCardMode && notice != null)
-                  Divider(
-                    height: 1,
-                    color: AppColors.borderSubtle.withValues(alpha: 0.8),
-                  ),
-                const SizedBox(height: AppSpace.xl),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg,
+            AppSpace.md,
+            AppSpace.lg,
+            AppSpace.xxl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AssetBalanceCard(assetCode: _assetCode),
+              const SizedBox(height: AppSpace.md),
+              ActionRow(assetCode: _assetCode),
+              if (notice != null) ...[
+                const SizedBox(height: AppSpace.md),
+                WalletNoticeCard(
+                  icon: Icons.info_outline_rounded,
+                  message: notice,
+                ),
               ],
-            ),
+              const SizedBox(height: AppSpace.xl),
+              const SectionHeader(
+                icon: Icons.receipt_long_outlined,
+                label: 'Transactions',
+              ),
+              const SizedBox(height: AppSpace.sm),
+              TransactionsList(assetCode: _assetCode),
+            ],
           ),
         ),
       ),
@@ -120,13 +103,16 @@ class _WalletAssetDetailScreenState extends State<WalletAssetDetailScreen> {
   ) {
     if (_assetCode == walletPointsAsset) {
       if (asset == null || asset.canSend) return null;
-      return 'Sending BNP is currently unavailable.';
+      return 'Sending BNP is off right now.';
     }
-    if (walletStore.canTransferAsset(_assetCode) &&
-        walletStore.canWithdrawAsset(_assetCode)) {
-      return null;
+    final canSend = walletStore.canTransferAsset(_assetCode);
+    final canWithdraw = walletStore.canWithdrawAsset(_assetCode);
+    if (canSend && canWithdraw) return null;
+    if (!canSend && !canWithdraw) {
+      return 'Sending $_assetCode is off right now. You can still receive it.';
     }
-    return 'Send and withdrawal are currently disabled for $_assetCode. '
-        'Receive/deposit is available.';
+    return canSend
+        ? 'Withdrawals of $_assetCode are off. Sends inside Blocnet work.'
+        : 'Sends inside Blocnet are off for $_assetCode. Withdrawals work.';
   }
 }

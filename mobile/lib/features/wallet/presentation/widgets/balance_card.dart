@@ -92,9 +92,10 @@ class _Figures extends StatelessWidget {
           child: Text(
             isHidden ? r'$••••••' : headline.amount,
             maxLines: 1,
-            style: AppText.display(AppColors.textPrimary, weight: FontWeight.w800)
-                .merge(AppText.tabular)
-                .copyWith(height: 1.1),
+            style:
+                AppText.display(AppColors.textPrimary, weight: FontWeight.w800)
+                    .merge(AppText.tabular)
+                    .copyWith(height: 1.1),
           ),
         ),
         if (!isHidden && headline.otherHoldings != null) ...[

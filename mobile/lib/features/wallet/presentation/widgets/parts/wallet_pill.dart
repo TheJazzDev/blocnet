@@ -18,9 +18,8 @@ class WalletPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: tint == null
-            ? AppColors.bgElevated
-            : tint.withValues(alpha: 0.12),
+        color:
+            tint == null ? AppColors.bgElevated : tint.withValues(alpha: 0.12),
         borderRadius: AppRadius.full,
         border: Border.all(
           color: tint == null
@@ -31,6 +30,7 @@ class WalletPill extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: WalletType.caps(tint ?? AppColors.textMuted, tracking: 0.6),
       ),
     );
