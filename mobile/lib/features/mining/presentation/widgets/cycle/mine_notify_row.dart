@@ -40,24 +40,23 @@ class MineNotifyRow extends StatelessWidget {
       margin: const EdgeInsets.only(top: AppSpace.lg),
       padding: const EdgeInsets.only(top: AppSpace.sm),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: MinePalette.divider)),
+        border: Border(top: BorderSide(color: MinePalette.edge)),
       ),
       child: MergeSemantics(
         child: SizedBox(
           height: 44,
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.notifications_active_outlined,
-                size: AppIcon.sm,
-                color: MinePalette.caption,
+                size: AppIcon.md,
+                color: MinePalette.accentSoft,
               ),
               const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Text(
                   MineCycleView.notifyLabel,
-                  style:
-                      AppText.body(MinePalette.body, weight: AppText.semibold),
+                  style: AppText.label(MinePalette.text, weight: AppText.bold),
                 ),
               ),
               Switch(
@@ -65,12 +64,12 @@ class MineNotifyRow extends StatelessWidget {
                 value: value,
                 onChanged:
                     enabled ? (next) => _toggle(context, store, next) : null,
-                activeColor: MinePalette.white,
-                activeTrackColor: MinePalette.fill,
-                inactiveThumbColor: MinePalette.strong,
-                inactiveTrackColor: MinePalette.pausedEdge,
+                activeColor: Colors.white,
+                activeTrackColor: MinePalette.accent,
+                inactiveThumbColor: MinePalette.muted,
+                inactiveTrackColor: MinePalette.raised,
                 trackOutlineColor:
-                    const WidgetStatePropertyAll(Colors.transparent),
+                    const WidgetStatePropertyAll(MinePalette.strongEdge),
                 materialTapTargetSize: MaterialTapTargetSize.padded,
               ),
             ],

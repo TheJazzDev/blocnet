@@ -1,3 +1,4 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/mining/presentation/widgets/cycle/mine_cycle_card.dart';
 import 'package:blocnet/features/mining/presentation/widgets/cycle/mine_progress_ring.dart';
@@ -57,7 +58,7 @@ void main() {
       find.text('0 BNP'),
       find.text('Start mining'),
     ]);
-    expect(find.text('CYCLE · 24H'), findsOneWidget);
+    expect(find.text('Cycle · 24h'), findsOneWidget);
     expect(find.text('5 BNP/hr'), findsOneWidget);
     expect(find.text('No boost yet'), findsOneWidget);
     expect(find.text("Notify me when it's ready"), findsNothing);
@@ -79,7 +80,7 @@ void main() {
       find.text('of 132 BNP'),
       find.text("Notify me when it's ready"),
     ]);
-    expect(find.text('HOUR 9 OF 24'), findsOneWidget);
+    expect(find.text('Hour 9 of 24'), findsOneWidget);
     expect(find.text('+10% from 2 friends'), findsOneWidget);
     expect(find.byKey(const ValueKey('mine-primary')), findsNothing);
     expect(find.textContaining('Claim'), findsNothing);
@@ -98,7 +99,7 @@ void main() {
       find.text('Claim 132 BNP'),
       find.text('Claiming starts your next cycle.'),
     ]);
-    expect(find.text('CYCLE COMPLETE'), findsOneWidget);
+    expect(find.text('Cycle complete'), findsOneWidget);
     expect(_ring(tester), 1);
     expect(find.text("Notify me when it's ready"), findsNothing);
 
@@ -118,12 +119,12 @@ void main() {
       find.text("or it's gone"),
       find.text('Claim 132 BNP'),
     ]);
-    expect(find.text('CLAIM WINDOW'), findsOneWidget);
+    expect(find.text('Claim window'), findsOneWidget);
     expect(_ring(tester), closeTo(3 / 48, 0.001));
     final painter = tester
         .widget<CustomPaint>(find.byKey(const ValueKey('mine-ring')))
         .painter! as MineRingPainter;
-    expect(painter.color, const Color(0xFFF59E0B));
+    expect(painter.color, AppColors.warning500);
     expect(find.text('Claiming starts your next cycle.'), findsNothing);
   });
 
@@ -136,7 +137,7 @@ void main() {
       find.text('Mining is paused · your balance is safe'),
       find.text('Paused'),
     ]);
-    expect(find.text('ALL MEMBERS'), findsOneWidget);
+    expect(find.text('All members'), findsOneWidget);
     expect(find.byKey(const ValueKey('mine-primary')), findsNothing);
     expect(find.textContaining('BNP/hr'), findsNothing);
     expect(find.text("Notify me when it's ready"), findsNothing);

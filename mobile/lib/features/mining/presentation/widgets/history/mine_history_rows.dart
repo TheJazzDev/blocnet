@@ -14,16 +14,10 @@ class MineHistoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (text, ground) = switch (group.outcome) {
-      MineCycleOutcome.claimed => (
-          MinePalette.accentSoft,
-          MinePalette.accentChip
-        ),
-      MineCycleOutcome.waiting => (
-          MinePalette.amberText,
-          MinePalette.amberChip
-        ),
-      MineCycleOutcome.expired => (MinePalette.faint, MinePalette.chip),
+    final tone = switch (group.outcome) {
+      MineCycleOutcome.claimed => MinePalette.success,
+      MineCycleOutcome.waiting => MinePalette.amber,
+      MineCycleOutcome.expired => MinePalette.faint,
     };
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -33,7 +27,7 @@ class MineHistoryHeader extends StatelessWidget {
       decoration: const BoxDecoration(
         color: MinePalette.card,
         border: Border.symmetric(
-          horizontal: BorderSide(color: MinePalette.rowHairline),
+          horizontal: BorderSide(color: MinePalette.edge),
         ),
       ),
       child: Row(
@@ -42,10 +36,10 @@ class MineHistoryHeader extends StatelessWidget {
             child: Text(
               group.title.toUpperCase(),
               style: AppText.label(MinePalette.muted, weight: AppText.bold)
-                  .copyWith(letterSpacing: 0.8),
+                  .copyWith(letterSpacing: 1),
             ),
           ),
-          MinePill(label: group.pill, text: text, ground: ground),
+          MinePill(label: group.pill, tone: tone),
         ],
       ),
     );
@@ -63,17 +57,19 @@ class MineHistoryHourRow extends StatelessWidget {
     final start = hour.hourStartAt;
     final expired = hour.isExpired;
     final stateColor = hour.isClaimed
-        ? MinePalette.miningNow
+        ? MinePalette.success
         : expired
-            ? MinePalette.caption
+            ? MinePalette.faint
             : MinePalette.amber;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpace.lg,
         vertical: AppSpace.md,
       ),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: MinePalette.hourHairline)),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: MinePalette.edge.withValues(alpha: 0.5)),
+        ),
       ),
       child: Row(
         children: [
@@ -81,7 +77,7 @@ class MineHistoryHourRow extends StatelessWidget {
             width: 52,
             child: Text(
               start == null ? '--:--' : MineFormat.hour(start),
-              style: AppText.body(MinePalette.faint, weight: AppText.semibold)
+              style: AppText.label(MinePalette.faint, weight: AppText.semibold)
                   .merge(AppText.tabular),
             ),
           ),
@@ -90,11 +86,11 @@ class MineHistoryHourRow extends StatelessWidget {
             child: Text(
               '${MineFormat.rate(hour.points)} BNP',
               style: AppText.body(
-                expired ? MinePalette.caption : MinePalette.strong,
-                weight: AppText.semibold,
+                expired ? MinePalette.faint : MinePalette.text,
+                weight: AppText.bold,
               ).merge(AppText.tabular).copyWith(
                     decoration: expired ? TextDecoration.lineThrough : null,
-                    decorationColor: MinePalette.caption,
+                    decorationColor: MinePalette.faint,
                   ),
             ),
           ),

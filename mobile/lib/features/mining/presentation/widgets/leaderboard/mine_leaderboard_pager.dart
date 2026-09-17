@@ -32,7 +32,7 @@ class MineLeaderboardPager extends StatelessWidget {
           const SizedBox(width: AppSpace.sm),
           Text(
             'Page $page of $pageCount',
-            style: AppText.label(MinePalette.faint, weight: AppText.semibold),
+            style: AppText.label(MinePalette.muted, weight: AppText.semibold),
           ),
           const SizedBox(width: AppSpace.sm),
           _PageButton(
@@ -77,15 +77,11 @@ class _PageButton extends StatelessWidget {
             child: Container(
               width: 32,
               height: 32,
-              decoration: mineTileDecoration(
-                ground: Colors.transparent,
-                edge: MinePalette.chip,
-                radius: AppRadius.sm,
-              ),
+              decoration: mineTileDecoration(radius: AppRadius.sm),
               child: Icon(
                 icon,
                 size: AppIcon.sm,
-                color: enabled ? MinePalette.body : MinePalette.quiet,
+                color: enabled ? MinePalette.text : MinePalette.faint,
               ),
             ),
           ),

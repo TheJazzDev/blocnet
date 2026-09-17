@@ -4,64 +4,64 @@ import 'package:blocnet/features/mining/data/mine_cycle_view.dart';
 import 'package:blocnet/features/mining/presentation/mine_palette.dart';
 import 'package:flutter/material.dart';
 
-/// Pill colours and icon per phase.
+/// Icon, tone (tag, icons) and ring colour per phase, as the old hero's
+/// status tag: grey idle, accent live, green ready, amber paused / closing.
 class MinePhaseStyle {
   const MinePhaseStyle({
     required this.icon,
-    required this.pillText,
-    required this.pillGround,
+    required this.tone,
     required this.ringColor,
+    this.quiet = false,
   });
 
   final IconData icon;
-  final Color pillText;
-  final Color pillGround;
+  final Color tone;
   final Color ringColor;
+
+  /// Idle and paused: nothing is being earned, so the core stays dim.
+  final bool quiet;
 
   static MinePhaseStyle of(MineCyclePhase phase) {
     switch (phase) {
       case MineCyclePhase.running:
-        return const MinePhaseStyle(
+        return MinePhaseStyle(
           icon: Icons.bolt_rounded,
-          pillText: MinePalette.accentSoft,
-          pillGround: MinePalette.accentChip,
+          tone: MinePalette.accent,
           ringColor: MinePalette.accent,
         );
       case MineCyclePhase.ready:
-        return const MinePhaseStyle(
+        return MinePhaseStyle(
           icon: Icons.check_circle_rounded,
-          pillText: MinePalette.readyText,
-          pillGround: MinePalette.readyChip,
-          ringColor: MinePalette.accent,
+          tone: MinePalette.success,
+          ringColor: MinePalette.success,
         );
       case MineCyclePhase.closingSoon:
-        return const MinePhaseStyle(
+        return MinePhaseStyle(
           icon: Icons.timer_rounded,
-          pillText: MinePalette.amberText,
-          pillGround: MinePalette.amberChip,
+          tone: MinePalette.amber,
           ringColor: MinePalette.amber,
         );
       case MineCyclePhase.paused:
-        return const MinePhaseStyle(
+        return MinePhaseStyle(
           icon: Icons.pause_circle_outline_rounded,
-          pillText: MinePalette.faint,
-          pillGround: MinePalette.chip,
+          tone: MinePalette.amber,
           ringColor: MinePalette.accent,
+          quiet: true,
         );
       case MineCyclePhase.idle:
       case MineCyclePhase.loading:
       case MineCyclePhase.loadError:
-        return const MinePhaseStyle(
+        return MinePhaseStyle(
           icon: Icons.pause_circle_outline_rounded,
-          pillText: MinePalette.faint,
-          pillGround: MinePalette.chip,
+          tone: MinePalette.faint,
           ringColor: MinePalette.accent,
+          quiet: true,
         );
     }
   }
 }
 
-/// `MINING` pill on the left, `Hour 9 of 24` on the right.
+/// Old hero header: icon and `Hour 9 of 24` on the left, `MINING` tag right.
 class MineStatusRow extends StatelessWidget {
   const MineStatusRow({super.key, required this.view});
 
@@ -70,39 +70,33 @@ class MineStatusRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = MinePhaseStyle.of(view.phase);
-    final caps = AppText.caption(MinePalette.caption, weight: AppText.bold);
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.sm,
-            vertical: AppSpace.xs,
-          ),
-          decoration: BoxDecoration(
-            color: style.pillGround,
-            borderRadius: AppRadius.full,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(style.icon, size: AppIcon.xs, color: style.pillText),
-              const SizedBox(width: AppSpace.xs),
-              Text(
-                view.pill,
-                style: AppText.caption(style.pillText, weight: AppText.bold)
-                    .copyWith(letterSpacing: 1.3, height: 1.2),
-              ),
-            ],
-          ),
+        Icon(
+          style.icon,
+          size: AppIcon.md,
+          color: style.quiet ? MinePalette.faint : style.tone,
         ),
         const SizedBox(width: AppSpace.sm),
         Expanded(
           child: Text(
-            view.rightLabel.toUpperCase(),
-            textAlign: TextAlign.right,
+            view.rightLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: caps.copyWith(letterSpacing: 0.7),
+            style: AppText.label(MinePalette.muted),
+          ),
+        ),
+        const SizedBox(width: AppSpace.sm),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.md,
+            vertical: AppSpace.xs,
+          ),
+          decoration: MinePalette.tag(style.tone),
+          child: Text(
+            view.pill,
+            style: AppText.caption(style.tone, weight: AppText.bold)
+                .copyWith(letterSpacing: 0.8),
           ),
         ),
       ],
@@ -110,7 +104,7 @@ class MineStatusRow extends StatelessWidget {
   }
 }
 
-/// `Ready tomorrow at 09:20` in white, ` · 15h left` muted.
+/// `Ready tomorrow at 09:20` bold, ` · 15h left` muted, centred.
 class MineWhenLine extends StatelessWidget {
   const MineWhenLine({super.key, required this.view});
 
@@ -124,20 +118,20 @@ class MineWhenLine extends StatelessWidget {
         children: [
           TextSpan(
             text: view.whenMuted,
-            style: const TextStyle(
+            style: TextStyle(
               color: MinePalette.muted,
               fontWeight: AppText.medium,
             ),
           ),
         ],
       ),
-      style: AppText.title(MinePalette.white)
-          .copyWith(height: 1.25, letterSpacing: -0.4),
+      textAlign: TextAlign.center,
+      style: AppText.subtitle(MinePalette.text, weight: AppText.bold),
     );
   }
 }
 
-/// Icon, number and unit inside the ring.
+/// Icon, number and unit inside the core.
 class MineRingCenter extends StatelessWidget {
   const MineRingCenter({super.key, required this.view});
 
@@ -146,25 +140,21 @@ class MineRingCenter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = MinePhaseStyle.of(view.phase);
-    final quiet = view.phase == MineCyclePhase.idle ||
-        view.phase == MineCyclePhase.paused;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           style.icon,
-          size: AppIcon.sm,
-          color: quiet
-              ? MinePalette.caption
-              : (view.isAmber ? MinePalette.amberText : MinePalette.accent),
+          size: view.centerNumber == null ? AppIcon.lg : AppIcon.sm,
+          color: style.quiet ? MinePalette.faint : style.tone,
         ),
         const SizedBox(height: AppSpace.hair),
         if (view.centerNumber != null)
           Text(
             view.centerNumber!,
-            style: AppText.headline(MinePalette.white)
+            style: AppText.headline(MinePalette.text)
                 .merge(AppText.tabular)
-                .copyWith(height: 1),
+                .copyWith(height: 1.1),
           ),
         Text(
           view.centerUnit,
@@ -175,7 +165,8 @@ class MineRingCenter extends StatelessWidget {
   }
 }
 
-/// `5 BNP/hr` over the boost line (or the closing-soon warning).
+/// The rate (or the closing-soon warning) as an old stat tile: icon in a
+/// tinted square, the value, and the boost line under it.
 class MineSideColumn extends StatelessWidget {
   const MineSideColumn({super.key, required this.view});
 
@@ -183,56 +174,100 @@ class MineSideColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (view.sideTop != null)
-          Text(
-            view.sideTop!,
-            style: AppText.label(MinePalette.body, weight: AppText.semibold),
+    final top = view.sideTop;
+    final bottom = view.sideBottom;
+    if (top == null && bottom == null) return const SizedBox.shrink();
+    final tone = view.isAmber ? MinePalette.amber : MinePalette.accent;
+    return Container(
+      padding: AppSpace.allMd,
+      decoration: BoxDecoration(
+        color: MinePalette.raised.withValues(alpha: 0.5),
+        borderRadius: AppRadius.lg,
+        border: Border.all(color: MinePalette.edge.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: tone.withValues(alpha: 0.12),
+              borderRadius: AppRadius.sm,
+            ),
+            child: Icon(
+              view.isAmber ? Icons.timer_outlined : Icons.speed_rounded,
+              size: AppIcon.sm,
+              color: tone,
+            ),
           ),
-        if (view.sideBottom != null) ...[
-          const SizedBox(height: AppSpace.sm),
-          Text(view.sideBottom!, style: AppText.label(MinePalette.faint)),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (top != null)
+                  Text(
+                    top,
+                    style:
+                        AppText.label(MinePalette.text, weight: AppText.bold),
+                  ),
+                if (bottom != null) ...[
+                  const SizedBox(height: AppSpace.hair),
+                  Text(
+                    bottom,
+                    style: AppText.caption(
+                      MinePalette.faint,
+                      weight: AppText.semibold,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
-      ],
+      ),
     );
   }
 }
 
-/// The card's one primary action, 52 tall.
+/// The card's one primary action, in the old Mine button's shape.
 class MinePrimaryButton extends StatelessWidget {
   const MinePrimaryButton({
     super.key,
     required this.label,
     required this.icon,
     required this.onPressed,
-    this.amber = false,
+    this.color,
     this.busy = false,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback onPressed;
-  final bool amber;
+
+  /// Defaults to the accent.
+  final Color? color;
   final bool busy;
 
   @override
   Widget build(BuildContext context) {
-    final fg = amber ? MinePalette.onAmber : MinePalette.white;
+    final ground = color ?? MinePalette.accent;
+    final fg = ThemeData.estimateBrightnessForColor(ground) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
     return Semantics(
       button: true,
       label: label,
       excludeSemantics: true,
       child: Material(
-        color: amber ? MinePalette.amber : MinePalette.fill,
-        borderRadius: AppRadius.md,
+        color: ground,
+        borderRadius: AppRadius.lg,
         child: InkWell(
-          borderRadius: AppRadius.md,
+          borderRadius: AppRadius.lg,
           onTap: busy ? null : onPressed,
           child: SizedBox(
-            height: 52,
+            height: 48,
             width: double.infinity,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -247,8 +282,8 @@ class MinePrimaryButton extends StatelessWidget {
                 const SizedBox(width: AppSpace.sm),
                 Text(
                   label,
-                  style: AppText.subtitle(fg, weight: AppText.bold)
-                      .copyWith(letterSpacing: -0.2),
+                  style: AppText.body(fg, weight: AppText.bold)
+                      .copyWith(letterSpacing: 0.2),
                 ),
               ],
             ),

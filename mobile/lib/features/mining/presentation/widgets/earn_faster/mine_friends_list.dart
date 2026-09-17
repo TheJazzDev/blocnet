@@ -85,7 +85,7 @@ class _FriendRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
       decoration: BoxDecoration(
         border: divided
-            ? const Border(top: BorderSide(color: MinePalette.divider))
+            ? const Border(top: BorderSide(color: MinePalette.edge))
             : null,
       ),
       child: Row(
@@ -98,8 +98,7 @@ class _FriendRow extends StatelessWidget {
           const SizedBox(width: AppSpace.sm),
           MinePill(
             label: mineFriendPill(friend, now),
-            text: active ? MinePalette.accentSoft : MinePalette.faint,
-            ground: active ? MinePalette.accentChip : MinePalette.chip,
+            tone: active ? MinePalette.accentSoft : MinePalette.faint,
           ),
         ],
       ),

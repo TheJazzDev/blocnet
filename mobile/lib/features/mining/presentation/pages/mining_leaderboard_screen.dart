@@ -1,3 +1,4 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/mining/presentation/mine_palette.dart';
@@ -87,6 +88,8 @@ class _MiningLeaderboardScreenState extends State<MiningLeaderboardScreen> {
                 return false;
               },
               child: RefreshIndicator(
+                color: AppColors.primary500,
+                backgroundColor: AppColors.bgSurface,
                 onRefresh: () => store.loadLeaderboard(
                   force: true,
                   page: store.leaderboardPage,
@@ -136,19 +139,37 @@ class _MiningLeaderboardScreenState extends State<MiningLeaderboardScreen> {
           child: Center(
             child: message == null
                 ? const CircularProgressIndicator(strokeWidth: 2)
-                : Text(message, style: AppText.label(MinePalette.faint)),
+                : Text(message, style: AppText.label(MinePalette.muted)),
           ),
         ),
       ];
     }
     return [
       for (final entry in entries)
-        Padding(
+        Container(
           key: entry.userId == me?.userId ? _meKey : null,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-          child: MineLeaderboardRow(
-            entry: entry,
-            onTap: () => openMineMemberProfile(context, entry),
+          margin: const EdgeInsets.fromLTRB(
+            AppSpace.lg,
+            0,
+            AppSpace.lg,
+            AppSpace.sm,
+          ),
+          clipBehavior: Clip.antiAlias,
+          decoration: mineTileDecoration(
+            edge: entry.rank <= 3
+                ? MinePalette.amber.withValues(alpha: 0.3)
+                : MinePalette.edge,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
+              child: MineLeaderboardRow(
+                entry: entry,
+                divided: false,
+                onTap: () => openMineMemberProfile(context, entry),
+              ),
+            ),
           ),
         ),
     ];
@@ -164,11 +185,12 @@ class _PinnedRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: const ValueKey('mine-pinned-row'),
-      decoration: const BoxDecoration(
-        color: MinePalette.pinGround,
-        border: Border(top: BorderSide(color: MinePalette.pinEdge)),
+      decoration: BoxDecoration(
+        color: MinePalette.card,
+        border: Border(top: BorderSide(color: MinePalette.accentEdge)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpace.lg + AppSpace.md),
       child: SafeArea(
         top: false,
         child: MineLeaderboardRow(

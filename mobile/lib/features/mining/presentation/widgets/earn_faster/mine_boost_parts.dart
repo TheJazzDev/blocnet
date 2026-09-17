@@ -17,12 +17,14 @@ class MineBoostHeadline extends StatelessWidget {
     super.key,
     required this.value,
     required this.caption,
-    this.valueColor = MinePalette.accent,
+    this.valueColor,
   });
 
   final String value;
   final String caption;
-  final Color valueColor;
+
+  /// Defaults to the accent.
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +34,13 @@ class MineBoostHeadline extends StatelessWidget {
       children: [
         Text(
           value,
-          style: AppText.headline(valueColor)
+          style: AppText.headline(valueColor ?? MinePalette.accentSoft)
               .merge(AppText.tabular)
               .copyWith(height: 1),
         ),
         const SizedBox(width: AppSpace.sm),
         Expanded(
-          child: Text(caption, style: AppText.label(MinePalette.faint)),
+          child: Text(caption, style: AppText.label(MinePalette.muted)),
         ),
       ],
     );
@@ -65,10 +67,10 @@ class MineBoostMeter extends StatelessWidget {
               Expanded(
                 child: Container(
                   key: ValueKey('mine-meter-${i < filled ? 'on' : 'off'}'),
-                  height: 4,
+                  height: 6,
                   decoration: BoxDecoration(
-                    color: i < filled ? MinePalette.fill : MinePalette.chip,
-                    borderRadius: BorderRadius.circular(2),
+                    color: i < filled ? MinePalette.accent : MinePalette.raised,
+                    borderRadius: AppRadius.full,
                   ),
                 ),
               ),
@@ -99,12 +101,15 @@ class MineRuleText extends StatelessWidget {
             if (lead != null)
               TextSpan(
                 text: lead,
-                style: const TextStyle(color: MinePalette.body),
+                style: TextStyle(
+                  color: MinePalette.text,
+                  fontWeight: AppText.bold,
+                ),
               ),
             TextSpan(text: text),
           ],
         ),
-        style: AppText.label(MinePalette.faint).copyWith(height: 1.55),
+        style: AppText.label(MinePalette.muted),
       ),
     );
   }
@@ -141,24 +146,33 @@ class MineFriendCodeRow extends StatelessWidget {
           onTap: onTap,
           borderRadius: AppRadius.md,
           child: Ink(
-            padding: AppSpace.allMd,
-            decoration: mineTileDecoration(ground: MinePalette.entryGround),
+            padding: AppSpace.row,
+            decoration: mineTileDecoration(
+              ground: MinePalette.raised.withValues(alpha: 0.5),
+              radius: AppRadius.md,
+            ),
             child: Row(
               children: [
-                const Icon(Icons.how_to_reg_outlined,
-                    size: AppIcon.sm, color: MinePalette.caption),
+                Icon(Icons.how_to_reg_outlined,
+                    size: AppIcon.md, color: MinePalette.accentSoft),
                 const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Text(
                     "Have a friend's code?",
-                    style: AppText.body(MinePalette.body,
-                        weight: AppText.semibold),
+                    style:
+                        AppText.label(MinePalette.text, weight: AppText.bold),
                   ),
                 ),
                 Text(
                   deadlineLabel(until, now),
-                  style: AppText.label(MinePalette.caption,
-                      weight: AppText.semibold),
+                  style:
+                      AppText.caption(MinePalette.amber, weight: AppText.bold),
+                ),
+                const SizedBox(width: AppSpace.xs),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: AppIcon.md,
+                  color: MinePalette.faint,
                 ),
               ],
             ),

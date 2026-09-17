@@ -20,10 +20,8 @@ class MineClaimReceipt extends StatelessWidget {
   Widget build(BuildContext context) {
     return _NoticeFrame(
       key: const ValueKey('mine-claim-receipt'),
-      ground: MinePalette.receiptGround,
-      edge: MinePalette.receiptEdge,
+      tone: MinePalette.success,
       icon: Icons.check_circle_rounded,
-      iconColor: MinePalette.accent,
       title: '+${MineFormat.points(points)} BNP claimed',
       body: nextCycleStarted ? 'Next cycle started.' : null,
     );
@@ -70,10 +68,8 @@ class MineExpiredNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     return _NoticeFrame(
       key: const ValueKey('mine-expired-notice'),
-      ground: MinePalette.noticeGround,
-      edge: MinePalette.noticeEdge,
+      tone: MinePalette.amber,
       icon: Icons.timer_off_outlined,
-      iconColor: MinePalette.amber,
       title: '${MineFormat.points(cycle.forfeitedPoints)} BNP expired',
       body: sentence(cycle, claimWindowHours),
       action: Semantics(
@@ -88,14 +84,14 @@ class MineExpiredNotice extends StatelessWidget {
               height: 36,
               alignment: Alignment.center,
               decoration: mineTileDecoration(
-                ground: Colors.transparent,
-                edge: MinePalette.noticeButtonEdge,
-                radius: AppRadius.sm,
+                ground: MinePalette.raised,
+                edge: MinePalette.strongEdge,
+                radius: AppRadius.md,
               ),
               child: Text(
                 'Dismiss',
                 style:
-                    AppText.label(MinePalette.body, weight: AppText.semibold),
+                    AppText.label(MinePalette.secondary, weight: AppText.bold),
               ),
             ),
           ),
@@ -108,19 +104,16 @@ class MineExpiredNotice extends StatelessWidget {
 class _NoticeFrame extends StatelessWidget {
   const _NoticeFrame({
     super.key,
-    required this.ground,
-    required this.edge,
+    required this.tone,
     required this.icon,
-    required this.iconColor,
     required this.title,
     this.body,
     this.action,
   });
 
-  final Color ground;
-  final Color edge;
+  /// Success for the receipt, amber for the lost cycle.
+  final Color tone;
   final IconData icon;
-  final Color iconColor;
   final String title;
   final String? body;
   final Widget? action;
@@ -134,33 +127,44 @@ class _NoticeFrame extends StatelessWidget {
         AppSpace.lg,
         AppSpace.md,
       ),
-      padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: mineTileDecoration(ground: ground, edge: edge),
+      padding: AppSpace.card,
+      decoration: mineTileDecoration(
+        ground: tone.withValues(alpha: 0.08),
+        edge: tone.withValues(alpha: 0.3),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Icon(icon, size: AppIcon.sm, color: iconColor),
-              const SizedBox(width: AppSpace.sm),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: tone.withValues(alpha: 0.12),
+                  borderRadius: AppRadius.sm,
+                ),
+                child: Icon(icon, size: AppIcon.sm, color: tone),
+              ),
+              const SizedBox(width: AppSpace.md),
               Expanded(
-                child: Text(
-                  title,
-                  style: AppText.body(
-                    MinePalette.strong,
-                    weight: AppText.semibold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style:
+                          AppText.body(MinePalette.text, weight: AppText.bold),
+                    ),
+                    if (body != null) ...[
+                      const SizedBox(height: AppSpace.hair),
+                      Text(body!, style: AppText.label(MinePalette.muted)),
+                    ],
+                  ],
                 ),
               ),
             ],
           ),
-          if (body != null) ...[
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              body!,
-              style: AppText.label(MinePalette.muted).copyWith(height: 1.6),
-            ),
-          ],
           if (action != null) ...[
             const SizedBox(height: AppSpace.sm),
             action!,
