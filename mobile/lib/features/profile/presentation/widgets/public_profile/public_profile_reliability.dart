@@ -2,10 +2,10 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/profile/domain/reliability_summary.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/reliability_line.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/services/hunter/hunter_board_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -59,7 +59,7 @@ class _PublicProfileReliabilityState extends State<PublicProfileReliability> {
       children: [
         const SectionLabel('Reliability', icon: Icons.verified_outlined),
         AppSpace.gapSm,
-        ProfileRowGroup(
+        AppRowGroup(
           children: [
             Padding(
               padding: AppSpace.card,

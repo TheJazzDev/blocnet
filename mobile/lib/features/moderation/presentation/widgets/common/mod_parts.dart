@@ -36,22 +36,6 @@ class ModFieldLabel extends StatelessWidget {
   }
 }
 
-/// A 1px divider inside a card.
-class ModHairline extends StatelessWidget {
-  const ModHairline({super.key, this.indent = 0});
-
-  final double indent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 1,
-      margin: EdgeInsets.only(left: indent),
-      color: AppColors.borderSubtle,
-    );
-  }
-}
-
 /// The dark input every moderation form uses.
 InputDecoration modInputDecoration({String? hint, String? label}) {
   OutlineInputBorder border(Color color) => OutlineInputBorder(

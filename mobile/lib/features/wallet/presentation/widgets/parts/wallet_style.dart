@@ -67,17 +67,3 @@ class WalletCard extends StatelessWidget {
     );
   }
 }
-
-/// A hairline between rows that sit in one card.
-class WalletRowDivider extends StatelessWidget {
-  const WalletRowDivider({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Divider(
-      height: 1,
-      thickness: 1,
-      color: AppColors.borderSubtle,
-    );
-  }
-}

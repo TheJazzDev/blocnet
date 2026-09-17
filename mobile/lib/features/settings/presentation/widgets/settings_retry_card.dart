@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Shown in place of the notification sections when they fail to load.
@@ -11,7 +11,7 @@ class SettingsRetryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ProfileRowGroup(
+    return AppRowGroup(
       children: [
         Padding(
           padding: AppSpace.card,

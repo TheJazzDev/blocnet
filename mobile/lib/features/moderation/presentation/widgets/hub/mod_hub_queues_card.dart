@@ -1,6 +1,4 @@
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,24 +34,8 @@ class ModHubQueuesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: AppRadius.md,
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: ClipRRect(
-        borderRadius: AppRadius.md,
-        child: Column(
-          children: [
-            for (var i = 0; i < queues.length; i++) ...[
-              if (i > 0)
-                const ModHairline(indent: AppSpace.lg + 36 + AppSpace.md),
-              _QueueRow(queue: queues[i]),
-            ],
-          ],
-        ),
-      ),
+    return AppRowGroup(
+      children: [for (final queue in queues) _QueueRow(queue: queue)],
     );
   }
 }
@@ -66,61 +48,22 @@ class _QueueRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final count = queue.count;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          queue.onTap();
-        },
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 60),
-          child: Padding(
-            padding: AppSpace.row,
-            child: Row(
-              children: [
-                AppIconSquare(
-                    icon: queue.icon,
-                    color: queue.color,
-                    size: 36,
-                    iconSize: AppIcon.md),
-                AppSpace.wGapMd,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        queue.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: ModText.rowTitle(AppColors.textPrimary),
-                      ),
-                      const SizedBox(height: AppSpace.hair),
-                      Text(
-                        queue.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: ModText.meta(AppColors.textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                if (count != null && count > 0) ...[
-                  AppSpace.wGapSm,
-                  AppPill.caps(label: '$count', color: queue.color),
-                ],
-                AppSpace.wGapXs,
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: AppIcon.lg,
-                  color: AppColors.textFaint,
-                ),
-              ],
-            ),
-          ),
-        ),
+    return AppListRow(
+      leading: AppIconSquare(
+        icon: queue.icon,
+        color: queue.color,
+        size: 36,
+        iconSize: AppIcon.md,
       ),
+      title: queue.title,
+      subtitle: queue.subtitle,
+      trailing: count != null && count > 0
+          ? AppPill.caps(label: '$count', color: queue.color)
+          : null,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        queue.onTap();
+      },
     );
   }
 }

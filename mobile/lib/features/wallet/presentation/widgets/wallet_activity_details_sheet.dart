@@ -144,16 +144,10 @@ class _FieldsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: walletCardDecoration(),
-      child: Column(
-        children: [
-          for (var i = 0; i < fields.length; i++) ...[
-            if (i > 0) const WalletRowDivider(),
-            _FieldRow(field: fields[i]),
-          ],
-        ],
-      ),
+    return AppRowGroup(
+      children: [
+        for (final field in fields) _FieldRow(field: field),
+      ],
     );
   }
 }

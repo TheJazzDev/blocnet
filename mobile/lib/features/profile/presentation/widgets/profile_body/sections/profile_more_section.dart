@@ -1,8 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_list_row.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/users/hunter_application_store.dart';
@@ -36,32 +34,32 @@ class ProfileMoreSection extends StatelessWidget {
         children: [
           const SectionLabel('More', icon: Icons.apps_rounded),
           AppSpace.gapSm,
-          ProfileRowGroup(
+          AppRowGroup(
             children: [
               if (!isHunter) const _BecomeHunterRow(),
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.emoji_events_outlined,
                 title: 'Badges',
                 onTap: () => navigator.pushNamed(AppRoutes.badges),
               ),
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.task_alt_outlined,
                 title: 'Quests',
                 onTap: () => navigator.pushNamed(AppRoutes.quests),
               ),
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.stairs_outlined,
                 title: 'Levels',
                 onTap: () => navigator.pushNamed(AppRoutes.levels),
               ),
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.volunteer_activism_outlined,
                 title: 'Tip History',
                 subtitle: 'Sent',
                 onTap: () => navigator.pushNamed(AppRoutes.tipsHistory),
               ),
               if (isHunter)
-                ProfileListRow(
+                AppListRow(
                   icon: Icons.savings_outlined,
                   title: 'Tips Received',
                   onTap: () => navigator.pushNamed(
@@ -74,27 +72,27 @@ class ProfileMoreSection extends StatelessWidget {
           AppSpace.gapXl,
           const SectionLabel('Account', icon: Icons.person_outline_rounded),
           AppSpace.gapSm,
-          ProfileRowGroup(
+          AppRowGroup(
             children: [
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.settings_outlined,
                 title: 'Settings',
                 onTap: () => navigator.pushNamed(AppRoutes.settings),
               ),
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.support_agent_outlined,
                 title: 'Help & Support',
                 onTap: () => navigator.pushNamed(AppRoutes.helpSupport),
               ),
               // Backend allows only owner/dev on /audit-log/system-alerts.
               if (auth.isOwner || auth.isDev)
-                ProfileListRow(
+                AppListRow(
                   icon: Icons.warning_amber_rounded,
                   iconColor: AppColors.warning500,
                   title: 'System Alerts',
                   onTap: () => navigator.pushNamed(AppRoutes.systemAlerts),
                 ),
-              ProfileListRow(
+              AppListRow(
                 icon: Icons.logout_rounded,
                 iconColor: AppColors.error500,
                 title: 'Sign Out',
@@ -128,7 +126,7 @@ class _BecomeHunterRow extends StatelessWidget {
         AppPill.caps(label: 'Approved', color: AppColors.successColor),
       _ => null,
     };
-    return ProfileListRow(
+    return AppListRow(
       icon: Icons.radar_rounded,
       iconColor: AppColors.tagPartnership,
       title: 'Become a Hunter',

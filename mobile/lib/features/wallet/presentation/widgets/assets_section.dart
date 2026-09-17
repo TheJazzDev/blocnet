@@ -1,8 +1,8 @@
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/asset_row.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_state_views.dart';
-import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -30,17 +30,10 @@ class AssetsSection extends StatelessWidget {
       );
     }
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: walletCardDecoration(),
-      child: Column(
-        children: [
-          for (var i = 0; i < assets.length; i++) ...[
-            if (i > 0) const WalletRowDivider(),
-            AssetRow(asset: assets[i]),
-          ],
-        ],
-      ),
+    return AppRowGroup(
+      children: [
+        for (final asset in assets) AssetRow(asset: asset),
+      ],
     );
   }
 }

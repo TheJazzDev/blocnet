@@ -136,7 +136,7 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ModHairline(),
+          const AppHairline(),
           AppSpace.gapMd,
           Text(label.toUpperCase(), style: ModText.caps(AppColors.textFaint)),
           for (final line in lines) ...[

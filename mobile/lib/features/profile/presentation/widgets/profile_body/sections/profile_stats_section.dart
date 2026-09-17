@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_stat_tile.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Four stat tiles under the hero, two per row. Each value says what it
@@ -36,23 +36,23 @@ class ProfileStatsSection extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: ProfileStatTile(
+                child: AppStatTile(
                   key: const ValueKey('profile-stat-gems'),
                   icon: Icons.diamond_outlined,
                   label: 'Gems followed',
                   value: gemsFollowed?.toString() ?? '—',
-                  color: AppColors.primary400,
+                  iconColor: AppColors.primary400,
                   onTap: onGemsTap,
                 ),
               ),
               AppSpace.wGapSm,
               Expanded(
-                child: ProfileStatTile(
+                child: AppStatTile(
                   key: const ValueKey('profile-stat-people'),
                   icon: Icons.people_outline_rounded,
                   label: 'People followed',
                   value: '$peopleFollowed',
-                  color: AppColors.tagPartnership,
+                  iconColor: AppColors.tagPartnership,
                 ),
               ),
             ],
@@ -61,23 +61,23 @@ class ProfileStatsSection extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: ProfileStatTile(
+                child: AppStatTile(
                   key: const ValueKey('profile-stat-tips'),
                   icon: Icons.volunteer_activism_outlined,
                   label: 'Tips sent',
                   value: '$tipsSent',
-                  color: AppColors.successColor,
+                  iconColor: AppColors.successColor,
                   onTap: onTipsTap,
                 ),
               ),
               AppSpace.wGapSm,
               Expanded(
-                child: ProfileStatTile(
+                child: AppStatTile(
                   key: const ValueKey('profile-stat-badges'),
                   icon: Icons.emoji_events_outlined,
                   label: 'Badges',
                   value: '$badgeCount',
-                  color: AppColors.warning500,
+                  iconColor: AppColors.warning500,
                   onTap: onBadgesTap,
                 ),
               ),

@@ -50,17 +50,10 @@ class SendAssetPickerSheet extends StatelessWidget {
             const SizedBox(height: AppSpace.md),
             Flexible(
               child: SingleChildScrollView(
-                child: Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: walletCardDecoration(),
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < ordered.length; i++) ...[
-                        if (i > 0) const WalletRowDivider(),
-                        _AssetOption(asset: ordered[i]),
-                      ],
-                    ],
-                  ),
+                child: AppRowGroup(
+                  children: [
+                    for (final asset in ordered) _AssetOption(asset: asset),
+                  ],
                 ),
               ),
             ),

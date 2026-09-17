@@ -6,7 +6,6 @@ import 'package:blocnet/features/profile/presentation/widgets/public_profile/pub
 import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_identity.dart';
 import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_recent_activity.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/profile_inline_state.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_header.dart';
 import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_reliability.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
@@ -17,6 +16,7 @@ import 'package:blocnet/services/users/blocks_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/utils/role_presentation.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -263,7 +263,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ),
                         ] else if (publicProfile == null) ...[
                           AppSpace.gapMd,
-                          ProfileRowGroup(
+                          AppRowGroup(
                             children: [
                               ProfileInlineState(
                                 icon: Icons.cloud_off_rounded,

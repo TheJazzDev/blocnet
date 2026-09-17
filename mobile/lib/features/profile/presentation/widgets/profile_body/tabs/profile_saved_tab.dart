@@ -1,11 +1,11 @@
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/profile_inline_state.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/tabs/profile_tab_list.dart';
 import 'package:blocnet/features/profile/presentation/widgets/profile_body/tabs/saved_update_row.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/detail_dialogs.dart';
 import 'package:blocnet/services/projects/update_reactions_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -65,7 +65,7 @@ class _ProfileSavedTabState extends State<ProfileSavedTab> {
 
     if (bookmarks.isEmpty && reactions.savedError != null) {
       // Saying "nothing saved" here would be false; the list did not load.
-      return ProfileRowGroup(
+      return AppRowGroup(
         children: [
           ProfileInlineState(
             icon: Icons.cloud_off_rounded,
@@ -78,7 +78,7 @@ class _ProfileSavedTabState extends State<ProfileSavedTab> {
     }
 
     if (bookmarks.isEmpty) {
-      return const ProfileRowGroup(
+      return const AppRowGroup(
         children: [
           ProfileInlineState(
             icon: Icons.bookmark_border_rounded,

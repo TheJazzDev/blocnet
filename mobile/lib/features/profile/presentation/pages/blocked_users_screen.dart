@@ -2,11 +2,11 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/profile/presentation/widgets/blocked_users/blocked_user_row.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/profile_inline_state.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_block_dialog.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/users/blocks_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -103,7 +103,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       );
     }
     if (store.error != null && users.isEmpty) {
-      return ProfileRowGroup(
+      return AppRowGroup(
         children: [
           ProfileInlineState(
             icon: Icons.cloud_off_rounded,
@@ -115,7 +115,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       );
     }
     if (users.isEmpty) {
-      return const ProfileRowGroup(
+      return const AppRowGroup(
         children: [
           ProfileInlineState(
             icon: Icons.check_circle_outline_rounded,
@@ -125,7 +125,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         ],
       );
     }
-    return ProfileRowGroup(
+    return AppRowGroup(
       children: [
         for (final user in users)
           BlockedUserRow(

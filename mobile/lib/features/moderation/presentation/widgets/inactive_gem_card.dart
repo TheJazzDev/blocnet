@@ -51,7 +51,7 @@ class InactiveGemCard extends StatelessWidget {
           AppSpace.gapXs,
           Text(_facts(), style: ModText.meta(AppColors.textMuted)),
           AppSpace.gapMd,
-          const ModHairline(),
+          const AppHairline(),
           AppSpace.gapMd,
           Text(
             (gem.hunters.length == 1 ? 'Hunter' : 'Hunters').toUpperCase(),

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 ///
 /// [subtitleWidget] replaces the plain [subtitle] text when a row needs a
 /// richer subtitle (e.g. a tappable "+ N more"). [footer] renders under the
-/// row for expandable detail. Rows sit in a `ProfileRowGroup`, which draws
+/// row for expandable detail. Rows sit in an `AppRowGroup`, which draws
 /// the hairlines.
 class SettingSwitchTile extends StatelessWidget {
   const SettingSwitchTile({

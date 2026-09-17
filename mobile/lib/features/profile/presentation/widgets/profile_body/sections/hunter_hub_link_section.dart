@@ -3,11 +3,10 @@ import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/main/presentation/navigation/main_tab_navigator.dart';
 import 'package:blocnet/features/main/presentation/widgets/main_tab_scope.dart';
 import 'package:blocnet/features/profile/domain/reliability_summary.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_list_row.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/common/reliability_line.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/services/hunter/hunter_board_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -60,9 +59,9 @@ class _HunterHubLinkSectionState extends State<HunterHubLinkSection> {
         children: [
           const SectionLabel('Hunter', icon: Icons.shield_outlined),
           AppSpace.gapSm,
-          ProfileRowGroup(
+          AppRowGroup(
             children: [
-              ProfileListRow(
+              AppListRow(
                 key: const ValueKey('profile-hunter-hub'),
                 icon: Icons.shield_outlined,
                 title: 'Hunter Hub',

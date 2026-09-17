@@ -1,12 +1,12 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/notifications/data/models/notification_preferences_model.dart';
-import 'package:blocnet/features/profile/presentation/widgets/common/profile_row_group.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/features/settings/presentation/widgets/category_switch_tile.dart';
 import 'package:blocnet/features/settings/presentation/widgets/setting_switch_tile.dart';
 import 'package:blocnet/features/settings/presentation/widgets/settings_choice_row.dart';
 import 'package:blocnet/services/notifications/notification_settings_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Push, email digest and digest cadence.
@@ -34,7 +34,7 @@ class SettingsNotificationsSection extends StatelessWidget {
         const SectionLabel('Notifications',
             icon: Icons.notifications_none_rounded),
         AppSpace.gapSm,
-        ProfileRowGroup(
+        AppRowGroup(
           children: [
             SettingSwitchTile(
               icon: Icons.notifications_outlined,
@@ -103,7 +103,7 @@ class SettingsCategoriesSection extends StatelessWidget {
                 ),
         ),
         AppSpace.gapSm,
-        ProfileRowGroup(
+        AppRowGroup(
           children: [
             for (final category in categories)
               CategorySwitchTile(
