@@ -1,6 +1,7 @@
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:flutter/material.dart';
 
+import 'presentation/pages/closed_alpha_screen.dart';
 import 'presentation/pages/forgot_password.dart';
 import 'presentation/pages/reset_password.dart';
 import 'presentation/pages/sign_in.dart';
@@ -13,6 +14,7 @@ class AuthRoutes {
   static const String verifyEmail = AppRoutes.verifyEmail;
   static const String resetPassword = AppRoutes.resetPassword;
   static const String forgotPassword = AppRoutes.forgotPassword;
+  static const String closedAlpha = ClosedAlphaScreen.routeName;
 
   static bool isAuthRoute(String? route) {
     if (route == null) return false;
@@ -31,6 +33,7 @@ class AuthRoutes {
       verifyEmail: (context) => const VerifyEmailScreen(),
       forgotPassword: (context) => const ForgotPasswordScreen(),
       resetPassword: (context) => const ResetPasswordScreen(),
+      closedAlpha: (context) => const ClosedAlphaScreen(),
     };
   }
 
@@ -40,6 +43,7 @@ class AuthRoutes {
     verifyEmail,
     resetPassword,
     forgotPassword,
+    closedAlpha,
   };
 
   static const Set<String> _guestOnlyRoutes = {

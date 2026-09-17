@@ -115,6 +115,7 @@ class AuthStore extends ChangeNotifier {
 
   // ── Space switcher — 'user' | 'hunter' ───────────────────────────────────
   String _activeSpace = 'user';
+  String? _closedAlphaRejectedEmail;
   bool _isSwitchingSpace = false;
 
   bool get isAuthenticated => _isAuthenticated;
@@ -149,6 +150,11 @@ class AuthStore extends ChangeNotifier {
   bool get canCreateUpdate => isOwner || isDev || isAdmin || isHunter;
   bool get canSubmitProject => isOwner || isDev || isAdmin || isHunter;
   String? get lastError => _lastError;
+
+  /// The email the closed-alpha check turned away on the last sign-in or
+  /// sign-up attempt, or null. Cleared when a new attempt starts.
+  String? get closedAlphaRejectedEmail => _closedAlphaRejectedEmail;
+  bool get closedAlphaRejected => _closedAlphaRejectedEmail != null;
   bool get isSupabaseConfigured =>
       _supabaseConfiguredOverride ?? AppConfig.isSupabaseConfigured;
   AppBootPhase get bootPhase => _bootPhase;
@@ -169,7 +175,8 @@ class AuthStore extends ChangeNotifier {
   bool get isInHunterSpace => _activeSpace == 'hunter' && hasHunterSpace;
 
   /// True when the user is viewing/interacting from the moderation perspective.
-  bool get isInModerationSpace => _activeSpace == 'moderation' && hasModerationSpace;
+  bool get isInModerationSpace =>
+      _activeSpace == 'moderation' && hasModerationSpace;
 
   bool get isSwitchingSpace => _isSwitchingSpace;
 
@@ -335,6 +342,7 @@ class AuthStore extends ChangeNotifier {
 
     _isSubmitting = true;
     _lastError = null;
+    _closedAlphaRejectedEmail = null;
     notifyListeners();
 
     try {
@@ -393,6 +401,7 @@ class AuthStore extends ChangeNotifier {
 
     _isSubmitting = true;
     _lastError = null;
+    _closedAlphaRejectedEmail = null;
     notifyListeners();
 
     try {
@@ -450,6 +459,7 @@ class AuthStore extends ChangeNotifier {
 
     _isSubmitting = true;
     _lastError = null;
+    _closedAlphaRejectedEmail = null;
     notifyListeners();
 
     try {
@@ -1033,6 +1043,7 @@ class AuthStore extends ChangeNotifier {
 
       _lastError =
           'Closed alpha is active. This email is not on the tester allowlist.';
+      _closedAlphaRejectedEmail = normalized;
       return false;
     } on ApiException catch (error) {
       final detail = describeApiError(

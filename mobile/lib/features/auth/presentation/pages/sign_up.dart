@@ -1,18 +1,17 @@
-import 'dart:async';
-
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_feedback.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_google_button.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_input_field.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_navigation.dart';
 import 'package:blocnet/features/auth/presentation/widgets/auth_screen_shell.dart';
+import 'package:blocnet/features/auth/presentation/widgets/auth_validators.dart';
+import 'package:blocnet/features/auth/presentation/widgets/sign_up/username_availability.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-
-enum _UsernameStatus { idle, checking, available, taken, invalid }
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -36,19 +35,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _referralFocus = FocusNode();
 
   bool _isSubmitting = false;
+  bool _isGoogleSigningUp = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  _UsernameStatus _usernameStatus = _UsernameStatus.idle;
-  Timer? _usernameDebounce;
   final _apiClient = ApiClient();
-  final _usernameRegExp = RegExp(r'^[a-z0-9_]{3,24}$');
+  late final _username = UsernameAvailability(apiClient: _apiClient);
   final _referralRegExp = RegExp(r'^[A-Z0-9]{8}$');
 
   @override
   void initState() {
     super.initState();
     _nameController.addListener(_onUsernameChanged);
+    _username.addListener(_rebuild);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -63,59 +62,56 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    _usernameDebounce?.cancel();
     _nameController.removeListener(_onUsernameChanged);
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _referralController.dispose();
-    _nameFocus.dispose();
-    _emailFocus.dispose();
-    _passwordFocus.dispose();
-    _confirmFocus.dispose();
-    _referralFocus.dispose();
+    _username
+      ..removeListener(_rebuild)
+      ..dispose();
+    for (final c in [
+      _nameController,
+      _emailController,
+      _passwordController,
+      _confirmPasswordController,
+      _referralController,
+    ]) {
+      c.dispose();
+    }
+    for (final f in [
+      _nameFocus,
+      _emailFocus,
+      _passwordFocus,
+      _confirmFocus,
+      _referralFocus,
+    ]) {
+      f.dispose();
+    }
     super.dispose();
   }
 
-  void _onUsernameChanged() {
-    final raw = _nameController.text.trim().toLowerCase();
-
-    _usernameDebounce?.cancel();
-
-    if (raw.isEmpty) {
-      setState(() => _usernameStatus = _UsernameStatus.idle);
-      return;
-    }
-
-    if (!_usernameRegExp.hasMatch(raw)) {
-      setState(() => _usernameStatus = _UsernameStatus.invalid);
-      return;
-    }
-
-    setState(() => _usernameStatus = _UsernameStatus.checking);
-
-    _usernameDebounce = Timer(const Duration(milliseconds: 500), () {
-      _checkUsernameAvailability(raw);
-    });
+  void _rebuild() {
+    if (mounted) setState(() {});
   }
 
-  Future<void> _checkUsernameAvailability(String username) async {
+  void _onUsernameChanged() => _username.onChanged(_nameController.text);
+
+  /// Checks an entered referral code with the backend. Returns false (and
+  /// says why) when sign-up should stop.
+  Future<bool> _referralIsValid(String code) async {
     try {
-      final response = await _apiClient.get(
-        '/users/check-username',
-        query: {'username': username},
+      final result = await _apiClient.get(
+        '/referrals/validate',
+        query: {'code': code},
       );
-      if (!mounted) return;
-      if (response is Map<String, dynamic>) {
-        final available = response['available'] == true;
-        setState(() {
-          _usernameStatus =
-              available ? _UsernameStatus.available : _UsernameStatus.taken;
-        });
+      final valid = result is Map<String, dynamic> && result['valid'] == true;
+      if (!valid && mounted) {
+        showAuthMessage(context, 'Referral code is invalid');
       }
+      return valid;
     } catch (_) {
-      if (mounted) setState(() => _usernameStatus = _UsernameStatus.idle);
+      if (mounted) {
+        showAuthMessage(
+            context, 'Could not check the referral code. Try again.');
+      }
+      return false;
     }
   }
 
@@ -124,57 +120,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
-    if (_usernameStatus != _UsernameStatus.available) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _usernameStatus == _UsernameStatus.taken
-                ? 'That username is already taken'
-                : 'Please wait for username availability check',
-          ),
-          backgroundColor: AppColors.darkGrey200,
-          behavior: SnackBarBehavior.floating,
-        ),
+    if (!_username.isAvailable) {
+      showAuthMessage(
+        context,
+        _username.status == UsernameStatus.taken
+            ? 'That username is already taken'
+            : 'Still checking that username',
       );
       return;
     }
 
     setState(() => _isSubmitting = true);
-
     final authStore = context.read<AuthStore>();
     final referralCode = _referralController.text.trim().toUpperCase();
 
-    if (referralCode.isNotEmpty) {
-      try {
-        final result = await _apiClient.get(
-          '/referrals/validate',
-          query: {'code': referralCode},
-        );
-        final valid = result is Map<String, dynamic> && result['valid'] == true;
-        if (!valid) {
-          if (!mounted) return;
-          setState(() => _isSubmitting = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Referral code is invalid'),
-              backgroundColor: AppColors.darkGrey200,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          return;
-        }
-      } catch (_) {
-        if (!mounted) return;
-        setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Unable to validate referral code right now'),
-            backgroundColor: AppColors.darkGrey200,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
+    if (referralCode.isNotEmpty && !await _referralIsValid(referralCode)) {
+      if (mounted) setState(() => _isSubmitting = false);
+      return;
     }
 
     final success = await authStore.signUpWithEmailPassword(
@@ -188,21 +150,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isSubmitting = false);
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authStore.lastError ?? 'Sign up failed'),
-          backgroundColor: AppColors.darkGrey200,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      handleAuthFailure(context, authStore, 'Sign up failed. Try again.');
       return;
     }
 
     if (authStore.isAuthenticated) {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.main,
-        (Route<dynamic> route) => false,
-      );
+      enterApp(context);
       return;
     }
 
@@ -214,7 +167,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _continueWithGoogle() async {
-    if (_isSubmitting) return;
+    if (_isSubmitting || _isGoogleSigningUp) return;
     FocusScope.of(context).unfocus();
     final authStore = context.read<AuthStore>();
 
@@ -224,107 +177,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
     if (!mounted) return;
 
-    setState(() => _isSubmitting = true);
-    final started = await authStore.signInWithGoogle();
+    setState(() => _isGoogleSigningUp = true);
+    final signedIn = await authStore.signInWithGoogle();
     if (!mounted) return;
-    setState(() => _isSubmitting = false);
+    setState(() => _isGoogleSigningUp = false);
 
-    if (!started) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authStore.lastError ?? 'Google sign-up failed'),
-          backgroundColor: AppColors.darkGrey200,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    if (!signedIn) {
+      handleAuthFailure(context, authStore, 'Google sign-up failed.');
       return;
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Continue with Google in your browser'),
-        backgroundColor: AppColors.bgSurface,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // The native Google flow returns a live session, so go straight in.
+    enterApp(context);
   }
 
-  Widget _buildUsernameHint() {
-    switch (_usernameStatus) {
-      case _UsernameStatus.checking:
-        return Row(
-          children: [
-            SizedBox(
-              width: 10,
-              height: 10,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.5,
-                color: AppColors.textFaint,
-              ),
-            ),
-            const SizedBox(width: AppSpace.sm),
-            Text(
-              'Checking availability…',
-              style: TextStyle(
-                color: AppColors.textFaint,
-                fontSize: AppText.captionSize,
-                fontFamily: 'Geist',
-              ),
-            ),
-          ],
-        );
-      case _UsernameStatus.available:
-        return Row(
-          children: [
-            Icon(Icons.check_circle_outline,
-                size: AppIcon.xs, color: AppColors.teal400),
-            const SizedBox(width: AppSpace.xs),
-            Text(
-              'Username is available',
-              style: TextStyle(
-                color: AppColors.teal400,
-                fontSize: AppText.captionSize,
-                fontFamily: 'Geist',
-              ),
-            ),
-          ],
-        );
-      case _UsernameStatus.taken:
-        return Row(
-          children: [
-            const Icon(Icons.cancel_outlined,
-                size: AppIcon.xs, color: Colors.redAccent),
-            const SizedBox(width: AppSpace.xs),
-            Text(
-              'Username is already taken',
-              style: TextStyle(
-                color: Colors.redAccent,
-                fontSize: AppText.captionSize,
-                fontFamily: 'Geist',
-              ),
-            ),
-          ],
-        );
-      case _UsernameStatus.invalid:
-      case _UsernameStatus.idle:
-        return Text(
-          'Username must be unique and cannot be changed later.',
-          style: TextStyle(
-            color: AppColors.textFaint,
-            fontSize: AppText.captionSize,
-            fontFamily: 'Geist',
-          ),
-        );
+  /// Sign-up is usually pushed from sign-in; a deep link can open it alone.
+  void _backToSignIn() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      navigator.pushReplacementNamed(AppRoutes.signIn);
     }
   }
 
   String? _validateUsername(String? value) {
     final username = (value ?? '').trim().toLowerCase();
     if (username.isEmpty) return 'Username is required';
-    if (!_usernameRegExp.hasMatch(username)) {
+    if (!UsernameAvailability.pattern.hasMatch(username)) {
       return 'Use 3–24 chars: lowercase letters, numbers, underscore only';
     }
-    if (_usernameStatus == _UsernameStatus.taken) {
+    if (_username.status == UsernameStatus.taken) {
       return 'Username is already taken';
     }
     return null;
@@ -343,28 +225,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     final authStore = context.watch<AuthStore>();
     final isBusy = _isSubmitting || authStore.isSubmitting;
-    final canSubmit = !isBusy &&
-        authStore.isSupabaseConfigured &&
-        _usernameStatus == _UsernameStatus.available;
+    final isAnyBusy = isBusy || _isGoogleSigningUp;
+    final configured = authStore.isSupabaseConfigured;
+    final canSubmit = !isAnyBusy && configured && _username.isAvailable;
 
     return AuthScreenShell(
       appBarTitle: '',
       heading: 'Join Blocnet',
-      subtitle: 'Create your account to start following gems.',
+      subtitle: 'Create an account to follow gems.',
       child: Form(
         key: _formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _GoogleAuthButton(
+            AuthGoogleButton(
               label: 'Sign up with Google',
-              isEnabled: !isBusy && authStore.isSupabaseConfigured,
-              isLoading: false,
+              isEnabled: !isAnyBusy && configured,
+              isLoading: _isGoogleSigningUp,
               onPressed: _continueWithGoogle,
             ),
-            const SizedBox(height: AppSpace.lg),
-            const _OrDivider(label: 'or sign up with email'),
-            const SizedBox(height: AppSpace.lg),
+            AppSpace.gapLg,
+            const AuthOrDivider(label: 'or use email'),
+            AppSpace.gapLg,
             AuthInputField(
               controller: _nameController,
               label: 'Username',
@@ -375,9 +257,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   FocusScope.of(context).requestFocus(_emailFocus),
               validator: _validateUsername,
             ),
-            const SizedBox(height: AppSpace.xs),
-            _buildUsernameHint(),
-            const SizedBox(height: AppSpace.md),
+            UsernameHint(status: _username.status),
+            AppSpace.gapMd,
             AuthInputField(
               controller: _emailController,
               label: 'Email address',
@@ -387,14 +268,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               autofillHints: const [AutofillHints.email],
               onFieldSubmitted: (_) =>
                   FocusScope.of(context).requestFocus(_passwordFocus),
-              validator: (value) {
-                final email = value?.trim() ?? '';
-                if (email.isEmpty) return 'Email is required';
-                if (!email.contains('@')) return 'Enter a valid email';
-                return null;
-              },
+              validator: validateEmail,
             ),
-            const SizedBox(height: AppSpace.md),
+            AppSpace.gapMd,
             AuthInputField(
               controller: _passwordController,
               label: 'Password',
@@ -409,14 +285,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 onTap: () =>
                     setState(() => _obscurePassword = !_obscurePassword),
               ),
-              validator: (value) {
-                if ((value ?? '').length < 6) {
-                  return 'Password must be at least 6 characters';
-                }
-                return null;
-              },
+              validator: validatePassword,
             ),
-            const SizedBox(height: AppSpace.md),
+            AppSpace.gapMd,
             AuthInputField(
               controller: _confirmPasswordController,
               label: 'Confirm password',
@@ -432,14 +303,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   () => _obscureConfirmPassword = !_obscureConfirmPassword,
                 ),
               ),
-              validator: (value) {
-                if (value != _passwordController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
+              validator:
+                  confirmPasswordValidator(() => _passwordController.text),
             ),
-            const SizedBox(height: AppSpace.md),
+            AppSpace.gapMd,
             AuthInputField(
               controller: _referralController,
               label: 'Referral code (optional)',
@@ -449,145 +316,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
               onFieldSubmitted: (_) => _submit(),
               validator: _validateReferral,
             ),
-            const SizedBox(height: AppSpace.xl),
+            AppSpace.gapXl,
             AppButton(
               label: 'Create account',
               onPressed: canSubmit ? _submit : null,
               isLoading: isBusy,
               fullWidth: true,
             ),
-            const SizedBox(height: AppSpace.xl),
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Already have an account?',
-                    style: TextStyle(
-                      color: AppColors.darkGrey500,
-                      fontSize: AppText.bodySize,
-                      fontFamily: 'Geist',
-                    ),
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  GestureDetector(
-                    onTap: isBusy ? null : () => Navigator.pop(context),
-                    child: Text(
-                      'Sign in',
-                      style: TextStyle(
-                        color: AppColors.teal400,
-                        fontSize: AppText.labelSize,
-                        fontFamily: 'Geist',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            AppSpace.gapMd,
+            AuthLinkRow(
+              prompt: 'Have an account?',
+              action: 'Sign in',
+              onTap: isAnyBusy ? null : _backToSignIn,
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _GoogleAuthButton extends StatelessWidget {
-  const _GoogleAuthButton({
-    required this.label,
-    required this.isEnabled,
-    required this.isLoading,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool isEnabled;
-  final bool isLoading;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: isEnabled ? onPressed : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 3,
-          shadowColor: Colors.black.withValues(alpha: 0.35),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          ),
-        ),
-        child: isLoading
-            ? SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primary400,
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/google_g.svg',
-                    width: 22,
-                    height: 22,
-                  ),
-                  const SizedBox(width: AppSpace.md),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: AppText.bodySize,
-                      fontFamily: 'Geist',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-class _OrDivider extends StatelessWidget {
-  const _OrDivider({this.label = 'or'});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 1,
-            color: AppColors.borderSubtle,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: AppColors.textFaint,
-              fontSize: AppText.bodySize,
-              fontFamily: 'Geist',
-            ),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            height: 1,
-            color: AppColors.bgElevated,
-          ),
-        ),
-      ],
     );
   }
 }
