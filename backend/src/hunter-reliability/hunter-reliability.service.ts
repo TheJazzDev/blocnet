@@ -182,6 +182,14 @@ export class HunterReliabilityService {
   }
 
   /**
+   * Each gem's newest published update, keyed by project id. One query.
+   * Gems with no published update are absent.
+   */
+  async lastUpdateAtFor(projectIds: string[]): Promise<Map<string, Date>> {
+    return this.loader.loadLastUpdateAt([...new Set(projectIds)]);
+  }
+
+  /**
    * The compact owner reliability for gem cards, keyed by project id.
    *
    * A gem's "owner" for this purpose is the first person `ownersOf` names:
