@@ -19,15 +19,15 @@ class AppIcon {
   /// 16 — inline with body and label text, dense rows. Absorbs 14, 15, 17.
   static const double sm = 16;
 
-  /// 20 — the default. Buttons, list rows, tab bars. Absorbs 18, 19, 21, 22.
-  static const double md = 20;
+  /// 18 — the default. Buttons, list rows, tab bars.
+  static const double md = 18;
 
   /// 24 — app bar, prominent actions. Absorbs 28.
   static const double lg = 24;
 
-  /// 32 — feature tiles, section markers. Absorbs 36, 38, 40.
-  static const double xl = 32;
+  /// 28 — feature tiles, section markers.
+  static const double xl = 28;
 
-  /// 48 — empty states and illustrations. Absorbs 64.
-  static const double xxl = 48;
+  /// 40 — empty states and illustrations.
+  static const double xxl = 40;
 }

@@ -52,8 +52,8 @@ void main() {
 
         final button = tester.widget<HubButton>(byKey('gem-handover')).tone;
         expect(button, HubButtonTone.warn);
-        expect(_label(tester, 'Hand over').style?.color, AppColors.quietOrange);
-        expect(_label(tester, 'Post update').style?.color, Colors.white);
+        expect(_label(tester, 'Hand over').style?.color, AppColors.tagAirdrop);
+        expect(_label(tester, 'Post update').style?.color, Colors.black);
       });
 
       testWidgets('a never-updated gem still fits both buttons',

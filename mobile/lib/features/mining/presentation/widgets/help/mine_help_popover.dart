@@ -49,7 +49,7 @@ class MineHelpOverlay extends StatelessWidget {
             key: const ValueKey('mine-help-scrim'),
             behavior: HitTestBehavior.opaque,
             onTap: onClose,
-            child: const ColoredBox(color: MinePalette.scrim),
+            child: ColoredBox(color: MinePalette.scrim),
           ),
         ),
         Positioned(
@@ -68,8 +68,8 @@ class MineHelpOverlay extends StatelessWidget {
                     width: _arrow,
                     height: _arrow,
                     decoration: BoxDecoration(
-                      color: MinePalette.popover,
-                      border: Border.all(color: MinePalette.popoverEdge),
+                      color: MinePalette.card,
+                      border: Border.all(color: MinePalette.strongEdge),
                     ),
                   ),
                 ),
@@ -104,12 +104,12 @@ class _PopoverCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       key: const ValueKey('mine-help-popover'),
-      color: MinePalette.popover,
+      color: MinePalette.card,
       elevation: 12,
       shadowColor: Colors.black,
       shape: const RoundedRectangleBorder(
         borderRadius: AppRadius.lg,
-        side: BorderSide(color: MinePalette.popoverEdge),
+        side: BorderSide(color: MinePalette.strongEdge),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -126,7 +126,7 @@ class _PopoverCard extends StatelessWidget {
               header: true,
               child: Text(
                 'How mining works',
-                style: AppText.body(MinePalette.white, weight: AppText.bold),
+                style: AppText.body(MinePalette.text, weight: AppText.bold),
               ),
             ),
             const SizedBox(height: AppSpace.sm),
@@ -138,14 +138,14 @@ class _PopoverCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpace.hair),
                     child: Icon(lines[i].$1,
-                        size: AppIcon.sm, color: MinePalette.accent),
+                        size: AppIcon.sm, color: MinePalette.accentSoft),
                   ),
                   const SizedBox(width: AppSpace.sm),
                   Expanded(
                     child: Text(
                       lines[i].$2,
-                      style:
-                          AppText.label(MinePalette.soft).copyWith(height: 1.5),
+                      style: AppText.label(MinePalette.secondary)
+                          .copyWith(height: 1.5),
                     ),
                   ),
                 ],
@@ -164,15 +164,20 @@ class _PopoverCard extends StatelessWidget {
                   child: Container(
                     height: 36,
                     alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: MinePalette.chip,
-                      borderRadius: AppRadius.sm,
+                    decoration: BoxDecoration(
+                      color: MinePalette.accent,
+                      borderRadius: AppRadius.md,
                     ),
                     child: Text(
                       'Got it',
                       style: AppText.label(
-                        MinePalette.white,
-                        weight: AppText.semibold,
+                        ThemeData.estimateBrightnessForColor(
+                                  MinePalette.accent,
+                                ) ==
+                                Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
+                        weight: AppText.bold,
                       ),
                     ),
                   ),

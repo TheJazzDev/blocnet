@@ -1,12 +1,15 @@
 import 'dart:math' as math;
 
-import 'package:blocnet/features/mining/presentation/mine_palette.dart';
+import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 
-/// The cycle ring: a track and a round-capped fill arc from 12 o'clock.
+/// The Mine core's two orbit rings, with the cycle's progress drawn along
+/// the outer one from 12 o'clock and a glowing dot at its head — the old
+/// Mine hero's orbit, now carrying the ring's meaning.
 ///
-/// [glow] is the blur radius of the fill's halo (the design's drop-shadow),
-/// animated by the card while a cycle runs.
+/// [glow] is the blur radius of the head dot's halo, animated by the card
+/// while a cycle runs.
 class MineRingPainter extends CustomPainter {
   const MineRingPainter({
     required this.fraction,
@@ -20,55 +23,56 @@ class MineRingPainter extends CustomPainter {
   final Color glowColor;
   final double glow;
 
-  /// Stroke and radius as the design's 100-unit viewBox: 7 and 44.
-  static const double strokeRatio = 0.07;
-  static const double radiusRatio = 0.44;
+  /// Outer and inner orbit radii as a share of the side.
+  static const double outerRatio = 0.45;
+  static const double innerRatio = 0.34;
+
+  static const double _arcStroke = 3;
+  static const double _dotRadius = 4.5;
 
   @override
   void paint(Canvas canvas, Size size) {
     final side = size.shortestSide;
-    final stroke = side * strokeRatio;
     final center = size.center(Offset.zero);
-    final rect = Rect.fromCircle(center: center, radius: side * radiusRatio);
+    final outer = side * outerRatio;
 
-    canvas.drawCircle(
-      center,
-      side * radiusRatio,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke
-        ..color = MinePalette.track,
-    );
+    Paint orbit(double alpha) => Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = color.withValues(alpha: alpha);
 
-    final sweep = fraction.clamp(0.0, 1.0) * 2 * math.pi;
-    if (sweep <= 0) return;
+    canvas.drawCircle(center, outer, orbit(0.22));
+    canvas.drawCircle(center, side * innerRatio, orbit(0.14));
+
+    final share = fraction.clamp(0.0, 1.0);
+    if (share <= 0) return;
 
     const start = -math.pi / 2;
-    if (glow > 0) {
-      canvas.drawArc(
-        rect,
-        start,
-        sweep,
-        false,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke
-          ..strokeCap = StrokeCap.round
-          ..color = glowColor
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, glow),
-      );
-    }
+    final sweep = share * 2 * math.pi;
     canvas.drawArc(
-      rect,
+      Rect.fromCircle(center: center, radius: outer),
       start,
       sweep,
       false,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke
+        ..strokeWidth = _arcStroke
         ..strokeCap = StrokeCap.round
         ..color = color,
     );
+
+    final head = center +
+        Offset(math.cos(start + sweep), math.sin(start + sweep)) * outer;
+    if (glow > 0) {
+      canvas.drawCircle(
+        head,
+        _dotRadius + glow,
+        Paint()
+          ..color = glowColor
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, glow),
+      );
+    }
+    canvas.drawCircle(head, _dotRadius, Paint()..color = color);
   }
 
   @override
@@ -79,7 +83,8 @@ class MineRingPainter extends CustomPainter {
       oldDelegate.glow != glow;
 }
 
-/// Ring plus its centre stack (icon, number, unit).
+/// Soft halo, orbit rings with progress, and the rounded-square core that
+/// holds [center] (icon, number, unit).
 class MineProgressRing extends StatelessWidget {
   const MineProgressRing({
     super.key,
@@ -87,31 +92,91 @@ class MineProgressRing extends StatelessWidget {
     required this.color,
     required this.glowColor,
     required this.glow,
+    required this.halo,
     required this.center,
-    this.size = 116,
+    this.size = 164,
   });
 
   final double fraction;
   final Color color;
   final Color glowColor;
   final double glow;
+
+  /// Opacity of the radial halo behind the core.
+  final double halo;
   final Widget center;
   final double size;
 
   @override
   Widget build(BuildContext context) {
+    final core = size * 0.52;
     return SizedBox.square(
       dimension: size,
-      child: CustomPaint(
-        key: const ValueKey('mine-ring'),
-        painter: MineRingPainter(
-          fraction: fraction,
-          color: color,
-          glowColor: glowColor,
-          glow: glow,
-        ),
-        child: Center(child: center),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [color.withValues(alpha: halo), Colors.transparent],
+              ),
+            ),
+            child: SizedBox.square(dimension: size),
+          ),
+          CustomPaint(
+            key: const ValueKey('mine-ring'),
+            size: Size.square(size),
+            painter: MineRingPainter(
+              fraction: fraction,
+              color: color,
+              glowColor: glowColor,
+              glow: glow,
+            ),
+          ),
+          _Core(size: core, color: color, lit: halo > 0.1, child: center),
+        ],
       ),
+    );
+  }
+}
+
+class _Core extends StatelessWidget {
+  const _Core({
+    required this.size,
+    required this.color,
+    required this.lit,
+    required this.child,
+  });
+
+  final double size;
+  final Color color;
+  final bool lit;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      padding: AppSpace.allXs,
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.xl,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.bgElevated, AppColors.bgSurface],
+        ),
+        border: Border.all(color: AppColors.borderMuted),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: lit ? 0.24 : 0.1),
+            blurRadius: 22,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: child)),
     );
   }
 }

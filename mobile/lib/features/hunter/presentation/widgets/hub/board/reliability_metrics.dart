@@ -1,4 +1,5 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_reliability_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
@@ -39,7 +40,8 @@ class ReliabilityMetricValues {
   final String waiting;
 }
 
-/// `4 of 4 RESPONSE · 5 days CADENCE · 0 WAITING` under a hairline.
+/// `RESPONSE 4 of 4 · CADENCE 5 days · WAITING 0`, as the old profile's
+/// small bordered trust chips.
 class ReliabilityMetrics extends StatelessWidget {
   const ReliabilityMetrics({super.key, required this.values});
 
@@ -47,17 +49,11 @@ class ReliabilityMetrics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 14),
-      padding: const EdgeInsets.only(top: 14),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.07)),
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpace.md + 2),
       child: Wrap(
-        spacing: 24,
-        runSpacing: 8,
+        spacing: 6,
+        runSpacing: 6,
         children: [
           _Metric(value: values.response, label: 'Response'),
           _Metric(value: values.cadence, label: 'Cadence'),
@@ -76,16 +72,34 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(value, style: HubType.lead(AppColors.zincStrong)),
-        Text(
-          label.toUpperCase(),
-          style: HubType.caps(AppColors.zincCaption),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.bgElevated,
+        borderRadius: AppRadius.sm,
+        border: Border.all(color: AppColors.borderMuted),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: HubType.caps(
+              AppColors.textFaint,
+              weight: AppText.semibold,
+              tracking: 0.4,
+            ),
+          ),
+          AppSpace.wGapXs,
+          Text(
+            value,
+            style: AppText.label(AppColors.textPrimary, weight: AppText.bold)
+                .merge(AppText.tabular),
+          ),
+        ],
+      ),
     );
   }
 }

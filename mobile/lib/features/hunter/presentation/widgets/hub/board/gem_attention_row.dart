@@ -1,17 +1,19 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_board_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/domain/hub_layout.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/board/gem_attention_parts.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/gem_header_line.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
 
 /// A gem that needs its hunter: due, quiet, or never updated.
 ///
-/// The escalation is in mass and warmth. Due gains an amber edge; quiet an
-/// orange edge and a warmed ground, and is the only row that carries actions
-/// (D2). A never-updated gem has the due physique and one action, its first
+/// A flat list row under a hairline, like the old feed. The state reads from
+/// the `DUE` / `QUIET` pill and the coloured age; quiet is the only row that
+/// carries actions (D2). A never-updated gem has one action, its first
 /// update. Waiting and reports render only when non-zero.
 class GemAttentionRow extends StatelessWidget {
   const GemAttentionRow({
@@ -41,71 +43,49 @@ class GemAttentionRow extends StatelessWidget {
     return InkWell(
       onTap: onOpen,
       child: Container(
-        decoration: BoxDecoration(
-          gradient: isQuiet
-              ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [AppColors.quietTop, AppColors.quietBottom],
-                )
-              : null,
-          border: const Border(
-            bottom: BorderSide(color: AppColors.borderFaint),
-          ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: HubInsets.gutter,
+          vertical: AppSpace.lg,
         ),
-        child: Stack(
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GemHeaderLine(gem: gem),
-                  const SizedBox(height: 10),
-                  if (kind == GemRowKind.neverUpdated)
-                    GemNeverUpdatedLine(
-                      listed: daysAgoSince(gem.listedAt, now),
-                    )
-                  else
-                    GemLastLine(
-                      title: gem.lastUpdate?.title ?? '',
-                      ago: compact
-                          ? daysAgo(gem.daysQuiet)
-                          : 'last update ${daysAgo(gem.daysQuiet)}',
-                    ),
-                  if (showDeadline) GemDeadlineLine(at: deadline, now: now),
-                  if (gem.membersWaiting > 0 || gem.openReports > 0)
-                    GemWaitMeta(
-                      waiting: gem.membersWaiting,
-                      reports: gem.openReports,
-                      compact: compact,
-                    ),
-                  if (isQuiet)
-                    _Actions(onPost: onPost, onOpen: onOpen)
-                  else if (kind == GemRowKind.neverUpdated)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: HubButton(
-                          label: 'Post the first update',
-                          icon: Icons.edit_outlined,
-                          onTap: onPost,
-                        ),
-                      ),
-                    ),
-                ],
+            GemHeaderLine(gem: gem),
+            AppSpace.gapMd,
+            if (kind == GemRowKind.neverUpdated)
+              GemNeverUpdatedLine(listed: daysAgoSince(gem.listedAt, now))
+            else
+              GemLastLine(
+                title: gem.lastUpdate?.title ?? '',
+                ago: compact
+                    ? daysAgo(gem.daysQuiet)
+                    : 'last update ${daysAgo(gem.daysQuiet)}',
+                agoColor: isQuiet ? HubTone.quiet : HubTone.due,
               ),
-            ),
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: 3,
-                color: isQuiet ? AppColors.quietOrange : AppColors.dueEdge,
+            if (showDeadline) GemDeadlineLine(at: deadline, now: now),
+            if (gem.membersWaiting > 0 || gem.openReports > 0)
+              GemWaitMeta(
+                waiting: gem.membersWaiting,
+                reports: gem.openReports,
+                compact: compact,
               ),
-            ),
+            if (isQuiet)
+              _Actions(onPost: onPost, onOpen: onOpen)
+            else if (kind == GemRowKind.neverUpdated)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpace.md),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: HubButton(
+                    label: 'Post the first update',
+                    icon: Icons.edit_outlined,
+                    onTap: onPost,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -122,7 +102,7 @@ class _Actions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: AppSpace.md),
       child: Row(
         children: [
           Expanded(
@@ -132,7 +112,7 @@ class _Actions extends StatelessWidget {
               onTap: onPost,
             ),
           ),
-          const SizedBox(width: 8),
+          AppSpace.wGapSm,
           Expanded(
             child: HubButton(
               label: 'Open gem',

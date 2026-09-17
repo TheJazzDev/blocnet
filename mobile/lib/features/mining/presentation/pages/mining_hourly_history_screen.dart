@@ -56,7 +56,7 @@ class _MiningHourlyHistoryScreenState extends State<MiningHourlyHistoryScreen> {
                       ? const CircularProgressIndicator(strokeWidth: 2)
                       : Text(
                           'No hours mined yet.',
-                          style: AppText.label(MinePalette.faint),
+                          style: AppText.label(MinePalette.muted),
                         ),
                 ),
               ),

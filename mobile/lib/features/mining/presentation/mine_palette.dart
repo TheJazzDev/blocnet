@@ -1,82 +1,49 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:flutter/material.dart';
 
-/// Colours of the approved Mine design. Reuses [AppColors] where the hex
-/// already exists; the rest are the design's own values.
+/// The Mine tab's colours, all taken from [AppColors].
+///
+/// The accent follows the space accent at runtime (`AppColors.primary500`),
+/// as the Mine did before the 2026-09-11 redesign, so every tint is derived
+/// from it rather than written as its own hex.
 class MinePalette {
   const MinePalette._();
 
   // Grounds and edges.
   static const Color ground = AppColors.bgBase;
-  static const Color card = AppColors.hubCard;
-  static const Color cardEdge = AppColors.hubCardEdge;
-  static const Color tileEdge = AppColors.hubTileEdge;
-  static const Color pausedEdge = AppColors.borderMuted;
-  static const Color track = AppColors.hubCardEdge;
-  static const Color chip = AppColors.bgElevated;
-  static const Color divider = Color(0x12FFFFFF);
-  static const Color rowHairline = AppColors.borderFaint;
-  static const Color hourHairline = Color(0xFF141417);
+  static const Color card = AppColors.bgSurface;
+  static const Color raised = AppColors.bgElevated;
+  static const Color edge = AppColors.borderSubtle;
+  static const Color strongEdge = AppColors.borderMuted;
 
   // Accent.
-  static const Color fill = AppColors.hunterFill;
-  static const Color accent = AppColors.chainIce;
-  static const Color accentSoft = AppColors.hunterSoft;
-  static const Color readyText = Color(0xFFA5F3FC);
-  static const Color accentChip = Color(0x1F22D3EE);
-  static const Color readyChip = Color(0x2E22D3EE);
+  static Color get accent => AppColors.primary500;
+  static Color get accentSoft => AppColors.primary400;
 
-  // Cycle grounds.
-  static const Color runTop = Color(0xFF0F1B1F);
-  static const Color runBottom = Color(0xFF101113);
-  static const Color runEdge = Color(0x2E22D3EE);
-  static const Color readyTop = Color(0xFF0F2126);
-  static const Color readyBottom = Color(0xFF101214);
-  static const Color readyEdgeLow = Color(0x5222D3EE);
-  static const Color readyEdgeHigh = Color(0xA322D3EE);
-  static const Color soonTop = Color(0xFF1F1A10);
-  static const Color soonBottom = Color(0xFF121110);
-  static const Color soonEdge = Color(0x52F59E0B);
+  /// The old "EARNING PER HOUR" panel: an 8 % accent wash, 20 % edge.
+  static Color get accentWash => accent.withValues(alpha: 0.08);
+  static Color get accentEdge => accent.withValues(alpha: 0.2);
 
-  // Amber.
-  static const Color amber = AppColors.dueAmber;
-  static const Color amberText = AppColors.chainBsc;
-  static const Color amberChip = Color(0x24F59E0B);
-  static const Color onAmber = Color(0xFF1C1204);
+  // Status.
+  static Color get amber => AppColors.warning500;
+  static Color get success => AppColors.successColor;
 
   // Text.
-  static const Color white = Colors.white;
-  static const Color strong = AppColors.zincStrong;
-  static const Color body = AppColors.zincBody;
-  static const Color soft = Color(0xFFC4C4CC);
-  static const Color muted = AppColors.zincMuted;
-  static const Color faint = AppColors.zincFaint;
-  static const Color dim = AppColors.zincDim;
-  static const Color caption = AppColors.zincCaption;
-  static const Color quiet = AppColors.zincQuiet;
+  static Color get text => AppColors.textPrimary;
+  static Color get secondary => AppColors.textSecondary;
+  static Color get muted => AppColors.textMuted;
+  static Color get faint => AppColors.textFaint;
 
-  // Notices.
-  static const Color receiptGround = Color(0xFF0F1B1F);
-  static const Color receiptEdge = Color(0x3322D3EE);
-  static const Color noticeGround = Color(0xFF141412);
-  static const Color noticeEdge = Color(0x33F59E0B);
-  static const Color noticeButtonEdge = AppColors.borderMuted;
+  /// Scrim under the help popover.
+  static Color get scrim => Colors.black.withValues(alpha: 0.6);
 
-  // Earn faster.
-  static const Color codeGround = Color(0xFF0B0F11);
-  static const Color codeEdge = Color(0x2E22D3EE);
-  static const Color entryGround = Color(0xFF0D0D0F);
-
-  // Leaderboard.
-  static const Color gold = Color(0xFFF0B429);
-  static const Color silver = Color(0xFFC0C6CE);
-  static const Color bronze = Color(0xFFC97B3C);
-  static const Color miningNow = AppColors.currentTick;
-  static const Color pinGround = Color(0xF20F1417);
-  static const Color pinEdge = Color(0x3822D3EE);
-
-  // Popover.
-  static const Color scrim = Color(0xA6000000);
-  static const Color popover = AppColors.bgSurface;
-  static const Color popoverEdge = Color(0xFF2A2A30);
+  /// A tinted tag or icon square in [color]: 14 % fill, 38 % edge.
+  static BoxDecoration tag(Color color, {BorderRadius? radius}) {
+    return BoxDecoration(
+      color: color.withValues(alpha: 0.14),
+      borderRadius: radius ?? AppRadius.full,
+      border: Border.all(color: color.withValues(alpha: 0.38)),
+    );
+  }
 }

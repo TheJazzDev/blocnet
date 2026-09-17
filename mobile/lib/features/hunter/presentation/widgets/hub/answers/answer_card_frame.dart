@@ -1,11 +1,12 @@
 import 'package:blocnet/app/theme.dart';
+import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/gem_monogram.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:flutter/material.dart';
 
 /// The shared shell of an invite or review card: 32px monogram, name, a
-/// status pill, then the body. [highlighted] draws the cyan inset an invite
-/// carries; a review sits on a neutral one.
+/// status pill, then the body, on a flat surface card. [highlighted] gives
+/// an invite a faint accent border; a review keeps the neutral one.
 class AnswerCardFrame extends StatelessWidget {
   const AnswerCardFrame({
     super.key,
@@ -27,15 +28,20 @@ class AnswerCardFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.fromLTRB(
+        HubInsets.gutter,
+        0,
+        HubInsets.gutter,
+        AppSpace.md,
+      ),
+      padding: AppSpace.card,
       decoration: BoxDecoration(
-        color: AppColors.hubCard,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.bgSurface,
+        borderRadius: AppRadius.md,
         border: Border.all(
           color: highlighted
-              ? AppColors.chainIce.withValues(alpha: 0.18)
-              : AppColors.hubTileEdge,
+              ? HubTone.accent.withValues(alpha: 0.3)
+              : AppColors.borderSubtle,
         ),
       ),
       child: Column(
@@ -44,7 +50,7 @@ class AnswerCardFrame extends StatelessWidget {
           Row(
             children: [
               GemMonogram(name: name, tag: tag, size: GemMonogramSize.small),
-              const SizedBox(width: 10),
+              AppSpace.wGapMd,
               Expanded(
                 child: Text(
                   name,
@@ -53,14 +59,14 @@ class AnswerCardFrame extends StatelessWidget {
                   style: HubType.rowTitle(AppColors.textPrimary),
                 ),
               ),
-              const SizedBox(width: 8),
+              AppSpace.wGapSm,
               pill,
             ],
           ),
-          const SizedBox(height: 8),
+          AppSpace.gapMd,
           body,
           if (actions != null) ...[
-            const SizedBox(height: 12),
+            AppSpace.gapMd,
             actions!,
           ],
         ],

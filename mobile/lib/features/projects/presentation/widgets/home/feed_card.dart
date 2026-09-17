@@ -315,7 +315,6 @@ class _FeedCardState extends State<FeedCard>
 
     final emphasis = FeedCardEmphasis.of(post.priority);
     final dense = widget.layout == FeedCardLayout.list;
-    final pad = dense ? AppSpace.md : AppSpace.lg;
     final edge = context.watch<EdgeEngineStore>().decisionForUpdate(post.id);
     // `ignore` earns no space: a verdict meaning "nothing to do" is not worth
     // a row of a member's screen.
@@ -324,63 +323,58 @@ class _FeedCardState extends State<FeedCard>
 
     return GestureDetector(
       onTap: () => _openDetails(context),
-      child: DecoratedBox(
-        // A card is a row in a stream, not a floating panel: full-bleed, its
-        // own padding, and a hairline to the next one. The urgency edge is a
-        // border rather than a child, so it needs no height of its own, and it
-        // is always 3px — merely transparent when there is no signal — so body
-        // text keeps one left margin at every priority.
-        decoration: BoxDecoration(
-          gradient: emphasis.ground,
-          border: Border(
-            left: BorderSide(
-              color: emphasis.edgeColor ?? Colors.transparent,
-              width: 3,
-            ),
-            bottom: const BorderSide(color: AppColors.borderFaint),
-          ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(pad - 3, pad, pad, pad),
-          child: FeedCardContent(
-            post: post,
-            emphasis: emphasis,
-            authorLevel: author.currentLevel ?? _resolvedAuthorLevel,
-            dense: dense,
-            likeIcon: ScaleTransition(
-              scale: TweenSequence<double>([
-                TweenSequenceItem(
-                  tween: Tween<double>(begin: 1, end: 1.28),
-                  weight: 45,
+      child: Container(
+        // List mode is a plain row between dividers; card mode is a flat
+        // surface with a hairline border, as the feed has always drawn them.
+        margin: dense ? null : const EdgeInsets.only(bottom: AppSpace.md),
+        padding: dense
+            ? const EdgeInsets.symmetric(vertical: AppSpace.md)
+            : AppSpace.card,
+        decoration: dense
+            ? const BoxDecoration(color: Colors.transparent)
+            : const BoxDecoration(
+                color: AppColors.bgSurface,
+                borderRadius: AppRadius.lg,
+                border: Border.fromBorderSide(
+                  BorderSide(color: AppColors.borderSubtle),
                 ),
-                TweenSequenceItem(
-                  tween: Tween<double>(begin: 1.28, end: 1),
-                  weight: 55,
-                ),
-              ]).animate(_likePulseController),
-              child: Icon(
-                isLiked
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                size: AppIcon.md,
-                color: isLiked ? AppColors.primary400 : AppColors.textMuted,
               ),
+        child: FeedCardContent(
+          post: post,
+          emphasis: emphasis,
+          authorLevel: author.currentLevel ?? _resolvedAuthorLevel,
+          dense: dense,
+          likeIcon: ScaleTransition(
+            scale: TweenSequence<double>([
+              TweenSequenceItem(
+                tween: Tween<double>(begin: 1, end: 1.28),
+                weight: 45,
+              ),
+              TweenSequenceItem(
+                tween: Tween<double>(begin: 1.28, end: 1),
+                weight: 55,
+              ),
+            ]).animate(_likePulseController),
+            child: Icon(
+              isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              size: AppIcon.md,
+              color: isLiked ? AppColors.primary400 : AppColors.textMuted,
             ),
-            isBookmarked: isBookmarked,
-            isCommented: _isCommented,
-            likeCount: likeCount,
-            commentCount: _commentCount,
-            bookmarkCount: bookmarkCount,
-            onLike: () => _handleLikeTap(context),
-            onComment: () => _handleCommentTap(context),
-            onShare: () => _handleShareTap(context),
-            onBookmark: _handleBookmarkTap,
-            onOpenAuthor: () => _openAuthorProfile(context),
-            onOpenProject: () => _openProjectDetails(context),
-            onTip: _tipHandler(context),
-            edgeSignals: showEdge ? edge.reasonCodes.length : null,
-            edgeVerdict: showEdge ? edge.recommendedAction : null,
           ),
+          isBookmarked: isBookmarked,
+          isCommented: _isCommented,
+          likeCount: likeCount,
+          commentCount: _commentCount,
+          bookmarkCount: bookmarkCount,
+          onLike: () => _handleLikeTap(context),
+          onComment: () => _handleCommentTap(context),
+          onShare: () => _handleShareTap(context),
+          onBookmark: _handleBookmarkTap,
+          onOpenAuthor: () => _openAuthorProfile(context),
+          onOpenProject: () => _openProjectDetails(context),
+          onTip: _tipHandler(context),
+          edgeSignals: showEdge ? edge.reasonCodes.length : null,
+          edgeVerdict: showEdge ? edge.recommendedAction : null,
         ),
       ),
     );

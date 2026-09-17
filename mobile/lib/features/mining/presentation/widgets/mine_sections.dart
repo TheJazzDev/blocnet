@@ -3,11 +3,11 @@ import 'package:blocnet/features/mining/data/mine_format.dart';
 import 'package:blocnet/features/mining/presentation/mine_palette.dart';
 import 'package:flutter/material.dart';
 
-/// Flat Mine card ground: `#101012` with a 1 px inset edge.
+/// Flat Mine card: surface ground, 1 px subtle edge, [AppRadius.lg].
 BoxDecoration mineTileDecoration({
   Color ground = MinePalette.card,
-  Color edge = MinePalette.tileEdge,
-  BorderRadius radius = AppRadius.md,
+  Color edge = MinePalette.edge,
+  BorderRadius radius = AppRadius.lg,
 }) {
   return BoxDecoration(
     color: ground,
@@ -16,7 +16,8 @@ BoxDecoration mineTileDecoration({
   );
 }
 
-/// `BALANCE` style section label with an icon and an optional right label.
+/// Old `GLOBAL LEADERBOARD` label: small caps, and the right label in an
+/// accent chip.
 class MineSectionHeader extends StatelessWidget {
   const MineSectionHeader({
     super.key,
@@ -35,8 +36,6 @@ class MineSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final caps = AppText.caption(MinePalette.caption, weight: AppText.bold)
-        .copyWith(letterSpacing: 1.5);
     final row = Padding(
       padding: EdgeInsets.fromLTRB(
         AppSpace.lg,
@@ -46,24 +45,41 @@ class MineSectionHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: AppIcon.sm, color: MinePalette.quiet),
+          Icon(icon, size: AppIcon.sm, color: MinePalette.faint),
           const SizedBox(width: AppSpace.sm),
-          Text(title.toUpperCase(), style: caps),
-          const Spacer(),
+          Expanded(
+            child: Text(
+              title.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.caption(MinePalette.faint, weight: AppText.bold)
+                  .copyWith(letterSpacing: 1.2),
+            ),
+          ),
           if (trailing != null)
-            Text(
-              trailing!.toUpperCase(),
-              style: caps.copyWith(
-                color: MinePalette.quiet,
-                letterSpacing: 0.7,
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.sm,
+                vertical: AppSpace.hair,
+              ),
+              decoration: BoxDecoration(
+                color: MinePalette.accent.withValues(alpha: 0.12),
+                borderRadius: AppRadius.full,
+              ),
+              child: Text(
+                trailing!.toUpperCase(),
+                style: AppText.caption(
+                  MinePalette.accentSoft,
+                  weight: AppText.bold,
+                ),
               ),
             ),
           if (onTap != null) ...[
             const SizedBox(width: AppSpace.xs),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              size: AppIcon.sm,
-              color: MinePalette.quiet,
+              size: AppIcon.md,
+              color: MinePalette.faint,
             ),
           ],
         ],
@@ -78,7 +94,57 @@ class MineSectionHeader extends StatelessWidget {
   }
 }
 
-/// Balance: big number, the conversion line, and the Wallet link.
+/// Old list row: accent icon, bold title over a muted subtitle, chevron.
+class MineRowContent extends StatelessWidget {
+  const MineRowContent({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.titleColor,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Color? titleColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: AppIcon.md, color: MinePalette.accentSoft),
+        const SizedBox(width: AppSpace.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: AppText.body(
+                  titleColor ?? MinePalette.text,
+                  weight: AppText.bold,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: AppSpace.hair),
+                Text(subtitle!, style: AppText.label(MinePalette.muted)),
+              ],
+            ],
+          ),
+        ),
+        Icon(
+          Icons.chevron_right_rounded,
+          size: AppIcon.md,
+          color: MinePalette.faint,
+        ),
+      ],
+    );
+  }
+}
+
+/// Balance: the number, the conversion line, and the Wallet link.
 class MineBalanceCard extends StatelessWidget {
   const MineBalanceCard({
     super.key,
@@ -114,49 +180,33 @@ class MineBalanceCard extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     MineFormat.points(balance),
-                    style: AppText.display(MinePalette.white)
+                    style: AppText.display(MinePalette.text)
                         .merge(AppText.tabular)
                         .copyWith(height: 1),
                   ),
                 ),
               ),
               const SizedBox(width: AppSpace.sm),
-              Text('BNP', style: AppText.body(MinePalette.muted)),
+              Text(
+                'BNP',
+                style: AppText.subtitle(MinePalette.muted),
+              ),
             ],
           ),
-          const SizedBox(height: AppSpace.sm),
+          const SizedBox(height: AppSpace.xs),
           Text(
             'Converts to BNT at launch.',
             style: AppText.label(MinePalette.faint),
           ),
           const SizedBox(height: AppSpace.md),
-          const Divider(height: 1, thickness: 1, color: MinePalette.divider),
+          const Divider(height: 1, thickness: 1, color: MinePalette.edge),
           InkWell(
             onTap: onOpenWallet,
-            child: SizedBox(
-              height: 44,
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.account_balance_wallet_outlined,
-                    size: AppIcon.sm,
-                    color: MinePalette.accent,
-                  ),
-                  const SizedBox(width: AppSpace.sm),
-                  Text(
-                    'View in Wallet',
-                    style: AppText.label(
-                      MinePalette.accent,
-                      weight: AppText.semibold,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpace.xs),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    size: AppIcon.sm,
-                    color: MinePalette.accent,
-                  ),
-                ],
+            child: const SizedBox(
+              height: 48,
+              child: MineRowContent(
+                icon: Icons.account_balance_wallet_outlined,
+                title: 'View in Wallet',
               ),
             ),
           ),
@@ -166,7 +216,7 @@ class MineBalanceCard extends StatelessWidget {
   }
 }
 
-/// A one-line card that opens a sub-screen: icon, title over subtitle, chevron.
+/// A card that opens a sub-screen: the old list row in a flat card.
 class MineLinkRow extends StatelessWidget {
   const MineLinkRow({
     super.key,
@@ -188,40 +238,15 @@ class MineLinkRow extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: AppRadius.md,
+          borderRadius: AppRadius.lg,
           onTap: onTap,
           child: Ink(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpace.lg,
-              vertical: AppSpace.lg,
-            ),
+            padding: AppSpace.row,
             decoration: mineTileDecoration(),
-            child: Row(
-              children: [
-                Icon(icon, size: AppIcon.md, color: MinePalette.caption),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: AppText.body(
-                          MinePalette.white,
-                          weight: AppText.semibold,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpace.hair),
-                      Text(subtitle, style: AppText.label(MinePalette.faint)),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  size: AppIcon.sm,
-                  color: MinePalette.caption,
-                ),
-              ],
+            child: MineRowContent(
+              icon: icon,
+              title: title,
+              subtitle: subtitle,
             ),
           ),
         ),

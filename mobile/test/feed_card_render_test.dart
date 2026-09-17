@@ -85,8 +85,9 @@ void main() {
     WidgetTester tester,
     Update post, {
     FeedCardLayout layout = FeedCardLayout.list,
+    Size size = phone,
   }) async {
-    tester.view.physicalSize = phone;
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -141,6 +142,18 @@ void main() {
           expect(size.width, lessThanOrEqualTo(phone.width));
         });
       }
+
+      testWidgets('fits a 375px phone (iPhone SE) without overflowing',
+          (tester) async {
+        await pumpCard(
+          tester,
+          updateWith(Priority.high),
+          layout: layout,
+          size: const Size(375, 667),
+        );
+        expect(tester.takeException(), isNull);
+        expect(find.text('Tip'), findsOneWidget);
+      });
 
       testWidgets('shows the update title, which the feed used to discard',
           (tester) async {

@@ -35,8 +35,8 @@ void main() {
     test('an unknown tag keeps its name on a neutral chip', () {
       final style = ChainStyle.forTag('DeFi');
       expect(style.label, 'DEFI');
-      expect(style.color, AppColors.zincMuted);
-      expect(style.chipBackground, AppColors.borderSubtle);
+      expect(style.color, AppColors.textMuted);
+      expect(style.chipBackground, AppColors.bgElevated);
       expect(ChainStyle.forTag('').label, '');
     });
 

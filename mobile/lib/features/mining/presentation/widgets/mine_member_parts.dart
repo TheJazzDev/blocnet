@@ -36,10 +36,10 @@ class MineAvatar extends StatelessWidget {
     return AppAvatar(
       radius: 18,
       imageUrl: imageUrl,
-      backgroundColor: MinePalette.fill,
+      backgroundColor: MinePalette.raised,
       fallback: Text(
         initials(name),
-        style: AppText.label(MinePalette.white, weight: AppText.bold),
+        style: AppText.label(MinePalette.text, weight: AppText.bold),
       ),
     );
   }
@@ -66,7 +66,7 @@ class MineNameWithLevel extends StatelessWidget {
             name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppText.body(MinePalette.white, weight: AppText.semibold),
+            style: AppText.body(MinePalette.text, weight: AppText.bold),
           ),
         ),
         if (number > 0) ...[
@@ -78,18 +78,12 @@ class MineNameWithLevel extends StatelessWidget {
   }
 }
 
-/// Small caps pill: `ACTIVE`, `12 DAYS`, `CLAIMED` …
+/// Old status tag: `ACTIVE`, `12 DAYS`, `CLAIMED` in a tinted, edged pill.
 class MinePill extends StatelessWidget {
-  const MinePill({
-    super.key,
-    required this.label,
-    required this.text,
-    required this.ground,
-  });
+  const MinePill({super.key, required this.label, required this.tone});
 
   final String label;
-  final Color text;
-  final Color ground;
+  final Color tone;
 
   @override
   Widget build(BuildContext context) {
@@ -98,11 +92,11 @@ class MinePill extends StatelessWidget {
         horizontal: AppSpace.sm,
         vertical: AppSpace.hair,
       ),
-      decoration: BoxDecoration(color: ground, borderRadius: AppRadius.full),
+      decoration: MinePalette.tag(tone, radius: AppRadius.sm),
       child: Text(
         label,
-        style: AppText.caption(text, weight: AppText.bold)
-            .copyWith(letterSpacing: 1.1),
+        style: AppText.caption(tone, weight: AppText.bold)
+            .copyWith(letterSpacing: 0.8),
       ),
     );
   }

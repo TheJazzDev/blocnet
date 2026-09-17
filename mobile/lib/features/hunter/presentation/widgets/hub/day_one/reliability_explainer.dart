@@ -15,10 +15,10 @@ class ReliabilityExplainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: HubInsets.gutter),
       child: Text(
         lines.join('\n'),
-        style: HubType.body(AppColors.zincMuted, height: 1.6),
+        style: HubType.body(AppColors.textMuted, height: 1.6),
       ),
     );
   }

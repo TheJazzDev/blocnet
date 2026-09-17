@@ -1,8 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/models/quiet_gem.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/feed_quiet_gem_parts.dart';
+import 'package:blocnet/features/projects/presentation/widgets/home/home_panel.dart';
 import 'package:flutter/material.dart';
 
 /// A card in the feed, authored by Blocnet, saying that a gem the member
@@ -14,8 +15,8 @@ import 'package:flutter/material.dart';
 /// so the member sees what they are waiting on rather than only being told
 /// something is wrong.
 ///
-/// Desaturated, not alarmed. The card is grey throughout and red appears on
-/// nothing here: a hunter who has gone quiet is a lapse to be stated, not a
+/// Desaturated, not alarmed. The card is a plain panel and red appears only
+/// on Report: a hunter who has gone quiet is a lapse to be stated, not a
 /// moderation event. It also claims only what is knowable — that nothing has
 /// come through, never that the project is dead.
 ///
@@ -47,179 +48,67 @@ class FeedQuietGemCard extends StatelessWidget {
     final handle = gem.hunterHandle;
     final last = gem.lastUpdate;
 
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: Color(0xFF141416),
-        border: Border(
-          left: BorderSide(color: Color(0xFF52525b), width: 3),
-          bottom: BorderSide(color: AppColors.borderFaint),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpace.md - 3,
-          AppSpace.md,
-          AppSpace.md,
-          AppSpace.md,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Blocnet is the author here, so the avatar is a system mark
-                // rather than a person's face.
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.bgSurface,
-                    border: Border.all(color: AppColors.borderSubtle),
-                  ),
-                  child: Icon(
-                    Icons.running_with_errors_rounded,
-                    size: AppIcon.sm,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'No word on ${gem.project.name}',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.custom(
-                          color: AppColors.textSecondary,
-                          size: AppText.bodySize,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpace.hair),
-                      Text(
-                        handle == null
-                            ? 'Untouched for ${gem.daysSilent} days'
-                            : '$handle last posted ${gem.daysSilent} days ago',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.custom(
-                          color: AppColors.textMuted,
-                          size: AppText.labelSize,
-                          weight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpace.md),
-            Text(
-              'You follow this gem, but nothing has come through. '
-              'Blocnet cannot tell you what the project is doing now — only '
-              'that nobody has reported it.',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-                height: 1.5,
-              ),
-            ),
-            if (last != null) ...[
-              const SizedBox(height: AppSpace.md),
-              _LastWords(update: last, daysAgo: gem.daysSilent),
-            ],
-            const SizedBox(height: AppSpace.md),
-            _GhostButton(
-              icon: Icons.campaign_outlined,
-              label: handle == null
-                  ? 'Ask for an update'
-                  : 'Ask $handle for an update',
-              onTap: onAsk,
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: _GhostButton(
-                    icon: Icons.visibility_off_outlined,
-                    label: 'Unfollow',
-                    onTap: onUnfollow,
-                  ),
-                ),
-                const SizedBox(width: AppSpace.sm),
-                Expanded(
-                  child: _GhostButton(
-                    icon: Icons.flag_outlined,
-                    label: 'Report inactive',
-                    onTap: onReport,
-                    danger: true,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              'Reported gems go to a moderator, who decides whether to '
-              'reassign them.',
-              textAlign: TextAlign.center,
-              style: AppTypography.custom(
-                color: AppColors.textFaint,
-                size: AppText.captionSize,
-                weight: FontWeight.w400,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// The hunter's last update, quoted. Shows the member what they are waiting
-/// on, which is more useful than a bare "no updates" line.
-class _LastWords extends StatelessWidget {
-  const _LastWords({required this.update, required this.daysAgo});
-
-  final Update update;
-  final int daysAgo;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = update.title.trim();
-    final body = update.description.trim();
-    final quoted = title.isNotEmpty ? title : body;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpace.md),
-      decoration: BoxDecoration(
-        color: AppColors.bgBase,
-        borderRadius: AppRadius.md,
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
+    return HomePanel(
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'LAST UPDATE · $daysAgo DAYS AGO',
-            style: AppTypography.custom(
-              color: AppColors.textFaint,
-              size: AppText.captionSize,
-              weight: FontWeight.w700,
-              letterSpacing: 0.8,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Blocnet is the author here, so the avatar is a system mark
+              // rather than a person's face.
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.bgElevated,
+                ),
+                child: Icon(
+                  Icons.running_with_errors_rounded,
+                  size: AppIcon.sm,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'No word on ${gem.project.name}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.custom(
+                        color: AppColors.textSecondary,
+                        size: AppText.bodySize,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.hair),
+                    Text(
+                      handle == null
+                          ? 'Untouched for ${gem.daysSilent} days'
+                          : '$handle last posted ${gem.daysSilent} days ago',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.custom(
+                        color: AppColors.textMuted,
+                        size: AppText.labelSize,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpace.xs),
+          const SizedBox(height: AppSpace.md),
           Text(
-            '"$quoted"',
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
+            'You follow this gem, but nothing has come through. '
+            'Blocnet cannot tell you what the project is doing now — only '
+            'that nobody has reported it.',
             style: AppTypography.custom(
               color: AppColors.textMuted,
               size: AppText.bodySize,
@@ -227,68 +116,52 @@ class _LastWords extends StatelessWidget {
               height: 1.5,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GhostButton extends StatelessWidget {
-  const _GhostButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.danger = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  /// Marks the one action that puts another member's standing in question.
-  final bool danger;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 44),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: AppRadius.md,
-          border: Border.all(
-            color: danger
-                ? AppColors.priorityHigh.withValues(alpha: 0.28)
-                : AppColors.borderSubtle,
+          if (last != null) ...[
+            const SizedBox(height: AppSpace.md),
+            QuietGemLastWords(update: last, daysAgo: gem.daysSilent),
+          ],
+          const SizedBox(height: AppSpace.md),
+          QuietGemButton(
+            icon: Icons.campaign_outlined,
+            label: handle == null
+                ? 'Ask for an update'
+                : 'Ask $handle for an update',
+            onTap: onAsk,
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: AppIcon.sm,
-              color: danger ? AppColors.priorityHigh : AppColors.textSecondary,
-            ),
-            const SizedBox(width: AppSpace.sm),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.custom(
-                  color:
-                      danger ? AppColors.priorityHigh : AppColors.textSecondary,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w600,
+          const SizedBox(height: AppSpace.sm),
+          Row(
+            children: [
+              Expanded(
+                child: QuietGemButton(
+                  icon: Icons.visibility_off_outlined,
+                  label: 'Unfollow',
+                  onTap: onUnfollow,
                 ),
               ),
+              const SizedBox(width: AppSpace.sm),
+              Expanded(
+                child: QuietGemButton(
+                  icon: Icons.flag_outlined,
+                  label: 'Report inactive',
+                  onTap: onReport,
+                  danger: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.sm),
+          Text(
+            'Reported gems go to a moderator, who decides whether to '
+            'reassign them.',
+            textAlign: TextAlign.center,
+            style: AppTypography.custom(
+              color: AppColors.textFaint,
+              size: AppText.captionSize,
+              weight: FontWeight.w400,
+              height: 1.4,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
