@@ -69,7 +69,9 @@ class AssetRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpace.sm),
-            Flexible(
+            // Expanded, not Flexible: every row's amounts end at the same
+            // edge, so the chevrons line up.
+            Expanded(
               flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -89,6 +91,8 @@ class AssetRow extends StatelessWidget {
                   Text(
                     usdText,
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
                     style: WalletType.meta(AppColors.textMuted),
                   ),
                 ],

@@ -3,6 +3,7 @@ import 'package:blocnet/features/wallet/data/repositories/wallet_api_repository.
 import 'package:blocnet/features/wallet/presentation/pages/send_token_page.dart';
 import 'package:blocnet/features/wallet/presentation/pages/wallet_screen.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/asset_row.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_details_sheet.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_fields.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_row.dart';
@@ -78,10 +79,24 @@ final _failedWithdrawal = WalletWithdrawalRequest.fromApi({
   'requestedAt': '2026-09-17T12:00:00Z',
 });
 
+/// A fresh wallet: every balance 0, so the right column is short text.
+Map<String, dynamic> _emptySummary() {
+  final summary = _summary();
+  for (final asset in summary['assets'] as List) {
+    (asset as Map<String, dynamic>)['available'] = '0';
+    asset.remove('usdValue');
+  }
+  return summary;
+}
+
 class _FakeRepo extends WalletApiRepository {
+  _FakeRepo({this.empty = false});
+
+  final bool empty;
+
   @override
   Future<WalletSnapshot?> fetchWalletSummary() async =>
-      WalletSnapshot.fromApi(_summary());
+      WalletSnapshot.fromApi(empty ? _emptySummary() : _summary());
 
   @override
   Future<List<WalletTransaction>> fetchTransactions({
@@ -125,8 +140,8 @@ Future<void> _phone(WidgetTester tester) async {
   addTearDown(tester.view.reset);
 }
 
-Future<WalletStore> _store() async {
-  final store = WalletStore(repository: _FakeRepo());
+Future<WalletStore> _store({bool empty = false}) async {
+  final store = WalletStore(repository: _FakeRepo(empty: empty));
   await store.refreshAll();
   return store;
 }
@@ -161,6 +176,38 @@ void main() {
     final bnp = tester.getTopLeft(find.text('Blocnet Points')).dy;
     final usdt = tester.getTopLeft(find.textContaining('Tether USD')).dy;
     expect(bnp, lessThan(usdt));
+  });
+
+  testWidgets('asset amounts and chevrons line up across rows',
+      (tester) async {
+    await _phone(tester);
+    final store = await _store(empty: true);
+
+    await tester.pumpWidget(_app(store, const WalletScreen()));
+    await tester.pumpAndSettle();
+
+    final rows = find.byType(AssetRow);
+    expect(rows, findsNWidgets(3));
+    final chevrons = <double>{};
+    final captions = <double>{};
+    for (var i = 0; i < 3; i++) {
+      final row = rows.at(i);
+      chevrons.add(tester
+          .getTopRight(find.descendant(
+            of: row,
+            matching: find.byIcon(Icons.chevron_right_rounded),
+          ))
+          .dx);
+      // The line under the amount: "Points", "Price pending" or "$…".
+      final caption = find
+          .descendant(of: row, matching: find.byType(Text))
+          .evaluate()
+          .last
+          .renderObject! as RenderBox;
+      captions.add(caption.localToGlobal(Offset(caption.size.width, 0)).dx);
+    }
+    expect(chevrons, hasLength(1));
+    expect(captions, hasLength(1));
   });
 
   testWidgets('a long transaction row fits 375px', (tester) async {
