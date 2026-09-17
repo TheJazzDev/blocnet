@@ -14,11 +14,21 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _tierColors = {
-  1: '#8A96A8', 2: '#8A96A8', 3: '#8A96A8',
-  4: '#2AA876', 5: '#2AA876', 6: '#2AA876',
-  7: '#8B5CF6', 8: '#8B5CF6', 9: '#8B5CF6',
-  10: '#F0B429', 11: '#F0B429', 12: '#F0B429',
-  13: '#E23D4A', 14: '#E23D4A', 15: '#E23D4A',
+  1: '#8A96A8',
+  2: '#8A96A8',
+  3: '#8A96A8',
+  4: '#2AA876',
+  5: '#2AA876',
+  6: '#2AA876',
+  7: '#8B5CF6',
+  8: '#8B5CF6',
+  9: '#8B5CF6',
+  10: '#F0B429',
+  11: '#F0B429',
+  12: '#F0B429',
+  13: '#E23D4A',
+  14: '#E23D4A',
+  15: '#E23D4A',
 };
 
 Map<String, dynamic> _levelJson(int level) => {
@@ -82,7 +92,8 @@ Future<void> _pumpPage(WidgetTester tester, {FeedViewMode? mode}) async {
   await tester.pumpWidget(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LevelsStore(apiClient: _FakeApiClient())),
+        ChangeNotifierProvider(
+            create: (_) => LevelsStore(apiClient: _FakeApiClient())),
         ChangeNotifierProvider.value(value: viewMode),
       ],
       child: const MaterialApp(home: LevelsPage()),
@@ -102,14 +113,56 @@ void main() {
     await _pumpPage(tester);
 
     expect(find.byType(TierSectionHeader), findsNWidgets(5));
-    for (final name in ['Iron', 'Jade', 'Amethyst', 'Gold', 'Ruby']) {
-      expect(find.text(name), findsOneWidget);
+    for (final name in ['IRON', 'JADE', 'AMETHYST', 'GOLD', 'RUBY']) {
+      expect(
+        find.descendant(
+          of: find.byType(TierSectionHeader),
+          matching: find.text(name),
+        ),
+        findsOneWidget,
+      );
     }
     expect(find.byType(LevelProgressCard), findsOneWidget);
     expect(find.byType(LevelListItem), findsNWidgets(15));
     expect(find.byType(LevelCardItem), findsNothing);
     expect(find.text('CURRENT'), findsOneWidget);
     expect(find.text('Next: Rank 6 · Level 6'), findsOneWidget);
+  });
+
+  testWidgets('levels page is flat and fits at 375px', (tester) async {
+    tester.view.physicalSize = const Size(375, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await _pumpPage(tester);
+
+    expect(tester.takeException(), isNull);
+    final decorations = tester
+        .widgetList<Container>(find.byType(Container))
+        .map((c) => c.decoration)
+        .whereType<BoxDecoration>()
+        .toList();
+    expect(decorations.any((d) => d.gradient != null), isFalse);
+    expect(decorations.any((d) => d.boxShadow != null), isFalse);
+    // Progress card: small caps header, tier pill, next-level line.
+    final card = find.byType(LevelProgressCard);
+    expect(
+      find.descendant(of: card, matching: find.text('YOUR LEVEL')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: card, matching: find.text('JADE')),
+      findsOneWidget,
+    );
+    // Every level row ends in a chevron.
+    expect(
+      find.descendant(
+        of: find.byType(LevelListItem),
+        matching: find.byIcon(Icons.chevron_right_rounded),
+      ),
+      findsNWidgets(15),
+    );
   });
 
   testWidgets('card view mode renders tiles instead of rows', (tester) async {
@@ -143,7 +196,7 @@ void main() {
         find.descendant(of: sheet, matching: find.text(text));
 
     expect(inSheet('LOCKED'), findsOneWidget);
-    expect(inSheet('Requirements to unlock'), findsOneWidget);
+    expect(inSheet('REQUIREMENTS TO UNLOCK'), findsOneWidget);
     for (final label in [
       'BNP earned',
       'Comments on updates',

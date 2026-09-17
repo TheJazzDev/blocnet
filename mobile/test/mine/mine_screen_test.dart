@@ -157,7 +157,7 @@ void main() {
     expect(find.byKey(const ValueKey('mine-primary')), findsNothing);
   });
 
-  testWidgets('5 · claiming shows the receipt above the next running cycle',
+  testWidgets('5 · claiming shows a toast and the next running cycle',
       (tester) async {
     final repo = FakeMineRepo(
       mineSnapshotJson(
@@ -185,14 +185,17 @@ void main() {
     await _settle(tester);
 
     expect(store.lastClaimResult?.isClaimed, isTrue);
+    expect(find.text('+126 BNP claimed. Next cycle started.'), findsOneWidget);
     expectTopToBottom(tester, [
-      find.text('+126 BNP claimed'),
-      find.text('Next cycle started.'),
       find.text('MINING'),
       find.text('Ready tomorrow at 09:20 · 24h left'),
       find.text('8,538'),
     ]);
     expect(find.text('Claim 132 BNP'), findsNothing);
+
+    // The toast goes away on its own.
+    await tester.pump(const Duration(seconds: 4));
+    expect(find.text('+126 BNP claimed. Next cycle started.'), findsNothing);
   });
 
   testWidgets(

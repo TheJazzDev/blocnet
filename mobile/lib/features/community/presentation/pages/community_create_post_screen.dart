@@ -1,17 +1,20 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/community/data/models/community_topic.dart';
-import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
+import 'package:blocnet/features/community/presentation/widgets/compose/compose_parts.dart';
 import 'package:blocnet/features/mentions/data/repositories/mentions_repository.dart';
-import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/features/mentions/presentation/widgets/mention_text_field.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/shared/widgets/app_button.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
+/// Write a community post and pick its topic. Pops with the topic on success
+/// so the feed can switch to it.
 class CommunityCreatePostScreen extends StatefulWidget {
   const CommunityCreatePostScreen({super.key});
 
@@ -21,22 +24,24 @@ class CommunityCreatePostScreen extends StatefulWidget {
 }
 
 class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
-  final TextEditingController _contentCtrl = MentionHighlightTextController();
-  final FocusNode _contentFocus = FocusNode();
-  late final MentionsRepository _mentionsRepository;
-  final List<CommunityTopic> _topics = const [
+  /// The server's limit for a community post.
+  static const int _maxLength = 5000;
+  static const List<CommunityTopic> _topics = [
     CommunityTopic.general,
     CommunityTopic.marketTalk,
   ];
-  CommunityTopic _selectedTopic = CommunityTopic.general;
+
+  final TextEditingController _contentCtrl = MentionHighlightTextController();
+  final FocusNode _contentFocus = FocusNode();
+  final MentionsRepository _mentionsRepository =
+      MentionsRepository(ApiClient());
+  CommunityTopic _topic = CommunityTopic.general;
 
   @override
   void initState() {
     super.initState();
-    _mentionsRepository = MentionsRepository(ApiClient());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _contentFocus.requestFocus();
+      if (mounted) _contentFocus.requestFocus();
     });
   }
 
@@ -47,31 +52,23 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
     super.dispose();
   }
 
-  Future<void> _submitPost() async {
+  Future<void> _submit() async {
     final content = _contentCtrl.text.trim();
     if (content.isEmpty) return;
-
+    final store = context.read<CommunityPostsStore>();
     try {
-      final created = await context.read<CommunityPostsStore>().createPost(
-            content: content,
-            topic: _selectedTopic,
-          );
-
+      final created = await store.createPost(content: content, topic: _topic);
       if (!mounted) return;
-
       if (created == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to create post')),
-        );
+        AppSnackbar.showError(context, 'Could not publish post');
         return;
       }
-
-      // Pass the selected topic back to navigate to the correct tab
-      Navigator.of(context).pop(_selectedTopic);
+      Navigator.of(context).pop(_topic);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create post')),
+      AppSnackbar.showError(
+        context,
+        store.lastError ?? 'Could not publish post',
       );
     }
   }
@@ -79,24 +76,20 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
-    final store = context.watch<CommunityPostsStore>();
-
-    final displayName = auth.displayName?.trim().isNotEmpty == true
+    final isSubmitting = context.watch<CommunityPostsStore>().isSubmittingPost;
+    final name = (auth.displayName?.trim().isNotEmpty ?? false)
         ? auth.displayName!.trim()
-        : (auth.email ?? 'Blocnet User').split('@').first;
-    final rawUsername = auth.username?.trim();
-    final username = rawUsername != null && rawUsername.isNotEmpty
-        ? (rawUsername.startsWith('@') ? rawUsername : '@$rawUsername')
-        : '@blocnet.user';
-    final avatarUrl = auth.avatarUrl;
+        : (auth.email ?? 'Blocnet member').split('@').first;
+    final raw = auth.username?.trim().replaceAll('@', '') ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: const CustomAppBar(
-        title: 'Create Post',
-        backButton: true,
+        title: 'New post',
         showSearch: false,
         showFilter: false,
+        showNotificationBell: false,
+        showSpaceSwitcher: false,
       ),
       body: GestureDetector(
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -107,142 +100,57 @@ class _CommunityCreatePostScreenState extends State<CommunityCreatePostScreen> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.md),
+                  padding: const EdgeInsets.all(AppSpace.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          AppAvatar(
-                            radius: 20,
-                            imageUrl: avatarUrl,
-                            fallback: Text(
-                              displayName.isNotEmpty
-                                  ? displayName[0].toUpperCase()
-                                  : 'B',
-                              style: AppTypography.custom(
-                                color: AppColors.primary400,
-                                size: AppText.subtitleSize,
-                                weight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpace.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  displayName,
-                                  style: AppTypography.custom(
-                                    color: AppColors.textPrimary,
-                                    size: AppText.bodySize,
-                                    weight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  username,
-                                  style: AppTypography.custom(
-                                    color: AppColors.textMuted,
-                                    size: AppText.bodySize,
-                                    weight: FontWeight.w400,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      ComposeAuthorRow(
+                        name: name,
+                        handle: raw.isEmpty ? '' : '@$raw',
+                        avatarUrl: auth.avatarUrl,
                       ),
                       const SizedBox(height: AppSpace.lg),
                       MentionTextField(
                         controller: _contentCtrl,
                         focusNode: _contentFocus,
                         mentionsRepository: _mentionsRepository,
-                        hintText: "What's on your mind?",
-                        minLines: 8,
+                        hintText: 'What’s happening?',
+                        minLines: 6,
                         maxLines: 12,
+                        maxLength: _maxLength,
                         showFocusHighlight: false,
                       ),
-                      const SizedBox(height: AppSpace.lg),
-                      Text(
-                        'TOPIC',
-                        style: AppTypography.custom(
-                          color: AppColors.textFaint,
-                          size: AppText.captionSize,
-                          weight: FontWeight.w600,
-                          letterSpacing: 0.8,
-                        ),
+                      const SizedBox(height: AppSpace.xs),
+                      ComposeCharCount(
+                        controller: _contentCtrl,
+                        max: _maxLength,
                       ),
-                      const SizedBox(height: AppSpace.sm),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _topics.map((topic) {
-                          final isActive = _selectedTopic == topic;
-                          return GestureDetector(
-                            onTap: () => setState(() => _selectedTopic = topic),
-                            child: AppSurface(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpace.md,
-                                  vertical: AppSpace.sm),
-                              child: Text(
-                                topic.label,
-                                style: AppTypography.custom(
-                                  color: isActive
-                                      ? AppColors.primary400
-                                      : AppColors.textSecondary,
-                                  size: AppText.labelSize,
-                                  weight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                      const SizedBox(height: AppSpace.md),
+                      ComposeTopicPicker(
+                        topics: _topics,
+                        selected: _topic,
+                        onSelected: (topic) => setState(() => _topic = topic),
                       ),
                     ],
                   ),
                 ),
               ),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.md),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: store.isSubmittingPost ? null : _submitPost,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary500,
-                        foregroundColor: Colors.black,
-                        elevation: 0,
-                        disabledBackgroundColor:
-                            AppColors.primary500.withValues(alpha: 0.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.mdValue),
-                        ),
-                      ),
-                      child: store.isSubmittingPost
-                          ? SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                color: Colors.black,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              'Post',
-                              style: AppTypography.custom(
-                                size: AppText.bodySize,
-                                color: Colors.black,
-                                weight: FontWeight.w700,
-                              ),
-                            ),
-                    ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg,
+                  AppSpace.sm,
+                  AppSpace.lg,
+                  AppSpace.md,
+                ),
+                child: ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _contentCtrl,
+                  builder: (context, value, _) => AppButton(
+                    label: 'Post',
+                    fullWidth: true,
+                    isLoading: isSubmitting,
+                    onPressed: value.text.trim().isEmpty || isSubmitting
+                        ? null
+                        : _submit,
                   ),
                 ),
               ),

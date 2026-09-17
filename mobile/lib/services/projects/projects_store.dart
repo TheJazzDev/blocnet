@@ -1,11 +1,11 @@
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/projects/data/models/follow_preference_model.dart';
-import 'package:blocnet/features/projects/data/models/priority_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/repositories/updates_api_repository.dart';
 import 'package:blocnet/features/projects/data/repositories/projects_api_repository.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
+import 'package:blocnet/services/api/api_error.dart';
 import 'package:blocnet/services/projects/project_follows_store.dart';
 import 'package:flutter/material.dart';
 
@@ -30,12 +30,6 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
   final Set<String> _followedProjectIds = <String>{};
   final Map<String, FollowPreference> _followPreferences =
       <String, FollowPreference>{};
-  @override
-  final Set<String> _discoverPrimaryTagFilters = <String>{};
-  @override
-  final Set<String> _discoverSecondaryTagFilters = <String>{};
-  @override
-  final Set<Priority> _discoverPriorityFilters = <Priority>{};
   bool _isFetching = false;
   bool _isTogglingFollow = false;
   bool _isUpdatingFollowPreferences = false;
@@ -45,16 +39,6 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
   Set<String> get followedProjectIds => Set.unmodifiable(_followedProjectIds);
   Map<String, FollowPreference> get followPreferences =>
       Map.unmodifiable(_followPreferences);
-  Set<String> get discoverPrimaryTagFilters =>
-      Set.unmodifiable(_discoverPrimaryTagFilters);
-  Set<String> get discoverSecondaryTagFilters =>
-      Set.unmodifiable(_discoverSecondaryTagFilters);
-  Set<Priority> get discoverPriorityFilters =>
-      Set.unmodifiable(_discoverPriorityFilters);
-  bool get hasDiscoverFilters =>
-      _discoverPrimaryTagFilters.isNotEmpty ||
-      _discoverSecondaryTagFilters.isNotEmpty ||
-      _discoverPriorityFilters.isNotEmpty;
   bool get isFetching => _isFetching;
   bool get isTogglingFollow => _isTogglingFollow;
   bool get isUpdatingFollowPreferences => _isUpdatingFollowPreferences;
@@ -201,13 +185,44 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
         }
       }
 
+      await _addMissingFollowed(postsByProject);
       _lastError = null;
     } catch (error) {
-      _lastError = error.toString();
+      _lastError = describeApiError(error, fallback: 'Could not load gems.');
       debugPrint('Failed to fetch projects from API: $error');
     } finally {
       _isFetching = false;
       notifyListeners();
+    }
+  }
+
+  /// `GET /projects` is capped, so a followed gem can be missing from it.
+  /// Reads the member's follows only when that happens; a failure keeps the
+  /// list as it is.
+  Future<void> _addMissingFollowed(
+    Map<String, List<Update>> postsByProject,
+  ) async {
+    final listed = _projects.map((p) => p.id).toSet();
+    final missing = _followedProjectIds.difference(listed);
+    if (missing.isEmpty) return;
+    const pageSize = 100;
+    try {
+      for (var offset = 0; missing.isNotEmpty; offset += pageSize) {
+        final page = await _projectsRepository.fetchFollowedProjects(
+          limit: pageSize,
+          offset: offset,
+        );
+        for (final project in page) {
+          if (!missing.remove(project.id)) continue;
+          _projects.add(project.copyWith(
+            posts: postsByProject[project.id] ?? const <Update>[],
+            admin: project.admin ?? _fallbackAdmin(project.adminId),
+          ));
+        }
+        if (page.length < pageSize) break;
+      }
+    } catch (error) {
+      debugPrint('Followed gems read failed: $error');
     }
   }
 
@@ -237,31 +252,6 @@ class ProjectsStore extends ChangeNotifier with _ProjectsStoreDiscoveryMixin {
       }
     }
     return null;
-  }
-
-  void setDiscoverFilters({
-    required Set<String> primaryTags,
-    required Set<String> secondaryTags,
-    required Set<Priority> priorities,
-  }) {
-    _discoverPrimaryTagFilters
-      ..clear()
-      ..addAll(primaryTags);
-    _discoverSecondaryTagFilters
-      ..clear()
-      ..addAll(secondaryTags);
-    _discoverPriorityFilters
-      ..clear()
-      ..addAll(priorities);
-    notifyListeners();
-  }
-
-  void clearDiscoverFilters() {
-    if (!hasDiscoverFilters) return;
-    _discoverPrimaryTagFilters.clear();
-    _discoverSecondaryTagFilters.clear();
-    _discoverPriorityFilters.clear();
-    notifyListeners();
   }
 
   /// Asks a gem's hunter for an update.

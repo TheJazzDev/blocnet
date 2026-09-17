@@ -1,10 +1,8 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
-/// Underlined segmented tab bar for the Activity / Following / Saved tabs.
+/// Underlined, left-aligned tab labels for the profile tabs.
 class ProfileTabBar extends StatelessWidget {
   const ProfileTabBar({
     super.key,
@@ -22,44 +20,17 @@ class ProfileTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: AppColors.bgBase,
-        border: Border(
-          top: BorderSide(color: AppColors.borderSubtle, width: 1),
-          bottom: BorderSide(color: AppColors.borderSubtle, width: 1),
-        ),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
       ),
       child: Row(
         children: [
           for (var i = 0; i < tabs.length; i++)
-            Expanded(
-              child: GestureDetector(
-                onTap: () => onChanged(i),
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  padding: const EdgeInsets.only(bottom: AppSpace.hair),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: i == activeIndex ? accent : Colors.transparent,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  height: 44,
-                  child: Text(
-                    tabs[i],
-                    style: AppTypography.custom(
-                      color: i == activeIndex ? accent : AppColors.textFaint,
-                      size: AppText.bodySize,
-                      weight:
-                          i == activeIndex ? FontWeight.w600 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
+            _Tab(
+              label: tabs[i],
+              active: i == activeIndex,
+              accent: accent,
+              onTap: () => onChanged(i),
             ),
         ],
       ),
@@ -67,96 +38,48 @@ class ProfileTabBar extends StatelessWidget {
   }
 }
 
-/// Shared empty-state block for the three profile tabs.
-class ProfileTabEmptyState extends StatelessWidget {
-  const ProfileTabEmptyState({
-    super.key,
-    required this.icon,
-    required this.title,
-    this.hint,
+class _Tab extends StatelessWidget {
+  const _Tab({
+    required this.label,
+    required this.active,
+    required this.accent,
+    required this.onTap,
   });
 
-  final IconData icon;
-  final String title;
-  final String? hint;
+  final String label;
+  final bool active;
+  final Color accent;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: AppIcon.xl, color: AppColors.textFaint),
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
+    return Semantics(
+      selected: active,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          height: 44,
+          margin: const EdgeInsets.only(right: AppSpace.xl),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: active ? accent : Colors.transparent,
+                width: 2,
               ),
             ),
-            if (hint != null) ...[
-              const SizedBox(height: AppSpace.xs),
-              Text(
-                hint!,
-                textAlign: TextAlign.center,
-                style: AppTypography.custom(
-                  color: AppColors.textFaint,
-                  size: AppText.captionSize,
-                  weight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ],
+          ),
+          child: Text(
+            label,
+            style: AppText.body(
+              active ? accent : AppColors.textFaint,
+              weight: active ? AppText.semibold : AppText.medium,
+            ),
+          ),
         ),
       ),
-    );
-  }
-}
-
-/// Wraps a list tile so it renders as a card in card mode or a divided
-/// row in list mode.
-class ProfileTabTileFrame extends StatelessWidget {
-  const ProfileTabTileFrame({
-    super.key,
-    required this.isCardMode,
-    required this.showDivider,
-    required this.child,
-    this.onTap,
-  });
-
-  final bool isCardMode;
-  final bool showDivider;
-  final Widget child;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final tile = GestureDetector(
-      onTap: onTap,
-      child: AppSurface(
-        margin: EdgeInsets.only(bottom: isCardMode ? 10 : 0),
-        padding: const EdgeInsets.all(AppSpace.md),
-        child: child,
-      ),
-    );
-
-    if (isCardMode) return tile;
-
-    return Column(
-      children: [
-        tile,
-        if (showDivider)
-          Divider(
-            height: 1,
-            color: AppColors.borderSubtle.withValues(alpha: 0.8),
-          ),
-      ],
     );
   }
 }

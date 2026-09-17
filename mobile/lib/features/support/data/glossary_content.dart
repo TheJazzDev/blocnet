@@ -24,7 +24,7 @@ const List<GlossaryTerm> glossaryTerms = [
     term: 'Gem',
     icon: Icons.diamond_outlined,
     definition:
-        'A crypto project listed on Blocnet. You find Gems in Discover, '
+        'A crypto project listed on Blocnet. You find Gems in the Gems tab, '
         'follow them, and their Updates fill your Home feed. Hunters submit '
         'new Gems and the Blocnet team approves them before listing.',
   ),

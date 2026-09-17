@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NotificationType, Prisma, RoleName } from '@prisma/client';
 import { FinancialAuditActions } from '../common/constants/financial-audit-actions';
+import { WITHDRAWAL_FAILED_MESSAGE } from '../wallet/withdrawal-failure';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from './notifications.service';
 import { NotificationEvent } from './types/notification-event.type';
@@ -964,7 +965,12 @@ export class NotificationEventsService {
         payload: {
           withdrawalId: withdrawal.id,
           status: action,
-          reason: this.stringValue(metadata.reason),
+          // A revert's audit reason is operator-only detail (F-37); members
+          // get the safe copy. Admin approve/reject reasons are for members.
+          reason:
+            action === FinancialAuditActions.WithdrawalReverted
+              ? WITHDRAWAL_FAILED_MESSAGE
+              : this.stringValue(metadata.reason),
           txHash: this.stringValue(metadata.txHash),
         } as Prisma.InputJsonValue,
         deeplink: '/wallet/transactions',

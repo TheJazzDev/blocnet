@@ -31,11 +31,11 @@ class MentionText extends StatelessWidget {
           weight: FontWeight.w400,
         );
 
+    // A mention reads at the size of the text around it, in the accent.
     final defaultMentionStyle = mentionStyle ??
-        AppTypography.custom(
+        defaultStyle.copyWith(
           color: AppColors.primary400,
-          size: AppText.labelSize,
-          weight: FontWeight.w600,
+          fontWeight: FontWeight.w600,
         );
 
     return Text.rich(

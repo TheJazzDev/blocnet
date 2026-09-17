@@ -22,6 +22,9 @@ class UserProfileStore extends ChangeNotifier {
   bool _isLoadingActivity = false;
   bool _isLoadingFollowingProfiles = false;
   String? _lastError;
+  String? _activityError;
+  bool _hasLoadedActivity = false;
+  bool _hasLoadedWatchlist = false;
 
   List<Project> get watchlist => List.unmodifiable(_watchlist);
   List<CommunityPost> get bookmarks => List.unmodifiable(_bookmarks);
@@ -38,6 +41,11 @@ class UserProfileStore extends ChangeNotifier {
       _isLoadingActivity ||
       _isLoadingFollowingProfiles;
   String? get lastError => _lastError;
+
+  /// Set when the last activity read failed; the list keeps what it had.
+  String? get activityError => _activityError;
+  bool get hasLoadedActivity => _hasLoadedActivity;
+  bool get hasLoadedWatchlist => _hasLoadedWatchlist;
 
   Future<void> fetchInitialOnce({String? userId}) async {
     final normalizedUserId = userId?.trim();
@@ -123,6 +131,7 @@ class UserProfileStore extends ChangeNotifier {
       _watchlist
         ..clear()
         ..addAll(items);
+      _hasLoadedWatchlist = true;
       _lastError = null;
     } catch (error) {
       _lastError = error.toString();
@@ -163,10 +172,13 @@ class UserProfileStore extends ChangeNotifier {
       _activity
         ..clear()
         ..addAll(items);
+      _activityError = null;
       _lastError = null;
     } catch (error) {
+      _activityError = error.toString();
       _lastError = error.toString();
     } finally {
+      _hasLoadedActivity = true;
       _isLoadingActivity = false;
       notifyListeners();
     }
@@ -178,6 +190,9 @@ class UserProfileStore extends ChangeNotifier {
     _activity.clear();
     _followingProfilesCount = 0;
     _lastError = null;
+    _activityError = null;
+    _hasLoadedActivity = false;
+    _hasLoadedWatchlist = false;
     _isLoadingWatchlist = false;
     _isLoadingBookmarks = false;
     _isLoadingActivity = false;

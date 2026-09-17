@@ -1,27 +1,25 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/shared/utils/format_number_utils.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+export 'wallet_error_text.dart';
 export 'wallet_send_flow.dart' show openSendFlow;
-
-enum WalletToastType { info, success, error }
 
 Color assetAccentColor(String assetCode) {
   switch (assetCode.toUpperCase()) {
     case walletPointsAsset:
-      return const Color(0xFFA855F7);
+      return AppColors.tagPartnership;
     case 'BNB':
-      return const Color(0xFFF3BA2F);
+      return AppColors.chainBsc;
     case 'USDT':
-      return const Color(0xFF26A17B);
+      return AppColors.successColor;
     case 'BNT':
     default:
-      return AppColors.teal400;
+      return AppColors.primary400;
   }
 }
 
@@ -102,6 +100,8 @@ String formatDate(DateTime? value) {
   return '$month ${local.day}, ${local.year} • $hour:$minute';
 }
 
+/// Withdrawal status colour: amber while it waits, accent while it moves,
+/// green when done, red when it did not happen.
 Color statusColor(String status) {
   switch (status) {
     case 'confirmed':
@@ -109,15 +109,49 @@ Color statusColor(String status) {
     case 'rejected':
     case 'reverted':
     case 'failed':
-      return AppColors.error500;
-    case 'broadcasting':
-    case 'approved':
+      return AppColors.tagWarning;
     case 'pending_review':
     case 'requested':
+      return AppColors.warning500;
+    case 'broadcasting':
+    case 'approved':
       return AppColors.primary500;
     default:
       return AppColors.textMuted;
   }
+}
+
+/// Withdrawal status in a member's words.
+String withdrawalStatusLabel(String status) {
+  switch (status) {
+    case 'requested':
+    case 'pending_review':
+      return 'In review';
+    case 'approved':
+      return 'Approved';
+    case 'broadcasting':
+      return 'Sending';
+    case 'confirmed':
+      return 'Sent';
+    case 'rejected':
+      return 'Rejected';
+    case 'reverted':
+    case 'failed':
+      return 'Failed';
+    default:
+      return toTitleCase(status);
+  }
+}
+
+/// Shown for a failed withdrawal when the server gives no reason.
+const String withdrawalFailedFallback =
+    'Withdrawal failed. The amount is back in your wallet.';
+
+/// What to tell the member about a failed withdrawal: the server's text
+/// (already written for members) or [withdrawalFailedFallback].
+String withdrawalFailureText(String? failureReason) {
+  final text = failureReason?.trim() ?? '';
+  return text.isEmpty ? withdrawalFailedFallback : text;
 }
 
 String toTitleCase(String value) {
@@ -173,92 +207,22 @@ Future<void> openExplorerTx(
 ) async {
   final uri = Uri.tryParse(explorerTxUrl);
   if (uri == null) {
-    showWalletToast(
+    AppSnackbar.showError(
       context,
-      message: 'Invalid explorer URL.',
-      type: WalletToastType.error,
+      'Invalid explorer URL.',
+      duration: AppSnackbar.longDuration,
     );
     return;
   }
 
   final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!launched && context.mounted) {
-    showWalletToast(
+    AppSnackbar.showError(
       context,
-      message: 'Could not open block explorer.',
-      type: WalletToastType.error,
+      'Could not open block explorer.',
+      duration: AppSnackbar.longDuration,
     );
   }
-}
-
-void showWalletToast(
-  BuildContext context, {
-  required String message,
-  WalletToastType type = WalletToastType.info,
-}) {
-  final messenger = ScaffoldMessenger.of(context);
-
-  Color backgroundColor;
-  Color borderColor;
-  IconData icon;
-
-  switch (type) {
-    case WalletToastType.success:
-      backgroundColor = const Color(0xFF0D2A22);
-      borderColor = AppColors.successColor.withValues(alpha: 0.65);
-      icon = Icons.check_circle_rounded;
-      break;
-    case WalletToastType.error:
-      backgroundColor = AppColors.error900.withValues(alpha: 0.95);
-      borderColor = AppColors.error500.withValues(alpha: 0.75);
-      icon = Icons.error_rounded;
-      break;
-    case WalletToastType.info:
-      backgroundColor = const Color(0xFF0B2A30);
-      borderColor = AppColors.primary500.withValues(alpha: 0.55);
-      icon = Icons.info_rounded;
-      break;
-  }
-
-  messenger.hideCurrentSnackBar();
-  final topInset = MediaQuery.paddingOf(context).top + kToolbarHeight + 8;
-  final bottomInset = MediaQuery.sizeOf(context).height - topInset - 72;
-  messenger.showSnackBar(
-    SnackBar(
-      duration: const Duration(seconds: 6),
-      showCloseIcon: true,
-      closeIconColor: AppColors.textMuted,
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: backgroundColor,
-      elevation: 0,
-      margin: EdgeInsets.fromLTRB(
-        16,
-        0,
-        16,
-        bottomInset.clamp(16, 1200).toDouble(),
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        side: BorderSide(color: borderColor),
-      ),
-      content: Row(
-        children: [
-          Icon(icon, size: AppIcon.md, color: AppColors.textPrimary),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Text(
-              message,
-              style: AppTypography.custom(
-                size: AppText.labelSize,
-                weight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 }
 
 bool isWalletReadyForAction(WalletStore store) {

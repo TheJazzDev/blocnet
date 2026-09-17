@@ -1,123 +1,79 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_headline.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_state_views.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
 import 'package:blocnet/services/wallet/wallet_visibility_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// One asset's balance: ticker square, name and network pill, the amount,
+/// and its value line.
 class AssetBalanceCard extends StatelessWidget {
-  const AssetBalanceCard({
-    super.key,
-    required this.assetCode,
-    required this.mode,
-  });
+  const AssetBalanceCard({super.key, required this.assetCode});
 
   final String assetCode;
-  final FeedViewMode mode;
 
   @override
   Widget build(BuildContext context) {
-    final walletStore = context.watch<WalletStore>();
-    final isBalanceHidden =
-        context.watch<WalletVisibilityStore>().isBalanceHidden;
-    final asset = walletStore.findAsset(assetCode);
-    final accent = assetAccentColor(assetCode);
-    final isCardMode = mode == FeedViewMode.card;
+    final asset = context.watch<WalletStore>().findAsset(assetCode);
+    final isHidden = context.watch<WalletVisibilityStore>().isBalanceHidden;
+    if (asset == null) return const WalletLoadingCard();
 
-    if (asset == null) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-        child: Text(
-          'Loading $assetCode balance...',
-          style: AppTypography.custom(
-            color: AppColors.textMuted,
-            size: AppText.bodySize,
-            weight: FontWeight.w400,
-          ),
-        ),
-      );
-    }
+    final valueLine = asset.isPoints
+        ? 'Send to any member by @username'
+        : isHidden
+            ? r'$•••• · Price $••••'
+            : isUsdPriceLive(asset.priceSource)
+                ? '\$${formatUsd(asset.usdValue)} · Price '
+                    '\$${formatUsd(asset.usdPrice, decimals: 4)}'
+                : walletUnpricedLabel(asset);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-          vertical: AppSpace.md, horizontal: AppSpace.md),
-      decoration: isCardMode
-          ? BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  accent.withValues(alpha: 0.18),
-                  AppColors.primary500.withValues(alpha: 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.lgValue),
-              border: Border.all(color: accent.withValues(alpha: 0.45)),
-            )
-          : null,
+    return WalletCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                asset.name,
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: AppText.subtitleSize,
-                  weight: FontWeight.w700,
+              AppIconSquare(
+                color: assetAccentColor(assetCode),
+                symbol: asset.symbol,
+                size: 32,
+                bordered: true,
+              ),
+              const SizedBox(width: AppSpace.md),
+              Flexible(
+                child: Text(
+                  asset.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: WalletType.rowTitle(AppColors.textPrimary),
                 ),
               ),
               const SizedBox(width: AppSpace.sm),
-              AppSurface(
-                radius: AppRadius.lg,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpace.sm, vertical: AppSpace.xs),
-                child: Text(
-                  assetBadgeText(asset),
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-              ),
+              AppPill.caps(label: assetBadgeText(asset), dense: true),
             ],
           ),
           const SizedBox(height: AppSpace.md),
-          Text(
-            isBalanceHidden
-                ? '•••••• ${asset.asset}'
-                : '${formatAssetAmount(asset)} ${asset.asset}',
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.displaySize,
-              weight: FontWeight.w800,
-              height: 1,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              isHidden
+                  ? '•••••• ${asset.asset}'
+                  : '${formatAssetAmount(asset)} ${asset.asset}',
+              maxLines: 1,
+              style: AppText.display(
+                AppColors.textPrimary,
+                weight: FontWeight.w800,
+              ).merge(AppText.tabular).copyWith(height: 1.1),
             ),
           ),
-          const SizedBox(height: AppSpace.sm),
-          Text(
-            asset.isPoints
-                ? 'In-app points · send to any member by @username'
-                : isBalanceHidden
-                    ? '\$•••• • Price \$••••'
-                    : (isUsdPriceLive(asset.priceSource)
-                        ? '\$${formatUsd(asset.usdValue)} • Price \$${formatUsd(asset.usdPrice, decimals: 4)}'
-                        : '${walletUnpricedLabel(asset)} · no market value yet'),
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.labelSize,
-              weight: FontWeight.w500,
-            ),
-          ),
+          const SizedBox(height: AppSpace.xs),
+          Text(valueLine, style: WalletType.meta(AppColors.textMuted)),
         ],
       ),
     );

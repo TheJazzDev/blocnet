@@ -31,8 +31,9 @@ class HubFab extends StatelessWidget {
           (dayOne ? onSubmitGem : onPostUpdate)();
         },
         child: Container(
-          height: 56,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
+          // 48px: the size of the + buttons' family, not Material's 56.
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
           decoration: BoxDecoration(
             color: HubTone.accent,
             borderRadius: AppRadius.lg,

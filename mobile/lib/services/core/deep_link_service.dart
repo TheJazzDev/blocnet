@@ -3,6 +3,8 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/projects/presentation/widgets/shared/detail_dialogs.dart';
+import 'package:blocnet/services/core/content_link.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 
 class DeepLinkService {
@@ -31,6 +33,12 @@ class DeepLinkService {
     AppRoutes.referralCode,
     AppRoutes.home,
     AppRoutes.discover,
+    AppRoutes.gems,
+    AppRoutes.gemsBoard,
+    AppRoutes.gemsHunters,
+    AppRoutes.topHunters,
+    AppRoutes.communitySaved,
+    AppRoutes.myReports,
   };
 
   DeepLinkService({
@@ -331,7 +339,8 @@ class DeepLinkService {
       }
 
       final normalizedExternal = rawPath
-          .replaceFirst(RegExp(r'^io\.blocnet\.app://', caseSensitive: false), '')
+          .replaceFirst(
+              RegExp(r'^io\.blocnet\.app://', caseSensitive: false), '')
           .replaceFirst(RegExp(r'^blocnet://', caseSensitive: false), '');
       if (normalizedExternal.startsWith('http://') ||
           normalizedExternal.startsWith('https://')) {
@@ -364,11 +373,9 @@ class DeepLinkService {
       return;
     }
 
-    // External URLs that do not map 1:1 to app routes can still open the app.
-    if (path.startsWith('/updates') ||
-        path.startsWith('/projects') ||
-        path.startsWith('/community')) {
-      navigatorKey.currentState?.pushNamed(AppRoutes.main);
+    final content = ContentLink.parse(path);
+    if (content != null) {
+      _openContent(content);
       return;
     }
 
@@ -387,6 +394,22 @@ class DeepLinkService {
       path,
       arguments: args.isEmpty ? null : args,
     );
+  }
+
+  /// Opens a shared update, gem or community post over the app shell.
+  void _openContent(ContentLink link) {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return;
+    if (link.kind == ContentLinkKind.communityPost) {
+      navigator.pushNamed(AppRoutes.communityDiscussion, arguments: link.id);
+      return;
+    }
+    final context = navigator.context;
+    if (link.kind == ContentLinkKind.update) {
+      unawaited(showUpdateDetailsDialog(context, link.id));
+    } else {
+      unawaited(showGemDetailsDialog(context, link.id));
+    }
   }
 
   String _normalizePathAlias(String path) {

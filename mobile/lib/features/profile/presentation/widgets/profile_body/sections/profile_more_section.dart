@@ -1,17 +1,17 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/profile/presentation/widgets/profile_body/widgets/profile_tile.dart';
 import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/users/hunter_application_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// "More" and "Account" tiles. Every entry here is shown to everyone; the
-/// only role-gated rows are System Alerts (owner/dev, matching the
-/// backend guard), the received-tips shortcut for hunters and the
-/// Become a Hunter entry for users who do not hold the role yet.
+/// "More" and "Account" rows. Every entry is shown to everyone; the only
+/// role-gated rows are System Alerts (owner/dev, matching the backend
+/// guard), received tips for hunters, and Become a Hunter for members who
+/// do not hold the role yet.
 class ProfileMoreSection extends StatelessWidget {
   const ProfileMoreSection({
     super.key,
@@ -26,110 +26,113 @@ class ProfileMoreSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final navigator = Navigator.of(context);
     final isHunter = auth.hasHunterSpace;
-    final applicationStatus = context.watch<HunterApplicationStore>().status;
-    final becomeHunterSubtitle = switch (applicationStatus) {
-      HunterApplicationStatus.pending => 'Application pending review',
-      HunterApplicationStatus.approved => 'Approved. Hunter tools on the way',
-      HunterApplicationStatus.rejected => 'Not approved. You can apply again',
-      HunterApplicationStatus.none => 'Post updates for gems and earn tips',
-    };
-    final becomeHunterPill = switch (applicationStatus) {
-      HunterApplicationStatus.pending => ProfileTilePill(
-          label: 'PENDING',
-          color: AppColors.warning500,
-        ),
-      HunterApplicationStatus.approved => ProfileTilePill(
-          label: 'APPROVED',
-          color: AppColors.successColor,
-        ),
-      _ => null,
-    };
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionLabel('More'),
-          const SizedBox(height: AppSpace.sm),
-          if (!isHunter)
-            ProfileTile(
-              icon: Icons.radar_rounded,
-              iconColor: AppColors.primary400,
-              title: 'Become a Hunter',
-              subtitle: becomeHunterSubtitle,
-              trailing: becomeHunterPill,
-              onTap: () => navigator.pushNamed(AppRoutes.becomeHunter),
-            ),
-          ProfileTile(
-            icon: Icons.emoji_events_outlined,
-            title: 'Badges',
-            subtitle: 'View and manage your earned badges',
-            onTap: () => navigator.pushNamed(AppRoutes.badges),
-          ),
-          ProfileTile(
-            icon: Icons.task_alt_outlined,
-            title: 'Quests',
-            subtitle: 'Complete quests to earn rewards',
-            onTap: () => navigator.pushNamed(AppRoutes.quests),
-          ),
-          ProfileTile(
-            icon: Icons.stairs_outlined,
-            title: 'Levels',
-            subtitle: 'See every level, its requirements and your progress',
-            onTap: () => navigator.pushNamed(AppRoutes.levels),
-          ),
-          ProfileTile(
-            icon: Icons.volunteer_activism_outlined,
-            title: 'Tip History',
-            subtitle: 'See all tips you sent to hunters',
-            onTap: () => navigator.pushNamed(AppRoutes.tipsHistory),
-          ),
-          if (isHunter)
-            ProfileTile(
-              icon: Icons.history_edu_outlined,
-              title: 'Tip History (Received)',
-              subtitle: 'Review tips you received from supporters',
-              onTap: () => navigator.pushNamed(
-                AppRoutes.tipsHistory,
-                arguments: const {'direction': 'received'},
+          const SectionLabel('More', icon: Icons.apps_rounded),
+          AppSpace.gapSm,
+          AppRowGroup(
+            children: [
+              if (!isHunter) const _BecomeHunterRow(),
+              AppListRow(
+                icon: Icons.emoji_events_outlined,
+                title: 'Badges',
+                onTap: () => navigator.pushNamed(AppRoutes.badges),
               ),
-            ),
-          ProfileTile(
-            icon: Icons.settings_outlined,
-            title: 'Settings',
-            subtitle: 'Account preferences',
-            onTap: () => navigator.pushNamed(AppRoutes.settings),
+              AppListRow(
+                icon: Icons.task_alt_outlined,
+                title: 'Quests',
+                onTap: () => navigator.pushNamed(AppRoutes.quests),
+              ),
+              AppListRow(
+                icon: Icons.stairs_outlined,
+                title: 'Levels',
+                onTap: () => navigator.pushNamed(AppRoutes.levels),
+              ),
+              AppListRow(
+                icon: Icons.volunteer_activism_outlined,
+                title: 'Tip History',
+                subtitle: 'Sent',
+                onTap: () => navigator.pushNamed(AppRoutes.tipsHistory),
+              ),
+              if (isHunter)
+                AppListRow(
+                  icon: Icons.savings_outlined,
+                  title: 'Tips Received',
+                  onTap: () => navigator.pushNamed(
+                    AppRoutes.tipsHistory,
+                    arguments: const {'direction': 'received'},
+                  ),
+                ),
+            ],
           ),
-          ProfileTile(
-            icon: Icons.support_agent_outlined,
-            title: 'Help & Support',
-            subtitle: 'Get help with account and app issues',
-            showDivider: false,
-            onTap: () => navigator.pushNamed(AppRoutes.helpSupport),
-          ),
-          const SizedBox(height: AppSpace.md),
-          const SectionLabel('Account'),
-          const SizedBox(height: AppSpace.sm),
-          // Backend allows only owner/dev on /audit-log/system-alerts.
-          if (auth.isOwner || auth.isDev)
-            ProfileTile(
-              icon: Icons.warning_amber_rounded,
-              title: 'System Alerts',
-              subtitle: 'Operational warnings and error events',
-              onTap: () => navigator.pushNamed(AppRoutes.systemAlerts),
-            ),
-          ProfileTile(
-            icon: Icons.logout_rounded,
-            title: 'Sign Out',
-            subtitle: 'Sign out of your account',
-            iconColor: AppColors.textMuted,
-            titleColor: AppColors.textSecondary,
-            showDivider: false,
-            onTap: onSignOut,
+          AppSpace.gapXl,
+          const SectionLabel('Account', icon: Icons.person_outline_rounded),
+          AppSpace.gapSm,
+          AppRowGroup(
+            children: [
+              AppListRow(
+                icon: Icons.settings_outlined,
+                title: 'Settings',
+                onTap: () => navigator.pushNamed(AppRoutes.settings),
+              ),
+              AppListRow(
+                icon: Icons.support_agent_outlined,
+                title: 'Help & Support',
+                onTap: () => navigator.pushNamed(AppRoutes.helpSupport),
+              ),
+              // Backend allows only owner/dev on /audit-log/system-alerts.
+              if (auth.isOwner || auth.isDev)
+                AppListRow(
+                  icon: Icons.warning_amber_rounded,
+                  iconColor: AppColors.warning500,
+                  title: 'System Alerts',
+                  onTap: () => navigator.pushNamed(AppRoutes.systemAlerts),
+                ),
+              AppListRow(
+                icon: Icons.logout_rounded,
+                iconColor: AppColors.error500,
+                title: 'Sign Out',
+                titleColor: AppColors.error500,
+                onTap: onSignOut,
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _BecomeHunterRow extends StatelessWidget {
+  const _BecomeHunterRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final status = context.watch<HunterApplicationStore>().status;
+    final subtitle = switch (status) {
+      HunterApplicationStatus.pending => 'Application in review',
+      HunterApplicationStatus.approved => 'Approved',
+      HunterApplicationStatus.rejected => 'Not approved · apply again',
+      HunterApplicationStatus.none => 'Post updates, earn tips',
+    };
+    final pill = switch (status) {
+      HunterApplicationStatus.pending =>
+        AppPill.caps(label: 'Pending', color: AppColors.warning500),
+      HunterApplicationStatus.approved =>
+        AppPill.caps(label: 'Approved', color: AppColors.successColor),
+      _ => null,
+    };
+    return AppListRow(
+      icon: Icons.radar_rounded,
+      iconColor: AppColors.tagPartnership,
+      title: 'Become a Hunter',
+      subtitle: subtitle,
+      trailing: pill,
+      onTap: () => Navigator.of(context).pushNamed(AppRoutes.becomeHunter),
     );
   }
 }

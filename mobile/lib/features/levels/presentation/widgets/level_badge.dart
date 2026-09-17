@@ -1,3 +1,4 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/levels/data/models/user_level_model.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_badge_artwork.dart';
@@ -50,7 +51,7 @@ class LevelBadge extends StatelessWidget {
       style: TextStyle(
         fontSize: size.fontSize,
         fontWeight: FontWeight.w500,
-        color: Colors.grey[700],
+        color: AppColors.textMuted,
       ),
       overflow: TextOverflow.ellipsis,
     );

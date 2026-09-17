@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import { config as loadEnv } from 'dotenv';
 import { seedBadgesAndQuests } from './seed.badges-quests';
 import { seedLevels } from './seed.levels';
+import { ensureSeedUsername } from './seed-username.util';
 
 // Keep existing env vars (for CI/prod seeding) and only fallback to .env.local.
 loadEnv({ path: '.env.local', override: false, quiet: true });
@@ -230,6 +231,7 @@ async function main() {
       displayName: 'Owner',
     },
   });
+  await ensureSeedUsername(prisma, ownerUserId, ownerEmail.split('@')[0]);
 
   await prisma.userRole.upsert({
     where: {

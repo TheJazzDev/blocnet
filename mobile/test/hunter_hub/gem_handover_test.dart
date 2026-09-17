@@ -4,8 +4,9 @@ import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/hunter/data/models/hunter_gem_detail_model.dart';
 import 'package:blocnet/features/hunter/data/models/pending_handover_model.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/handover_offer_sheet.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/features/profile/data/models/profile_search_result_model.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -50,8 +51,8 @@ void main() {
         expect(hand.left - post.right, 8);
         expect(hand.right, lessThanOrEqualTo(width - 16));
 
-        final button = tester.widget<HubButton>(byKey('gem-handover')).tone;
-        expect(button, HubButtonTone.warn);
+        final button = tester.widget<AppButton>(byKey('gem-handover')).variant;
+        expect(button, AppButtonVariant.tinted);
         expect(_label(tester, 'Hand over').style?.color, AppColors.tagAirdrop);
         expect(_label(tester, 'Post update').style?.color, Colors.black);
       });
@@ -85,14 +86,14 @@ void main() {
         expect(find.text('Hand over Halo Points'), findsOneWidget);
         expect(find.text(HandoverOfferSheet.explainer), findsOneWidget);
         expect(
-          tester.widget<HubButton>(byKey('handover-offer')).onTap,
+          tester.widget<AppButton>(byKey('handover-offer')).onPressed,
           isNull,
         );
 
         await tester.enterText(byKey('handover-hunter'), '  @ ');
         await tester.pump();
         expect(
-          tester.widget<HubButton>(byKey('handover-offer')).onTap,
+          tester.widget<AppButton>(byKey('handover-offer')).onPressed,
           isNull,
           reason: 'a bare @ is not a hunter',
         );
@@ -118,7 +119,8 @@ void main() {
         store.gate = Completer<void>();
         await tester.tap(byKey('handover-offer'));
         await tester.pump();
-        expect(tester.widget<HubButton>(byKey('handover-offer')).busy, isTrue);
+        expect(tester.widget<AppButton>(byKey('handover-offer')).isLoading,
+            isTrue);
 
         store.gate!.complete();
         await tester.pumpAndSettle();
@@ -151,7 +153,7 @@ void main() {
               find.text('That hunter already has a handover pending.')),
           findsOneWidget,
         );
-        expect(find.byType(SnackBar), findsNothing);
+        expect(find.byType(AppToast), findsNothing);
         expect(store.loads, 1);
       });
 
@@ -180,7 +182,7 @@ void main() {
         final field = tester.widget<TextField>(byKey('handover-hunter'));
         expect(field.controller!.text, '@maya');
         expect(
-          tester.widget<HubButton>(byKey('handover-offer')).onTap,
+          tester.widget<AppButton>(byKey('handover-offer')).onPressed,
           isNotNull,
         );
       });
@@ -202,8 +204,8 @@ void main() {
           findsOneWidget,
         );
         expect(
-          tester.widget<HubButton>(byKey('handover-withdraw')).tone,
-          HubButtonTone.warn,
+          tester.widget<AppButton>(byKey('handover-withdraw')).variant,
+          AppButtonVariant.tinted,
         );
 
         await tester.tap(byKey('handover-withdraw'));

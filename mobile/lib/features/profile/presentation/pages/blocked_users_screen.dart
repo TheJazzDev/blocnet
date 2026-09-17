@@ -1,9 +1,13 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/profile/presentation/widgets/blocked_users/blocked_user_row.dart';
+import 'package:blocnet/features/profile/presentation/widgets/common/profile_inline_state.dart';
+import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_block_dialog.dart';
+import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/users/blocks_store.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -29,54 +33,8 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   Future<void> _unblockUser(BlockedUser user) async {
     if (_pendingUnblockIds.contains(user.blockedId)) return;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgSurface,
-        title: Text(
-          'Unblock user?',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.subtitleSize,
-            weight: FontWeight.w700,
-          ),
-        ),
-        content: Text(
-          'You will start seeing their posts and comments again.',
-          style: AppTypography.custom(
-            color: AppColors.textSecondary,
-            size: AppText.bodySize,
-            weight: FontWeight.w400,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              'Cancel',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.labelSize,
-                weight: FontWeight.w600,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              'Unblock',
-              style: AppTypography.custom(
-                color: AppColors.primary400,
-                size: AppText.labelSize,
-                weight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
+    final confirmed = await confirmPublicProfileBlock(context, isBlocked: true);
+    if (!confirmed || !mounted) return;
 
     setState(() => _pendingUnblockIds.add(user.blockedId));
     final success =
@@ -85,11 +43,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     setState(() => _pendingUnblockIds.remove(user.blockedId));
 
     if (!success) {
-      final error =
-          context.read<BlocksStore>().error ?? 'Failed to unblock user';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      AppSnackbar.showError(context, 'Could not unblock this user');
     }
   }
 
@@ -105,145 +59,82 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       ),
       body: Consumer<BlocksStore>(
         builder: (context, store, _) {
-          final blockedUsers = store.blockedUsers;
-
-          if (store.isLoading && blockedUsers.isEmpty) {
-            return Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary400,
-                strokeWidth: 2,
-              ),
-            );
-          }
-
-          if (store.error != null && blockedUsers.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpace.xl),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      store.error!,
-                      textAlign: TextAlign.center,
-                      style: AppTypography.custom(
-                        color: AppColors.textMuted,
-                        size: AppText.bodySize,
-                        weight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.md),
-                    TextButton(
-                      onPressed: store.fetchBlockedUsers,
-                      child: Text(
-                        'Retry',
-                        style: AppTypography.custom(
-                          color: AppColors.primary400,
-                          size: AppText.labelSize,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          if (blockedUsers.isEmpty) {
-            return Center(
-              child: Text(
-                'No blocked users',
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w500,
-                ),
-              ),
-            );
-          }
-
+          final users = store.blockedUsers;
           return RefreshIndicator(
+            color: AppColors.primary500,
+            backgroundColor: AppColors.bgSurface,
             onRefresh: store.fetchBlockedUsers,
-            child: ListView.separated(
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(
                   AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
-              itemCount: blockedUsers.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
-              itemBuilder: (context, index) {
-                final user = blockedUsers[index];
-                final name =
-                    (user.blocked.displayName?.trim().isNotEmpty ?? false)
-                        ? user.blocked.displayName!.trim()
-                        : (user.blocked.username?.trim().isNotEmpty ?? false)
-                            ? user.blocked.username!.trim()
-                            : 'User';
-                final username =
-                    (user.blocked.username?.trim().isNotEmpty ?? false)
-                        ? '@${user.blocked.username!.trim()}'
-                        : null;
-                final isPending = _pendingUnblockIds.contains(user.blockedId);
-
-                return AppSurface(
-                  padding: const EdgeInsets.all(AppSpace.md),
-                  child: Row(
-                    children: [
-                      AppAvatar(
-                        radius: 19,
-                        imageUrl: user.blocked.avatarUrl,
-                        fallback: Text(
-                          name.substring(0, 1).toUpperCase(),
-                          style: AppTypography.custom(
-                            color: AppColors.primary400,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w700,
-                          ),
+              children: [
+                SectionLabel(
+                  'Blocked',
+                  icon: Icons.block_outlined,
+                  trailing: users.isEmpty
+                      ? null
+                      : Text(
+                          '${users.length}',
+                          style: AppText.caption(AppColors.textFaint,
+                              weight: AppText.bold),
                         ),
-                      ),
-                      const SizedBox(width: AppSpace.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: AppTypography.custom(
-                                color: AppColors.textPrimary,
-                                size: AppText.bodySize,
-                                weight: FontWeight.w600,
-                              ),
-                            ),
-                            if (username != null)
-                              Text(
-                                username,
-                                style: AppTypography.custom(
-                                  color: AppColors.textMuted,
-                                  size: AppText.bodySize,
-                                  weight: FontWeight.w400,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: isPending ? null : () => _unblockUser(user),
-                        child: Text(
-                          isPending ? '...' : 'Unblock',
-                          style: AppTypography.custom(
-                            color: AppColors.primary400,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                ),
+                AppSpace.gapSm,
+                _content(store, users),
+              ],
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _content(BlocksStore store, List<BlockedUser> users) {
+    if (store.isLoading && users.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(AppSpace.xl),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary400,
+            strokeWidth: 2,
+          ),
+        ),
+      );
+    }
+    if (store.error != null && users.isEmpty) {
+      return AppRowGroup(
+        children: [
+          ProfileInlineState(
+            icon: Icons.cloud_off_rounded,
+            title: 'Could not load blocked users',
+            actionLabel: 'Retry',
+            onAction: store.fetchBlockedUsers,
+          ),
+        ],
+      );
+    }
+    if (users.isEmpty) {
+      return const AppRowGroup(
+        children: [
+          ProfileInlineState(
+            icon: Icons.check_circle_outline_rounded,
+            title: 'No one blocked',
+            hint: 'Block from a member’s profile.',
+          ),
+        ],
+      );
+    }
+    return AppRowGroup(
+      children: [
+        for (final user in users)
+          BlockedUserRow(
+            key: ValueKey(user.blockedId),
+            user: user,
+            isPending: _pendingUnblockIds.contains(user.blockedId),
+            onUnblock: () => _unblockUser(user),
+          ),
+      ],
     );
   }
 }

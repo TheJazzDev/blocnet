@@ -1,22 +1,8 @@
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/shared/widgets/app_button_tone.dart';
 import 'package:flutter/material.dart';
 
-enum AppButtonVariant {
-  /// Filled with the live space accent. One per screen.
-  primary,
-
-  /// Tinted accent on a bordered surface. The common secondary action.
-  secondary,
-
-  /// Text only. For tertiary actions and anything inside a dense row.
-  ghost,
-
-  /// Filled destructive. Reserve for actions that lose data or access.
-  danger,
-}
-
-enum AppButtonSize { regular, small }
+export 'app_button_tone.dart' show AppButtonVariant, AppButtonSize;
 
 /// The button.
 ///
@@ -28,10 +14,17 @@ enum AppButtonSize { regular, small }
 /// `AppColors.primary500` when the space changes, so reading the token is
 /// enough and the widget stays independent of app state.
 ///
+/// The compact sizes are the visual language's 40px (and 34px) button —
+/// filled accent, dark outlined, or outlined in a status colour — used by the
+/// Hunter Hub and the moderation space. A busy compact button shows only its
+/// spinner, as those screens always did.
+///
 /// ```dart
 /// AppButton(label: 'Start Mining', onPressed: start, fullWidth: true)
 /// AppButton(label: 'Cancel', onPressed: pop, variant: AppButtonVariant.ghost)
 /// AppButton(label: 'Suspend user', onPressed: suspend, variant: AppButtonVariant.danger)
+/// AppButton(label: 'Dismiss', onPressed: dismiss,
+///     variant: AppButtonVariant.outline, size: AppButtonSize.compact)
 /// ```
 class AppButton extends StatelessWidget {
   const AppButton({
@@ -40,6 +33,7 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.regular,
     this.icon,
+    this.color,
     this.isLoading = false,
     this.fullWidth = false,
     super.key,
@@ -55,92 +49,108 @@ class AppButton extends StatelessWidget {
   final AppButtonSize size;
   final IconData? icon;
 
-  /// Shows a spinner and blocks presses. The label stays, so the button does
-  /// not change width mid-action.
+  /// Overrides the tone of a [AppButtonVariant.primary] or
+  /// [AppButtonVariant.tinted] button (e.g. the moderation red).
+  final Color? color;
+
+  /// Shows a spinner and blocks presses. At regular and small sizes the label
+  /// stays, so the button does not change width mid-action.
   final bool isLoading;
   final bool fullWidth;
 
-  bool get _enabled => onPressed != null && !isLoading;
   bool get _small => size == AppButtonSize.small;
-
-  Color get _tone => switch (variant) {
-        AppButtonVariant.danger => AppColors.error500,
-        _ => AppColors.primary500,
-      };
-
-  Color get _background => switch (variant) {
-        AppButtonVariant.primary => _tone,
-        AppButtonVariant.danger => _tone,
-        AppButtonVariant.secondary => _tone.withValues(alpha: 0.12),
-        AppButtonVariant.ghost => Colors.transparent,
-      };
-
-  Color get _foreground => switch (variant) {
-        AppButtonVariant.primary ||
-        AppButtonVariant.danger =>
-          _tone.computeLuminance() > 0.4 ? AppColors.bgBase : Colors.white,
-        _ => _tone,
-      };
+  bool get _compact =>
+      size == AppButtonSize.compact || size == AppButtonSize.compactSmall;
 
   @override
   Widget build(BuildContext context) {
-    final fg = _foreground;
+    final tone = AppButtonTone.of(variant, color);
+    // A compact button that is busy keeps full strength; it is working, not
+    // disabled.
+    final dimmed = _compact
+        ? onPressed == null && !isLoading
+        : onPressed == null || isLoading;
+    final enabled = onPressed != null && !isLoading;
 
-    final content = Row(
+    return Semantics(
+      button: true,
+      enabled: !dimmed,
+      child: Opacity(
+        opacity: dimmed ? 0.45 : 1,
+        child: Material(
+          color: tone.background,
+          borderRadius: _radius,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: enabled ? onPressed : null,
+            borderRadius: _radius,
+            child: Container(
+              height: switch (size) {
+                AppButtonSize.compact => 40,
+                AppButtonSize.compactSmall => 34,
+                _ => null,
+              },
+              alignment: _compact ? Alignment.center : null,
+              // 44px tall at regular size: the accessibility minimum for a
+              // touch target.
+              constraints:
+                  _compact ? null : BoxConstraints(minHeight: _small ? 36 : 44),
+              padding: EdgeInsets.symmetric(
+                horizontal: _compact || _small ? AppSpace.md : AppSpace.lg,
+                vertical: _compact ? 0 : (_small ? AppSpace.sm : AppSpace.md),
+              ),
+              decoration: tone.border == null
+                  ? null
+                  : BoxDecoration(
+                      borderRadius: _radius,
+                      border: Border.all(color: tone.border!),
+                    ),
+              child: _compact && isLoading
+                  ? _spinner(tone.foreground, AppIcon.sm)
+                  : _content(tone.foreground),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  BorderRadius get _radius => _compact ? AppRadius.md : AppRadius.sm;
+
+  Widget _spinner(Color color, double size) => SizedBox(
+        width: size,
+        height: size,
+        child: CircularProgressIndicator(strokeWidth: 2, color: color),
+      );
+
+  Widget _content(Color fg) {
+    final iconSize = _compact || _small ? AppIcon.sm : AppIcon.md;
+    final gap = _compact ? 6.0 : AppSpace.sm;
+    final style = _compact
+        ? AppText.label(fg, weight: AppText.bold)
+        : _small
+            ? AppText.label(fg, weight: AppText.semibold)
+            : AppText.body(fg, weight: AppText.semibold);
+    return Row(
       mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (isLoading) ...[
-          SizedBox(
-            width: _small ? AppIcon.xs : AppIcon.sm,
-            height: _small ? AppIcon.xs : AppIcon.sm,
-            child: CircularProgressIndicator(strokeWidth: 2, color: fg),
-          ),
-          const SizedBox(width: AppSpace.sm),
+          _spinner(fg, _small ? AppIcon.xs : AppIcon.sm),
+          SizedBox(width: gap),
         ] else if (icon != null) ...[
-          Icon(icon, size: _small ? AppIcon.sm : AppIcon.md, color: fg),
-          const SizedBox(width: AppSpace.sm),
+          Icon(icon, size: iconSize, color: fg),
+          SizedBox(width: gap),
         ],
         Flexible(
           child: Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: _small
-                ? AppText.label(fg, weight: AppText.semibold)
-                : AppText.body(fg, weight: AppText.semibold),
+            style: style,
           ),
         ),
       ],
-    );
-
-    return Opacity(
-      opacity: _enabled ? 1 : 0.45,
-      child: Material(
-        color: _background,
-        borderRadius: AppRadius.sm,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _enabled ? onPressed : null,
-          borderRadius: AppRadius.sm,
-          child: Container(
-            // 44px tall at regular size: the accessibility minimum for a
-            // touch target, which the hand-rolled buttons vary either side of.
-            constraints: BoxConstraints(minHeight: _small ? 36 : 44),
-            padding: EdgeInsets.symmetric(
-              horizontal: _small ? AppSpace.md : AppSpace.lg,
-              vertical: _small ? AppSpace.sm : AppSpace.md,
-            ),
-            decoration: variant == AppButtonVariant.secondary
-                ? BoxDecoration(
-                    borderRadius: AppRadius.sm,
-                    border: Border.all(color: _tone.withValues(alpha: 0.35)),
-                  )
-                : null,
-            child: content,
-          ),
-        ),
-      ),
     );
   }
 }

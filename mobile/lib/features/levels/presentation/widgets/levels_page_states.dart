@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/features/badges/presentation/widgets/progress_style.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Full-body loading spinner for the levels page.
@@ -15,7 +15,7 @@ class LevelsLoadingState extends StatelessWidget {
   }
 }
 
-/// Full-body error message with a retry button.
+/// Full-body error with a retry button.
 class LevelsErrorState extends StatelessWidget {
   const LevelsErrorState({
     super.key,
@@ -29,30 +29,13 @@ class LevelsErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.lg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline_rounded,
-                size: AppIcon.xxl, color: AppColors.error500),
-            const SizedBox(height: AppSpace.md),
-            Text(
-              message,
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.labelSize,
-                weight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpace.md),
-            ElevatedButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
-          ],
+      child: AppEmptyState.error(
+        title: 'Could not load levels',
+        message: progressErrorText(
+          message,
+          fallback: 'Check your connection and try again.',
         ),
+        onAction: onRetry,
       ),
     );
   }
@@ -64,14 +47,10 @@ class LevelsEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'No levels available',
-        style: AppTypography.custom(
-          color: AppColors.textMuted,
-          size: AppText.labelSize,
-          weight: FontWeight.w500,
-        ),
+    return const Center(
+      child: AppEmptyState(
+        icon: Icons.military_tech_outlined,
+        title: 'No levels yet',
       ),
     );
   }

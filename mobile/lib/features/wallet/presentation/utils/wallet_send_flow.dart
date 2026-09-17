@@ -4,6 +4,7 @@ import 'package:blocnet/features/wallet/presentation/pages/send_token_page.dart'
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/send_asset_picker_sheet.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -36,10 +37,10 @@ Future<void> openSendFlow(
     return;
   }
 
-  showWalletToast(
+  AppSnackbar.showSuccess(
     context,
-    message: resultMessage,
-    type: WalletToastType.success,
+    resultMessage,
+    duration: AppSnackbar.longDuration,
   );
 }
 
@@ -49,10 +50,10 @@ Future<String?> _openPointsSend(
 ) async {
   final asset = walletStore.findAsset(walletPointsAsset);
   if (asset == null || !asset.canSend) {
-    showWalletToast(
+    AppSnackbar.showInfo(
       context,
-      message: 'Sending BNP is unavailable right now.',
-      type: WalletToastType.info,
+      'Sending BNP is unavailable right now.',
+      duration: AppSnackbar.longDuration,
     );
     return null;
   }
@@ -71,19 +72,19 @@ Future<String?> _openTokenSend(
   final canWithdraw = walletStore.canWithdrawAsset(assetCode);
 
   if (!isWalletReadyForAction(walletStore)) {
-    showWalletToast(
+    AppSnackbar.showError(
       context,
-      message: walletNotReadyMessage(walletStore),
-      type: WalletToastType.error,
+      walletNotReadyMessage(walletStore),
+      duration: AppSnackbar.longDuration,
     );
     return null;
   }
 
   if (!canTransfer && !canWithdraw) {
-    showWalletToast(
+    AppSnackbar.showInfo(
       context,
-      message: '$assetCode send and withdrawal are currently disabled.',
-      type: WalletToastType.info,
+      'Sending $assetCode is off right now.',
+      duration: AppSnackbar.longDuration,
     );
     return null;
   }
@@ -105,10 +106,10 @@ Future<String?> _pickAsset(
 ) async {
   final assets = walletStore.snapshot?.assets ?? const <WalletAssetBalance>[];
   if (assets.isEmpty) {
-    showWalletToast(
+    AppSnackbar.showInfo(
       context,
-      message: 'No wallet assets available to send right now.',
-      type: WalletToastType.info,
+      'Nothing to send yet.',
+      duration: AppSnackbar.longDuration,
     );
     return null;
   }

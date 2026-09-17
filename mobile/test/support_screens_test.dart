@@ -50,6 +50,42 @@ void main() {
     expect(find.textContaining('coming soon'), findsNothing);
   });
 
+  testWidgets('a link that cannot open says so instead of doing nothing',
+      (tester) async {
+    final opened = <Uri>[];
+    await tester.pumpWidget(_app(HelpSupportScreen(
+      launcher: (uri) async {
+        opened.add(uri);
+        return false;
+      },
+    )));
+    await tester.pump();
+
+    await tester.tap(find.text('Email Support'));
+    await tester.pump();
+
+    expect(opened.single.toString(), 'mailto:support@blocnet.app');
+    expect(find.text('Could not open your mail app'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 10));
+  });
+
+  test('support copy names the tabs as they are now', () {
+    final copy = [
+      for (final step in gettingStartedSteps) ...[
+        step.body,
+        step.actionLabel ?? '',
+      ],
+      for (final entry in faqEntries) entry.answer,
+      for (final term in glossaryTerms) term.definition,
+    ].join('\n');
+    expect(copy, isNot(contains('Discover')));
+    expect(copy, isNot(contains('Mining tab')));
+    expect(copy, isNot(contains('Open Mining')));
+    expect(copy, isNot(contains('Profile > Referral Code')));
+    expect(copy, contains('Gems tab'));
+    expect(copy, contains('Mine tab'));
+  });
+
   test('FAQ covers the core vocabulary', () {
     final questions = faqEntries.map((e) => e.question.toLowerCase()).toList();
     for (final term in [
@@ -99,6 +135,31 @@ void main() {
       );
       expect(find.text('${i + 1}. ${step.title}'), findsOneWidget);
     }
+  });
+
+  testWidgets('getting started fits 375px and shows each shortcut as a button',
+      (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_app(const GettingStartedScreen()));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    final withAction =
+        gettingStartedSteps.where((s) => s.actionLabel != null).toList();
+    for (final step in withAction) {
+      final label = find.text(step.actionLabel!);
+      await tester.scrollUntilVisible(
+        label,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(label, findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+    expect(find.byIcon(Icons.arrow_forward_rounded), findsWidgets);
   });
 
   test('glossary defines every agreed term with BNP/BNT expansions', () {

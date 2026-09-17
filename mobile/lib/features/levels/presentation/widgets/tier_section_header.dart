@@ -1,12 +1,11 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/domain/level_tier.dart';
 import 'package:blocnet/features/levels/presentation/widgets/level_status_chip.dart';
 import 'package:flutter/material.dart';
 
-/// Heading for one tier: colour swatch, tier name, level range and a status
-/// pill describing how far the user is through the tier.
+/// Small caps heading for one tier: a flat colour dot, the tier name, its
+/// level range and a pill saying how far the user is through it.
 class TierSectionHeader extends StatelessWidget {
   const TierSectionHeader({
     super.key,
@@ -24,49 +23,29 @@ class TierSectionHeader extends StatelessWidget {
     final unlocked =
         section.levels.where((l) => l.level <= currentLevelNumber).length;
     final total = section.levels.length;
+    final caps = AppText.caption(AppColors.textFaint, weight: AppText.bold)
+        .copyWith(letterSpacing: 1.0);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpace.hair, AppSpace.xs, AppSpace.hair, AppSpace.sm),
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
       child: Row(
         children: [
           Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(AppRadius.smValue),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.45),
-                  blurRadius: 6,
-                  spreadRadius: 0.5,
-                ),
-              ],
-            ),
+            width: AppSpace.sm,
+            height: AppSpace.sm,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          const SizedBox(width: AppSpace.sm),
-          Text(
-            tier.name,
-            style: AppTypography.custom(
-              color: AppColors.textPrimary,
-              size: AppText.labelSize,
-              weight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(width: AppSpace.sm),
+          AppSpace.wGapSm,
+          Text(tier.name.toUpperCase(), style: caps),
+          AppSpace.wGapSm,
           Expanded(
             child: Text(
-              '${tier.rangeLabel} · ${tier.shape}',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.captionSize,
-                weight: FontWeight.w500,
-              ),
+              tier.rangeLabel.toUpperCase(),
               overflow: TextOverflow.ellipsis,
+              style: caps.copyWith(fontWeight: AppText.medium),
             ),
           ),
-          const SizedBox(width: AppSpace.sm),
+          AppSpace.wGapSm,
           _statusChip(color: color, unlocked: unlocked, total: total),
         ],
       ),
@@ -81,7 +60,7 @@ class TierSectionHeader extends StatelessWidget {
     if (total == 0) return const SizedBox.shrink();
     if (unlocked >= total) {
       return LevelStatusChip(
-        label: 'COMPLETE',
+        label: 'Complete',
         color: color,
         filled: false,
         icon: Icons.check_rounded,
@@ -89,7 +68,7 @@ class TierSectionHeader extends StatelessWidget {
     }
     if (unlocked == 0) {
       return LevelStatusChip(
-        label: 'LOCKED',
+        label: 'Locked',
         color: AppColors.textFaint,
         filled: false,
         icon: Icons.lock_outline_rounded,

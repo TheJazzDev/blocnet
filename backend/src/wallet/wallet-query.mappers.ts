@@ -13,6 +13,10 @@ import {
 } from '@prisma/client';
 import { toDecimalString } from './types/decimal';
 import { normalizeWalletAsset } from './wallet-asset.util';
+import {
+  toMemberLedgerMetadata,
+  toMemberWithdrawalFailure,
+} from './withdrawal-failure';
 
 /**
  * User-facing wallet block for `GET /wallet/me`.
@@ -89,7 +93,10 @@ export function toTransactionResponse(
           : 'internal';
   }
 
-  const metadata = normalizeLedgerMetadata(entry.metadata);
+  const metadata = toMemberLedgerMetadata(
+    entry,
+    normalizeLedgerMetadata(entry.metadata),
+  );
 
   const asset =
     normalizeWalletAsset(entry.debitAccount.currency) ??
@@ -143,6 +150,10 @@ export function normalizeLedgerMetadata(
   return input;
 }
 
+/**
+ * Member view of a withdrawal. Failure text is always the safe copy from
+ * `withdrawal-failure.ts`, including on rows stored before that split.
+ */
 export function toWithdrawalResponse(withdrawal: {
   id: string;
   asset: WalletAsset;
@@ -161,6 +172,7 @@ export function toWithdrawalResponse(withdrawal: {
   createdAt: Date;
   updatedAt: Date;
 }) {
+  const { failureReason, rejectReason } = toMemberWithdrawalFailure(withdrawal);
   return {
     id: withdrawal.id,
     asset: withdrawal.asset,
@@ -170,9 +182,9 @@ export function toWithdrawalResponse(withdrawal: {
     netAmount: toDecimalString(withdrawal.netAmount),
     status: withdrawal.status,
     reason: withdrawal.reason,
-    rejectReason: withdrawal.rejectReason,
+    rejectReason,
     broadcastTxHash: withdrawal.broadcastTxHash,
-    failureReason: withdrawal.failureReason,
+    failureReason,
     requestedAt: withdrawal.requestedAt,
     reviewedAt: withdrawal.reviewedAt,
     confirmedAt: withdrawal.confirmedAt,

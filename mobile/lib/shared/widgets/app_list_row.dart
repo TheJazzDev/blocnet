@@ -1,32 +1,36 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
+import 'package:blocnet/shared/widgets/app_icon_square.dart';
 import 'package:flutter/material.dart';
 
-/// A leading / title+subtitle / trailing row.
-///
-/// This is the shape behind most of the app's lists: settings entries,
-/// leaderboard rows, wallet assets, project rows, notification items. Each one
-/// had its own copy, which is why the gap between the avatar and the title, and
-/// the alignment of the trailing value, differ from screen to screen.
+/// The list row of the visual language: a leading icon (in a tinted square,
+/// or bare in the accent), a bold title, a muted subtitle, an optional
+/// trailing widget and a chevron when the row opens something.
 ///
 /// Flutter's own `ListTile` is deliberately not used: it enforces Material
 /// metrics and its own text theme, which fight the token scale.
 ///
 /// ```dart
 /// AppListRow(
-///   leading: AppAvatar(user: u),
-///   title: u.displayName,
-///   subtitle: '@${u.username}',
-///   trailing: Text('4,210', style: AppText.label(AppColors.textPrimary)),
-///   onTap: () => openProfile(u),
+///   icon: Icons.shield_outlined,
+///   title: 'Privacy',
+///   subtitle: 'Who can see your activity',
+///   onTap: openPrivacy,
 /// )
+/// AppListRow(leading: AppAvatar(user: u), title: u.displayName)
 /// ```
 class AppListRow extends StatelessWidget {
   const AppListRow({
     required this.title,
     this.subtitle,
+    this.subtitleWidget,
+    this.icon,
+    this.iconColor,
+    this.plainIcon = false,
     this.leading,
     this.trailing,
+    this.trailingIcon = Icons.chevron_right_rounded,
+    this.showChevron,
     this.onTap,
     this.dense = false,
     this.padding,
@@ -36,32 +40,48 @@ class AppListRow extends StatelessWidget {
 
   final String title;
   final String? subtitle;
+
+  /// Replaces [subtitle] when the second line needs more than text.
+  final Widget? subtitleWidget;
+
+  /// Drawn in an [AppIconSquare] (or bare, when [plainIcon]). Ignored when
+  /// [leading] is given.
+  final IconData? icon;
+
+  /// Defaults to the live space accent.
+  final Color? iconColor;
+
+  /// The bare accent icon of the Mine rows, instead of the square.
+  final bool plainIcon;
   final Widget? leading;
 
-  /// A value, a chip, or a chevron. Kept as a widget because the app's rows
-  /// end in all three.
+  /// A value, a pill, a switch — anything before the chevron.
   final Widget? trailing;
+  final IconData trailingIcon;
+
+  /// Defaults to showing the chevron whenever the row is tappable.
+  final bool? showChevron;
   final VoidCallback? onTap;
 
-  /// Tighter vertical padding, label-sized title. For rows inside a card.
+  /// Label-sized title. For rows inside a dense card.
   final bool dense;
   final EdgeInsetsGeometry? padding;
   final Color? titleColor;
 
   @override
   Widget build(BuildContext context) {
+    final lead = leading ?? _iconLead();
+    final chevron = showChevron ?? onTap != null;
+    final titleStyle = (dense ? AppText.label : AppText.body)(
+      titleColor ?? AppColors.textPrimary,
+      weight: AppText.bold,
+    );
+
     final row = Padding(
-      padding: padding ??
-          EdgeInsets.symmetric(
-            horizontal: AppSpace.lg,
-            vertical: dense ? AppSpace.sm : AppSpace.md,
-          ),
+      padding: padding ?? AppSpace.row,
       child: Row(
         children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: AppSpace.md),
-          ],
+          if (lead != null) ...[lead, AppSpace.wGapMd],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,23 +89,19 @@ class AppListRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: dense
-                      ? AppText.label(
-                          titleColor ?? AppColors.textPrimary,
-                          weight: AppText.medium,
-                        )
-                      : AppText.body(
-                          titleColor ?? AppColors.textPrimary,
-                          weight: AppText.medium,
-                        ),
+                  style: titleStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: AppSpace.hair),
+                if (subtitleWidget != null) ...[
+                  AppSpace.gapHair,
+                  subtitleWidget!,
+                ] else if (subtitle != null && subtitle!.isNotEmpty) ...[
+                  AppSpace.gapHair,
                   Text(
                     subtitle!,
-                    style: AppText.caption(AppColors.textFaint),
+                    style: AppText.label(AppColors.textMuted,
+                        weight: AppText.regular),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -93,9 +109,10 @@ class AppListRow extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: AppSpace.md),
-            trailing!,
+          if (trailing != null) ...[AppSpace.wGapSm, trailing!],
+          if (chevron) ...[
+            AppSpace.wGapXs,
+            Icon(trailingIcon, size: AppIcon.md, color: AppColors.textFaint),
           ],
         ],
       ),
@@ -103,8 +120,20 @@ class AppListRow extends StatelessWidget {
 
     if (onTap == null) return row;
     return Material(
-      color: Colors.transparent,
+      type: MaterialType.transparency,
       child: InkWell(onTap: onTap, child: row),
     );
+  }
+
+  Widget? _iconLead() {
+    if (icon == null) return null;
+    if (plainIcon) {
+      return Icon(
+        icon,
+        size: AppIcon.md,
+        color: iconColor ?? AppColors.primary400,
+      );
+    }
+    return AppIconSquare(icon: icon, color: iconColor);
   }
 }

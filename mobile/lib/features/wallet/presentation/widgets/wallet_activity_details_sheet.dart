@@ -1,352 +1,207 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/features/wallet/data/models/wallet_models.dart';
 import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_button.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_fields.dart';
 import 'package:blocnet/features/wallet/presentation/widgets/wallet_activity_rows.dart';
 import 'package:blocnet/services/wallet/wallet_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-class _WalletDetailField {
-  const _WalletDetailField({
-    required this.label,
-    required this.value,
-    this.copyable = false,
-  });
-
-  final String label;
-  final String value;
-  final bool copyable;
-}
-
-void _showCopiedToast(BuildContext context, String message) {
-  showWalletToast(
-    context,
-    message: message,
-    type: WalletToastType.success,
-  );
-}
-
 /// Bottom sheet with every detail of one activity row.
 void showWalletActivityDetails(BuildContext context, WalletActivityItem row) {
-  final tx = row.transaction;
-  final withdrawal = row.withdrawal;
-  if (tx == null && withdrawal == null) {
-    return;
-  }
-
-  final fields = <_WalletDetailField>[];
-  String? explorerTxUrl;
-  if (tx != null) {
-    final metadata = tx.metadata;
-    final counterparty = tx.counterparty;
-    final counterpartyLabel = counterparty?.preferredLabel ?? '';
-    final counterpartyAddress = trimValue(
-      counterparty?.walletAddress ??
-          (tx.isOutgoing
-              ? tx.metadataString('recipientAddress')
-              : tx.metadataString('senderAddress')),
-    );
-    final fromAddress = trimValue(tx.metadataString('fromAddress'));
-    final toAddress = trimValue(tx.metadataString('toAddress'));
-    final txHash = trimValue(tx.metadataString('txHash'));
-    final note = trimValue(tx.metadataString('note'));
-    explorerTxUrl =
-        buildExplorerTxUrl(context.read<WalletStore>().snapshot, txHash);
-
-    final feeAmount = double.tryParse(tx.feeAmount) ?? 0;
-    final amountDecimals = tx.isPoints ? 3 : 6;
-    fields.addAll([
-      _WalletDetailField(label: 'Type', value: _typeLabel(tx)),
-      _WalletDetailField(
-          label: 'Direction', value: directionLabel(tx.direction)),
-      _WalletDetailField(
-        label: 'Amount',
-        value:
-            '${formatTokenAmount(tx.amount, maxDecimals: amountDecimals)} ${tx.asset}',
-      ),
-      if (feeAmount > 0)
-        _WalletDetailField(
-          label: 'Fee',
-          value:
-              '${formatTokenAmount(tx.feeAmount, maxDecimals: amountDecimals)} ${tx.asset}',
-        ),
-      _WalletDetailField(label: 'Date', value: formatDate(tx.createdAt)),
-    ]);
-
-    if (counterpartyLabel.isNotEmpty) {
-      fields.add(
-          _WalletDetailField(label: 'Counterparty', value: counterpartyLabel));
-    }
-    if (counterpartyAddress.isNotEmpty) {
-      fields.add(
-        _WalletDetailField(
-          label: 'Counterparty Wallet',
-          value: counterpartyAddress,
-          copyable: true,
-        ),
-      );
-    }
-    if (fromAddress.isNotEmpty) {
-      fields.add(
-        _WalletDetailField(
-            label: 'From Wallet', value: fromAddress, copyable: true),
-      );
-    }
-    if (toAddress.isNotEmpty) {
-      fields.add(
-        _WalletDetailField(
-            label: 'To Wallet', value: toAddress, copyable: true),
-      );
-    }
-    if (txHash.isNotEmpty) {
-      fields.add(
-        _WalletDetailField(
-            label: 'Transaction Hash', value: txHash, copyable: true),
-      );
-    }
-    final logIndex = tx.metadataInt('logIndex');
-    if (logIndex != null) {
-      fields.add(
-          _WalletDetailField(label: 'Log Index', value: logIndex.toString()));
-    }
-    final depositId = trimValue(metadata?['depositId']?.toString());
-    if (depositId.isNotEmpty) {
-      fields.add(_WalletDetailField(
-          label: 'Deposit ID', value: depositId, copyable: true));
-    }
-    if (note.isNotEmpty) {
-      fields.add(_WalletDetailField(label: 'Note', value: note));
-    }
-    if (tx.referenceId != null &&
-        tx.referenceId!.trim().isNotEmpty &&
-        tx.referenceId != tx.id) {
-      fields.add(
-        _WalletDetailField(
-          label: 'Reference ID',
-          value: tx.referenceId!,
-          copyable: true,
-        ),
-      );
-    }
-    fields.add(_WalletDetailField(
-        label: tx.isPoints ? 'Transaction ID' : 'Ledger Entry ID',
-        value: tx.id,
-        copyable: true));
-  }
-
-  if (withdrawal != null) {
-    fields.addAll([
-      _WalletDetailField(label: 'Type', value: 'Withdrawal'),
-      _WalletDetailField(
-          label: 'Status', value: toTitleCase(withdrawal.status)),
-      _WalletDetailField(
-        label: 'Amount',
-        value:
-            '-${formatTokenAmount(withdrawal.amount, absolute: true)} ${withdrawal.asset}',
-      ),
-      _WalletDetailField(
-        label: 'Destination Wallet',
-        value: withdrawal.toAddress,
-        copyable: true,
-      ),
-      _WalletDetailField(label: 'Reason', value: withdrawal.reason),
-      _WalletDetailField(
-        label: 'Requested At',
-        value: formatDate(withdrawal.requestedAt),
-      ),
-    ]);
-    if (withdrawal.broadcastTxHash != null &&
-        withdrawal.broadcastTxHash!.trim().isNotEmpty) {
-      explorerTxUrl ??= buildExplorerTxUrl(
-          context.read<WalletStore>().snapshot, withdrawal.broadcastTxHash!);
-      fields.add(
-        _WalletDetailField(
-          label: 'Broadcast Tx Hash',
-          value: withdrawal.broadcastTxHash!,
-          copyable: true,
-        ),
-      );
-    }
-    if (withdrawal.rejectReason != null &&
-        withdrawal.rejectReason!.trim().isNotEmpty) {
-      fields.add(
-        _WalletDetailField(
-            label: 'Reject Reason', value: withdrawal.rejectReason!),
-      );
-    }
-    if (withdrawal.failureReason != null &&
-        withdrawal.failureReason!.trim().isNotEmpty) {
-      fields.add(
-        _WalletDetailField(
-            label: 'Failure Reason', value: withdrawal.failureReason!),
-      );
-    }
-    fields.add(
-      _WalletDetailField(
-        label: 'Withdrawal ID',
-        value: withdrawal.id,
-        copyable: true,
-      ),
-    );
-  }
-
+  if (row.transaction == null && row.withdrawal == null) return;
+  final details = WalletActivityDetails.from(
+    row,
+    context.read<WalletStore>().snapshot,
+  );
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (sheetContext) {
-      final title = tx != null ? _typeLabel(tx) : 'Withdrawal Details';
-      return SafeArea(
-        top: false,
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.bgSurface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-            border: Border.all(color: AppColors.borderSubtle),
-          ),
-          padding: EdgeInsets.fromLTRB(
-            16,
-            12,
-            16,
-            18 + MediaQuery.of(sheetContext).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.borderMuted,
-                      borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpace.md),
-                Text(
-                  title,
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: AppText.titleSize,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.md),
-                ...fields.map((field) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpace.md),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpace.md,
-                        vertical: AppSpace.md,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgElevated,
-                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-                        border: Border.all(color: AppColors.borderSubtle),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  field.label,
-                                  style: AppTypography.custom(
-                                    color: AppColors.textFaint,
-                                    size: AppText.captionSize,
-                                    weight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: AppSpace.hair),
-                                Text(
-                                  field.value,
-                                  style: AppTypography.custom(
-                                    color: AppColors.textSecondary,
-                                    size: AppText.labelSize,
-                                    weight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (field.copyable) ...[
-                            const SizedBox(width: AppSpace.sm),
-                            GestureDetector(
-                              onTap: () {
-                                Clipboard.setData(
-                                  ClipboardData(text: field.value),
-                                );
-                                _showCopiedToast(
-                                  sheetContext,
-                                  '${field.label} copied.',
-                                );
-                              },
-                              child: Container(
-                                width: 30,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  color: AppColors.bgSurface,
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.smValue),
-                                  border:
-                                      Border.all(color: AppColors.borderSubtle),
-                                ),
-                                child: Icon(
-                                  Icons.copy_rounded,
-                                  size: AppIcon.sm,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-                if (explorerTxUrl != null) ...[
-                  const SizedBox(height: AppSpace.xs),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: () => openExplorerTx(
-                        sheetContext,
-                        explorerTxUrl!,
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary500,
-                        foregroundColor: Colors.black,
-                        minimumSize: const Size.fromHeight(44),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.mdValue),
-                        ),
-                      ),
-                      icon: const Icon(Icons.open_in_new_rounded,
-                          size: AppIcon.md),
-                      label: const Text('Verify on block explorer'),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      );
-    },
+    builder: (_) => WalletActivitySheet(item: row, details: details),
   );
 }
 
-/// BNP rows carry a readable label from the backend ("BNP transfer", "Tip").
-String _typeLabel(WalletTransaction tx) =>
-    tx.isPoints ? tx.label : toTitleCase(tx.reason);
+class WalletActivitySheet extends StatelessWidget {
+  const WalletActivitySheet({
+    super.key,
+    required this.item,
+    required this.details,
+  });
+
+  final WalletActivityItem item;
+  final WalletActivityDetails details;
+
+  @override
+  Widget build(BuildContext context) {
+    final explorerUrl = details.explorerUrl;
+    return SafeArea(
+      top: false,
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        decoration: const BoxDecoration(
+          color: AppColors.bgBase,
+          borderRadius: AppRadius.sheet,
+          border: Border(top: BorderSide(color: AppColors.borderSubtle)),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg,
+            AppSpace.md,
+            AppSpace.lg,
+            AppSpace.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _Grabber(),
+              const SizedBox(height: AppSpace.lg),
+              _Header(item: item, title: details.title),
+              const SizedBox(height: AppSpace.lg),
+              _FieldsCard(fields: details.fields),
+              if (explorerUrl != null) ...[
+                const SizedBox(height: AppSpace.lg),
+                SizedBox(
+                  width: double.infinity,
+                  child: WalletButton(
+                    icon: Icons.open_in_new_rounded,
+                    label: 'View on block explorer',
+                    onPressed: () => openExplorerTx(context, explorerUrl),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Grabber extends StatelessWidget {
+  const _Grabber();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 36,
+        height: 4,
+        decoration: const BoxDecoration(
+          color: AppColors.borderMuted,
+          borderRadius: AppRadius.full,
+        ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.item, required this.title});
+
+  final WalletActivityItem item;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final badge = item.badgeLabel;
+    final badgeColor = item.badgeColor;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: AppText.title(AppColors.textPrimary)),
+              const SizedBox(height: AppSpace.hair),
+              Text(
+                item.amountLabel,
+                style: AppText.body(item.amountColor, weight: AppText.bold)
+                    .merge(AppText.tabular),
+              ),
+            ],
+          ),
+        ),
+        if (badge != null && badgeColor != null)
+          AppPill.caps(label: badge, color: badgeColor, dense: true),
+      ],
+    );
+  }
+}
+
+class _FieldsCard extends StatelessWidget {
+  const _FieldsCard({required this.fields});
+
+  final List<WalletDetailField> fields;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppRowGroup(
+      children: [
+        for (final field in fields) _FieldRow(field: field),
+      ],
+    );
+  }
+}
+
+class _FieldRow extends StatelessWidget {
+  const _FieldRow({required this.field});
+
+  final WalletDetailField field;
+
+  void _copy(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: field.value));
+    // The root overlay: a SnackBar would sit behind this sheet.
+    AppSnackbar.showSuccess(context, '${field.label} copied.');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        AppSpace.md,
+        field.copyable ? AppSpace.xs : AppSpace.lg,
+        AppSpace.md,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  field.label.toUpperCase(),
+                  style: WalletType.caps(AppColors.textFaint),
+                ),
+                const SizedBox(height: AppSpace.hair),
+                Text(
+                  field.value,
+                  style: AppText.label(
+                    AppColors.textSecondary,
+                    weight: AppText.semibold,
+                  ).copyWith(height: 1.4),
+                ),
+              ],
+            ),
+          ),
+          if (field.copyable)
+            IconButton(
+              onPressed: () => _copy(context),
+              tooltip: 'Copy ${field.label.toLowerCase()}',
+              iconSize: AppIcon.sm,
+              icon: Icon(Icons.copy_rounded, color: AppColors.textMuted),
+            ),
+        ],
+      ),
+    );
+  }
+}

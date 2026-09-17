@@ -1,13 +1,15 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_card.dart';
+import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
+import 'package:blocnet/shared/widgets/app_empty_state.dart';
 import 'package:flutter/material.dart';
 
+/// One topic's posts, pull to refresh. When there are none it says why:
+/// nothing posted yet, or the feed failed to load.
 class CommunityFeedList extends StatelessWidget {
   const CommunityFeedList({
     super.key,
@@ -21,6 +23,8 @@ class CommunityFeedList extends StatelessWidget {
     required this.onBookmark,
     this.onModeratePost,
     this.canArchiveModeration = false,
+    this.error,
+    this.emptyTitle = 'No posts yet',
   });
 
   final List<CommunityPost> posts;
@@ -37,74 +41,78 @@ class CommunityFeedList extends StatelessWidget {
   )? onModeratePost;
   final bool canArchiveModeration;
 
+  /// Why the feed failed to load; shown only when there is nothing to list.
+  final String? error;
+  final String emptyTitle;
+
   @override
   Widget build(BuildContext context) {
-    if (posts.isEmpty) {
-      return RefreshIndicator(
-        color: accentColor,
-        backgroundColor: AppColors.bgSurface,
-        onRefresh: onRefresh,
-        child: ListView(
-          controller: controller,
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(16, 32, 16, bottomPad),
-          children: [
-            SizedBox(
-              height: 140,
-              child: Center(
-                child: Text(
-                  'No posts in this section yet.',
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: AppText.labelSize,
-                    weight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final isCardMode = mode == FeedViewMode.card;
     return RefreshIndicator(
       color: accentColor,
       backgroundColor: AppColors.bgSurface,
       onRefresh: onRefresh,
-      child: ListView.separated(
-        controller: controller,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPad),
-        itemCount: posts.length,
-        separatorBuilder: (_, __) => isCardMode
-            ? const SizedBox(height: AppSpace.md)
-            : Divider(
-                height: 1,
-                color: AppColors.borderSubtle.withValues(alpha: 0.8),
+      child: posts.isEmpty ? _empty() : _list(context),
+    );
+  }
+
+  Widget _empty() {
+    return ListView(
+      controller: controller,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.only(bottom: bottomPad),
+      children: [
+        error != null
+            ? AppEmptyState.error(
+                title: 'Couldn’t load posts',
+                message: error,
+                onAction: onRefresh,
+              )
+            : AppEmptyState(
+                icon: Icons.forum_outlined,
+                title: emptyTitle,
+                message: 'Tap + to start one.',
               ),
-        itemBuilder: (context, index) => CommunityCard(
-          post: posts[index],
+      ],
+    );
+  }
+
+  Widget _list(BuildContext context) {
+    final isCard = mode == FeedViewMode.card;
+    return ListView.separated(
+      controller: controller,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        isCard ? AppSpace.md : 0,
+        AppSpace.lg,
+        bottomPad,
+      ),
+      itemCount: posts.length,
+      separatorBuilder: (_, __) => isCard
+          ? const SizedBox(height: AppSpace.md)
+          : const Divider(height: 1, color: AppColors.borderSubtle),
+      itemBuilder: (context, index) {
+        final post = posts[index];
+        return CommunityCard(
+          key: ValueKey('community-post-${post.id}'),
+          post: post,
           mode: mode,
           onTap: () => Navigator.of(context).pushNamed(
             AppRoutes.communityDiscussion,
-            arguments: posts[index].id,
+            arguments: post.id,
           ),
           onCommentTap: () => Navigator.of(context).pushNamed(
             AppRoutes.communityDiscussion,
-            arguments: {
-              'postId': posts[index].id,
-              'focusComposer': true,
-            },
+            arguments: {'postId': post.id, 'focusComposer': true},
           ),
-          onLike: () => onLike(posts[index].id),
-          onBookmark: () => onBookmark(posts[index].id),
+          onLike: () => onLike(post.id),
+          onBookmark: () => onBookmark(post.id),
           onModerate: onModeratePost == null
               ? null
-              : (decision) => onModeratePost!(posts[index].id, decision),
+              : (decision) => onModeratePost!(post.id, decision),
           canArchiveModeration: canArchiveModeration,
-        ),
-      ),
+        );
+      },
     );
   }
 }

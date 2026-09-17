@@ -8,11 +8,25 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class ApiException implements Exception {
-  ApiException(this.message, {this.statusCode, this.responseBody});
+  ApiException(
+    this.message, {
+    this.statusCode,
+    this.responseBody,
+    this.isNetworkError = false,
+  });
+
+  /// Shown for any 401 that reaches a screen. A session the auth server
+  /// really rejected is signed out before screens see it, so a visible 401
+  /// means the session could not be confirmed yet (usually no connection).
+  static const String sessionUnconfirmedMessage =
+      "We couldn't confirm your session. Check your connection and try again.";
 
   final String message;
   final int? statusCode;
   final String? responseBody;
+
+  /// True when no response arrived at all (DNS, socket, timeout).
+  final bool isNetworkError;
 
   @override
   String toString() {
@@ -21,6 +35,14 @@ class ApiException implements Exception {
     }
     return message;
   }
+}
+
+/// The backend answers 401 for its own JWKS problems too ("Token
+/// verification timed out", "JWKS not configured"). Those say nothing about
+/// the user's token, so they must never end a session.
+bool isServerSideAuthTrouble(String? responseBody) {
+  final body = (responseBody ?? '').toLowerCase();
+  return body.contains('timed out') || body.contains('jwks');
 }
 
 class ApiClient {
@@ -43,6 +65,12 @@ class ApiClient {
   static String? _authToken;
   static Future<String?> Function()? _tokenRefresher;
   static Future<String?>? _inFlightTokenRefresh;
+  static void Function()? _sessionRejectedHandler;
+
+  /// Requests that carry the token under test in their body. Retrying them
+  /// with a refreshed header would resend the stale body token, so the
+  /// caller handles refresh itself.
+  static const Set<String> _noAutoRefreshPaths = {'/auth/session/verify'};
 
   static void setAuthToken(String? token) {
     _authToken = token;
@@ -56,6 +84,12 @@ class ApiClient {
 
   static void setAuthTokenRefresher(Future<String?> Function()? refresher) {
     _tokenRefresher = refresher;
+  }
+
+  /// Called when the backend still answers 401 to a token that was refreshed
+  /// a moment ago: the session is dead and the user has to sign in again.
+  static void setSessionRejectedHandler(void Function()? handler) {
+    _sessionRejectedHandler = handler;
   }
 
   /// Identical GETs (same path + query) issued while one is still in flight
@@ -174,29 +208,20 @@ class ApiClient {
 
     try {
       var streamed = await send();
+      var refreshed = false;
       if (streamed.statusCode == 401) {
         final refreshedToken = await _refreshAuthToken();
         if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          refreshed = true;
           streamed = await send();
         }
       }
 
       final response = await http.Response.fromStream(streamed);
+      if (refreshed) _reportIfStillRejected(response);
       return _parseResponse(response);
-    } on SocketException {
-      throw ApiException(
-        'Unable to connect right now. Please check your internet and try again.',
-      );
-    } on HttpException {
-      throw ApiException(
-        'Network error. Please try again in a moment.',
-      );
-    } on FormatException {
-      throw ApiException('Received malformed response from API.');
-    } on TimeoutException {
-      throw ApiException(
-        'Request timed out. Please try again.',
-      );
+    } catch (error) {
+      throw _translateTransportError(error);
     }
   }
 
@@ -232,30 +257,52 @@ class ApiClient {
     try {
       StartupMetricsService.recordApiCall(label: label);
       final response = await call().timeout(_requestTimeout);
-      if (response.statusCode == 401) {
+      if (response.statusCode == 401 && !_noAutoRefreshPaths.contains(label)) {
         final refreshedToken = await _refreshAuthToken();
         if (refreshedToken != null && refreshedToken.isNotEmpty) {
           final retryResponse = await call().timeout(_requestTimeout);
+          _reportIfStillRejected(retryResponse);
           return retryResponse;
         }
       }
 
       return response;
-    } on SocketException {
-      throw ApiException(
+    } catch (error) {
+      throw _translateTransportError(error);
+    }
+  }
+
+  void _reportIfStillRejected(http.Response response) {
+    if (response.statusCode != 401) return;
+    if (isServerSideAuthTrouble(response.body)) return;
+    _sessionRejectedHandler?.call();
+  }
+
+  /// Maps transport failures to user-facing [ApiException]s and passes
+  /// anything else through untouched.
+  Object _translateTransportError(Object error) {
+    if (error is SocketException || error is http.ClientException) {
+      return ApiException(
         'Unable to connect right now. Please check your internet and try again.',
-      );
-    } on HttpException {
-      throw ApiException(
-        'Network error. Please try again in a moment.',
-      );
-    } on FormatException {
-      throw ApiException('Received malformed response from API.');
-    } on TimeoutException {
-      throw ApiException(
-        'Request timed out. Please try again.',
+        isNetworkError: true,
       );
     }
+    if (error is HttpException) {
+      return ApiException(
+        'Network error. Please try again in a moment.',
+        isNetworkError: true,
+      );
+    }
+    if (error is TimeoutException) {
+      return ApiException(
+        'Request timed out. Please try again.',
+        isNetworkError: true,
+      );
+    }
+    if (error is FormatException) {
+      return ApiException('Received malformed response from API.');
+    }
+    return error;
   }
 
   Future<String?> _refreshAuthToken() async {
@@ -291,7 +338,10 @@ class ApiClient {
     final body = response.body.trim();
 
     if (!isSuccess) {
-      final parsedMessage = _extractErrorMessage(body);
+      // Raw backend auth text ("Invalid or expired token") is never copy.
+      final parsedMessage = response.statusCode == 401
+          ? ApiException.sessionUnconfirmedMessage
+          : _extractErrorMessage(body);
       throw ApiException(
         parsedMessage ?? _fallbackStatusMessage(response.statusCode),
         statusCode: response.statusCode,
@@ -323,7 +373,7 @@ class ApiClient {
   }
 
   String _fallbackStatusMessage(int statusCode) {
-    if (statusCode == 401) return 'Session expired. Please sign in again.';
+    if (statusCode == 401) return ApiException.sessionUnconfirmedMessage;
     if (statusCode == 403) return 'You are not allowed to perform this action.';
     if (statusCode == 404) return 'Requested data was not found.';
     if (statusCode == 409) {

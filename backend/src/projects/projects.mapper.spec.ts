@@ -126,4 +126,26 @@ describe('projects.mapper', () => {
     expect(withReliability).not.toHaveProperty('hunters');
     expect(toProjectResponse(project).ownerReliability).toBeNull();
   });
+
+  it('carries the newest update time when given, else null', () => {
+    const project = {
+      id: 'project-1',
+      primaryTag: { id: 'tag-1', name: 'Layer 1', slug: 'layer-1' },
+      secondaryTags: [],
+      hunters: [],
+      ownerAdmin: {
+        id: 'user-1',
+        email: 'owner@blocnet.io',
+        username: 'owner',
+        displayName: 'Owner',
+        avatarUrl: null,
+        currentLevel: null,
+      },
+      _count: { follows: 0, updates: 1 },
+    } as unknown as ProjectWithRelations;
+    const at = new Date('2026-09-10T12:00:00Z');
+
+    expect(toProjectResponse(project, null, at).lastUpdateAt).toBe(at);
+    expect(toProjectResponse(project).lastUpdateAt).toBeNull();
+  });
 });

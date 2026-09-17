@@ -1,3 +1,4 @@
+import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/levels/domain/level_tier.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class TierLevelBadge extends StatelessWidget {
       style: AppTypography.custom(
         size: size * 0.5,
         weight: FontWeight.w800,
-        color: const Color(0xFF0B0B0D),
+        color: AppColors.bgBase,
         height: 1,
       ),
     );

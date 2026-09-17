@@ -4,6 +4,7 @@ import 'package:blocnet/features/mining/presentation/mine_palette.dart';
 import 'package:blocnet/features/mining/presentation/widgets/earn_faster/mine_boost_parts.dart';
 import 'package:blocnet/features/mining/presentation/widgets/earn_faster/mine_earn_faster_cards.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mine_member_parts.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// `ACTIVE`, or days since the friend last mined: `12 DAYS`.
@@ -96,9 +97,9 @@ class _FriendRow extends StatelessWidget {
             child: MineNameWithLevel(name: name, level: friend.currentLevel),
           ),
           const SizedBox(width: AppSpace.sm),
-          MinePill(
+          AppPill.caps(
             label: mineFriendPill(friend, now),
-            tone: active ? MinePalette.accentSoft : MinePalette.faint,
+            color: active ? MinePalette.accentSoft : MinePalette.faint,
           ),
         ],
       ),

@@ -4,13 +4,17 @@ import 'dart:io';
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/services/api/api_error.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/services/auth/session_identity_cache.dart';
+import 'package:blocnet/services/auth/session_refresh_policy.dart';
 import 'package:blocnet/services/users/me_snapshot_cache.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 part 'auth_store_profile_referral.part.dart';
+part 'auth_store_session.part.dart';
 
 enum AppBootPhase {
   cold,
@@ -25,10 +29,21 @@ class AuthStore extends ChangeNotifier {
     ApiClient? apiClient,
     bool enableSupabaseAuthListener = true,
     bool? supabaseConfiguredOverride,
+    Stream<void>? connectivityRestored,
+    RefreshBackoff? refreshBackoff,
   })  : _apiClient = apiClient ?? ApiClient(),
         _enableSupabaseAuthListener = enableSupabaseAuthListener,
-        _supabaseConfiguredOverride = supabaseConfiguredOverride {
+        _supabaseConfiguredOverride = supabaseConfiguredOverride,
+        _refreshBackoff = refreshBackoff ?? RefreshBackoff() {
     ApiClient.setAuthTokenRefresher(refreshAccessTokenSilently);
+    ApiClient.setSessionRejectedHandler(handleSessionRejected);
+
+    final restored = connectivityRestored ??
+        (_enableSupabaseAuthListener ? _defaultConnectivityRestored() : null);
+    _connectivitySubscription = restored?.listen(
+      (_) => _onConnectivityRestored(),
+      onError: (Object error) => debugPrint('Connectivity warning: $error'),
+    );
 
     if (_enableSupabaseAuthListener && isSupabaseConfigured) {
       _authSubscription =
@@ -86,6 +101,22 @@ class AuthStore extends ChangeNotifier {
   StreamSubscription<AuthState>? _authSubscription;
   Future<String?>? _inFlightSilentRefresh;
   bool _explicitSignOutInProgress = false;
+
+  // Session health (see auth_store_session.part.dart).
+  static const String sessionEndedMessage =
+      'Your session ended. Sign in again.';
+  final RefreshBackoff _refreshBackoff;
+  final RefreshBackoff _retryBackoff = RefreshBackoff();
+  StreamSubscription<void>? _connectivitySubscription;
+  Timer? _sessionRetryTimer;
+  Future<void>? _pendingSessionEnd;
+  bool _sessionEndInProgress = false;
+  bool _sessionRetryInFlight = false;
+  bool _isSessionUnverified = false;
+  bool _rolesConfirmed = false;
+  String? _sessionEndedNotice;
+  SessionVerifyFailure? _lastVerifyFailure;
+
   static const Duration _authTimeout = Duration(seconds: 15);
   static const Duration _spaceSwitchDelay = Duration(milliseconds: 300);
   static const String _spaceKeyPrefix = 'blocnet_active_space_';
@@ -115,6 +146,7 @@ class AuthStore extends ChangeNotifier {
 
   // ── Space switcher — 'user' | 'hunter' ───────────────────────────────────
   String _activeSpace = 'user';
+  String? _closedAlphaRejectedEmail;
   bool _isSwitchingSpace = false;
 
   bool get isAuthenticated => _isAuthenticated;
@@ -149,11 +181,32 @@ class AuthStore extends ChangeNotifier {
   bool get canCreateUpdate => isOwner || isDev || isAdmin || isHunter;
   bool get canSubmitProject => isOwner || isDev || isAdmin || isHunter;
   String? get lastError => _lastError;
+
+  /// The email the closed-alpha check turned away on the last sign-in or
+  /// sign-up attempt, or null. Cleared when a new attempt starts.
+  String? get closedAlphaRejectedEmail => _closedAlphaRejectedEmail;
+  bool get closedAlphaRejected => _closedAlphaRejectedEmail != null;
   bool get isSupabaseConfigured =>
       _supabaseConfiguredOverride ?? AppConfig.isSupabaseConfigured;
   AppBootPhase get bootPhase => _bootPhase;
   bool get isBootstrapping => _bootPhase != AppBootPhase.ready;
   bool get hasBootstrapped => _bootPhase == AppBootPhase.ready;
+
+  /// Set when the auth server ended the session; the sign-in screen shows it.
+  String? get sessionEndedNotice => _sessionEndedNotice;
+
+  /// True while signed in on the last known identity because the backend or
+  /// auth server could not be reached. A re-check is scheduled.
+  bool get isSessionUnverified => _isSessionUnverified;
+
+  void clearSessionEndedNotice() {
+    if (_sessionEndedNotice == null) return;
+    _sessionEndedNotice = null;
+    notifyListeners();
+  }
+
+  /// The backend refused a freshly refreshed token: end the session once.
+  void handleSessionRejected() => unawaited(_endDeadSession());
 
   // ── Space switcher getters ────────────────────────────────────────────────
   /// Whether the user has any elevated role that grants hunter space access.
@@ -169,7 +222,8 @@ class AuthStore extends ChangeNotifier {
   bool get isInHunterSpace => _activeSpace == 'hunter' && hasHunterSpace;
 
   /// True when the user is viewing/interacting from the moderation perspective.
-  bool get isInModerationSpace => _activeSpace == 'moderation' && hasModerationSpace;
+  bool get isInModerationSpace =>
+      _activeSpace == 'moderation' && hasModerationSpace;
 
   bool get isSwitchingSpace => _isSwitchingSpace;
 
@@ -276,44 +330,17 @@ class AuthStore extends ChangeNotifier {
       }
       notifyListeners();
 
-      final bootstrapSignedIn = await verifyAndSignIn(
-        bootstrapToken,
-        setSubmitting: false,
-        hydrateProfile: false,
-        bindPendingReferral: false,
-      );
-      if (bootstrapSignedIn) {
+      // Refreshes once on a refused token; a dead session signs out, an
+      // unreachable server leaves us signed in on the last known identity.
+      if (await _confirmSession(bootstrapToken)) {
         _bootPhase = AppBootPhase.authReady;
         notifyListeners();
         await _finishBootstrapHydration();
         return;
       }
-
-      // If startup verification fails due to an expired access token, refresh
-      // once and retry before treating the local session as invalid.
-      final refreshedToken = await refreshAccessTokenSilently();
-      if (refreshedToken == null || refreshedToken.trim().isEmpty) {
-        _lastError = null;
-        _bootPhase = AppBootPhase.ready;
-        notifyListeners();
-        return;
-      }
-
-      final refreshedSignedIn = await verifyAndSignIn(
-        refreshedToken,
-        setSubmitting: false,
-        hydrateProfile: false,
-        bindPendingReferral: false,
-      );
-      if (refreshedSignedIn) {
-        _bootPhase = AppBootPhase.authReady;
-        notifyListeners();
-        await _finishBootstrapHydration();
-      } else {
-        _lastError = null;
-        _bootPhase = AppBootPhase.ready;
-        notifyListeners();
-      }
+      _lastError = null;
+      _bootPhase = AppBootPhase.ready;
+      notifyListeners();
     } catch (error) {
       debugPrint('bootstrapFromSession warning: $error');
       _lastError = null;
@@ -335,6 +362,7 @@ class AuthStore extends ChangeNotifier {
 
     _isSubmitting = true;
     _lastError = null;
+    _closedAlphaRejectedEmail = null;
     notifyListeners();
 
     try {
@@ -393,6 +421,7 @@ class AuthStore extends ChangeNotifier {
 
     _isSubmitting = true;
     _lastError = null;
+    _closedAlphaRejectedEmail = null;
     notifyListeners();
 
     try {
@@ -450,6 +479,7 @@ class AuthStore extends ChangeNotifier {
 
     _isSubmitting = true;
     _lastError = null;
+    _closedAlphaRejectedEmail = null;
     notifyListeners();
 
     try {
@@ -863,11 +893,12 @@ class AuthStore extends ChangeNotifier {
         _bootPhase = AppBootPhase.ready;
       }
       _lastError = null;
+      _lastVerifyFailure = null;
+      _markSessionConfirmed();
+      unawaited(_persistIdentity());
       return true;
-    } on ApiException catch (error) {
-      _lastError = describeApiError(error, fallback: 'Unable to sign in');
-      return false;
     } catch (error) {
+      _lastVerifyFailure = classifyVerifyError(error);
       _lastError = describeApiError(error, fallback: 'Unable to sign in');
       return false;
     } finally {
@@ -886,6 +917,8 @@ class AuthStore extends ChangeNotifier {
   Future<void> Function()? onBeforeSignOut;
 
   Future<void> signOut() async {
+    // A user-chosen sign-out needs no "session ended" notice.
+    if (!_sessionEndInProgress) _sessionEndedNotice = null;
     _explicitSignOutInProgress = true;
     // Runs before Supabase sign-out and before [_clearAuth] drops the bearer
     // token, so the request still authenticates as the departing user.
@@ -901,6 +934,7 @@ class AuthStore extends ChangeNotifier {
     } finally {
       _explicitSignOutInProgress = false;
       _clearAuth(notify: true);
+      await SessionIdentityCache.clear();
     }
   }
 
@@ -968,6 +1002,7 @@ class AuthStore extends ChangeNotifier {
       } else if (_activeSpace == 'moderation' && !hasModerationSpace) {
         _activeSpace = 'user';
       }
+      unawaited(_persistIdentity());
     } catch (_) {
       // Keep startup resilient; final state is still ready.
     } finally {
@@ -1033,6 +1068,7 @@ class AuthStore extends ChangeNotifier {
 
       _lastError =
           'Closed alpha is active. This email is not on the tester allowlist.';
+      _closedAlphaRejectedEmail = normalized;
       return false;
     } on ApiException catch (error) {
       final detail = describeApiError(
@@ -1050,8 +1086,14 @@ class AuthStore extends ChangeNotifier {
     }
   }
 
+  /// Refreshes the access token, sharing one in-flight attempt. Returns null
+  /// without calling Supabase when there is no local session, the session is
+  /// being ended, or a recent failure is still cooling down.
   Future<String?> refreshAccessTokenSilently() async {
     if (!isSupabaseConfigured) {
+      return null;
+    }
+    if (_sessionEndInProgress || !_hasLocalSession) {
       return null;
     }
 
@@ -1059,8 +1101,11 @@ class AuthStore extends ChangeNotifier {
     if (pending != null) {
       return pending;
     }
+    if (_refreshBackoff.isCoolingDown) {
+      return null;
+    }
 
-    final refreshFuture = _refreshAccessTokenSilentlyInternal();
+    final refreshFuture = _runSessionRefresh();
     _inFlightSilentRefresh = refreshFuture;
 
     try {
@@ -1072,57 +1117,32 @@ class AuthStore extends ChangeNotifier {
     }
   }
 
-  Future<String?> _refreshAccessTokenSilentlyInternal() async {
-    if (!isSupabaseConfigured) {
-      return null;
+  /// Asks Supabase for a new access token. Throws on failure so the caller
+  /// can tell a dead session from an unreachable server. Tests override it.
+  @protected
+  Future<String> requestRefreshedAccessToken() async {
+    final response = await Supabase.instance.client.auth
+        .refreshSession()
+        .timeout(_authTimeout);
+
+    final session =
+        response.session ?? Supabase.instance.client.auth.currentSession;
+    final token = session?.accessToken;
+    if (token == null || token.trim().isEmpty) {
+      throw AuthSessionMissingException();
     }
-
-    try {
-      final response = await Supabase.instance.client.auth
-          .refreshSession()
-          .timeout(_authTimeout);
-
-      final session =
-          response.session ?? Supabase.instance.client.auth.currentSession;
-      final token = session?.accessToken;
-      if (token == null || token.trim().isEmpty) {
-        return null;
-      }
-
-      _syncAccessToken(token);
-      _email = session?.user.email ?? _email;
-      return token;
-    } catch (_) {
-      return null;
-    }
+    _email = session?.user.email ?? _email;
+    return token;
   }
 
+  /// Supabase only signs out on its own when a refresh was rejected outright
+  /// (network failures are retried, not signed out), so this session is dead.
   Future<void> _recoverUnexpectedSignOut() async {
-    final hadLocalSession =
-        _isAuthenticated || (_accessToken?.isNotEmpty ?? false);
-    if (!hadLocalSession) {
+    if (!_hasLocalSession) {
       _clearAuth(notify: true);
       return;
     }
-
-    try {
-      final refreshedToken = await refreshAccessTokenSilently();
-      if (refreshedToken == null || refreshedToken.trim().isEmpty) {
-        _lastError = null;
-        notifyListeners();
-        return;
-      }
-
-      await verifyAndSignIn(
-        refreshedToken,
-        setSubmitting: false,
-        hydrateProfile: false,
-        bindPendingReferral: false,
-      );
-    } catch (_) {
-      _lastError = null;
-      notifyListeners();
-    }
+    await _endDeadSession();
   }
 
   void _syncAccessToken(String token) {
@@ -1149,6 +1169,8 @@ class AuthStore extends ChangeNotifier {
     _lastError = null;
     _activeSpace = 'user';
     _bootPhase = AppBootPhase.ready;
+    _resetSessionHealth();
+    unawaited(SessionIdentityCache.clear());
     ApiClient.setAuthToken(null);
     if (notify) {
       notifyListeners();
@@ -1164,7 +1186,10 @@ class AuthStore extends ChangeNotifier {
   @override
   void dispose() {
     ApiClient.setAuthTokenRefresher(null);
+    ApiClient.setSessionRejectedHandler(null);
     _authSubscription?.cancel();
+    _connectivitySubscription?.cancel();
+    _sessionRetryTimer?.cancel();
     super.dispose();
   }
 

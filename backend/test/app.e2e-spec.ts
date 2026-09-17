@@ -43,7 +43,12 @@ describe('Health (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
-    await app.init();
+    // Bind to the loopback address supertest dials; see F-71 in the unit specs.
+    await app.listen(0, '127.0.0.1');
+  });
+
+  afterEach(async () => {
+    await app.close();
   });
 
   it('/api/health (GET)', async () => {

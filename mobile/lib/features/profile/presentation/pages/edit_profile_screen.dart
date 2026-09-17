@@ -8,11 +8,13 @@ import 'package:blocnet/services/community/community_posts_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
-import 'package:blocnet/shared/widgets/app_network_image.dart';
+import 'package:blocnet/features/profile/presentation/widgets/edit_profile/avatar_picker_row.dart';
+import 'package:blocnet/features/profile/presentation/widgets/edit_profile/profile_primary_button.dart';
+import 'package:blocnet/features/profile/presentation/widgets/edit_profile/profile_text_field.dart';
+import 'package:blocnet/features/profile/presentation/widgets/section_label.dart';
 import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -60,7 +62,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         setState(() => _isSubmitting = false);
         AppSnackbar.showError(
           context,
-          auth.lastError ?? 'Failed to upload avatar',
+          auth.lastError ?? 'Could not upload the photo',
         );
         return;
       }
@@ -77,7 +79,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!success) {
       AppSnackbar.showError(
         context,
-        context.read<AuthStore>().lastError ?? 'Failed to update profile',
+        context.read<AuthStore>().lastError ?? 'Could not save your profile',
       );
       return;
     }
@@ -85,7 +87,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     await _refreshDependentViews();
     if (!mounted) return;
 
-    AppSnackbar.showSuccess(context, 'Profile updated successfully');
+    AppSnackbar.showSuccess(context, 'Profile saved');
     Navigator.of(context).pop(true);
   }
 
@@ -128,7 +130,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final fileSize = await pickedFile.length();
       if (fileSize > 5 * 1024 * 1024) {
         if (!mounted) return;
-        AppSnackbar.showError(context, 'Avatar must be 5MB or smaller');
+        AppSnackbar.showError(context, 'Photo must be 5 MB or smaller');
         return;
       }
 
@@ -136,8 +138,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() => _selectedAvatarFile = pickedFile);
     } catch (error) {
       if (!mounted) return;
-      AppSnackbar.showError(
-          context, 'Image selection failed. Please try again.');
+      AppSnackbar.showError(context, 'Could not open that photo');
     } finally {
       if (mounted) {
         setState(() => _isPickingImage = false);
@@ -148,6 +149,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
+    final username = auth.username?.trim() ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
@@ -168,196 +170,69 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _FieldLabel('Avatar'),
-                const SizedBox(height: AppSpace.sm),
-                Row(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.bgSurface,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: _selectedAvatarFile != null
-                          ? Image.file(
-                              _selectedAvatarFile!,
-                              fit: BoxFit.cover,
-                            )
-                          : (auth.avatarUrl != null &&
-                                  auth.avatarUrl!.trim().isNotEmpty
-                              ? AppNetworkImage(
-                                  url: auth.avatarUrl!.trim(),
-                                  fit: BoxFit.cover,
-                                  fallback: Icon(
-                                    Icons.person,
-                                    color: AppColors.textMuted,
-                                  ),
-                                )
-                              : Icon(Icons.person, color: AppColors.textMuted)),
-                    ),
-                    const SizedBox(width: AppSpace.md),
-                    Expanded(
-                      child: SizedBox(
-                        height: 40,
-                        child: OutlinedButton(
-                          onPressed: _isPickingImage ? null : _pickAvatar,
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.borderSubtle),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.mdValue),
-                            ),
-                          ),
-                          child: Text(
-                            _isPickingImage ? 'Opening...' : 'Choose image',
-                            style: AppTypography.custom(
-                              color: AppColors.textSecondary,
-                              size: AppText.labelSize,
-                              weight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                const SectionLabel('Photo'),
+                AppSpace.gapSm,
+                AvatarPickerRow(
+                  name: auth.displayName ?? auth.email ?? '',
+                  avatarUrl: auth.avatarUrl,
+                  pickedFile: _selectedAvatarFile,
+                  isPicking: _isPickingImage,
+                  onPick: _isSubmitting ? null : _pickAvatar,
                 ),
-                const SizedBox(height: AppSpace.lg),
-                _FieldLabel('Username'),
-                const SizedBox(height: AppSpace.sm),
+                AppSpace.gapXl,
+                const SectionLabel('Username'),
+                AppSpace.gapSm,
                 AppSurface(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
                       horizontal: AppSpace.lg, vertical: AppSpace.md),
-                  child: Text(
-                    auth.username ?? '@set-at-signup',
-                    style: AppTypography.custom(
-                      color: AppColors.textSecondary,
-                      size: AppText.bodySize,
-                      weight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpace.sm),
-                Text(
-                  'Username is unique and cannot be changed after signup.',
-                  style: AppTypography.custom(
-                    color: AppColors.textFaint,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.lg),
-                _FieldLabel('Display Name'),
-                const SizedBox(height: AppSpace.sm),
-                _Input(ctrl: _displayNameCtrl),
-                const SizedBox(height: AppSpace.lg),
-                _FieldLabel('Bio'),
-                const SizedBox(height: AppSpace.sm),
-                _Input(ctrl: _bioCtrl, minLines: 3, maxLines: 5),
-                const SizedBox(height: AppSpace.xl),
-                SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary500,
-                      foregroundColor: Colors.black,
-                      elevation: 0,
-                      disabledBackgroundColor:
-                          AppColors.primary500.withValues(alpha: 0.5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.mdValue),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          username.isEmpty
+                              ? 'Not set'
+                              : (username.startsWith('@')
+                                  ? username
+                                  : '@$username'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.body(AppColors.textMuted),
+                        ),
                       ),
-                    ),
-                    child: _isSubmitting
-                        ? SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              color: Colors.black,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'Save Profile',
-                            style: AppTypography.custom(
-                              size: AppText.labelSize,
-                              color: Colors.black,
-                              weight: FontWeight.w700,
-                            ),
-                          ),
+                      Icon(Icons.lock_outline_rounded,
+                          size: AppIcon.sm, color: AppColors.textFaint),
+                    ],
                   ),
+                ),
+                AppSpace.gapXs,
+                Text(
+                  'Set at sign-up. Can’t be changed.',
+                  style: AppText.caption(AppColors.textFaint),
+                ),
+                AppSpace.gapXl,
+                const SectionLabel('Display name'),
+                AppSpace.gapSm,
+                ProfileTextField(controller: _displayNameCtrl),
+                AppSpace.gapXl,
+                const SectionLabel('Bio'),
+                AppSpace.gapSm,
+                ProfileTextField(
+                  controller: _bioCtrl,
+                  minLines: 3,
+                  maxLines: 5,
+                ),
+                AppSpace.gapXl,
+                ProfilePrimaryButton(
+                  label: 'Save',
+                  busy: _isSubmitting,
+                  onPressed: _save,
+                  foreground: AppColors.onAccentForSpace(auth.isInHunterSpace),
                 ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: AppTypography.custom(
-        color: AppColors.textMuted,
-        size: AppText.captionSize,
-        weight: FontWeight.w600,
-      ),
-    );
-  }
-}
-
-class _Input extends StatelessWidget {
-  const _Input({
-    required this.ctrl,
-    this.minLines = 1,
-    this.maxLines = 1,
-  });
-
-  final TextEditingController ctrl;
-  final int minLines;
-  final int maxLines;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: ctrl,
-      minLines: minLines,
-      maxLines: maxLines,
-      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-      style: AppTypography.custom(
-        color: AppColors.textSecondary,
-        size: AppText.bodySize,
-        weight: FontWeight.w400,
-      ),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColors.bgSurface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          borderSide: BorderSide(color: AppColors.borderSubtle),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          borderSide: BorderSide(color: AppColors.borderSubtle),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          borderSide: BorderSide(color: AppColors.primary400, width: 1.4),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.lg, vertical: AppSpace.md),
       ),
     );
   }

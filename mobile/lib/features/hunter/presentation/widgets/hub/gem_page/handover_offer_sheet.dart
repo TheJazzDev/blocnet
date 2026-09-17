@@ -1,8 +1,8 @@
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/handover_sheet_frame.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_input.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/services/hunter/hunter_board_store.dart';
-import 'package:blocnet/shared/widgets/username_suggest_field.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -115,11 +115,13 @@ class _HandoverOfferSheetState extends State<HandoverOfferSheet> {
         ),
         if (error != null) HandoverSheetError(message: error),
         const SizedBox(height: 12),
-        HubButton(
+        AppButton(
           key: const ValueKey('handover-offer'),
           label: 'Offer handover',
-          busy: busy,
-          onTap: _hasHunter ? () => _offer(store) : null,
+          isLoading: busy,
+          onPressed: _hasHunter ? () => _offer(store) : null,
+          color: HubTone.accent,
+          size: AppButtonSize.compact,
         ),
       ],
     );

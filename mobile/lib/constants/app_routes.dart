@@ -44,9 +44,16 @@ class AppRoutes {
   // Project routes
   static const String home = '/home';
   static const String discover = '/discover';
+
+  /// Gems opens on Discover, Your board or Hunters. `/discover` and
+  /// `/top-hunters` are kept as aliases of the first and last.
+  static const String gems = '/gems';
+  static const String gemsBoard = '/gems/board';
+  static const String gemsHunters = '/gems/hunters';
   static const String topHunters = '/top-hunters';
   static const String communityCreatePost = '/community-create-post';
   static const String communityDiscussion = '/community-discussion';
+  static const String communitySaved = '/community-saved';
   static const String myReports = '/my-reports';
   static const String editProfile = '/edit-profile';
 }

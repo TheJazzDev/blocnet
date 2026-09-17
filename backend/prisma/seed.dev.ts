@@ -5,7 +5,6 @@ import {
   UpdateUrgency,
   PrismaClient,
   ProjectStatus,
-  RoleName,
   TipAccountType,
   TipCurrencyKind,
 } from '@prisma/client';
@@ -17,6 +16,8 @@ import {
   resolveWalletChainEnvironment,
   resolveWalletChainId,
 } from './wallet-seed.util';
+import { ensureSeedUsername } from './seed-username.util';
+import { buildSeedDevUsers, type SeedUserKey } from './seed-dev-users';
 
 loadEnv({ path: '.env.local', override: true, quiet: true });
 
@@ -28,24 +29,6 @@ if (!connectionString) {
 
 const pool = new Pool({ connectionString });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
-
-type SeedUserKey =
-  | 'owner'
-  | 'adminAlpha'
-  | 'adminDelta'
-  | 'hunterNexa'
-  | 'hunterSage'
-  | 'memberRae'
-  | 'memberKai'
-  | 'memberMila';
-
-type SeedUser = {
-  key: SeedUserKey;
-  id: string;
-  email: string;
-  displayName: string;
-  roles: RoleName[];
-};
 
 type SeedProjectKey =
   | 'solanaRadar'
@@ -80,71 +63,9 @@ type SecondaryTagKey =
   | 'security'
   | 'metaverse';
 
-const fallbackOwnerId = '8c244a0e-71f4-4a39-8d30-3d32f2ee9012';
-const fallbackOwnerEmail = 'owner@blocknet.local';
-
 async function main() {
-  const ownerUserId = process.env.OWNER_USER_ID?.trim() || fallbackOwnerId;
-  const ownerEmail = process.env.OWNER_EMAIL?.trim() || fallbackOwnerEmail;
-
-  const users: SeedUser[] = [
-    {
-      key: 'owner',
-      id: ownerUserId,
-      email: ownerEmail,
-      displayName: 'Jazzdev',
-      roles: [RoleName.owner, RoleName.user],
-    },
-    {
-      key: 'adminAlpha',
-      id: '2ebbe14f-8ab4-4bd4-a705-524192fca2e1',
-      email: 'admin.alpha@blocknet.local',
-      displayName: 'Admin Alpha',
-      roles: [RoleName.admin, RoleName.user],
-    },
-    {
-      key: 'adminDelta',
-      id: 'cb3f28af-b140-4e67-a495-378bc6f5f84f',
-      email: 'admin.delta@blocknet.local',
-      displayName: 'Admin Delta',
-      roles: [RoleName.admin, RoleName.user],
-    },
-    {
-      key: 'hunterNexa',
-      id: '6d4ec119-bbb0-4d5a-b72e-569c5fb73916',
-      email: 'hunter.nexa@blocknet.local',
-      displayName: 'Hunter Nexa',
-      roles: [RoleName.hunter, RoleName.user],
-    },
-    {
-      key: 'hunterSage',
-      id: '006a2a8f-f88c-4fc1-a895-0f8d6ceb35f4',
-      email: 'hunter.sage@blocknet.local',
-      displayName: 'Hunter Sage',
-      roles: [RoleName.hunter, RoleName.user],
-    },
-    {
-      key: 'memberRae',
-      id: 'af4976a2-93e8-4d6f-810d-b9171d8c2ea9',
-      email: 'member.rae@blocknet.local',
-      displayName: 'Member Rae',
-      roles: [RoleName.user],
-    },
-    {
-      key: 'memberKai',
-      id: '870f8a2f-4f5d-46de-abf3-f8ad58f99f8a',
-      email: 'member.kai@blocknet.local',
-      displayName: 'Member Kai',
-      roles: [RoleName.user],
-    },
-    {
-      key: 'memberMila',
-      id: '47efea2e-fb8c-487f-9683-fd4cb0e9df8d',
-      email: 'member.mila@blocknet.local',
-      displayName: 'Member Mila',
-      roles: [RoleName.user],
-    },
-  ];
+  const users = buildSeedDevUsers(process.env);
+  const ownerEmail = users[0].email;
 
   const profileByKey = new Map<SeedUserKey, { id: string; email: string }>();
 
@@ -162,6 +83,8 @@ async function main() {
       },
       select: { id: true, email: true },
     });
+
+    await ensureSeedUsername(prisma, user.id, user.username);
 
     profileByKey.set(user.key, profile);
   }

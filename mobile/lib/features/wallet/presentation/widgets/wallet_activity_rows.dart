@@ -75,12 +75,14 @@ List<WalletActivityItem> buildWalletActivityRows(
       WalletActivityItem(
         id: tx.id.isNotEmpty ? 'tx_${tx.id}' : 'tx_${rows.length}',
         icon: icon,
-        title: tx.label.toUpperCase(),
+        // BNP labels arrive readable ("BNP transfer"); ledger reasons
+        // arrive in caps and read better in title case.
+        title: tx.isPoints ? tx.label : toTitleCase(tx.label),
         subtitle: _transactionSubtitle(tx),
         amountLabel:
             '$sign${formatTokenAmount(tx.amount, absolute: true, maxDecimals: tx.isPoints ? 3 : 6)} ${tx.asset}',
         amountColor: isOutgoing
-            ? AppColors.error500
+            ? AppColors.textPrimary
             : isIncoming
                 ? AppColors.successColor
                 : AppColors.textMuted,
@@ -97,9 +99,9 @@ List<WalletActivityItem> buildWalletActivityRows(
       continue;
     }
 
-    final statusLabel = withdrawal.status.replaceAll('_', ' ').toUpperCase();
+    final statusLabel = withdrawalStatusLabel(withdrawal.status);
     final addressLabel = withdrawal.toAddress.isEmpty
-        ? 'External wallet'
+        ? 'outside wallet'
         : truncateMiddle(withdrawal.toAddress);
 
     rows.add(
@@ -108,11 +110,11 @@ List<WalletActivityItem> buildWalletActivityRows(
             ? 'withdrawal_${withdrawal.id}'
             : 'withdrawal_${rows.length}',
         icon: Icons.call_made_rounded,
-        title: 'WITHDRAWAL',
-        subtitle: '$addressLabel • ${formatDate(withdrawal.requestedAt)}',
+        title: 'Withdrawal',
+        subtitle: 'To $addressLabel • ${formatDate(withdrawal.requestedAt)}',
         amountLabel:
             '-${formatTokenAmount(withdrawal.amount, absolute: true)} ${withdrawal.asset}',
-        amountColor: AppColors.error500,
+        amountColor: AppColors.textPrimary,
         occurredAt: withdrawal.requestedAt,
         isOutgoing: true,
         isIncoming: false,

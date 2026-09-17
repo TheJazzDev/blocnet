@@ -1,12 +1,12 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/moderation/data/models/inactive_gem_model.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_app_bar.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_queue_body.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/inactive_gem_card.dart';
 import 'package:blocnet/features/moderation/presentation/widgets/resolve_inactive_gem_dialog.dart';
 import 'package:blocnet/services/api/api_client.dart';
 import 'package:blocnet/services/api/api_error.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 
 /// Gems members have reported as abandoned (F-42), for a moderator to follow
@@ -73,7 +73,7 @@ class _InactiveGemsQueueScreenState extends State<InactiveGemsQueueScreen> {
     if (resolution == null || !mounted) return;
 
     setState(() => _resolvingProjectId = gem.projectId);
-    final messenger = ScaffoldMessenger.of(context);
+    final toast = AppSnackbar.of(context);
     try {
       await _apiClient.post(
         '/community/moderation/inactive-gems/${gem.projectId}/resolve',
@@ -83,25 +83,15 @@ class _InactiveGemsQueueScreenState extends State<InactiveGemsQueueScreen> {
         },
       );
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Reports on ${gem.projectName} resolved'),
-          backgroundColor: AppColors.successColor,
-        ),
-      );
+      toast.success('Reports on ${gem.projectName} resolved');
       setState(() => _gems = _gems
           .where((row) => row.projectId != gem.projectId)
           .toList(growable: false));
       _loadGems();
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to resolve: ${describeApiError(e)}',
-          ),
-          backgroundColor: AppColors.error500,
-        ),
+      toast.error(
+        describeApiError(e, fallback: 'Could not resolve these reports.'),
       );
     } finally {
       if (mounted) setState(() => _resolvingProjectId = null);
@@ -112,63 +102,16 @@ class _InactiveGemsQueueScreenState extends State<InactiveGemsQueueScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      appBar: AppBar(
-        backgroundColor: AppColors.bgBase,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Quiet Gems Reported',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.subtitleSize,
-            weight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isLoading && _gems.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null && _gems.isEmpty) {
-      return Center(
-        child: AppEmptyState.error(
-          title: 'Reported gems did not load',
-          message: _error,
-          onAction: _loadGems,
-        ),
-      );
-    }
-    if (_gems.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: _loadGems,
-        color: AppColors.moderationAccent,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            AppEmptyState(
-              icon: Icons.verified_outlined,
-              title: 'No quiet gems reported',
-              message:
-                  'When members report a gem whose hunter has gone quiet, it appears here.',
-            ),
-          ],
-        ),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: _loadGems,
-      color: AppColors.moderationAccent,
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpace.lg),
+      appBar: const ModAppBar(title: 'Quiet Gems Reported'),
+      body: ModQueueBody(
+        isLoading: _isLoading,
+        error: _error,
         itemCount: _gems.length,
+        onRefresh: _loadGems,
+        errorTitle: 'Reported gems did not load',
+        emptyIcon: Icons.verified_outlined,
+        emptyTitle: 'No quiet gems reported',
+        emptyMessage: 'Gems members report as quiet show up here.',
         itemBuilder: (context, index) {
           final gem = _gems[index];
           return InactiveGemCard(

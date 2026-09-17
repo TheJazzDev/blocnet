@@ -77,27 +77,3 @@ class MineNameWithLevel extends StatelessWidget {
     );
   }
 }
-
-/// Old status tag: `ACTIVE`, `12 DAYS`, `CLAIMED` in a tinted, edged pill.
-class MinePill extends StatelessWidget {
-  const MinePill({super.key, required this.label, required this.tone});
-
-  final String label;
-  final Color tone;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.sm,
-        vertical: AppSpace.hair,
-      ),
-      decoration: MinePalette.tag(tone, radius: AppRadius.sm),
-      child: Text(
-        label,
-        style: AppText.caption(tone, weight: AppText.bold)
-            .copyWith(letterSpacing: 0.8),
-      ),
-    );
-  }
-}

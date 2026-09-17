@@ -2,6 +2,7 @@ import 'package:blocnet/features/mentions/data/repositories/mentions_repository.
 import 'package:blocnet/features/profile/presentation/pages/public_profile_screen.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/services/api/api_client.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 
 class MentionProfileNavigator {
@@ -20,13 +21,17 @@ class MentionProfileNavigator {
     final normalizedUsername = _normalizeUsername(mentionUsername);
     if (normalizedUsername.isEmpty) return;
 
-    final admin = await _resolveAdmin(normalizedUsername);
+    Admin? admin;
+    try {
+      admin = await _resolveAdmin(normalizedUsername);
+    } catch (_) {
+      // A failed lookup is reported the same way as a missing profile below.
+      admin = null;
+    }
     if (!context.mounted) return;
 
     if (admin == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to open this profile right now.')),
-      );
+      AppSnackbar.showError(context, 'Could not open @$normalizedUsername');
       return;
     }
 

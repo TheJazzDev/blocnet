@@ -30,7 +30,6 @@ Future<void> _pump(WidgetTester tester, AuthStore auth) async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthStore>.value(value: auth),
-        ChangeNotifierProvider(create: (_) => FeedViewModeStore()),
         ChangeNotifierProvider(create: (_) => HunterApplicationStore()),
       ],
       child: MaterialApp(
@@ -72,7 +71,7 @@ void main() {
     ]) {
       expect(find.text(title), findsOneWidget, reason: title);
     }
-    expect(find.text('Tip History (Received)'), findsNothing);
+    expect(find.text('Tips Received'), findsNothing);
     // The referral code moved to Mine > Earn faster.
     expect(find.text('Referral Code'), findsNothing);
     expect(find.text('System Alerts'), findsNothing);
@@ -90,7 +89,7 @@ void main() {
     expect(find.text('Submit New Gem'), findsNothing);
     expect(find.text('Manage My Gems'), findsNothing);
     expect(find.text('Manage My Updates'), findsNothing);
-    expect(find.text('Tip History (Received)'), findsOneWidget);
+    expect(find.text('Tips Received'), findsOneWidget);
     // Nothing from the shared list goes away for hunters.
     expect(find.text('Badges'), findsOneWidget);
     expect(find.text('Quests'), findsOneWidget);

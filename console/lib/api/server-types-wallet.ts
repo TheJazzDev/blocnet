@@ -74,7 +74,10 @@ export interface AdminWalletWithdrawal {
   netAmount: string;
   reason: string;
   rejectReason: string | null;
+  /** Operator-only failure detail (raw provider/config error). */
   failureReason: string | null;
+  /** What the member is shown for the same failure. */
+  failureMessage: string | null;
   broadcastTxHash: string | null;
   confirmations: number;
   requester: {

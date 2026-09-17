@@ -1,8 +1,9 @@
 import 'package:blocnet/features/hunter/data/models/pending_handover_model.dart';
 import 'package:blocnet/features/hunter/domain/hub_format.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/gem_page/handover_sheet_frame.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
+import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/services/hunter/hunter_board_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -53,12 +54,14 @@ class _HandoverPendingSheetState extends State<HandoverPendingSheet> {
           HandoverSheetError(message: error),
           const SizedBox(height: 12),
         ],
-        HubButton(
+        AppButton(
           key: const ValueKey('handover-withdraw'),
           label: 'Withdraw handover',
-          tone: HubButtonTone.warn,
-          busy: store.isHandoverBusy(widget.projectId),
-          onTap: () => _withdraw(store),
+          variant: AppButtonVariant.tinted,
+          isLoading: store.isHandoverBusy(widget.projectId),
+          onPressed: () => _withdraw(store),
+          color: HubTone.quiet,
+          size: AppButtonSize.compact,
         ),
       ],
     );

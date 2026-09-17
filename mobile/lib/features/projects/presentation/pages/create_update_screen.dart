@@ -1,13 +1,12 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/projects/data/models/priority_model.dart';
-import 'package:blocnet/features/projects/data/models/project_model.dart';
 import 'package:blocnet/features/projects/data/models/update_model.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
-import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_choice_fields.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_author_scope.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_deadline_field.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_fields.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_form.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_notice.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_project_picker.dart';
 import 'package:blocnet/features/projects/presentation/widgets/update/create_update_empty_state.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
@@ -16,6 +15,7 @@ import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:blocnet/services/projects/projects_store.dart';
 import 'package:blocnet/services/projects/tags_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -82,7 +82,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       _loadingOriginal = false;
       _original = update;
       if (update == null) {
-        _submitError = 'Could not load this update. Please try again.';
+        _submitError = "Couldn't load this update. Go back and try again.";
         return;
       }
       _titleController.text = update.title;
@@ -111,7 +111,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
     final board = context.watch<HunterBoardStore>().board;
     final options = _withSelected(composerProjectOptions(
       boardGems: board?.gems ?? const [],
-      projects: _availableProjectsForAuthor(
+      projects: ComposerAuthorScope.projectsFor(
         auth: auth,
         projects: projectsStore.projects,
       ),
@@ -122,131 +122,48 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
     }
 
     if (!auth.canCreateUpdate) {
-      return _scaffold(Padding(
-        padding: const EdgeInsets.all(AppSpace.lg),
-        child: Text(
-          'Your current role does not allow creating updates.',
-          style: AppTypography.custom(
-            color: AppColors.textMuted,
-            size: AppText.bodySize,
-            weight: FontWeight.w400,
-          ),
-        ),
+      return _scaffold(const ComposerNotice(
+        icon: Icons.lock_outline_rounded,
+        title: "Your role can't post updates",
       ));
     }
 
     final waiting =
         _loadingOriginal || (projectsStore.isFetching && options.isEmpty);
-    if (waiting) {
-      return _scaffold(Center(
-        child: CircularProgressIndicator(
-          color: AppColors.teal400,
-          strokeWidth: 2,
-        ),
-      ));
-    }
+    if (waiting) return _scaffold(const ComposerLoading());
 
     if (options.isEmpty) {
       return _scaffold(CreateUpdateEmptyState(
-        isHunterRestricted: _isHunterRestricted(auth),
+        isHunterRestricted: ComposerAuthorScope.isHunterRestricted(auth),
       ));
     }
 
-    return _scaffold(Form(
-      key: _formKey,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpace.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_submitError != null && _submitError!.isNotEmpty) ...[
-              Text(
-                _submitError!,
-                style: AppTypography.custom(
-                  color: AppColors.error500,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: AppSpace.md),
-            ],
-            const ComposerFieldLabel('Project'),
-            const SizedBox(height: AppSpace.sm),
-            ComposerProjectPicker(
-              options: options,
-              value: _selectedProjectId,
-              enabled: !widget.isEdit,
-              onChanged: (value) => setState(() => _selectedProjectId = value),
-            ),
-            const SizedBox(height: AppSpace.lg),
-            const ComposerFieldLabel('Urgency'),
-            const SizedBox(height: AppSpace.sm),
-            ComposerPriorityPicker(
-              value: _selectedPriority,
-              onChanged: (value) => setState(() => _selectedPriority = value),
-            ),
-            const SizedBox(height: AppSpace.lg),
-            const ComposerFieldLabel('Closing window (optional)'),
-            const SizedBox(height: AppSpace.sm),
-            ComposerDeadlineField(
-              value: _deadlineAt,
-              onPick: _pickDeadline,
-              onClear: () => setState(() => _deadlineAt = null),
-            ),
-            const SizedBox(height: AppSpace.lg),
-            const ComposerFieldLabel('Secondary tags'),
-            const SizedBox(height: AppSpace.sm),
-            ComposerTagPicker(
-              tags: tagsStore.secondaryTags,
-              selected: _selectedSecondaryTagIds,
-              onToggle: (id, selected) => setState(() {
-                selected
-                    ? _selectedSecondaryTagIds.add(id)
-                    : _selectedSecondaryTagIds.remove(id);
-              }),
-            ),
-            const SizedBox(height: AppSpace.lg),
-            const ComposerFieldLabel('Title'),
-            const SizedBox(height: AppSpace.sm),
-            TextFormField(
-              key: const ValueKey('composer-title'),
-              controller: _titleController,
-              style: composerValueStyle(),
-              decoration: composerFieldDecoration(hintText: 'Update title'),
-              validator: (value) {
-                final next = value?.trim() ?? '';
-                if (next.isEmpty) return 'Title is required';
-                if (next.length < 6) return 'Use at least 6 characters';
-                return null;
-              },
-            ),
-            const SizedBox(height: AppSpace.lg),
-            const ComposerFieldLabel('Content'),
-            const SizedBox(height: AppSpace.sm),
-            TextFormField(
-              key: const ValueKey('composer-content'),
-              controller: _contentController,
-              minLines: 7,
-              maxLines: 12,
-              style: composerValueStyle(),
-              decoration: composerFieldDecoration(
-                hintText: 'Write your update (markdown supported)',
-              ),
-              validator: (value) {
-                final next = value?.trim() ?? '';
-                if (next.isEmpty) return 'Content is required';
-                if (next.length < 16) return 'Use at least 16 characters';
-                return null;
-              },
-            ),
-            const SizedBox(height: AppSpace.xl),
-            ComposerSubmitButton(
-              label: widget.isEdit ? 'Save changes' : 'Publish Update',
-              busy: _isSubmitting,
-              onTap: _submit,
-            ),
-          ],
-        ),
+    return _scaffold(ComposerForm(
+      formKey: _formKey,
+      title: _titleController,
+      content: _contentController,
+      options: options,
+      tags: tagsStore.secondaryTags,
+      state: ComposerFormState(
+        projectId: _selectedProjectId,
+        priority: _selectedPriority,
+        deadlineAt: _deadlineAt,
+        tagIds: _selectedSecondaryTagIds,
+        isEdit: widget.isEdit,
+        busy: _isSubmitting,
+        error: _submitError,
+      ),
+      callbacks: ComposerFormCallbacks(
+        onProject: (value) => setState(() => _selectedProjectId = value),
+        onPriority: (value) => setState(() => _selectedPriority = value),
+        onPickDeadline: _pickDeadline,
+        onClearDeadline: () => setState(() => _deadlineAt = null),
+        onToggleTag: (id, selected) => setState(() {
+          selected
+              ? _selectedSecondaryTagIds.add(id)
+              : _selectedSecondaryTagIds.remove(id);
+        }),
+        onSubmit: _submit,
       ),
     ));
   }
@@ -299,7 +216,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
     final updatesStore = context.read<UpdatesStore>();
     final projectsStore = context.read<ProjectsStore>();
     final notificationsStore = context.read<NotificationsStore>();
-    final messenger = ScaffoldMessenger.of(context);
+    final toast = AppSnackbar.of(context);
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
     final tagIds = _selectedSecondaryTagIds.toList();
@@ -307,7 +224,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
     try {
       final original = _original;
       if (widget.isEdit) {
-        if (original == null) throw Exception('Update not loaded.');
+        if (original == null) throw Exception('This update did not load.');
         await updatesStore.updateUpdate(original.withEdits(
           title: title,
           content: content,
@@ -325,7 +242,7 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
           deadlineAt: _deadlineAt,
         );
         if (created == null) {
-          throw Exception('Could not create update. Please try again.');
+          throw Exception('The update was not created. Try again.');
         }
       }
 
@@ -336,50 +253,17 @@ class _CreateUpdateScreenState extends State<CreateUpdateScreen> {
       ]);
 
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(
-        content: Text(widget.isEdit ? 'Update saved' : 'Update published'),
-      ));
+      toast.success(widget.isEdit ? 'Update saved' : 'Update published');
       Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) return;
-      setState(() => _submitError = error.toString());
-      messenger.showSnackBar(SnackBar(
-        content: Text(widget.isEdit
-            ? 'Failed to save: $error'
-            : 'Failed to publish: $error'),
-      ));
+      final message = composerErrorText(error);
+      setState(() => _submitError = message);
+      toast.error(widget.isEdit
+          ? "Couldn't save: $message"
+          : "Couldn't publish: $message");
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  List<Project> _availableProjectsForAuthor({
-    required AuthStore auth,
-    required List<Project> projects,
-  }) {
-    if (!_isHunterRestricted(auth)) return projects;
-
-    final userId = auth.userId?.trim() ?? '';
-    final username =
-        _normalizeIdentity(auth.username ?? auth.displayName ?? '');
-
-    return projects.where((project) {
-      if (userId.isNotEmpty &&
-          (project.adminId == userId || project.admin?.id == userId)) {
-        return true;
-      }
-      final projectUsername = _normalizeIdentity(
-          project.admin?.username ?? project.admin?.name ?? '');
-      return username.isNotEmpty && projectUsername == username;
-    }).toList(growable: false);
-  }
-
-  bool _isHunterRestricted(AuthStore auth) {
-    return auth.isInHunterSpace ||
-        (auth.isHunter && !auth.isOwner && !auth.isAdmin);
-  }
-
-  String _normalizeIdentity(String value) {
-    return value.replaceAll('@', '').trim().toLowerCase();
   }
 }

@@ -1,6 +1,7 @@
 import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/mining/data/mine_format.dart';
 import 'package:blocnet/features/mining/presentation/mine_palette.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Flat Mine card: surface ground, 1 px subtle edge, [AppRadius.lg].
@@ -94,56 +95,6 @@ class MineSectionHeader extends StatelessWidget {
   }
 }
 
-/// Old list row: accent icon, bold title over a muted subtitle, chevron.
-class MineRowContent extends StatelessWidget {
-  const MineRowContent({
-    super.key,
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.titleColor,
-  });
-
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final Color? titleColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: AppIcon.md, color: MinePalette.accentSoft),
-        const SizedBox(width: AppSpace.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: AppText.body(
-                  titleColor ?? MinePalette.text,
-                  weight: AppText.bold,
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: AppSpace.hair),
-                Text(subtitle!, style: AppText.label(MinePalette.muted)),
-              ],
-            ],
-          ),
-        ),
-        Icon(
-          Icons.chevron_right_rounded,
-          size: AppIcon.md,
-          color: MinePalette.faint,
-        ),
-      ],
-    );
-  }
-}
-
 /// Balance: the number, the conversion line, and the Wallet link.
 class MineBalanceCard extends StatelessWidget {
   const MineBalanceCard({
@@ -200,14 +151,14 @@ class MineBalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.md),
           const Divider(height: 1, thickness: 1, color: MinePalette.edge),
-          InkWell(
-            onTap: onOpenWallet,
-            child: const SizedBox(
-              height: 48,
-              child: MineRowContent(
-                icon: Icons.account_balance_wallet_outlined,
-                title: 'View in Wallet',
-              ),
+          SizedBox(
+            height: 48,
+            child: AppListRow(
+              icon: Icons.account_balance_wallet_outlined,
+              plainIcon: true,
+              title: 'View in Wallet',
+              padding: EdgeInsets.zero,
+              onTap: onOpenWallet,
             ),
           ),
         ],
@@ -216,7 +167,8 @@ class MineBalanceCard extends StatelessWidget {
   }
 }
 
-/// A card that opens a sub-screen: the old list row in a flat card.
+/// A card that opens a sub-screen: the shared list row, with the Mine's
+/// bare accent icon, alone in a row group.
 class MineLinkRow extends StatelessWidget {
   const MineLinkRow({
     super.key,
@@ -235,21 +187,16 @@ class MineLinkRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: AppRadius.lg,
-          onTap: onTap,
-          child: Ink(
-            padding: AppSpace.row,
-            decoration: mineTileDecoration(),
-            child: MineRowContent(
-              icon: icon,
-              title: title,
-              subtitle: subtitle,
-            ),
+      child: AppRowGroup(
+        children: [
+          AppListRow(
+            icon: icon,
+            plainIcon: true,
+            title: title,
+            subtitle: subtitle,
+            onTap: onTap,
           ),
-        ),
+        ],
       ),
     );
   }

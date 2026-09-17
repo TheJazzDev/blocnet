@@ -1,6 +1,6 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 enum _StatusTone { warning, success, error }
@@ -8,13 +8,16 @@ enum _StatusTone { warning, success, error }
 /// States of the Become-a-Hunter flow that are not the form itself:
 /// pending review, approved (role still propagating), not approved (the
 /// form is shown again beneath it), or the role already granted.
+///
+/// A flat card: tinted icon square, title, an outlined status pill, and a
+/// short line. The colour lives in the icon and the pill, not the border.
 class BecomeHunterStatusCard extends StatelessWidget {
   const BecomeHunterStatusCard.pending({super.key})
       : _icon = Icons.hourglass_top_rounded,
-        _title = 'Application pending',
-        _body = 'Your application is with the Blocnet team. We review '
-            'applications within a few days and will notify you as soon '
-            'as a decision is made.',
+        _title = 'Application sent',
+        _status = 'In review',
+        _body = 'The team reviews applications within a few days. '
+            'You get a notification either way.',
         _tone = _StatusTone.warning,
         _actionLabel = null,
         _onAction = null;
@@ -22,18 +25,18 @@ class BecomeHunterStatusCard extends StatelessWidget {
   const BecomeHunterStatusCard.approved({super.key})
       : _icon = Icons.task_alt_rounded,
         _title = 'Application approved',
-        _body = 'Welcome aboard. Hunter tools appear as soon as the role '
-            'reaches your account, usually within a minute. Pull to refresh '
-            'or reopen the app if it takes longer.',
+        _status = 'Approved',
+        _body = 'Hunter tools appear once the role reaches your account, '
+            'usually within a minute. Reopen the app if it takes longer.',
         _tone = _StatusTone.success,
         _actionLabel = null,
         _onAction = null;
 
   const BecomeHunterStatusCard.rejected({super.key})
       : _icon = Icons.info_outline_rounded,
-        _title = 'Application not approved',
-        _body = 'Your last application was not approved this time. You can '
-            'update your reasons below and apply again.',
+        _title = 'Last application not approved',
+        _status = 'Not approved',
+        _body = 'You can update your answer below and apply again.',
         _tone = _StatusTone.error,
         _actionLabel = null,
         _onAction = null;
@@ -43,14 +46,15 @@ class BecomeHunterStatusCard extends StatelessWidget {
     required VoidCallback onOpenHunterSpace,
   })  : _icon = Icons.verified_rounded,
         _title = 'You are a Hunter',
-        _body = 'Hunter tools live in the Hunter space: post Updates, '
-            'submit Gems and track your stats and tips from Hunter Hub.',
+        _status = 'Hunter',
+        _body = 'Your Hub, updates and tips are in Hunter space.',
         _tone = _StatusTone.success,
         _actionLabel = 'Open Hunter space',
         _onAction = onOpenHunterSpace;
 
   final IconData _icon;
   final String _title;
+  final String _status;
   final String _body;
   final _StatusTone _tone;
   final String? _actionLabel;
@@ -61,25 +65,19 @@ class BecomeHunterStatusCard extends StatelessWidget {
     final accent = switch (_tone) {
       _StatusTone.warning => AppColors.warning500,
       _StatusTone.success => AppColors.successColor,
-      _StatusTone.error => AppColors.error500,
+      _StatusTone.error => AppColors.tagWarning,
     };
 
-    return Container(
+    return AppSurface(
       width: double.infinity,
-      padding: AppSpace.card,
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: AppRadius.lg,
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: AppIcon.xl,
-                height: AppIcon.xl,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
                   borderRadius: AppRadius.md,
@@ -90,48 +88,29 @@ class BecomeHunterStatusCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   _title,
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: AppText.bodySize,
+                  style: AppText.body(
+                    AppColors.textPrimary,
                     weight: AppText.bold,
                   ),
                 ),
+              ),
+              AppSpace.wGapSm,
+              AppPill(
+                label: _status,
+                color: accent,
+                dense: true,
+                uppercase: true,
               ),
             ],
           ),
           AppSpace.gapMd,
-          Text(
-            _body,
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.bodySize,
-              weight: AppText.regular,
-              height: 1.5,
-            ),
-          ),
+          Text(_body, style: AppText.body(AppColors.textMuted)),
           if (_actionLabel != null) ...[
             AppSpace.gapLg,
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _onAction,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary500,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: AppRadius.md,
-                  ),
-                ),
-                child: Text(
-                  _actionLabel,
-                  style: AppTypography.custom(
-                    size: AppText.labelSize,
-                    weight: AppText.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
+            AppButton(
+              label: _actionLabel,
+              onPressed: _onAction,
+              fullWidth: true,
             ),
           ],
         ],

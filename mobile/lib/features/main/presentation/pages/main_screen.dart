@@ -3,6 +3,7 @@ import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/constants/app_routes.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/space_meta.dart';
 import 'package:blocnet/features/auth/presentation/widgets/spaces/spaces_explainer_sheet.dart';
+import 'package:blocnet/features/gems/presentation/pages/gems_screen.dart';
 import 'package:blocnet/features/hunter/presentation/pages/hunter_hub_screen.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/hub_app_bar_actions.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/hub_fab_host.dart';
@@ -13,7 +14,6 @@ import 'package:blocnet/features/mining/presentation/pages/mining_screen.dart';
 import 'package:blocnet/features/mining/presentation/widgets/help/mine_header_actions.dart';
 import 'package:blocnet/features/moderation/presentation/pages/moderation_hub_screen.dart';
 import 'package:blocnet/features/projects/presentation/sections/home.dart';
-import 'package:blocnet/features/projects/presentation/sections/projects/discover.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/features/community/presentation/pages/community_screen.dart';
 import 'package:blocnet/features/profile/presentation/pages/profile_screen.dart';
@@ -23,6 +23,7 @@ import 'package:blocnet/services/engagement/mining_store.dart';
 import 'package:blocnet/services/notifications/notifications_store.dart';
 import 'package:blocnet/services/users/hunter_application_store.dart';
 import 'package:blocnet/shared/widgets/lazy_tab_stack.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:blocnet/app/typography.dart';
@@ -273,19 +274,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
 
     _lastBackPressAt = now;
-    ScaffoldMessenger.maybeOf(context)
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: const Text('Press back again to exit'),
-          duration: _exitBackWindow,
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.bgElevated,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.mdValue),
-          ),
-        ),
-      );
+    AppSnackbar.showInfo(
+      context,
+      'Press back again to exit',
+      duration: _exitBackWindow,
+    );
   }
 
   void _onFabTap(BuildContext context) {

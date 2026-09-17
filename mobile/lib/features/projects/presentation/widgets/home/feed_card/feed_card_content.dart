@@ -11,19 +11,19 @@ import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/fe
 import 'package:blocnet/features/projects/presentation/widgets/home/feed_card/feed_tag_pill.dart';
 import 'package:flutter/material.dart';
 
-/// One feed card, in the app's original layout: the avatar in a left column,
-/// everything else stacked beside it.
+/// One feed card: the avatar beside the author line, and everything else at
+/// full width underneath so the text is not squeezed by the avatar column.
 ///
 /// ```
-///   avatar | level · name · role · time
-///          | @handle
-///          | in gem-name ............. PRIORITY
-///          | tags
-///          | title
-///          | deadline (when the update carries one)
-///          | body
-///          | edge     (when Edge has a verdict worth showing)
-///          | like · comment · bookmark · share · Tip
+///   avatar  level · name · role · time
+///           @handle
+///   in gem-name ..................... PRIORITY
+///   tags
+///   title
+///   deadline (when the update carries one)
+///   body
+///   edge     (when Edge has a verdict worth showing)
+///   like · comment · bookmark · share · Tip
 /// ```
 ///
 /// [dense] is the only thing that varies between the two feed view modes, and
@@ -91,88 +91,88 @@ class FeedCardContent extends StatelessWidget {
         title.isNotEmpty && !body.toLowerCase().startsWith(title.toLowerCase());
     final gap = dense ? AppSpace.sm : AppSpace.md;
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FeedCardAvatar(author: author, onTap: onOpenAuthor),
-        const SizedBox(width: AppSpace.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FeedCardAuthorLine(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            FeedCardAvatar(author: author, onTap: onOpenAuthor),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: FeedCardAuthorLine(
                 author: author,
                 level: authorLevel,
                 createdAt: post.createdAt,
                 onTap: onOpenAuthor,
               ),
-              const SizedBox(height: AppSpace.sm),
-              FeedProjectTag(
-                project: project,
-                priority: post.priority,
-                onTap: onOpenProject,
-              ),
-              if (post.secondaryTags.isNotEmpty) ...[
-                SizedBox(height: gap),
-                Wrap(
-                  spacing: AppSpace.xs + 2,
-                  runSpacing: AppSpace.xs + 2,
-                  children: post.secondaryTags
-                      .take(3)
-                      .map((tag) => FeedTagPill(label: tag.name))
-                      .toList(),
-                ),
-              ],
-              if (showTitle) ...[
-                SizedBox(height: gap),
-                Text(
-                  title,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: emphasis.titleSize,
-                    weight: FontWeight.w600,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-              if (post.deadlineAt != null)
-                FeedDeadlineLine(deadlineAt: post.deadlineAt!),
-              if (body.isNotEmpty) ...[
-                SizedBox(height: showTitle ? AppSpace.xs : gap),
-                Text(
-                  body,
-                  maxLines: showTitle ? 3 : 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.custom(
-                    color: AppColors.textSecondary,
-                    size: AppText.bodySize,
-                    weight: FontWeight.w400,
-                    height: 1.55,
-                  ),
-                ),
-              ],
-              if (edgeSignals != null && edgeVerdict != null) ...[
-                SizedBox(height: gap),
-                FeedEdgeTag(signals: edgeSignals!, verdict: edgeVerdict!),
-              ],
-              SizedBox(height: gap),
-              FeedActionRow(
-                likeIcon: likeIcon,
-                onLikeTap: onLike,
-                onCommentTap: onComment,
-                onShareTap: onShare,
-                onBookmarkTap: onBookmark,
-                isBookmarked: isBookmarked,
-                isCommented: isCommented,
-                likeCount: likeCount,
-                commentCount: commentCount,
-                bookmarkCount: bookmarkCount,
-                onTipTap: onTip,
-              ),
-            ],
+            ),
+          ],
+        ),
+        SizedBox(height: gap),
+        FeedProjectTag(
+          project: project,
+          priority: post.priority,
+          onTap: onOpenProject,
+        ),
+        if (post.secondaryTags.isNotEmpty) ...[
+          SizedBox(height: gap),
+          Wrap(
+            spacing: AppSpace.xs + 2,
+            runSpacing: AppSpace.xs + 2,
+            children: post.secondaryTags
+                .take(3)
+                .map((tag) => FeedTagPill(label: tag.name))
+                .toList(),
           ),
+        ],
+        if (showTitle) ...[
+          SizedBox(height: gap),
+          Text(
+            title,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.custom(
+              color: AppColors.textPrimary,
+              size: emphasis.titleSize,
+              weight: FontWeight.w600,
+              height: 1.3,
+            ),
+          ),
+        ],
+        if (post.deadlineAt != null)
+          FeedDeadlineLine(deadlineAt: post.deadlineAt!),
+        if (body.isNotEmpty) ...[
+          SizedBox(height: showTitle ? AppSpace.xs : gap),
+          Text(
+            body,
+            maxLines: showTitle ? 3 : 4,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.custom(
+              color: AppColors.textSecondary,
+              size: AppText.bodySize,
+              weight: FontWeight.w400,
+              height: 1.55,
+            ),
+          ),
+        ],
+        if (edgeSignals != null && edgeVerdict != null) ...[
+          SizedBox(height: gap),
+          FeedEdgeTag(signals: edgeSignals!, verdict: edgeVerdict!),
+        ],
+        SizedBox(height: gap),
+        FeedActionRow(
+          likeIcon: likeIcon,
+          onLikeTap: onLike,
+          onCommentTap: onComment,
+          onShareTap: onShare,
+          onBookmarkTap: onBookmark,
+          isBookmarked: isBookmarked,
+          isCommented: isCommented,
+          likeCount: likeCount,
+          commentCount: commentCount,
+          bookmarkCount: bookmarkCount,
+          onTipTap: onTip,
         ),
       ],
     );

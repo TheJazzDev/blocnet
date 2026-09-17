@@ -1,9 +1,9 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
-import 'package:blocnet/features/wallet/presentation/utils/wallet_utils.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_button.dart';
+import 'package:blocnet/features/wallet/presentation/widgets/parts/wallet_style.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -39,10 +39,10 @@ class PointsReceiveScreen extends StatelessWidget {
 
   void _copy(BuildContext context, String handle) {
     Clipboard.setData(ClipboardData(text: handle));
-    showWalletToast(
+    AppSnackbar.showSuccess(
       context,
-      message: 'Username copied.',
-      type: WalletToastType.success,
+      'Username copied.',
+      duration: AppSnackbar.longDuration,
     );
   }
 
@@ -56,10 +56,10 @@ class PointsReceiveScreen extends StatelessWidget {
       );
     } catch (_) {
       if (!context.mounted) return;
-      showWalletToast(
+      AppSnackbar.showError(
         context,
-        message: 'Unable to open share options right now.',
-        type: WalletToastType.error,
+        "Couldn't open sharing.",
+        duration: AppSnackbar.longDuration,
       );
     }
   }
@@ -70,96 +70,57 @@ class PointsReceiveScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       appBar: AppBar(
-        title: Text(
-          'Receive BNP',
-          style: AppTypography.custom(
-            color: AppColors.textPrimary,
-            size: AppText.titleSize,
-            weight: FontWeight.w700,
-          ),
-        ),
+        title: Text('Receive BNP', style: AppText.title(AppColors.textPrimary)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
-            AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
-        child: AppSurface(
-          radius: AppRadius.lg,
-          padding: const EdgeInsets.all(AppSpace.lg),
+          AppSpace.lg,
+          AppSpace.md,
+          AppSpace.lg,
+          AppSpace.xl,
+        ),
+        child: WalletCard(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Share your username to receive BNP',
-                textAlign: TextAlign.center,
-                style: AppTypography.custom(
-                  color: AppColors.textPrimary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w700,
-                ),
+                style: WalletType.rowTitle(AppColors.textPrimary),
               ),
-              const SizedBox(height: AppSpace.xs),
+              const SizedBox(height: AppSpace.hair),
               Text(
-                'Blocnet Points move between members in the app. '
-                'Anyone can send you BNP with your @username.',
-                textAlign: TextAlign.center,
-                style: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.labelSize,
-                  weight: FontWeight.w500,
-                  height: 1.4,
-                ),
+                'Members send BNP to your @username.',
+                style: WalletType.meta(AppColors.textMuted),
               ),
               const SizedBox(height: AppSpace.lg),
               Text(
-                handle ?? 'Set a username in your profile to receive BNP.',
-                textAlign: TextAlign.center,
-                style: AppTypography.custom(
-                  color: handle == null
-                      ? AppColors.textMuted
-                      : AppColors.textPrimary,
-                  size: handle == null ? AppText.labelSize : AppText.titleSize,
-                  weight: FontWeight.w800,
-                ),
+                'YOUR USERNAME',
+                style: WalletType.caps(AppColors.textFaint),
               ),
-              if (handle != null) ...[
+              const SizedBox(height: AppSpace.xs),
+              if (handle == null)
+                Text(
+                  'Set a username in your profile to receive BNP.',
+                  style: AppText.body(AppColors.textMuted),
+                )
+              else ...[
+                Text(handle, style: AppText.headline(AppColors.textPrimary)),
                 const SizedBox(height: AppSpace.lg),
                 Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton.icon(
+                      child: WalletButton(
+                        icon: Icons.copy_rounded,
+                        label: 'Copy',
                         onPressed: () => _copy(context, handle),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary500,
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size.fromHeight(44),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.mdValue),
-                          ),
-                        ),
-                        icon: const Icon(Icons.copy_rounded, size: AppIcon.sm),
-                        label: const Text('Copy'),
                       ),
                     ),
                     const SizedBox(width: AppSpace.md),
                     Expanded(
-                      child: OutlinedButton.icon(
+                      child: WalletButton.outlined(
+                        icon: Icons.ios_share_rounded,
+                        label: 'Share',
                         onPressed: () => _share(context, handle),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textPrimary,
-                          minimumSize: const Size.fromHeight(44),
-                          side: BorderSide(color: AppColors.borderMuted),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.mdValue),
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.ios_share_rounded,
-                          size: AppIcon.sm,
-                        ),
-                        label: const Text('Share'),
                       ),
                     ),
                   ],

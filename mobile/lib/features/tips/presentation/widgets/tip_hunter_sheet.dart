@@ -1,14 +1,20 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
+import 'package:blocnet/features/tips/presentation/widgets/tip_sheet/tip_form.dart';
+import 'package:blocnet/features/tips/presentation/widgets/tip_sheet/tip_recent_list.dart';
+import 'package:blocnet/features/tips/presentation/widgets/tip_sheet/tip_recipient_card.dart';
+import 'package:blocnet/features/tips/presentation/widgets/tip_sheet/tip_sheet_copy.dart';
+import 'package:blocnet/features/tips/presentation/widgets/tip_sheet/tip_sheet_styles.dart';
+import 'package:blocnet/features/tips/presentation/widgets/tip_sheet/tip_stat_tiles.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/engagement/tips_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
-import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// Send a tip to a member (usually a hunter) from a post, update or profile.
 class TipHunterSheet extends StatefulWidget {
   const TipHunterSheet({
     super.key,
@@ -47,10 +53,12 @@ class TipHunterSheet extends StatefulWidget {
 }
 
 class _TipHunterSheetState extends State<TipHunterSheet> {
-  static final RegExp _amountPattern = RegExp(r'^\d+(\.\d+)?$');
-  final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _noteController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _noteController = TextEditingController();
   String? _error;
+
+  /// One key per sheet. The sheet closes after a send, so a second tip
+  /// always opens a new sheet with a new key.
   late final String _idempotencyKey =
       'tip-${DateTime.now().microsecondsSinceEpoch}';
 
@@ -59,9 +67,8 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final auth = context.read<AuthStore>();
       final store = context.read<TipsStore>();
-      store.ensureUserScope(auth.userId);
+      store.ensureUserScope(context.read<AuthStore>().userId);
       store.loadOverview(force: true);
       store.loadSentHistory(force: true, limit: 100);
     });
@@ -75,38 +82,22 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
   }
 
   Future<void> _submit() async {
-    final auth = context.read<AuthStore>();
     final store = context.read<TipsStore>();
     final userProfileStore = context.read<UserProfileStore>();
     final amount = _amountController.text.trim();
     final note = _noteController.text.trim();
     final recipient = widget.recipient;
-    final overview = store.overview;
+    final currency = store.overview?.activeCurrency;
 
-    if (auth.userId != null && auth.userId == recipient.userId) {
-      setState(() => _error = 'You cannot tip yourself.');
-      return;
-    }
+    final invalid = validateTip(
+      amount: amount,
+      recipientId: recipient.userId,
+      ownUserId: context.read<AuthStore>().userId,
+      currency: currency,
+    );
+    setState(() => _error = invalid);
+    if (invalid != null) return;
 
-    if (!_amountPattern.hasMatch(amount)) {
-      setState(() => _error = 'Enter a valid amount.');
-      return;
-    }
-
-    final currency = overview?.activeCurrency;
-    if (currency != null) {
-      final decimals = currency.decimals;
-      final parts = amount.split('.');
-      final fraction = parts.length > 1 ? parts[1] : '';
-      if (fraction.length > decimals) {
-        setState(
-          () => _error = 'Amount supports up to $decimals decimal places.',
-        );
-        return;
-      }
-    }
-
-    setState(() => _error = null);
     try {
       await store.sendTip(
         amount: amount,
@@ -117,20 +108,14 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
         contextId: widget.contextId,
         idempotencyKey: _idempotencyKey,
       );
-      await userProfileStore.refreshAll();
-      if (!mounted) return;
-      _amountController.clear();
-      _noteController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Tip sent to ${recipient.label}'),
-          backgroundColor: AppColors.successColor,
-        ),
-      );
     } catch (error) {
-      if (!mounted) return;
-      setState(() => _error = store.describeError(error));
+      if (mounted) setState(() => _error = tipErrorText(store, error));
+      return;
     }
+    await userProfileStore.refreshAll();
+    if (!mounted) return;
+    AppSnackbar.showSuccess(context, 'Tip sent to ${recipient.label}.');
+    Navigator.of(context).pop();
   }
 
   @override
@@ -138,449 +123,97 @@ class _TipHunterSheetState extends State<TipHunterSheet> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.bgBase,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: AppRadius.sheet,
+        border: Border(top: BorderSide(color: AppColors.borderSubtle)),
       ),
       child: SafeArea(
         top: false,
-        child: Consumer<TipsStore>(
-          builder: (context, store, _) {
-            final overview = store.overview;
-            final active = overview?.activeCurrency;
-            final balance = active == null
-                ? null
-                : overview?.findBalance(active.code)?.balance;
-            final feePolicy = active?.feePolicy;
-            final feePct = feePolicy == null
-                ? 0
-                : (feePolicy.feeBps / 100).toStringAsFixed(2);
-
-            final history = store.sentHistory
-                .where((row) => row.recipient.id == widget.recipient.userId)
-                .toList(growable: false);
-            final allSentHistory = store.sentHistory;
-
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(
-                      top: AppSpace.md, bottom: AppSpace.sm),
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.borderMuted,
-                      borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppSpace.md, AppSpace.xs, AppSpace.md, AppSpace.sm),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Tip Hunter',
-                        style: AppTypography.custom(
-                          color: AppColors.textPrimary,
-                          size: AppText.subtitleSize,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      4,
-                      16,
-                      20 + MediaQuery.of(context).viewInsets.bottom,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _RecipientHeader(recipient: widget.recipient),
-                        const SizedBox(height: AppSpace.md),
-                        AppSurface(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(AppSpace.md),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Your balance: ${balance ?? '0'} ${active?.symbol ?? ''}',
-                                style: AppTypography.custom(
-                                  color: AppColors.textSecondary,
-                                  size: AppText.labelSize,
-                                  weight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: AppSpace.hair),
-                              Text(
-                                'Fee: $feePct% (${feePolicy?.senderPaysFee == false ? 'hunter pays' : 'sender pays'})',
-                                style: AppTypography.custom(
-                                  color: AppColors.textMuted,
-                                  size: AppText.bodySize,
-                                  weight: FontWeight.w400,
-                                ),
-                              ),
-                              if (feePolicy?.minTip != null) ...[
-                                const SizedBox(height: AppSpace.hair),
-                                Text(
-                                  'Minimum tip: ${feePolicy!.minTip} ${active?.symbol ?? ''}',
-                                  style: AppTypography.custom(
-                                    color: AppColors.textMuted,
-                                    size: AppText.bodySize,
-                                    weight: FontWeight.w400,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: AppSpace.md),
-                        Text(
-                          'Amount (${active?.symbol ?? 'BNP'})',
-                          style: AppTypography.custom(
-                            color: AppColors.textSecondary,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpace.sm),
-                        TextField(
-                          controller: _amountController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          style: AppTypography.custom(
-                            color: AppColors.textPrimary,
-                            size: AppText.bodySize,
-                            weight: FontWeight.w500,
-                          ),
-                          decoration: _fieldDecoration('0.0'),
-                        ),
-                        const SizedBox(height: AppSpace.md),
-                        Text(
-                          'Note (optional)',
-                          style: AppTypography.custom(
-                            color: AppColors.textSecondary,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpace.sm),
-                        TextField(
-                          controller: _noteController,
-                          maxLines: 2,
-                          style: AppTypography.custom(
-                            color: AppColors.textPrimary,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w500,
-                          ),
-                          decoration: _fieldDecoration('Thanks for the alpha.'),
-                        ),
-                        if (_error != null) ...[
-                          const SizedBox(height: AppSpace.md),
-                          Text(
-                            _error!,
-                            style: AppTypography.custom(
-                              color: AppColors.error500,
-                              size: AppText.labelSize,
-                              weight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: AppSpace.lg),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed:
-                                store.isSending || store.isLoadingOverview
-                                    ? null
-                                    : _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary500,
-                              foregroundColor: Colors.black,
-                              minimumSize: const Size.fromHeight(48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.mdValue),
-                              ),
-                            ),
-                            child: store.isSending
-                                ? SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.bgBase,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    'Send Tip',
-                                    style: AppTypography.custom(
-                                      color: Colors.black,
-                                      size: AppText.labelSize,
-                                      weight: FontWeight.w700,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpace.lg),
-                        Text(
-                          'Recent Tips To This Hunter',
-                          style: AppTypography.custom(
-                            color: AppColors.textPrimary,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpace.sm),
-                        if (store.isLoadingSentHistory && history.isEmpty)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: AppSpace.md),
-                              child: CircularProgressIndicator(
-                                color: AppColors.primary500,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          )
-                        else if (history.isEmpty)
-                          AppSurface(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(AppSpace.md),
-                            child: Text(
-                              'No tip history yet for this hunter.',
-                              style: AppTypography.custom(
-                                color: AppColors.textMuted,
-                                size: AppText.labelSize,
-                                weight: FontWeight.w500,
-                              ),
-                            ),
-                          )
-                        else
-                          ...history.take(8).map(
-                                (row) => _TipHistoryRow(item: row),
-                              ),
-                        const SizedBox(height: AppSpace.lg),
-                        Text(
-                          'All Tips Sent',
-                          style: AppTypography.custom(
-                            color: AppColors.textPrimary,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpace.sm),
-                        if (store.isLoadingSentHistory &&
-                            allSentHistory.isEmpty)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: AppSpace.md),
-                              child: CircularProgressIndicator(
-                                color: AppColors.primary500,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          )
-                        else if (allSentHistory.isEmpty)
-                          AppSurface(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(AppSpace.md),
-                            child: Text(
-                              'No sent tips yet.',
-                              style: AppTypography.custom(
-                                color: AppColors.textMuted,
-                                size: AppText.labelSize,
-                                weight: FontWeight.w500,
-                              ),
-                            ),
-                          )
-                        else
-                          ...allSentHistory.take(8).map(
-                                (row) => _TipHistoryRow(item: row),
-                              ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
+        child: Column(
+          children: [
+            _header(context),
+            Expanded(
+              child: Consumer<TipsStore>(
+                builder: (context, store, _) => _body(context, store),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  InputDecoration _fieldDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: AppTypography.custom(
-        color: AppColors.textFaint,
-        size: AppText.bodySize,
-        weight: FontWeight.w400,
+  Widget _header(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        AppSpace.sm,
+        AppSpace.xs,
+        AppSpace.xs,
       ),
-      filled: true,
-      fillColor: AppColors.bgSurface,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        borderSide: BorderSide(color: AppColors.borderSubtle),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        borderSide: BorderSide(color: AppColors.borderSubtle),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.mdValue),
-        borderSide: BorderSide(color: AppColors.primary500),
-      ),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: 11),
-    );
-  }
-}
-
-class _RecipientHeader extends StatelessWidget {
-  const _RecipientHeader({required this.recipient});
-
-  final TipRecipient recipient;
-
-  @override
-  Widget build(BuildContext context) {
-    final avatarUrl = recipient.avatarUrl?.trim() ?? '';
-    return AppSurface(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpace.md),
       child: Row(
         children: [
-          AppAvatar(
-            radius: 18,
-            imageUrl: avatarUrl,
-            fallback: Icon(Icons.person,
-                color: AppColors.textMuted, size: AppIcon.md),
-          ),
-          const SizedBox(width: AppSpace.md),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  recipient.label,
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: AppText.labelSize,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.hair),
-                Text(
-                  recipient.isHunterHint ? 'Hunter' : 'Hunter candidate',
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: AppText.labelSize,
-                    weight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpace.sm, vertical: AppSpace.xs),
-            decoration: BoxDecoration(
-              color: AppColors.primary500.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(AppRadius.fullValue),
-              border: Border.all(
-                color: AppColors.primary500.withValues(alpha: 0.45),
-              ),
-            ),
             child: Text(
-              'TIP',
-              style: AppTypography.custom(
-                color: AppColors.primary400,
-                size: AppText.captionSize,
-                weight: FontWeight.w700,
+              'Send a tip',
+              style: AppText.subtitle(
+                AppColors.textPrimary,
+                weight: AppText.bold,
               ),
             ),
+          ),
+          IconButton(
+            tooltip: 'Close',
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(Icons.close_rounded, color: AppColors.textMuted),
           ),
         ],
       ),
     );
   }
-}
 
-class _TipHistoryRow extends StatelessWidget {
-  const _TipHistoryRow({required this.item});
+  Widget _body(BuildContext context, TipsStore store) {
+    final overview = store.overview;
+    final active = overview?.activeCurrency;
+    final symbol = active?.symbol ?? 'BNP';
+    final balance =
+        active == null ? null : overview?.findBalance(active.code)?.balance;
+    final policy = active?.feePolicy;
+    final minimum = tipMinimumLabel(policy, symbol);
+    final recent = store.sentHistory
+        .where((row) => row.recipient.id == widget.recipient.userId)
+        .toList(growable: false);
 
-  final TipTransaction item;
-
-  @override
-  Widget build(BuildContext context) {
-    final outgoing = item.direction == 'sent';
-    final amountColor =
-        outgoing ? const Color(0xFFF87171) : AppColors.successColor;
-    final prefix = outgoing ? '-' : '+';
-    final date = item.createdAt;
-    final dateLabel =
-        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-
-    return AppSurface(
-      margin: const EdgeInsets.only(bottom: AppSpace.sm),
-      padding: const EdgeInsets.all(11),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.note?.trim().isNotEmpty == true
-                      ? item.note!.trim()
-                      : 'Tip transfer',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.custom(
-                    color: AppColors.textPrimary,
-                    size: AppText.labelSize,
-                    weight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.hair),
-                Text(
-                  dateLabel,
-                  style: AppTypography.custom(
-                    color: AppColors.textMuted,
-                    size: AppText.captionSize,
-                    weight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpace.md),
-          Text(
-            '$prefix${item.amount} ${item.currency.symbol}',
-            style: AppTypography.custom(
-              color: amountColor,
-              size: AppText.labelSize,
-              weight: FontWeight.w700,
-            ),
-          ),
-        ],
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        AppSpace.xs,
+        AppSpace.lg,
+        AppSpace.xl + MediaQuery.viewInsetsOf(context).bottom,
       ),
+      children: [
+        TipRecipientCard(recipient: widget.recipient),
+        const SizedBox(height: AppSpace.md),
+        TipStatTiles(
+          balance: overview == null
+              ? (store.isLoadingOverview ? '—' : '0 $symbol')
+              : '${balance ?? '0'} $symbol',
+          fee: tipFeeLabel(policy),
+          feeNote: [tipFeePayer(policy), if (minimum != null) minimum].join(' · '),
+        ),
+        const SizedBox(height: AppSpace.lg),
+        TipForm(
+          amountController: _amountController,
+          noteController: _noteController,
+          symbol: symbol,
+          error: _error,
+          isSending: store.isSending,
+          onSend: store.isLoadingOverview ? null : _submit,
+        ),
+        const SizedBox(height: AppSpace.xl),
+        const TipSectionLabel('Your tips to them', icon: Icons.history_rounded),
+        const SizedBox(height: AppSpace.sm),
+        TipRecentList(items: recent, isLoading: store.isLoadingSentHistory),
+      ],
     );
   }
 }

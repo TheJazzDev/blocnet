@@ -5,29 +5,6 @@ import 'package:blocnet/features/mining/presentation/mine_palette.dart';
 import 'package:blocnet/features/mining/presentation/widgets/mine_sections.dart';
 import 'package:flutter/material.dart';
 
-/// `+126 BNP claimed` over `Next cycle started.`, above the card.
-class MineClaimReceipt extends StatelessWidget {
-  const MineClaimReceipt({
-    super.key,
-    required this.points,
-    required this.nextCycleStarted,
-  });
-
-  final int points;
-  final bool nextCycleStarted;
-
-  @override
-  Widget build(BuildContext context) {
-    return _NoticeFrame(
-      key: const ValueKey('mine-claim-receipt'),
-      tone: MinePalette.success,
-      icon: Icons.check_circle_rounded,
-      title: '+${MineFormat.points(points)} BNP claimed',
-      body: nextCycleStarted ? 'Next cycle started.' : null,
-    );
-  }
-}
-
 /// `132 BNP expired` with the date, the window and a real Dismiss target.
 class MineExpiredNotice extends StatelessWidget {
   const MineExpiredNotice({

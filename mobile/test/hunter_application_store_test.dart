@@ -226,7 +226,7 @@ void main() {
 
     expect(ok, isFalse);
     expect(store.isPending, isFalse);
-    expect(store.lastError, 'Request failed (500)');
+    expect(store.lastError, isNot(contains('500')));
   });
 
   test('switching users re-scopes and a hunter drops a stale pending flag',

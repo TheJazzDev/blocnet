@@ -1,13 +1,13 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/auth/data/repositories/users_api_repository.dart';
 import 'package:blocnet/features/profile/data/models/public_profile_model.dart';
 import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_actions.dart';
 import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_identity.dart';
 import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_recent_activity.dart';
-import 'package:blocnet/features/profile/presentation/widgets/stat_card.dart';
-import 'package:blocnet/features/profile/presentation/widgets/trust_chips.dart';
+import 'package:blocnet/features/profile/presentation/widgets/common/profile_inline_state.dart';
+import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_header.dart';
+import 'package:blocnet/features/profile/presentation/widgets/public_profile/public_profile_reliability.dart';
 import 'package:blocnet/features/projects/data/models/admin_model.dart';
 import 'package:blocnet/features/tips/data/models/tip_models.dart';
 import 'package:blocnet/features/tips/presentation/widgets/tip_hunter_sheet.dart';
@@ -16,6 +16,8 @@ import 'package:blocnet/services/users/blocks_store.dart';
 import 'package:blocnet/services/projects/updates_store.dart';
 import 'package:blocnet/services/users/user_profile_store.dart';
 import 'package:blocnet/shared/utils/role_presentation.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -85,6 +87,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     }
   }
 
+  void _retryPublicProfile() {
+    setState(() => _isLoadingPublicProfile = true);
+    _loadPublicProfile();
+  }
+
   Future<void> _toggleFollow() async {
     if (_isSubmittingFollow) return;
     final userProfileStore = context.read<UserProfileStore>();
@@ -104,9 +111,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       userProfileStore.applyFollowingProfilesDelta(wasFollowing ? 1 : -1);
       if (!mounted) return;
       setState(() => _isFollowing = wasFollowing);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to update follow status')),
-      );
+      AppSnackbar.showError(context, 'Could not update follow');
     } finally {
       if (mounted) setState(() => _isSubmittingFollow = false);
     }
@@ -158,11 +163,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     if (ok) {
       setState(() => _isBlocked = !_isBlocked);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(blocksStore.error ??
-              'Failed to ${actionLabel.toLowerCase()} user'),
-        ),
+      AppSnackbar.showError(
+        context,
+        'Could not ${actionLabel.toLowerCase()} this user',
       );
     }
 
@@ -190,9 +193,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final admin = widget.admin;
     final authStore = context.watch<AuthStore>();
     final publicProfile = _publicProfile;
-    final username = admin.username.trim().isNotEmpty
-        ? admin.username
-        : '@${admin.name.toLowerCase().replaceAll(' ', '_')}';
+    final rawHandle = admin.username.trim();
+    final handle = rawHandle.isEmpty
+        ? null
+        : (rawHandle.startsWith('@') ? rawHandle : '@$rawHandle');
     final displayRoleKey = publicProfile != null
         ? resolvePrimaryRoleKeyFromRoles(publicProfile.roles)
         : admin.primaryRoleKey;
@@ -201,110 +205,75 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             .map((role) => role.trim().toLowerCase())
             .contains('hunter')
         : admin.hasRole('hunter');
+    final isOwnProfile = authStore.userId == admin.id;
     final canTipHunter = isHunterTarget &&
         authStore.userId != null &&
-        authStore.userId != admin.id &&
+        !isOwnProfile &&
         admin.id.trim().isNotEmpty;
-    final isOwnProfile = authStore.userId == admin.id;
 
     final content = Container(
       decoration: BoxDecoration(
         color: AppColors.bgBase,
-        borderRadius: widget.asSheet
-            ? const BorderRadius.vertical(top: Radius.circular(24))
-            : BorderRadius.zero,
+        borderRadius: widget.asSheet ? AppRadius.sheet : BorderRadius.zero,
       ),
       child: SafeArea(
         top: !widget.asSheet,
         child: Column(
           children: [
-            if (widget.asSheet)
-              Padding(
-                padding: const EdgeInsets.only(
-                    top: AppSpace.md, bottom: AppSpace.sm),
-                child: Container(
-                  width: 44,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderMuted,
-                    borderRadius: BorderRadius.circular(AppRadius.fullValue),
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpace.md, AppSpace.xs, AppSpace.md, AppSpace.sm),
-              child: Row(
-                children: [
-                  Text(
-                    'Public Profile',
-                    style: AppTypography.custom(
-                      color: AppColors.textPrimary,
-                      size: AppText.subtitleSize,
-                      weight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(Icons.close_rounded, color: AppColors.textMuted),
-                  ),
-                ],
-              ),
-            ),
+            PublicProfileHeader(asSheet: widget.asSheet),
             Expanded(
               child: Consumer<UpdatesStore>(
                 builder: (context, updatesStore, _) {
                   final posts = updatesStore.posts
                       .where((p) => p.admin?.id == admin.id)
                       .toList();
-                  final stats = _publicProfile?.stats;
-                  final trust = _publicProfile?.trust;
-                  final followersCount =
-                      stats?.followersCount ?? admin.followers;
-                  final postsCount = stats?.updatesCreated ?? posts.length;
-                  final projectCount = stats?.projectsCreated ??
-                      posts.map((post) => post.projectId).toSet().length;
+                  final stats = publicProfile?.stats;
 
                   return SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
-                        AppSpace.lg, AppSpace.xs, AppSpace.lg, AppSpace.xl),
+                        AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xl),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         PublicProfileIdentity(
                           admin: admin,
-                          displayName: _publicProfile?.displayName,
-                          username: username,
+                          displayName: publicProfile?.displayName,
+                          avatarUrl: publicProfile?.avatarUrl,
+                          handle: handle,
                           roleKey: displayRoleKey,
                         ),
-                        const SizedBox(height: AppSpace.lg),
-                        Row(
-                          children: [
-                            StatCard(
-                                value: '$followersCount', label: 'Followers'),
-                            const SizedBox(width: AppSpace.sm),
-                            StatCard(value: '$postsCount', label: 'Posts'),
-                            const SizedBox(width: AppSpace.sm),
-                            StatCard(value: '$projectCount', label: 'Gems'),
-                          ],
+                        AppSpace.gapMd,
+                        PublicProfileCounts(
+                          followers: stats?.followersCount ?? admin.followers,
+                          updates: stats?.updatesCreated ?? posts.length,
+                          gems: stats?.projectsCreated ??
+                              posts
+                                  .map((post) => post.projectId)
+                                  .toSet()
+                                  .length,
                         ),
                         if (_isLoadingPublicProfile) ...[
-                          const SizedBox(height: AppSpace.md),
-                          SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              color: AppColors.primary400,
-                              strokeWidth: 2,
-                            ),
+                          AppSpace.gapMd,
+                          LinearProgressIndicator(
+                            minHeight: 2,
+                            color: AppColors.primary400,
+                            backgroundColor: AppColors.bgElevated,
+                          ),
+                        ] else if (publicProfile == null) ...[
+                          AppSpace.gapMd,
+                          AppRowGroup(
+                            children: [
+                              ProfileInlineState(
+                                icon: Icons.cloud_off_rounded,
+                                title: 'Could not load this profile',
+                                actionLabel: 'Retry',
+                                onAction: _retryPublicProfile,
+                              ),
+                            ],
                           ),
                         ],
-                        if (trust != null) ...[
-                          const SizedBox(height: AppSpace.lg),
-                          TrustChips(trust: trust),
-                        ],
-                        const SizedBox(height: AppSpace.lg),
-                        if (canTipHunter)
+                        AppSpace.gapLg,
+                        if (!isOwnProfile)
                           Row(
                             children: [
                               Expanded(
@@ -314,33 +283,31 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                   onPressed: _toggleFollow,
                                 ),
                               ),
-                              const SizedBox(width: AppSpace.sm),
-                              Expanded(
-                                child: PublicProfileTipButton(
-                                  onPressed: () => _openTipSheet(publicProfile),
+                              if (canTipHunter) ...[
+                                AppSpace.wGapSm,
+                                Expanded(
+                                  child: PublicProfileTipButton(
+                                    onPressed: () =>
+                                        _openTipSheet(publicProfile),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
-                          )
-                        else
-                          SizedBox(
-                            width: double.infinity,
-                            child: PublicProfileFollowButton(
-                              isFollowing: _isFollowing,
-                              isSubmitting: _isSubmittingFollow,
-                              onPressed: _toggleFollow,
-                            ),
                           ),
+                        if (isHunterTarget) ...[
+                          AppSpace.gapXl,
+                          PublicProfileReliability(profileId: admin.id),
+                        ],
+                        AppSpace.gapXl,
+                        PublicProfileRecentActivity(posts: posts),
                         if (!isOwnProfile) ...[
-                          const SizedBox(height: AppSpace.md),
+                          AppSpace.gapLg,
                           PublicProfileBlockButton(
                             isBlocked: _isBlocked,
                             isSubmitting: _isSubmittingBlock,
                             onPressed: _toggleBlock,
                           ),
                         ],
-                        const SizedBox(height: AppSpace.lg),
-                        PublicProfileRecentActivity(posts: posts),
                       ],
                     ),
                   );

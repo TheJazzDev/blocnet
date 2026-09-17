@@ -1,8 +1,8 @@
-import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/features/mining/data/models/mining_models.dart';
 import 'package:blocnet/features/mining/presentation/widgets/cycle/mine_cycle_card.dart';
 import 'package:blocnet/features/mining/presentation/widgets/cycle/mine_progress_ring.dart';
 import 'package:flutter/material.dart';
+import 'package:blocnet/features/mining/presentation/mine_palette.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/mine_fixtures.dart';
@@ -107,7 +107,7 @@ void main() {
     expect(probe.claims, 1);
   });
 
-  testWidgets('4 · closing soon: amber ring drains, amber Claim, no note',
+  testWidgets('4 · closing soon: ring drains in the accent, no note',
       (tester) async {
     final probe = _Probe(soonNow);
     await _pump(tester, probe.card(mineSnapshot(session: claimableSession())));
@@ -124,7 +124,7 @@ void main() {
     final painter = tester
         .widget<CustomPaint>(find.byKey(const ValueKey('mine-ring')))
         .painter! as MineRingPainter;
-    expect(painter.color, AppColors.warning500);
+    expect(painter.color, MinePalette.accent);
     expect(find.text('Claiming starts your next cycle.'), findsNothing);
   });
 

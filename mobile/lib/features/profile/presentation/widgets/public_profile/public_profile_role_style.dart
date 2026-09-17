@@ -1,31 +1,31 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:flutter/material.dart';
 
-/// Chip label for the role a public profile leads with.
+/// Pill label for the role a public profile leads with.
 String publicProfileRoleLabel(String roleKey) {
   switch (roleKey) {
     case 'core_team':
-      return 'CORE TEAM';
+      return 'Core team';
     case 'community_admin':
-      return 'ADMIN';
+      return 'Admin';
     case 'community_moderator':
-      return 'MODERATOR';
+      return 'Moderator';
     case 'hunter':
-      return 'HUNTER';
+      return 'Hunter';
     default:
-      return roleKey.toUpperCase();
+      return roleKey.replaceAll('_', ' ');
   }
 }
 
-/// Chip text colour for that role; border and fill are tints of it.
-Color publicProfileRoleTextColor(String roleKey) {
+/// Pill colour for that role, from the app palette.
+Color publicProfileRoleColor(String roleKey) {
   switch (roleKey) {
     case 'core_team':
-      return const Color(0xFF38BDF8);
+      return AppColors.tagInfo;
     case 'hunter':
-      return const Color(0xFFC084FC);
+      return AppColors.tagPartnership;
     case 'community_moderator':
-      return const Color(0xFFF59E0B);
+      return AppColors.warning500;
     case 'community_admin':
       return AppColors.primary400;
     default:

@@ -7,12 +7,13 @@ import 'package:blocnet/features/hunter/presentation/widgets/hub/board/hub_ident
 import 'package:blocnet/features/hunter/presentation/widgets/hub/hub_app_bar_actions.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/hub_board_view.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/hub_fab_host.dart';
-import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_button.dart';
 import 'package:blocnet/features/hunter/presentation/widgets/hub/parts/hub_styles.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/hunter/hunter_board_store.dart';
 import 'package:blocnet/services/projects/project_invites_store.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -53,12 +54,10 @@ class _HunterHubScreenState extends State<HunterHubScreen> {
   Future<void> _respond(ProjectInviteModel invite, bool accept) async {
     final invites = context.read<ProjectInvitesStore>();
     final board = context.read<HunterBoardStore>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
+    final toast = AppSnackbar.of(context);
     final ok = await invites.respond(invite.id, accept: accept);
     if (!ok) {
-      messenger?.showSnackBar(SnackBar(
-        content: Text(invites.lastError ?? 'Could not answer the invite.'),
-      ));
+      toast.error(invites.lastError ?? 'Could not answer the invite.');
       return;
     }
     if (accept) await board.loadBoard();
@@ -157,10 +156,11 @@ class _BoardStatus extends StatelessWidget {
               style: HubType.body(AppColors.textMuted),
             ),
             AppSpace.gapMd,
-            HubButton(
+            AppButton(
               label: 'Try again',
-              tone: HubButtonTone.outline,
-              onTap: onRetry,
+              variant: AppButtonVariant.outline,
+              onPressed: onRetry,
+              size: AppButtonSize.compact,
             ),
           ],
         ),

@@ -1,7 +1,10 @@
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/features/moderation/data/models/inactive_gem_model.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_dialog.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_parts.dart';
+import 'package:blocnet/features/moderation/presentation/widgets/common/mod_styles.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// What a moderator chose when resolving a quiet gem.
@@ -55,124 +58,55 @@ class _ResolveInactiveGemDialogState extends State<ResolveInactiveGemDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: AppColors.bgSurface,
-      title: Text(
-        'Resolve reports on ${widget.gemName}',
-        style: AppTypography.custom(
-          color: AppColors.textPrimary,
-          size: AppText.bodySize,
-          weight: FontWeight.w700,
-        ),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _label('Outcome'),
-            const SizedBox(height: AppSpace.sm),
-            for (final outcome in InactiveGemOutcome.values)
-              _OutcomeOption(
-                outcome: outcome,
-                selected: _outcome == outcome,
-                onTap: () => setState(() => _outcome = outcome),
-              ),
-            const SizedBox(height: AppSpace.md),
-            _label('Note (required)'),
-            const SizedBox(height: AppSpace.sm),
-            TextField(
-              controller: _noteController,
-              maxLines: 3,
-              maxLength: ResolveInactiveGemDialog.maxNoteLength,
-              onChanged: (_) => setState(() {}),
-              style: AppTypography.custom(
-                color: AppColors.textPrimary,
-                size: AppText.bodySize,
-                weight: FontWeight.w400,
-              ),
-              decoration: InputDecoration(
-                hintText: 'What did you do, and why?',
-                hintStyle: AppTypography.custom(
-                  color: AppColors.textMuted,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
+    return ModDialog(
+      title: 'Resolve ${widget.gemName}',
+      confirmLabel: 'Resolve',
+      onConfirm: _canSubmit
+          ? () => Navigator.of(context).pop(
+                InactiveGemResolution(
+                  outcome: _outcome!,
+                  note: _noteController.text.trim(),
                 ),
-                filled: true,
-                fillColor: AppColors.bgBase,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.smValue),
-                  borderSide: const BorderSide(color: AppColors.borderSubtle),
+              )
+          : null,
+      children: [
+        const ModFieldLabel('Outcome'),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.bgBase,
+            borderRadius: AppRadius.md,
+            border: Border.all(color: AppColors.borderSubtle),
+          ),
+          child: Column(
+            children: [
+              for (final outcome in InactiveGemOutcome.values) ...[
+                if (outcome.index > 0) const AppHairline(),
+                _OutcomeOption(
+                  outcome: outcome,
+                  selected: _outcome == outcome,
+                  onTap: () => setState(() => _outcome = outcome),
                 ),
-                contentPadding: const EdgeInsets.all(AppSpace.md),
-              ),
-            ),
-            Text(
-              'Resolving closes every open report on this gem. It does not '
-              'reassign the gem — that is decided in the console.',
-              style: AppTypography.custom(
-                color: AppColors.textMuted,
-                size: AppText.captionSize,
-                weight: FontWeight.w400,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            'Cancel',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.labelSize,
-              weight: FontWeight.w600,
-            ),
+              ],
+            ],
           ),
         ),
-        ElevatedButton(
-          onPressed: _canSubmit
-              ? () => Navigator.of(context).pop(
-                    InactiveGemResolution(
-                      outcome: _outcome!,
-                      note: _noteController.text.trim(),
-                    ),
-                  )
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.moderationAccent,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor:
-                AppColors.moderationAccent.withValues(alpha: 0.3),
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpace.lg, vertical: AppSpace.md),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.smValue),
-            ),
-          ),
-          child: Text(
-            'Resolve',
-            style: AppTypography.custom(
-              color: Colors.white,
-              size: AppText.labelSize,
-              weight: FontWeight.w700,
-            ),
-          ),
+        AppSpace.gapLg,
+        const ModFieldLabel('Note'),
+        TextField(
+          controller: _noteController,
+          minLines: 2,
+          maxLines: 3,
+          maxLength: ResolveInactiveGemDialog.maxNoteLength,
+          onChanged: (_) => setState(() {}),
+          style: AppText.body(AppColors.textPrimary),
+          decoration: modInputDecoration(hint: 'What did you do, and why?'),
+        ),
+        Text(
+          'Closes every open report on this gem. Reassigning is done in the '
+          'console.',
+          style: ModText.meta(AppColors.textMuted),
         ),
       ],
-    );
-  }
-
-  Widget _label(String text) {
-    return Text(
-      text,
-      style: AppTypography.custom(
-        color: AppColors.textMuted,
-        size: AppText.labelSize,
-        weight: FontWeight.w600,
-      ),
     );
   }
 }
@@ -190,35 +124,36 @@ class _OutcomeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.moderationAccent : AppColors.textMuted;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.smValue),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 44),
-        child: Row(
-          children: [
-            Icon(
-              selected
-                  ? Icons.radio_button_checked_rounded
-                  : Icons.radio_button_unchecked_rounded,
-              size: AppIcon.md,
-              color: color,
-            ),
-            const SizedBox(width: AppSpace.sm),
-            Expanded(
-              child: Text(
-                outcome.label,
-                style: AppTypography.custom(
-                  color: selected
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
-                  size: AppText.labelSize,
-                  weight: selected ? FontWeight.w700 : FontWeight.w500,
+    return Semantics(
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    outcome.label,
+                    style: AppText.label(
+                      selected ? AppColors.textPrimary : AppColors.textSecondary,
+                      weight: selected ? AppText.bold : AppText.medium,
+                    ),
+                  ),
                 ),
-              ),
+                Icon(
+                  selected
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  size: AppIcon.md,
+                  color: selected ? ModTone.accent : AppColors.textFaint,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

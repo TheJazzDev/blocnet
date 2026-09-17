@@ -1,15 +1,31 @@
 import 'package:blocnet/app/theme.dart';
-import 'package:blocnet/app/tokens/tokens.dart';
 import 'package:blocnet/features/projects/data/repositories/project_proposals_api_repository.dart';
+import 'package:blocnet/features/projects/presentation/widgets/project/submit/submit_gem_form.dart';
 import 'package:blocnet/features/projects/presentation/widgets/shared/app_bar.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_fields.dart';
+import 'package:blocnet/features/projects/presentation/widgets/update/composer/composer_notice.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/projects/tags_store.dart';
+import 'package:blocnet/widgets/app_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:provider/provider.dart';
 
+/// Sends a gem proposal; returns the created proposal, or null.
+typedef ProposalSubmit = Future<Map<String, dynamic>?> Function({
+  required String name,
+  String? symbol,
+  String? websiteUrl,
+  required String description,
+  required String primaryTagId,
+  String? reason,
+});
+
+/// Submit New Gem: a hunter proposes a gem for approval.
 class SubmitProjectScreen extends StatefulWidget {
-  const SubmitProjectScreen({super.key});
+  const SubmitProjectScreen({super.key, this.submit});
+
+  /// Injectable for tests; `POST /project-proposals` otherwise.
+  final ProposalSubmit? submit;
 
   @override
   State<SubmitProjectScreen> createState() => _SubmitProjectScreenState();
@@ -17,435 +33,133 @@ class SubmitProjectScreen extends StatefulWidget {
 
 class _SubmitProjectScreenState extends State<SubmitProjectScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _symbolController = TextEditingController();
-  final _websiteController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _reasonController = TextEditingController();
-  final _repository = ProjectProposalsApiRepository();
+  final _fields = SubmitGemControllers();
 
-  String? _selectedPrimaryTagId;
+  String? _chainId;
   bool _isSubmitting = false;
   String? _submitError;
+
+  /// True until the first tag read has returned, so an empty list is not
+  /// mistaken for "no tags configured" on the first frame.
+  bool _loadingTags = true;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      final tagsStore = context.read<TagsStore>();
-      await tagsStore.fetchOnce();
-      if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadTags());
+  }
 
-      if (_selectedPrimaryTagId == null && tagsStore.primaryTags.isNotEmpty) {
-        setState(() {
-          _selectedPrimaryTagId = tagsStore.primaryTags.first.id;
-        });
+  Future<void> _loadTags({bool force = false}) async {
+    final tags = context.read<TagsStore>();
+    if (mounted) setState(() => _loadingTags = true);
+    await (force ? tags.refresh() : tags.fetchOnce());
+    if (!mounted) return;
+    setState(() {
+      _loadingTags = false;
+      if (_chainId == null && tags.primaryTags.isNotEmpty) {
+        _chainId = tags.primaryTags.first.id;
       }
     });
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _symbolController.dispose();
-    _websiteController.dispose();
-    _descriptionController.dispose();
-    _reasonController.dispose();
+    _fields.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
-    final tagsStore = context.watch<TagsStore>();
-
-    if (!auth.canSubmitProject) {
-      return Scaffold(
-        backgroundColor: AppColors.bgBase,
-        appBar: _buildAppBar(),
-        body: Padding(
-          padding: const EdgeInsets.all(AppSpace.lg),
-          child: Text(
-            'Your current role does not allow project submission.',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.bodySize,
-              weight: FontWeight.w400,
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (tagsStore.isLoading && tagsStore.primaryTags.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppColors.bgBase,
-        appBar: _buildAppBar(),
-        body: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.teal400,
-            strokeWidth: 2,
-          ),
-        ),
-      );
-    }
-
-    if (tagsStore.primaryTags.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppColors.bgBase,
-        appBar: _buildAppBar(),
-        body: Padding(
-          padding: const EdgeInsets.all(AppSpace.lg),
-          child: Text(
-            'Primary tags are not configured yet. Contact admin.',
-            style: AppTypography.custom(
-              color: AppColors.textMuted,
-              size: AppText.bodySize,
-              weight: FontWeight.w400,
-            ),
-          ),
-        ),
-      );
-    }
-
+    final tags = context.watch<TagsStore>();
     return Scaffold(
       backgroundColor: AppColors.bgBase,
-      appBar: _buildAppBar(),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpace.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_submitError != null && _submitError!.isNotEmpty) ...[
-                Text(
-                  _submitError!,
-                  style: AppTypography.custom(
-                    color: AppColors.error500,
-                    size: AppText.bodySize,
-                    weight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: AppSpace.md),
-              ],
-              _FieldLabel('Gem name'),
-              const SizedBox(height: AppSpace.sm),
-              TextFormField(
-                controller: _nameController,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                ),
-                decoration: _fieldDecoration(hintText: 'e.g. Codawoo'),
-                validator: (value) {
-                  final next = value?.trim() ?? '';
-                  if (next.isEmpty) return 'Name is required';
-                  if (next.length < 2) return 'Use at least 2 characters';
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpace.lg),
-              _FieldLabel('Symbol (optional)'),
-              const SizedBox(height: AppSpace.sm),
-              TextFormField(
-                controller: _symbolController,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                ),
-                decoration: _fieldDecoration(hintText: 'e.g. COD'),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              _FieldLabel('Website URL (optional)'),
-              const SizedBox(height: AppSpace.sm),
-              TextFormField(
-                controller: _websiteController,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                ),
-                decoration: _fieldDecoration(hintText: 'https://example.com'),
-              ),
-              const SizedBox(height: AppSpace.lg),
-              _FieldLabel('Primary tag'),
-              const SizedBox(height: AppSpace.sm),
-              DropdownButtonFormField<String>(
-                value: _selectedPrimaryTagId,
-                decoration: _fieldDecoration(),
-                dropdownColor: AppColors.bgElevated,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                ),
-                items: tagsStore.primaryTags
-                    .map(
-                      (tag) => DropdownMenuItem<String>(
-                        value: tag.id,
-                        child: Text(
-                          tag.name,
-                          style: AppTypography.custom(
-                            color: AppColors.textSecondary,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() => _selectedPrimaryTagId = value);
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Select a primary tag';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpace.lg),
-              _FieldLabel('Description'),
-              const SizedBox(height: AppSpace.sm),
-              TextFormField(
-                controller: _descriptionController,
-                minLines: 6,
-                maxLines: 10,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                ),
-                decoration: _fieldDecoration(
-                  hintText: 'Explain what this gem is about.',
-                ),
-                validator: (value) {
-                  final next = value?.trim() ?? '';
-                  if (next.isEmpty) return 'Description is required';
-                  if (next.length < 12) return 'Use at least 12 characters';
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpace.lg),
-              _FieldLabel('Why should we approve? (optional)'),
-              const SizedBox(height: AppSpace.sm),
-              TextFormField(
-                controller: _reasonController,
-                minLines: 3,
-                maxLines: 6,
-                style: AppTypography.custom(
-                  color: AppColors.textSecondary,
-                  size: AppText.bodySize,
-                  weight: FontWeight.w400,
-                ),
-                decoration: _fieldDecoration(
-                  hintText: 'Credibility, risk checks, relevance, etc.',
-                ),
-              ),
-              const SizedBox(height: AppSpace.xl),
-              GestureDetector(
-                onTap: _isSubmitting ? null : _submit,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpace.lg),
-                  decoration: BoxDecoration(
-                    gradient: _isSubmitting
-                        ? null
-                        : LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.teal400,
-                              AppColors.primary500,
-                            ],
-                          ),
-                    color: _isSubmitting ? AppColors.bgElevated : null,
-                    borderRadius: BorderRadius.circular(AppRadius.lgValue),
-                    border: Border.all(
-                      color: _isSubmitting
-                          ? AppColors.borderSubtle
-                          : AppColors.teal400.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
-                    boxShadow: _isSubmitting
-                        ? null
-                        : [
-                            BoxShadow(
-                              color: AppColors.teal400.withValues(alpha: 0.25),
-                              blurRadius: 16,
-                              spreadRadius: 0,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                  ),
-                  child: _isSubmitting
-                      ? Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: AppColors.teal400,
-                            ),
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.send_rounded,
-                              size: AppIcon.md,
-                              color: Colors.black,
-                            ),
-                            const SizedBox(width: AppSpace.md),
-                            Text(
-                              'Submit For Approval',
-                              style: AppTypography.custom(
-                                color: Colors.black,
-                                size: AppText.bodySize,
-                                weight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      appBar: const CustomAppBar(
+        title: 'Submit New Gem',
+        showSearch: false,
+        showSpaceSwitcher: false,
       ),
+      body: _body(auth, tags),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return const CustomAppBar(
-      title: 'Submit New Gem',
-      showSearch: false,
-      showFilter: false,
-      showSpaceSwitcher: false,
+  Widget _body(AuthStore auth, TagsStore tags) {
+    if (!auth.canSubmitProject) {
+      return const ComposerNotice(
+        icon: Icons.lock_outline_rounded,
+        title: "Your role can't submit gems",
+        message: 'Hunters and admins can propose gems.',
+      );
+    }
+    if (tags.primaryTags.isEmpty) {
+      if (_loadingTags || tags.isLoading) return const ComposerLoading();
+      if (tags.lastError != null) {
+        return ComposerNotice(
+          icon: Icons.cloud_off_rounded,
+          title: "Couldn't load chains",
+          message: 'Check your connection.',
+          actionLabel: 'Try again',
+          onAction: () => _loadTags(force: true),
+        );
+      }
+      return const ComposerNotice(
+        icon: Icons.label_off_outlined,
+        title: 'No chains set up yet',
+        message: 'An admin adds them from the console.',
+      );
+    }
+    return SubmitGemForm(
+      formKey: _formKey,
+      fields: _fields,
+      chains: tags.primaryTags,
+      chainId: _chainId,
+      onChain: (id) => setState(() => _chainId = id),
+      busy: _isSubmitting,
+      error: _submitError,
+      onSubmit: _submit,
     );
   }
 
-  InputDecoration _fieldDecoration({String? hintText}) {
-    return InputDecoration(
-      hintText: hintText,
-      hintStyle: AppTypography.custom(
-        color: AppColors.textFaint,
-        size: AppText.bodySize,
-        weight: FontWeight.w400,
-      ),
-      filled: true,
-      fillColor: AppColors.bgSurface,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        borderSide: BorderSide(
-          color: AppColors.borderSubtle.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        borderSide: BorderSide(
-          color: AppColors.borderSubtle.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        borderSide: BorderSide(
-          color: AppColors.teal400,
-          width: 2,
-        ),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        borderSide: BorderSide(
-          color: AppColors.error500,
-          width: 1.5,
-        ),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        borderSide: BorderSide(
-          color: AppColors.error500,
-          width: 2,
-        ),
-      ),
-      contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.lg, vertical: AppSpace.lg),
-    );
+  String? _optional(TextEditingController c) {
+    final text = c.text.trim();
+    return text.isEmpty ? null : text;
   }
 
   Future<void> _submit() async {
     final form = _formKey.currentState;
-    if (form == null || !form.validate()) return;
+    final chainId = _chainId;
+    if (form == null || !form.validate() || chainId == null) return;
 
     setState(() {
       _isSubmitting = true;
       _submitError = null;
     });
+    final toast = AppSnackbar.of(context);
+    final send =
+        widget.submit ?? ProjectProposalsApiRepository().submitProposal;
 
     try {
-      final response = await _repository.submitProposal(
-        name: _nameController.text.trim(),
-        symbol: _symbolController.text.trim().isEmpty
-            ? null
-            : _symbolController.text.trim(),
-        websiteUrl: _websiteController.text.trim().isEmpty
-            ? null
-            : _websiteController.text.trim(),
-        description: _descriptionController.text.trim(),
-        primaryTagId: _selectedPrimaryTagId!,
-        reason: _reasonController.text.trim().isEmpty
-            ? null
-            : _reasonController.text.trim(),
+      final response = await send(
+        name: _fields.name.text.trim(),
+        symbol: _optional(_fields.symbol),
+        websiteUrl: _optional(_fields.website),
+        description: _fields.description.text.trim(),
+        primaryTagId: chainId,
+        reason: _optional(_fields.reason),
       );
       if (response == null) {
-        throw Exception('Could not submit gem proposal. Please retry.');
+        throw Exception('The proposal was not sent. Try again.');
       }
-
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gem submitted for approval')),
-      );
-      Navigator.of(context).pop();
+      toast.success('Gem submitted for approval');
+      Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) return;
-      setState(() {
-        _submitError = error.toString();
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Submission failed: $error')),
-      );
+      final message = composerErrorText(error);
+      setState(() => _submitError = message);
+      toast.error("Couldn't submit: $message");
     } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
+      if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-}
-
-// ─── Field Label ──────────────────────────────────────────────────────────────
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.label);
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: AppTypography.custom(
-        color: AppColors.textMuted,
-        size: AppText.labelSize,
-        weight: FontWeight.w500,
-      ),
-    );
   }
 }

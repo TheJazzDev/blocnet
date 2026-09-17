@@ -1,4 +1,5 @@
 import 'package:blocnet/constants/app_routes.dart';
+import 'package:blocnet/features/auth/presentation/pages/closed_alpha_screen.dart';
 import 'package:blocnet/features/auth/routes.dart';
 import 'package:blocnet/routes/protected_routes.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,9 @@ void main() {
     expect(routes.containsKey(AppRoutes.verifyEmail), isTrue);
     expect(routes.containsKey(AppRoutes.forgotPassword), isTrue);
     expect(routes.containsKey(AppRoutes.resetPassword), isTrue);
+    expect(routes.containsKey(ClosedAlphaScreen.routeName), isTrue);
+    // A turned-away email is still signed out; the screen must stay open to it.
+    expect(AuthRoutes.isGuestOnlyRoute(ClosedAlphaScreen.routeName), isFalse);
   });
 
   test('all declared protected routes are registered', () {

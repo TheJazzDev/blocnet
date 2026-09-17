@@ -52,12 +52,14 @@ export type ProjectWithRelations = Prisma.ProjectGetPayload<{
 }>;
 
 /**
- * [ownerReliability] is attached by the list and detail reads, which batch it;
- * other callers leave it null rather than pay for it.
+ * [ownerReliability] and [lastUpdateAt] (the gem's newest published update)
+ * are attached by the list and detail reads, which batch them; other callers
+ * leave them null rather than pay for them.
  */
 export function toProjectResponse(
   project: ProjectWithRelations,
   ownerReliability: OwnerReliabilityDto | null = null,
+  lastUpdateAt: Date | null = null,
 ) {
   const {
     _count,
@@ -91,5 +93,6 @@ export function toProjectResponse(
       currentLevel: toCurrentLevelDto(ownerAdmin.currentLevel),
     },
     ownerReliability,
+    lastUpdateAt,
   };
 }

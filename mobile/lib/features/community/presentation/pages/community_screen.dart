@@ -1,25 +1,24 @@
-import 'dart:async';
-
 import 'package:blocnet/app/config.dart';
 import 'package:blocnet/app/theme.dart';
 import 'package:blocnet/app/tokens/tokens.dart';
-import 'package:blocnet/app/typography.dart';
 import 'package:blocnet/constants/app_routes.dart';
-import 'package:blocnet/features/community/data/models/community_moderation_models.dart';
-import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
 import 'package:blocnet/features/community/data/models/community_post_model.dart';
 import 'package:blocnet/features/community/data/models/community_topic.dart';
-import 'package:blocnet/features/community/presentation/widgets/community_content_moderation_sheet.dart';
+import 'package:blocnet/features/community/data/repositories/community_moderation_api_repository.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_feed_list.dart';
 import 'package:blocnet/features/community/presentation/widgets/community_tabs.dart';
-import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
+import 'package:blocnet/features/community/presentation/widgets/feed/community_new_items_pill.dart';
+import 'package:blocnet/features/community/presentation/widgets/feed/community_save_toggle.dart';
+import 'package:blocnet/features/community/presentation/widgets/moderation/moderation_actions.dart';
 import 'package:blocnet/services/auth/auth_store.dart';
 import 'package:blocnet/services/community/community_posts_store.dart';
 import 'package:blocnet/services/core/feed_view_mode_store.dart';
-import 'package:blocnet/widgets/app_snackbar.dart';
+import 'package:blocnet/shared/application/feed/feed_sync_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// The Community tab: General and Market Talk, new-post polling, and the
+/// compose button.
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
 
@@ -29,37 +28,35 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+  static const _topics = [CommunityTopic.general, CommunityTopic.marketTalk];
+
+  late final TabController _tabController =
+      TabController(length: _topics.length, vsync: this);
   final Map<CommunityTopic, ScrollController> _scrollControllers = {
-    CommunityTopic.general: ScrollController(),
-    CommunityTopic.marketTalk: ScrollController(),
+    for (final topic in _topics) topic: ScrollController(),
   };
   final Set<String> _pendingNewPostIds = <String>{};
-  final FeedSyncController _feedSyncController =
+  final FeedSyncController _feedSync =
       FeedSyncController(debugLabel: 'Community');
   final CommunityModerationApiRepository _moderationRepository =
       CommunityModerationApiRepository();
 
+  CommunityTopic get _activeTopic => _topics[_tabController.index];
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
-      if (_isActiveListNearTop() && _pendingNewPostIds.isNotEmpty) {
-        setState(() => _pendingNewPostIds.clear());
-      } else {
-        setState(() {});
-      }
+      setState(_clearPendingIfAtTop);
     });
     for (final controller in _scrollControllers.values) {
       controller.addListener(_handleScroll);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<CommunityPostsStore>().fetchPostsOnce();
+      if (mounted) context.read<CommunityPostsStore>().fetchPostsOnce();
     });
-    _feedSyncController.start(
+    _feedSync.start(
       realtimeEnabled: AppConfig.isSupabaseConfigured,
       pollInterval: const Duration(seconds: 12),
       channelName: 'community-new-posts',
@@ -70,7 +67,7 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   @override
   void dispose() {
-    _feedSyncController.dispose();
+    _feedSync.dispose();
     for (final controller in _scrollControllers.values) {
       controller
         ..removeListener(_handleScroll)
@@ -80,54 +77,37 @@ class _CommunityScreenState extends State<CommunityScreen>
     super.dispose();
   }
 
-  void _handleScroll() {
-    if (_isActiveListNearTop() && _pendingNewPostIds.isNotEmpty) {
-      setState(() => _pendingNewPostIds.clear());
-    }
+  void _clearPendingIfAtTop() {
+    if (_isActiveListNearTop()) _pendingNewPostIds.clear();
   }
 
-  CommunityTopic _activeTopic() {
-    switch (_tabController.index) {
-      case 1:
-        return CommunityTopic.marketTalk;
-      default:
-        return CommunityTopic.general;
+  void _handleScroll() {
+    if (_pendingNewPostIds.isNotEmpty && _isActiveListNearTop()) {
+      setState(_pendingNewPostIds.clear);
     }
   }
 
   bool _isActiveListNearTop() {
-    final controller = _scrollControllers[_activeTopic()];
+    final controller = _scrollControllers[_activeTopic];
     if (controller == null || !controller.hasClients) return true;
     return controller.offset < 80;
   }
 
   Future<void> _checkForNewPosts() async {
     if (!mounted) return;
-
     final store = context.read<CommunityPostsStore>();
-    final existingIds = store.posts.map((post) => post.id).toSet();
-
+    final existing = store.posts.map((post) => post.id).toSet();
     await store.refreshPosts();
-
-    if (!mounted) return;
-
-    final newIds = store.posts
-        .where((post) => !existingIds.contains(post.id))
+    if (!mounted || existing.isEmpty) return;
+    final fresh = store.posts
+        .where((post) => !existing.contains(post.id))
         .map((post) => post.id);
-
-    if (newIds.isEmpty || _isActiveListNearTop()) return;
-
-    setState(() => _pendingNewPostIds.addAll(newIds));
-  }
-
-  int _pendingCountForActiveTopic(List<CommunityPost> posts) {
-    final active = _activeTopic();
-    final visible = _filterPosts(posts, active);
-    return visible.where((post) => _pendingNewPostIds.contains(post.id)).length;
+    if (fresh.isEmpty || _isActiveListNearTop()) return;
+    setState(() => _pendingNewPostIds.addAll(fresh));
   }
 
   Future<void> _jumpToLatest() async {
-    final controller = _scrollControllers[_activeTopic()];
+    final controller = _scrollControllers[_activeTopic];
     if (controller != null && controller.hasClients) {
       await controller.animateTo(
         0,
@@ -135,171 +115,111 @@ class _CommunityScreenState extends State<CommunityScreen>
         curve: Curves.easeOutCubic,
       );
     }
-    if (!mounted) return;
-    setState(() => _pendingNewPostIds.clear());
+    if (mounted) setState(_pendingNewPostIds.clear);
   }
 
-  Future<void> _handleRefresh() async {
+  Future<void> _refresh() async {
     await context.read<CommunityPostsStore>().refreshPosts();
-    if (!mounted) return;
-    setState(() => _pendingNewPostIds.clear());
+    if (mounted) setState(_pendingNewPostIds.clear);
   }
 
-  Future<void> _moderatePost(
-    String postId,
-    CommunityContentModerationDecision decision,
-  ) async {
-    try {
-      await _moderationRepository.moderateCommunityPostStatus(
-        postId: postId,
-        status: decision.status,
-        reason: decision.reason,
-      );
-      if (!mounted) return;
-      await context.read<CommunityPostsStore>().refreshPosts();
-      if (!mounted) return;
-      AppSnackbar.showSuccess(
-        context,
-        switch (decision.status) {
-          CommunityContentModerationStatus.active => 'Post restored',
-          CommunityContentModerationStatus.hidden => 'Post hidden',
-          CommunityContentModerationStatus.archived => 'Post archived',
-        },
-      );
-    } catch (error) {
-      if (!mounted) return;
-      AppSnackbar.showError(context, error.toString());
+  Future<void> _compose() async {
+    final result =
+        await Navigator.of(context).pushNamed(AppRoutes.communityCreatePost);
+    if (result is! CommunityTopic || !mounted) return;
+    final target = _topics.indexOf(result);
+    if (target >= 0 && _tabController.index != target) {
+      _tabController.animateTo(target);
     }
+    // The new post is at the top of its list; show it.
+    final controller = _scrollControllers[result];
+    if (controller != null && controller.hasClients) controller.jumpTo(0);
   }
+
+  List<CommunityPost> _postsFor(List<CommunityPost> posts, CommunityTopic t) =>
+      posts.where((post) => post.topic == t).toList();
 
   @override
   Widget build(BuildContext context) {
-    final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
     final auth = context.watch<AuthStore>();
-    final isHunterSpace = auth.isInHunterSpace;
+    final store = context.watch<CommunityPostsStore>();
     final viewMode = context.watch<FeedViewModeStore>().mode;
-    final accent = AppColors.accentForSpace(isHunterSpace);
-    final onAccent = AppColors.onAccentForSpace(isHunterSpace);
-    final canArchiveModeration = auth.isCommunityAdmin;
-    final canModerateContent = auth.canAccessCommunityStaffTools;
+    final accent = AppColors.accentForSpace(auth.isInHunterSpace);
+    final onAccent = AppColors.onAccentForSpace(auth.isInHunterSpace);
+    final canModerate = auth.canAccessCommunityStaffTools;
+    final bottomPad = MediaQuery.paddingOf(context).bottom + 96;
+    final posts = store.posts;
+    final pending = _postsFor(posts, _activeTopic)
+        .where((post) => _pendingNewPostIds.contains(post.id))
+        .length;
 
     return Scaffold(
       backgroundColor: AppColors.bgBase,
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.of(context).pushNamed(
-            AppRoutes.communityCreatePost,
-          );
-          // If a topic was returned, switch to that tab
-          if (result is CommunityTopic && mounted) {
-            final targetIndex = result == CommunityTopic.marketTalk ? 1 : 0;
-            if (_tabController.index != targetIndex) {
-              _tabController.animateTo(targetIndex);
-            }
-          }
-        },
+        tooltip: 'New post',
+        onPressed: _compose,
         backgroundColor: accent,
         elevation: 0,
         child: Icon(Icons.add_rounded, color: onAccent),
       ),
-      body: Consumer<CommunityPostsStore>(
-        builder: (context, store, _) {
-          final posts = store.posts;
-
-          if (store.isFetchingPosts && posts.isEmpty) {
-            return Center(
-              child: CircularProgressIndicator(
-                color: accent,
-                strokeWidth: 2,
-              ),
-            );
-          }
-
-          final pendingCount = _pendingCountForActiveTopic(posts);
-
-          return Stack(
-            children: [
-              Column(
-                children: [
-                  CommunityTabs(
-                    controller: _tabController,
-                    accentColor: accent,
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        CommunityFeedList(
-                          posts: _filterPosts(posts, CommunityTopic.general),
-                          bottomPad: bottomPad,
-                          mode: viewMode,
-                          controller:
-                              _scrollControllers[CommunityTopic.general]!,
-                          accentColor: accent,
-                          onRefresh: _handleRefresh,
-                          onLike: store.toggleLike,
-                          onBookmark: store.toggleBookmark,
-                          onModeratePost:
-                              canModerateContent ? _moderatePost : null,
-                          canArchiveModeration: canArchiveModeration,
-                        ),
-                        CommunityFeedList(
-                          posts: _filterPosts(posts, CommunityTopic.marketTalk),
-                          bottomPad: bottomPad,
-                          mode: viewMode,
-                          controller:
-                              _scrollControllers[CommunityTopic.marketTalk]!,
-                          accentColor: accent,
-                          onRefresh: _handleRefresh,
-                          onLike: store.toggleLike,
-                          onBookmark: store.toggleBookmark,
-                          onModeratePost:
-                              canModerateContent ? _moderatePost : null,
-                          canArchiveModeration: canArchiveModeration,
-                        ),
-                      ],
+      body: Column(
+        children: [
+          CommunityTabs(controller: _tabController, accentColor: accent),
+          Expanded(
+            child: store.isFetchingPosts && posts.isEmpty
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: accent,
+                      strokeWidth: 2,
                     ),
-                  ),
-                ],
-              ),
-              if (pendingCount > 0)
-                Positioned(
-                  top: 8,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: GestureDetector(
-                      onTap: _jumpToLatest,
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpace.md, vertical: AppSpace.sm),
-                        decoration: BoxDecoration(
-                          color: accent,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.fullValue),
-                        ),
-                        child: Text(
-                          '$pendingCount new posts',
-                          style: AppTypography.custom(
-                            color: onAccent,
-                            size: AppText.labelSize,
-                            weight: FontWeight.w700,
+                  )
+                : Stack(
+                    children: [
+                      TabBarView(
+                        controller: _tabController,
+                        children: [
+                          for (final topic in _topics)
+                            CommunityFeedList(
+                              posts: _postsFor(posts, topic),
+                              error: store.postsError,
+                              bottomPad: bottomPad,
+                              mode: viewMode,
+                              controller: _scrollControllers[topic]!,
+                              accentColor: accent,
+                              onRefresh: _refresh,
+                              onLike: store.toggleLike,
+                              onBookmark: (id) =>
+                                  toggleCommunitySave(context, id),
+                              onModeratePost: !canModerate
+                                  ? null
+                                  : (postId, decision) => applyPostModeration(
+                                        context,
+                                        repository: _moderationRepository,
+                                        postId: postId,
+                                        decision: decision,
+                                      ),
+                              canArchiveModeration: auth.isCommunityAdmin,
+                            ),
+                        ],
+                      ),
+                      if (pending > 0)
+                        Positioned(
+                          top: AppSpace.sm,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: CommunityNewItemsPill(
+                              count: pending,
+                              noun: 'post',
+                              onTap: _jumpToLatest,
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                    ],
                   ),
-                ),
-            ],
-          );
-        },
+          ),
+        ],
       ),
     );
-  }
-
-  List<CommunityPost> _filterPosts(
-      List<CommunityPost> posts, CommunityTopic tab) {
-    return posts.where((post) => post.topic == tab).toList();
   }
 }

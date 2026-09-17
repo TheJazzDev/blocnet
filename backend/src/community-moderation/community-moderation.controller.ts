@@ -36,6 +36,7 @@ import { ReviewCommunityAppealDto } from './dto/review-community-appeal.dto';
 import { ReviewCommunityReportDto } from './dto/review-community-report.dto';
 import { CommunityModerationService } from './community-moderation.service';
 import { InactiveGemsModerationService } from './inactive-gems-moderation.service';
+import { MyReportsService } from './my-reports.service';
 
 const COMMUNITY_MODERATION_REVIEW_ROLES = [
   AppRole.OWNER,
@@ -58,6 +59,7 @@ export class CommunityModerationController {
   constructor(
     private readonly communityModerationService: CommunityModerationService,
     private readonly inactiveGems: InactiveGemsModerationService,
+    private readonly myReports: MyReportsService,
   ) {}
 
   @Post('community/reports')
@@ -70,6 +72,20 @@ export class CommunityModerationController {
     }
 
     return this.communityModerationService.createReport(user, dto);
+  }
+
+  /** The caller's own reports. Any signed-in member; no staff role. */
+  @Get('community/reports/mine')
+  @ApiOperation({ summary: 'List the reports the caller has filed' })
+  async listMyReports(
+    @CurrentUser() user: AuthUser | undefined,
+    @Query() query: ListCommunityReportsQuery,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException('User context missing');
+    }
+
+    return this.myReports.listMine(user.id, query);
   }
 
   @Get(['admin/community-moderation/reports', 'community/moderation/reports'])
@@ -196,10 +212,7 @@ export class CommunityModerationController {
     return this.communityModerationService.clearRestrictions(user, id, dto);
   }
 
-  @Get([
-    'admin/community-moderation/stats',
-    'community/moderation/stats',
-  ])
+  @Get(['admin/community-moderation/stats', 'community/moderation/stats'])
   @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
   @ApiOperation({
     summary:
@@ -271,7 +284,10 @@ export class CommunityModerationController {
     return this.communityModerationService.listAppeals(user, query);
   }
 
-  @Get(['community/moderation/appeals', 'admin/community-moderation/queue/appeals'])
+  @Get([
+    'community/moderation/appeals',
+    'admin/community-moderation/queue/appeals',
+  ])
   @Roles(...COMMUNITY_MODERATION_REVIEW_ROLES)
   async listAppealsQueue(
     @CurrentUser() user: AuthUser | undefined,

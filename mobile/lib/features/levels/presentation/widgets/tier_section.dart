@@ -6,6 +6,7 @@ import 'package:blocnet/features/levels/presentation/widgets/level_card_item.dar
 import 'package:blocnet/features/levels/presentation/widgets/level_list_item.dart';
 import 'package:blocnet/features/levels/presentation/widgets/tier_section_header.dart';
 import 'package:blocnet/features/projects/presentation/models/feed_view_mode.dart';
+import 'package:blocnet/shared/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 typedef LevelTapCallback = void Function(UserLevelModel level);
@@ -26,7 +27,7 @@ class TierSection extends StatelessWidget {
   final FeedViewMode mode;
   final LevelTapCallback onLevelTap;
 
-  static const double _tileGap = 8;
+  static const double _tileGap = AppSpace.sm;
 
   @override
   Widget build(BuildContext context) {
@@ -44,32 +45,29 @@ class TierSection extends StatelessWidget {
 
   Widget _buildList() {
     final levels = section.levels;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.lgValue),
-        border: Border.all(color: section.color.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < levels.length; i++) ...[
-            if (i > 0)
-              Divider(
-                height: 1,
-                thickness: 1,
-                indent: 3,
-                color: AppColors.borderSubtle.withValues(alpha: 0.8),
+    return AppSurface.flush(
+      child: ClipRRect(
+        // Keeps the rows' ink inside the card's corners.
+        borderRadius: AppRadius.md,
+        child: Column(
+          children: [
+            for (var i = 0; i < levels.length; i++) ...[
+              if (i > 0)
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AppColors.borderSubtle,
+                ),
+              LevelListItem(
+                level: levels[i],
+                isCurrent: levels[i].level == currentLevelNumber,
+                isLocked: levels[i].level > currentLevelNumber,
+                tierColor: section.color,
+                onTap: () => onLevelTap(levels[i]),
               ),
-            LevelListItem(
-              level: levels[i],
-              isCurrent: levels[i].level == currentLevelNumber,
-              isLocked: levels[i].level > currentLevelNumber,
-              tierColor: section.color,
-              onTap: () => onLevelTap(levels[i]),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
